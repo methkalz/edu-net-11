@@ -62,13 +62,13 @@ const Auth = () => {
       {/* Main Login Card */}
       <Card className="w-full max-w-md modern-card relative z-10 animate-scale-in overflow-hidden">
         {/* Security Badge */}
-        <div className="absolute top-4 left-4 bg-gradient-blue text-white px-3 py-1 rounded-full text-xs font-cairo flex items-center gap-1">
+        <div className="absolute top-4 left-4 gradient-blue text-white px-3 py-1 rounded-full text-xs font-cairo flex items-center gap-1">
           <Shield className="h-3 w-3" />
           نظام آمن
         </div>
 
         <CardHeader className="text-center pb-6 pt-12">
-          <div className="w-24 h-24 mx-auto mb-6 bg-gradient-blue rounded-full flex items-center justify-center shadow-lg">
+          <div className="w-24 h-24 mx-auto mb-6 gradient-blue rounded-full flex items-center justify-center shadow-lg">
             <BookOpen className="h-12 w-12 text-white" />
           </div>
           <CardTitle className="text-3xl font-bold font-cairo mb-2 text-foreground">
@@ -135,7 +135,7 @@ const Auth = () => {
             {/* Login Button */}
             <Button 
               type="submit" 
-              className="w-full bg-gradient-blue hover:shadow-lg text-white h-12 text-lg font-cairo rounded-xl transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-70" 
+              className="w-full gradient-blue hover:shadow-lg text-white h-12 text-lg font-cairo rounded-xl transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-70" 
               disabled={loading}
             >
               {loading ? (
