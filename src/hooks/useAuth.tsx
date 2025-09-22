@@ -228,15 +228,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Immediate sign out with no delays
           await supabase.auth.signOut();
           
+          // Show generic error message to hide super admin existence
           toast({
-            title: "منع دخول أمني",
-            description: "مدير النظام العليا يجب أن يدخل من اللوحة المخصصة له",
+            title: "خطأ في تسجيل الدخول",
+            description: "بيانات الدخول غير صحيحة",
             variant: "destructive",
           });
           
-          // Immediate redirect without delay to prevent any state persistence
-          window.location.replace('/super-admin-auth');
-          return { error: { message: "Superadmin access blocked from regular auth" } as any };
+          // Return generic error without revealing super admin information
+          return { error: { message: "Invalid credentials" } as any };
         }
         
         // SECURITY BARRIER: Prevent regular users from accessing superadmin auth page
