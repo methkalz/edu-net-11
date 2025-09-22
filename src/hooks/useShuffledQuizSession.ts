@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { logger } from '@/lib/logger';
 
 // أنواع البيانات
 interface GameQuestion {
@@ -155,7 +156,7 @@ export function useShuffledQuizSession() {
       .eq('lesson_id', lessonId);
 
     if (error) {
-      console.error('Error fetching questions:', error);
+      logger.error('Error fetching questions', error);
       throw error;
     }
 
@@ -251,7 +252,7 @@ export function useShuffledQuizSession() {
       });
 
     } catch (error: any) {
-      console.error('Error creating session:', error);
+      logger.error('Error creating session', error);
       toast({
         title: "خطأ في إنشاء الاختبار",
         description: error.message || "حدث خطأ غير متوقع",
@@ -370,13 +371,13 @@ export function useShuffledQuizSession() {
     return result;
   }, [session]);
 
-  // تنظيف الجلسات المنتهية الصلاحية
+  // تنظيف الجلسات المنتهية الصلاحية - محسّن مع cleanup
   useEffect(() => {
     const cleanupExpiredSessions = async () => {
       try {
         await supabase.rpc('cleanup_expired_quiz_sessions');
       } catch (error) {
-        console.error('Error cleaning up expired sessions:', error);
+        logger.error('Error cleaning up expired sessions', error);
       }
     };
 
@@ -384,7 +385,12 @@ export function useShuffledQuizSession() {
     
     // تنظيف دوري كل 5 دقائق
     const interval = setInterval(cleanupExpiredSessions, 5 * 60 * 1000);
-    return () => clearInterval(interval);
+    
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
   }, []);
 
   return {

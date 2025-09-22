@@ -91,14 +91,21 @@ const QuizChallengeRealFixed: React.FC<QuizChallengeRealProps> = ({
     checkSession();
   }, [lessonId, currentLesson, questions.length, resumeSession]);
 
-  // Timer
+  // Timer - محسّن مع cleanup مناسب
   useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
+    
     if (session && timeLeft > 0 && !quizCompleted && quizStarted) {
-      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-      return () => clearTimeout(timer);
+      timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
     } else if (timeLeft === 0 && session && !quizCompleted) {
       handleQuizComplete();
     }
+    
+    return () => {
+      if (timer) {
+        clearTimeout(timer);
+      }
+    };
   }, [timeLeft, session, quizCompleted, quizStarted]);
 
   const startQuiz = async (resume: boolean = false) => {

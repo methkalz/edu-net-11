@@ -16,19 +16,53 @@
 
 import React from 'react'
 import { createRoot } from 'react-dom/client'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { Toaster } from '@/components/ui/toaster'
+import { Toaster as Sonner } from '@/components/ui/sonner'
+import { TooltipProvider } from '@/components/ui/tooltip'
+import { BrowserRouter } from 'react-router-dom'
+import { AuthProvider } from '@/hooks/useAuth'
+import { SiteSettingsProvider } from '@/hooks/useSiteSettings'
 import App from './App.tsx'
 import './index.css'
-import { setupGlobalChunkErrorHandler } from './utils/chunkRetry'
+import PerformanceSetup from '@/lib/performance-setup'
+import { ErrorBoundary } from '@/lib/error-boundary'
 
-// Setup global chunk error handling before app initialization
-setupGlobalChunkErrorHandler();
+// إعداد تحسينات الأداء
+PerformanceSetup.initialize()
 
-// Create root element using React 18 API
-const root = createRoot(document.getElementById("root")!);
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
+      retry: (failureCount, error: any) => {
+        if (error?.status >= 400 && error?.status < 500) return false
+        return failureCount < 3
+      },
+      refetchOnWindowFocus: false,
+    },
+  },
+})
 
-// Render the application with Strict Mode for better development experience
-root.render(
+window.addEventListener('beforeunload', () => PerformanceSetup.cleanup())
+
+createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <AuthProvider>
+            <SiteSettingsProvider>
+              <TooltipProvider>
+                <App />
+                <Toaster />
+                <Sonner />
+              </TooltipProvider>
+            </SiteSettingsProvider>
+          </AuthProvider>
+        </BrowserRouter>
+      </QueryClientProvider>
+    </ErrorBoundary>
+  </React.StrictMode>,
+)

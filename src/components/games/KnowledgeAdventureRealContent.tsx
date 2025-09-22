@@ -120,7 +120,7 @@ const KnowledgeAdventureRealContent: React.FC = () => {
 
       // إذا نجح الطالب، انتظر قليلاً ثم عُد للخريطة تلقائياً
       if (percentage >= 70) {
-        console.log('🎯 Student passed, will auto-return to map');
+        logger.info('Student passed quiz, auto-returning to map', { lessonId, score, percentage });
         setTimeout(() => {
           setSelectedLesson(null);
           toast({

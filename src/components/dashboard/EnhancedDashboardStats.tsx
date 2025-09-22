@@ -116,7 +116,7 @@ interface EnhancedDashboardStatsProps {
   onRefresh: () => void;
 }
 
-export const EnhancedDashboardStats: React.FC<EnhancedDashboardStatsProps> = ({
+export const EnhancedDashboardStats: React.FC<EnhancedDashboardStatsProps> = React.memo(({
   stats,
   loading,
   refreshing,
@@ -197,6 +197,8 @@ export const EnhancedDashboardStats: React.FC<EnhancedDashboardStatsProps> = ({
       </div>
     </section>
   );
-};
+});
+
+EnhancedDashboardStats.displayName = 'EnhancedDashboardStats';
 
 export default EnhancedDashboardStats;
