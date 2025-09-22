@@ -35,7 +35,6 @@ interface AuthContextType {
   userProfile: UserProfile | null;     // Extended user profile with role and school info
   loading: boolean;                     // Loading state for auth operations
   signIn: (email: string, password: string) => Promise<AuthResponse>;
-  signUp: (email: string, password: string, fullName: string) => Promise<AuthResponse>;
   signOut: () => Promise<void>;
 }
 
@@ -142,10 +141,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   
   /**
-   * User Registration Function
+   * User Registration Function (INTERNAL USE ONLY)
    * 
    * Creates a new user account with email verification.
-   * Sends a confirmation email with a redirect URL back to the homepage.
+   * This function is kept for internal administrative use only.
+   * It should NOT be exposed through the public context.
+   * 
+   * Only authorized administrators can create accounts through
+   * dedicated management systems (UserManagement, TeacherManagement, etc.)
    * 
    * @param email - User's email address
    * @param password - User's password
@@ -243,6 +246,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   // Provide authentication context to all child components
+  // Note: signUp is intentionally NOT included in the context for security reasons
+  // Account creation is handled through authorized administrative systems only
   return (
     <AuthContext.Provider value={{ 
       user, 
@@ -250,7 +255,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       userProfile, 
       loading, 
       signIn, 
-      signUp, 
       signOut 
     }}>
       {children}

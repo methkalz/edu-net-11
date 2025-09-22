@@ -4,15 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
 import { useAuth } from '@/hooks/useAuth';
 import { BookOpen } from 'lucide-react';
 
 const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [loginData, setLoginData] = useState({ email: '', password: '' });
-  const [signupData, setSignupData] = useState({ email: '', password: '', fullName: '' });
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -28,12 +27,6 @@ const Auth = () => {
     setLoading(false);
   };
 
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    await signUp(signupData.email, signupData.password, signupData.fullName);
-    setLoading(false);
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted flex items-center justify-center p-6" dir="rtl">
@@ -53,100 +46,39 @@ const Auth = () => {
           <CardDescription className="text-base text-muted-foreground">ادخل إلى منصة التعليم الذكية</CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-8 bg-muted">
-              <TabsTrigger value="login" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-cairo">
-                تسجيل الدخول
-              </TabsTrigger>
-              <TabsTrigger value="signup" className="data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground font-cairo">
-                إنشاء حساب
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="login" className="space-y-6 animate-fade-in">
-              <form onSubmit={handleLogin} className="space-y-6">
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="login-email" className="font-cairo text-base text-foreground">البريد الإلكتروني</Label>
-                    <Input
-                      id="login-email"
-                      type="email"
-                      value={loginData.email}
-                      onChange={(e) => setLoginData(prev => ({ ...prev, email: e.target.value }))}
-                      required
-                      className="mt-2 h-12 text-lg bg-background border-input focus:border-primary ltr-content"
-                      placeholder="أدخل بريدك الإلكتروني"
-                      dir="ltr"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="login-password" className="font-cairo text-base text-foreground">كلمة المرور</Label>
-                    <Input
-                      id="login-password"
-                      type="password"
-                      value={loginData.password}
-                      onChange={(e) => setLoginData(prev => ({ ...prev, password: e.target.value }))}
-                      required
-                      className="mt-2 h-12 text-lg bg-background border-input focus:border-primary ltr-content"
-                      placeholder="أدخل كلمة المرور"
-                      dir="ltr"
-                    />
-                  </div>
-                </div>
-                <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-12 text-lg font-cairo rounded-xl transition-all" disabled={loading}>
-                  {loading ? 'جاري تسجيل الدخول...' : 'تسجيل الدخول'}
-                </Button>
-              </form>
-            </TabsContent>
-            
-            <TabsContent value="signup" className="space-y-6 animate-fade-in">
-              <form onSubmit={handleSignup} className="space-y-6">
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="signup-name" className="font-cairo text-base text-foreground">الاسم الكامل</Label>
-                    <Input
-                      id="signup-name"
-                      type="text"
-                      value={signupData.fullName}
-                      onChange={(e) => setSignupData(prev => ({ ...prev, fullName: e.target.value }))}
-                      required
-                      className="mt-2 h-12 text-lg bg-background border-input focus:border-secondary"
-                      placeholder="أدخل اسمك الكامل"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="signup-email" className="font-cairo text-base text-foreground">البريد الإلكتروني</Label>
-                    <Input
-                      id="signup-email"
-                      type="email"
-                      value={signupData.email}
-                      onChange={(e) => setSignupData(prev => ({ ...prev, email: e.target.value }))}
-                      required
-                      className="mt-2 h-12 text-lg bg-background border-input focus:border-secondary ltr-content"
-                      placeholder="أدخل بريدك الإلكتروني"
-                      dir="ltr"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="signup-password" className="font-cairo text-base text-foreground">كلمة المرور</Label>
-                    <Input
-                      id="signup-password"
-                      type="password"
-                      value={signupData.password}
-                      onChange={(e) => setSignupData(prev => ({ ...prev, password: e.target.value }))}
-                      required
-                      className="mt-2 h-12 text-lg bg-background border-input focus:border-secondary ltr-content"
-                      placeholder="أدخل كلمة مرور قوية"
-                      dir="ltr"
-                    />
-                  </div>
-                </div>
-                <Button type="submit" className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground h-12 text-lg font-cairo rounded-xl transition-all" disabled={loading}>
-                  {loading ? 'جاري إنشاء الحساب...' : 'إنشاء حساب جديد'}
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
+          <form onSubmit={handleLogin} className="space-y-6">
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="login-email" className="font-cairo text-base text-foreground">البريد الإلكتروني</Label>
+                <Input
+                  id="login-email"
+                  type="email"
+                  value={loginData.email}
+                  onChange={(e) => setLoginData(prev => ({ ...prev, email: e.target.value }))}
+                  required
+                  className="mt-2 h-12 text-lg bg-background border-input focus:border-primary ltr-content"
+                  placeholder="أدخل بريدك الإلكتروني"
+                  dir="ltr"
+                />
+              </div>
+              <div>
+                <Label htmlFor="login-password" className="font-cairo text-base text-foreground">كلمة المرور</Label>
+                <Input
+                  id="login-password"
+                  type="password"
+                  value={loginData.password}
+                  onChange={(e) => setLoginData(prev => ({ ...prev, password: e.target.value }))}
+                  required
+                  className="mt-2 h-12 text-lg bg-background border-input focus:border-primary ltr-content"
+                  placeholder="أدخل كلمة المرور"
+                  dir="ltr"
+                />
+              </div>
+            </div>
+            <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-12 text-lg font-cairo rounded-xl transition-all" disabled={loading}>
+              {loading ? 'جاري تسجيل الدخول...' : 'تسجيل الدخول'}
+            </Button>
+          </form>
         </CardContent>
       </Card>
     </div>
