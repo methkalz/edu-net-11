@@ -220,7 +220,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    * User Sign Out Function
    * 
    * Signs out the current user and clears all authentication state.
-   * The auth state change listener will handle cleanup and redirections.
+   * Automatically redirects to the authentication page after successful logout.
    */
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
@@ -237,6 +237,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         title: "تم تسجيل الخروج",
         description: "نراك قريباً",
       });
+      // Automatic redirection after successful logout
+      window.location.href = '/auth';
     }
   };
 

@@ -62,7 +62,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
 
   const handleLogout = async () => {
     await signOut();
-    navigate('/auth');
+    // Redirection is now handled automatically by signOut function
   };
 
   const getLogoSize = () => {

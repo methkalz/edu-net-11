@@ -13,9 +13,8 @@ export const AdminAccessBanner: React.FC = () => {
   if (!isAdminAccess) return null;
 
   const handleReturnToAdmin = async () => {
-    // Sign out and return to admin login
+    // Sign out with automatic redirection to auth page
     await signOut();
-    window.location.href = '/auth';
   };
 
   return (
