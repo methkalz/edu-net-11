@@ -66,7 +66,7 @@ const Auth = () => {
           <div className="w-24 h-24 mx-auto mb-6 gradient-blue rounded-full flex items-center justify-center shadow-lg">
             <BookOpen className="h-12 w-12 text-white" />
           </div>
-          <CardTitle className="text-3xl font-bold font-cairo mb-2 text-foreground">
+          <CardTitle className="text-3xl font-bold font-cairo mb-2 text-foreground text-center">
             مرحباً بك
           </CardTitle>
           <CardDescription className="text-base text-muted-foreground mb-2">
