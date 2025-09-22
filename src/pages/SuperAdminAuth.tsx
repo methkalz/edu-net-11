@@ -15,10 +15,27 @@ const SuperAdminAuth = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user && userProfile?.role === 'superadmin') {
-      navigate('/dashboard');
-    } else if (user && userProfile?.role !== 'superadmin') {
-      navigate('/auth');
+    // Enhanced security check for SuperAdmin page access
+    if (user && userProfile) {
+      if (userProfile.role === 'superadmin') {
+        navigate('/dashboard');
+      } else {
+        // Non-superadmin detected on superadmin page - immediate redirect
+        window.location.replace('/auth');
+      }
+    }
+    
+    // Additional security: Block access if user is logged in but role is being checked
+    if (user && !userProfile) {
+      // Wait a moment for profile to load, then check
+      const securityTimeout = setTimeout(() => {
+        if (user && !userProfile) {
+          // Profile failed to load - potential security issue
+          window.location.replace('/auth');
+        }
+      }, 3000);
+      
+      return () => clearTimeout(securityTimeout);
     }
   }, [user, userProfile, navigate]);
 
