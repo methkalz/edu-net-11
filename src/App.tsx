@@ -21,7 +21,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ErrorBoundary } from "@/lib/error-boundary";
 import useSiteSettings from "@/hooks/useSiteSettings";
@@ -86,11 +86,9 @@ const App = () => {
             {/* Toast notification systems - dual system for flexibility */}
             <Toaster />
             <Sonner />
-            {/* Router configuration for SPA navigation */}
-            <BrowserRouter>
-              {/* Suspense boundary for lazy-loaded components */}
-              <Suspense fallback={<PageLoading message="Loading..." />}>
-                <Routes>
+            {/* Suspense boundary for lazy-loaded components */}
+            <Suspense fallback={<PageLoading message="Loading..." />}>
+              <Routes>
                   {/* Public routes */}
                   <Route path="/" element={<Suspense fallback={<PageLoading message="لحظة.. منجهزلك الصفحة" />}><LandingPage /></Suspense>} />
                   <Route path="/index2" element={<Index />} />
@@ -163,9 +161,8 @@ const App = () => {
                   
                   {/* IMPORTANT: Keep catch-all route last - handles 404 errors */}
                   <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Suspense>
-            </BrowserRouter>
+              </Routes>
+            </Suspense>
           </AuthProvider>
         </TooltipProvider>
       </QueryClientProvider>
