@@ -190,33 +190,97 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    * User Sign In Function
    * 
    * Authenticates a user with email and password.
-   * The auth state change listener will handle profile fetching and redirections.
+   * Includes security check to prevent superadmins from signing in from regular auth page.
    * 
    * @param email - User's email address
    * @param password - User's password
    * @returns Promise with error information if sign in fails
    */
   const signIn = async (email: string, password: string): Promise<AuthResponse> => {
-    const { error } = await supabase.auth.signInWithPassword({
+    // First, attempt to sign in to get user data
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    // Handle sign in result with user feedback
     if (error) {
       toast({
         title: "خطأ في تسجيل الدخول",
         description: error.message,
         variant: "destructive",
       });
-    } else {
-      toast({
-        title: "مرحباً",
-        description: "تم تسجيل الدخول بنجاح",
-      });
+      return { error };
     }
 
-    return { error };
+    // If sign in successful, check user role for security
+    if (data.user) {
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('user_id', data.user.id)
+          .single();
+
+        const currentPath = window.location.pathname;
+        
+        // Security check: Prevent superadmin from signing in from regular auth page
+        if (profile?.role === 'superadmin' && currentPath === '/auth') {
+          // Sign out immediately to prevent unauthorized access
+          await supabase.auth.signOut();
+          
+          toast({
+            title: "وصول غير مسموح",
+            description: "السوبر آدمن يجب أن يسجل الدخول من لوحته الخاصة",
+            variant: "destructive",
+          });
+          
+          // Redirect to superadmin auth page
+          setTimeout(() => {
+            window.location.href = '/super-admin-auth';
+          }, 1500);
+          
+          return { error: { message: "Unauthorized access for superadmin" } as any };
+        }
+        
+        // Security check: Prevent regular users from accessing superadmin auth page
+        if (profile?.role !== 'superadmin' && currentPath === '/super-admin-auth') {
+          // Sign out immediately
+          await supabase.auth.signOut();
+          
+          toast({
+            title: "وصول غير مسموح",
+            description: "هذه اللوحة مخصصة للسوبر آدمن فقط",
+            variant: "destructive",
+          });
+          
+          // Redirect to regular auth page
+          setTimeout(() => {
+            window.location.href = '/auth';
+          }, 1500);
+          
+          return { error: { message: "Unauthorized access for regular user" } as any };
+        }
+        
+      } catch (profileError) {
+        logError('Error checking user role during sign in', profileError as Error);
+        // Sign out if we can't verify the role
+        await supabase.auth.signOut();
+        toast({
+          title: "خطأ في التحقق",
+          description: "حدث خطأ في التحقق من صلاحيات المستخدم",
+          variant: "destructive",
+        });
+        return { error: { message: "Profile verification failed" } as any };
+      }
+    }
+
+    // If all security checks pass, allow the sign in
+    toast({
+      title: "مرحباً",
+      description: "تم تسجيل الدخول بنجاح",
+    });
+
+    return { error: null };
   };
 
   /**
