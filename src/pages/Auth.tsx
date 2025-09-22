@@ -154,9 +154,6 @@ const Auth = () => {
 
           {/* Footer Info */}
           <div className="text-center pt-4 border-t border-border/30">
-            <p className="text-xs text-muted-foreground/70 font-cairo">
-              للمديرين العليا: يوجد نظام دخول منفصل وآمن
-            </p>
             <div className="flex items-center justify-center gap-1 mt-2 text-xs text-muted-foreground/50">
               <Lock className="h-3 w-3" />
               <span>محمي بأعلى معايير الأمان</span>
