@@ -76,6 +76,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Handle magic link authentication from PIN login
+  useEffect(() => {
+    const handleMagicLink = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const accessToken = urlParams.get('access_token');
+      const refreshToken = urlParams.get('refresh_token');
+      const adminAccess = urlParams.get('admin_access');
+      const pinLogin = urlParams.get('pin_login');
+
+      if (accessToken && refreshToken && adminAccess && pinLogin) {
+        try {
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
+          });
+
+          if (!error) {
+            // Clean the URL from sensitive parameters
+            const cleanUrl = new URL(window.location.href);
+            cleanUrl.searchParams.delete('access_token');
+            cleanUrl.searchParams.delete('refresh_token');
+            cleanUrl.searchParams.delete('type');
+            
+            window.history.replaceState({}, '', cleanUrl.toString());
+            
+            toast({
+              title: "تم تسجيل الدخول بنجاح",
+              description: "تم الدخول عبر PIN الإداري",
+            });
+          }
+        } catch (error) {
+          console.error('Magic link authentication error:', error);
+        }
+      }
+    };
+
+    handleMagicLink();
+  }, []);
+
   useEffect(() => {
     /**
      * Authentication State Change Listener

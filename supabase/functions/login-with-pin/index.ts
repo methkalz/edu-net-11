@@ -83,12 +83,19 @@ Deno.serve(async (req) => {
       })
       .eq('id', pinData.id)
 
+    // Get the correct origin from request
+    const requestUrl = new URL(req.url)
+    const origin = req.headers.get('origin') || 
+                   req.headers.get('referer')?.split('/').slice(0, 3).join('/') ||
+                   `${requestUrl.protocol}//${requestUrl.host}` ||
+                   'http://localhost:3000'
+
     // Generate a temporary session for the target user
     const { data: sessionData, error: sessionError } = await supabase.auth.admin.generateLink({
       type: 'magiclink',
       email: targetProfile.email,
       options: {
-        redirectTo: `${req.headers.get('origin') || 'http://localhost:8080'}/dashboard?admin_access=true`
+        redirectTo: `${origin}/dashboard?admin_access=true&pin_login=true`
       }
     })
 

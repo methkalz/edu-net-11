@@ -73,43 +73,59 @@ export const PinLoginDialog: React.FC<PinLoginDialogProps> = ({
   };
 
   const loginWithPin = async () => {
-    if (enteredPin.length !== 6) {
+    if (!enteredPin || enteredPin.length !== 6) {
       toast({
-        title: "رمز PIN غير صالح",
-        description: "يجب أن يتكون الرمز من 6 أرقام",
-        variant: "destructive"
+        title: "خطأ",
+        description: "يرجى إدخال رقم PIN صحيح مكون من 6 أرقام",
+        variant: "destructive",
       });
       return;
     }
 
     setIsLoggingIn(true);
+
     try {
-      const { data, error } = await supabase.functions.invoke('login-with-pin', {
+      const { data } = await supabase.functions.invoke('login-with-pin', {
         body: { pinCode: enteredPin }
       });
 
-      if (error) throw error;
+      if (data?.success && data?.redirectUrl) {
+        // Extract access_token from the magic link URL
+        const url = new URL(data.redirectUrl);
+        const accessToken = url.searchParams.get('access_token');
+        const refreshToken = url.searchParams.get('refresh_token');
 
-      toast({
-        title: "تم الدخول بنجاح",
-        description: `سيتم توجيهك إلى لوحة تحكم ${data.targetUser.name}`,
-      });
+        if (accessToken && refreshToken) {
+          // Set the session directly using the tokens
+          const { error: sessionError } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
+          });
 
-      // Redirect to the target user's dashboard
-      if (data.redirectUrl) {
-        window.open(data.redirectUrl, '_blank');
+          if (sessionError) {
+            throw sessionError;
+          }
+
+          toast({
+            title: "تم تسجيل الدخول بنجاح",
+            description: `تم الدخول كـ: ${data.targetUser?.name}`,
+          });
+
+          // Close the dialog and redirect to dashboard
+          onOpenChange(false);
+          window.location.href = '/dashboard?admin_access=true&pin_login=true';
+        } else {
+          throw new Error('لم يتم العثور على رموز المصادقة في الرابط');
+        }
+      } else {
+        throw new Error(data?.error || 'فشل في تسجيل الدخول');
       }
-      
-      onOpenChange(false);
-      setEnteredPin('');
-      setGeneratedPin(null);
-      setPinExpiresAt(null);
-    } catch (error) {
-      console.error('Error logging in with PIN:', error);
+    } catch (error: any) {
+      console.error('Login error:', error);
       toast({
-        title: "خطأ في الدخول",
-        description: "رمز PIN غير صالح أو منتهي الصلاحية",
-        variant: "destructive"
+        title: "خطأ في تسجيل الدخول",
+        description: error.message || "حدث خطأ أثناء محاولة تسجيل الدخول",
+        variant: "destructive",
       });
     } finally {
       setIsLoggingIn(false);
@@ -222,7 +238,7 @@ export const PinLoginDialog: React.FC<PinLoginDialogProps> = ({
             <div className="text-sm text-muted-foreground space-y-1">
               <p>• الرمز صالح لمدة 15 دقيقة فقط</p>
               <p>• يمكن استخدام الرمز مرة واحدة فقط</p>
-              <p>• سيتم فتح نافذة جديدة للدخول إلى حساب المستخدم</p>
+              <p>• سيتم تسجيل الدخول في نفس النافذة مع إمكانية العودة للسوبر آدمن</p>
               <p>• يمكنك العودة لحسابك الأصلي في أي وقت</p>
             </div>
           </div>
