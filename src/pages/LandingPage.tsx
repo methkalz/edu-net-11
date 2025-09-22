@@ -50,9 +50,18 @@ const LandingPage: React.FC = () => {
                   المحتوى
                 </button>
               </div>
-              <Button onClick={() => navigate('/auth')} className="bg-gray-900 text-white hover:bg-gray-800 text-xs md:text-sm px-3 md:px-6 py-2 rounded-md transition-colors">
-                ابدأ الآن
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate('/auth')} 
+                  className="border-gray-300 text-gray-700 hover:bg-gray-50 text-xs md:text-sm px-3 md:px-4 py-2 rounded-md transition-colors"
+                >
+                  تسجيل الدخول
+                </Button>
+                <Button onClick={() => navigate('/auth')} className="bg-gray-900 text-white hover:bg-gray-800 text-xs md:text-sm px-3 md:px-6 py-2 rounded-md transition-colors">
+                  ابدأ الآن
+                </Button>
+              </div>
             </div>
           </div>
         </nav>
