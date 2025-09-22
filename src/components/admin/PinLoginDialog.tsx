@@ -89,34 +89,29 @@ export const PinLoginDialog: React.FC<PinLoginDialogProps> = ({
         body: { pinCode: enteredPin }
       });
 
-      if (data?.success && data?.redirectUrl) {
-        // Extract access_token from the magic link URL
-        const url = new URL(data.redirectUrl);
-        const accessToken = url.searchParams.get('access_token');
-        const refreshToken = url.searchParams.get('refresh_token');
+      if (data?.success && data?.magicLink) {
+        toast({
+          title: "تم تسجيل الدخول بنجاح",
+          description: `سيتم فتح نافذة جديدة للدخول كـ: ${data.targetUser?.name}`,
+        });
 
-        if (accessToken && refreshToken) {
-          // Set the session directly using the tokens
-          const { error: sessionError } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken
-          });
-
-          if (sessionError) {
-            throw sessionError;
-          }
-
+        // Open magic link in new window to complete authentication
+        const newWindow = window.open(data.magicLink, '_blank');
+        
+        // Close dialog and reset form
+        onOpenChange(false);
+        setEnteredPin('');
+        setGeneratedPin('');
+        setPinExpiresAt(null);
+        
+        // Show instructions for returning to super admin
+        setTimeout(() => {
           toast({
-            title: "تم تسجيل الدخول بنجاح",
-            description: `تم الدخول كـ: ${data.targetUser?.name}`,
+            title: "تعليمات",
+            description: "لإنهاء الجلسة والعودة للسوبر آدمن، اضغط على 'تسجيل الخروج' في الحساب الجديد",
           });
-
-          // Close the dialog and redirect to dashboard
-          onOpenChange(false);
-          window.location.href = '/dashboard?admin_access=true&pin_login=true';
-        } else {
-          throw new Error('لم يتم العثور على رموز المصادقة في الرابط');
-        }
+        }, 2000);
+        
       } else {
         throw new Error(data?.error || 'فشل في تسجيل الدخول');
       }
@@ -238,7 +233,8 @@ export const PinLoginDialog: React.FC<PinLoginDialogProps> = ({
             <div className="text-sm text-muted-foreground space-y-1">
               <p>• الرمز صالح لمدة 15 دقيقة فقط</p>
               <p>• يمكن استخدام الرمز مرة واحدة فقط</p>
-              <p>• سيتم تسجيل الدخول في نفس النافذة مع إمكانية العودة للسوبر آدمن</p>
+              <p>• سيتم فتح نافذة جديدة للدخول إلى حساب المستخدم</p>
+              <p>• لإنهاء الجلسة والعودة للسوبر آدمن، اضغط 'تسجيل الخروج' في الحساب الجديد</p>
               <p>• يمكنك العودة لحسابك الأصلي في أي وقت</p>
             </div>
           </div>

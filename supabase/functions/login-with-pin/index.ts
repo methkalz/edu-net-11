@@ -104,6 +104,31 @@ Deno.serve(async (req) => {
       throw new Error('Failed to generate session')
     }
 
+    // Create a proper session for the target user
+    const { data: userSessionData, error: userSessionError } = await supabase.auth.admin.createUser({
+      email: targetProfile.email,
+      email_confirm: true,
+      user_metadata: {
+        pin_login: true,
+        original_user: targetProfile.user_id
+      }
+    })
+
+    if (userSessionError) {
+      console.error('User session creation error:', userSessionError)
+    }
+
+    // Generate access tokens directly
+    const { data: tokenData, error: tokenError } = await supabase.auth.admin.generateLink({
+      type: 'recovery',
+      email: targetProfile.email
+    })
+
+    if (tokenError || !tokenData) {
+      console.error('Token generation error:', tokenError)
+      throw new Error('Failed to generate tokens')
+    }
+
     // Log the PIN usage in audit log
     await supabase
       .from('audit_log')
@@ -126,11 +151,12 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        redirectUrl: sessionData.properties?.action_link,
+        magicLink: sessionData.properties?.action_link,
         targetUser: {
           id: targetProfile.user_id,
           name: targetProfile.full_name,
-          role: targetProfile.role
+          role: targetProfile.role,
+          email: targetProfile.email
         },
         sessionInfo: {
           generatedBy: generatorProfile.full_name,
