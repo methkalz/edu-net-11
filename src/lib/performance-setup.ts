@@ -156,7 +156,7 @@ class PerformanceSetup {
     MemoryLeakPrevention.registerTimer(scrollTimeout);
   }
 
-  // معالجة الأخطاء العامة
+  // معالجة الأخطاء غير المُعالجة
   private static setupGlobalErrorHandling() {
     // معالجة الأخطاء غير المُعالجة
     window.addEventListener('error', (event) => {
@@ -178,7 +178,7 @@ class PerformanceSetup {
       }
     });
 
-    // مراقبة Long Tasks (المهام الطويلة)
+    // مراقبة Long Tasks (المهام الطويلة) - معالجة منفصلة للـ PerformanceObserver
     if ('PerformanceObserver' in window) {
       try {
         const observer = new PerformanceObserver((list) => {
@@ -194,7 +194,11 @@ class PerformanceSetup {
         });
         
         observer.observe({ entryTypes: ['longtask'] });
-        MemoryLeakPrevention.registerObserver(observer);
+        
+        // إضافة cleanup منفصل للـ PerformanceObserver
+        this.cleanupFunctions.push(() => {
+          observer.disconnect();
+        });
       } catch (error) {
         // تجاهل إذا لم يكن مدعوماً
       }
@@ -269,7 +273,13 @@ class PerformanceSetup {
 
   // الحصول على تقرير الأداء
   static getPerformanceReport() {
-    const report = {
+    const report: {
+      memoryUsage: any;
+      timing: PerformanceTiming;
+      navigation: PerformanceNavigation;
+      isInitialized: boolean;
+      timestamp: number;
+    } = {
       memoryUsage: 'unknown',
       timing: performance.timing,
       navigation: performance.navigation,

@@ -22,7 +22,6 @@ import { Toaster as Sonner } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from '@/hooks/useAuth'
-import { SiteSettingsProvider } from '@/hooks/useSiteSettings'
 import App from './App.tsx'
 import './index.css'
 import PerformanceSetup from '@/lib/performance-setup'
@@ -53,13 +52,11 @@ createRoot(document.getElementById('root')!).render(
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <AuthProvider>
-            <SiteSettingsProvider>
-              <TooltipProvider>
-                <App />
-                <Toaster />
-                <Sonner />
-              </TooltipProvider>
-            </SiteSettingsProvider>
+            <TooltipProvider>
+              <App />
+              <Toaster />
+              <Sonner />
+            </TooltipProvider>
           </AuthProvider>
         </BrowserRouter>
       </QueryClientProvider>
