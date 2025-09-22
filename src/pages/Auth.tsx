@@ -69,7 +69,7 @@ const Auth = () => {
           <CardTitle className="text-3xl font-bold font-cairo mb-2 text-foreground text-center">
             مرحباً بك
           </CardTitle>
-          <CardDescription className="text-base text-muted-foreground mb-2">
+          <CardDescription className="text-base text-muted-foreground mb-2 text-center">
             دخول المستخدمين - منصة التعليم الذكية
           </CardDescription>
           <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground/70">
