@@ -61,11 +61,6 @@ const Auth = () => {
 
       {/* Main Login Card */}
       <Card className="w-full max-w-md modern-card relative z-10 animate-scale-in overflow-hidden">
-        {/* Security Badge */}
-        <div className="absolute top-4 left-4 gradient-blue text-white px-3 py-1 rounded-full text-xs font-cairo flex items-center gap-1">
-          <Shield className="h-3 w-3" />
-          نظام آمن
-        </div>
 
         <CardHeader className="text-center pb-6 pt-12">
           <div className="w-24 h-24 mx-auto mb-6 gradient-blue rounded-full flex items-center justify-center shadow-lg">
