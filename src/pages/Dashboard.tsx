@@ -812,7 +812,7 @@ const Dashboard = () => {
         {/* Performance Metrics */}
         <section className="animate-fade-in-up" style={{animationDelay: '700ms'}}>
           <div className="flex items-center mb-6">
-            <h2 className="text-2xl font-bold font-cairo text-foreground">📈 مؤشرات الأداء</h2>
+            <h2 className="text-2xl font-bold font-cairo text-foreground">مؤشرات الأداء</h2>
             <div className="accent-dot mr-3 animate-gentle-float"></div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
