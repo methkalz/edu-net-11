@@ -127,7 +127,7 @@ export const ImpersonationBanner: React.FC = () => {
       <Shield className="h-4 w-4 text-amber-600" />
       <AlertDescription className="flex items-center justify-between">
         <span className="text-sm text-amber-800">
-          <strong>وضع الانتحال الآمن:</strong> أنت تعمل الآن كـ <strong>{impersonatedUserName}</strong>
+          أنت تعمل الآن كـ <strong>{impersonatedUserName}</strong>
         </span>
         <Button
           variant="outline"
