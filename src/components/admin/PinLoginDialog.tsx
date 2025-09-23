@@ -87,49 +87,43 @@ export const PinLoginDialog: React.FC<PinLoginDialogProps> = ({
     try {
       console.log('Starting PIN login process...');
       
-      const { data } = await supabase.functions.invoke('login-with-pin', {
+      const { data, error } = await supabase.functions.invoke('login-with-pin', {
         body: { pinCode: enteredPin }
       });
 
       console.log('PIN login response:', data);
 
-      if (data?.success && data?.hashedToken) {
-        console.log('Attempting to verify OTP with hashed token...');
+      if (error) {
+        throw new Error(`خطأ في الخادم: ${error.message}`);
+      }
+
+      if (data?.success && data?.sessionData) {
+        console.log('PIN validated, storing session data...');
         
-        // Use the correct method to verify the OTP and create session
-        const { data: verifyData, error: verifyError } = await supabase.auth.verifyOtp({
-          token_hash: data.hashedToken,
-          type: 'email'
+        // Store the impersonation session data in localStorage for later use
+        localStorage.setItem('impersonation_session', JSON.stringify(data.sessionData));
+        localStorage.setItem('original_admin_session', JSON.stringify(await supabase.auth.getSession()));
+        
+        toast({
+          title: "تم التحقق من الرمز بنجاح",
+          description: `سيتم الآن فتح نافذة جديدة للدخول كـ: ${data.targetUser?.name}`,
         });
 
-        console.log('OTP verification result:', { verifyData, verifyError });
+        // Open new window with impersonation parameters
+        const impersonationUrl = `${window.location.origin}/dashboard?impersonate=${data.targetUser.id}&admin_access=true&pin_login=true`;
+        window.open(impersonationUrl, '_blank');
 
-        if (verifyError) {
-          throw new Error(`فشل في التحقق من الرمز: ${verifyError.message}`);
-        }
-
-        if (verifyData?.user && verifyData?.session) {
-          toast({
-            title: "تم تسجيل الدخول بنجاح",
-            description: `تم الدخول كـ: ${data.targetUser?.name}`,
-          });
-
-          // Close dialog and redirect
-          onOpenChange(false);
-          setEnteredPin('');
-          setGeneratedPin('');
-          setPinExpiresAt(null);
-          
-          // Redirect to dashboard with admin access flags
-          window.location.href = '/dashboard?admin_access=true&pin_login=true';
-        } else {
-          throw new Error('لم يتم إنشاء جلسة صحيحة');
-        }
+        // Close dialog
+        onOpenChange(false);
+        setEnteredPin('');
+        setGeneratedPin('');
+        setPinExpiresAt(null);
+        
       } else {
-        throw new Error(data?.error || 'فشل في تسجيل الدخول');
+        throw new Error(data?.error || 'فشل في التحقق من الرمز');
       }
     } catch (error: any) {
-      console.error('Login error:', error);
+      console.error('PIN login error:', error);
       toast({
         title: "خطأ في تسجيل الدخول",
         description: error.message || "حدث خطأ أثناء محاولة تسجيل الدخول",

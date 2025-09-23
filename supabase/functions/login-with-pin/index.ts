@@ -83,15 +83,12 @@ Deno.serve(async (req) => {
       })
       .eq('id', pinData.id)
 
-    // Generate a magic link for user impersonation
-    const { data: magicLinkData, error: magicLinkError } = await supabase.auth.admin.generateLink({
-      type: 'magiclink',
-      email: targetProfile.email
-    });
-
-    if (magicLinkError || !magicLinkData?.properties?.hashed_token) {
-      console.error('Magic link generation error:', magicLinkError)
-      throw new Error('Failed to generate magic link for impersonation')
+    // Create impersonation session data
+    const sessionData = {
+      targetUserId: targetProfile.user_id,
+      targetUserEmail: targetProfile.email,
+      originalAdminId: pinData.generated_by,
+      impersonationStarted: new Date().toISOString()
     }
 
     // Log the PIN usage in audit log
@@ -116,7 +113,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        hashedToken: magicLinkData.properties.hashed_token,
+        sessionData: sessionData,
         targetUser: {
           id: targetProfile.user_id,
           name: targetProfile.full_name,

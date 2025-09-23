@@ -76,16 +76,58 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Handle magic link authentication from PIN login
+  // Handle impersonation and magic link authentication
   useEffect(() => {
-    const handleMagicLink = async () => {
+    const handleAuthentication = async () => {
       const urlParams = new URLSearchParams(window.location.search);
-      const accessToken = urlParams.get('access_token');
-      const refreshToken = urlParams.get('refresh_token');
+      
+      // Handle impersonation from URL parameters
+      const impersonateUserId = urlParams.get('impersonate');
       const adminAccess = urlParams.get('admin_access');
       const pinLogin = urlParams.get('pin_login');
 
-      if (accessToken && refreshToken && adminAccess && pinLogin) {
+      if (impersonateUserId && adminAccess && pinLogin) {
+        // Get stored impersonation session data
+        const impersonationData = localStorage.getItem('impersonation_session');
+        
+        if (impersonationData) {
+          const sessionData = JSON.parse(impersonationData);
+          
+          if (sessionData.targetUserId === impersonateUserId) {
+            console.log('Starting user impersonation...');
+            
+            try {
+              // Call impersonation function
+              const { data, error } = await supabase.functions.invoke('impersonate-user', {
+                body: {
+                  targetUserId: impersonateUserId,
+                  adminUserId: sessionData.originalAdminId
+                }
+              });
+
+              if (error) {
+                console.error('Impersonation error:', error);
+                return;
+              }
+              
+              if (data?.success && data?.magicLink) {
+                // Redirect to magic link for seamless login
+                window.location.href = data.magicLink;
+                return;
+              }
+            } catch (error) {
+              console.error('Impersonation error:', error);
+            }
+          }
+        }
+      }
+
+      // Handle magic link callback for impersonation
+      const accessToken = urlParams.get('access_token');
+      const refreshToken = urlParams.get('refresh_token');
+      const impersonated = urlParams.get('impersonated');
+
+      if (accessToken && refreshToken && impersonated) {
         try {
           const { error } = await supabase.auth.setSession({
             access_token: accessToken,
@@ -93,26 +135,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           });
 
           if (!error) {
-            // Clean the URL from sensitive parameters
+            // Clean the URL but keep admin access parameters
             const cleanUrl = new URL(window.location.href);
             cleanUrl.searchParams.delete('access_token');
             cleanUrl.searchParams.delete('refresh_token');
             cleanUrl.searchParams.delete('type');
+            cleanUrl.searchParams.delete('impersonate');
+            cleanUrl.searchParams.set('admin_access', 'true');
+            cleanUrl.searchParams.set('impersonated', 'true');
             
             window.history.replaceState({}, '', cleanUrl.toString());
             
             toast({
               title: "تم تسجيل الدخول بنجاح",
-              description: "تم الدخول عبر PIN الإداري",
+              description: "تم الدخول بصلاحيات المستخدم المحدد",
             });
+            
+            // Refresh to ensure proper session loading
+            setTimeout(() => window.location.reload(), 500);
           }
         } catch (error) {
-          console.error('Magic link authentication error:', error);
+          console.error('Session setting error:', error);
         }
       }
     };
 
-    handleMagicLink();
+    handleAuthentication();
   }, []);
 
   useEffect(() => {
