@@ -14,15 +14,9 @@ import {
   Puzzle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useRealGameStats } from '@/hooks/useRealGameStats';
-import { useRealLeaderboard } from '@/hooks/useRealLeaderboard';
-import { useRealAchievements } from '@/hooks/useRealAchievements';
 
 export const StudentGameSection: React.FC = () => {
   const navigate = useNavigate();
-  const { stats, loading: statsLoading } = useRealGameStats();
-  const { leaderboard, loading: leaderboardLoading } = useRealLeaderboard();
-  const { earnedAchievements, loading: achievementsLoading } = useRealAchievements();
 
   const games = [
     {
@@ -51,22 +45,19 @@ export const StudentGameSection: React.FC = () => {
     }
   ];
 
-  // Real achievements data
-  const displayedAchievements = earnedAchievements.slice(0, 3).map(achievement => ({
-    name: achievement.title,
-    description: achievement.description,
-    icon: achievement.icon,
-    earned: achievement.earned
-  }));
+  const achievements = [
+    { name: 'نجم الألعاب', description: 'أكمل 10 ألعاب', icon: Star, earned: true },
+    { name: 'بطل المطابقة', description: 'احصل على نقاط كاملة في المطابقة', icon: Trophy, earned: true },
+    { name: 'مستكشف المعرفة', description: 'أكمل مغامرة المعرفة', icon: Crown, earned: false }
+  ];
 
-  // Real leaderboard data (top 5 players)
-  const displayedLeaderboard = leaderboard.players.slice(0, 5).map((player, index) => ({
-    rank: player.rank,
-    name: player.isCurrentUser ? 'أنت' : player.name,
-    points: player.points,
-    avatar: player.isCurrentUser ? '⭐' : ['👑', '🥈', '🥉', '🎯', '🌟'][index] || '👤',
-    isCurrentUser: player.isCurrentUser
-  }));
+  const leaderboard = [
+    { rank: 1, name: 'أحمد محمد', points: 1250, avatar: '👑' },
+    { rank: 2, name: 'فاطمة علي', points: 1180, avatar: '🥈' },
+    { rank: 3, name: 'يوسف أحمد', points: 1050, avatar: '🥉' },
+    { rank: 4, name: 'أنت', points: 890, avatar: '⭐', isCurrentUser: true },
+    { rank: 5, name: 'نور الدين', points: 820, avatar: '🎯' }
+  ];
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -97,21 +88,15 @@ export const StudentGameSection: React.FC = () => {
             <p className="text-xl opacity-90">تعلم واستمتع واجمع النقاط!</p>
             <div className="flex justify-center gap-4 mt-6">
               <div className="text-center">
-                <div className="text-2xl font-bold">
-                  {statsLoading ? '...' : stats.totalPoints.toLocaleString()}
-                </div>
+                <div className="text-2xl font-bold">890</div>
                 <div className="text-sm opacity-80">نقاطك</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold">
-                  {statsLoading ? '...' : (stats.completedVideos + stats.completedLessons + stats.completedProjects)}
-                </div>
-                <div className="text-sm opacity-80">أنشطة مكتملة</div>
+                <div className="text-2xl font-bold">24</div>
+                <div className="text-sm opacity-80">ألعاب مكتملة</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold">
-                  {leaderboardLoading ? '...' : (stats.currentRank || '-')}
-                </div>
+                <div className="text-2xl font-bold">4</div>
                 <div className="text-sm opacity-80">ترتيبك</div>
               </div>
             </div>
@@ -184,12 +169,7 @@ export const StudentGameSection: React.FC = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {achievementsLoading ? (
-              <div className="text-center text-muted-foreground">جاري تحميل الإنجازات...</div>
-            ) : displayedAchievements.length === 0 ? (
-              <div className="text-center text-muted-foreground">لا توجد إنجازات بعد</div>
-            ) : (
-              displayedAchievements.map((achievement, index) => {
+            {achievements.map((achievement, index) => {
               const IconComponent = achievement.icon;
               
               return (
@@ -221,7 +201,7 @@ export const StudentGameSection: React.FC = () => {
                   )}
                 </div>
               );
-            }))}
+            })}
           </CardContent>
         </Card>
 
@@ -234,12 +214,7 @@ export const StudentGameSection: React.FC = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {leaderboardLoading ? (
-              <div className="text-center text-muted-foreground">جاري تحميل لوحة المتصدرين...</div>
-            ) : displayedLeaderboard.length === 0 ? (
-              <div className="text-center text-muted-foreground">لا يوجد متصدرون بعد</div>
-            ) : (
-              displayedLeaderboard.map((player) => (
+            {leaderboard.map((player) => (
               <div 
                 key={player.rank}
                 className={`flex items-center gap-3 p-3 rounded-lg border transition-all duration-200 ${
@@ -268,7 +243,7 @@ export const StudentGameSection: React.FC = () => {
                   </div>
                 </div>
               </div>
-            )))}
+            ))}
           </CardContent>
         </Card>
       </div>

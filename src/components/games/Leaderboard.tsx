@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PlayerAvatar from './PlayerAvatar';
-import { useRealLeaderboard } from '@/hooks/useRealLeaderboard';
 
 interface LeaderboardProps {
   currentPlayer: any;
@@ -96,73 +95,37 @@ const getRankBadge = (rank: number) => {
 };
 
 const Leaderboard: React.FC<LeaderboardProps> = ({ currentPlayer }) => {
-  const { leaderboard, getPlayersByStreak, getPlayersByActivities, loading, error } = useRealLeaderboard();
+  const [selectedPeriod, setSelectedPeriod] = useState<'weekly' | 'monthly' | 'alltime'>('weekly');
 
-  // Convert real data to match expected format
-  const allPlayers = leaderboard.players.map(player => ({
-    id: player.id,
-    name: player.name,
-    level: Math.floor(player.points / 100) + 1, // Simple level calculation
-    totalXP: player.points,
-    coins: Math.floor(player.points / 10), // Simple coins calculation
-    streakDays: player.streakDays,
-    completedQuests: player.completedActivities,
-    avatarId: player.avatar || 'student1',
-    achievements: Array(player.achievementsCount).fill('achievement')
-  }));
+  // Add current player to the list and sort
+  const allPlayers = [...MOCK_PLAYERS];
+  if (currentPlayer.name && !allPlayers.find(p => p.id === currentPlayer.id)) {
+    allPlayers.push(currentPlayer);
+  }
 
-  const sortedByXP = allPlayers;
-  const sortedByStreak = getPlayersByStreak().map(player => ({
-    id: player.id,
-    name: player.name,
-    level: Math.floor(player.points / 100) + 1,
-    totalXP: player.points,
-    coins: Math.floor(player.points / 10),
-    streakDays: player.streakDays,
-    completedQuests: player.completedActivities,
-    avatarId: player.avatar || 'student1',
-    achievements: Array(player.achievementsCount).fill('achievement')
-  }));
-  const sortedByQuests = getPlayersByActivities().map(player => ({
-    id: player.id,
-    name: player.name,
-    level: Math.floor(player.points / 100) + 1,
-    totalXP: player.points,
-    coins: Math.floor(player.points / 10),
-    streakDays: player.streakDays,
-    completedQuests: player.completedActivities,
-    avatarId: player.avatar || 'student1',
-    achievements: Array(player.achievementsCount).fill('achievement')
-  }));
+  const sortedByXP = [...allPlayers].sort((a, b) => b.totalXP - a.totalXP);
+  const sortedByStreak = [...allPlayers].sort((a, b) => b.streakDays - a.streakDays);
+  const sortedByQuests = [...allPlayers].sort((a, b) => b.completedQuests - a.completedQuests);
 
   const renderLeaderboard = (players: any[], metric: 'xp' | 'streak' | 'quests') => {
-    const currentPlayerData = players.find(p => leaderboard.players.find(rp => rp.id === p.id)?.isCurrentUser);
-    const currentPlayerRank = currentPlayerData ? players.findIndex(p => p.id === currentPlayerData.id) + 1 : 0;
-
-    if (loading) {
-      return <div className="text-center text-muted-foreground">جاري تحميل البيانات...</div>;
-    }
-
-    if (error) {
-      return <div className="text-center text-red-500">خطأ في تحميل البيانات: {error}</div>;
-    }
+    const currentPlayerRank = players.findIndex(p => p.id === currentPlayer.id) + 1;
 
     return (
       <div className="space-y-4">
         {/* Current Player Stats */}
-        {currentPlayerData && (
+        {currentPlayer.name && (
           <Card className="border-primary bg-primary/5">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="text-2xl font-bold text-primary">#{currentPlayerRank}</div>
-                  <PlayerAvatar avatarId={currentPlayerData.avatarId} size="sm" />
+                  <PlayerAvatar avatarId={currentPlayer.avatarId} size="sm" />
                   <div>
-                    <div className="font-medium">{currentPlayerData.name} (أنت)</div>
+                    <div className="font-medium">{currentPlayer.name} (أنت)</div>
                     <div className="text-sm text-muted-foreground">
-                      {metric === 'xp' && `${currentPlayerData.totalXP} نقطة خبرة`}
-                      {metric === 'streak' && `${currentPlayerData.streakDays} يوم متتالي`}
-                      {metric === 'quests' && `${currentPlayerData.completedQuests} مهمة مكتملة`}
+                      {metric === 'xp' && `${currentPlayer.totalXP} نقطة خبرة`}
+                      {metric === 'streak' && `${currentPlayer.streakDays} يوم متتالي`}
+                      {metric === 'quests' && `${currentPlayer.completedQuests} مهمة مكتملة`}
                     </div>
                   </div>
                 </div>
@@ -176,7 +139,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ currentPlayer }) => {
         <div className="space-y-3">
           {players.slice(0, 10).map((player, index) => {
             const rank = index + 1;
-            const isCurrentPlayer = leaderboard.players.find(rp => rp.id === player.id)?.isCurrentUser || false;
+            const isCurrentPlayer = player.id === currentPlayer.id;
             
             return (
               <Card 
@@ -315,27 +278,27 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ currentPlayer }) => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
             <div>
               <div className="text-2xl font-bold text-blue-500">
-                {leaderboard.totalPoints.toLocaleString()}
+                {allPlayers.reduce((sum, p) => sum + p.totalXP, 0).toLocaleString()}
               </div>
-              <div className="text-sm text-muted-foreground">إجمالي النقاط</div>
+              <div className="text-sm text-muted-foreground">إجمالي الخبرة</div>
             </div>
             <div>
               <div className="text-2xl font-bold text-green-500">
-                {leaderboard.players.reduce((sum, p) => sum + p.completedActivities, 0)}
+                {allPlayers.reduce((sum, p) => sum + p.completedQuests, 0)}
               </div>
-              <div className="text-sm text-muted-foreground">الأنشطة المكتملة</div>
+              <div className="text-sm text-muted-foreground">المهام المكتملة</div>
             </div>
             <div>
               <div className="text-2xl font-bold text-yellow-500">
-                {Math.max(...leaderboard.players.map(p => p.streakDays), 0)}
+                {Math.max(...allPlayers.map(p => p.streakDays))}
               </div>
               <div className="text-sm text-muted-foreground">أطول سلسلة</div>
             </div>
             <div>
               <div className="text-2xl font-bold text-purple-500">
-                {leaderboard.totalPlayers}
+                {allPlayers.length}
               </div>
-              <div className="text-sm text-muted-foreground">الطلاب النشطين</div>
+              <div className="text-sm text-muted-foreground">اللاعبين النشطين</div>
             </div>
           </div>
         </CardContent>

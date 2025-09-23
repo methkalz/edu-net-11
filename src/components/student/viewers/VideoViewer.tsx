@@ -29,33 +29,23 @@ export const VideoViewer: React.FC<VideoViewerProps> = ({
   const [hasStarted, setHasStarted] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
 
-  // النظام المبسط: 5 ثوان = مكتمل + نقاط
   useEffect(() => {
     if (isOpen && !hasStarted) {
       setHasStarted(true);
-      toast("بدء مشاهدة الفيديو", {
-        description: "سيتم احتساب الفيديو كمكتمل خلال 5 ثوانٍ",
-        duration: 2000,
+      toast.info('بدأت مشاهدة الفيديو', {
+        description: 'ستحصل على النقاط عند تشغيل الفيديو'
       });
-      
-      // 5 ثوانٍ = فيديو مكتمل + نقاط
-      const completionTimer = setTimeout(() => {
-        if (!isCompleted) {
-          setIsCompleted(true);
-          onComplete();
-          toast("تم إكمال الفيديو!", {
-            description: "أحسنت! لقد أكملت مشاهدة الفيديو بنجاح",
-            duration: 3000,
-          });
-        }
-      }, 5000); // 5 ثوانٍ فقط
-
-      return () => clearTimeout(completionTimer);
     }
-  }, [isOpen, hasStarted, isCompleted, onComplete]);
+  }, [isOpen, hasStarted]);
 
   const handleVideoPlay = () => {
-    // لا حاجة للمنطق المعقد - النظام أصبح مبسط (5 ثوان تلقائياً)
+    if (!isCompleted) {
+      setIsCompleted(true);
+      onComplete();
+      toast.success('تم إكمال الفيديو بنجاح!', {
+        description: 'تم إضافة النقاط إلى رصيدك'
+      });
+    }
   };
 
   const extractYouTubeId = (url: string): string | null => {

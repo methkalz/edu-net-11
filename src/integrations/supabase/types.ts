@@ -4360,42 +4360,6 @@ export type Database = {
         }
         Relationships: []
       }
-      student_unified_points: {
-        Row: {
-          content_type: string | null
-          created_at: string
-          description: string | null
-          id: string
-          points_value: number
-          source_id: string
-          source_type: string
-          student_id: string
-          updated_at: string
-        }
-        Insert: {
-          content_type?: string | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          points_value?: number
-          source_id: string
-          source_type: string
-          student_id: string
-          updated_at?: string
-        }
-        Update: {
-          content_type?: string | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          points_value?: number
-          source_id?: string
-          source_type?: string
-          student_id?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       students: {
         Row: {
           created_at_utc: string
