@@ -396,12 +396,14 @@ export const StudentGrade11Content: React.FC = () => {
                     <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">
                       <PlayCircle className="w-16 h-16 text-white opacity-80 group-hover:opacity-100 transition-opacity" />
                     </div>
-                    <div className="absolute top-2 left-2">
-                      <Badge variant="secondary" className="bg-black/60 text-white">
-                        <Clock className="w-3 h-3 ml-1" />
-                        {video.duration || 'غير محدد'}
-                      </Badge>
-                    </div>
+                    {video.duration && (
+                      <div className="absolute top-2 left-2">
+                        <Badge variant="secondary" className="bg-black/60 text-white">
+                          <Clock className="w-3 h-3 ml-1" />
+                          {video.duration}
+                        </Badge>
+                      </div>
+                    )}
                   </div>
                   <CardContent className="p-4">
                     <h3 className="font-semibold mb-2 line-clamp-2">{video.title}</h3>
