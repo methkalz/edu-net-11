@@ -542,7 +542,7 @@ const Dashboard = () => {
         {/* Quick Actions */}
         <section className="animate-fade-in-up" style={{animationDelay: '200ms'}}>
           <div className="flex items-center mb-6">
-            <h2 className="text-2xl font-bold font-cairo text-foreground">⚡ الإجراءات السريعة</h2>
+            <h2 className="text-2xl font-bold font-cairo text-foreground">الإجراءات السريعة</h2>
             <div className="accent-dot mr-3"></div>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
