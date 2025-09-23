@@ -1,6 +1,7 @@
 import React from 'react';
 import { useStudentProgress } from '@/hooks/useStudentProgress';
 import { useStudentContent } from '@/hooks/useStudentContent';
+import { useStudentAssignedGrade } from '@/hooks/useStudentAssignedGrade';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +25,7 @@ import {
 export const StudentStats: React.FC = () => {
   const { stats, achievements, loading } = useStudentProgress();
   const { getProgressPercentage, getTotalContentCount, getCompletedContentCount } = useStudentContent();
+  const { assignedGrade } = useStudentAssignedGrade();
 
   if (loading) {
     return (
@@ -72,15 +74,16 @@ export const StudentStats: React.FC = () => {
       description: 'فيديو تعليمي',
       animation: 'animate-float'
     },
-    {
-      title: 'المشاريع المنجزة',
+    // إخفاء المشاريع للصف الحادي عشر لأنه لا يحتوي على مشاريع
+    ...(assignedGrade !== '11' ? [{
+      title: assignedGrade === '10' ? 'المشاريع المصغرة' : 'المشاريع النهائية',
       value: stats.completed_projects.toString(),
       icon: Trophy,
       gradient: 'from-purple-400 to-pink-400',
       bgGradient: 'from-purple-50 to-pink-50',
-      description: 'مشروع مكتمل',
+      description: assignedGrade === '10' ? 'مشروع مصغر مكتمل' : 'مشروع نهائي مكتمل',
       animation: 'animate-glow'
-    },
+    }] : []),
     {
       title: 'الإنجازات',
       value: stats.achievements_count.toString(),
