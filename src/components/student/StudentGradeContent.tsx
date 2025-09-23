@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStudentContent } from '@/hooks/useStudentContent';
 import { useStudentProgress } from '@/hooks/useStudentProgress';
@@ -87,6 +87,16 @@ export const StudentGradeContent: React.FC = () => {
   const [activeContentTab, setActiveContentTab] = useState('videos');
   
   // Viewer states
+  // Debug logging for Grade 10 video categories
+  useEffect(() => {
+    if (assignedGrade === '10' && gradeContent?.videos?.length > 0) {
+      console.log('[DEBUG] Grade 10 Videos loaded:', gradeContent.videos.length);
+      console.log('[DEBUG] Videos data:', gradeContent.videos);
+      console.log('[DEBUG] Educational videos:', gradeContent.videos.filter(v => v.video_category === 'educational_explanations'));
+      console.log('[DEBUG] Windows videos:', gradeContent.videos.filter(v => v.video_category === 'windows_basics'));
+    }
+  }, [assignedGrade, gradeContent]);
+
   const [selectedContent, setSelectedContent] = useState<any>(null);
   const [viewerType, setViewerType] = useState<'video' | 'document' | 'lesson' | 'project' | null>(null);
   

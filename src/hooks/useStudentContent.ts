@@ -85,8 +85,12 @@ const fetchContentForGrade = async (grade: string, userId?: string): Promise<Gra
     
     const { data: videoData, error: videoError } = await videoQuery;
     
+    console.log(`[DEBUG] Grade ${grade} videos from DB:`, videoData);
+    console.log(`[DEBUG] Videos error:`, videoError);
+    
     if (!videoError && videoData) {
       videos = videoData.map((item: any) => mapToContentItem(item, 'video', grade));
+      console.log(`[DEBUG] Mapped videos:`, videos);
     }
     
     if (videoError) {

@@ -65,8 +65,11 @@ export const useGrade10Files = () => {
     try {
       const { data, error } = await supabase
         .from('grade10_videos')
-        .select('*')
+        .select('id, title, description, video_url, thumbnail_url, duration, source_type, category, video_category, grade_level, owner_user_id, school_id, is_visible, allowed_roles, order_index, created_at, updated_at')
         .order('created_at', { ascending: false });
+
+      console.log('[DEBUG] Grade10Files - Fetched videos:', data);
+      console.log('[DEBUG] Grade10Files - Videos error:', error);
 
       if (error) throw error;
       setVideos((data || []) as Grade10Video[]);
