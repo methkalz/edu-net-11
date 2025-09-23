@@ -43,6 +43,7 @@ import { LottieLoader } from '@/components/ui/LottieLoader';
 import { logger } from '@/lib/logger';
 import { TeacherContentSettingsForm } from '@/components/admin/TeacherContentSettingsForm';
 import { AutoAvatarAssignment } from '@/components/admin/AutoAvatarAssignment';
+import { AvatarDatabaseSeeder } from '@/components/admin/AvatarDatabaseSeeder';
 
 interface HeaderSettings {
   id?: string;
@@ -1587,6 +1588,7 @@ const SystemSettings = () => {
 
           {/* تبويب إدارة الأفاتار */}
           <TabsContent value="avatars" className="space-y-6 animate-fade-in" dir="rtl">
+            <AvatarDatabaseSeeder />
             <AutoAvatarAssignment />
           </TabsContent>
         </Tabs>
