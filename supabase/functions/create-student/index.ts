@@ -142,12 +142,12 @@ Deno.serve(async (req) => {
     // Helper function to get random avatar for students
     const getRandomStudentAvatar = () => {
       const studentAvatars = [
-        '/avatars/student-boy-1.png',
-        '/avatars/student-boy-2.png', 
-        '/avatars/student-creative.png',
-        '/avatars/student-girl-1.png',
-        '/avatars/student-girl-2.png',
-        '/avatars/universal-default.png'
+        'avatars/student-boy-1.png',
+        'avatars/student-boy-2.png', 
+        'avatars/student-creative.png',
+        'avatars/student-girl-1.png',
+        'avatars/student-girl-2.png',
+        'avatars/universal-default.png'
       ];
       return studentAvatars[Math.floor(Math.random() * studentAvatars.length)];
     };

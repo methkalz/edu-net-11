@@ -123,11 +123,11 @@ serve(async (req) => {
     // Helper function to get random avatar for teachers
     const getRandomTeacherAvatar = () => {
       const teacherAvatars = [
-        '/avatars/teacher-female-1.png',
-        '/avatars/teacher-female-2.png',
-        '/avatars/teacher-male-1.png', 
-        '/avatars/teacher-male-2.png',
-        '/avatars/universal-default.png'
+        'avatars/teacher-female-1.png',
+        'avatars/teacher-female-2.png',
+        'avatars/teacher-male-1.png', 
+        'avatars/teacher-male-2.png',
+        'avatars/universal-default.png'
       ];
       return teacherAvatars[Math.floor(Math.random() * teacherAvatars.length)];
     };

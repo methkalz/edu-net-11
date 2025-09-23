@@ -30,54 +30,54 @@ serve(async (req) => {
       switch (role) {
         case 'student':
           const studentAvatars = [
-            '/avatars/student-boy-1.png',
-            '/avatars/student-boy-2.png', 
-            '/avatars/student-creative.png',
-            '/avatars/student-girl-1.png',
-            '/avatars/student-girl-2.png',
-            '/avatars/universal-default.png'
+            'avatars/student-boy-1.png',
+            'avatars/student-boy-2.png', 
+            'avatars/student-creative.png',
+            'avatars/student-girl-1.png',
+            'avatars/student-girl-2.png',
+            'avatars/universal-default.png'
           ];
           return studentAvatars[Math.floor(Math.random() * studentAvatars.length)];
         
         case 'teacher':
           const teacherAvatars = [
-            '/avatars/teacher-female-1.png',
-            '/avatars/teacher-female-2.png',
-            '/avatars/teacher-male-1.png', 
-            '/avatars/teacher-male-2.png',
-            '/avatars/universal-default.png'
+            'avatars/teacher-female-1.png',
+            'avatars/teacher-female-2.png',
+            'avatars/teacher-male-1.png', 
+            'avatars/teacher-male-2.png',
+            'avatars/universal-default.png'
           ];
           return teacherAvatars[Math.floor(Math.random() * teacherAvatars.length)];
         
         case 'school_admin':
           const adminAvatars = [
-            '/avatars/admin-school-female.png',
-            '/avatars/admin-school-male.png',
-            '/avatars/admin-school-formal.png',
-            '/avatars/universal-default.png'
+            'avatars/admin-school-female.png',
+            'avatars/admin-school-male.png',
+            'avatars/admin-school-formal.png',
+            'avatars/universal-default.png'
           ];
           return adminAvatars[Math.floor(Math.random() * adminAvatars.length)];
         
         case 'superadmin':
           const superAdminAvatars = [
-            '/avatars/superadmin-1.png',
-            '/avatars/superadmin-2.png',
-            '/avatars/universal-default.png'
+            'avatars/superadmin-1.png',
+            'avatars/superadmin-2.png',
+            'avatars/universal-default.png'
           ];
           return superAdminAvatars[Math.floor(Math.random() * superAdminAvatars.length)];
         
         default:
-          return '/avatars/universal-default.png';
+          return 'avatars/universal-default.png';
       }
     };
 
     console.log('Starting avatar assignment process...');
 
-    // Get all profiles that need avatar assignment
+    // Get all profiles that need avatar assignment (null, empty, or wrong paths)
     const { data: profiles, error: fetchError } = await supabaseAdmin
       .from('profiles')
       .select('user_id, role, avatar_url, full_name')
-      .or('avatar_url.is.null,avatar_url.eq.');
+      .or('avatar_url.is.null,avatar_url.eq.,avatar_url.like./avatars/%');
 
     if (fetchError) {
       console.error('Error fetching profiles:', fetchError);
