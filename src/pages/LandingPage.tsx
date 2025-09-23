@@ -289,7 +289,7 @@ const LandingPage: React.FC = () => {
         <section className="py-16 md:py-24 bg-gradient-to-br from-blue-50 via-purple-50 to-blue-50">
           <div className="container mx-auto px-4 text-center">
             <div className="max-w-5xl mx-auto">
-              <h2 className="text-2xl md:text-3xl lg:text-4xl font-light text-gray-900 mb-8 md:mb-12">
+              <h2 className="text-2xl md:text-3xl lg:text-4xl font-light text-gray-900 mb-8 md:mb-12 text-center">
                 عرض خاص للمدارس
               </h2>
               
