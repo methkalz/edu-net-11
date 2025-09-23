@@ -136,7 +136,30 @@ Deno.serve(async (req) => {
       }
 
       user_id = newUser.user.id;
-      console.log('Created new user account:', user_id);
+
+      // Get random avatar for student
+      const { data: avatars } = await supabaseAdmin
+        .from('avatar_images')
+        .select('image_path')
+        .eq('is_active', true)
+        .or('category.eq.student,category.eq.universal');
+
+      const randomAvatar = avatars && avatars.length > 0 
+        ? avatars[Math.floor(Math.random() * avatars.length)].image_path 
+        : '/avatars/universal-default.png';
+
+      // Wait a moment for the user profile to be created by trigger
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Update user profile with avatar
+      await supabaseAdmin
+        .from('profiles')
+        .update({
+          avatar_url: randomAvatar
+        })
+        .eq('user_id', newUser.user.id);
+
+      console.log('Created new user account with avatar:', user_id);
     }
 
     // Only create new student if we don't already have one
