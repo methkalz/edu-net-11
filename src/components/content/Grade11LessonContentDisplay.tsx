@@ -285,21 +285,16 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
   const renderCompactMedia = (media: any) => {
     return (
       <div 
-        className="flex items-center gap-4 p-4 bg-card rounded-xl border-2 cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition-all"
+        className="flex items-center gap-2 p-2 bg-muted/50 rounded border cursor-pointer hover:bg-muted transition-colors"
         onClick={() => setPreviewMedia(media)}
       >
-        <div className="p-2 bg-primary/10 rounded-lg">
-          {getMediaIcon(media.media_type)}
-        </div>
-        <div className="flex-1">
-          <span className="text-base font-medium truncate block">{media.file_name}</span>
-          <span className="text-sm text-muted-foreground">{getMediaTypeLabel(media.media_type)}</span>
-        </div>
-        <Badge variant="outline" className={`text-sm px-3 py-1 ${getMediaTypeBadge(media.media_type)}`}>
-          {getMediaTypeLabel(media.media_type)}
+        {getMediaIcon(media.media_type)}
+        <span className="text-xs font-medium truncate flex-1">{media.file_name}</span>
+        <Badge variant="outline" className={`text-xs ${getMediaTypeBadge(media.media_type)}`}>
+          {media.media_type}
         </Badge>
-        <Button variant="ghost" size="sm" className="h-10 w-10 p-0 hover:bg-primary/10">
-          <ExternalLink className="h-5 w-5" />
+        <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+          <ExternalLink className="h-3 w-3" />
         </Button>
       </div>
     );
@@ -350,83 +345,49 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
       {/* Lesson Content */}
       {!hideHeader && (
         <div className="prose prose-lg max-w-none w-full">
-          <h3 className="text-2xl font-bold text-foreground mb-4">{lesson.title}</h3>
+          <h2 className="text-2xl font-bold mb-4 text-foreground">{lesson.title}</h2>
           {lesson.content && (
-            <div className="text-lg text-foreground/90 leading-relaxed whitespace-pre-wrap break-words max-w-full">
+            <div className="text-lg text-foreground leading-8 whitespace-pre-wrap break-words max-w-full">
               {lesson.content}
             </div>
           )}
         </div>
       )}
 
-      {/* Media Controls */}
-      {showControls && sortedMedia.length > 0 && (
-        <div className="flex items-center gap-4 p-4 bg-muted/30 rounded-xl border">
-          <div className="flex items-center gap-3">
-            <Switch
-              id={`expand-${lesson.id}`}
-              checked={isExpanded}
-              onCheckedChange={setIsExpanded}
-            />
-            <Label htmlFor={`expand-${lesson.id}`} className="text-base cursor-pointer font-medium">
-              عرض الوسائط مدمجة
-            </Label>
-          </div>
-          <Badge variant="secondary" className="text-sm px-3 py-1">
-            {sortedMedia.length} ملف وسائط
-          </Badge>
-        </div>
-      )}
-
-      {/* Media Display */}
+      {/* Media Display - Always Expanded for Students */}
       {sortedMedia.length > 0 && (
-        <div className="space-y-4">
-          {isExpanded ? (
-            // Expanded view - embedded media with larger, cleaner design
-            <div className="space-y-6">
-              {sortedMedia.map((media) => (
-                <Card key={media.id} className="overflow-hidden border-2 rounded-xl">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-start gap-4 mb-4">
-                      <div className="p-2 bg-primary/10 rounded-lg">
-                        {getMediaIcon(media.media_type)}
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="text-lg font-semibold text-foreground">{media.file_name}</h4>
-                        <p className="text-base text-muted-foreground">{getMediaTypeLabel(media.media_type)}</p>
-                      </div>
-                      <Badge variant="outline" className={`text-sm px-3 py-1 ${getMediaTypeBadge(media.media_type)}`}>
-                        {getMediaTypeLabel(media.media_type)}
-                      </Badge>
-                      <Button
-                        variant="ghost"
-                        size="lg"
-                        onClick={() => setPreviewMedia(media)}
-                        className="h-12 w-12 rounded-full hover:bg-primary/10"
-                      >
-                        <Maximize2 className="h-5 w-5" />
-                      </Button>
-                    </div>
-                    <div className="rounded-xl overflow-hidden border">
-                      {renderEmbeddedMedia(media)}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            // Compact view - larger, minimalist media list
-            <div className="space-y-4">
-              <h4 className="text-xl font-bold text-foreground mb-4">الوسائط المرفقة</h4>
-              <div className="space-y-3">
-                {sortedMedia.map((media) => (
-                  <div key={media.id}>
-                    {renderCompactMedia(media)}
+        <div className="space-y-8">
+          {sortedMedia.map((media) => (
+            <div key={media.id} className="bg-background rounded-2xl border border-border/50 overflow-hidden">
+              {/* Media Header */}
+              <div className="px-6 py-4 bg-muted/30 border-b border-border/50">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-background rounded-lg">
+                    {getMediaIcon(media.media_type)}
                   </div>
-                ))}
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-foreground">{media.file_name}</h3>
+                    <Badge variant="outline" className={`text-sm mt-1 ${getMediaTypeBadge(media.media_type)}`}>
+                      {getMediaTypeLabel(media.media_type)}
+                    </Badge>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setPreviewMedia(media)}
+                    className="h-10 w-10 p-0 rounded-full"
+                  >
+                    <Maximize2 className="h-5 w-5" />
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Media Content */}
+              <div className="p-6">
+                {renderEmbeddedMedia(media)}
               </div>
             </div>
-          )}
+          ))}
         </div>
       )}
 
