@@ -27,7 +27,7 @@ const StudentFeaturesSlider: React.FC = () => {
       features: ['دعم المشاريع', 'شروحات عملية', 'تطبيق الشبكات']
     },
     {
-      title: 'حفظ المشروع الآمن',
+      title: 'حفظ المشروع بأمان',
       description: 'حفظ المشروع داخل المنظومة لمنع ضياعه.',
       image: '/student-features/networking-labs.png',
       features: ['حفظ آمن', 'نسخ احتياطية', 'عدم ضياع البيانات']
