@@ -50,183 +50,85 @@ const Grade11LessonDetailsModal: React.FC<Grade11LessonDetailsModalProps> = ({ l
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl h-[85vh] p-0 gap-0 flex flex-col">
-        {/* Header */}
-        <DialogHeader className="p-6 pb-4 bg-muted/30 border-b">
-          <div className="flex items-start justify-between">
-            <div className="flex-1 pr-8">
-              <DialogTitle className="text-2xl font-bold text-foreground mb-3">
-                {lesson.title}
-              </DialogTitle>
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <Clock className="h-4 w-4" />
-                  <span>15 دقيقة</span>
+      <DialogContent className="max-w-5xl h-[90vh] p-0 gap-0 flex flex-col bg-background">
+        {/* Header - Minimalist */}
+        <div className="flex items-center justify-between p-8 pb-6 border-b border-border/50">
+          <div className="flex-1">
+            <h1 className="text-3xl font-bold text-foreground mb-3 leading-tight">
+              {lesson.title}
+            </h1>
+            <div className="flex items-center gap-6 text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                <span className="text-base">15 دقيقة تقريباً</span>
+              </div>
+              {lesson.media && lesson.media.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  <span className="text-base">{lesson.media.length} وسيطة مرفقة</span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <Calendar className="h-4 w-4" />
-                  <span>{format(new Date(lesson.created_at), 'dd/MM/yyyy')}</span>
+              )}
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="lg"
+            onClick={onClose}
+            className="h-12 w-12 rounded-full hover:bg-muted"
+          >
+            <X className="h-6 w-6" />
+          </Button>
+        </div>
+
+        {/* Content - Clean and Spacious */}
+        <ScrollArea className="flex-1 px-8 py-6">
+          <div className="max-w-4xl mx-auto space-y-8">
+            {/* Lesson Text Content */}
+            {lesson.content && (
+              <div className="bg-background rounded-2xl border border-border/50 p-8">
+                <div className="prose prose-lg max-w-none text-foreground leading-8">
+                  <div className="text-lg text-foreground leading-8 whitespace-pre-wrap break-words">
+                    {lesson.content}
+                  </div>
                 </div>
-                {lesson.media && lesson.media.length > 0 && (
-                  <Badge variant="secondary" className="bg-muted text-muted-foreground">
-                    {lesson.media.length} ملف مرفق
-                  </Badge>
-                )}
+              </div>
+            )}
+
+            {/* Media Content */}
+            {lesson.media && lesson.media.length > 0 && (
+              <div className="space-y-6">
+                <h2 className="text-2xl font-semibold text-foreground">الوسائط التعليمية</h2>
+                <div className="space-y-6">
+                  <Grade11LessonContentDisplay 
+                    lesson={lesson}
+                    defaultExpanded={true}
+                    showControls={false}
+                    hideHeader={true}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Empty State */}
+            {(!lesson.content || lesson.content.trim() === '') && (!lesson.media || lesson.media.length === 0) && (
+              <div className="text-center py-16">
+                <div className="bg-muted/50 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
+                  <FileText className="h-12 w-12 text-muted-foreground" />
+                </div>
+                <h3 className="text-xl font-semibold text-foreground mb-3">الدرس فارغ</h3>
+                <p className="text-lg text-muted-foreground">لم يتم إضافة محتوى لهذا الدرس بعد</p>
+              </div>
+            )}
+
+            {/* Minimal Footer Info */}
+            <div className="pt-8 border-t border-border/50">
+              <div className="flex items-center justify-between text-sm text-muted-foreground">
+                <span>تاريخ الإنشاء: {format(new Date(lesson.created_at), 'dd MMMM yyyy')}</span>
+                <span>الدرس رقم {lesson.order_index}</span>
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100"
-            >
-              <X className="h-4 w-4" />
-            </Button>
           </div>
-        </DialogHeader>
-
-        {/* Content */}
-        <div className="flex-1 min-h-0 overflow-hidden">
-          <Tabs defaultValue="content" className="h-full flex flex-col">
-            <div className="px-6 pt-4 pb-2 border-b bg-background">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="content">محتوى الدرس</TabsTrigger>
-                <TabsTrigger value="media">الوسائط المرفقة</TabsTrigger>
-              </TabsList>
-            </div>
-
-            <div className="flex-1 min-h-0 overflow-hidden">
-              <TabsContent value="content" className="h-full m-0 data-[state=active]:flex data-[state=active]:flex-col">
-                <ScrollArea className="flex-1 px-6 py-4">
-                  <div className="space-y-6 max-w-none">
-                    {/* Lesson Content */}
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-lg">محتوى الدرس</CardTitle>
-                      </CardHeader>
-                      <CardContent className="prose prose-sm max-w-none break-words">
-                        <div className="text-sm leading-relaxed break-words max-w-full overflow-wrap-anywhere">
-                          <Grade11LessonContentDisplay 
-                            lesson={lesson}
-                          defaultExpanded={true}
-                            showControls={false}
-                          />
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    {/* Additional Information */}
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-lg">معلومات إضافية</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <h4 className="font-medium mb-2">تاريخ الإنشاء</h4>
-                            <p className="text-sm text-muted-foreground">
-                              {format(new Date(lesson.created_at), 'dd MMMM yyyy')}
-                            </p>
-                          </div>
-                          <div>
-                            <h4 className="font-medium mb-2">آخر تحديث</h4>
-                            <p className="text-sm text-muted-foreground">
-                              {format(new Date(lesson.updated_at), 'dd MMMM yyyy')}
-                            </p>
-                          </div>
-                          <div>
-                            <h4 className="font-medium mb-2">ترتيب الدرس</h4>
-                            <p className="text-sm text-muted-foreground">
-                              الدرس رقم {lesson.order_index}
-                            </p>
-                          </div>
-                          <div>
-                            <h4 className="font-medium mb-2">الوسائط المرفقة</h4>
-                            <p className="text-sm text-muted-foreground">
-                              {lesson.media?.length || 0} ملف
-                            </p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </ScrollArea>
-              </TabsContent>
-
-              <TabsContent value="media" className="h-full m-0 data-[state=active]:flex data-[state=active]:flex-col">
-                <ScrollArea className="flex-1 px-6 py-4">
-                  <div className="space-y-4">
-                    {!lesson.media || lesson.media.length === 0 ? (
-                      <Card className="text-center p-12">
-                        <FileText className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                        <h3 className="text-lg font-semibold mb-2">لا توجد وسائط مرفقة</h3>
-                        <p className="text-muted-foreground">لم يتم إرفاق أي ملفات بهذا الدرس</p>
-                      </Card>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {lesson.media.map((media, index) => (
-                          <Card key={media.id} className="hover:shadow-md transition-shadow">
-                            <CardContent className="p-4">
-                              <div className="flex items-start gap-3">
-                                <div className="p-2 bg-muted rounded-lg">
-                                  {getMediaIcon(media.media_type)}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <h4 className="font-medium text-sm mb-1 truncate">
-                                    {media.file_name || `${getMediaTypeLabel(media.media_type)} ${index + 1}`}
-                                  </h4>
-                                  <p className="text-xs text-muted-foreground mb-2">
-                                    نوع الملف: {getMediaTypeLabel(media.media_type)}
-                                  </p>
-                                  <div className="flex items-center gap-2">
-                                    <Badge variant="outline">
-                                      {media.media_type}
-                                    </Badge>
-                                    <span className="text-xs text-muted-foreground">
-                                      {format(new Date(media.created_at), 'dd/MM/yyyy')}
-                                    </span>
-                                  </div>
-                                </div>
-                                <Button variant="ghost" size="sm">
-                                  <Download className="h-4 w-4" />
-                                </Button>
-                              </div>
-
-                              {/* Media Preview */}
-                              <div className="mt-3 p-3 bg-muted/30 rounded-lg">
-                                <p className="text-xs text-muted-foreground mb-2">معاينة:</p>
-                                {media.media_type === 'video' && (
-                                  <div className="aspect-video bg-black rounded flex items-center justify-center">
-                                    <PlayCircle className="h-12 w-12 text-white opacity-70" />
-                                  </div>
-                                )}
-                                {media.media_type === 'image' && (
-                                  <div className="aspect-video bg-gray-100 rounded flex items-center justify-center">
-                                    <Image className="h-8 w-8 text-gray-400" />
-                                  </div>
-                                )}
-                                {media.media_type === 'lottie' && (
-                                  <div className="aspect-video bg-gradient-to-br from-purple-100 to-pink-100 rounded flex items-center justify-center">
-                                    <PlayCircle className="h-8 w-8 text-purple-500" />
-                                  </div>
-                                )}
-                                {media.media_type === 'code' && (
-                                  <div className="bg-gray-900 text-green-400 p-3 rounded font-mono text-xs">
-                                    &lt;/&gt; ملف كود
-                                  </div>
-                                )}
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </ScrollArea>
-              </TabsContent>
-            </div>
-          </Tabs>
-        </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );
