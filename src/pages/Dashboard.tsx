@@ -508,8 +508,7 @@ const Dashboard = () => {
             
             {/* Software Update Notice */}
             <Alert className="animate-fade-in glass-card soft-shadow border-2 border-orange-300 bg-gradient-to-r from-orange-100 to-yellow-100 backdrop-blur-sm shadow-lg animate-pulse">
-              <Wrench className="h-5 w-5 text-orange-600 animate-spin" style={{animationDuration: '3s'}} />
-              <AlertDescription className="text-orange-900 font-bold text-lg leading-relaxed">
+              <AlertDescription className="text-orange-900 font-semibold text-base leading-relaxed">
                 🔧 يُجرى حاليًا تحديثات برمجية، وقد تطرأ بعض الأعطال الفنية مؤقتًا.. نشكرك على صبرك الجميل 😊
               </AlertDescription>
             </Alert>
