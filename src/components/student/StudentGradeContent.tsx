@@ -35,7 +35,8 @@ import {
   Target,
   Sparkles,
   Plus,
-  Edit3
+  Edit3,
+  Monitor
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { ProjectFormData } from '@/types/grade10-projects';
@@ -444,7 +445,7 @@ export const StudentGradeContent: React.FC = () => {
                       </Badge>
                     </TabsTrigger>
                     <TabsTrigger value="windows_basics" className="flex items-center gap-2">
-                      <Video className="w-4 h-4" />
+                      <Monitor className="w-4 h-4" />
                       أساسيات الويندوز
                       <Badge variant="secondary" className="text-xs bg-green-500/10 text-green-600">
                         {tab.items.filter((item: any) => item.video_category === 'windows_basics').length}
