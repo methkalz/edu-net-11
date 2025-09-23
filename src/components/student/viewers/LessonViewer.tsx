@@ -5,35 +5,14 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent } from '@/components/ui/card';
-import { BookOpen, X, CheckCircle, Play, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { BookOpen, X, CheckCircle, Clock, Play, FileText, Image } from 'lucide-react';
 import { toast } from 'sonner';
+import type { StudentContentItem } from '@/hooks/useStudentContent';
 
 interface LessonViewerProps {
   isOpen: boolean;
   onClose: () => void;
-  lesson: {
-    id: string;
-    title: string;
-    description?: string;
-    content?: string;
-    video_url?: string;
-    duration?: number;
-    topic?: {
-      id: string;
-      title: string;
-      section?: {
-        id: string;
-        title: string;
-      };
-    };
-    media?: Array<{
-      id: string;
-      media_type: string;
-      file_path: string;
-      file_name: string;
-      order_index: number;
-    }>;
-  };
+  lesson: StudentContentItem;
   onProgress: (progress: number, studyTime: number) => void;
   onComplete: () => void;
 }
@@ -49,13 +28,6 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
   const [progress, setProgress] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
-  const [currentSection, setCurrentSection] = useState(0);
-  const [scrollProgress, setScrollProgress] = useState(0);
-
-  // Split lesson content into sections if available
-  const sections = lesson.content 
-    ? lesson.content.split('\n\n').filter(section => section.trim())
-    : ['المحتوى غير متوفر'];
 
   useEffect(() => {
     if (isOpen && !hasStarted) {
@@ -73,16 +45,14 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
       setStudyTime(prev => {
         const newTime = prev + 1;
         
-        // Calculate progress based on study time, section progress, and scroll
-        const timeProgress = Math.min((newTime / 60) * 100, 100); // 1 minute minimum
-        const sectionProgress = ((currentSection + 1) / sections.length) * 100;
-        const combinedProgress = Math.max(timeProgress, sectionProgress, scrollProgress);
+        // Calculate progress based on study time (minimum 1 minute)
+        const timeProgress = Math.min((newTime / 60) * 100, 100);
         
-        setProgress(combinedProgress);
-        onProgress(combinedProgress, newTime);
+        setProgress(timeProgress);
+        onProgress(timeProgress, newTime);
 
-        // Mark as complete if studied for enough time and viewed all sections
-        if (combinedProgress >= 90 && !isCompleted) {
+        // Mark as complete if studied for enough time
+        if (timeProgress >= 90 && !isCompleted) {
           setIsCompleted(true);
           onComplete();
           toast.success('تم إكمال دراسة الدرس بنجاح!', {
@@ -95,15 +65,7 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isOpen, currentSection, sections.length, scrollProgress, onProgress, onComplete, isCompleted]);
-
-  const handleScroll = (scrollTop: number, scrollHeight: number, clientHeight: number) => {
-    const maxScroll = scrollHeight - clientHeight;
-    if (maxScroll > 0) {
-      const scrollPercent = (scrollTop / maxScroll) * 100;
-      setScrollProgress(Math.min(scrollPercent, 100));
-    }
-  };
+  }, [isOpen, onProgress, onComplete, isCompleted]);
 
   const handleClose = () => {
     // Save final progress before closing
@@ -113,22 +75,66 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
     onClose();
   };
 
-  const nextSection = () => {
-    if (currentSection < sections.length - 1) {
-      setCurrentSection(prev => prev + 1);
+  // Helper function to render media content
+  const renderMediaContent = () => {
+    if (!lesson.media || !Array.isArray(lesson.media) || lesson.media.length === 0) {
+      return null;
     }
-  };
 
-  const prevSection = () => {
-    if (currentSection > 0) {
-      setCurrentSection(prev => prev - 1);
-    }
+    return (
+      <Card className="mb-4">
+        <CardContent className="p-4">
+          <h3 className="font-semibold mb-3">الوسائط المرفقة</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {lesson.media.map((media: any, index: number) => (
+              <div key={media.id || index} className="border rounded-lg p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  {media.media_type === 'video' && <Play className="w-4 h-4 text-blue-500" />}
+                  {media.media_type === 'image' && <Image className="w-4 h-4 text-green-500" />}
+                  {media.media_type === 'document' && <FileText className="w-4 h-4 text-purple-500" />}
+                  <span className="font-medium text-sm">{media.file_name || `وسيطة ${index + 1}`}</span>
+                </div>
+                
+                {media.media_type === 'video' && media.file_path && (
+                  <div className="bg-black rounded overflow-hidden">
+                    <iframe
+                      src={media.file_path}
+                      className="w-full aspect-video"
+                      allowFullScreen
+                      title={media.file_name || `فيديو ${index + 1}`}
+                    />
+                  </div>
+                )}
+                
+                {media.media_type === 'image' && media.file_path && (
+                  <img
+                    src={media.file_path}
+                    alt={media.file_name || `صورة ${index + 1}`}
+                    className="w-full rounded border"
+                  />
+                )}
+                
+                {media.media_type === 'document' && media.file_path && (
+                  <div className="text-center p-4 bg-muted rounded">
+                    <Button variant="outline" size="sm" asChild>
+                      <a href={media.file_path} target="_blank" rel="noopener noreferrer">
+                        عرض المستند
+                      </a>
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-4xl w-full max-h-[90vh] p-0">
-        <DialogHeader className="p-6 pb-0">
+        <DialogHeader className="p-6 pb-4">
           <div className="flex items-center justify-between">
             <div className="space-y-1 flex-1">
               <DialogTitle className="text-xl font-bold flex items-center gap-2">
@@ -136,18 +142,7 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
                 {lesson.title}
               </DialogTitle>
               {lesson.description && (
-                <p className="text-sm text-muted-foreground">{lesson.description}</p>
-              )}
-              {lesson.topic && (
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  {lesson.topic.section && (
-                    <>
-                      <span>{lesson.topic.section.title}</span>
-                      <span>•</span>
-                    </>
-                  )}
-                  <span>{lesson.topic.title}</span>
-                </div>
+                <p className="text-sm text-muted-foreground line-clamp-2">{lesson.description}</p>
               )}
             </div>
             <div className="flex items-center gap-2">
@@ -162,117 +157,9 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
               </Button>
             </div>
           </div>
-        </DialogHeader>
-
-        <div className="px-6 pb-6 space-y-4">
-          {/* Video if available */}
-          {lesson.video_url && (
-            <div className="bg-black rounded-lg overflow-hidden">
-              <iframe
-                src={lesson.video_url}
-                className="w-full aspect-video"
-                allowFullScreen
-                title={lesson.title}
-              />
-            </div>
-          )}
-
-          {/* Media Gallery */}
-          {lesson.media && lesson.media.length > 0 && (
-            <Card>
-              <CardContent className="p-4">
-                <h3 className="font-semibold mb-3">الوسائط المرفقة</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {lesson.media
-                    .sort((a, b) => a.order_index - b.order_index)
-                    .map((media) => (
-                      <div key={media.id} className="border rounded-lg p-3">
-                        <div className="flex items-center gap-2 mb-2">
-                          {media.media_type === 'video' && <Play className="w-4 h-4 text-blue-500" />}
-                          {media.media_type === 'image' && <BookOpen className="w-4 h-4 text-green-500" />}
-                          <span className="font-medium text-sm">{media.file_name}</span>
-                        </div>
-                        {media.media_type === 'video' && (
-                          <div className="bg-black rounded overflow-hidden">
-                            <iframe
-                              src={media.file_path}
-                              className="w-full aspect-video"
-                              allowFullScreen
-                              title={media.file_name}
-                            />
-                          </div>
-                        )}
-                        {media.media_type === 'image' && (
-                          <img
-                            src={media.file_path}
-                            alt={media.file_name}
-                            className="w-full rounded border"
-                          />
-                        )}
-                        {media.media_type === 'document' && (
-                          <div className="text-center p-4 bg-muted rounded">
-                            <Button variant="outline" size="sm" asChild>
-                              <a href={media.file_path} target="_blank" rel="noopener noreferrer">
-                                عرض المستند
-                              </a>
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Lesson Content */}
-          <Card>
-            <CardContent className="p-0">
-              <div className="flex items-center justify-between p-4 border-b">
-                <h3 className="font-semibold">محتوى الدرس</h3>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">
-                    القسم {currentSection + 1} من {sections.length}
-                  </span>
-                  <div className="flex gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={prevSection}
-                      disabled={currentSection === 0}
-                    >
-                      <ChevronRight className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={nextSection}
-                      disabled={currentSection === sections.length - 1}
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-              
-              <ScrollArea 
-                className="h-[40vh] p-6"
-                onScrollCapture={(e) => {
-                  const target = e.target as HTMLElement;
-                  handleScroll(target.scrollTop, target.scrollHeight, target.clientHeight);
-                }}
-              >
-                <div className="prose prose-sm max-w-none dark:prose-invert">
-                  <div className="whitespace-pre-wrap">
-                    {sections[currentSection]}
-                  </div>
-                </div>
-              </ScrollArea>
-            </CardContent>
-          </Card>
 
           {/* Progress Indicators */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4 mt-4">
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">تقدم الدراسة</span>
@@ -283,55 +170,75 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
             
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">وقت الدراسة</span>
+                <span className="text-muted-foreground flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  وقت الدراسة
+                </span>
                 <span className="font-medium">
                   {Math.floor(studyTime / 60)}:{(studyTime % 60).toString().padStart(2, '0')}
                 </span>
               </div>
               <Progress value={Math.min((studyTime / 60) * 100, 100)} className="h-2" />
             </div>
-            
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">الأقسام</span>
-                <span className="font-medium">{currentSection + 1}/{sections.length}</span>
-              </div>
-              <Progress value={((currentSection + 1) / sections.length) * 100} className="h-2" />
-            </div>
           </div>
+        </DialogHeader>
+
+        <div className="px-6 pb-6">
+          <ScrollArea className="max-h-[60vh]">
+            {/* Video Content */}
+            {lesson.video_url && (
+              <div className="bg-black rounded-lg overflow-hidden mb-4">
+                <iframe
+                  src={lesson.video_url}
+                  className="w-full aspect-video"
+                  allowFullScreen
+                  title={lesson.title}
+                />
+              </div>
+            )}
+
+            {/* Media Content */}
+            {renderMediaContent()}
+
+            {/* Text Content */}
+            {lesson.content && (
+              <Card>
+                <CardContent className="p-6">
+                  <h3 className="font-semibold mb-4">محتوى الدرس</h3>
+                  <div className="prose prose-sm max-w-none dark:prose-invert">
+                    <div className="whitespace-pre-wrap text-foreground leading-relaxed">
+                      {lesson.content}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Fallback if no content */}
+            {!lesson.content && !lesson.video_url && (!lesson.media || lesson.media.length === 0) && (
+              <Card>
+                <CardContent className="p-6 text-center">
+                  <div className="space-y-2">
+                    <BookOpen className="w-12 h-12 mx-auto text-muted-foreground" />
+                    <h3 className="font-semibold">لا يوجد محتوى متاح</h3>
+                    <p className="text-sm text-muted-foreground">محتوى هذا الدرس غير متوفر حالياً</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </ScrollArea>
 
           {/* Action Buttons */}
-          <div className="flex justify-between pt-4">
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={prevSection}
-                disabled={currentSection === 0}
-              >
-                <ChevronRight className="w-4 h-4 mr-2" />
-                السابق
+          <div className="flex justify-end gap-3 pt-4 mt-4 border-t">
+            <Button variant="outline" onClick={handleClose}>
+              إغلاق
+            </Button>
+            {isCompleted && (
+              <Button className="bg-green-600 hover:bg-green-700">
+                <CheckCircle className="w-4 h-4 mr-2" />
+                مكتمل
               </Button>
-              <Button
-                variant="outline"
-                onClick={nextSection}
-                disabled={currentSection === sections.length - 1}
-              >
-                التالي
-                <ChevronLeft className="w-4 h-4 ml-2" />
-              </Button>
-            </div>
-            
-            <div className="flex gap-3">
-              <Button variant="outline" onClick={handleClose}>
-                إغلاق
-              </Button>
-              {isCompleted && (
-                <Button className="bg-green-600 hover:bg-green-700">
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  مكتمل
-                </Button>
-              )}
-            </div>
+            )}
           </div>
         </div>
       </DialogContent>
