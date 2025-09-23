@@ -158,7 +158,7 @@ export const useStudentContent = () => {
               section:grade11_sections(id, title)
             ),
             media:grade11_lesson_media(
-              id, media_type, media_url, media_title, order_index
+              id, media_type, file_path, file_name, order_index, created_at
             )
           `)
           .eq('is_active', true)
