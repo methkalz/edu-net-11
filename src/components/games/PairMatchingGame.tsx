@@ -29,6 +29,7 @@ export const PairMatchingGame: React.FC<PairMatchingGameProps> = ({
     timeRemaining,
     isGameActive,
     loading,
+    gamesLoading, // حالة تحميل الألعاب
     selectedLeft,
     selectedRight,
     nextUnlockedGame,
@@ -163,15 +164,21 @@ export const PairMatchingGame: React.FC<PairMatchingGameProps> = ({
 
   // حساب نسبة التقدم
   const progress = shuffledPairs.leftItems.length > 0 ? matchedPairs.length / shuffledPairs.leftItems.length * 100 : 0;
-  if (loading) {
+  
+  // عرض التحميل أثناء جلب الألعاب أو أثناء تحميل اللعبة
+  if (gamesLoading || loading) {
     return <Card className="w-full max-w-6xl mx-auto">
         <CardContent className="p-8 text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">جاري تحميل الألعاب...</p>
+          <p className="text-muted-foreground">
+            {gamesLoading ? 'جاري تحميل الألعاب...' : 'جاري تحميل اللعبة...'}
+          </p>
         </CardContent>
       </Card>;
   }
-  if (games.length === 0) {
+  
+  // عرض رسالة عدم وجود ألعاب فقط بعد انتهاء التحميل
+  if (!gamesLoading && games.length === 0) {
     return <Card className="w-full max-w-6xl mx-auto">
         <CardContent className="p-8 text-center">
           <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />

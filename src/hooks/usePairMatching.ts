@@ -91,6 +91,7 @@ export const usePairMatching = (gameId?: string) => {
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [isGameActive, setIsGameActive] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [gamesLoading, setGamesLoading] = useState(true); // حالة تحميل الألعاب
   const [mistakes, setMistakes] = useState(0);
   const [nextUnlockedGame, setNextUnlockedGame] = useState<GameWithProgress | null>(null);
   const [nextCardGame, setNextCardGame] = useState<GameWithProgress | null>(null);
@@ -119,6 +120,7 @@ export const usePairMatching = (gameId?: string) => {
   // جلب الألعاب مع التقدم
   const fetchGamesWithProgress = useCallback(async () => {
     try {
+      setGamesLoading(true); // بدء التحميل
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
@@ -159,6 +161,8 @@ export const usePairMatching = (gameId?: string) => {
         description: 'حدث خطأ أثناء تحميل ألعاب المطابقة',
         variant: 'destructive'
       });
+    } finally {
+      setGamesLoading(false); // انتهاء التحميل
     }
   }, [toast]);
 
@@ -710,6 +714,9 @@ export const usePairMatching = (gameId?: string) => {
     },
     
     // نظام الصوت
-    gameAudio
+    gameAudio,
+    
+    // حالة تحميل الألعاب
+    gamesLoading
   };
 };
