@@ -4,6 +4,7 @@ import { useStudentContent } from '@/hooks/useStudentContent';
 import { useStudentProgress } from '@/hooks/useStudentProgress';
 import { useGrade10MiniProjects } from '@/hooks/useGrade10MiniProjects';
 import { useGrade12Projects } from '@/hooks/useGrade12Projects';
+import { useStudentGrade10Lessons } from '@/hooks/useStudentGrade10Lessons';
 import { StudentGrade11Content } from './StudentGrade11Content';
 import { StudentGrade10Lessons } from './StudentGrade10Lessons';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -59,6 +60,13 @@ export const StudentGradeContent: React.FC = () => {
     currentProject: null,
     setCurrentProject: () => {},
     loading: false
+  };
+  
+  const grade10LessonsResult = assignedGrade === '10' ? useStudentGrade10Lessons() : {
+    sections: [],
+    loading: false,
+    error: null,
+    getContentStats: () => ({ totalLessons: 0 })
   };
   
   const grade12HooksResult = assignedGrade === '12' ? useGrade12Projects() : {
@@ -380,7 +388,7 @@ export const StudentGradeContent: React.FC = () => {
       id: 'lessons',
       label: 'الدروس',
       icon: BookOpen,
-      count: 0,
+      count: grade10LessonsResult.getContentStats().totalLessons,
       items: [],
       color: 'from-purple-500 to-pink-500'
     }] : []),
