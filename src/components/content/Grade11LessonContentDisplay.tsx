@@ -76,21 +76,6 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
     return colors[type as keyof typeof colors] || 'bg-gray-100 text-gray-700 border-gray-200';
   };
 
-  const getMediaTypeLabel = (mediaType: string) => {
-    switch (mediaType) {
-      case 'video':
-        return 'فيديو';
-      case 'lottie':
-        return 'رسوم متحركة';
-      case 'image':
-        return 'صورة';
-      case 'code':
-        return 'كود';
-      default:
-        return 'ملف';
-    }
-  };
-
   const renderEmbeddedMedia = (media: any) => {
     const metadata = media.metadata || {};
 
@@ -341,53 +326,78 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
   };
 
   return (
-    <div className="space-y-6 w-full max-w-none">
+    <div className="space-y-4 w-full max-w-none">
       {/* Lesson Content */}
       {!hideHeader && (
-        <div className="prose prose-lg max-w-none w-full">
-          <h2 className="text-2xl font-bold mb-4 text-foreground">{lesson.title}</h2>
+        <div className="prose prose-sm max-w-none w-full">
+          <h6 className="font-medium text-sm mb-2">{lesson.title}</h6>
           {lesson.content && (
-            <div className="text-lg text-foreground leading-8 whitespace-pre-wrap break-words max-w-full">
+            <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap break-words max-w-full">
               {lesson.content}
             </div>
           )}
         </div>
       )}
 
-      {/* Media Display - Always Expanded for Students */}
+      {/* Media Controls */}
+      {showControls && sortedMedia.length > 0 && (
+        <div className="flex items-center gap-3 py-2 border-t border-b">
+          <div className="flex items-center gap-2">
+            <Switch
+              id={`expand-${lesson.id}`}
+              checked={isExpanded}
+              onCheckedChange={setIsExpanded}
+            />
+            <Label htmlFor={`expand-${lesson.id}`} className="text-xs cursor-pointer">
+              عرض الوسائط مدمجة
+            </Label>
+          </div>
+          <Badge variant="secondary" className="text-xs">
+            {sortedMedia.length} ملف وسائط
+          </Badge>
+        </div>
+      )}
+
+      {/* Media Display */}
       {sortedMedia.length > 0 && (
-        <div className="space-y-8">
-          {sortedMedia.map((media) => (
-            <div key={media.id} className="bg-background rounded-2xl border border-border/50 overflow-hidden">
-              {/* Media Header */}
-              <div className="px-6 py-4 bg-muted/30 border-b border-border/50">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-background rounded-lg">
-                    {getMediaIcon(media.media_type)}
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-foreground">{media.file_name}</h3>
-                    <Badge variant="outline" className={`text-sm mt-1 ${getMediaTypeBadge(media.media_type)}`}>
-                      {getMediaTypeLabel(media.media_type)}
-                    </Badge>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setPreviewMedia(media)}
-                    className="h-10 w-10 p-0 rounded-full"
-                  >
-                    <Maximize2 className="h-5 w-5" />
-                  </Button>
-                </div>
-              </div>
-              
-              {/* Media Content */}
-              <div className="p-6">
-                {renderEmbeddedMedia(media)}
-              </div>
+        <div className="space-y-3">
+          {isExpanded ? (
+            // Expanded view - embedded media
+            <div className="space-y-4">
+              {sortedMedia.map((media) => (
+                <Card key={media.id} className="overflow-hidden">
+                  <CardContent className="p-3">
+                    <div className="flex items-center justify-start gap-2 mb-3">
+                      {getMediaIcon(media.media_type)}
+                      <span className="text-sm font-medium">{media.file_name}</span>
+                      <Badge variant="outline" className={`text-xs ${getMediaTypeBadge(media.media_type)}`}>
+                        {media.media_type}
+                      </Badge>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setPreviewMedia(media)}
+                        className="ml-auto h-6 w-6 p-0"
+                      >
+                        <Maximize2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                    {renderEmbeddedMedia(media)}
+                  </CardContent>
+                </Card>
+              ))}
             </div>
-          ))}
+          ) : (
+            // Compact view - media list
+            <div className="space-y-2">
+              <div className="text-xs text-muted-foreground font-medium">الوسائط المرفقة:</div>
+              {sortedMedia.map((media) => (
+                <div key={media.id}>
+                  {renderCompactMedia(media)}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -396,6 +406,13 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
         <MediaPreview
           media={previewMedia}
           onClose={() => setPreviewMedia(null)}
+        />
+      )}
+      {/* معاينة الوسائط */}
+      {previewMedia && (
+        <MediaPreview 
+          media={previewMedia} 
+          onClose={() => setPreviewMedia(null)} 
         />
       )}
 

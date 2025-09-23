@@ -60,27 +60,10 @@ export interface Grade11LessonWithMedia extends Grade11Lesson {
 export const useGrade11Content = () => {
   const [sections, setSections] = useState<Grade11SectionWithTopics[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [cachedData, setCachedData] = useState<Grade11SectionWithTopics[] | null>(null);
-  const [lastFetch, setLastFetch] = useState<number>(0);
 
-  const fetchSections = async (useCache = true) => {
+  const fetchSections = async () => {
     try {
       setLoading(true);
-      setError(null);
-      
-      // التحقق من الكاش
-      const cacheAge = Date.now() - lastFetch;
-      const cacheValid = cacheAge < 5 * 60 * 1000; // 5 دقائق
-      
-      if (useCache && cachedData && cacheValid) {
-        logger.debug('Using cached Grade 11 sections');
-        setSections(cachedData);
-        setLoading(false);
-        return;
-      }
-
-      logger.debug('Fetching fresh Grade 11 sections data');
       
       // Fetch sections with topics, lessons and media
       const { data: sectionsData, error: sectionsError } = await supabase
@@ -115,21 +98,9 @@ export const useGrade11Content = () => {
       })) || [];
 
       setSections(formattedSections);
-      setCachedData(formattedSections);
-      setLastFetch(Date.now());
-      
-      logger.debug('Grade 11 sections loaded successfully', {
-        sectionsCount: formattedSections.length,
-        totalTopics: formattedSections.reduce((acc, s) => acc + s.topics.length, 0),
-        totalLessons: formattedSections.reduce((acc, s) => 
-          acc + s.topics.reduce((topicAcc, t) => topicAcc + t.lessons.length, 0), 0
-        )
-      });
     } catch (error) {
-      const errorMessage = 'حدث خطأ في تحميل أقسام الصف الحادي عشر';
       logger.error('Error fetching Grade 11 sections', error as Error);
-      setError(errorMessage);
-      toast.error(errorMessage);
+      toast.error('حدث خطأ في تحميل أقسام الصف الحادي عشر');
     } finally {
       setLoading(false);
     }
@@ -438,7 +409,6 @@ export const useGrade11Content = () => {
   return {
     sections,
     loading,
-    error,
     fetchSections,
     addSection,
     updateSection,
