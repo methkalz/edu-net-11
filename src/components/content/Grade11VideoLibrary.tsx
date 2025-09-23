@@ -150,22 +150,14 @@ const Grade11VideoLibrary: React.FC<Grade11VideoLibraryProps> = ({
                     alt={video.title}
                     className="w-full h-full object-cover"
                     onError={(e) => {
-                      // إذا فشل تحميل الصورة من Google Drive، استخدم رابط بديل
-                      const target = e.currentTarget;
-                      if (target.src.includes('lh3.googleusercontent.com')) {
-                        const fileId = target.src.split('/d/')[1];
-                        target.src = `https://drive.google.com/thumbnail?id=${fileId}&sz=w320-h180`;
-                      } else {
-                        // إخفاء الصورة وإظهار أيقونة الفيديو
-                        target.style.display = 'none';
-                      }
+                      e.currentTarget.style.display = 'none';
                     }}
                   />
-                ) : null}
-                {/* أيقونة الفيديو الافتراضية */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Video className="h-12 w-12 text-muted-foreground" />
-                </div>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <Video className="h-12 w-12 text-muted-foreground" />
+                  </div>
+                )}
                 <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                   <Button
                     size="sm"
