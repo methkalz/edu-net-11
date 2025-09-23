@@ -83,12 +83,16 @@ Deno.serve(async (req) => {
       })
       .eq('id', pinData.id)
 
+    // Get the correct app URL (not Supabase URL)
+    const appUrl = Deno.env.get('APP_URL') || 'http://localhost:5173';
+    console.log(`Using app URL for redirect: ${appUrl}`);
+    
     // Generate magic link for direct login
     const { data: magicLink, error: linkError } = await supabase.auth.admin.generateLink({
       type: 'magiclink',
       email: targetProfile.email,
       options: {
-        redirectTo: `${new URL(Deno.env.get('SUPABASE_URL') || 'http://localhost:5173').origin}/dashboard?admin_access=true&pin_login=true&target_user_id=${targetProfile.user_id}&admin_user_id=${pinData.generated_by}`
+        redirectTo: `${appUrl}/dashboard?admin_access=true&pin_login=true&target_user_id=${targetProfile.user_id}&admin_user_id=${pinData.generated_by}`
       }
     })
 
