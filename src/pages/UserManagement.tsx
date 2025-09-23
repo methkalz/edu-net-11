@@ -848,18 +848,18 @@ const UserManagement: React.FC = () => {
                              >
                                <Eye className="h-4 w-4" />
                              </Button>
-                             <Button
-                               variant="ghost"
-                               size="sm"
-                               onClick={() => {
-                                 setSelectedUserForPin(user);
-                                 setShowPinLoginDialog(true);
-                               }}
-                               className="text-blue-600 hover:text-blue-700 h-8 w-8 p-0"
-                               title="الدخول للحساب"
-                             >
-                               <LogIn className="h-4 w-4" />
-                             </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedUserForPin(user);
+                                  setShowPinLoginDialog(true);
+                                }}
+                                className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 h-8 w-8 p-0 transition-all duration-200 group"
+                                title="تسجيل الدخول كهذا المستخدم"
+                              >
+                                <LogIn className="h-4 w-4 group-hover:scale-110 transition-transform duration-200" />
+                              </Button>
                              <Button
                                variant="ghost"
                                size="sm"
