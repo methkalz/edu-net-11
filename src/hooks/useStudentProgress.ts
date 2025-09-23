@@ -210,30 +210,6 @@ export const useStudentProgress = () => {
     }
   };
 
-  const getProgress = async (
-    contentId: string,
-    contentType: 'video' | 'document' | 'lesson' | 'project' | 'game'
-  ): Promise<StudentProgress | null> => {
-    if (!user) return null;
-
-    try {
-      const { data, error } = await supabase
-        .from('student_progress')
-        .select('*')
-        .eq('student_id', user.id)
-        .eq('content_id', contentId)
-        .eq('content_type', contentType)
-        .maybeSingle();
-
-      if (error) throw error;
-
-      return data as StudentProgress | null;
-    } catch (err) {
-      logger.error('Error getting progress', err as Error);
-      return null;
-    }
-  };
-
   useEffect(() => {
     if (user && userProfile?.role === 'student') {
       fetchStudentStats();
@@ -250,7 +226,6 @@ export const useStudentProgress = () => {
     loading,
     error,
     updateProgress,
-    getProgress,
     logActivity,
     awardAchievement,
     refetch: fetchStudentStats
