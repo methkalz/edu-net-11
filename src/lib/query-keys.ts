@@ -17,6 +17,7 @@ export const QUERY_KEYS = {
   
   // Grade content
   GRADE_CONTENT: {
+    GRADE_10_SECTIONS: () => ['grade10', 'sections'],
     GRADE_11: (userId?: string) => ['grade11', 'content', userId],
     GRADE_11_SECTIONS: () => ['grade11', 'sections'],
     GRADE_11_VIDEOS: () => ['grade11', 'videos'],

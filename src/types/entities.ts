@@ -59,6 +59,34 @@ export interface ProjectContent extends BaseContent {
   max_points?: number;
 }
 
+// أنواع محددة للصف العاشر
+export interface Grade10Section extends BaseContent {
+  topics: Grade10Topic[];
+}
+
+export interface Grade10Topic extends BaseContent {
+  section_id: string;
+  content?: string;
+  lessons?: Grade10Lesson[];
+}
+
+export interface Grade10Lesson extends BaseContent {
+  topic_id: string;
+  content?: string;
+  media?: Grade10LessonMedia[];
+}
+
+export interface Grade10LessonMedia {
+  id: string;
+  lesson_id: string;
+  media_type: 'video' | 'lottie' | 'image' | 'code';
+  file_path: string;
+  file_name: string;
+  metadata: Record<string, unknown>;
+  order_index: number;
+  created_at: string;
+}
+
 // أنواع محددة للصف الحادي عشر
 export interface Grade11Section extends BaseContent {
   topics: Grade11Topic[];

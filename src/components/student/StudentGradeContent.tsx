@@ -5,6 +5,7 @@ import { useStudentProgress } from '@/hooks/useStudentProgress';
 import { useGrade10MiniProjects } from '@/hooks/useGrade10MiniProjects';
 import { useGrade12Projects } from '@/hooks/useGrade12Projects';
 import { StudentGrade11Content } from './StudentGrade11Content';
+import { StudentGrade10Lessons } from './StudentGrade10Lessons';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -374,14 +375,15 @@ export const StudentGradeContent: React.FC = () => {
       items: currentContent?.videos || [],
       color: 'from-blue-500 to-cyan-500'
     },
-    {
+    // إضافة تاب الدروس للصف العاشر
+    ...(assignedGrade === '10' ? [{
       id: 'lessons',
       label: 'الدروس',
       icon: BookOpen,
-      count: currentContent?.lessons?.length || 0,
-      items: currentContent?.lessons || [],
+      count: 0,
+      items: [],
       color: 'from-purple-500 to-pink-500'
-    },
+    }] : []),
     // تعطيل المشاريع للصف الحادي عشر
     ...(assignedGrade !== '11' ? [{
       id: 'projects',
@@ -432,8 +434,11 @@ export const StudentGradeContent: React.FC = () => {
 
         {contentTabs.map((tab) => (
           <TabsContent key={tab.id} value={tab.id} className="mt-8">
-            {/* Special handling for Grade 10 Videos with sub-tabs */}
-            {tab.id === 'videos' && assignedGrade === '10' ? (
+            {/* Special handling for Grade 10 Lessons */}
+            {tab.id === 'lessons' && assignedGrade === '10' ? (
+              <StudentGrade10Lessons />
+            ) : /* Special handling for Grade 10 Videos with sub-tabs */
+            tab.id === 'videos' && assignedGrade === '10' ? (
               <div className="space-y-6">
                 <Tabs defaultValue="educational_explanations" className="w-full">
                   <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto">
