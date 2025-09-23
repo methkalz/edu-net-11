@@ -31,6 +31,7 @@ const Grade10VideoForm: React.FC<Grade10VideoFormProps> = ({
     duration: initialData?.duration || '',
     source_type: initialData?.source_type || 'youtube',
     category: initialData?.category || 'general',
+    video_category: initialData?.video_category || 'educational_explanations',
     is_visible: initialData?.is_visible ?? true,
     allowed_roles: initialData?.allowed_roles || ['all'],
     order_index: initialData?.order_index || 0,
@@ -76,6 +77,11 @@ const Grade10VideoForm: React.FC<Grade10VideoFormProps> = ({
     { value: 'web_development', label: 'تطوير المواقع' },
     { value: 'mobile_apps', label: 'تطبيقات الجوال' },
     { value: 'theory', label: 'المفاهيم النظرية' }
+  ];
+
+  const videoCategoryOptions = [
+    { value: 'educational_explanations', label: 'شروحات تعليمية' },
+    { value: 'windows_basics', label: 'أساسيات الويندوز' }
   ];
 
   const roleOptions = [
@@ -190,6 +196,25 @@ const Grade10VideoForm: React.FC<Grade10VideoFormProps> = ({
                   placeholder="أدخل وصف الفيديو"
                   rows={3}
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="video_category">تصنيف الفيديو</Label>
+                <Select
+                  value={formData.video_category}
+                  onValueChange={(value) => setFormData({ ...formData, video_category: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="اختر التصنيف" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {videoCategoryOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">

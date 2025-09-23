@@ -166,6 +166,7 @@ export const useGrade10Content = () => {
         source_type: videoData.source_type,
         thumbnail_url: videoData.thumbnail_url,
         category: videoData.category,
+        video_category: videoData.video_category,
         is_visible: videoData.is_visible,
         allowed_roles: videoData.allowed_roles,
         order_index: videoData.order_index,

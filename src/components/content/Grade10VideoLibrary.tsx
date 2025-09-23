@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Video, Play, Edit, Trash2, Search, Filter, Plus, Eye, EyeOff, Calendar, Clock, User } from 'lucide-react';
+import { Video, Play, Edit, Trash2, Search, Filter, Plus, Eye, EyeOff, Calendar, Clock, User, Monitor } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
 import { useGrade10Content } from '@/hooks/useGrade10Content';
 import { logger } from '@/lib/logger';
@@ -17,7 +18,7 @@ const Grade10VideoLibrary: React.FC = () => {
   const { userProfile } = useAuth();
   const { videos, addVideo, updateVideo, deleteVideo, loading } = useGrade10Content();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState('educational_explanations');
   const [showForm, setShowForm] = useState(false);
   const [editingVideo, setEditingVideo] = useState<{ id: string; title: string; video_url: string } | null>(null);
   const [previewVideo, setPreviewVideo] = useState<{ id: string; title: string; video_url: string; source_type: string; description?: string } | null>(null);
@@ -45,12 +46,21 @@ const Grade10VideoLibrary: React.FC = () => {
     upload: 'ملف مرفوع'
   };
 
+  // تصفية الفيديوهات حسب التاب والبحث
   const filteredVideos = videos.filter(video => {
-    const matchesSearch = video.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    if (!video.is_visible && !canManageContent) return false;
+    
+    const matchesSearch = video.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          video.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || video.category === selectedCategory;
+    
+    const matchesCategory = video.video_category === selectedCategory;
+    
     return matchesSearch && matchesCategory;
   });
+
+  // تجميع الفيديوهات حسب التصنيف لعرض العداد
+  const educationalVideos = videos.filter(v => v.video_category === 'educational_explanations' && (v.is_visible || canManageContent));
+  const windowsVideos = videos.filter(v => v.video_category === 'windows_basics' && (v.is_visible || canManageContent));
 
   const handleSaveVideo = async (videoData: any) => {
     try {
@@ -156,7 +166,7 @@ const Grade10VideoLibrary: React.FC = () => {
             مكتبة فيديوهات الصف العاشر
           </h2>
           <p className="text-muted-foreground mt-1">
-            {filteredVideos.length} فيديو متاح
+            {filteredVideos.length} فيديو متاح في {selectedCategory === 'educational_explanations' ? 'الشروحات التعليمية' : 'أساسيات الويندوز'}
           </p>
         </div>
 
@@ -168,31 +178,31 @@ const Grade10VideoLibrary: React.FC = () => {
         )}
       </div>
 
-      {/* أدوات البحث والتصفية */}
+      {/* Video Category Tabs */}
+      <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="educational_explanations" className="flex items-center gap-2">
+            <Video className="h-4 w-4" />
+            شروحات تعليمية ({educationalVideos.length})
+          </TabsTrigger>
+          <TabsTrigger value="windows_basics" className="flex items-center gap-2">
+            <Monitor className="h-4 w-4" />
+            أساسيات الويندوز ({windowsVideos.length})
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      {/* أدوات البحث */}
       <div className="flex flex-col md:flex-row gap-4">
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="البحث في الفيديوهات..."
+            placeholder={`البحث في ${selectedCategory === 'educational_explanations' ? 'الشروحات التعليمية' : 'أساسيات الويندوز'}...`}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
           />
         </div>
-        
-        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-          <SelectTrigger className="w-48">
-            <Filter className="h-4 w-4 mr-2" />
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {categoryOptions.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
       </div>
 
       {/* قائمة الفيديوهات */}
@@ -202,10 +212,18 @@ const Grade10VideoLibrary: React.FC = () => {
             <Video className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">لا توجد فيديوهات</h3>
             <p className="text-muted-foreground">
-              {searchTerm || selectedCategory !== 'all'
-                ? 'لم يتم العثور على فيديوهات تطابق المعايير المحددة'
-                : 'لم يتم إضافة أي فيديوهات بعد'}
+              {searchTerm 
+                ? `لم يتم العثور على فيديوهات تطابق "${searchTerm}" في ${selectedCategory === 'educational_explanations' ? 'الشروحات التعليمية' : 'أساسيات الويندوز'}`
+                : selectedCategory === 'educational_explanations'
+                  ? 'لم يتم إضافة أي شروحات تعليمية بعد'
+                  : 'لم يتم إضافة أي فيديوهات لأساسيات الويندوز بعد'
+              }
             </p>
+            {canManageContent && !searchTerm && (
+              <p className="text-sm text-muted-foreground mt-2">
+                يمكنك إضافة فيديوهات جديدة باستخدام الزر أعلاه
+              </p>
+            )}
           </CardContent>
         </Card>
       ) : (
