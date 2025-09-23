@@ -11,7 +11,6 @@ import {
   Play,
   Crown,
   Award,
-  Brain,
   Puzzle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -33,18 +32,6 @@ export const StudentGameSection: React.FC = () => {
       category: 'شبكات'
     },
     {
-      id: 'quiz-challenge',
-      title: 'تحدي الأسئلة',
-      description: 'اختبر معلوماتك في أسئلة متنوعة',
-      icon: Brain,
-      difficulty: 'متوسط',
-      points: '10-25 نقطة',
-      color: 'from-green-500 to-emerald-500',
-      bgColor: 'from-green-50 to-emerald-50',
-      path: '/quiz-challenge',
-      category: 'عام'
-    },
-    {
       id: 'knowledge-adventure',
       title: 'مغامرة المعرفة',
       description: 'استكشف عالم التقنية في رحلة تعليمية ممتعة',
@@ -61,7 +48,6 @@ export const StudentGameSection: React.FC = () => {
   const achievements = [
     { name: 'نجم الألعاب', description: 'أكمل 10 ألعاب', icon: Star, earned: true },
     { name: 'بطل المطابقة', description: 'احصل على نقاط كاملة في المطابقة', icon: Trophy, earned: true },
-    { name: 'عبقري الأسئلة', description: 'أجب على 50 سؤال بشكل صحيح', icon: Brain, earned: false },
     { name: 'مستكشف المعرفة', description: 'أكمل مغامرة المعرفة', icon: Crown, earned: false }
   ];
 
