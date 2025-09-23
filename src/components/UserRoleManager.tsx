@@ -12,6 +12,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { logger } from '@/lib/logger';
 import { UniversalAvatar } from '@/components/shared/UniversalAvatar';
 import { UserTitleBadge } from '@/components/shared/UserTitleBadge';
+import { useLoginTracking } from '@/hooks/useLoginTracking';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,6 +37,8 @@ interface User {
   display_title?: string;
   points?: number;
   level?: number;
+  last_login_at?: string | null;
+  login_count?: number;
 }
 
 interface UserRoleManagerProps {
@@ -61,6 +64,7 @@ const roleColors = {
 export const UserRoleManager: React.FC<UserRoleManagerProps> = ({ onBack }) => {
   const { toast } = useToast();
   const { userProfile } = useAuth();
+  const { formatLastLogin } = useLoginTracking();
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -88,7 +92,7 @@ export const UserRoleManager: React.FC<UserRoleManagerProps> = ({ onBack }) => {
     try {
       let query = supabase
         .from('profiles')
-        .select('user_id, full_name, email, role, phone, created_at, school_id, avatar_url, display_title, points, level')
+        .select('*')  // Select all columns to handle missing columns gracefully
         .order('created_at', { ascending: false });
 
       // If not superadmin, only show users from same school
@@ -99,7 +103,25 @@ export const UserRoleManager: React.FC<UserRoleManagerProps> = ({ onBack }) => {
       const { data, error } = await query;
 
       if (error) throw error;
-      setUsers(data || []);
+      
+      // Process data to ensure compatibility with missing columns
+      const processedUsers = (data || []).map(user => ({
+        user_id: user.user_id,
+        full_name: user.full_name,
+        email: user.email,
+        role: user.role,
+        phone: user.phone,
+        created_at: user.created_at,
+        school_id: user.school_id,
+        avatar_url: user.avatar_url,
+        display_title: user.display_title,
+        points: user.points,
+        level: user.level,
+        last_login_at: (user as any).last_login_at || null,
+        login_count: (user as any).login_count || 0
+      }));
+      
+      setUsers(processedUsers);
     } catch (error: any) {
       logger.error('Error loading users', error as Error);
       toast({
@@ -250,6 +272,21 @@ export const UserRoleManager: React.FC<UserRoleManagerProps> = ({ onBack }) => {
                       {user.phone && (
                         <p className="text-sm text-muted-foreground">{user.phone}</p>
                       )}
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xs text-muted-foreground">آخر تسجيل دخول:</span>
+                        <span className={`text-xs px-2 py-1 rounded-full ${
+                          !user.last_login_at 
+                            ? 'bg-red-100 text-red-700' 
+                            : 'bg-green-100 text-green-700'
+                        }`}>
+                          {formatLastLogin(user.last_login_at, user.created_at)}
+                        </span>
+                        {user.login_count && user.login_count > 0 && (
+                          <span className="text-xs text-muted-foreground">
+                            ({user.login_count} مرة)
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
 
