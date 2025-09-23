@@ -147,17 +147,6 @@ serve(async (req) => {
         // User exists with profile - check if we can convert role
         if (existingProfile.role === 'student') {
           console.log('Converting existing student to teacher...');
-
-          // Get random avatar for teacher
-          const { data: avatars } = await supabaseAdmin
-            .from('avatar_images')
-            .select('image_path')
-            .eq('is_active', true)
-            .or('category.eq.teacher,category.eq.universal');
-
-          const randomAvatar = avatars && avatars.length > 0 
-            ? avatars[Math.floor(Math.random() * avatars.length)].image_path 
-            : '/avatars/universal-default.png';
           
           // Update existing user's role to teacher
           const { error: updateProfileError } = await supabaseAdmin
@@ -166,8 +155,7 @@ serve(async (req) => {
               role: 'teacher',
               full_name: fullName,
               phone: phone || null,
-              school_id: currentProfile.school_id,
-              avatar_url: randomAvatar
+              school_id: currentProfile.school_id
             })
             .eq('user_id', existingAuthUser.id);
 
@@ -245,36 +233,13 @@ serve(async (req) => {
 
       newUser = createResult.data;
       userId = newUser.user.id;
-
-      // Get random avatar for teacher
-      const { data: avatars } = await supabaseAdmin
-        .from('avatar_images')
-        .select('image_path')
-        .eq('is_active', true)
-        .or('category.eq.teacher,category.eq.universal');
-
-      const randomAvatar = avatars && avatars.length > 0 
-        ? avatars[Math.floor(Math.random() * avatars.length)].image_path 
-        : '/avatars/universal-default.png';
-
-      // Wait a moment for trigger to complete
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Update profile with avatar
-      await supabaseAdmin
-        .from('profiles')
-        .update({
-          avatar_url: randomAvatar
-        })
-        .eq('user_id', userId);
-
-      console.log('User created successfully with teacher profile and avatar:', newUser.user.id);
+      console.log('User created successfully with teacher profile:', newUser.user.id);
     } else {
       console.log('Using existing user converted to teacher:', userId);
     }
 
     // Wait a moment for trigger to complete
-    await new Promise(resolve => setTimeout(resolve, 100);
+    await new Promise(resolve => setTimeout(resolve, 100));
 
     // Assign teacher to classes if provided
     if (classIds.length > 0) {
