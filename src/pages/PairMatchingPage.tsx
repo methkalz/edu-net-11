@@ -12,7 +12,7 @@ const PairMatchingPage: React.FC = () => {
       <AppHeader 
         title="لعبة مطابقة الكلمات" 
         showBackButton={true} 
-        backPath="/content-management/grade-11" 
+        backPath="/dashboard" 
         showLogout={true} 
       />
       

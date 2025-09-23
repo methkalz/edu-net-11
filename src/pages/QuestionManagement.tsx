@@ -33,7 +33,7 @@ const QuestionManagement: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
-      <AppHeader title="إدارة أسئلة الألعاب التفاعلية" showBackButton={true} backPath="/content-management/grade-11" showLogout={true} />
+      <AppHeader title="إدارة أسئلة الألعاب التفاعلية" showBackButton={true} backPath="/dashboard" showLogout={true} />
       
       <main className="container mx-auto px-6 py-8 flex-1">
         <QuestionManagementPanel />
