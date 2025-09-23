@@ -136,7 +136,6 @@ const StudentLessonModal: React.FC<StudentLessonModalProps> = ({
         {/* المحتوى الرئيسي */}
         <div className="flex-1 overflow-hidden">
           <ScrollArea className="h-full">
-          >
             <div className="max-w-4xl mx-auto p-8 space-y-8">
               {/* المحتوى النصي */}
               {hasContent && (

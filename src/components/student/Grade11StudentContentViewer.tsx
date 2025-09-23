@@ -157,66 +157,6 @@ const MinimalistTopicCard = memo<{
 
 MinimalistTopicCard.displayName = 'MinimalistTopicCard';
 
-// Memoized topic card
-const TopicCard = memo<{
-  topic: Grade11TopicWithLessons;
-  topicIndex: number;
-  onLessonClick: (lesson: Grade11LessonWithMedia) => void;
-}>(({ topic, topicIndex, onLessonClick }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-
-  return (
-    <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
-      <Card className="border-r-4 border-r-blue-400 bg-blue-50/30">
-        <CollapsibleTrigger asChild>
-          <CardHeader className="pb-4 cursor-pointer hover:bg-blue-50/50 transition-colors">
-            <CardTitle className="text-xl flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <span className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
-                  {topicIndex + 1}
-                </span>
-                <span className="text-gray-900">{topic.title}</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Badge variant="outline" className="text-sm">
-                  {topic.lessons.length} درس
-                </Badge>
-                <ChevronDown className={`h-5 w-5 text-gray-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
-              </div>
-            </CardTitle>
-            {topic.content && (
-              <p className="text-lg text-gray-600 mr-12">{topic.content}</p>
-            )}
-          </CardHeader>
-        </CollapsibleTrigger>
-        
-        <CollapsibleContent>
-          <CardContent className="pt-0">
-            {topic.lessons.length === 0 ? (
-              <p className="text-gray-500 text-lg text-center py-8">
-                لا توجد دروس في هذا الموضوع بعد
-              </p>
-            ) : (
-              <div className="space-y-4">
-                {topic.lessons.map((lesson, lessonIndex) => (
-                  <LessonCard
-                    key={lesson.id}
-                    lesson={lesson}
-                    lessonIndex={lessonIndex}
-                    onLessonClick={onLessonClick}
-                  />
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </CollapsibleContent>
-      </Card>
-    </Collapsible>
-  );
-});
-
-TopicCard.displayName = 'TopicCard';
-
 const Grade11StudentContentViewer: React.FC<Grade11StudentContentViewerProps> = ({
   onContentClick,
   onContentComplete,
