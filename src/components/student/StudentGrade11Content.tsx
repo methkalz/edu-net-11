@@ -447,7 +447,7 @@ export const StudentGrade11Content: React.FC = () => {
                 lesson={selectedLesson}
                 defaultExpanded={true}
                 showControls={true}
-                hideHeader={true}
+                hideTitle={true}
               />
             </div>
           </DialogContent>

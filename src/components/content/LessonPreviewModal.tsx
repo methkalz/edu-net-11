@@ -79,7 +79,7 @@ const LessonPreviewModal: React.FC<LessonPreviewModalProps> = ({
                 lesson={lesson}
                 defaultExpanded={true}
                 showControls={false}
-                hideHeader={true}
+                hideTitle={true}
               />
             </div>
           )}
