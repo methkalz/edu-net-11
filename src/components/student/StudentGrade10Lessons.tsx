@@ -120,6 +120,18 @@ export const StudentGrade10Lessons: React.FC = () => {
     );
   });
 
+  // Calculate total lessons for each tab
+  const getTotalLessonsInSections = (sectionsArray: any[]) => {
+    return sectionsArray.reduce((total, section) => {
+      return total + section.topics.reduce((sectionTotal: number, topic: any) => {
+        return sectionTotal + topic.lessons.length;
+      }, 0);
+    }, 0);
+  };
+
+  const communicationLessonsCount = getTotalLessonsInSections(communicationSections);
+  const computerLessonsCount = getTotalLessonsInSections(computerSections);
+
   const getMediaIcon = (mediaType: string) => {
     switch (mediaType) {
       case 'video': return <Video className="w-4 h-4 text-white" />;
@@ -271,11 +283,11 @@ export const StudentGrade10Lessons: React.FC = () => {
         <TabsList className="grid w-full grid-cols-2 h-12">
           <TabsTrigger value="communication" className="flex items-center gap-2 text-base font-medium">
             <BookOpen className="w-5 h-5" />
-            أساسيات الاتصال ({communicationSections.length})
+            أساسيات الاتصال ({communicationLessonsCount} درس)
           </TabsTrigger>
           <TabsTrigger value="computer" className="flex items-center gap-2 text-base font-medium">
             <Monitor className="w-5 h-5" />
-            تركيبة الحاسوب ({computerSections.length})
+            تركيبة الحاسوب ({computerLessonsCount} درس)
           </TabsTrigger>
         </TabsList>
 
