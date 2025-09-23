@@ -29,8 +29,8 @@ interface LessonViewerProps {
     media?: Array<{
       id: string;
       media_type: string;
-      media_url: string;
-      media_title: string;
+      file_path: string;
+      file_name: string;
       order_index: number;
     }>;
   };
@@ -190,29 +190,29 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
                         <div className="flex items-center gap-2 mb-2">
                           {media.media_type === 'video' && <Play className="w-4 h-4 text-blue-500" />}
                           {media.media_type === 'image' && <BookOpen className="w-4 h-4 text-green-500" />}
-                          <span className="font-medium text-sm">{media.media_title}</span>
+                          <span className="font-medium text-sm">{media.file_name}</span>
                         </div>
                         {media.media_type === 'video' && (
                           <div className="bg-black rounded overflow-hidden">
                             <iframe
-                              src={media.media_url}
+                              src={media.file_path}
                               className="w-full aspect-video"
                               allowFullScreen
-                              title={media.media_title}
+                              title={media.file_name}
                             />
                           </div>
                         )}
                         {media.media_type === 'image' && (
                           <img
-                            src={media.media_url}
-                            alt={media.media_title}
+                            src={media.file_path}
+                            alt={media.file_name}
                             className="w-full rounded border"
                           />
                         )}
                         {media.media_type === 'document' && (
                           <div className="text-center p-4 bg-muted rounded">
                             <Button variant="outline" size="sm" asChild>
-                              <a href={media.media_url} target="_blank" rel="noopener noreferrer">
+                              <a href={media.file_path} target="_blank" rel="noopener noreferrer">
                                 عرض المستند
                               </a>
                             </Button>
