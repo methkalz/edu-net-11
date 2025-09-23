@@ -194,7 +194,8 @@ export const useStudentGrade10Lessons = () => {
       totalSections,
       totalTopics,
       totalLessons,
-      totalMedia
+      totalMedia,
+      totalVideos: 0 // Grade 10 doesn't have separate videos table yet
     };
   };
 
