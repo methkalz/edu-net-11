@@ -234,6 +234,33 @@ serve(async (req) => {
       newUser = createResult.data;
       userId = newUser.user.id;
       console.log('User created successfully with teacher profile:', newUser.user.id);
+
+      // دالة لاختيار أفاتار عشوائي للمعلم
+      const getRandomTeacherAvatar = async (): Promise<string> => {
+        const { data: avatars } = await supabaseAdmin
+          .from('avatar_images')
+          .select('file_path')
+          .eq('is_active', true)
+          .or('category.eq.teacher,category.eq.universal');
+        
+        if (avatars && avatars.length > 0) {
+          const randomIndex = Math.floor(Math.random() * avatars.length);
+          return avatars[randomIndex].file_path;
+        }
+        return '/avatars/universal-default.png';
+      };
+
+      // اختيار وتطبيق أفاتار عشوائي للمعلم الجديد
+      const randomAvatar = await getRandomTeacherAvatar();
+      
+      // تحديث الملف الشخصي بالأفاتار
+      await supabaseAdmin
+        .from('profiles')
+        .update({ 
+          avatar_url: randomAvatar,
+          display_title: 'معلم'
+        })
+        .eq('user_id', userId);
     } else {
       console.log('Using existing user converted to teacher:', userId);
     }
