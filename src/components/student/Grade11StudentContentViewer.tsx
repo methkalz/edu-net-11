@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
-import { Play, Clock, FileText, Search, ChevronRight, CheckCircle2, PlayCircle, BookOpen, Trophy, Star } from 'lucide-react';
+import React, { useState, useCallback, memo, useMemo } from 'react';
+import { Play, Clock, FileText, Search, ChevronRight, CheckCircle2, PlayCircle, BookOpen, Trophy, Star, ChevronDown, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Progress } from '@/components/ui/progress';
-import { useGrade11Content, Grade11LessonWithMedia } from '@/hooks/useGrade11Content';
+import { useGrade11Content, Grade11LessonWithMedia, Grade11SectionWithTopics, Grade11TopicWithLessons } from '@/hooks/useGrade11Content';
 import Grade11LessonDetailsModal from '../content/Grade11LessonDetailsModal';
 
 interface Grade11StudentContentViewerProps {
@@ -15,37 +15,12 @@ interface Grade11StudentContentViewerProps {
   onContentComplete?: (contentId: string, contentType: string, timeSpent: number) => void;
 }
 
-const Grade11StudentContentViewer: React.FC<Grade11StudentContentViewerProps> = ({
-  onContentClick,
-  onContentComplete
-}) => {
-  const { sections, loading } = useGrade11Content();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedLesson, setSelectedLesson] = useState<Grade11LessonWithMedia | null>(null);
-  const [isLessonModalOpen, setIsLessonModalOpen] = useState(false);
-
-  const allTopics = sections.flatMap(section => section.topics);
-  const allLessons = allTopics.flatMap(topic => topic.lessons);
-  const totalLessons = allLessons.length;
-  const completedLessons = 0; // سيتم تحديثه لاحقاً مع نظام التقدم
-
-  const filteredSections = sections.map(section => ({
-    ...section,
-    topics: section.topics.filter(topic => 
-      topic.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      topic.lessons.some(lesson => lesson.title.toLowerCase().includes(searchTerm.toLowerCase()))
-    )
-  })).filter(section => section.topics.length > 0);
-
-  const handleLessonClick = (lesson: Grade11LessonWithMedia) => {
-    if (onContentClick) {
-      onContentClick(lesson, 'lesson');
-    } else {
-      setSelectedLesson(lesson);
-      setIsLessonModalOpen(true);
-    }
-  };
-
+// Memoized lesson card component for better performance
+const LessonCard = memo<{
+  lesson: Grade11LessonWithMedia;
+  lessonIndex: number;
+  onLessonClick: (lesson: Grade11LessonWithMedia) => void;
+}>(({ lesson, lessonIndex, onLessonClick }) => {
   const getMediaIcon = (mediaType: string) => {
     switch (mediaType) {
       case 'video':
@@ -58,6 +33,206 @@ const Grade11StudentContentViewer: React.FC<Grade11StudentContentViewerProps> = 
         return <FileText className="h-5 w-5 text-gray-500" />;
     }
   };
+
+  return (
+    <div
+      onClick={() => onLessonClick(lesson)}
+      className="flex items-center gap-4 p-5 rounded-xl border-2 border-gray-100 hover:border-blue-200 hover:bg-blue-50/50 cursor-pointer transition-all duration-200 group bg-white"
+    >
+      <div className="bg-green-500 text-white rounded-full w-10 h-10 flex items-center justify-center text-sm font-bold">
+        {lessonIndex + 1}
+      </div>
+      
+      <div className="flex-1">
+        <h4 className="font-semibold text-lg text-gray-900 group-hover:text-blue-700 transition-colors mb-2">
+          {lesson.title}
+        </h4>
+        <div className="flex items-center gap-6">
+          <span className="text-base text-gray-500 flex items-center gap-2">
+            <Clock className="h-5 w-5" />
+            15 دقيقة تقريباً
+          </span>
+          {lesson.media && lesson.media.length > 0 && (
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-gray-500">الوسائط:</span>
+              <div className="flex items-center gap-2">
+                {lesson.media.slice(0, 3).map((media) => (
+                  <div key={media.id} className="flex items-center">
+                    {getMediaIcon(media.media_type)}
+                  </div>
+                ))}
+                {lesson.media.length > 3 && (
+                  <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                    +{lesson.media.length - 3} أكثر
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+      
+      <Button 
+        size="lg" 
+        className="px-6 py-3 text-base font-medium"
+        onClick={(e) => {
+          e.stopPropagation();
+          onLessonClick(lesson);
+        }}
+      >
+        ابدأ الدرس
+        <ChevronRight className="h-5 w-5 mr-2" />
+      </Button>
+    </div>
+  );
+});
+
+LessonCard.displayName = 'LessonCard';
+
+// Memoized topic card
+const TopicCard = memo<{
+  topic: Grade11TopicWithLessons;
+  topicIndex: number;
+  onLessonClick: (lesson: Grade11LessonWithMedia) => void;
+}>(({ topic, topicIndex, onLessonClick }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  return (
+    <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+      <Card className="border-r-4 border-r-blue-400 bg-blue-50/30">
+        <CollapsibleTrigger asChild>
+          <CardHeader className="pb-4 cursor-pointer hover:bg-blue-50/50 transition-colors">
+            <CardTitle className="text-xl flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <span className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
+                  {topicIndex + 1}
+                </span>
+                <span className="text-gray-900">{topic.title}</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Badge variant="outline" className="text-sm">
+                  {topic.lessons.length} درس
+                </Badge>
+                <ChevronDown className={`h-5 w-5 text-gray-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+              </div>
+            </CardTitle>
+            {topic.content && (
+              <p className="text-lg text-gray-600 mr-12">{topic.content}</p>
+            )}
+          </CardHeader>
+        </CollapsibleTrigger>
+        
+        <CollapsibleContent>
+          <CardContent className="pt-0">
+            {topic.lessons.length === 0 ? (
+              <p className="text-gray-500 text-lg text-center py-8">
+                لا توجد دروس في هذا الموضوع بعد
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {topic.lessons.map((lesson, lessonIndex) => (
+                  <LessonCard
+                    key={lesson.id}
+                    lesson={lesson}
+                    lessonIndex={lessonIndex}
+                    onLessonClick={onLessonClick}
+                  />
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
+  );
+});
+
+TopicCard.displayName = 'TopicCard';
+
+const Grade11StudentContentViewer: React.FC<Grade11StudentContentViewerProps> = ({
+  onContentClick,
+  onContentComplete
+}) => {
+  const { 
+    sections, 
+    loading, 
+    error, 
+    stats,
+    loadSectionTopics,
+    loadTopicLessons,
+    loadLessonMedia
+  } = useOptimizedGrade11Content();
+  
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedLesson, setSelectedLesson] = useState<OptimizedGrade11Lesson | null>(null);
+  const [isLessonModalOpen, setIsLessonModalOpen] = useState(false);
+  const [openSections, setOpenSections] = useState<Set<string>>(new Set());
+
+  // Handle section expansion
+  const toggleSection = useCallback(async (sectionId: string) => {
+    const section = sections.find(s => s.id === sectionId);
+    if (!section) return;
+
+    if (openSections.has(sectionId)) {
+      setOpenSections(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(sectionId);
+        return newSet;
+      });
+    } else {
+      setOpenSections(prev => new Set(prev).add(sectionId));
+      
+      // Load topics if not loaded
+      if (!section.topicsLoaded && !section.topicsLoading) {
+        await loadSectionTopics(sectionId);
+      }
+    }
+  }, [sections, openSections, loadSectionTopics]);
+
+  // Handle topic expansion
+  const toggleTopic = useCallback(async (sectionId: string, topicId: string) => {
+    const section = sections.find(s => s.id === sectionId);
+    const topic = section?.topics.find(t => t.id === topicId);
+    if (!topic) return;
+
+    // Load lessons if not loaded
+    if (!topic.lessonsLoaded && !topic.lessonsLoading) {
+      await loadTopicLessons(sectionId, topicId);
+    }
+  }, [sections, loadTopicLessons]);
+
+  // Handle lesson click
+  const handleLessonClick = useCallback(async (lesson: OptimizedGrade11Lesson) => {
+    // Load media if not loaded
+    const section = sections.find(s => s.topics.some(t => t.lessons.some(l => l.id === lesson.id)));
+    const topic = section?.topics.find(t => t.lessons.some(l => l.id === lesson.id));
+    
+    if (section && topic && !lesson.mediaLoaded && !lesson.mediaLoading) {
+      await loadLessonMedia(section.id, topic.id, lesson.id);
+    }
+
+    if (onContentClick) {
+      onContentClick(lesson, 'lesson');
+    } else {
+      setSelectedLesson(lesson);
+      setIsLessonModalOpen(true);
+    }
+  }, [sections, loadLessonMedia, onContentClick]);
+
+  // Search filtering
+  const filteredSections = sections.filter(section => {
+    if (!searchTerm) return true;
+    
+    const matchesSection = section.title.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesTopics = section.topics.some(topic => 
+      topic.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      topic.lessons.some(lesson => lesson.title.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+    
+    return matchesSection || matchesTopics;
+  });
+
+  const completedLessons = 0; // سيتم تحديثه لاحقاً مع نظام التقدم
 
   if (loading) {
     return (
@@ -72,7 +247,7 @@ const Grade11StudentContentViewer: React.FC<Grade11StudentContentViewerProps> = 
     );
   }
 
-  const progressPercentage = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+  const progressPercentage = stats.lessonsCount > 0 ? Math.round((completedLessons / stats.lessonsCount) * 100) : 0;
 
   return (
     <div className="max-w-6xl mx-auto px-4">
@@ -91,7 +266,7 @@ const Grade11StudentContentViewer: React.FC<Grade11StudentContentViewerProps> = 
             <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-white/50">
               <div className="flex items-center justify-center gap-3 mb-2">
                 <BookOpen className="h-8 w-8 text-blue-600" />
-                <span className="text-3xl font-bold text-gray-900">{totalLessons}</span>
+                <span className="text-3xl font-bold text-gray-900">{stats.lessonsCount}</span>
               </div>
               <p className="text-lg font-medium text-gray-600">درس متاح</p>
             </div>
@@ -99,7 +274,7 @@ const Grade11StudentContentViewer: React.FC<Grade11StudentContentViewerProps> = 
             <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-white/50">
               <div className="flex items-center justify-center gap-3 mb-2">
                 <Trophy className="h-8 w-8 text-orange-600" />
-                <span className="text-3xl font-bold text-gray-900">{sections.length}</span>
+                <span className="text-3xl font-bold text-gray-900">{stats.sectionsCount}</span>
               </div>
               <p className="text-lg font-medium text-gray-600">قسم تعليمي</p>
             </div>
@@ -107,7 +282,7 @@ const Grade11StudentContentViewer: React.FC<Grade11StudentContentViewerProps> = 
             <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-white/50">
               <div className="flex items-center justify-center gap-3 mb-2">
                 <Star className="h-8 w-8 text-yellow-600" />
-                <span className="text-3xl font-bold text-gray-900">{allTopics.length}</span>
+                <span className="text-3xl font-bold text-gray-900">{stats.topicsCount}</span>
               </div>
               <p className="text-lg font-medium text-gray-600">موضوع رئيسي</p>
             </div>
@@ -123,7 +298,7 @@ const Grade11StudentContentViewer: React.FC<Grade11StudentContentViewerProps> = 
                 </div>
                 <Progress value={progressPercentage} className="h-3" />
                 <p className="text-sm text-gray-600">
-                  أكملت {completedLessons} من أصل {totalLessons} درس
+                  أكملت {completedLessons} من أصل {stats.lessonsCount} درس
                 </p>
               </div>
             </div>
@@ -157,117 +332,64 @@ const Grade11StudentContentViewer: React.FC<Grade11StudentContentViewerProps> = 
             <p className="text-lg text-gray-500">جرب تغيير مصطلحات البحث</p>
           </Card>
         ) : (
-          <Accordion type="multiple" defaultValue={sections.map(s => s.id)} className="space-y-6">
+          <div className="space-y-6">
             {filteredSections.map((section, sectionIndex) => (
-              <AccordionItem 
+              <Collapsible 
                 key={section.id} 
-                value={section.id}
-                className="border-2 rounded-2xl bg-white shadow-sm"
+                open={openSections.has(section.id)}
+                onOpenChange={() => toggleSection(section.id)}
               >
-                <AccordionTrigger className="px-8 py-6 hover:no-underline">
-                  <div className="flex items-center justify-between w-full text-right">
-                    <div className="flex items-center gap-6">
-                      <div className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-full w-12 h-12 flex items-center justify-center text-lg font-bold">
-                        {sectionIndex + 1}
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-2xl text-gray-900 mb-2">{section.title}</h3>
-                        {section.description && (
-                          <p className="text-lg text-gray-600">{section.description}</p>
-                        )}
+                <Card className="border-2 rounded-2xl bg-white shadow-sm overflow-hidden">
+                  <CollapsibleTrigger asChild>
+                    <div className="px-8 py-6 hover:bg-gray-50/50 cursor-pointer transition-colors">
+                      <div className="flex items-center justify-between w-full text-right">
+                        <div className="flex items-center gap-6">
+                          <div className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-full w-12 h-12 flex items-center justify-center text-lg font-bold">
+                            {sectionIndex + 1}
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-2xl text-gray-900 mb-2">{section.title}</h3>
+                            {section.description && (
+                              <p className="text-lg text-gray-600">{section.description}</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <Badge variant="secondary" className="text-base px-4 py-2">
+                            {section.topics.length} موضوع
+                          </Badge>
+                          <ChevronDown className={`h-6 w-6 text-gray-400 transition-transform duration-200 ${
+                            openSections.has(section.id) ? 'rotate-180' : ''
+                          }`} />
+                        </div>
                       </div>
                     </div>
-                    <Badge variant="secondary" className="text-base px-4 py-2">
-                      {section.topics.length} موضوع
-                    </Badge>
-                  </div>
-                </AccordionTrigger>
-                
-                <AccordionContent className="px-8 pb-8">
-                  <div className="space-y-6">
-                    {section.topics.map((topic, topicIndex) => (
-                      <Card key={topic.id} className="border-r-4 border-r-blue-400 bg-blue-50/30">
-                        <CardHeader className="pb-4">
-                          <CardTitle className="text-xl flex items-center gap-4">
-                            <span className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
-                              {topicIndex + 1}
-                            </span>
-                            <span className="text-gray-900">{topic.title}</span>
-                          </CardTitle>
-                          {topic.content && (
-                            <p className="text-lg text-gray-600 mr-12">{topic.content}</p>
-                          )}
-                        </CardHeader>
-                        
-                        <CardContent className="pt-0">
-                          {topic.lessons.length === 0 ? (
-                            <p className="text-gray-500 text-lg text-center py-8">
-                              لا توجد دروس في هذا الموضوع بعد
-                            </p>
-                          ) : (
-                            <div className="space-y-4">
-                              {topic.lessons.map((lesson, lessonIndex) => (
-                                <div
-                                  key={lesson.id}
-                                  onClick={() => handleLessonClick(lesson)}
-                                  className="flex items-center gap-4 p-5 rounded-xl border-2 border-gray-100 hover:border-blue-200 hover:bg-blue-50/50 cursor-pointer transition-all duration-200 group bg-white"
-                                >
-                                  <div className="bg-green-500 text-white rounded-full w-10 h-10 flex items-center justify-center text-sm font-bold">
-                                    {lessonIndex + 1}
-                                  </div>
-                                  
-                                  <div className="flex-1">
-                                    <h4 className="font-semibold text-lg text-gray-900 group-hover:text-blue-700 transition-colors mb-2">
-                                      {lesson.title}
-                                    </h4>
-                                    <div className="flex items-center gap-6">
-                                      <span className="text-base text-gray-500 flex items-center gap-2">
-                                        <Clock className="h-5 w-5" />
-                                        15 دقيقة تقريباً
-                                      </span>
-                                      {lesson.media && lesson.media.length > 0 && (
-                                        <div className="flex items-center gap-3">
-                                          <span className="text-sm text-gray-500">الوسائط:</span>
-                                          <div className="flex items-center gap-2">
-                                            {lesson.media.slice(0, 3).map((media) => (
-                                              <div key={media.id} className="flex items-center">
-                                                {getMediaIcon(media.media_type)}
-                                              </div>
-                                            ))}
-                                            {lesson.media.length > 3 && (
-                                              <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                                                +{lesson.media.length - 3} أكثر
-                                              </span>
-                                            )}
-                                          </div>
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                  
-                                  <Button 
-                                    size="lg" 
-                                    className="px-6 py-3 text-base font-medium"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleLessonClick(lesson);
-                                    }}
-                                  >
-                                    ابدأ الدرس
-                                    <ChevronRight className="h-5 w-5 mr-2" />
-                                  </Button>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
+                  </CollapsibleTrigger>
+                  
+                  <CollapsibleContent>
+                    <div className="px-8 pb-8 border-t border-gray-100">
+                      {section.topics.length === 0 ? (
+                        <div className="text-center py-8">
+                          <p className="text-lg text-gray-500">لا توجد مواضيع في هذا القسم بعد</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-6 pt-6">
+                          {section.topics.map((topic, topicIndex) => (
+                            <TopicCard
+                              key={topic.id}
+                              topic={topic}
+                              topicIndex={topicIndex}
+                              onLessonClick={handleLessonClick}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </CollapsibleContent>
+                </Card>
+              </Collapsible>
             ))}
-          </Accordion>
+          </div>
         )}
       </div>
 
