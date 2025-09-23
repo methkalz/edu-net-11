@@ -11,10 +11,12 @@
  * @version 1.0.0
  */
 
-import { useState, useEffect } from 'react';
+import React from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { auditLogger, AUDIT_ACTIONS, AUDIT_ENTITIES } from '@/lib/audit';
 import { logger } from '@/lib/logger';
+import { QUERY_KEYS, CACHE_TIMES } from '@/lib/query-keys';
 
 interface LoginTrackingData {
   user_id: string;
@@ -39,22 +41,104 @@ interface LoginStats {
   neverLoggedIn: number;
 }
 
-export const useLoginTracking = () => {
-  const [loginData, setLoginData] = useState<LoginTrackingData[]>([]);
-  const [stats, setStats] = useState<LoginStats>({
-    totalUsers: 0,
-    activeToday: 0,
-    activeThisWeek: 0,
-    activeThisMonth: 0,
-    neverLoggedIn: 0
-  });
-  const [loading, setLoading] = useState(false);
+// Fetch functions
+const fetchLoginData = async (schoolId?: string): Promise<LoginTrackingData[]> => {
+  let query = supabase
+    .from('profiles')
+    .select(`
+      user_id,
+      full_name,
+      email,
+      role,
+      created_at,
+      school_id,
+      avatar_url,
+      display_title,
+      points,
+      level,
+      *
+    `)
+    .order('created_at', { ascending: false });
 
-  /**
-   * Records a login timestamp for a user
-   */
-  const recordLogin = async (userId: string) => {
-    try {
+  // Filter by school if not superadmin
+  if (schoolId) {
+    query = query.eq('school_id', schoolId);
+  }
+
+  const { data, error } = await query;
+
+  if (error) throw error;
+
+  // Ensure login_count is never null and add missing properties
+  const processedData = (data || []).map(user => ({
+    ...user,
+    login_count: (user as any).login_count || 0,
+    last_login_at: (user as any).last_login_at || null
+  })) as LoginTrackingData[];
+
+  return processedData;
+};
+
+export const useLoginTracking = () => {
+  const queryClient = useQueryClient();
+
+  // Login data query
+  const {
+    data: loginData = [],
+    isLoading: loading,
+    refetch: loadLoginData
+  } = useQuery({
+    queryKey: QUERY_KEYS.USER.LOGIN_TRACKING(),
+    queryFn: () => fetchLoginData(),
+    enabled: false, // Manual trigger
+    staleTime: CACHE_TIMES.SHORT, // Cache for 5 minutes
+    gcTime: CACHE_TIMES.MEDIUM, // Keep in cache for 15 minutes
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
+  });
+
+  // Calculate stats from login data
+  const stats = React.useMemo(() => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    const calculatedStats: LoginStats = {
+      totalUsers: loginData.length,
+      activeToday: 0,
+      activeThisWeek: 0,
+      activeThisMonth: 0,
+      neverLoggedIn: 0
+    };
+
+    loginData.forEach(user => {
+      if (!user.last_login_at) {
+        calculatedStats.neverLoggedIn++;
+        return;
+      }
+
+      const lastLogin = new Date(user.last_login_at);
+      
+      if (lastLogin >= today) {
+        calculatedStats.activeToday++;
+      }
+      
+      if (lastLogin >= weekAgo) {
+        calculatedStats.activeThisWeek++;
+      }
+      
+      if (lastLogin >= monthAgo) {
+        calculatedStats.activeThisMonth++;
+      }
+    });
+
+    return calculatedStats;
+  }, [loginData]);
+  // Record login mutation
+  const recordLoginMutation = useMutation({
+    mutationFn: async (userId: string) => {
       const now = new Date().toISOString();
       
       // Get current login count - handle case where column might not exist yet
@@ -67,116 +151,46 @@ export const useLoginTracking = () => {
       const currentCount = (currentProfile as any)?.login_count || 0;
       
       // Update last login and increment count - handle missing columns gracefully
-      try {
-        // Simple audit logging for now until database columns are added
-        await auditLogger.log({
-          action: AUDIT_ACTIONS.USER_LOGIN,
-          entity: AUDIT_ENTITIES.USER,
-          entity_id: userId,
-          actor_user_id: userId,
-          payload_json: {
-            timestamp: now,
-            method: 'direct_call'
-          }
-        });
+      // Simple audit logging for now until database columns are added
+      await auditLogger.log({
+        action: AUDIT_ACTIONS.USER_LOGIN,
+        entity: AUDIT_ENTITIES.USER,
+        entity_id: userId,
+        actor_user_id: userId,
+        payload_json: {
+          timestamp: now,
+          method: 'direct_call'
+        }
+      });
 
-        logger.info('Login recorded via audit system', { userId, timestamp: now });
-      } catch (error) {
-        logger.error('Error updating login tracking', error);
-        return;
-      }
-    } catch (error) {
-      logger.error('Error in recordLogin', error as Error);
+      logger.info('Login recorded via audit system', { userId, timestamp: now });
+    },
+    onSuccess: () => {
+      // Optionally refresh login data
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USER.LOGIN_TRACKING() });
+    },
+    onError: (error) => {
+      logger.error('Error updating login tracking', error);
     }
+  });
+
+  /**
+   * Records a login timestamp for a user
+   */
+  const recordLogin = (userId: string) => {
+    return recordLoginMutation.mutateAsync(userId);
   };
 
   /**
    * Loads login tracking data for all users
    */
-  const loadLoginData = async (schoolId?: string) => {
-    setLoading(true);
-    try {
-      let query = supabase
-        .from('profiles')
-        .select(`
-          user_id,
-          full_name,
-          email,
-          role,
-          created_at,
-          school_id,
-          avatar_url,
-          display_title,
-          points,
-          level,
-          *
-        `)
-        .order('created_at', { ascending: false });
-
-      // Filter by school if not superadmin
-      if (schoolId) {
-        query = query.eq('school_id', schoolId);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-
-      // Ensure login_count is never null and add missing properties
-      const processedData = (data || []).map(user => ({
-        ...user,
-        login_count: (user as any).login_count || 0,
-        last_login_at: (user as any).last_login_at || null
-      })) as LoginTrackingData[];
-
-      setLoginData(processedData);
-      calculateStats(processedData);
-    } catch (error) {
-      logger.error('Error loading login data', error as Error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  /**
-   * Calculates login statistics
-   */
-  const calculateStats = (data: LoginTrackingData[]) => {
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-
-    const stats: LoginStats = {
-      totalUsers: data.length,
-      activeToday: 0,
-      activeThisWeek: 0,
-      activeThisMonth: 0,
-      neverLoggedIn: 0
-    };
-
-    data.forEach(user => {
-      if (!user.last_login_at) {
-        stats.neverLoggedIn++;
-        return;
-      }
-
-      const lastLogin = new Date(user.last_login_at);
-      
-      if (lastLogin >= today) {
-        stats.activeToday++;
-      }
-      
-      if (lastLogin >= weekAgo) {
-        stats.activeThisWeek++;
-      }
-      
-      if (lastLogin >= monthAgo) {
-        stats.activeThisMonth++;
-      }
+  const loadLoginDataWithSchool = (schoolId?: string) => {
+    queryClient.setQueryData(QUERY_KEYS.USER.LOGIN_TRACKING(), undefined);
+    return queryClient.fetchQuery({
+      queryKey: QUERY_KEYS.USER.LOGIN_TRACKING(),
+      queryFn: () => fetchLoginData(schoolId),
+      staleTime: CACHE_TIMES.SHORT,
     });
-
-    setStats(stats);
   };
 
   /**
@@ -234,7 +248,7 @@ export const useLoginTracking = () => {
     stats,
     loading,
     recordLogin,
-    loadLoginData,
+    loadLoginData: loadLoginDataWithSchool,
     formatLastLogin,
     getNeverLoggedInUsers,
     getInactiveUsers

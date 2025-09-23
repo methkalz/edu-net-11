@@ -28,6 +28,7 @@ export const QUERY_KEYS = {
   // User data
   USER: {
     PROFILE: (userId: string) => ['user', 'profile', userId],
+    LOGIN_TRACKING: () => ['user', 'login-tracking'],
   },
 } as const;
 

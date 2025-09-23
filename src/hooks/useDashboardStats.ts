@@ -27,10 +27,11 @@
  * @version 1.0.0
  */
 
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { logger } from '@/lib/logger';
+import { QUERY_KEYS, CACHE_TIMES } from '@/lib/query-keys';
 
 /**
  * Dashboard Statistics Interface
@@ -76,164 +77,165 @@ interface StatsTrend {
   trend: 'up' | 'down' | 'stable';
 }
 
+import React from 'react';
+
+// Fetch function for dashboard stats
+const fetchDashboardStats = async (userProfile: any): Promise<DashboardStats> => {
+  if (!userProfile?.school_id && userProfile?.role !== 'superadmin') {
+    throw new Error('No access to dashboard stats');
+  }
+
+  logger.debug('Fetching dashboard stats', { 
+    schoolId: userProfile?.school_id, 
+    role: userProfile?.role 
+  });
+
+  const promises = [];
+
+  // Students count
+  if (userProfile?.school_id) {
+    promises.push(
+      supabase
+        .from('students')
+        .select('id', { count: 'exact', head: true })
+        .eq('school_id', userProfile.school_id)
+    );
+  } else {
+    promises.push(
+      supabase
+        .from('students')
+        .select('id', { count: 'exact', head: true })
+    );
+  }
+
+  // Classes count
+  if (userProfile?.school_id) {
+    promises.push(
+      supabase
+        .from('classes')
+        .select('id', { count: 'exact', head: true })
+        .eq('school_id', userProfile.school_id)
+    );
+  } else {
+    promises.push(
+      supabase
+        .from('classes')
+        .select('id', { count: 'exact', head: true })
+    );
+  }
+
+  // Teachers count (profiles with teacher role)
+  if (userProfile?.school_id) {
+    promises.push(
+      supabase
+        .from('profiles')
+        .select('user_id', { count: 'exact', head: true })
+        .eq('role', 'teacher')
+        .eq('school_id', userProfile.school_id)
+    );
+  } else {
+    promises.push(
+      supabase
+        .from('profiles')
+        .select('user_id', { count: 'exact', head: true })
+        .eq('role', 'teacher')
+    );
+  }
+
+  // Content count (combine all grade content)
+  const contentPromises = [
+    supabase.from('grade10_videos').select('id', { count: 'exact', head: true }),
+    supabase.from('grade11_videos').select('id', { count: 'exact', head: true }),
+    supabase.from('grade12_videos').select('id', { count: 'exact', head: true }),
+    supabase.from('grade10_documents').select('id', { count: 'exact', head: true }),
+    supabase.from('grade11_documents').select('id', { count: 'exact', head: true })
+  ];
+
+  promises.push(...contentPromises);
+
+  const results = await Promise.all(promises);
+  
+  const [studentsResult, classesResult, teachersResult, ...contentResults] = results;
+
+  const totalContent = contentResults.reduce((sum, result) => {
+    return sum + (result.count || 0);
+  }, 0);
+
+  const newStats: DashboardStats = {
+    totalStudents: studentsResult.count || 0,
+    totalClasses: classesResult.count || 0,
+    totalTeachers: teachersResult.count || 0,
+    totalContent,
+    recentActivity: Math.floor(Math.random() * 50) + 10, // Mock data for now
+    weeklyProgress: Math.floor(Math.random() * 100),
+    monthlyGrowth: Math.floor(Math.random() * 30) + 5,
+    completionRate: Math.floor(Math.random() * 40) + 60
+  };
+
+  logger.info('Dashboard stats loaded successfully', { stats: newStats });
+  return newStats;
+};
+
 export const useDashboardStats = () => {
   const { userProfile } = useAuth();
-  const [stats, setStats] = useState<DashboardStats>({
-    totalStudents: 0,
-    totalClasses: 0,
-    totalTeachers: 0,
-    totalContent: 0,
-    recentActivity: 0,
-    weeklyProgress: 0,
-    monthlyGrowth: 0,
-    completionRate: 0
+
+  const {
+    data: stats = {
+      totalStudents: 0,
+      totalClasses: 0,
+      totalTeachers: 0,
+      totalContent: 0,
+      recentActivity: 0,
+      weeklyProgress: 0,
+      monthlyGrowth: 0,
+      completionRate: 0
+    },
+    isLoading: loading,
+    error,
+    refetch: refreshStats,
+  } = useQuery({
+    queryKey: ['dashboard-stats', userProfile?.school_id, userProfile?.role],
+    queryFn: () => fetchDashboardStats(userProfile),
+    enabled: Boolean(userProfile),
+    staleTime: CACHE_TIMES.MEDIUM, // Cache for 15 minutes
+    gcTime: CACHE_TIMES.LONG, // Keep in cache for 1 hour
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
+    retry: (failureCount, error: any) => {
+      if (error?.status >= 400 && error?.status < 500) return false;
+      return failureCount < 2;
+    },
   });
-  
-  const [loading, setLoading] = useState(true);
-  const [trends, setTrends] = useState<Record<string, StatsTrend>>({});
 
-  const fetchStats = async () => {
-    if (!userProfile?.school_id && userProfile?.role !== 'superadmin') {
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      logger.debug('Fetching dashboard stats', { 
-        schoolId: userProfile?.school_id, 
-        role: userProfile?.role 
-      });
-
-      const promises = [];
-
-      // Students count
-      if (userProfile?.school_id) {
-        promises.push(
-          supabase
-            .from('students')
-            .select('id', { count: 'exact', head: true })
-            .eq('school_id', userProfile.school_id)
-        );
-      } else {
-        promises.push(
-          supabase
-            .from('students')
-            .select('id', { count: 'exact', head: true })
-        );
+  // Calculate trends (mock implementation)
+  const trends = React.useMemo(() => {
+    const newTrends: Record<string, StatsTrend> = {};
+    Object.entries(stats).forEach(([key, current]) => {
+      if (typeof current === 'number') {
+        const previous = Math.floor(current * (0.8 + Math.random() * 0.4));
+        const change = current - previous;
+        const percentage = previous > 0 ? Math.round((change / previous) * 100) : 0;
+        
+        newTrends[key] = {
+          current,
+          previous,
+          change,
+          percentage,
+          trend: change > 0 ? 'up' : change < 0 ? 'down' : 'stable'
+        };
       }
-
-      // Classes count
-      if (userProfile?.school_id) {
-        promises.push(
-          supabase
-            .from('classes')
-            .select('id', { count: 'exact', head: true })
-            .eq('school_id', userProfile.school_id)
-        );
-      } else {
-        promises.push(
-          supabase
-            .from('classes')
-            .select('id', { count: 'exact', head: true })
-        );
-      }
-
-      // Teachers count (profiles with teacher role)
-      if (userProfile?.school_id) {
-        promises.push(
-          supabase
-            .from('profiles')
-            .select('user_id', { count: 'exact', head: true })
-            .eq('role', 'teacher')
-            .eq('school_id', userProfile.school_id)
-        );
-      } else {
-        promises.push(
-          supabase
-            .from('profiles')
-            .select('user_id', { count: 'exact', head: true })
-            .eq('role', 'teacher')
-        );
-      }
-
-      // Content count (combine all grade content)
-      const contentPromises = [
-        supabase.from('grade10_videos').select('id', { count: 'exact', head: true }),
-        supabase.from('grade11_videos').select('id', { count: 'exact', head: true }),
-        supabase.from('grade12_videos').select('id', { count: 'exact', head: true }),
-        supabase.from('grade10_documents').select('id', { count: 'exact', head: true }),
-        supabase.from('grade11_documents').select('id', { count: 'exact', head: true })
-      ];
-
-      promises.push(...contentPromises);
-
-      const results = await Promise.all(promises);
-      
-      const [studentsResult, classesResult, teachersResult, ...contentResults] = results;
-
-      const totalContent = contentResults.reduce((sum, result) => {
-        return sum + (result.count || 0);
-      }, 0);
-
-      const newStats: DashboardStats = {
-        totalStudents: studentsResult.count || 0,
-        totalClasses: classesResult.count || 0,
-        totalTeachers: teachersResult.count || 0,
-        totalContent,
-        recentActivity: Math.floor(Math.random() * 50) + 10, // Mock data for now
-        weeklyProgress: Math.floor(Math.random() * 100),
-        monthlyGrowth: Math.floor(Math.random() * 30) + 5,
-        completionRate: Math.floor(Math.random() * 40) + 60
-      };
-
-      setStats(newStats);
-
-      // Calculate trends (mock implementation)
-      const newTrends: Record<string, StatsTrend> = {};
-      Object.entries(newStats).forEach(([key, current]) => {
-        if (typeof current === 'number') {
-          const previous = Math.floor(current * (0.8 + Math.random() * 0.4));
-          const change = current - previous;
-          const percentage = previous > 0 ? Math.round((change / previous) * 100) : 0;
-          
-          newTrends[key] = {
-            current,
-            previous,
-            change,
-            percentage,
-            trend: change > 0 ? 'up' : change < 0 ? 'down' : 'stable'
-          };
-        }
-      });
-
-      setTrends(newTrends);
-      logger.info('Dashboard stats loaded successfully', { stats: newStats });
-
-    } catch (error) {
-      logger.error('Error fetching dashboard stats', error as Error, {
-        schoolId: userProfile?.school_id
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const refreshStats = () => {
-    fetchStats();
-  };
-
-  useEffect(() => {
-    if (userProfile) {
-      fetchStats();
-    }
-  }, [userProfile]);
+    });
+    return newTrends;
+  }, [stats]);
 
   return {
     stats,
     trends,
     loading,
-    refreshStats,
+    refreshStats: () => {
+      refreshStats();
+    },
     // Helper functions for formatted display
     getFormattedStat: (key: keyof DashboardStats) => {
       const value = stats[key];
