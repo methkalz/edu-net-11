@@ -18,6 +18,7 @@ import { DocumentViewer } from './viewers/DocumentViewer';
 import { LessonViewer } from './viewers/LessonViewer';
 import { ProjectViewer } from './viewers/ProjectViewer';
 import AdvancedProjectEditor from '../content/AdvancedProjectEditor';
+import Grade11StudentContentViewer from './Grade11StudentContentViewer';
 import { 
   Play, 
   FileText, 
@@ -354,6 +355,16 @@ export const StudentGradeContent: React.FC = () => {
       color: 'from-orange-500 to-red-500'
     }
   ];
+
+  // استخدام العارض المخصص للصف 11
+  if (assignedGrade === '11') {
+    return (
+      <Grade11StudentContentViewer 
+        onContentClick={handleContentClick}
+        onContentComplete={handleContentComplete}
+      />
+    );
+  }
 
   return (
     <>
