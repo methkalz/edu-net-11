@@ -570,7 +570,7 @@ const Dashboard = () => {
               <CardHeader>
                 <CardTitle className="text-xl font-cairo flex items-center">
                   <Activity className="h-6 w-6 ml-3 text-primary icon-glow" />
-                  🔥 النشاطات الحديثة
+                  النشاطات الحديثة
                   <div className="accent-dot mr-auto"></div>
                 </CardTitle>
               </CardHeader>
