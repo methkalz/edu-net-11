@@ -12,8 +12,7 @@ import {
   Crown,
   Award,
   Brain,
-  Puzzle,
-  AlertCircle
+  Puzzle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -31,8 +30,19 @@ export const StudentGameSection: React.FC = () => {
       color: 'from-blue-500 to-cyan-500',
       bgColor: 'from-blue-50 to-cyan-50',
       path: '/pair-matching',
-      category: 'شبكات',
-      isAvailable: true  // متوفرة دائماً
+      category: 'شبكات'
+    },
+    {
+      id: 'quiz-challenge',
+      title: 'تحدي الأسئلة',
+      description: 'اختبر معلوماتك في أسئلة متنوعة',
+      icon: Brain,
+      difficulty: 'متوسط',
+      points: '10-25 نقطة',
+      color: 'from-green-500 to-emerald-500',
+      bgColor: 'from-green-50 to-emerald-50',
+      path: '/quiz-challenge',
+      category: 'عام'
     },
     {
       id: 'knowledge-adventure',
@@ -44,17 +54,14 @@ export const StudentGameSection: React.FC = () => {
       color: 'from-purple-500 to-pink-500',
       bgColor: 'from-purple-50 to-pink-50',
       path: '/knowledge-adventure',
-      category: 'تفاعلي',
-      isAvailable: true  // متوفرة دائماً
+      category: 'تفاعلي'
     }
   ];
-
-  // تصفية الألعاب المتوفرة فقط
-  const availableGames = games.filter(game => game.isAvailable);
 
   const achievements = [
     { name: 'نجم الألعاب', description: 'أكمل 10 ألعاب', icon: Star, earned: true },
     { name: 'بطل المطابقة', description: 'احصل على نقاط كاملة في المطابقة', icon: Trophy, earned: true },
+    { name: 'عبقري الأسئلة', description: 'أجب على 50 سؤال بشكل صحيح', icon: Brain, earned: false },
     { name: 'مستكشف المعرفة', description: 'أكمل مغامرة المعرفة', icon: Crown, earned: false }
   ];
 
@@ -113,7 +120,7 @@ export const StudentGameSection: React.FC = () => {
 
       {/* Games Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {availableGames.length > 0 ? availableGames.map((game) => {
+        {games.map((game) => {
           const IconComponent = game.icon;
           
           return (
@@ -163,17 +170,7 @@ export const StudentGameSection: React.FC = () => {
               </CardContent>
             </Card>
           );
-        }) : (
-          <div className="col-span-full">
-            <Card className="p-8 text-center">
-              <div className="w-16 h-16 mx-auto bg-muted rounded-full flex items-center justify-center mb-4">
-                <AlertCircle className="w-8 h-8 text-muted-foreground" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">لا توجد ألعاب متاحة حالياً</h3>
-              <p className="text-muted-foreground">سيتم إضافة المزيد من الألعاب قريباً!</p>
-            </Card>
-          </div>
-        )}
+        })}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
