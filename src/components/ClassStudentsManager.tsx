@@ -58,7 +58,7 @@ interface Student {
   email?: string;
   phone?: string;
   created_at_utc: string;
-  avatar_url?: string | null;
+  avatar_url?: string;
 }
 
 interface NewStudent {
@@ -220,39 +220,23 @@ export const ClassStudentsManager: React.FC<ClassStudentsManagerProps> = ({
             username,
             email,
             phone,
-            created_at_utc,
-            user_id
+            created_at_utc
           )
         `)
         .eq('class_id', classData.id);
 
-      // Get profile data separately for avatar_url
-      if (studentsData && studentsData.length > 0) {
-        const userIds = studentsData.map(item => item.students.user_id).filter(Boolean);
-        const { data: profilesData } = await supabase
-          .from('profiles')
-          .select('user_id, avatar_url')
-          .in('user_id', userIds);
+      if (error) throw error;
 
-        // Create a map for quick profile lookup
-        const profilesMap = new Map(
-          profilesData?.map(profile => [profile.user_id, profile.avatar_url]) || []
-        );
+      const formattedStudents = studentsData?.map(item => ({
+        id: item.students.id,
+        full_name: item.students.full_name,
+        username: item.students.username,
+        email: item.students.email,
+        phone: item.students.phone,
+        created_at_utc: item.students.created_at_utc
+      })) || [];
 
-        const formattedStudents = studentsData.map(item => ({
-          id: item.students.id,
-          full_name: item.students.full_name,
-          username: item.students.username,
-          email: item.students.email,
-          phone: item.students.phone,
-          created_at_utc: item.students.created_at_utc,
-          avatar_url: profilesMap.get(item.students.user_id) || null
-        }));
-
-        setStudents(formattedStudents);
-      } else {
-        setStudents([]);
-      }
+      setStudents(formattedStudents);
     } catch (error: unknown) {
       logger.error('Error loading students', error as Error, { 
         classId: classData.id 

@@ -137,33 +137,6 @@ Deno.serve(async (req) => {
 
       user_id = newUser.user.id;
       console.log('Created new user account:', user_id);
-
-      // دالة لاختيار أفاتار عشوائي للطالب
-      const getRandomStudentAvatar = async (): Promise<string> => {
-        const { data: avatars } = await supabaseAdmin
-          .from('avatar_images')
-          .select('file_path')
-          .eq('is_active', true)
-          .or('category.eq.student,category.eq.universal');
-        
-        if (avatars && avatars.length > 0) {
-          const randomIndex = Math.floor(Math.random() * avatars.length);
-          return avatars[randomIndex].file_path;
-        }
-        return '/avatars/universal-default.png';
-      };
-
-      // اختيار وتطبيق أفاتار عشوائي
-      const randomAvatar = await getRandomStudentAvatar();
-      
-      // تحديث الملف الشخصي بالأفاتار
-      await supabaseAdmin
-        .from('profiles')
-        .update({ 
-          avatar_url: randomAvatar,
-          display_title: 'طالب جديد'
-        })
-        .eq('user_id', user_id);
     }
 
     // Only create new student if we don't already have one

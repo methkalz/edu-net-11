@@ -31,8 +31,7 @@ import {
   Play,
   Pause,
   RotateCw,
-  FileText,
-  Users
+  FileText
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -42,8 +41,6 @@ import { useSharedLottieSettings } from '@/hooks/useSharedLottieSettings';
 import { LottieLoader } from '@/components/ui/LottieLoader';
 import { logger } from '@/lib/logger';
 import { TeacherContentSettingsForm } from '@/components/admin/TeacherContentSettingsForm';
-import { AutoAvatarAssignment } from '@/components/admin/AutoAvatarAssignment';
-import { AvatarDatabaseSeeder } from '@/components/admin/AvatarDatabaseSeeder';
 
 interface HeaderSettings {
   id?: string;
@@ -1584,12 +1581,6 @@ const SystemSettings = () => {
           {/* تبويب إعدادات المضامين التعليمية */}
           <TabsContent value="content" className="space-y-6 animate-fade-in" dir="rtl">
             <TeacherContentSettingsForm />
-          </TabsContent>
-
-          {/* تبويب إدارة الأفاتار */}
-          <TabsContent value="avatars" className="space-y-6 animate-fade-in" dir="rtl">
-            <AvatarDatabaseSeeder />
-            <AutoAvatarAssignment />
           </TabsContent>
         </Tabs>
       </div>

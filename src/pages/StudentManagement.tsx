@@ -40,7 +40,6 @@ interface Student {
   phone?: string;
   created_at_utc: string;
   school_id: string;
-  avatar_url?: string | null;
   classes?: {
     id: string;
     class_name: string;
@@ -212,8 +211,7 @@ export default function StudentManagement() {
           email,
           phone,
           created_at_utc,
-          school_id,
-          user_id
+          school_id
         `)
         .eq('school_id', userProfile.school_id)
         .order('full_name');
@@ -227,18 +225,6 @@ export default function StudentManagement() {
         });
         return;
       }
-
-      // Get profile data for avatar_url
-      const userIds = studentsData?.map(student => student.user_id).filter(Boolean) || [];
-      const { data: profilesData } = await supabase
-        .from('profiles')
-        .select('user_id, avatar_url')
-        .in('user_id', userIds);
-
-      // Create a map for quick profile lookup
-      const profilesMap = new Map(
-        profilesData?.map(profile => [profile.user_id, profile.avatar_url]) || []
-      );
 
       // Get class enrollments for each student
       const studentsWithClasses = await Promise.all(
@@ -256,7 +242,6 @@ export default function StudentManagement() {
 
           return {
             ...student,
-            avatar_url: profilesMap.get(student.user_id) || null,
             classes: classData?.map(item => ({
               id: item.classes.id,
               class_name: item.classes.class_names.name,
