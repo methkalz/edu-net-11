@@ -32,6 +32,7 @@ export const LazyStudentManagement = lazy(() => retryDynamicImport(() => import(
 export const LazyTest = lazy(() => retryDynamicImport(() => import('@/pages/Test')));
 export const LazyQuestionManagement = lazy(() => retryDynamicImport(() => import('@/pages/QuestionManagement')));
 export const LazyPairMatchingPage = lazy(() => retryDynamicImport(() => import('@/pages/PairMatchingPage')));
+export const LazyReports = lazy(() => retryDynamicImport(() => import('@/pages/Reports')));
 
 // HOC for lazy components with error boundary
 export const withLazyLoading = (Component: React.LazyExoticComponent<React.ComponentType<Record<string, unknown>>>) => {

@@ -49,6 +49,7 @@ import {
   LazyStudentManagement,
   LazyTest,
   LazyPairMatchingPage,
+  LazyReports,
   withLazyLoading
 } from "@/components/LazyComponents";
 
@@ -154,10 +155,13 @@ const App = () => {
                    <Route path="/pair-matching/:gameId?" element={<LazyPairMatchingPage />} />
                   
                    {/* Question management for interactive games */}
-                   <Route path="/question-management" element={<LazyTest />} />
-                  
-                  {/* Development and testing routes */}
-                  <Route path="/test" element={<LazyTest />} />
+                    <Route path="/question-management" element={<LazyTest />} />
+                   
+                   {/* Reports dashboard route */}
+                    <Route path="/reports" element={<Suspense fallback={<PageLoading message="جاري تحميل التقارير..." />}><LazyReports /></Suspense>} />
+                   
+                   {/* Development and testing routes */}
+                    <Route path="/test" element={<LazyTest />} />
                   
                   {/* IMPORTANT: Keep catch-all route last - handles 404 errors */}
                   <Route path="*" element={<NotFound />} />
