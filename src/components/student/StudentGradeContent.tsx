@@ -346,14 +346,15 @@ export const StudentGradeContent: React.FC = () => {
       items: currentContent?.lessons || [],
       color: 'from-purple-500 to-pink-500'
     },
-    {
+    // تعطيل المشاريع للصف الحادي عشر
+    ...(assignedGrade !== '11' ? [{
       id: 'projects',
       label: assignedGrade === '10' ? 'ميني بروجكت' : assignedGrade === '12' ? 'المشروع النهائي' : 'المشاريع',
       icon: Trophy,
       count: allProjects.length,
       items: allProjects,
       color: 'from-orange-500 to-red-500'
-    }
+    }] : [])
   ];
 
 
@@ -373,7 +374,7 @@ export const StudentGradeContent: React.FC = () => {
       {/* Content Tabs */}
       <Tabs value={activeContentTab} onValueChange={setActiveContentTab} className="w-full">
         <div className="flex justify-center mb-8">
-          <TabsList className="grid grid-cols-3 w-full max-w-2xl h-12 bg-muted/50">
+          <TabsList className={`grid ${assignedGrade === '11' ? 'grid-cols-2' : 'grid-cols-3'} w-full max-w-2xl h-12 bg-muted/50`}>
             {contentTabs.map((tab) => {
               const IconComponent = tab.icon;
               return (
