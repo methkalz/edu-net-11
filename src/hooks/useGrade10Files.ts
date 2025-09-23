@@ -32,6 +32,7 @@ interface Grade10Video {
   duration?: string;
   source_type: 'youtube' | 'vimeo' | 'direct';
   category?: string;
+  video_category?: string;
   grade_level: string;
   owner_user_id: string;
   school_id?: string;

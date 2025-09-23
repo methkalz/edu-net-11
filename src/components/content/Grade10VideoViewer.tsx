@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Video, Play, Search, Calendar, Eye, X } from 'lucide-react';
+import { Video, Play, Search, Calendar, Eye, X, BookOpen, Monitor } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface Grade10Video {
   id: string;
@@ -16,6 +17,7 @@ interface Grade10Video {
   duration?: string;
   source_type: 'youtube' | 'vimeo' | 'direct' | 'google_drive';
   category?: string;
+  video_category?: string;
   grade_level: string;
   owner_user_id: string;
   school_id?: string;
@@ -32,11 +34,20 @@ const Grade10VideoViewer: React.FC<Grade10VideoViewerProps> = ({ videos, loading
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedVideo, setSelectedVideo] = useState<Grade10Video | null>(null);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('educational_explanations');
 
-  const filteredVideos = videos.filter(video =>
-    video.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (video.description && video.description.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  // Filter videos by category and search term
+  const getFilteredVideos = (category: string) => {
+    return videos
+      .filter(video => (video.video_category || 'educational_explanations') === category)
+      .filter(video =>
+        video.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (video.description && video.description.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+  };
+
+  const educationalVideos = getFilteredVideos('educational_explanations');
+  const windowsBasicsVideos = getFilteredVideos('windows_basics');
 
   const getVideoThumbnail = (video: Grade10Video): string => {
     if (video.thumbnail_url) {
@@ -148,6 +159,99 @@ const Grade10VideoViewer: React.FC<Grade10VideoViewerProps> = ({ videos, loading
     );
   };
 
+  const renderVideoGrid = (videosList: Grade10Video[], categoryName: string) => {
+    if (videosList.length === 0) {
+      return (
+        <div className="text-center py-12">
+          <Video className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-semibold mb-2">
+            {searchTerm ? 'لا توجد نتائج' : `لا توجد فيديوهات في ${categoryName}`}
+          </h3>
+          <p className="text-muted-foreground">
+            {searchTerm 
+              ? 'جرب البحث بمصطلحات مختلفة'
+              : `لم يتم إضافة أي فيديوهات في قسم ${categoryName} بعد`
+            }
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {videosList.map((video) => (
+          <Card key={video.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+            <div className="relative">
+              <img
+                src={getVideoThumbnail(video)}
+                alt={video.title}
+                className="w-full h-48 object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '/placeholder.svg';
+                }}
+              />
+              <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
+                <Button
+                  size="lg"
+                  className="bg-white/20 hover:bg-white/30 text-white border-white/50"
+                  onClick={() => openVideo(video)}
+                >
+                  <Play className="h-6 w-6 mr-2" />
+                  مشاهدة
+                </Button>
+              </div>
+            </div>
+            
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg leading-7 line-clamp-2">
+                {video.title}
+              </CardTitle>
+              {video.description && (
+                <p className="text-sm text-muted-foreground line-clamp-2">
+                  {video.description}
+                </p>
+              )}
+            </CardHeader>
+
+            <CardContent className="space-y-3">
+              <div className="flex flex-wrap gap-2">
+                <Badge variant="secondary" className="text-xs">
+                  {getSourceTypeLabel(video.source_type)}
+                </Badge>
+                {video.category && (
+                  <Badge variant="outline" className="text-xs">
+                    {video.category}
+                  </Badge>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between text-sm text-muted-foreground">
+                <div className="flex items-center gap-1">
+                  <Calendar className="h-4 w-4" />
+                  {formatDate(video.created_at)}
+                </div>
+                {video.duration && (
+                  <div className="flex items-center gap-1">
+                    <Eye className="h-4 w-4" />
+                    {video.duration}
+                  </div>
+                )}
+              </div>
+
+              <Button 
+                className="w-full" 
+                onClick={() => openVideo(video)}
+              >
+                <Play className="h-4 w-4 mr-2" />
+                مشاهدة الفيديو
+              </Button>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -176,7 +280,7 @@ const Grade10VideoViewer: React.FC<Grade10VideoViewerProps> = ({ videos, loading
         <div>
           <h2 className="text-2xl font-bold">فيديوهات الصف العاشر</h2>
           <p className="text-muted-foreground">
-            {filteredVideos.length} من {videos.length} فيديو
+            {videos.length} فيديو مجموع
           </p>
         </div>
         <div className="relative w-full md:w-80">
@@ -190,93 +294,27 @@ const Grade10VideoViewer: React.FC<Grade10VideoViewerProps> = ({ videos, loading
         </div>
       </div>
 
-      {/* Videos Grid */}
-      {filteredVideos.length === 0 ? (
-        <div className="text-center py-12">
-          <Video className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2">
-            {searchTerm ? 'لا توجد نتائج' : 'لا توجد فيديوهات'}
-          </h3>
-          <p className="text-muted-foreground">
-            {searchTerm 
-              ? 'جرب البحث بمصطلحات مختلفة'
-              : 'لم يتم إضافة أي فيديوهات للصف العاشر بعد'
-            }
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredVideos.map((video) => (
-            <Card key={video.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-              <div className="relative">
-                <img
-                  src={getVideoThumbnail(video)}
-                  alt={video.title}
-                  className="w-full h-48 object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/placeholder.svg';
-                  }}
-                />
-                <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <Button
-                    size="lg"
-                    className="bg-white/20 hover:bg-white/30 text-white border-white/50"
-                    onClick={() => openVideo(video)}
-                  >
-                    <Play className="h-6 w-6 mr-2" />
-                    مشاهدة
-                  </Button>
-                </div>
-              </div>
-              
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg leading-7 line-clamp-2">
-                  {video.title}
-                </CardTitle>
-                {video.description && (
-                  <p className="text-sm text-muted-foreground line-clamp-2">
-                    {video.description}
-                  </p>
-                )}
-              </CardHeader>
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="educational_explanations" className="flex items-center gap-2">
+            <BookOpen className="h-4 w-4" />
+            شروحات تعليمية ({educationalVideos.length})
+          </TabsTrigger>
+          <TabsTrigger value="windows_basics" className="flex items-center gap-2">
+            <Monitor className="h-4 w-4" />
+            أساسيات الويندوز ({windowsBasicsVideos.length})
+          </TabsTrigger>
+        </TabsList>
 
-              <CardContent className="space-y-3">
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="secondary" className="text-xs">
-                    {getSourceTypeLabel(video.source_type)}
-                  </Badge>
-                  {video.category && (
-                    <Badge variant="outline" className="text-xs">
-                      {video.category}
-                    </Badge>
-                  )}
-                </div>
+        <TabsContent value="educational_explanations" className="mt-6">
+          {renderVideoGrid(educationalVideos, 'شروحات تعليمية')}
+        </TabsContent>
 
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <Calendar className="h-4 w-4" />
-                    {formatDate(video.created_at)}
-                  </div>
-                  {video.duration && (
-                    <div className="flex items-center gap-1">
-                      <Eye className="h-4 w-4" />
-                      {video.duration}
-                    </div>
-                  )}
-                </div>
-
-                <Button 
-                  className="w-full" 
-                  onClick={() => openVideo(video)}
-                >
-                  <Play className="h-4 w-4 mr-2" />
-                  مشاهدة الفيديو
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+        <TabsContent value="windows_basics" className="mt-6">
+          {renderVideoGrid(windowsBasicsVideos, 'أساسيات الويندوز')}
+        </TabsContent>
+      </Tabs>
 
       {/* Video Modal */}
       <Dialog open={isVideoModalOpen} onOpenChange={setIsVideoModalOpen}>
