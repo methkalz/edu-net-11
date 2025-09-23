@@ -18,6 +18,21 @@ interface LessonViewerProps {
     content?: string;
     video_url?: string;
     duration?: number;
+    topic?: {
+      id: string;
+      title: string;
+      section?: {
+        id: string;
+        title: string;
+      };
+    };
+    media?: Array<{
+      id: string;
+      media_type: string;
+      media_url: string;
+      media_title: string;
+      order_index: number;
+    }>;
   };
   onProgress: (progress: number, studyTime: number) => void;
   onComplete: () => void;
@@ -123,6 +138,17 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
               {lesson.description && (
                 <p className="text-sm text-muted-foreground">{lesson.description}</p>
               )}
+              {lesson.topic && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  {lesson.topic.section && (
+                    <>
+                      <span>{lesson.topic.section.title}</span>
+                      <span>•</span>
+                    </>
+                  )}
+                  <span>{lesson.topic.title}</span>
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-2">
               {isCompleted && (
@@ -149,6 +175,54 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
                 title={lesson.title}
               />
             </div>
+          )}
+
+          {/* Media Gallery */}
+          {lesson.media && lesson.media.length > 0 && (
+            <Card>
+              <CardContent className="p-4">
+                <h3 className="font-semibold mb-3">الوسائط المرفقة</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {lesson.media
+                    .sort((a, b) => a.order_index - b.order_index)
+                    .map((media) => (
+                      <div key={media.id} className="border rounded-lg p-3">
+                        <div className="flex items-center gap-2 mb-2">
+                          {media.media_type === 'video' && <Play className="w-4 h-4 text-blue-500" />}
+                          {media.media_type === 'image' && <BookOpen className="w-4 h-4 text-green-500" />}
+                          <span className="font-medium text-sm">{media.media_title}</span>
+                        </div>
+                        {media.media_type === 'video' && (
+                          <div className="bg-black rounded overflow-hidden">
+                            <iframe
+                              src={media.media_url}
+                              className="w-full aspect-video"
+                              allowFullScreen
+                              title={media.media_title}
+                            />
+                          </div>
+                        )}
+                        {media.media_type === 'image' && (
+                          <img
+                            src={media.media_url}
+                            alt={media.media_title}
+                            className="w-full rounded border"
+                          />
+                        )}
+                        {media.media_type === 'document' && (
+                          <div className="text-center p-4 bg-muted rounded">
+                            <Button variant="outline" size="sm" asChild>
+                              <a href={media.media_url} target="_blank" rel="noopener noreferrer">
+                                عرض المستند
+                              </a>
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                </div>
+              </CardContent>
+            </Card>
           )}
 
           {/* Lesson Content */}

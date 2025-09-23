@@ -19,6 +19,9 @@ export interface StudentContentItem {
   is_active: boolean;
   order_index: number;
   created_at: string;
+  content?: string; // For lessons
+  topic?: any; // For grade 11 lessons
+  media?: any[]; // For grade 11 lesson media
   progress?: {
     progress_percentage: number;
     completed_at?: string;
@@ -140,17 +143,32 @@ export const useStudentContent = () => {
     }
 
     try {
-      // Fetch lessons for grade 11
+      // Fetch lessons for grade 11 with hierarchical structure
       if (grade === '11') {
         const { data: lessonData, error: lessonError } = await (supabase as any)
           .from('grade11_lessons')
-          .select('id, title, description, is_active, order_index, created_at')
-          .eq('grade_level', grade)
+          .select(`
+            id, title, description, content, is_active, order_index, created_at,
+            topic:grade11_topics(
+              id, title,
+              section:grade11_sections(id, title)
+            ),
+            media:grade11_lesson_media(
+              id, media_type, media_url, media_title, order_index
+            )
+          `)
           .eq('is_active', true)
           .order('order_index', { ascending: true });
 
         if (!lessonError && lessonData) {
-          lessons = lessonData.map((item: any) => mapToContentItem(item, 'lesson', grade));
+          lessons = lessonData.map((item: any) => {
+            const mappedItem = mapToContentItem(item, 'lesson', grade);
+            // Add additional lesson-specific data
+            mappedItem.content = item.content || '';
+            mappedItem.topic = item.topic;
+            mappedItem.media = item.media || [];
+            return mappedItem;
+          });
         }
       }
       
