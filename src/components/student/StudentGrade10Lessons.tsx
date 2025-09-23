@@ -22,9 +22,11 @@ import {
   Search,
   Target,
   PlayCircle,
-  Calendar
+  Calendar,
+  Maximize2
 } from 'lucide-react';
-import { useStudentGrade10Lessons, Grade10LessonWithMedia } from '@/hooks/useStudentGrade10Lessons';
+import { useStudentGrade10Lessons, Grade10LessonWithMedia, Grade10LessonMedia } from '@/hooks/useStudentGrade10Lessons';
+import Grade10MediaPreview from '@/components/content/Grade10MediaPreview';
 
 export const StudentGrade10Lessons: React.FC = () => {
   const { sections, loading, error, getContentStats } = useStudentGrade10Lessons();
@@ -32,6 +34,7 @@ export const StudentGrade10Lessons: React.FC = () => {
   const [openTopics, setOpenTopics] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLesson, setSelectedLesson] = useState<Grade10LessonWithMedia | null>(null);
+  const [previewMedia, setPreviewMedia] = useState<Grade10LessonMedia | null>(null);
   const [activeTab, setActiveTab] = useState('communication');
 
   const stats = getContentStats();
@@ -54,8 +57,52 @@ export const StudentGrade10Lessons: React.FC = () => {
     );
   };
 
-  // Filter sections for communication basics
+  // Filter sections for communication basics (exclude computer composition topics)
   const communicationSections = (sections || []).filter(section => {
+    // Exclude sections or topics related to computer composition
+    const isComputerTopic = section.title.toLowerCase().includes('تركيبة الحاسوب') ||
+                           section.title.toLowerCase().includes('القطع') ||
+                           section.description?.toLowerCase().includes('تركيبة الحاسوب') ||
+                           section.description?.toLowerCase().includes('القطع');
+    
+    if (isComputerTopic) return false;
+    
+    if (!searchQuery) return true;
+    
+    const query = searchQuery.toLowerCase();
+    return (
+      section.title.toLowerCase().includes(query) ||
+      section.description?.toLowerCase().includes(query) ||
+      section.topics?.some(topic => {
+        // Also exclude computer composition topics from search
+        const isTopicComputer = topic.title.toLowerCase().includes('تركيبة الحاسوب') ||
+                              topic.title.toLowerCase().includes('القطع') ||
+                              topic.content?.toLowerCase().includes('تركيبة الحاسوب') ||
+                              topic.content?.toLowerCase().includes('القطع');
+        
+        if (isTopicComputer) return false;
+        
+        return (
+          topic.title.toLowerCase().includes(query) ||
+          topic.content?.toLowerCase().includes(query) ||
+          topic.lessons?.some(lesson => 
+            lesson.title.toLowerCase().includes(query) ||
+            lesson.content?.toLowerCase().includes(query)
+          )
+        );
+      })
+    );
+  });
+
+  // For computer composition tab - only sections/topics related to computer composition
+  const computerSections = (sections || []).filter(section => {
+    const isComputerTopic = section.title.toLowerCase().includes('تركيبة الحاسوب') ||
+                           section.title.toLowerCase().includes('القطع') ||
+                           section.description?.toLowerCase().includes('تركيبة الحاسوب') ||
+                           section.description?.toLowerCase().includes('القطع');
+    
+    if (!isComputerTopic) return false;
+    
     if (!searchQuery) return true;
     
     const query = searchQuery.toLowerCase();
@@ -72,9 +119,6 @@ export const StudentGrade10Lessons: React.FC = () => {
       )
     );
   });
-
-  // For computer composition tab (placeholder for future development)
-  const computerSections = [];
 
   const getMediaIcon = (mediaType: string) => {
     switch (mediaType) {
@@ -368,15 +412,135 @@ export const StudentGrade10Lessons: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="computer" className="space-y-4 mt-6">
-          <Card className="text-center p-8">
-            <div className="space-y-4">
-              <Monitor className="w-16 h-16 mx-auto text-muted-foreground" />
-              <h3 className="text-lg font-semibold">قريباً</h3>
-              <p className="text-muted-foreground">
-                محتوى تركيبة الحاسوب قيد التطوير وسيكون متاحاً قريباً
-              </p>
-            </div>
-          </Card>
+          {computerSections.length === 0 ? (
+            <Card className="text-center p-8">
+              <div className="space-y-4">
+                <Monitor className="w-16 h-16 mx-auto text-muted-foreground" />
+                <h3 className="text-lg font-semibold">قريباً</h3>
+                <p className="text-muted-foreground">
+                  محتوى تركيبة الحاسوب قيد التطوير وسيكون متاحاً قريباً
+                </p>
+              </div>
+            </Card>
+          ) : (
+            computerSections.map((section) => (
+              <Card key={section.id} className="overflow-hidden">
+                <Collapsible 
+                  open={openSections.includes(section.id)}
+                  onOpenChange={() => toggleSection(section.id)}
+                >
+                  <CollapsibleTrigger asChild>
+                    <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
+                       <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
+                            <Monitor className="w-6 h-6 text-white" />
+                          </div>
+                          <div className="text-left">
+                            <CardTitle className="text-xl font-bold">{section.title}</CardTitle>
+                            {section.description && (
+                              <p className="text-base text-muted-foreground mt-2">
+                                {section.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Badge variant="secondary" className="text-sm px-3 py-1">
+                            {section.topics.length} موضوع
+                          </Badge>
+                          {openSections.includes(section.id) ? (
+                            <ChevronDown className="w-6 h-6" />
+                          ) : (
+                            <ChevronRight className="w-6 h-6" />
+                          )}
+                        </div>
+                      </div>
+                    </CardHeader>
+                  </CollapsibleTrigger>
+
+                  <CollapsibleContent>
+                    <CardContent className="pt-0">
+                      <div className="space-y-3">
+                        {section.topics.map((topic) => (
+                          <Card key={topic.id} className="ml-4">
+                            <Collapsible
+                              open={openTopics.includes(topic.id)}
+                              onOpenChange={() => toggleTopic(topic.id)}
+                            >
+                              <CollapsibleTrigger asChild>
+                                <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors py-4">
+                                   <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                      <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
+                                        <Monitor className="w-5 h-5 text-white" />
+                                      </div>
+                                      <div className="text-left">
+                                        <h4 className="font-semibold text-lg">{topic.title}</h4>
+                                        {topic.content && (
+                                          <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                                            {topic.content}
+                                          </p>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                      <Badge variant="outline" className="text-sm px-3 py-1">
+                                        {topic.lessons.length} درس
+                                      </Badge>
+                                      {openTopics.includes(topic.id) ? (
+                                        <ChevronDown className="w-5 h-5" />
+                                      ) : (
+                                        <ChevronRight className="w-5 h-5" />
+                                      )}
+                                    </div>
+                                  </div>
+                                </CardHeader>
+                              </CollapsibleTrigger>
+
+                              <CollapsibleContent>
+                                <CardContent className="pt-0">
+                                  <div className="space-y-2">
+                                    {topic.lessons.map((lesson) => (
+                                       <div
+                                        key={lesson.id}
+                                        className="flex items-center justify-between p-4 bg-muted/30 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer"
+                                        onClick={() => setSelectedLesson(lesson)}
+                                      >
+                                        <div className="flex items-center gap-4">
+                                          <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                                            <BookOpen className="w-4 h-4 text-white" />
+                                          </div>
+                                          <div>
+                                            <h5 className="text-base font-semibold">{lesson.title}</h5>
+                                            {lesson.media && lesson.media.length > 0 && (
+                                              <div className="flex items-center gap-2 mt-1">
+                                                <PlayCircle className="w-4 h-4 text-muted-foreground" />
+                                                <span className="text-sm text-muted-foreground">
+                                                  {lesson.media.length} ملف وسائط
+                                                </span>
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+                                        <Button variant="outline" size="sm" className="px-4">
+                                          عرض
+                                        </Button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </CardContent>
+                              </CollapsibleContent>
+                            </Collapsible>
+                          </Card>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </CollapsibleContent>
+                </Collapsible>
+              </Card>
+            ))
+          )}
         </TabsContent>
       </Tabs>
 
@@ -406,7 +570,7 @@ export const StudentGrade10Lessons: React.FC = () => {
                   <h4 className="text-lg font-semibold">الملفات المرفقة</h4>
                   <div className="grid gap-4 md:grid-cols-2">
                     {selectedLesson.media.map((media) => (
-                      <Card key={media.id} className="p-4">
+                      <Card key={media.id} className="p-4 hover:shadow-md transition-shadow cursor-pointer" onClick={() => setPreviewMedia(media)}>
                         <div className="flex items-center gap-3">
                           <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${getMediaColor(media.media_type)}`}>
                             {getMediaIcon(media.media_type)}
@@ -416,15 +580,12 @@ export const StudentGrade10Lessons: React.FC = () => {
                             <p className="text-sm text-muted-foreground">
                               {media.media_type === 'video' ? 'فيديو' : 
                                media.media_type === 'image' ? 'صورة' :
-                               media.media_type === 'code' ? 'كود' : 'ملف'}
+                               media.media_type === 'code' ? 'كود' : 
+                               media.media_type === 'lottie' ? 'أنيميشن' : 'ملف'}
                             </p>
                           </div>
                           <Button variant="outline" size="sm">
-                            {media.media_type === 'video' ? (
-                              <Play className="w-4 h-4" />
-                            ) : (
-                              <Download className="w-4 h-4" />
-                            )}
+                            <Maximize2 className="w-4 h-4" />
                           </Button>
                         </div>
                       </Card>
@@ -436,6 +597,14 @@ export const StudentGrade10Lessons: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Media Preview Modal */}
+      {previewMedia && (
+        <Grade10MediaPreview
+          media={previewMedia}
+          onClose={() => setPreviewMedia(null)}
+        />
+      )}
     </div>
   );
 };
