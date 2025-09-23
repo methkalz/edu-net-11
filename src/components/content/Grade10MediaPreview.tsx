@@ -17,7 +17,7 @@ const Grade10MediaPreview: React.FC<Grade10MediaPreviewProps> = ({ media, onClos
   // Get speed setting for Lottie from metadata
   const speedSetting = media.metadata?.speed || 1;
   
-  // Apply speed when it changes
+  // Apply speed when it changes - updated to match Grade 11 logic
   useEffect(() => {
     if (lottieRef.current && speedSetting !== undefined && media.media_type === 'lottie') {
       console.log('Applying speed to Grade 10 media preview:', speedSetting);
@@ -112,18 +112,45 @@ const Grade10MediaPreview: React.FC<Grade10MediaPreviewProps> = ({ media, onClos
         );
 
       case 'lottie':
+        console.log('=== GRADE 10 LOTTIE DEBUG ===');
+        console.log('Media metadata:', media.metadata);
+        
         try {
-          const animationData = typeof media.metadata?.animation_data === 'string' 
-            ? JSON.parse(media.metadata.animation_data)
-            : media.metadata?.animation_data;
+          let animationData = null;
           
-          if (!animationData) {
+          // Try different ways to get animation data - same logic as Grade 11
+          if (media.metadata?.animation_data) {
+            console.log('Using metadata.animation_data');
+            animationData = typeof media.metadata.animation_data === 'string' 
+              ? JSON.parse(media.metadata.animation_data) 
+              : media.metadata.animation_data;
+          } else if (media.metadata?.lottie_data) {
+            console.log('Using metadata.lottie_data');
+            animationData = typeof media.metadata.lottie_data === 'string' 
+              ? JSON.parse(media.metadata.lottie_data) 
+              : media.metadata.lottie_data;
+          } else if (media.file_path && media.file_path.includes('.json')) {
+            console.log('Lottie file path detected, but no animation data in metadata');
             return (
-              <div className="text-center p-8">
-                <p className="text-muted-foreground">لا يمكن تحميل بيانات الأنيميشن</p>
+              <div className="relative rounded-lg bg-amber-50 p-4 text-center">
+                <Play className="h-8 w-8 mx-auto mb-2 text-amber-500" />
+                <p className="text-sm text-amber-700">يتطلب تحميل ملف اللوتي من الرابط</p>
               </div>
             );
           }
+
+          console.log('Final animation data:', animationData);
+          
+          if (!animationData || Object.keys(animationData).length === 0) {
+            throw new Error('No valid animation data found');
+          }
+
+          // Use metadata speed as single source of truth, fallback to 1
+          const finalSpeedSetting = typeof media.metadata?.speed === 'number' ? media.metadata.speed : 1;
+          const loopSetting = typeof media.metadata?.loop === 'boolean' ? media.metadata.loop : true;
+          
+          console.log('Speed sources - metadata.speed:', media.metadata?.speed, 'final speedSetting:', finalSpeedSetting);
+          console.log('Loop setting:', loopSetting);
 
           return (
             <div className="relative rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center p-4">
@@ -131,7 +158,7 @@ const Grade10MediaPreview: React.FC<Grade10MediaPreviewProps> = ({ media, onClos
                 <Lottie
                   lottieRef={lottieRef}
                   animationData={animationData}
-                  loop={media.metadata?.loop !== false}
+                  loop={loopSetting}
                   autoplay={true}
                   style={{ width: '100%', height: '100%', maxWidth: '100%', maxHeight: '100%' }}
                   rendererSettings={{
@@ -139,9 +166,9 @@ const Grade10MediaPreview: React.FC<Grade10MediaPreviewProps> = ({ media, onClos
                   }}
                   onLoadedData={() => {
                     console.log('Grade 10 Lottie loaded successfully');
-                    if (lottieRef.current && speedSetting !== 1) {
-                      console.log('Setting speed on load:', speedSetting);
-                      lottieRef.current.setSpeed(speedSetting);
+                    if (lottieRef.current && finalSpeedSetting !== 1) {
+                      console.log('Setting speed on load:', finalSpeedSetting);
+                      lottieRef.current.setSpeed(finalSpeedSetting);
                     }
                   }}
                   onError={(error) => console.error('Grade 10 Lottie error:', error)}
@@ -150,10 +177,12 @@ const Grade10MediaPreview: React.FC<Grade10MediaPreviewProps> = ({ media, onClos
             </div>
           );
         } catch (error) {
-          console.error('Error parsing Lottie data:', error);
+          console.error('Grade 10 Lottie parsing error:', error);
           return (
-            <div className="text-center p-8">
-              <p className="text-red-500">خطأ في تحميل الأنيميشن</p>
+            <div className="relative rounded-lg bg-red-50 border border-red-200 p-4 text-center">
+              <Play className="h-8 w-8 mx-auto mb-2 text-red-400" />
+              <p className="text-sm text-red-600">خطأ في تحميل الرسوم المتحركة</p>
+              <p className="text-xs text-red-500 mt-1">تحقق من صحة ملف اللوتي</p>
             </div>
           );
         }

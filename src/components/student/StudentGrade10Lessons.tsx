@@ -375,12 +375,17 @@ export const StudentGrade10Lessons: React.FC = () => {
                                         className="flex items-center justify-between p-4 bg-muted/30 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer"
                                         onClick={() => setSelectedLesson(lesson)}
                                       >
-                                        <div className="flex items-center gap-4">
+                              <div className="flex items-center gap-4">
                                           <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
                                             <BookOpen className="w-4 h-4 text-white" />
                                           </div>
                                           <div>
                                             <h5 className="text-base font-semibold">{lesson.title}</h5>
+                                            {lesson.content && (
+                                              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                                                {lesson.content.substring(0, 100)}...
+                                              </p>
+                                            )}
                                             {lesson.media && lesson.media.length > 0 && (
                                               <div className="flex items-center gap-2 mt-1">
                                                 <PlayCircle className="w-4 h-4 text-muted-foreground" />
@@ -391,7 +396,7 @@ export const StudentGrade10Lessons: React.FC = () => {
                                             )}
                                           </div>
                                         </div>
-                                        <Button variant="outline" size="sm" className="px-4">
+                                        <Button variant="outline" size="sm" className="px-4 hover:bg-primary hover:text-primary-foreground transition-colors">
                                           عرض
                                         </Button>
                                       </div>
@@ -513,6 +518,11 @@ export const StudentGrade10Lessons: React.FC = () => {
                                           </div>
                                           <div>
                                             <h5 className="text-base font-semibold">{lesson.title}</h5>
+                                            {lesson.content && (
+                                              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                                                {lesson.content.substring(0, 100)}...
+                                              </p>
+                                            )}
                                             {lesson.media && lesson.media.length > 0 && (
                                               <div className="flex items-center gap-2 mt-1">
                                                 <PlayCircle className="w-4 h-4 text-muted-foreground" />
@@ -523,7 +533,7 @@ export const StudentGrade10Lessons: React.FC = () => {
                                             )}
                                           </div>
                                         </div>
-                                        <Button variant="outline" size="sm" className="px-4">
+                                        <Button variant="outline" size="sm" className="px-4 hover:bg-primary hover:text-primary-foreground transition-colors">
                                           عرض
                                         </Button>
                                       </div>
@@ -558,7 +568,7 @@ export const StudentGrade10Lessons: React.FC = () => {
               {/* Lesson Content */}
               {selectedLesson.content && (
                 <div className="prose prose-sm max-w-none">
-                  <div className="whitespace-pre-wrap text-muted-foreground">
+                  <div className="text-xl text-foreground/90 leading-9 whitespace-pre-wrap break-words max-w-full p-8 bg-gradient-to-r from-muted/30 to-muted/20 rounded-3xl border-2 border-border/30 shadow-sm">
                     {selectedLesson.content}
                   </div>
                 </div>
