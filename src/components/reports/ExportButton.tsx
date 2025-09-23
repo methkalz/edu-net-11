@@ -43,7 +43,11 @@ export const ExportButton: React.FC<ExportButtonProps> = ({ data, filename }) =>
       const values = Object.values(data).join(',');
       const csvContent = `${headers}\n${values}`;
       
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      // Add BOM for proper Arabic encoding support
+      const BOM = '\uFEFF';
+      const fullContent = BOM + csvContent;
+      
+      const blob = new Blob([fullContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
