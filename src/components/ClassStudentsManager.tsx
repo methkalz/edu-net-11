@@ -18,7 +18,12 @@ import {
   Check,
   AlertCircle,
   UserPlus,
-  Mail
+  Mail,
+  HelpCircle,
+  User,
+  AtSign,
+  Phone,
+  Lock
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
@@ -38,6 +43,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 interface Student {
   id: string;
@@ -106,6 +118,18 @@ export const ClassStudentsManager: React.FC<ClassStudentsManagerProps> = ({
   const [sendWelcomeEmail, setSendWelcomeEmail] = useState(true);
   const [sendWelcomeEmailBulk, setSendWelcomeEmailBulk] = useState(true);
   const [emailStatus, setEmailStatus] = useState<{[key: string]: 'sending' | 'sent' | 'failed'}>({});
+  
+  // Instructions dialog state
+  const [showInstructions, setShowInstructions] = useState(false);
+
+  // Show instructions dialog on first visit to import tab
+  useEffect(() => {
+    const hasSeenInstructions = localStorage.getItem('csv-instructions-seen');
+    if (!hasSeenInstructions) {
+      setShowInstructions(true);
+      localStorage.setItem('csv-instructions-seen', 'true');
+    }
+  }, []);
 
   useEffect(() => {
     loadStudents();
@@ -982,10 +1006,69 @@ export const ClassStudentsManager: React.FC<ClassStudentsManagerProps> = ({
                           حمل القالب الجاهز لملء بيانات الطلاب
                         </p>
                       </div>
-                      <Button variant="outline" onClick={downloadTemplate}>
-                        <Download className="h-4 w-4 mr-2" />
-                        تحميل القالب
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Dialog open={showInstructions} onOpenChange={setShowInstructions}>
+                          <DialogTrigger asChild>
+                            <Button variant="ghost" size="sm" className="p-2">
+                              <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-primary" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-md">
+                            <DialogHeader>
+                              <DialogTitle className="text-right flex items-center gap-2">
+                                <HelpCircle className="h-5 w-5 text-primary" />
+                                تعليمات ملء البيانات
+                              </DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4 text-right">
+                              <div className="space-y-3">
+                                <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-950 rounded-lg">
+                                  <User className="h-5 w-5 text-green-600 flex-shrink-0" />
+                                  <div>
+                                    <p className="font-medium text-green-800 dark:text-green-200">full_name</p>
+                                    <p className="text-sm text-green-600 dark:text-green-300">الاسم الكامل للطالب (مطلوب)</p>
+                                  </div>
+                                </div>
+                                
+                                <div className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
+                                  <AtSign className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                                  <div>
+                                    <p className="font-medium text-blue-800 dark:text-blue-200">email</p>
+                                    <p className="text-sm text-blue-600 dark:text-blue-300">البريد الإلكتروني (مطلوب)</p>
+                                  </div>
+                                </div>
+                                
+                                <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                                  <Phone className="h-5 w-5 text-gray-600 flex-shrink-0" />
+                                  <div>
+                                    <p className="font-medium text-gray-800 dark:text-gray-200">phone</p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">رقم الهاتف (اختياري)</p>
+                                  </div>
+                                </div>
+                                
+                                <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                                  <Lock className="h-5 w-5 text-gray-600 flex-shrink-0" />
+                                  <div>
+                                    <p className="font-medium text-gray-800 dark:text-gray-200">password</p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">كلمة المرور (اختياري - سيتم إنشاء كلمة مرور عشوائية إذا تركت فارغة)</p>
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              <div className="mt-6 p-3 bg-amber-50 dark:bg-amber-950 rounded-lg">
+                                <p className="text-sm text-amber-800 dark:text-amber-200 text-right">
+                                  💡 <strong>نصيحة:</strong> يرجى حذف التعليمات من الملف قبل رفعه للنظام
+                                </p>
+                              </div>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                        
+                        <Button variant="outline" onClick={downloadTemplate}>
+                          <Download className="h-4 w-4 mr-2" />
+                          تحميل القالب
+                        </Button>
+                      </div>
                     </div>
 
                     {/* Drag & Drop Area */}
