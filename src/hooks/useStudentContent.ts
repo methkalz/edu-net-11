@@ -12,6 +12,7 @@ export interface StudentContentItem {
   content_type: 'video' | 'document' | 'project' | 'lesson';
   grade_level: string;
   category?: string;
+  video_category?: string;
   file_path?: string;
   video_url?: string;
   thumbnail_url?: string;
@@ -47,6 +48,7 @@ const mapToContentItem = (item: any, contentType: 'video' | 'document' | 'projec
     content_type: contentType,
     grade_level: grade,
     category: String(item.category || ''),
+    video_category: String(item.video_category || ''),
     file_path: String(item.file_path || ''),
     video_url: String(item.video_url || ''),
     thumbnail_url: String(item.thumbnail_url || ''),
@@ -71,7 +73,7 @@ const fetchContentForGrade = async (grade: string, userId?: string): Promise<Gra
     
     let videoQuery = (supabase as any)
       .from(videoTable)
-      .select('id, title, description, video_url, thumbnail_url, duration, category, is_visible, is_active, order_index, created_at')
+      .select('id, title, description, video_url, thumbnail_url, duration, category, video_category, is_visible, is_active, order_index, created_at')
       .eq('is_active', true)
       .eq('is_visible', true)
       .order('order_index', { ascending: true });

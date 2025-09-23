@@ -421,186 +421,260 @@ export const StudentGradeContent: React.FC = () => {
 
         {contentTabs.map((tab) => (
           <TabsContent key={tab.id} value={tab.id} className="mt-8">
-            {/* Add Create Project Button for Grade 10 Projects Tab */}
-            {tab.id === 'projects' && assignedGrade === '10' && (
-              <div className="mb-6 flex justify-center">
-                <Dialog open={isCreateProjectDialogOpen} onOpenChange={setIsCreateProjectDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button className="gap-2" size="lg">
-                      <Plus className="h-5 w-5" />
-                      إنشاء ميني بروجكت جديد
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-[500px]">
-                    <DialogHeader>
-                      <DialogTitle>إنشاء ميني بروجكت جديد</DialogTitle>
-                    </DialogHeader>
-                    <form onSubmit={handleCreateMiniProject} className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="title">عنوان المشروع *</Label>
-                        <Input
-                          id="title"
-                          value={projectFormData.title}
-                          onChange={(e) => setProjectFormData(prev => ({ ...prev, title: e.target.value }))}
-                          placeholder="مثال: تقرير عن الشبكات الحاسوبية"
-                          required
-                        />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="description">وصف المشروع</Label>
-                        <Textarea
-                          id="description"
-                          value={projectFormData.description}
-                          onChange={(e) => setProjectFormData(prev => ({ ...prev, description: e.target.value }))}
-                          placeholder="وصف مختصر عن محتوى المشروع وأهدافه"
-                          rows={3}
-                        />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="due_date">موعد التسليم (اختياري)</Label>
-                        <Input
-                          id="due_date"
-                          type="datetime-local"
-                          value={projectFormData.due_date}
-                          onChange={(e) => setProjectFormData(prev => ({ ...prev, due_date: e.target.value }))}
-                        />
-                      </div>
-                      
-                      <div className="flex gap-2 pt-4">
-                        <Button type="submit" className="flex-1">إنشاء المشروع</Button>
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          onClick={() => setIsCreateProjectDialogOpen(false)}
-                        >
-                          إلغاء
-                        </Button>
-                      </div>
-                    </form>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            )}
+            {/* Special handling for Grade 10 Videos with sub-tabs */}
+            {tab.id === 'videos' && assignedGrade === '10' ? (
+              <div className="space-y-6">
+                <Tabs defaultValue="educational_explanations" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto">
+                    <TabsTrigger value="educational_explanations" className="flex items-center gap-2">
+                      <BookOpen className="w-4 h-4" />
+                      شروحات تعليمية
+                      <Badge variant="secondary" className="text-xs bg-blue-500/10 text-blue-600">
+                        {tab.items.filter((item: any) => item.video_category === 'educational_explanations').length}
+                      </Badge>
+                    </TabsTrigger>
+                    <TabsTrigger value="windows_basics" className="flex items-center gap-2">
+                      <Video className="w-4 h-4" />
+                      أساسيات الويندوز
+                      <Badge variant="secondary" className="text-xs bg-green-500/10 text-green-600">
+                        {tab.items.filter((item: any) => item.video_category === 'windows_basics').length}
+                      </Badge>
+                    </TabsTrigger>
+                  </TabsList>
 
-            {/* Add Create Final Project Button for Grade 12 Projects Tab */}
-            {tab.id === 'projects' && assignedGrade === '12' && (
-              <div className="mb-6 flex justify-center">
-                <Dialog open={isCreateFinalProjectDialogOpen} onOpenChange={setIsCreateFinalProjectDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button className="gap-2" size="lg" variant="default">
-                      <Plus className="h-5 w-5" />
-                      إنشاء مشروع نهائي جديد
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-[500px]">
-                    <DialogHeader>
-                      <DialogTitle>إنشاء مشروع نهائي جديد</DialogTitle>
-                    </DialogHeader>
-                    <form onSubmit={handleCreateFinalProject} className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="final-title">عنوان المشروع النهائي *</Label>
-                        <Input
-                          id="final-title"
-                          value={finalProjectFormData.title}
-                          onChange={(e) => setFinalProjectFormData(prev => ({ ...prev, title: e.target.value }))}
-                          placeholder="مثال: نظام إدارة قواعد البيانات"
-                          required
-                        />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="final-description">وصف المشروع</Label>
-                        <Textarea
-                          id="final-description"
-                          value={finalProjectFormData.description}
-                          onChange={(e) => setFinalProjectFormData(prev => ({ ...prev, description: e.target.value }))}
-                          placeholder="وصف شامل عن المشروع النهائي وأهدافه ومتطلباته"
-                          rows={3}
-                        />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="final-due-date">موعد التسليم (اختياري)</Label>
-                        <Input
-                          id="final-due-date"
-                          type="datetime-local"
-                          value={finalProjectFormData.due_date}
-                          onChange={(e) => setFinalProjectFormData(prev => ({ ...prev, due_date: e.target.value }))}
-                        />
-                      </div>
-                      
-                      <div className="flex gap-2 pt-4">
-                        <Button type="submit" className="flex-1">إنشاء المشروع النهائي</Button>
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          onClick={() => setIsCreateFinalProjectDialogOpen(false)}
-                        >
-                          إلغاء
-                        </Button>
-                      </div>
-                    </form>
-                  </DialogContent>
-                </Dialog>
+                  <TabsContent value="educational_explanations" className="mt-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {tab.items.filter((item: any) => item.video_category === 'educational_explanations').length > 0 ? (
+                        tab.items
+                          .filter((item: any) => item.video_category === 'educational_explanations')
+                          .map((item: any) => (
+                            <ContentCard
+                              key={item.id}
+                              item={item}
+                              type="video"
+                              icon={Video}
+                              color={tab.color}
+                            />
+                          ))
+                      ) : (
+                        <div className="col-span-full text-center py-12">
+                          <BookOpen className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+                          <h3 className="text-lg font-semibold mb-2">لا توجد شروحات تعليمية</h3>
+                          <p className="text-muted-foreground">لم يتم رفع أي شروحات تعليمية بعد</p>
+                        </div>
+                      )}
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="windows_basics" className="mt-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {tab.items.filter((item: any) => item.video_category === 'windows_basics').length > 0 ? (
+                        tab.items
+                          .filter((item: any) => item.video_category === 'windows_basics')
+                          .map((item: any) => (
+                            <ContentCard
+                              key={item.id}
+                              item={item}
+                              type="video"
+                              icon={Video}
+                              color={tab.color}
+                            />
+                          ))
+                      ) : (
+                        <div className="col-span-full text-center py-12">
+                          <Video className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+                          <h3 className="text-lg font-semibold mb-2">لا توجد فيديوهات أساسيات الويندوز</h3>
+                          <p className="text-muted-foreground">لم يتم رفع أي فيديوهات لأساسيات الويندوز بعد</p>
+                        </div>
+                      )}
+                    </div>
+                  </TabsContent>
+                </Tabs>
               </div>
-            )}
-            
-            {tab.items.length === 0 ? (
-              <Card className="text-center p-12 bg-muted/20">
-                <div className="space-y-4">
-                  <div className="w-16 h-16 mx-auto bg-muted rounded-full flex items-center justify-center">
-                    <tab.icon className="w-8 h-8 text-muted-foreground" />
-                  </div>
-                  <h3 className="text-lg font-medium text-muted-foreground">
-                    {tab.id === 'projects' && assignedGrade === '10' 
-                      ? 'لا يوجد مشاريع مصغرة' 
-                      : tab.id === 'projects' && assignedGrade === '12'
-                      ? 'لا يوجد مشاريع نهائية'
-                      : `لا يوجد ${tab.label} متاح`
-                    }
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    {tab.id === 'projects' && assignedGrade === '10'
-                      ? 'ابدأ بإنشاء مشروعك الأول باستخدام الزر أعلاه'
-                      : tab.id === 'projects' && assignedGrade === '12'
-                      ? 'ابدأ بإنشاء مشروعك النهائي باستخدام الزر أعلاه'
-                      : `لم يتم إضافة أي ${tab.label} للصف ${assignedGrade} بعد`
-                    }
-                  </p>
-                  {tab.id === 'projects' && assignedGrade === '10' && (
-                    <Button 
-                      className="gap-2 mt-4"
-                      onClick={() => setIsCreateProjectDialogOpen(true)}
-                    >
-                      <Plus className="h-4 w-4" />
-                      إنشاء مشروع جديد
-                    </Button>
-                  )}
-                  {tab.id === 'projects' && assignedGrade === '12' && (
-                    <Button 
-                      className="gap-2 mt-4"
-                      onClick={() => setIsCreateFinalProjectDialogOpen(true)}
-                    >
-                      <Plus className="h-4 w-4" />
-                      إنشاء مشروع نهائي
-                    </Button>
-                  )}
-                </div>
-              </Card>
             ) : (
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {tab.items.map((item: any) => (
-                  <ContentCard
-                    key={item.id}
-                    item={item}
-                    type={tab.id.slice(0, -1) as any}
-                    icon={tab.icon}
-                    color={tab.color}
-                  />
-                ))}
-              </div>
+              <>
+                {/* Add Create Project Button for Grade 10 Projects Tab */}
+                {tab.id === 'projects' && assignedGrade === '10' && (
+                  <div className="mb-6 flex justify-center">
+                    <Dialog open={isCreateProjectDialogOpen} onOpenChange={setIsCreateProjectDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button className="gap-2" size="lg">
+                          <Plus className="h-5 w-5" />
+                          إنشاء ميني بروجكت جديد
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[500px]">
+                        <DialogHeader>
+                          <DialogTitle>إنشاء ميني بروجكت جديد</DialogTitle>
+                        </DialogHeader>
+                        <form onSubmit={handleCreateMiniProject} className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="title">عنوان المشروع *</Label>
+                            <Input
+                              id="title"
+                              value={projectFormData.title}
+                              onChange={(e) => setProjectFormData(prev => ({ ...prev, title: e.target.value }))}
+                              placeholder="مثال: تقرير عن الشبكات الحاسوبية"
+                              required
+                            />
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label htmlFor="description">وصف المشروع</Label>
+                            <Textarea
+                              id="description"
+                              value={projectFormData.description}
+                              onChange={(e) => setProjectFormData(prev => ({ ...prev, description: e.target.value }))}
+                              placeholder="وصف مختصر عن محتوى المشروع وأهدافه"
+                              rows={3}
+                            />
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label htmlFor="due_date">موعد التسليم (اختياري)</Label>
+                            <Input
+                              id="due_date"
+                              type="datetime-local"
+                              value={projectFormData.due_date}
+                              onChange={(e) => setProjectFormData(prev => ({ ...prev, due_date: e.target.value }))}
+                            />
+                          </div>
+                          
+                          <div className="flex gap-2 pt-4">
+                            <Button type="submit" className="flex-1">إنشاء المشروع</Button>
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              onClick={() => setIsCreateProjectDialogOpen(false)}
+                            >
+                              إلغاء
+                            </Button>
+                          </div>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                )}
+
+                {/* Add Create Final Project Button for Grade 12 Projects Tab */}
+                {tab.id === 'projects' && assignedGrade === '12' && (
+                  <div className="mb-6 flex justify-center">
+                    <Dialog open={isCreateFinalProjectDialogOpen} onOpenChange={setIsCreateFinalProjectDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button className="gap-2" size="lg" variant="default">
+                          <Plus className="h-5 w-5" />
+                          إنشاء مشروع نهائي جديد
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[500px]">
+                        <DialogHeader>
+                          <DialogTitle>إنشاء مشروع نهائي جديد</DialogTitle>
+                        </DialogHeader>
+                        <form onSubmit={handleCreateFinalProject} className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="final-title">عنوان المشروع النهائي *</Label>
+                            <Input
+                              id="final-title"
+                              value={finalProjectFormData.title}
+                              onChange={(e) => setFinalProjectFormData(prev => ({ ...prev, title: e.target.value }))}
+                              placeholder="مثال: نظام إدارة قواعد البيانات"
+                              required
+                            />
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label htmlFor="final-description">وصف المشروع</Label>
+                            <Textarea
+                              id="final-description"
+                              value={finalProjectFormData.description}
+                              onChange={(e) => setFinalProjectFormData(prev => ({ ...prev, description: e.target.value }))}
+                              placeholder="وصف شامل عن المشروع النهائي وأهدافه ومتطلباته"
+                              rows={3}
+                            />
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label htmlFor="final-due-date">موعد التسليم (اختياري)</Label>
+                            <Input
+                              id="final-due-date"
+                              type="datetime-local"
+                              value={finalProjectFormData.due_date}
+                              onChange={(e) => setFinalProjectFormData(prev => ({ ...prev, due_date: e.target.value }))}
+                            />
+                          </div>
+                          
+                          <div className="flex gap-2 pt-4">
+                            <Button type="submit" className="flex-1">إنشاء المشروع النهائي</Button>
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              onClick={() => setIsCreateFinalProjectDialogOpen(false)}
+                            >
+                              إلغاء
+                            </Button>
+                          </div>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                )}
+                
+                {tab.items.length === 0 ? (
+                  <Card className="text-center p-12 bg-muted/20">
+                    <div className="space-y-4">
+                      <div className="w-16 h-16 mx-auto bg-muted rounded-full flex items-center justify-center">
+                        <tab.icon className="w-8 h-8 text-muted-foreground" />
+                      </div>
+                      <h3 className="text-lg font-medium text-muted-foreground">
+                        {tab.id === 'projects' && assignedGrade === '10' 
+                          ? 'لا يوجد مشاريع مصغرة' 
+                          : tab.id === 'projects' && assignedGrade === '12'
+                          ? 'لا يوجد مشاريع نهائية'
+                          : `لا يوجد ${tab.label} متاح`
+                        }
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {tab.id === 'projects' && assignedGrade === '10'
+                          ? 'ابدأ بإنشاء مشروعك الأول باستخدام الزر أعلاه'
+                          : tab.id === 'projects' && assignedGrade === '12'
+                          ? 'ابدأ بإنشاء مشروعك النهائي باستخدام الزر أعلاه'
+                          : `لم يتم إضافة أي ${tab.label} للصف ${assignedGrade} بعد`
+                        }
+                      </p>
+                      {tab.id === 'projects' && assignedGrade === '10' && (
+                        <Button 
+                          className="gap-2 mt-4"
+                          onClick={() => setIsCreateProjectDialogOpen(true)}
+                        >
+                          <Plus className="h-4 w-4" />
+                          إنشاء مشروع جديد
+                        </Button>
+                      )}
+                      {tab.id === 'projects' && assignedGrade === '12' && (
+                        <Button 
+                          className="gap-2 mt-4"
+                          onClick={() => setIsCreateFinalProjectDialogOpen(true)}
+                        >
+                          <Plus className="h-4 w-4" />
+                          إنشاء مشروع نهائي
+                        </Button>
+                      )}
+                    </div>
+                  </Card>
+                ) : (
+                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {tab.items.map((item: any) => (
+                      <ContentCard
+                        key={item.id}
+                        item={item}
+                        type={tab.id.slice(0, -1) as any}
+                        icon={tab.icon}
+                        color={tab.color}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </TabsContent>
         ))}
