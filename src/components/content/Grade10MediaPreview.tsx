@@ -248,7 +248,7 @@ const Grade10MediaPreview: React.FC<Grade10MediaPreviewProps> = ({ media, onClos
           <Button variant="outline" onClick={onClose}>
             إغلاق
           </Button>
-          {media.file_path && (
+          {media.file_path && media.media_type !== 'lottie' && (
             <Button 
               variant="default"
               onClick={() => window.open(media.file_path, '_blank')}
