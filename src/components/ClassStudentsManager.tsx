@@ -698,14 +698,38 @@ export const ClassStudentsManager: React.FC<ClassStudentsManagerProps> = ({
   };
 
   const downloadTemplate = () => {
-    const csvContent = 'full_name,email,phone,password\nمحمد أحمد,mohamed@example.com,+972501234567,\nفاطمة علي,fatima@example.com,+972507654321,';
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    // Create CSV content with proper Arabic support
+    const csvHeaders = 'full_name,email,phone,password';
+    const csvInstructions = '# تعليمات ملء البيانات:\n# full_name: الاسم الكامل للطالب (مطلوب)\n# email: البريد الإلكتروني (مطلوب - يجب أن يكون فريد)\n# phone: رقم الهاتف (اختياري)\n# password: كلمة المرور (اختياري - سيتم إنشاء كلمة مرور عشوائية إذا تركت فارغة)\n# يرجى حذف هذه التعليمات قبل رفع الملف\n';
+    const csvSampleData = [
+      'أحمد محمد الأحمد,ahmed.mohamed@school.edu,+972501234567,',
+      'فاطمة علي السالم,fatima.ali@school.edu,+972507654321,',
+      'خالد حسن المحمود,khalid.hassan@school.edu,+972509876543,',
+      'سارة يوسف القاسم,sara.youssef@school.edu,+972505555555,'
+    ].join('\n');
+    
+    const csvContent = csvInstructions + csvHeaders + '\n' + csvSampleData;
+    
+    // Add BOM for proper Arabic encoding support
+    const BOM = '\uFEFF';
+    const fullContent = BOM + csvContent;
+    
+    // Create blob with explicit UTF-8 encoding
+    const blob = new Blob([fullContent], { 
+      type: 'text/csv;charset=utf-8;' 
+    });
+    
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'students_template.csv';
+    a.download = 'قالب_الطلاب_students_template.csv';
     a.click();
     window.URL.revokeObjectURL(url);
+    
+    toast({
+      title: "تم تحميل القالب",
+      description: "تم تحميل قالب إضافة الطلاب بنجاح. يرجى ملء البيانات وحفظ الملف بصيغة CSV."
+    });
   };
 
   return (
