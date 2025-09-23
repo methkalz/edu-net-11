@@ -389,7 +389,6 @@ const Dashboard = () => {
     { name: 'إدارة المستخدمين', icon: Users, path: '/users' },
     { name: 'التقارير', icon: BarChart3, path: '/reports' },
     { name: 'إعدادات النظام', icon: Settings, path: '/system-settings' },
-    { name: 'الإشعارات', icon: Bell, path: '/notifications' },
     ...(userProfile?.role === 'superadmin' ? [
       { name: 'إدارة مضامين الصفوف', icon: BookOpen, path: '/content-management' }
     ] : [
