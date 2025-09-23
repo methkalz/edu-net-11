@@ -79,7 +79,7 @@ const Index = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <img src="/lovable-uploads/f942a38c-ddca-45fc-82fc-239e22268abe.png" alt="شعار الموقع" className="h-10 w-auto" />
-              <span className="text-xl font-semibold font-cairo text-gray-600">التقنية ببساطة</span>
+              <span className="text-xl font-semibold font-cairo text-gray-600">Edunet</span>
             </div>
             <div className="hidden md:flex items-center gap-8">
               <button onClick={() => scrollToSection('materials')} className="text-gray-600 hover:text-primary transition-colors">
@@ -390,14 +390,14 @@ const Index = () => {
         <div className="container mx-auto px-6 py-12">
           <div className="text-center">
             <h3 className="text-2xl font-bold font-cairo text-gradient-blue mb-4 text-center">
-              التقنية ببساطة
+              Edunet
             </h3>
             <p className="text-gray-600 mb-6 text-center">
               نظام تعليمي وإداري شامل لتخصص الحوسبة - مطابق لتعليمات وزارة التربية
             </p>
             <div className="w-16 h-1 gradient-blue mx-auto rounded-full mb-6"></div>
             <p className="text-sm text-gray-500 text-center">
-              &copy; 2024 التقنية ببساطة. جميع الحقوق محفوظة.
+              &copy; 2024 Edunet. جميع الحقوق محفوظة.
             </p>
           </div>
         </div>

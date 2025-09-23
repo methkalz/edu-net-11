@@ -36,7 +36,7 @@ const LandingPage: React.FC = () => {
             <div className="flex items-center gap-2">
               <img src="/logo-edunet.png" alt="شعار المنصة" className="h-8 w-auto md:h-10" />
               <div className="hidden sm:block">
-                <h1 className="text-base md:text-lg font-semibold text-gray-900">التقنية ببساطة</h1>
+                <h1 className="text-base md:text-lg font-semibold text-gray-900">Edunet</h1>
                 <p className="text-xs text-gray-500 hidden md:block">نظام تعليمي لتخصص الحوسبة</p>
               </div>
             </div>
