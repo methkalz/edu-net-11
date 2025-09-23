@@ -129,14 +129,12 @@ const Auth = () => {
           <div className="text-center pt-4 border-t border-border/30">
             <div className="flex items-center justify-center gap-1 mt-2 text-xs text-muted-foreground/50">
               <Lock className="h-3 w-3" />
-              <span>محمي بأعلى معايير 
-                <button 
-                  onClick={() => navigate('/superadmin-auth')} 
-                  className="hover:text-muted-foreground/70 transition-colors duration-200"
-                >
-                  الأمان
-                </button>
-              </span>
+              <button 
+                onClick={() => navigate('/super-admin-auth')} 
+                className="hover:text-muted-foreground/70 transition-colors duration-200"
+              >
+                محمي بأعلى معايير الأمان
+              </button>
             </div>
           </div>
         </CardContent>
