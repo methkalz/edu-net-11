@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { LogIn, Loader2 } from 'lucide-react';
+import { LogIn, Loader2, Shield } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { SecureStorage } from '@/lib/security/encryption';
+import { SecurityMonitor } from '@/lib/security/security-monitor';
+import { RateLimiter } from '@/lib/security/rate-limiter';
 
 interface SimpleImpersonationButtonProps {
   targetUserId: string;
@@ -32,7 +35,56 @@ export const SimpleImpersonationButton: React.FC<SimpleImpersonationButtonProps>
     setIsLoading(true);
 
     try {
-      // Get full target user data
+      // 1. فحص أمني أولي: التحقق من صلاحيات السوبر آدمن
+      const { data: adminProfile, error: adminError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
+
+      if (adminError || !adminProfile || adminProfile.role !== 'superadmin') {
+        SecurityMonitor.logSecurityEvent({
+          type: 'UNAUTHORIZED_ACCESS',
+          severity: 'CRITICAL',
+          message: 'محاولة انتحال من غير سوبر آدمن',
+          userId: user.id,
+          details: {
+            targetUserId,
+            targetUserName,
+            attemptedRole: adminProfile?.role || 'unknown'
+          }
+        });
+
+        toast.error('غير مسموح لك بهذا الإجراء');
+        return;
+      }
+
+      // 2. فحص Rate Limiting
+      const rateLimitKey = `impersonation_${user.id}`;
+      if (!RateLimiter.isAllowed(rateLimitKey, 5, 60000)) { // 5 محاولات في الدقيقة
+        const cooldownTime = RateLimiter.getCooldownTime(rateLimitKey);
+        const remainingMinutes = Math.ceil(cooldownTime / 60000);
+        
+        SecurityMonitor.logSecurityEvent({
+          type: 'SUSPICIOUS_ACTIVITY',
+          severity: 'HIGH',
+          message: 'تجاوز الحد المسموح لمحاولات الانتحال',
+          userId: user.id,
+          details: { cooldownTime, targetUserId }
+        });
+
+        toast.error(`يرجى الانتظار ${remainingMinutes} دقيقة قبل المحاولة مرة أخرى`);
+        return;
+      }
+
+      // 3. فحص النشاط المشبوه
+      SecurityMonitor.checkSuspiciousActivity(user.id, 'impersonation_attempt', {
+        targetUserId,
+        targetUserName,
+        targetUserRole
+      });
+
+      // 4. الحصول على بيانات المستخدم المستهدف
       const { data: targetUser, error } = await supabase
         .from('profiles')
         .select('*')
@@ -40,11 +92,26 @@ export const SimpleImpersonationButton: React.FC<SimpleImpersonationButtonProps>
         .single();
 
       if (error || !targetUser) {
+        RateLimiter.recordFailedAttempt(rateLimitKey);
         toast.error('فشل في العثور على بيانات المستخدم');
         return;
       }
 
-      // Save current admin session info
+      // 5. فحص أمني: منع انتحال سوبر آدمن آخر
+      if (targetUser.role === 'superadmin') {
+        SecurityMonitor.logSecurityEvent({
+          type: 'UNAUTHORIZED_ACCESS',
+          severity: 'CRITICAL',
+          message: 'محاولة انتحال سوبر آدمن',
+          userId: user.id,
+          details: { targetUserId, targetUserName }
+        });
+
+        toast.error('لا يمكن انتحال حساب سوبر آدمن');
+        return;
+      }
+
+      // 6. حفظ بيانات الجلسة بطريقة آمنة
       const adminData = {
         user_id: user.id,
         email: user.email,
@@ -53,22 +120,51 @@ export const SimpleImpersonationButton: React.FC<SimpleImpersonationButtonProps>
         return_url: window.location.pathname
       };
       
-      localStorage.setItem('admin_impersonation_data', JSON.stringify(adminData));
-      localStorage.setItem('impersonated_user_data', JSON.stringify(targetUser));
+      // استخدام التشفير الآمن
+      SecureStorage.setSecureItem('admin_impersonation_data', adminData);
+      SecureStorage.setSecureItem('impersonated_user_data', targetUser);
       localStorage.setItem('is_impersonating', 'true');
+
+      // 7. تسجيل العملية الناجحة
+      SecurityMonitor.logSecurityEvent({
+        type: 'IMPERSONATION_ATTEMPT',
+        severity: 'MEDIUM',
+        message: 'بدء جلسة انتحال ناجحة',
+        userId: user.id,
+        details: {
+          targetUserId,
+          targetUserName,
+          targetUserRole,
+          action: 'start_impersonation'
+        }
+      });
 
       toast.success(`تم تسجيل الدخول كـ ${targetUserName}`);
       
-      // Navigate to dashboard with impersonation parameters
+      // التنقل مع المعاملات الآمنة
       navigate(`/dashboard?impersonated=true&user_id=${targetUserId}&admin_id=${user.id}`);
       
-      // Refresh the page to apply impersonation
+      // إعادة تحميل الصفحة لتطبيق الانتحال
       setTimeout(() => {
         window.location.reload();
       }, 100);
 
     } catch (error) {
       console.error('Simple impersonation error:', error);
+      
+      // تسجيل الخطأ كحدث أمني
+      SecurityMonitor.logSecurityEvent({
+        type: 'SUSPICIOUS_ACTIVITY',
+        severity: 'HIGH',
+        message: 'فشل في عملية الانتحال',
+        userId: user?.id,
+        details: {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          targetUserId,
+          targetUserName
+        }
+      });
+
       toast.error('حدث خطأ أثناء محاولة تسجيل الدخول');
     } finally {
       setIsLoading(false);
@@ -87,7 +183,7 @@ export const SimpleImpersonationButton: React.FC<SimpleImpersonationButtonProps>
       {isLoading ? (
         <Loader2 className="h-4 w-4 animate-spin" />
       ) : (
-        <LogIn className="h-4 w-4" />
+        <Shield className="h-4 w-4" />
       )}
     </Button>
   );
