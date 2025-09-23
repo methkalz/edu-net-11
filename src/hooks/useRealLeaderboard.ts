@@ -42,8 +42,8 @@ export const useRealLeaderboard = () => {
       setLoading(true);
       setError(null);
 
-      // Get all students in the same school with their stats
-      const { data: studentsData, error: studentsError } = await supabase
+      // First get all students from the same school
+      const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select(`
           user_id,
@@ -53,12 +53,14 @@ export const useRealLeaderboard = () => {
         `)
         .eq('role', 'student')
         .eq('school_id', userProfile.school_id)
-        .order('points', { ascending: false })
-        .limit(50);
+        .order('points', { ascending: false });
 
-      if (studentsError) throw studentsError;
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        throw profilesError;
+      }
 
-      if (!studentsData) {
+      if (!profilesData || profilesData.length === 0) {
         setLeaderboard({
           players: [],
           currentUserRank: 0,
@@ -69,9 +71,32 @@ export const useRealLeaderboard = () => {
         return;
       }
 
-      // Get additional stats for each student
+      // Filter to get only grade 11 students
+      const grade11Students = [];
+      for (const profile of profilesData) {
+        // Use the existing function to get student grade
+        const { data: gradeData } = await supabase
+          .rpc('get_student_assigned_grade', { student_user_id: profile.user_id });
+        
+        if (gradeData === '11') {
+          grade11Students.push(profile);
+        }
+      }
+
+      if (grade11Students.length === 0) {
+        setLeaderboard({
+          players: [],
+          currentUserRank: 0,
+          totalPlayers: 0,
+          averagePoints: 0,
+          totalPoints: 0
+        });
+        return;
+      }
+
+      // Get additional stats for each grade 11 student
       const playersWithStats = await Promise.all(
-        studentsData.map(async (student, index) => {
+        grade11Students.map(async (student, index) => {
           // Get completed activities count
           const { data: activitiesData } = await supabase
             .from('student_activity_log')
@@ -84,7 +109,7 @@ export const useRealLeaderboard = () => {
             .select('id')
             .eq('student_id', student.user_id);
 
-          // Calculate streak days
+          // Calculate streak days from recent activity
           const { data: recentActivity } = await supabase
             .from('student_activity_log')
             .select('created_at')
