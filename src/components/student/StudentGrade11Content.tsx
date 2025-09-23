@@ -424,7 +424,10 @@ export const StudentGrade11Content: React.FC = () => {
       {/* Lesson Viewer Dialog */}
       {selectedLesson && (
         <Dialog open={!!selectedLesson} onOpenChange={() => setSelectedLesson(null)}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent 
+            className="max-w-4xl max-h-[90vh] overflow-y-auto"
+            aria-describedby="lesson-content-description"
+          >
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <BookOpen className="w-5 h-5" />
@@ -432,7 +435,7 @@ export const StudentGrade11Content: React.FC = () => {
               </DialogTitle>
             </DialogHeader>
             
-            <div className="mt-4">
+            <div id="lesson-content-description" className="mt-4">
               <Grade11LessonContentDisplay
                 lesson={selectedLesson}
                 defaultExpanded={true}
@@ -447,7 +450,10 @@ export const StudentGrade11Content: React.FC = () => {
       {/* Video Viewer Dialog */}
       {selectedVideo && (
         <Dialog open={!!selectedVideo} onOpenChange={() => setSelectedVideo(null)}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent 
+            className="max-w-4xl max-h-[90vh] overflow-y-auto"
+            aria-describedby="video-content-description"
+          >
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Video className="w-5 h-5" />
@@ -455,7 +461,7 @@ export const StudentGrade11Content: React.FC = () => {
               </DialogTitle>
             </DialogHeader>
             
-            <div className="mt-4">
+            <div id="video-content-description" className="mt-4">
               <Grade11VideoViewer 
                 video={selectedVideo}
                 onClose={() => setSelectedVideo(null)}
