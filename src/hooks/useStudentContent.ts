@@ -82,8 +82,8 @@ export const useStudentContent = () => {
         .eq('is_visible', true)
         .order('order_index', { ascending: true });
 
-      // Only add grade_level filter for grade10 and grade11 videos (grade12_videos doesn't have this column)
-      if (grade === '10' || grade === '11') {
+      // Only add grade_level filter for grade10 videos (grade11 and grade12 don't always have this column properly set)
+      if (grade === '10') {
         videoQuery = videoQuery.eq('grade_level', grade);
       }
       
@@ -93,7 +93,11 @@ export const useStudentContent = () => {
         videos = videoData.map((item: any) => mapToContentItem(item, 'video', grade));
       }
       
-      logger.info(`Found ${videos.length} videos for grade ${grade}`);
+      if (videoError) {
+        logger.error(`Error fetching ${videoTable}:`, videoError);
+      } else {
+        logger.info(`Found ${videos.length} videos for grade ${grade} from ${videoTable}`);
+      }
     } catch (err) {
       logger.warn('Could not fetch videos', { error: err });
     }
@@ -173,6 +177,8 @@ export const useStudentContent = () => {
 
         if (lessonError) {
           logger.error('Error fetching grade 11 lessons:', lessonError);
+        } else {
+          logger.info(`Found ${lessons.length} lessons for grade ${grade} with hierarchical data`);
         }
       }
       
