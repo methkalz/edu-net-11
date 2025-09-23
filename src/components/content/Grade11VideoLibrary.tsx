@@ -72,11 +72,30 @@ const Grade11VideoLibrary: React.FC<Grade11VideoLibraryProps> = ({
   };
 
   const getGoogleDriveThumbnail = (videoUrl: string) => {
-    // Extract FILE_ID from Google Drive URL
-    const match = videoUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+    // Extract FILE_ID from different Google Drive URL formats
+    let fileId = null;
+    
+    // Format: https://drive.google.com/file/d/FILE_ID/view?usp=sharing
+    let match = videoUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
     if (match && match[1]) {
-      return `https://drive.google.com/thumbnail?id=${match[1]}`;
+      fileId = match[1];
     }
+    
+    // Format: https://drive.google.com/open?id=FILE_ID
+    if (!fileId) {
+      match = videoUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+      if (match && match[1]) {
+        fileId = match[1];
+      }
+    }
+    
+    // If we found a file ID, return the thumbnail URL
+    if (fileId) {
+      console.log('Google Drive File ID found:', fileId);
+      return `https://drive.google.com/thumbnail?id=${fileId}`;
+    }
+    
+    console.log('Could not extract Google Drive File ID from:', videoUrl);
     return null;
   };
 
@@ -172,8 +191,12 @@ const Grade11VideoLibrary: React.FC<Grade11VideoLibraryProps> = ({
                     src={getThumbnailUrl(video)!} 
                     alt={video.title}
                     className="w-full h-full object-cover"
+                    onLoad={() => {
+                      console.log('Thumbnail loaded successfully for:', video.title);
+                    }}
                     onError={(e) => {
-                      // If Google Drive thumbnail fails, show video icon
+                      console.log('Thumbnail failed to load for:', video.title, 'URL:', getThumbnailUrl(video));
+                      // Hide the image and show fallback
                       e.currentTarget.style.display = 'none';
                       const parent = e.currentTarget.parentElement;
                       if (parent) {
@@ -185,7 +208,10 @@ const Grade11VideoLibrary: React.FC<Grade11VideoLibraryProps> = ({
                     }}
                   />
                 ) : null}
-                <div className="video-fallback w-full h-full flex items-center justify-center" style={{ display: getThumbnailUrl(video) ? 'none' : 'flex' }}>
+                <div 
+                  className="video-fallback absolute inset-0 w-full h-full flex items-center justify-center" 
+                  style={{ display: getThumbnailUrl(video) ? 'none' : 'flex' }}
+                >
                   <Video className="h-12 w-12 text-muted-foreground" />
                 </div>
                 <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
