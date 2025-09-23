@@ -20,7 +20,8 @@ export const Grade11VideoViewer: React.FC<Grade11VideoViewerProps> = ({
   video, 
   onClose 
 }) => {
-  const getYouTubeEmbedUrl = (url: string) => {
+  const getEmbedUrl = (url: string, sourceType?: string) => {
+    // Handle YouTube URLs
     if (url.includes('youtube.com/watch?v=')) {
       const videoId = url.split('v=')[1]?.split('&')[0];
       return `https://www.youtube.com/embed/${videoId}`;
@@ -28,20 +29,29 @@ export const Grade11VideoViewer: React.FC<Grade11VideoViewerProps> = ({
       const videoId = url.split('youtu.be/')[1]?.split('?')[0];
       return `https://www.youtube.com/embed/${videoId}`;
     }
+    
+    // Handle Google Drive URLs
+    if (url.includes('drive.google.com/file/d/')) {
+      const fileId = url.split('/d/')[1]?.split('/')[0];
+      return `https://drive.google.com/file/d/${fileId}/preview`;
+    }
+    
     return url;
   };
 
-  const embedUrl = getYouTubeEmbedUrl(video.video_url);
+  const embedUrl = getEmbedUrl(video.video_url, video.source_type);
+  const isGoogleDrive = video.video_url.includes('drive.google.com');
+  const isYouTube = video.source_type === 'youtube' || video.video_url.includes('youtube.com') || video.video_url.includes('youtu.be');
 
   return (
     <div className="space-y-6">
       {/* Video Player */}
       <div className="aspect-video bg-black rounded-lg overflow-hidden">
-        {video.source_type === 'youtube' ? (
+        {isYouTube || isGoogleDrive ? (
           <iframe
             src={embedUrl}
             title={video.title}
-            className="w-full h-full"
+            className="w-full h-full border-0"
             allowFullScreen
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           />

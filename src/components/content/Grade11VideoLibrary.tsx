@@ -57,7 +57,10 @@ const Grade11VideoLibrary: React.FC<Grade11VideoLibraryProps> = ({
     }
   };
 
-  const getSourceLabel = (sourceType: string) => {
+  const getSourceLabel = (sourceType: string, videoUrl: string) => {
+    if (videoUrl.includes('drive.google.com')) {
+      return 'Google Drive';
+    }
     switch (sourceType) {
       case 'youtube':
         return 'YouTube';
@@ -179,7 +182,7 @@ const Grade11VideoLibrary: React.FC<Grade11VideoLibraryProps> = ({
                     {video.title}
                   </CardTitle>
                   <Badge variant="outline" className="text-xs shrink-0">
-                    {getSourceIcon(video.source_type)} {getSourceLabel(video.source_type)}
+                    {getSourceIcon(video.source_type)} {getSourceLabel(video.source_type, video.video_url)}
                   </Badge>
                 </div>
               </CardHeader>
