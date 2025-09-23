@@ -70,8 +70,7 @@ import {
   Trash,
   Settings,
   UserMinus,
-  Award,
-  LogIn
+  Award
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -79,7 +78,7 @@ import AppHeader from '@/components/shared/AppHeader';
 import AppFooter from '@/components/shared/AppFooter';
 import { PageLoading, DataLoading } from '@/components/ui/LoadingComponents';
 import { logger } from '@/lib/logger';
-import { PinLoginDialog } from '@/components/admin/PinLoginDialog';
+import { DirectImpersonationButton } from '@/components/admin/DirectImpersonationButton';
 import { OrphanedUsersCleanup } from '@/components/admin/OrphanedUsersCleanup';
 
 interface User {
@@ -140,8 +139,6 @@ const UserManagement: React.FC = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
-  const [showPinLoginDialog, setShowPinLoginDialog] = useState(false);
-  const [selectedUserForPin, setSelectedUserForPin] = useState<User | null>(null);
   const [showRoleManager, setShowRoleManager] = useState(false);
   const [editUserData, setEditUserData] = useState<{
     user_id: string;
@@ -848,18 +845,11 @@ const UserManagement: React.FC = () => {
                              >
                                <Eye className="h-4 w-4" />
                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  setSelectedUserForPin(user);
-                                  setShowPinLoginDialog(true);
-                                }}
-                                className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 h-8 w-8 p-0 transition-all duration-200 group"
-                                title="تسجيل الدخول كهذا المستخدم"
-                              >
-                                <LogIn className="h-4 w-4 group-hover:scale-110 transition-transform duration-200" />
-                              </Button>
+                              <DirectImpersonationButton
+                                targetUserId={user.user_id}
+                                targetUserName={user.full_name || user.email}
+                                targetUserEmail={user.email}
+                              />
                              <Button
                                variant="ghost"
                                size="sm"
@@ -1317,12 +1307,6 @@ const UserManagement: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* PIN Login Dialog */}
-      <PinLoginDialog
-        open={showPinLoginDialog}
-        onOpenChange={setShowPinLoginDialog}
-        targetUser={selectedUserForPin}
-      />
       
       <AppFooter />
     </div>
