@@ -296,6 +296,23 @@ All colors MUST be HSL.
     background: var(--gradient-hero);
   }
 
+  /* Extended Gradient Classes */
+  .gradient-electric {
+    background: linear-gradient(135deg, hsl(210 100% 65%), hsl(190 100% 70%));
+  }
+
+  .gradient-fire {
+    background: linear-gradient(135deg, hsl(15 100% 55%), hsl(35 95% 60%));
+  }
+
+  .gradient-sunset {
+    background: linear-gradient(135deg, hsl(25 95% 60%), hsl(340 85% 65%), hsl(270 85% 65%));
+  }
+
+  .gradient-neon {
+    background: linear-gradient(135deg, hsl(120 100% 60%), hsl(190 100% 65%), hsl(270 85% 65%));
+  }
+
   /* Modern Card Effects */
   .modern-card {
     backdrop-filter: blur(10px);
