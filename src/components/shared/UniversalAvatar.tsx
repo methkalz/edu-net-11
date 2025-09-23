@@ -48,9 +48,13 @@ export const UniversalAvatar: React.FC<UniversalAvatarProps> = ({
     <Avatar className={cn(sizeClasses[size], className)}>
       {avatarUrl && (
         <AvatarImage 
-          src={avatarUrl} 
+          src={avatarUrl.startsWith('/') ? avatarUrl : `/avatars/${avatarUrl}`}
           alt={userName || 'User avatar'}
           className="object-cover"
+          onError={(e) => {
+            // Hide the image if it fails to load, fallback will show
+            e.currentTarget.style.display = 'none';
+          }}
         />
       )}
       <AvatarFallback className="bg-gradient-to-br from-primary to-primary-foreground text-primary-foreground">
