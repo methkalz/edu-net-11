@@ -1,84 +1,89 @@
 import React from 'react';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Shield, ArrowLeft, User } from "lucide-react";
-import { useSearchParams } from "react-router-dom";
+import { Alert, AlertDescription } from '@/components/ui/alert';  
+import { Button } from '@/components/ui/button';
+import { Shield, LogOut, User } from 'lucide-react';
 
 interface AdminAccessBannerProps {
   onReturnToSuperAdmin?: () => void;
 }
 
-export const AdminAccessBanner: React.FC<AdminAccessBannerProps> = ({ 
-  onReturnToSuperAdmin 
-}) => {
-  const [searchParams] = useSearchParams();
-  const adminAccess = searchParams.get('admin_access');
-  const pinLogin = searchParams.get('pin_login');
-  const impersonated = searchParams.get('impersonated');
+export const AdminAccessBanner: React.FC<AdminAccessBannerProps> = ({ onReturnToSuperAdmin }) => {
+  // Check URL parameters for different access types
+  const urlParams = new URLSearchParams(window.location.search);
+  const isAdminAccess = urlParams.get('admin_access') === 'true';
+  const isImpersonated = urlParams.get('impersonated') === 'true';
+  const isPinLogin = urlParams.get('pin_login') === 'true';
   
-  // Show if admin access or impersonation is active
-  if (!adminAccess && !impersonated) {
-    return null;
-  }
+  // Don't show banner if none of the admin access flags are present
+  if (!isAdminAccess && !isImpersonated && !isPinLogin) return null;
 
   const handleReturnToSuperAdmin = () => {
-    // Clear impersonation data
+    // Clear any impersonation data
+    localStorage.removeItem('impersonation_data');
+    localStorage.removeItem('pin_session_data');
     localStorage.removeItem('impersonation_session');
     localStorage.removeItem('original_admin_session');
     
     if (onReturnToSuperAdmin) {
       onReturnToSuperAdmin();
     } else {
+      // Navigate back to users page
       window.location.href = '/users';
     }
   };
 
-  const isImpersonation = impersonated === 'true';
+  // Determine banner content based on access type
+  const getBannerContent = () => {
+    if (isPinLogin) {
+      return {
+        variant: 'default' as const,
+        icon: Shield,
+        message: 'تم تسجيل الدخول باستخدام PIN إداري مؤقت',
+        buttonText: 'إنهاء الجلسة'
+      };
+    } else if (isImpersonated) {
+      return {
+        variant: 'destructive' as const,
+        icon: User,
+        message: 'أنت تتصفح كمستخدم آخر - وضع المحاكاة نشط',
+        buttonText: 'إنهاء المحاكاة'
+      };
+    } else {
+      return {
+        variant: 'default' as const,
+        icon: Shield,
+        message: 'وضع الوصول الإداري نشط',
+        buttonText: 'العودة للحساب الأصلي'
+      };
+    }
+  };
+
+  const bannerContent = getBannerContent();
+  const IconComponent = bannerContent.icon;
 
   return (
-    <Card className={`mb-4 ${isImpersonation 
-      ? 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950' 
-      : 'border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950'
+    <Alert className={`mb-4 ${
+      bannerContent.variant === 'destructive' 
+        ? 'border-destructive bg-destructive/10' 
+        : 'border-warning bg-warning/10'
     }`}>
-      <CardContent className="flex items-center justify-between p-4">
-        <div className="flex items-center gap-3">
-          {isImpersonation ? (
-            <User className="h-5 w-5 text-red-600 dark:text-red-400" />
-          ) : (
-            <Shield className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-          )}
-          <div>
-            <p className={`font-medium ${isImpersonation 
-              ? 'text-red-800 dark:text-red-200' 
-              : 'text-amber-800 dark:text-amber-200'
-            }`}>
-              {isImpersonation ? 'جلسة انتحال هوية نشطة' : 'جلسة وصول إداري مؤقتة'}
-            </p>
-            <p className={`text-sm ${isImpersonation 
-              ? 'text-red-700 dark:text-red-300' 
-              : 'text-amber-700 dark:text-amber-300'
-            }`}>
-              {isImpersonation 
-                ? 'تم الدخول بصلاحيات مستخدم آخر عبر نظام PIN' 
-                : 'تم تسجيل الدخول عبر PIN من لوحة السوبر آدمن'
-              }
-            </p>
-          </div>
+      <IconComponent className="h-4 w-4" />
+      <AlertDescription className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="font-medium">
+            {bannerContent.message}
+          </span>
         </div>
-        
-        <Button
-          variant="outline"
-          size="sm"
+        <Button 
+          size="sm" 
+          variant="outline" 
           onClick={handleReturnToSuperAdmin}
-          className={isImpersonation 
-            ? 'border-red-300 text-red-700 hover:bg-red-100 dark:border-red-700 dark:text-red-300 dark:hover:bg-red-900'
-            : 'border-amber-300 text-amber-700 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-300 dark:hover:bg-amber-900'
-          }
+          className="flex items-center gap-1"
         >
-          <ArrowLeft className="ml-2 h-4 w-4" />
-          العودة للسوبر آدمن
+          <LogOut className="h-3 w-3" />
+          {bannerContent.buttonText}
         </Button>
-      </CardContent>
-    </Card>
+      </AlertDescription>
+    </Alert>
   );
 };

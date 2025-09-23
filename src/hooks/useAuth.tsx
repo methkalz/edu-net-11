@@ -76,58 +76,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Handle impersonation and magic link authentication
+  // Handle PIN login and magic link authentication
   useEffect(() => {
     const handleAuthentication = async () => {
       const urlParams = new URLSearchParams(window.location.search);
       
-      // Handle impersonation from URL parameters
-      const impersonateUserId = urlParams.get('impersonate');
+      // Handle magic link authentication with admin access parameters
+      const accessToken = urlParams.get('access_token');
+      const refreshToken = urlParams.get('refresh_token');
       const adminAccess = urlParams.get('admin_access');
       const pinLogin = urlParams.get('pin_login');
 
-      if (impersonateUserId && adminAccess && pinLogin) {
-        // Get stored impersonation session data
-        const impersonationData = localStorage.getItem('impersonation_session');
-        
-        if (impersonationData) {
-          const sessionData = JSON.parse(impersonationData);
-          
-          if (sessionData.targetUserId === impersonateUserId) {
-            console.log('Starting user impersonation...');
-            
-            try {
-              // Call impersonation function
-              const { data, error } = await supabase.functions.invoke('impersonate-user', {
-                body: {
-                  targetUserId: impersonateUserId,
-                  adminUserId: sessionData.originalAdminId
-                }
-              });
-
-              if (error) {
-                console.error('Impersonation error:', error);
-                return;
-              }
-              
-              if (data?.success && data?.magicLink) {
-                // Redirect to magic link for seamless login
-                window.location.href = data.magicLink;
-                return;
-              }
-            } catch (error) {
-              console.error('Impersonation error:', error);
-            }
-          }
-        }
-      }
-
-      // Handle magic link callback for impersonation
-      const accessToken = urlParams.get('access_token');
-      const refreshToken = urlParams.get('refresh_token');
-      const impersonated = urlParams.get('impersonated');
-
-      if (accessToken && refreshToken && impersonated) {
+      if (accessToken && refreshToken && (adminAccess || pinLogin)) {
         try {
           const { error } = await supabase.auth.setSession({
             access_token: accessToken,
@@ -140,15 +100,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             cleanUrl.searchParams.delete('access_token');
             cleanUrl.searchParams.delete('refresh_token');
             cleanUrl.searchParams.delete('type');
-            cleanUrl.searchParams.delete('impersonate');
-            cleanUrl.searchParams.set('admin_access', 'true');
-            cleanUrl.searchParams.set('impersonated', 'true');
+            
+            // Keep admin access indicators
+            if (adminAccess) cleanUrl.searchParams.set('admin_access', 'true');
+            if (pinLogin) cleanUrl.searchParams.set('pin_login', 'true');
             
             window.history.replaceState({}, '', cleanUrl.toString());
             
             toast({
               title: "تم تسجيل الدخول بنجاح",
-              description: "تم الدخول بصلاحيات المستخدم المحدد",
+              description: "تم الدخول بصلاحيات إدارية مؤقتة",
             });
             
             // Refresh to ensure proper session loading

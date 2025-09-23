@@ -83,12 +83,21 @@ Deno.serve(async (req) => {
       })
       .eq('id', pinData.id)
 
-    // Create impersonation session data
-    const sessionData = {
-      targetUserId: targetProfile.user_id,
-      targetUserEmail: targetProfile.email,
-      originalAdminId: pinData.generated_by,
-      impersonationStarted: new Date().toISOString()
+    // Generate magic link for direct login
+    const { data: magicLink, error: linkError } = await supabase.auth.admin.generateLink({
+      type: 'magiclink',
+      email: targetProfile.email,
+      options: {
+        redirectTo: `${new URL(Deno.env.get('SUPABASE_URL') || 'http://localhost:5173').origin}/dashboard?admin_access=true&pin_login=true&target_user_id=${targetProfile.user_id}&admin_user_id=${pinData.generated_by}`
+      }
+    })
+
+    if (linkError || !magicLink) {
+      console.error('Magic link generation error:', linkError)
+      return new Response(
+        JSON.stringify({ error: 'Failed to generate login link' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
     // Log the PIN usage in audit log
@@ -113,7 +122,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        sessionData: sessionData,
+        magicLink: magicLink.properties.action_link,
         targetUser: {
           id: targetProfile.user_id,
           name: targetProfile.full_name,

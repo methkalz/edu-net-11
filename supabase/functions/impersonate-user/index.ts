@@ -33,7 +33,7 @@ Deno.serve(async (req) => {
       .eq('user_id', adminUserId)
       .single()
 
-    if (adminError || !adminProfile || adminProfile.role !== 'super_admin') {
+    if (adminError || !adminProfile || adminProfile.role !== 'superadmin') {
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -54,31 +54,12 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Create a session for the target user
-    const { data: sessionData, error: sessionError } = await supabase.auth.admin.createUser({
-      email: targetUser.email,
-      email_confirm: true,
-      user_metadata: {
-        full_name: targetUser.full_name,
-        impersonated_by: adminUserId,
-        impersonation_started: new Date().toISOString()
-      }
-    })
-
-    if (sessionError) {
-      console.error('Session creation error:', sessionError)
-      return new Response(
-        JSON.stringify({ error: 'Failed to create impersonation session' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
-    // Generate magic link for seamless login
+    // Generate magic link for the existing user
     const { data: magicLink, error: linkError } = await supabase.auth.admin.generateLink({
       type: 'magiclink',
       email: targetUser.email,
       options: {
-        redirectTo: `${req.headers.get('origin') || 'http://localhost:5173'}/dashboard?admin_access=true&impersonated=true`
+        redirectTo: `${req.headers.get('origin') || 'http://localhost:5173'}/dashboard?admin_access=true&impersonated=true&target_user_id=${targetUserId}&admin_user_id=${adminUserId}`
       }
     })
 
@@ -89,6 +70,7 @@ Deno.serve(async (req) => {
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+
 
     // Log impersonation
     await supabase

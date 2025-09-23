@@ -97,27 +97,16 @@ export const PinLoginDialog: React.FC<PinLoginDialogProps> = ({
         throw new Error(`خطأ في الخادم: ${error.message}`);
       }
 
-      if (data?.success && data?.sessionData) {
-        console.log('PIN validated, storing session data...');
-        
-        // Store the impersonation session data in localStorage for later use
-        localStorage.setItem('impersonation_session', JSON.stringify(data.sessionData));
-        localStorage.setItem('original_admin_session', JSON.stringify(await supabase.auth.getSession()));
+      if (data?.success && data?.magicLink) {
+        console.log('PIN validated, redirecting to magic link...');
         
         toast({
           title: "تم التحقق من الرمز بنجاح",
-          description: `سيتم الآن فتح نافذة جديدة للدخول كـ: ${data.targetUser?.name}`,
+          description: `جاري تسجيل الدخول كـ: ${data.targetUser?.name}`,
         });
 
-        // Open new window with impersonation parameters
-        const impersonationUrl = `${window.location.origin}/dashboard?impersonate=${data.targetUser.id}&admin_access=true&pin_login=true`;
-        window.open(impersonationUrl, '_blank');
-
-        // Close dialog
-        onOpenChange(false);
-        setEnteredPin('');
-        setGeneratedPin('');
-        setPinExpiresAt(null);
+        // Redirect to magic link in same window
+        window.location.href = data.magicLink;
         
       } else {
         throw new Error(data?.error || 'فشل في التحقق من الرمز');
@@ -240,8 +229,8 @@ export const PinLoginDialog: React.FC<PinLoginDialogProps> = ({
             <div className="text-sm text-muted-foreground space-y-1">
               <p>• الرمز صالح لمدة 15 دقيقة فقط</p>
               <p>• يمكن استخدام الرمز مرة واحدة فقط</p>
-              <p>• سيتم تسجيل الدخول في نفس النافذة باستخدام التحقق الآمن</p>
-              <p>• سيتم عرض إشعار بنجاح العملية مع إمكانية العودة للسوبر آدمن</p>
+              <p>• سيتم تسجيل الدخول في نفس النافذة باستخدام Magic Link الآمن</p>
+              <p>• سيتم عرض بانر إداري مع إمكانية العودة للسوبر آدمن</p>
               <p>• يمكنك العودة لحسابك الأصلي في أي وقت</p>
             </div>
           </div>
