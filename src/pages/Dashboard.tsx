@@ -507,9 +507,10 @@ const Dashboard = () => {
           <div className="container mx-auto px-6 py-6 space-y-8">
             
             {/* Software Update Notice */}
-            <Alert className="animate-fade-in glass-card soft-shadow border-2 border-orange-300 bg-gradient-to-r from-orange-100 to-yellow-100 backdrop-blur-sm shadow-lg animate-pulse">
-              <AlertDescription className="text-orange-900 font-semibold text-base leading-relaxed">
-                🔧 يُجرى حاليًا تحديثات برمجية، وقد تطرأ بعض الأعطال الفنية مؤقتًا.. نشكرك على صبرك الجميل 😊
+            <Alert className="animate-fade-in glass-card soft-shadow border-yellow-200 bg-yellow-50/80 backdrop-blur-sm">
+              <Wrench className="h-4 w-4 text-yellow-600" />
+              <AlertDescription className="text-yellow-800 font-medium">
+                يُجرى حاليًا تحديثات برمجية، وقد تطرأ بعض الأعطال الفنية مؤقتًا.. نشكرك على صبرك الجميل 😊
               </AlertDescription>
             </Alert>
             
