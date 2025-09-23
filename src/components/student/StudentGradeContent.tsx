@@ -4,6 +4,7 @@ import { useStudentContent } from '@/hooks/useStudentContent';
 import { useStudentProgress } from '@/hooks/useStudentProgress';
 import { useGrade10MiniProjects } from '@/hooks/useGrade10MiniProjects';
 import { useGrade12Projects } from '@/hooks/useGrade12Projects';
+import { StudentGrade11Content } from './StudentGrade11Content';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -109,6 +110,11 @@ export const StudentGradeContent: React.FC = () => {
   const navigate = useNavigate();
 
   const currentContent = gradeContent;
+
+  // إذا كان الصف الحادي عشر، عرض المكون المخصص
+  if (assignedGrade === '11') {
+    return <StudentGrade11Content />;
+  }
 
   const handleContentClick = (content: any, contentType: 'video' | 'document' | 'lesson' | 'project') => {
     if (contentType === 'project' && assignedGrade === '10') {
