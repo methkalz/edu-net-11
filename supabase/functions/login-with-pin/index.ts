@@ -83,50 +83,15 @@ Deno.serve(async (req) => {
       })
       .eq('id', pinData.id)
 
-    // Get the correct origin from request
-    const requestUrl = new URL(req.url)
-    const origin = req.headers.get('origin') || 
-                   req.headers.get('referer')?.split('/').slice(0, 3).join('/') ||
-                   `${requestUrl.protocol}//${requestUrl.host}` ||
-                   'http://localhost:3000'
-
-    // Generate a temporary session for the target user
-    const { data: sessionData, error: sessionError } = await supabase.auth.admin.generateLink({
+    // Generate a magic link for user impersonation
+    const { data: magicLinkData, error: magicLinkError } = await supabase.auth.admin.generateLink({
       type: 'magiclink',
-      email: targetProfile.email,
-      options: {
-        redirectTo: `${origin}/dashboard?admin_access=true&pin_login=true`
-      }
-    })
-
-    if (sessionError || !sessionData) {
-      console.error('Session generation error:', sessionError)
-      throw new Error('Failed to generate session')
-    }
-
-    // Create a proper session for the target user
-    const { data: userSessionData, error: userSessionError } = await supabase.auth.admin.createUser({
-      email: targetProfile.email,
-      email_confirm: true,
-      user_metadata: {
-        pin_login: true,
-        original_user: targetProfile.user_id
-      }
-    })
-
-    if (userSessionError) {
-      console.error('User session creation error:', userSessionError)
-    }
-
-    // Generate access tokens directly
-    const { data: tokenData, error: tokenError } = await supabase.auth.admin.generateLink({
-      type: 'recovery',
       email: targetProfile.email
-    })
+    });
 
-    if (tokenError || !tokenData) {
-      console.error('Token generation error:', tokenError)
-      throw new Error('Failed to generate tokens')
+    if (magicLinkError || !magicLinkData?.properties?.hashed_token) {
+      console.error('Magic link generation error:', magicLinkError)
+      throw new Error('Failed to generate magic link for impersonation')
     }
 
     // Log the PIN usage in audit log
@@ -151,7 +116,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        magicLink: sessionData.properties?.action_link,
+        hashedToken: magicLinkData.properties.hashed_token,
         targetUser: {
           id: targetProfile.user_id,
           name: targetProfile.full_name,

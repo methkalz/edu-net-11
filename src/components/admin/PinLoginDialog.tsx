@@ -85,33 +85,46 @@ export const PinLoginDialog: React.FC<PinLoginDialogProps> = ({
     setIsLoggingIn(true);
 
     try {
+      console.log('Starting PIN login process...');
+      
       const { data } = await supabase.functions.invoke('login-with-pin', {
         body: { pinCode: enteredPin }
       });
 
-      if (data?.success && data?.magicLink) {
-        toast({
-          title: "تم تسجيل الدخول بنجاح",
-          description: `سيتم فتح نافذة جديدة للدخول كـ: ${data.targetUser?.name}`,
+      console.log('PIN login response:', data);
+
+      if (data?.success && data?.hashedToken) {
+        console.log('Attempting to verify OTP with hashed token...');
+        
+        // Use the correct method to verify the OTP and create session
+        const { data: verifyData, error: verifyError } = await supabase.auth.verifyOtp({
+          token_hash: data.hashedToken,
+          type: 'email'
         });
 
-        // Open magic link in new window to complete authentication
-        const newWindow = window.open(data.magicLink, '_blank');
-        
-        // Close dialog and reset form
-        onOpenChange(false);
-        setEnteredPin('');
-        setGeneratedPin('');
-        setPinExpiresAt(null);
-        
-        // Show instructions for returning to super admin
-        setTimeout(() => {
+        console.log('OTP verification result:', { verifyData, verifyError });
+
+        if (verifyError) {
+          throw new Error(`فشل في التحقق من الرمز: ${verifyError.message}`);
+        }
+
+        if (verifyData?.user && verifyData?.session) {
           toast({
-            title: "تعليمات",
-            description: "لإنهاء الجلسة والعودة للسوبر آدمن، اضغط على 'تسجيل الخروج' في الحساب الجديد",
+            title: "تم تسجيل الدخول بنجاح",
+            description: `تم الدخول كـ: ${data.targetUser?.name}`,
           });
-        }, 2000);
-        
+
+          // Close dialog and redirect
+          onOpenChange(false);
+          setEnteredPin('');
+          setGeneratedPin('');
+          setPinExpiresAt(null);
+          
+          // Redirect to dashboard with admin access flags
+          window.location.href = '/dashboard?admin_access=true&pin_login=true';
+        } else {
+          throw new Error('لم يتم إنشاء جلسة صحيحة');
+        }
       } else {
         throw new Error(data?.error || 'فشل في تسجيل الدخول');
       }
@@ -233,8 +246,8 @@ export const PinLoginDialog: React.FC<PinLoginDialogProps> = ({
             <div className="text-sm text-muted-foreground space-y-1">
               <p>• الرمز صالح لمدة 15 دقيقة فقط</p>
               <p>• يمكن استخدام الرمز مرة واحدة فقط</p>
-              <p>• سيتم فتح نافذة جديدة للدخول إلى حساب المستخدم</p>
-              <p>• لإنهاء الجلسة والعودة للسوبر آدمن، اضغط 'تسجيل الخروج' في الحساب الجديد</p>
+              <p>• سيتم تسجيل الدخول في نفس النافذة باستخدام التحقق الآمن</p>
+              <p>• سيتم عرض إشعار بنجاح العملية مع إمكانية العودة للسوبر آدمن</p>
               <p>• يمكنك العودة لحسابك الأصلي في أي وقت</p>
             </div>
           </div>
