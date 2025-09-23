@@ -172,11 +172,13 @@ const Grade11StudentContentViewer: React.FC<Grade11StudentContentViewerProps> = 
     });
   }, []);
 
-  // Handle lesson click - simplified without lazy loading
+  // Handle lesson click - simplified with better debugging
   const handleLessonClick = useCallback((lesson: Grade11LessonWithMedia) => {
+    console.log('🔍 Lesson clicked:', lesson.title, lesson);
     if (onContentClick) {
       onContentClick(lesson, 'lesson');
     } else {
+      console.log('📖 Opening lesson modal for:', lesson.title);
       setSelectedLesson(lesson);
       setIsLessonModalOpen(true);
     }
