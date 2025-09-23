@@ -4,6 +4,7 @@ import { useStudentContent } from '@/hooks/useStudentContent';
 import { useStudentProgress } from '@/hooks/useStudentProgress';
 import { useGrade10MiniProjects } from '@/hooks/useGrade10MiniProjects';
 import { useGrade12Projects } from '@/hooks/useGrade12Projects';
+import { StudentGrade11Content } from './StudentGrade11Content';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -323,6 +324,11 @@ export const StudentGradeContent: React.FC = () => {
         </div>
       </Card>
     );
+  }
+
+  // Special handling for Grade 11 - show structured content
+  if (assignedGrade === '11') {
+    return <StudentGrade11Content />;
   }
 
   if (!currentContent) {
