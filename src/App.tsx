@@ -20,7 +20,6 @@ import React, { Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ErrorBoundary } from "@/lib/error-boundary";
@@ -58,15 +57,11 @@ const Grade12ProjectEditorPage = React.lazy(() => import('@/pages/Grade12Project
 const LandingPage = React.lazy(() => import('@/pages/LandingPage'));
 import { PageLoading } from "@/components/ui/LoadingComponents";
 
-// Global React Query client configuration for server state management
-const queryClient = new QueryClient();
-
 /**
  * Main App Component
  * 
- * Sets up the entire application with all necessary providers and routing.
- * Applies site settings on mount and provides a fallback loading state
- * for lazy-loaded components.
+ * Sets up the application routing with lazy-loaded components and fallback loading states.
+ * Site settings are applied on mount for theme, language direction (RTL), and other global configurations.
  * 
  * @returns {JSX.Element} The main application component
  */
@@ -78,12 +73,10 @@ const App = () => {
   return (
     // Global error boundary to catch and handle any unhandled errors
     <ErrorBoundary>
-      {/* React Query provider for server state management */}
-      <QueryClientProvider client={queryClient}>
-        {/* Tooltip provider for UI tooltips throughout the app */}
-        <TooltipProvider>
-          {/* Authentication provider for user session management */}
-          <AuthProvider>
+      {/* Tooltip provider for UI tooltips throughout the app */}
+      <TooltipProvider>
+        {/* Authentication provider for user session management */}
+        <AuthProvider>
             {/* Toast notification systems - dual system for flexibility */}
             <Toaster />
             <Sonner />
@@ -169,7 +162,6 @@ const App = () => {
             </Suspense>
           </AuthProvider>
         </TooltipProvider>
-      </QueryClientProvider>
     </ErrorBoundary>
   );
 };

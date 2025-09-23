@@ -40,6 +40,8 @@ const queryClient = new QueryClient({
         return failureCount < 3
       },
       refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      refetchOnMount: false,
     },
   },
 })
