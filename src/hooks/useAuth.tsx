@@ -39,6 +39,8 @@ interface AuthContextType {
 }
 
 // Create the authentication context
+import { useImpersonation } from './useImpersonation';
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 /**
@@ -55,6 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const { isImpersonating, getEffectiveUser, getEffectiveUserProfile } = useImpersonation();
 
   /**
    * Role-based Redirection Logic
@@ -360,11 +363,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Provide authentication context to all child components
   // Note: signUp is intentionally NOT included in the context for security reasons
   // Account creation is handled through authorized administrative systems only
+  // Get effective user and profile based on impersonation status
+  const effectiveUser = isImpersonating ? getEffectiveUser() : user;
+  const effectiveUserProfile = isImpersonating ? getEffectiveUserProfile() : userProfile;
+
   return (
     <AuthContext.Provider value={{ 
-      user, 
+      user: effectiveUser as User, 
       session, 
-      userProfile, 
+      userProfile: effectiveUserProfile, 
       loading, 
       signIn, 
       signOut 

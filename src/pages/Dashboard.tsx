@@ -60,6 +60,7 @@ import { ar } from 'date-fns/locale';
 import AppFooter from '@/components/shared/AppFooter';
 import { PageLoading } from '@/components/ui/LoadingComponents';
 import { AdminAccessBanner } from '@/components/admin/AdminAccessBanner';
+import { ImpersonationBanner } from '@/components/admin/ImpersonationBanner';
 
 /**
  * Dashboard Component Implementation
@@ -437,7 +438,8 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background pattern-dots flex flex-col" dir="rtl">
-      {/* Admin Access Banner */}
+      {/* Impersonation Banner */}
+      <ImpersonationBanner />
       <AdminAccessBanner />
       
       {/* Modern Header مع الإعدادات المخصصة والتأثيرات */}
