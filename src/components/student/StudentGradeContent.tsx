@@ -338,14 +338,6 @@ export const StudentGradeContent: React.FC = () => {
       color: 'from-blue-500 to-cyan-500'
     },
     {
-      id: 'documents',
-      label: 'المستندات',
-      icon: FileText,
-      count: currentContent?.documents?.length || 0,
-      items: currentContent?.documents || [],
-      color: 'from-green-500 to-emerald-500'
-    },
-    {
       id: 'lessons',
       label: 'الدروس',
       icon: BookOpen,
@@ -379,7 +371,7 @@ export const StudentGradeContent: React.FC = () => {
       {/* Content Tabs */}
       <Tabs value={activeContentTab} onValueChange={setActiveContentTab} className="w-full">
         <div className="flex justify-center mb-8">
-          <TabsList className="grid grid-cols-4 w-full max-w-2xl h-12 bg-muted/50">
+          <TabsList className="grid grid-cols-3 w-full max-w-2xl h-12 bg-muted/50">
             {contentTabs.map((tab) => {
               const IconComponent = tab.icon;
               return (
