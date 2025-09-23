@@ -107,7 +107,7 @@ export const ImpersonationBanner: React.FC = () => {
       SecureStorage.clearAllSecureData();
       
       toast.success('تم العودة إلى الحساب الإداري');
-      navigate('/user-management');
+      navigate('/dashboard');
       
       setTimeout(() => {
         window.location.reload();
