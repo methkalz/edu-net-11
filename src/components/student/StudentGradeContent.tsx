@@ -47,6 +47,25 @@ export const StudentGradeContent: React.FC = () => {
     error
   } = useStudentContent();
   const { updateProgress } = useStudentProgress();
+  
+  // استخدام conditional hooks لتجنب أخطاء الجلب غير الضرورية
+  const grade10HooksResult = assignedGrade === '10' ? useGrade10MiniProjects() : {
+    projects: [],
+    createProject: async () => null,
+    fetchProject: async () => null,
+    currentProject: null,
+    setCurrentProject: () => {},
+    loading: false
+  };
+  
+  const grade12HooksResult = assignedGrade === '12' ? useGrade12Projects() : {
+    projects: [],
+    createProject: async () => null,
+    currentProject: null,
+    setCurrentProject: () => {},
+    loading: false
+  };
+  
   const { 
     projects: miniProjects,
     createProject,
@@ -54,7 +73,7 @@ export const StudentGradeContent: React.FC = () => {
     currentProject,
     setCurrentProject,
     loading: projectsLoading
-  } = useGrade10MiniProjects();
+  } = grade10HooksResult;
   
   const { 
     projects: finalProjects,
@@ -62,7 +81,7 @@ export const StudentGradeContent: React.FC = () => {
     currentProject: currentFinalProject,
     setCurrentProject: setCurrentFinalProject,
     loading: finalProjectsLoading
-  } = useGrade12Projects();
+  } = grade12HooksResult;
   
   const [activeContentTab, setActiveContentTab] = useState('videos');
   
