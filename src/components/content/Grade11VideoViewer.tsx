@@ -57,56 +57,58 @@ export const Grade11VideoViewer: React.FC<Grade11VideoViewerProps> = ({
       </div>
 
       {/* Video Info */}
-      <Card>
-        <CardHeader>
+      <Card className="border-2">
+        <CardHeader className="pb-4">
           <div className="flex items-start justify-between">
-            <div className="space-y-2">
-              <CardTitle className="text-xl">{video.title}</CardTitle>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Calendar className="w-4 h-4" />
-                {new Date(video.created_at).toLocaleDateString('ar-SA')}
+            <div className="space-y-3">
+              <CardTitle className="text-2xl font-bold text-foreground">{video.title}</CardTitle>
+              <div className="flex items-center gap-3 text-base text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-5 h-5" />
+                  {new Date(video.created_at).toLocaleDateString('ar-SA')}
+                </div>
                 {video.duration && (
-                  <>
-                    <span>•</span>
-                    <Clock className="w-4 h-4" />
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-5 h-5" />
                     {video.duration}
-                  </>
+                  </div>
                 )}
               </div>
             </div>
-            <Badge variant="outline" className="flex items-center gap-1">
-              <Video className="w-3 h-3" />
+            <Badge variant="outline" className="flex items-center gap-2 text-sm px-4 py-2">
+              <Video className="w-4 h-4" />
               {video.category}
             </Badge>
           </div>
         </CardHeader>
 
         {video.description && (
-          <CardContent>
-            <div className="space-y-4">
+          <CardContent className="pt-0">
+            <div className="space-y-5">
               <div>
-                <h4 className="text-sm font-semibold mb-2">الوصف</h4>
-                <p className="text-muted-foreground leading-relaxed">
+                <h4 className="text-lg font-bold mb-3 text-foreground">الوصف</h4>
+                <p className="text-base text-muted-foreground leading-7">
                   {video.description}
                 </p>
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex gap-3">
                 <Button 
                   variant="outline" 
-                  size="sm"
+                  size="default"
                   onClick={() => window.open(video.video_url, '_blank')}
-                  className="flex items-center gap-1"
+                  className="flex items-center gap-2 px-4 py-2"
                 >
-                  <ExternalLink className="w-3 h-3" />
+                  <ExternalLink className="w-4 h-4" />
                   فتح في نافذة جديدة
                 </Button>
                 
                 {onClose && (
                   <Button 
                     variant="ghost" 
-                    size="sm"
+                    size="default"
                     onClick={onClose}
+                    className="px-4 py-2"
                   >
                     إغلاق
                   </Button>

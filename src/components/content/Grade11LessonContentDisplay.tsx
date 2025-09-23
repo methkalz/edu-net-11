@@ -270,16 +270,18 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
   const renderCompactMedia = (media: any) => {
     return (
       <div 
-        className="flex items-center gap-2 p-2 bg-muted/50 rounded border cursor-pointer hover:bg-muted transition-colors"
+        className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg border-2 cursor-pointer hover:bg-muted/70 transition-colors"
         onClick={() => setPreviewMedia(media)}
       >
-        {getMediaIcon(media.media_type)}
-        <span className="text-xs font-medium truncate flex-1">{media.file_name}</span>
-        <Badge variant="outline" className={`text-xs ${getMediaTypeBadge(media.media_type)}`}>
+        <div className="p-2 bg-primary/10 rounded-full">
+          {getMediaIcon(media.media_type)}
+        </div>
+        <span className="text-sm font-semibold truncate flex-1">{media.file_name}</span>
+        <Badge variant="outline" className={`text-sm px-3 py-1 ${getMediaTypeBadge(media.media_type)}`}>
           {media.media_type}
         </Badge>
-        <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-          <ExternalLink className="h-3 w-3" />
+        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+          <ExternalLink className="h-4 w-4" />
         </Button>
       </div>
     );
@@ -329,10 +331,10 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
     <div className="space-y-4 w-full max-w-none">
       {/* Lesson Content */}
       {!hideHeader && (
-        <div className="prose prose-sm max-w-none w-full">
-          <h6 className="font-medium text-sm mb-2">{lesson.title}</h6>
+        <div className="prose max-w-none w-full">
+          <h5 className="font-semibold text-lg mb-4 text-foreground">{lesson.title}</h5>
           {lesson.content && (
-            <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap break-words max-w-full">
+            <div className="text-base text-muted-foreground leading-7 whitespace-pre-wrap break-words max-w-full">
               {lesson.content}
             </div>
           )}
@@ -341,18 +343,18 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
 
       {/* Media Controls */}
       {showControls && sortedMedia.length > 0 && (
-        <div className="flex items-center gap-3 py-2 border-t border-b">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4 py-4 border-t border-b bg-muted/30 rounded-lg px-4">
+          <div className="flex items-center gap-3">
             <Switch
               id={`expand-${lesson.id}`}
               checked={isExpanded}
               onCheckedChange={setIsExpanded}
             />
-            <Label htmlFor={`expand-${lesson.id}`} className="text-xs cursor-pointer">
+            <Label htmlFor={`expand-${lesson.id}`} className="text-sm font-medium cursor-pointer">
               عرض الوسائط مدمجة
             </Label>
           </div>
-          <Badge variant="secondary" className="text-xs">
+          <Badge variant="secondary" className="text-sm px-3 py-1">
             {sortedMedia.length} ملف وسائط
           </Badge>
         </div>
@@ -363,23 +365,25 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
         <div className="space-y-3">
           {isExpanded ? (
             // Expanded view - embedded media
-            <div className="space-y-4">
+            <div className="space-y-6">
               {sortedMedia.map((media) => (
-                <Card key={media.id} className="overflow-hidden">
-                  <CardContent className="p-3">
-                    <div className="flex items-center justify-start gap-2 mb-3">
-                      {getMediaIcon(media.media_type)}
-                      <span className="text-sm font-medium">{media.file_name}</span>
-                      <Badge variant="outline" className={`text-xs ${getMediaTypeBadge(media.media_type)}`}>
+                <Card key={media.id} className="overflow-hidden border-2">
+                  <CardContent className="p-5">
+                    <div className="flex items-center justify-start gap-3 mb-4">
+                      <div className="p-2 bg-primary/10 rounded-full">
+                        {getMediaIcon(media.media_type)}
+                      </div>
+                      <span className="text-base font-semibold flex-1">{media.file_name}</span>
+                      <Badge variant="outline" className={`text-sm px-3 py-1 ${getMediaTypeBadge(media.media_type)}`}>
                         {media.media_type}
                       </Badge>
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
                         onClick={() => setPreviewMedia(media)}
-                        className="ml-auto h-6 w-6 p-0"
+                        className="h-8 w-8 p-0"
                       >
-                        <Maximize2 className="h-3 w-3" />
+                        <Maximize2 className="h-4 w-4" />
                       </Button>
                     </div>
                     {renderEmbeddedMedia(media)}
@@ -389,8 +393,8 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
             </div>
           ) : (
             // Compact view - media list
-            <div className="space-y-2">
-              <div className="text-xs text-muted-foreground font-medium">الوسائط المرفقة:</div>
+            <div className="space-y-3">
+              <div className="text-sm text-muted-foreground font-semibold">الوسائط المرفقة:</div>
               {sortedMedia.map((media) => (
                 <div key={media.id}>
                   {renderCompactMedia(media)}

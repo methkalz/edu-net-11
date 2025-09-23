@@ -153,70 +153,70 @@ export const StudentGrade11Content: React.FC = () => {
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="w-8 h-8 mx-auto mb-2 bg-blue-100 rounded-full flex items-center justify-center">
-              <FolderOpen className="w-4 h-4 text-blue-600" />
+        <Card className="border-2 hover:shadow-md transition-shadow">
+          <CardContent className="p-6 text-center">
+            <div className="w-12 h-12 mx-auto mb-3 bg-blue-100 rounded-full flex items-center justify-center">
+              <FolderOpen className="w-6 h-6 text-blue-600" />
             </div>
-            <div className="text-2xl font-bold text-blue-600">{stats.totalSections}</div>
-            <div className="text-xs text-muted-foreground">أقسام</div>
+            <div className="text-3xl font-bold text-blue-600 mb-1">{stats.totalSections}</div>
+            <div className="text-sm text-muted-foreground font-medium">أقسام</div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="w-8 h-8 mx-auto mb-2 bg-green-100 rounded-full flex items-center justify-center">
-              <Target className="w-4 h-4 text-green-600" />
+        <Card className="border-2 hover:shadow-md transition-shadow">
+          <CardContent className="p-6 text-center">
+            <div className="w-12 h-12 mx-auto mb-3 bg-green-100 rounded-full flex items-center justify-center">
+              <Target className="w-6 h-6 text-green-600" />
             </div>
-            <div className="text-2xl font-bold text-green-600">{stats.totalTopics}</div>
-            <div className="text-xs text-muted-foreground">مواضيع</div>
+            <div className="text-3xl font-bold text-green-600 mb-1">{stats.totalTopics}</div>
+            <div className="text-sm text-muted-foreground font-medium">مواضيع</div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="w-8 h-8 mx-auto mb-2 bg-purple-100 rounded-full flex items-center justify-center">
-              <BookOpen className="w-4 h-4 text-purple-600" />
+        <Card className="border-2 hover:shadow-md transition-shadow">
+          <CardContent className="p-6 text-center">
+            <div className="w-12 h-12 mx-auto mb-3 bg-purple-100 rounded-full flex items-center justify-center">
+              <BookOpen className="w-6 h-6 text-purple-600" />
             </div>
-            <div className="text-2xl font-bold text-purple-600">{stats.totalLessons}</div>
-            <div className="text-xs text-muted-foreground">دروس</div>
+            <div className="text-3xl font-bold text-purple-600 mb-1">{stats.totalLessons}</div>
+            <div className="text-sm text-muted-foreground font-medium">دروس</div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="w-8 h-8 mx-auto mb-2 bg-orange-100 rounded-full flex items-center justify-center">
-              <PlayCircle className="w-4 h-4 text-orange-600" />
+        <Card className="border-2 hover:shadow-md transition-shadow">
+          <CardContent className="p-6 text-center">
+            <div className="w-12 h-12 mx-auto mb-3 bg-orange-100 rounded-full flex items-center justify-center">
+              <PlayCircle className="w-6 h-6 text-orange-600" />
             </div>
-            <div className="text-2xl font-bold text-orange-600">{stats.totalMedia}</div>
-            <div className="text-xs text-muted-foreground">وسائط</div>
+            <div className="text-3xl font-bold text-orange-600 mb-1">{stats.totalMedia}</div>
+            <div className="text-sm text-muted-foreground font-medium">وسائط</div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="w-8 h-8 mx-auto mb-2 bg-red-100 rounded-full flex items-center justify-center">
-              <Video className="w-4 h-4 text-red-600" />
+        <Card className="border-2 hover:shadow-md transition-shadow">
+          <CardContent className="p-6 text-center">
+            <div className="w-12 h-12 mx-auto mb-3 bg-red-100 rounded-full flex items-center justify-center">
+              <Video className="w-6 h-6 text-red-600" />
             </div>
-            <div className="text-2xl font-bold text-red-600">{stats.totalVideos}</div>
-            <div className="text-xs text-muted-foreground">فيديوهات</div>
+            <div className="text-3xl font-bold text-red-600 mb-1">{stats.totalVideos}</div>
+            <div className="text-sm text-muted-foreground font-medium">فيديوهات</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Search */}
-      <div className="flex gap-2">
+      <div className="flex gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
           <Input
             placeholder="ابحث في المحتوى..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className="pl-12 py-3 text-base border-2"
           />
         </div>
         {searchQuery && (
-          <Button variant="outline" onClick={() => setSearchQuery('')}>
+          <Button variant="outline" onClick={() => setSearchQuery('')} className="px-6 py-3">
             مسح
           </Button>
         )}
@@ -224,13 +224,13 @@ export const StudentGrade11Content: React.FC = () => {
 
       {/* Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="lessons" className="flex items-center gap-2">
-            <BookOpen className="w-4 h-4" />
+        <TabsList className="grid w-full grid-cols-2 h-12">
+          <TabsTrigger value="lessons" className="flex items-center gap-2 text-base font-medium">
+            <BookOpen className="w-5 h-5" />
             الدروس ({sections.length})
           </TabsTrigger>
-          <TabsTrigger value="videos" className="flex items-center gap-2">
-            <Video className="w-4 h-4" />
+          <TabsTrigger value="videos" className="flex items-center gap-2 text-base font-medium">
+            <Video className="w-5 h-5" />
             الفيديوهات ({videos.length})
           </TabsTrigger>
         </TabsList>
@@ -255,28 +255,28 @@ export const StudentGrade11Content: React.FC = () => {
                 >
                   <CollapsibleTrigger asChild>
                     <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
-                            <FolderOpen className="w-5 h-5 text-white" />
+                       <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
+                            <FolderOpen className="w-6 h-6 text-white" />
                           </div>
                           <div className="text-left">
-                            <CardTitle className="text-lg">{section.title}</CardTitle>
+                            <CardTitle className="text-xl font-bold">{section.title}</CardTitle>
                             {section.description && (
-                              <p className="text-sm text-muted-foreground mt-1">
+                              <p className="text-base text-muted-foreground mt-2">
                                 {section.description}
                               </p>
                             )}
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="secondary">
+                        <div className="flex items-center gap-3">
+                          <Badge variant="secondary" className="text-sm px-3 py-1">
                             {section.topics.length} موضوع
                           </Badge>
                           {openSections.includes(section.id) ? (
-                            <ChevronDown className="w-5 h-5" />
+                            <ChevronDown className="w-6 h-6" />
                           ) : (
-                            <ChevronRight className="w-5 h-5" />
+                            <ChevronRight className="w-6 h-6" />
                           )}
                         </div>
                       </div>
@@ -294,28 +294,28 @@ export const StudentGrade11Content: React.FC = () => {
                             >
                               <CollapsibleTrigger asChild>
                                 <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors py-4">
-                                  <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                      <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
-                                        <Target className="w-4 h-4 text-white" />
+                                   <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                      <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
+                                        <Target className="w-5 h-5 text-white" />
                                       </div>
                                       <div className="text-left">
-                                        <h4 className="font-medium">{topic.title}</h4>
+                                        <h4 className="font-semibold text-lg">{topic.title}</h4>
                                         {topic.content && (
-                                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                                          <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
                                             {topic.content}
                                           </p>
                                         )}
                                       </div>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                      <Badge variant="outline" className="text-xs">
+                                    <div className="flex items-center gap-3">
+                                      <Badge variant="outline" className="text-sm px-3 py-1">
                                         {topic.lessons.length} درس
                                       </Badge>
                                       {openTopics.includes(topic.id) ? (
-                                        <ChevronDown className="w-4 h-4" />
+                                        <ChevronDown className="w-5 h-5" />
                                       ) : (
-                                        <ChevronRight className="w-4 h-4" />
+                                        <ChevronRight className="w-5 h-5" />
                                       )}
                                     </div>
                                   </div>
@@ -326,28 +326,28 @@ export const StudentGrade11Content: React.FC = () => {
                                 <CardContent className="pt-0">
                                   <div className="space-y-2">
                                     {topic.lessons.map((lesson) => (
-                                      <div
+                                       <div
                                         key={lesson.id}
-                                        className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                                        className="flex items-center justify-between p-4 bg-muted/30 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer"
                                         onClick={() => setSelectedLesson(lesson)}
                                       >
-                                        <div className="flex items-center gap-3">
-                                          <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-pink-500 rounded flex items-center justify-center">
-                                            <BookOpen className="w-3 h-3 text-white" />
+                                        <div className="flex items-center gap-4">
+                                          <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                                            <BookOpen className="w-4 h-4 text-white" />
                                           </div>
                                           <div>
-                                            <h5 className="text-sm font-medium">{lesson.title}</h5>
+                                            <h5 className="text-base font-semibold">{lesson.title}</h5>
                                             {lesson.media && lesson.media.length > 0 && (
-                                              <div className="flex items-center gap-1 mt-1">
-                                                <PlayCircle className="w-3 h-3 text-muted-foreground" />
-                                                <span className="text-xs text-muted-foreground">
+                                              <div className="flex items-center gap-2 mt-1">
+                                                <PlayCircle className="w-4 h-4 text-muted-foreground" />
+                                                <span className="text-sm text-muted-foreground">
                                                   {lesson.media.length} ملف وسائط
                                                 </span>
                                               </div>
                                             )}
                                           </div>
                                         </div>
-                                        <Button variant="ghost" size="sm">
+                                        <Button variant="outline" size="sm" className="px-4">
                                           عرض
                                         </Button>
                                       </div>
