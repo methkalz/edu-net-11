@@ -97,16 +97,16 @@ export const useRealLeaderboard = () => {
       // Get additional stats for each grade 11 student
       const playersWithStats = await Promise.all(
         grade11Students.map(async (student, index) => {
-          // Get completed activities count
-          const { data: activitiesData } = await supabase
+          // Get completed activities count - Use count instead of select all
+          const { count: activitiesCount } = await supabase
             .from('student_activity_log')
-            .select('id')
+            .select('*', { count: 'exact', head: true })
             .eq('student_id', student.user_id);
 
-          // Get achievements count
-          const { data: achievementsData } = await supabase
+          // Get achievements count - Use count instead of select all
+          const { count: achievementsCount } = await supabase
             .from('student_achievements')
-            .select('id')
+            .select('*', { count: 'exact', head: true })
             .eq('student_id', student.user_id);
 
           // Calculate streak days from recent activity
@@ -142,9 +142,9 @@ export const useRealLeaderboard = () => {
             points: student.points || 0,
             rank: index + 1,
             isCurrentUser: student.user_id === user.id,
-            completedActivities: activitiesData?.length || 0,
+            completedActivities: activitiesCount || 0,
             streakDays,
-            achievementsCount: achievementsData?.length || 0,
+            achievementsCount: achievementsCount || 0,
             avatar: student.avatar_url
           };
         })
