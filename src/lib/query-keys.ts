@@ -12,6 +12,7 @@ export const QUERY_KEYS = {
     STATS: (userId: string) => ['student', 'stats', userId],
     ACHIEVEMENTS: (userId: string) => ['student', 'achievements', userId],
     CONTENT: (userId: string, grade: string) => ['student', 'content', userId, grade],
+    NOTIFICATIONS: (userId: string) => ['student', 'notifications', userId],
   },
   
   // Grade content
@@ -23,6 +24,22 @@ export const QUERY_KEYS = {
     DOCUMENTS: (grade: string) => ['documents', grade],
     PROJECTS: (grade: string, userId: string) => ['projects', grade, userId],
     LESSONS: (grade: string) => ['lessons', grade],
+  },
+  
+  // Teacher data
+  TEACHER: {
+    CONTENT_ACCESS: (teacherId: string, schoolId: string) => ['teacher', 'content-access', teacherId, schoolId],
+  },
+  
+  // School data  
+  SCHOOL: {
+    PACKAGE: (schoolId: string) => ['school', 'package', schoolId],
+    AVAILABLE_GRADES: (schoolId: string, role: string) => ['school', 'available-grades', schoolId, role],
+  },
+  
+  // Calendar data
+  CALENDAR: {
+    EVENTS: (schoolId: string, limit: number) => ['calendar', 'events', schoolId, limit],
   },
   
   // User data

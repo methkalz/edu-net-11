@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { logger } from '@/lib/logger';
+import { QUERY_KEYS, CACHE_TIMES } from '@/lib/query-keys';
 
 interface SchoolPackage {
   id: string;
@@ -22,50 +23,48 @@ interface SchoolPackage {
   current_teachers: number;
 }
 
+// Fetch function
+const fetchSchoolPackage = async (schoolId: string): Promise<SchoolPackage | null> => {
+  const { data, error: fetchError } = await supabase
+    .rpc('get_school_package_with_usage', { school_uuid: schoolId });
+
+  if (fetchError) {
+    logger.error('Error fetching school package', fetchError);
+    throw fetchError;
+  }
+
+  const packageData = data as unknown as SchoolPackage;
+  logger.info('School package loaded', { packageData });
+  return packageData;
+};
+
 export const useSchoolPackage = () => {
   const { userProfile } = useAuth();
-  const [schoolPackage, setSchoolPackage] = useState<SchoolPackage | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  const fetchSchoolPackage = async () => {
-    if (!userProfile?.school_id) {
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError(null);
-
-      const { data, error: fetchError } = await supabase
-        .rpc('get_school_package_with_usage', { school_uuid: userProfile.school_id });
-
-      if (fetchError) {
-        throw fetchError;
-      }
-
-      setSchoolPackage(data as unknown as SchoolPackage);
-      logger.info('School package loaded', { packageData: data });
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'خطأ في تحميل بيانات الباقة';
-      setError(errorMessage);
-      logger.error('Error fetching school package', err as Error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (userProfile?.school_id) {
-      fetchSchoolPackage();
-    }
-  }, [userProfile?.school_id]);
+  const {
+    data: schoolPackage = null,
+    isLoading: loading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: QUERY_KEYS.SCHOOL.PACKAGE(userProfile?.school_id || ''),
+    queryFn: () => fetchSchoolPackage(userProfile!.school_id),
+    enabled: Boolean(userProfile?.school_id),
+    staleTime: CACHE_TIMES.MEDIUM, // Cache for 15 minutes
+    gcTime: CACHE_TIMES.LONG, // Keep in cache for 1 hour
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
+    retry: (failureCount, error: any) => {
+      if (error?.status >= 400 && error?.status < 500) return false;
+      return failureCount < 2;
+    },
+  });
 
   return {
     schoolPackage,
     loading,
-    error,
-    refetch: fetchSchoolPackage
+    error: error?.message || null,
+    refetch
   };
 };
