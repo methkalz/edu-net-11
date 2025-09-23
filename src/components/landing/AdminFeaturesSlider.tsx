@@ -30,7 +30,7 @@ const AdminFeaturesSlider: React.FC = () => {
       title: 'فحص ذكي للمشاريع',
       description: 'تقليل نسب الأخطاء والغش في مشاريع التخرج من خلال فحص ذكي للمشاريع قبل التسليم.',
       image: '/admin-features/class-management.png',
-      features: ['فحص التشابه', 'منع الغش', 'جودة المشاريع']
+      features: ['فحص التشابه', 'تقليل نسبة الـ חשד', 'جودة المشاريع']
     }
   ];
 
