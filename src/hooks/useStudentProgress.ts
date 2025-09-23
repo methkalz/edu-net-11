@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
+import React from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { logger } from '@/lib/logger';
+import { QUERY_KEYS, CACHE_TIMES } from '@/lib/query-keys';
 
 export interface StudentStats {
   total_points: number;
@@ -34,78 +36,137 @@ export interface Achievement {
   metadata: any;
 }
 
-export const useStudentProgress = () => {
-  const { user, userProfile } = useAuth();
-  const [stats, setStats] = useState<StudentStats>({
+// Fetch functions
+const fetchStudentStats = async (userId: string): Promise<StudentStats> => {
+  const { data, error } = await supabase
+    .rpc('get_student_dashboard_stats', { student_uuid: userId });
+
+  if (error) {
+    logger.error('Error fetching student stats', error);
+    throw error;
+  }
+
+  logger.info('Student stats loaded successfully', { stats: data });
+  return data as unknown as StudentStats || {
     total_points: 0,
     completed_videos: 0,
     completed_projects: 0,
     current_streak: 0,
     total_activities: 0,
     achievements_count: 0
-  });
-  const [progress, setProgress] = useState<StudentProgress[]>([]);
-  const [achievements, setAchievements] = useState<Achievement[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchStudentStats = async () => {
-    if (!user || userProfile?.role !== 'student') return;
-
-    try {
-      setLoading(true);
-      setError(null);
-
-      // Get dashboard stats
-      const { data: statsData, error: statsError } = await supabase
-        .rpc('get_student_dashboard_stats', { student_uuid: user.id });
-
-      if (statsError) throw statsError;
-
-      if (statsData) {
-        setStats(statsData as unknown as StudentStats);
-      }
-
-      // Get progress data
-      const { data: progressData, error: progressError } = await supabase
-        .from('student_progress')
-        .select('*')
-        .eq('student_id', user.id)
-        .order('updated_at', { ascending: false });
-
-      if (progressError) throw progressError;
-      setProgress((progressData || []) as StudentProgress[]);
-
-      // Get achievements
-      const { data: achievementsData, error: achievementsError } = await supabase
-        .from('student_achievements')
-        .select('*')
-        .eq('student_id', user.id)
-        .order('earned_at', { ascending: false });
-
-      if (achievementsError) throw achievementsError;
-      setAchievements(achievementsData || []);
-
-      logger.info('Student stats loaded successfully', { stats: statsData });
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'خطأ في تحميل إحصائيات الطالب';
-      setError(errorMessage);
-      logger.error('Error fetching student stats', err as Error);
-    } finally {
-      setLoading(false);
-    }
   };
+};
 
-  const updateProgress = async (
-    contentId: string,
-    contentType: 'video' | 'document' | 'lesson' | 'project' | 'game',
-    progressPercentage: number,
-    timeSpentMinutes: number = 0,
-    pointsEarned: number = 0
-  ) => {
-    if (!user || !userProfile?.school_id) return;
+const fetchStudentProgress = async (userId: string): Promise<StudentProgress[]> => {
+  const { data, error } = await supabase
+    .from('student_progress')
+    .select('*')
+    .eq('student_id', userId)
+    .order('updated_at', { ascending: false });
 
-    try {
+  if (error) {
+    logger.error('Error fetching student progress', error);
+    throw error;
+  }
+
+  return (data || []) as StudentProgress[];
+};
+
+const fetchStudentAchievements = async (userId: string): Promise<Achievement[]> => {
+  const { data, error } = await supabase
+    .from('student_achievements')
+    .select('*')
+    .eq('student_id', userId)
+    .order('earned_at', { ascending: false });
+
+  if (error) {
+    logger.error('Error fetching student achievements', error);
+    throw error;
+  }
+
+  return data || [];
+};
+
+export const useStudentProgress = () => {
+  const { user, userProfile } = useAuth();
+  const queryClient = useQueryClient();
+
+  // Stats query
+  const {
+    data: stats = {
+      total_points: 0,
+      completed_videos: 0,
+      completed_projects: 0,
+      current_streak: 0,
+      total_activities: 0,
+      achievements_count: 0
+    },
+    isLoading: statsLoading,
+    error: statsError,
+    refetch: refetchStats
+  } = useQuery({
+    queryKey: QUERY_KEYS.STUDENT.STATS(user?.id || ''),
+    queryFn: () => fetchStudentStats(user!.id),
+    enabled: Boolean(user && userProfile?.role === 'student'),
+    staleTime: CACHE_TIMES.SHORT,
+    gcTime: CACHE_TIMES.MEDIUM,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
+  });
+
+  // Progress query
+  const {
+    data: progress = [],
+    isLoading: progressLoading,
+    error: progressError
+  } = useQuery({
+    queryKey: QUERY_KEYS.STUDENT.PROGRESS(user?.id || ''),
+    queryFn: () => fetchStudentProgress(user!.id),
+    enabled: Boolean(user && userProfile?.role === 'student'),
+    staleTime: CACHE_TIMES.SHORT,
+    gcTime: CACHE_TIMES.MEDIUM,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
+  });
+
+  // Achievements query
+  const {
+    data: achievements = [],
+    isLoading: achievementsLoading,
+    error: achievementsError
+  } = useQuery({
+    queryKey: QUERY_KEYS.STUDENT.ACHIEVEMENTS(user?.id || ''),
+    queryFn: () => fetchStudentAchievements(user!.id),
+    enabled: Boolean(user && userProfile?.role === 'student'),
+    staleTime: CACHE_TIMES.MEDIUM,
+    gcTime: CACHE_TIMES.LONG,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
+  });
+
+  const loading = statsLoading || progressLoading || achievementsLoading;
+  const error = statsError?.message || progressError?.message || achievementsError?.message || null;
+
+  // Update progress mutation
+  const updateProgressMutation = useMutation({
+    mutationFn: async ({
+      contentId,
+      contentType,
+      progressPercentage,
+      timeSpentMinutes = 0,
+      pointsEarned = 0
+    }: {
+      contentId: string;
+      contentType: 'video' | 'document' | 'lesson' | 'project' | 'game';
+      progressPercentage: number;
+      timeSpentMinutes?: number;
+      pointsEarned?: number;
+    }) => {
+      if (!user || !userProfile?.school_id) throw new Error('User not authenticated');
+
       const updateData = {
         student_id: user.id,
         content_id: contentId,
@@ -129,31 +190,59 @@ export const useStudentProgress = () => {
       if (error) throw error;
 
       // Log activity
-      await logActivity(contentType === 'video' ? 'video_watch' : 
-                       contentType === 'project' ? 'project_submit' :
-                       contentType === 'game' ? 'game_play' : 'document_read',
-                       contentId, timeSpentMinutes * 60, pointsEarned);
+      await logActivityMutation.mutateAsync({
+        activityType: contentType === 'video' ? 'video_watch' : 
+                     contentType === 'project' ? 'project_submit' :
+                     contentType === 'game' ? 'game_play' : 'document_read',
+        contentId,
+        durationSeconds: timeSpentMinutes * 60,
+        pointsEarned
+      });
 
-      // Refresh stats
-      await fetchStudentStats();
-
-      logger.info('Progress updated successfully', { contentId, progressPercentage });
       return data;
-    } catch (err) {
-      logger.error('Error updating progress', err as Error);
-      throw err;
+    },
+    onSuccess: () => {
+      // Invalidate and refetch related queries
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.STUDENT.PROGRESS(user?.id || '') });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.STUDENT.STATS(user?.id || '') });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.STUDENT.CONTENT(user?.id || '', '') });
+    },
+    onError: (error) => {
+      logger.error('Error updating progress', error);
     }
-  };
+  });
 
-  const logActivity = async (
-    activityType: 'login' | 'video_watch' | 'document_read' | 'project_submit' | 'game_play' | 'quiz_complete',
-    contentId?: string,
-    durationSeconds: number = 0,
+  const updateProgress = (
+    contentId: string,
+    contentType: 'video' | 'document' | 'lesson' | 'project' | 'game',
+    progressPercentage: number,
+    timeSpentMinutes: number = 0,
     pointsEarned: number = 0
   ) => {
-    if (!user || !userProfile?.school_id) return;
+    return updateProgressMutation.mutateAsync({
+      contentId,
+      contentType,
+      progressPercentage,
+      timeSpentMinutes,
+      pointsEarned
+    });
+  };
 
-    try {
+  // Log activity mutation
+  const logActivityMutation = useMutation({
+    mutationFn: async ({
+      activityType,
+      contentId,
+      durationSeconds = 0,
+      pointsEarned = 0
+    }: {
+      activityType: 'login' | 'video_watch' | 'document_read' | 'project_submit' | 'game_play' | 'quiz_complete';
+      contentId?: string;
+      durationSeconds?: number;
+      pointsEarned?: number;
+    }) => {
+      if (!user || !userProfile?.school_id) throw new Error('User not authenticated');
+
       const { error } = await supabase
         .from('student_activity_log')
         .insert({
@@ -166,23 +255,44 @@ export const useStudentProgress = () => {
         });
 
       if (error) throw error;
-
       logger.info('Activity logged successfully', { activityType, contentId });
-    } catch (err) {
-      logger.error('Error logging activity', err as Error);
+    },
+    onError: (error) => {
+      logger.error('Error logging activity', error);
     }
+  });
+
+  const logActivity = (
+    activityType: 'login' | 'video_watch' | 'document_read' | 'project_submit' | 'game_play' | 'quiz_complete',
+    contentId?: string,
+    durationSeconds: number = 0,
+    pointsEarned: number = 0
+  ) => {
+    return logActivityMutation.mutateAsync({
+      activityType,
+      contentId,
+      durationSeconds,
+      pointsEarned
+    });
   };
 
-  const awardAchievement = async (
-    achievementType: string,
-    achievementName: string,
-    achievementDescription: string,
-    pointsValue: number,
-    metadata: any = {}
-  ) => {
-    if (!user || !userProfile?.school_id) return;
+  // Award achievement mutation
+  const awardAchievementMutation = useMutation({
+    mutationFn: async ({
+      achievementType,
+      achievementName,
+      achievementDescription,
+      pointsValue,
+      metadata = {}
+    }: {
+      achievementType: string;
+      achievementName: string;
+      achievementDescription: string;
+      pointsValue: number;
+      metadata?: any;
+    }) => {
+      if (!user || !userProfile?.school_id) throw new Error('User not authenticated');
 
-    try {
       const { data, error } = await supabase
         .from('student_achievements')
         .insert({
@@ -198,26 +308,54 @@ export const useStudentProgress = () => {
         .single();
 
       if (error) throw error;
-
-      // Refresh stats and achievements
-      await fetchStudentStats();
-
-      logger.info('Achievement awarded successfully', { achievementType, pointsValue });
       return data;
-    } catch (err) {
-      logger.error('Error awarding achievement', err as Error);
-      throw err;
+    },
+    onSuccess: () => {
+      // Invalidate related queries
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.STUDENT.ACHIEVEMENTS(user?.id || '') });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.STUDENT.STATS(user?.id || '') });
+    },
+    onError: (error) => {
+      logger.error('Error awarding achievement', error);
     }
+  });
+
+  const awardAchievement = (
+    achievementType: string,
+    achievementName: string,
+    achievementDescription: string,
+    pointsValue: number,
+    metadata: any = {}
+  ) => {
+    return awardAchievementMutation.mutateAsync({
+      achievementType,
+      achievementName,
+      achievementDescription,
+      pointsValue,
+      metadata
+    });
   };
 
-  useEffect(() => {
-    if (user && userProfile?.role === 'student') {
-      fetchStudentStats();
-      
-      // Log login activity
-      logActivity('login');
+  // Log login activity on first load
+  const { mutate: logLoginActivity } = useMutation({
+    mutationFn: () => logActivity('login'),
+    onError: (error) => {
+      logger.error('Error logging login activity', error);
     }
-  }, [user, userProfile]);
+  });
+
+  // Effect to log login when user becomes available
+  React.useEffect(() => {
+    if (user && userProfile?.role === 'student') {
+      logLoginActivity();
+    }
+  }, [user, userProfile, logLoginActivity]);
+
+  const refetch = () => {
+    refetchStats();
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.STUDENT.PROGRESS(user?.id || '') });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.STUDENT.ACHIEVEMENTS(user?.id || '') });
+  };
 
   return {
     stats,
@@ -228,6 +366,6 @@ export const useStudentProgress = () => {
     updateProgress,
     logActivity,
     awardAchievement,
-    refetch: fetchStudentStats
+    refetch
   };
 };

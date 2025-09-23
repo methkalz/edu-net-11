@@ -1,55 +1,56 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { logger } from '@/lib/logger';
+import { QUERY_KEYS, CACHE_TIMES } from '@/lib/query-keys';
+
+const fetchAssignedGrade = async (userId: string): Promise<string> => {
+  const { data, error } = await supabase
+    .rpc('get_student_assigned_grade', { student_user_id: userId });
+
+  if (error) {
+    logger.error('Error fetching student assigned grade', error);
+    throw error;
+  }
+
+  const grade = data || '11';
+  
+  logger.info('Student assigned grade fetched', { 
+    studentId: userId,
+    grade
+  });
+
+  return grade;
+};
 
 export const useStudentAssignedGrade = () => {
   const { user, userProfile } = useAuth();
-  const [assignedGrade, setAssignedGrade] = useState<string>('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  const fetchAssignedGrade = async () => {
-    if (!user || userProfile?.role !== 'student') {
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError(null);
-
-      const { data, error: gradeError } = await supabase
-        .rpc('get_student_assigned_grade', { student_user_id: user.id });
-
-      if (gradeError) throw gradeError;
-
-      setAssignedGrade(data || '11');
-      
-      logger.info('Student assigned grade fetched', { 
-        studentId: user.id,
-        grade: data
-      });
-
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'خطأ في تحميل الصف المخصص';
-      setError(errorMessage);
-      logger.error('Error fetching student assigned grade', err as Error);
-      // Default to grade 11 on error
-      setAssignedGrade('11');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchAssignedGrade();
-  }, [user, userProfile]);
+  const {
+    data: assignedGrade = '11',
+    isLoading: loading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: QUERY_KEYS.STUDENT.ASSIGNED_GRADE(user?.id || ''),
+    queryFn: () => fetchAssignedGrade(user!.id),
+    enabled: Boolean(user && userProfile?.role === 'student'),
+    staleTime: CACHE_TIMES.LONG, // Cache for 1 hour - grade doesn't change often
+    gcTime: CACHE_TIMES.VERY_LONG, // Keep in cache for 24 hours
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
+    retry: (failureCount, error: any) => {
+      // Don't retry on 4xx errors
+      if (error?.status >= 400 && error?.status < 500) return false;
+      return failureCount < 2;
+    },
+  });
 
   return {
     assignedGrade,
     loading,
-    error,
-    refetch: fetchAssignedGrade
+    error: error?.message || null,
+    refetch
   };
 };

@@ -56,17 +56,17 @@ export const StudentGrade11Content: React.FC = () => {
   };
 
   // Filter sections based on search
-  const filteredSections = sections.filter(section => {
+  const filteredSections = (sections || []).filter(section => {
     if (!searchQuery) return true;
     
     const query = searchQuery.toLowerCase();
     return (
       section.title.toLowerCase().includes(query) ||
       section.description?.toLowerCase().includes(query) ||
-      section.topics.some(topic => 
+      section.topics?.some(topic => 
         topic.title.toLowerCase().includes(query) ||
         topic.content?.toLowerCase().includes(query) ||
-        topic.lessons.some(lesson => 
+        topic.lessons?.some(lesson => 
           lesson.title.toLowerCase().includes(query) ||
           lesson.content?.toLowerCase().includes(query)
         )
@@ -75,7 +75,7 @@ export const StudentGrade11Content: React.FC = () => {
   });
 
   // Filter videos based on search
-  const filteredVideos = videos.filter(video => {
+  const filteredVideos = (videos || []).filter(video => {
     if (!searchQuery) return true;
     
     const query = searchQuery.toLowerCase();
@@ -227,11 +227,11 @@ export const StudentGrade11Content: React.FC = () => {
         <TabsList className="grid w-full grid-cols-2 h-12">
           <TabsTrigger value="lessons" className="flex items-center gap-2 text-base font-medium">
             <BookOpen className="w-5 h-5" />
-            الدروس ({sections.length})
+            الدروس ({(sections || []).length})
           </TabsTrigger>
           <TabsTrigger value="videos" className="flex items-center gap-2 text-base font-medium">
             <Video className="w-5 h-5" />
-            الفيديوهات ({videos.length})
+            الفيديوهات ({(videos || []).length})
           </TabsTrigger>
         </TabsList>
 
