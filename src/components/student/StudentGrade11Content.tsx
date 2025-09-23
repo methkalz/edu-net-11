@@ -425,22 +425,29 @@ export const StudentGrade11Content: React.FC = () => {
       {selectedLesson && (
         <Dialog open={!!selectedLesson} onOpenChange={() => setSelectedLesson(null)}>
           <DialogContent 
-            className="max-w-4xl max-h-[90vh] overflow-y-auto"
+            className="max-w-5xl max-h-[92vh] overflow-y-auto bg-background/95 backdrop-blur-sm border-2"
             aria-describedby="lesson-content-description"
           >
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <BookOpen className="w-5 h-5" />
-                {selectedLesson.title}
+              <DialogTitle className="flex items-center gap-4 text-2xl font-bold text-foreground">
+                <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+                  <BookOpen className="w-6 h-6 text-white" />
+                </div>
+                <div className="text-right">
+                  <h2 className="text-2xl font-bold leading-tight">{selectedLesson.title}</h2>
+                  <p className="text-base text-muted-foreground font-normal mt-1">
+                    درس تفاعلي - الصف الحادي عشر
+                  </p>
+                </div>
               </DialogTitle>
             </DialogHeader>
             
-            <div id="lesson-content-description" className="mt-4">
+            <div id="lesson-content-description" className="mt-6 px-2">
               <Grade11LessonContentDisplay
                 lesson={selectedLesson}
                 defaultExpanded={true}
                 showControls={true}
-                hideHeader={false}
+                hideHeader={true}
               />
             </div>
           </DialogContent>
@@ -451,17 +458,24 @@ export const StudentGrade11Content: React.FC = () => {
       {selectedVideo && (
         <Dialog open={!!selectedVideo} onOpenChange={() => setSelectedVideo(null)}>
           <DialogContent 
-            className="max-w-4xl max-h-[90vh] overflow-y-auto"
+            className="max-w-5xl max-h-[92vh] overflow-y-auto bg-background/95 backdrop-blur-sm border-2"
             aria-describedby="video-content-description"
           >
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Video className="w-5 h-5" />
-                {selectedVideo.title}
+            <DialogHeader className="pb-6 border-b border-border/50">
+              <DialogTitle className="flex items-center gap-4 text-2xl font-bold text-foreground">
+                <div className="w-12 h-12 bg-gradient-to-r from-red-500 to-orange-500 rounded-xl flex items-center justify-center">
+                  <Video className="w-6 h-6 text-white" />
+                </div>
+                <div className="text-right">
+                  <h2 className="text-2xl font-bold leading-tight">{selectedVideo.title}</h2>
+                  <p className="text-base text-muted-foreground font-normal mt-1">
+                    فيديو تعليمي - الصف الحادي عشر
+                  </p>
+                </div>
               </DialogTitle>
             </DialogHeader>
             
-            <div id="video-content-description" className="mt-4">
+            <div id="video-content-description" className="mt-6 px-2">
               <Grade11VideoViewer 
                 video={selectedVideo}
                 onClose={() => setSelectedVideo(null)}
