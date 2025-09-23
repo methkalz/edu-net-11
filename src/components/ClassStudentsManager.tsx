@@ -724,6 +724,7 @@ export const ClassStudentsManager: React.FC<ClassStudentsManagerProps> = ({
   const downloadTemplate = () => {
     // Create CSV content with proper Arabic support
     const csvHeaders = 'full_name,email,phone,password';
+    const csvInstructions = '# تعليمات ملء البيانات:\n# full_name: الاسم الكامل للطالب (مطلوب)\n# email: البريد الإلكتروني (مطلوب - يجب أن يكون فريد)\n# phone: رقم الهاتف (اختياري)\n# password: كلمة المرور (اختياري - سيتم إنشاء كلمة مرور عشوائية إذا تركت فارغة)\n# يرجى حذف هذه التعليمات قبل رفع الملف\n';
     const csvSampleData = [
       'أحمد محمد الأحمد,ahmed.mohamed@school.edu,+972501234567,',
       'فاطمة علي السالم,fatima.ali@school.edu,+972507654321,',
@@ -731,7 +732,7 @@ export const ClassStudentsManager: React.FC<ClassStudentsManagerProps> = ({
       'سارة يوسف القاسم,sara.youssef@school.edu,+972505555555,'
     ].join('\n');
     
-    const csvContent = csvHeaders + '\n' + csvSampleData;
+    const csvContent = csvInstructions + csvHeaders + '\n' + csvSampleData;
     
     // Add BOM for proper Arabic encoding support
     const BOM = '\uFEFF';
@@ -1052,6 +1053,12 @@ export const ClassStudentsManager: React.FC<ClassStudentsManagerProps> = ({
                                     <p className="text-sm text-gray-600 dark:text-gray-400">كلمة المرور (اختياري - سيتم إنشاء كلمة مرور عشوائية إذا تركت فارغة)</p>
                                   </div>
                                 </div>
+                              </div>
+                              
+                              <div className="mt-6 p-3 bg-amber-50 dark:bg-amber-950 rounded-lg">
+                                <p className="text-sm text-amber-800 dark:text-amber-200 text-right">
+                                  💡 <strong>نصيحة:</strong> يرجى حذف التعليمات من الملف قبل رفعه للنظام
+                                </p>
                               </div>
                             </div>
                           </DialogContent>
