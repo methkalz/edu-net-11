@@ -10,14 +10,13 @@ import StudentFeaturesSlider from '@/components/landing/StudentFeaturesSlider';
 import AdminFeaturesSlider from '@/components/landing/AdminFeaturesSlider';
 import CountdownTimer from '@/components/ui/CountdownTimer';
 import { useTrafficLightEffect } from '@/hooks/useTrafficLightEffect';
-
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const activeBox = useTrafficLightEffect();
 
   // تاريخ انتهاء التجربة المجانية - 29 سبتمبر 2025 الساعة 17:00 توقيت القدس
   const freeTrialEndDate = new Date('2025-09-29T17:00:00+03:00'); // +03:00 is Jerusalem timezone (UTC+3)
-  
+
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
@@ -51,11 +50,7 @@ const LandingPage: React.FC = () => {
                 </button>
               </div>
               <div className="flex items-center gap-2">
-                <Button 
-                  variant="outline" 
-                  onClick={() => navigate('/auth')} 
-                  className="border-gray-300 text-gray-700 hover:bg-gray-50 text-xs md:text-sm px-3 md:px-4 py-2 rounded-md transition-colors"
-                >
+                <Button variant="outline" onClick={() => navigate('/auth')} className="border-gray-300 text-gray-700 hover:bg-gray-50 text-xs md:text-sm px-3 md:px-4 py-2 rounded-md transition-colors">
                   تسجيل الدخول
                 </Button>
                 <Button onClick={() => navigate('/auth')} className="bg-gray-900 text-white hover:bg-gray-800 text-xs md:text-sm px-3 md:px-6 py-2 rounded-md transition-colors">
@@ -92,58 +87,26 @@ const LandingPage: React.FC = () => {
               
               
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 max-w-4xl mx-auto mb-12 md:mb-16 mt-16 md:mt-24 px-2">
-                <div className={`relative pt-10 md:pt-12 pb-4 md:pb-6 px-3 md:px-6 rounded-xl md:rounded-2xl text-center border transition-all duration-500 ${
-                  activeBox === 0 
-                    ? 'bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 shadow-2xl scale-105' 
-                    : 'bg-gradient-to-br from-blue-25 to-blue-50 border-blue-100 opacity-60 shadow-sm'
-                }`}>
-                  <div className={`absolute -top-6 md:-top-8 left-1/2 transform -translate-x-1/2 w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center shadow-lg transition-all duration-500 ${
-                    activeBox === 0 
-                      ? 'bg-gradient-to-br from-blue-500 to-blue-600' 
-                      : 'bg-gradient-to-br from-blue-300 to-blue-400'
-                  }`}>
+                <div className={`relative pt-10 md:pt-12 pb-4 md:pb-6 px-3 md:px-6 rounded-xl md:rounded-2xl text-center border transition-all duration-500 ${activeBox === 0 ? 'bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 shadow-2xl scale-105' : 'bg-gradient-to-br from-blue-25 to-blue-50 border-blue-100 opacity-60 shadow-sm'}`}>
+                  <div className={`absolute -top-6 md:-top-8 left-1/2 transform -translate-x-1/2 w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center shadow-lg transition-all duration-500 ${activeBox === 0 ? 'bg-gradient-to-br from-blue-500 to-blue-600' : 'bg-gradient-to-br from-blue-300 to-blue-400'}`}>
                     <BookOpen className="h-6 w-6 md:h-8 md:w-8 text-white" />
                   </div>
                   <span className="text-gray-700 font-medium text-sm md:text-base">مواد تعليمية جاهزة</span>
                 </div>
-                <div className={`relative pt-10 md:pt-12 pb-4 md:pb-6 px-3 md:px-6 rounded-xl md:rounded-2xl text-center border transition-all duration-500 ${
-                  activeBox === 1 
-                    ? 'bg-gradient-to-br from-green-50 to-green-100 border-green-200 shadow-2xl scale-105' 
-                    : 'bg-gradient-to-br from-green-25 to-green-50 border-green-100 opacity-60 shadow-sm'
-                }`}>
-                  <div className={`absolute -top-6 md:-top-8 left-1/2 transform -translate-x-1/2 w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center shadow-lg transition-all duration-500 ${
-                    activeBox === 1 
-                      ? 'bg-gradient-to-br from-green-500 to-green-600' 
-                      : 'bg-gradient-to-br from-green-300 to-green-400'
-                  }`}>
+                <div className={`relative pt-10 md:pt-12 pb-4 md:pb-6 px-3 md:px-6 rounded-xl md:rounded-2xl text-center border transition-all duration-500 ${activeBox === 1 ? 'bg-gradient-to-br from-green-50 to-green-100 border-green-200 shadow-2xl scale-105' : 'bg-gradient-to-br from-green-25 to-green-50 border-green-100 opacity-60 shadow-sm'}`}>
+                  <div className={`absolute -top-6 md:-top-8 left-1/2 transform -translate-x-1/2 w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center shadow-lg transition-all duration-500 ${activeBox === 1 ? 'bg-gradient-to-br from-green-500 to-green-600' : 'bg-gradient-to-br from-green-300 to-green-400'}`}>
                     <Monitor className="h-6 w-6 md:h-8 md:w-8 text-white" />
                   </div>
                   <span className="text-gray-700 font-medium text-sm md:text-base">بنك امتحانات بجروت</span>
                 </div>
-                <div className={`relative pt-10 md:pt-12 pb-4 md:pb-6 px-3 md:px-6 rounded-xl md:rounded-2xl text-center border transition-all duration-500 ${
-                  activeBox === 2 
-                    ? 'bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 shadow-2xl scale-105' 
-                    : 'bg-gradient-to-br from-purple-25 to-purple-50 border-purple-100 opacity-60 shadow-sm'
-                }`}>
-                  <div className={`absolute -top-6 md:-top-8 left-1/2 transform -translate-x-1/2 w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center shadow-lg transition-all duration-500 ${
-                    activeBox === 2 
-                      ? 'bg-gradient-to-br from-purple-500 to-purple-600' 
-                      : 'bg-gradient-to-br from-purple-300 to-purple-400'
-                  }`}>
+                <div className={`relative pt-10 md:pt-12 pb-4 md:pb-6 px-3 md:px-6 rounded-xl md:rounded-2xl text-center border transition-all duration-500 ${activeBox === 2 ? 'bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 shadow-2xl scale-105' : 'bg-gradient-to-br from-purple-25 to-purple-50 border-purple-100 opacity-60 shadow-sm'}`}>
+                  <div className={`absolute -top-6 md:-top-8 left-1/2 transform -translate-x-1/2 w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center shadow-lg transition-all duration-500 ${activeBox === 2 ? 'bg-gradient-to-br from-purple-500 to-purple-600' : 'bg-gradient-to-br from-purple-300 to-purple-400'}`}>
                     <Gamepad2 className="h-6 w-6 md:h-8 md:w-8 text-white" />
                   </div>
                   <span className="text-gray-700 font-medium text-sm md:text-base">ألعاب تعليمية محفزة</span>
                 </div>
-                <div className={`relative pt-10 md:pt-12 pb-4 md:pb-6 px-3 md:px-6 rounded-xl md:rounded-2xl text-center border transition-all duration-500 ${
-                  activeBox === 3 
-                    ? 'bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 shadow-2xl scale-105' 
-                    : 'bg-gradient-to-br from-orange-25 to-orange-50 border-orange-100 opacity-60 shadow-sm'
-                }`}>
-                  <div className={`absolute -top-6 md:-top-8 left-1/2 transform -translate-x-1/2 w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center shadow-lg transition-all duration-500 ${
-                    activeBox === 3 
-                      ? 'bg-gradient-to-br from-orange-500 to-orange-600' 
-                      : 'bg-gradient-to-br from-orange-300 to-orange-400'
-                  }`}>
+                <div className={`relative pt-10 md:pt-12 pb-4 md:pb-6 px-3 md:px-6 rounded-xl md:rounded-2xl text-center border transition-all duration-500 ${activeBox === 3 ? 'bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 shadow-2xl scale-105' : 'bg-gradient-to-br from-orange-25 to-orange-50 border-orange-100 opacity-60 shadow-sm'}`}>
+                  <div className={`absolute -top-6 md:-top-8 left-1/2 transform -translate-x-1/2 w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center shadow-lg transition-all duration-500 ${activeBox === 3 ? 'bg-gradient-to-br from-orange-500 to-orange-600' : 'bg-gradient-to-br from-orange-300 to-orange-400'}`}>
                     <Users className="h-6 w-6 md:h-8 md:w-8 text-white" />
                   </div>
                   <span className="text-gray-700 font-medium text-sm md:text-base">تقارير تفصيلية فورية</span>
@@ -172,7 +135,7 @@ const LandingPage: React.FC = () => {
                 suffix: '%',
                 label: 'نسبة الرضا',
                 duration: 4000
-                }].map((stat, index) => <div key={index} className="text-center">
+              }].map((stat, index) => <div key={index} className="text-center">
                     <div className="text-xl md:text-2xl lg:text-3xl font-light text-gray-900 mb-1 md:mb-2">
                       <AnimatedCounter end={stat.number} duration={stat.duration} suffix={stat.suffix} />
                     </div>
@@ -339,14 +302,14 @@ const LandingPage: React.FC = () => {
                     <Gift className="h-6 w-6 md:h-8 md:w-8 text-white" />
                   </div>
                   <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-3 md:mb-4 text-center">تجربة مجانية</h3>
-                  <p className="text-gray-600 leading-relaxed text-sm md:text-base text-center">تجربة مجانية لمدة أسبوعين كاملين مع إمكانية الوصول لجميع الميزات</p>
+                  <p className="text-gray-600 leading-relaxed text-sm md:text-base">تجربة مجانية لمدة أسبوعين كاملين مع إمكانية الوصول لجميع الميزات</p>
                 </div>
                 <div className="bg-white p-6 md:p-8 rounded-xl md:rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 text-center">
                   <div className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-6">
                     <Heart className="h-6 w-6 md:h-8 md:w-8 text-white" />
                   </div>
                   <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-3 md:mb-4 text-center">دعم גפ"ן</h3>
-                  <p className="text-gray-600 leading-relaxed text-center">فرصة الحصول على النظام مع دعم منظومة גפ"ן المالي</p>
+                  <p className="text-gray-600 leading-relaxed">الحصول على المنظومة من خلال גפ"ן</p>
                 </div>
               </div>
               
@@ -356,11 +319,7 @@ const LandingPage: React.FC = () => {
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-4 text-center">للتواصل والاستفسار</h3>
                 <p className="text-xl text-gray-700 mb-8 font-medium text-center">يونس عمارنة: 0528359103</p>
-                <Button 
-                  size="lg" 
-                  onClick={() => window.open('https://api.whatsapp.com/send/?phone=972528359103&text=%D9%85%D8%B1%D8%AD%D8%A8%D8%A7%D9%8B%D8%8C+%D8%A3%D8%B1%D8%BA%D8%A8+%D9%81%D9%8A+%D9%85%D8%B9%D8%B1%D9%81%D8%A9+%D8%A7%D9%84%D9%85%D8%B2%D9%8A%D8%AF+%D8%B9%D9%86+%D9%85%D9%86%D8%B5%D8%A9+%D8%A7%D9%84%D8%AA%D9%82%D9%86%D9%8A%D8%A9+%D8%A8%D8%A8%D8%B3%D8%A7%D8%B7%D8%A9+%D9%84%D9%84%D8%AA%D8%B9%D9%84%D9%8A%D9%85+%D8%A7%D9%84%D8%A5%D9%84%D9%83%D8%AA%D8%B1%D9%88%D9%86%D9%8A&type=phone_number&app_absent=0', '_blank')} 
-                  className="bg-green-600 hover:bg-green-700 text-white px-12 py-4 rounded-2xl transition-all duration-300 font-medium text-lg w-full max-w-xs mx-auto block shadow-lg hover:shadow-xl hover:scale-105 flex items-center justify-center gap-2 group"
-                >
+                <Button size="lg" onClick={() => window.open('https://api.whatsapp.com/send/?phone=972528359103&text=%D9%85%D8%B1%D8%AD%D8%A8%D8%A7%D9%8B%D8%8C+%D8%A3%D8%B1%D8%BA%D8%A8+%D9%81%D9%8A+%D9%85%D8%B9%D8%B1%D9%81%D8%A9+%D8%A7%D9%84%D9%85%D8%B2%D9%8A%D8%AF+%D8%B9%D9%86+%D9%85%D9%86%D8%B5%D8%A9+%D8%A7%D9%84%D8%AA%D9%82%D9%86%D9%8A%D8%A9+%D8%A8%D8%A8%D8%B3%D8%A7%D8%B7%D8%A9+%D9%84%D9%84%D8%AA%D8%B9%D9%84%D9%8A%D9%85+%D8%A7%D9%84%D8%A5%D9%84%D9%83%D8%AA%D8%B1%D9%88%D9%86%D9%8A&type=phone_number&app_absent=0', '_blank')} className="bg-green-600 hover:bg-green-700 text-white px-12 py-4 rounded-2xl transition-all duration-300 font-medium text-lg w-full max-w-xs mx-auto block shadow-lg hover:shadow-xl hover:scale-105 flex items-center justify-center gap-2 group">
                   اطلب الآن
                   <ArrowRight className="h-5 w-5 transition-transform duration-500 group-hover:translate-x-2 animate-[wiggle_2s_ease-in-out_infinite]" />
                 </Button>
