@@ -382,8 +382,18 @@ export const StudentGrade11Content: React.FC = () => {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {filteredVideos.map((video) => (
                 <Card key={video.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                  <div className="aspect-video bg-gradient-to-r from-red-500 to-pink-500 relative">
-                    <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="aspect-video bg-gradient-to-r from-red-500 to-pink-500 relative overflow-hidden">
+                    {video.thumbnail_url ? (
+                      <img 
+                        src={video.thumbnail_url} 
+                        alt={video.title}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    ) : null}
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/40 transition-colors">
                       <PlayCircle className="w-16 h-16 text-white opacity-80" />
                     </div>
                     <div className="absolute top-2 left-2">
