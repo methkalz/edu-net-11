@@ -1,93 +1,161 @@
-import React, { useState, useCallback, memo, useMemo } from 'react';
-import { Play, Clock, FileText, Search, ChevronRight, CheckCircle2, PlayCircle, BookOpen, Trophy, Star, ChevronDown } from 'lucide-react';
+import React, { useState, useCallback, memo, useMemo, Suspense, lazy } from 'react';
+import { Search, ChevronDown, BookOpen, Trophy, Star, AlertCircle, RefreshCw, Wifi, WifiOff, FileText } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Progress } from '@/components/ui/progress';
 import { useGrade11Content, Grade11LessonWithMedia, Grade11SectionWithTopics, Grade11TopicWithLessons } from '@/hooks/useGrade11Content';
-import Grade11LessonDetailsModal from '../content/Grade11LessonDetailsModal';
+import { useVirtualizedContent } from '@/hooks/useVirtualizedContent';
+import { useErrorHandler } from '@/lib/error-handling/hooks/use-error-handler';
+import MinimalistLessonCard from './MinimalistLessonCard';
+import ProgressTracker from './ProgressTracker';
+
+// Lazy load المودال للأداء
+const StudentLessonModal = lazy(() => import('./StudentLessonModal'));
 
 interface Grade11StudentContentViewerProps {
   onContentClick?: (content: any, contentType: 'lesson') => void;
   onContentComplete?: (contentId: string, contentType: string, timeSpent: number) => void;
+  completedLessons?: string[];
+  studyTime?: number;
 }
 
-// Memoized lesson card component for better performance
-const LessonCard = memo<{
-  lesson: Grade11LessonWithMedia;
-  lessonIndex: number;
+// خطأ مخصص للشبكة
+const NetworkError = ({ onRetry }: { onRetry: () => void }) => (
+  <Alert className="border-red-200 bg-red-50">
+    <WifiOff className="h-6 w-6 text-red-600" />
+    <AlertDescription className="flex items-center justify-between">
+      <div>
+        <p className="text-lg font-medium text-red-800 mb-1">خطأ في الاتصال</p>
+        <p className="text-red-600">تحقق من اتصالك بالإنترنت وحاول مرة أخرى</p>
+      </div>
+      <Button onClick={onRetry} variant="outline" size="sm" className="mr-4">
+        <RefreshCw className="h-4 w-4 ml-2" />
+        إعادة المحاولة
+      </Button>
+    </AlertDescription>
+  </Alert>
+);
+
+// حالة التحميل المحسنة
+const LoadingSkeleton = () => (
+  <div className="max-w-6xl mx-auto space-y-8 px-4">
+    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-8 space-y-4">
+      <Skeleton className="h-12 w-96 mx-auto" />
+      <Skeleton className="h-6 w-64 mx-auto" />
+      <div className="grid grid-cols-3 gap-6 max-w-2xl mx-auto pt-4">
+        {[1, 2, 3].map(i => (
+          <Skeleton key={i} className="h-24 rounded-xl" />
+        ))}
+      </div>
+    </div>
+    <Skeleton className="h-16 rounded-2xl" />
+    {[1, 2, 3].map(i => (
+      <Card key={i} className="rounded-2xl">
+        <div className="p-6 space-y-4">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-32 w-full" />
+        </div>
+      </Card>
+    ))}
+  </div>
+);
+
+// Memoized minimalist topic card
+const MinimalistTopicCard = memo<{
+  topic: Grade11TopicWithLessons;
+  topicIndex: number;
   onLessonClick: (lesson: Grade11LessonWithMedia) => void;
-}>(({ lesson, lessonIndex, onLessonClick }) => {
-  const getMediaIcon = (mediaType: string) => {
-    switch (mediaType) {
-      case 'video':
-        return <PlayCircle className="h-5 w-5 text-blue-500" />;
-      case 'lottie':
-        return <Play className="h-5 w-5 text-purple-500" />;
-      case 'image':
-        return <FileText className="h-5 w-5 text-green-500" />;
-      default:
-        return <FileText className="h-5 w-5 text-gray-500" />;
-    }
-  };
+  completedLessons?: string[];
+}>(({ topic, topicIndex, onLessonClick, completedLessons = [] }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  
+  const completedCount = topic.lessons.filter(lesson => 
+    completedLessons.includes(lesson.id)
+  ).length;
+  const progressPercentage = topic.lessons.length > 0 
+    ? (completedCount / topic.lessons.length) * 100 
+    : 0;
 
   return (
-    <div
-      onClick={() => onLessonClick(lesson)}
-      className="flex items-center gap-4 p-5 rounded-xl border-2 border-gray-100 hover:border-blue-200 hover:bg-blue-50/50 cursor-pointer transition-all duration-200 group bg-white"
-    >
-      <div className="bg-green-500 text-white rounded-full w-10 h-10 flex items-center justify-center text-sm font-bold">
-        {lessonIndex + 1}
-      </div>
-      
-      <div className="flex-1">
-        <h4 className="font-semibold text-lg text-gray-900 group-hover:text-blue-700 transition-colors mb-2">
-          {lesson.title}
-        </h4>
-        <div className="flex items-center gap-6">
-          <span className="text-base text-gray-500 flex items-center gap-2">
-            <Clock className="h-5 w-5" />
-            15 دقيقة تقريباً
-          </span>
-          {lesson.media && lesson.media.length > 0 && (
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-gray-500">الوسائط:</span>
-              <div className="flex items-center gap-2">
-                {lesson.media.slice(0, 3).map((media) => (
-                  <div key={media.id} className="flex items-center">
-                    {getMediaIcon(media.media_type)}
-                  </div>
-                ))}
-                {lesson.media.length > 3 && (
-                  <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                    +{lesson.media.length - 3} أكثر
-                  </span>
-                )}
+    <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+      <Card className="border-2 border-gray-100 hover:border-blue-200 hover:shadow-md transition-all duration-300 rounded-2xl overflow-hidden">
+        <CollapsibleTrigger asChild>
+          <CardHeader className="pb-4 cursor-pointer hover:bg-blue-50/30 transition-colors">
+            <CardTitle className="text-xl flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold text-white ${
+                  progressPercentage === 100 ? 'bg-green-500' : 'bg-blue-500'
+                }`}>
+                  {progressPercentage === 100 ? '✓' : topicIndex + 1}
+                </div>
+                <div className="text-right">
+                  <span className="text-gray-900 text-xl font-bold">{topic.title}</span>
+                  {progressPercentage > 0 && (
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className="w-24 bg-gray-200 rounded-full h-2">
+                        <div 
+                          className="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all duration-500"
+                          style={{ width: `${progressPercentage}%` }}
+                        />
+                      </div>
+                      <span className="text-sm font-medium text-blue-600">
+                        {Math.round(progressPercentage)}%
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
-        </div>
-      </div>
-      
-      <Button 
-        size="lg" 
-        className="px-6 py-3 text-base font-medium"
-        onClick={(e) => {
-          e.stopPropagation();
-          onLessonClick(lesson);
-        }}
-      >
-        ابدأ الدرس
-        <ChevronRight className="h-5 w-5 mr-2" />
-      </Button>
-    </div>
+              <div className="flex items-center gap-3">
+                <Badge variant="outline" className="text-base px-3 py-1">
+                  {topic.lessons.length} درس
+                </Badge>
+                <ChevronDown className={`h-6 w-6 text-gray-400 transition-transform duration-200 ${
+                  isExpanded ? 'rotate-180' : ''
+                }`} />
+              </div>
+            </CardTitle>
+            {topic.content && (
+              <p className="text-lg text-gray-600 mr-16 leading-relaxed">{topic.content}</p>
+            )}
+          </CardHeader>
+        </CollapsibleTrigger>
+        
+        <CollapsibleContent>
+          <CardContent className="pt-0 pb-6">
+            {topic.lessons.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="bg-gray-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                  <BookOpen className="h-8 w-8 text-gray-400" />
+                </div>
+                <p className="text-lg text-gray-500">لا توجد دروس في هذا الموضوع بعد</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {topic.lessons.map((lesson, lessonIndex) => (
+                  <MinimalistLessonCard
+                    key={lesson.id}
+                    lesson={lesson}
+                    lessonIndex={lessonIndex}
+                    onLessonClick={onLessonClick}
+                    isCompleted={completedLessons.includes(lesson.id)}
+                    progress={completedLessons.includes(lesson.id) ? 100 : 0}
+                  />
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
   );
 });
 
-LessonCard.displayName = 'LessonCard';
+MinimalistTopicCard.displayName = 'MinimalistTopicCard';
 
 // Memoized topic card
 const TopicCard = memo<{
@@ -151,13 +219,18 @@ TopicCard.displayName = 'TopicCard';
 
 const Grade11StudentContentViewer: React.FC<Grade11StudentContentViewerProps> = ({
   onContentClick,
-  onContentComplete
+  onContentComplete,
+  completedLessons = [],
+  studyTime = 0
 }) => {
-  const { sections, loading } = useGrade11Content();
+  const { sections, loading, error, fetchSections } = useGrade11Content();
+  const { handleError } = useErrorHandler();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLesson, setSelectedLesson] = useState<Grade11LessonWithMedia | null>(null);
   const [isLessonModalOpen, setIsLessonModalOpen] = useState(false);
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
+  const [showProgressTracker, setShowProgressTracker] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   // Handle section expansion with simple toggle
   const toggleSection = useCallback((sectionId: string) => {
@@ -172,15 +245,44 @@ const Grade11StudentContentViewer: React.FC<Grade11StudentContentViewerProps> = 
     });
   }, []);
 
-  // Handle lesson click - simplified without lazy loading
-  const handleLessonClick = useCallback((lesson: Grade11LessonWithMedia) => {
-    if (onContentClick) {
-      onContentClick(lesson, 'lesson');
-    } else {
-      setSelectedLesson(lesson);
-      setIsLessonModalOpen(true);
+  // مراقبة حالة الشبكة
+  React.useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // Handle lesson click with error handling
+  const handleLessonClick = useCallback(async (lesson: Grade11LessonWithMedia) => {
+    try {
+      if (onContentClick) {
+        onContentClick(lesson, 'lesson');
+      } else {
+        setSelectedLesson(lesson);
+        setIsLessonModalOpen(true);
+      }
+    } catch (error) {
+      handleError(error, { context: 'opening_lesson', lessonId: lesson.id });
     }
-  }, [onContentClick]);
+  }, [onContentClick, handleError]);
+
+  // Handle lesson completion
+  const handleLessonComplete = useCallback(async (lessonId: string, timeSpent: number) => {
+    try {
+      if (onContentComplete) {
+        await onContentComplete(lessonId, 'lesson', timeSpent);
+      }
+    } catch (error) {
+      handleError(error, { context: 'completing_lesson', lessonId });
+    }
+  }, [onContentComplete, handleError]);
 
   // Memoized search filtering to prevent unnecessary re-renders
   const filteredSections = useMemo(() => {
@@ -208,93 +310,167 @@ const Grade11StudentContentViewer: React.FC<Grade11StudentContentViewerProps> = 
     };
   }, [sections]);
 
-  const completedLessons = 0; // سيتم تحديثه لاحقاً مع نظام التقدم
+  const completedLessonsCount = completedLessons.length;
 
+  // إدارة الأخطاء والحالات الاستثنائية
   if (loading) {
+    return <LoadingSkeleton />;
+  }
+
+  if (error && !isOnline) {
     return (
-      <div className="max-w-6xl mx-auto space-y-6 px-4">
-        <div className="space-y-4">
-          <Skeleton className="h-16 w-full" />
-          <Skeleton className="h-12 w-64" />
-          <Skeleton className="h-32 w-full" />
-          <Skeleton className="h-48 w-full" />
-        </div>
+      <div className="max-w-4xl mx-auto px-4 py-12">
+        <NetworkError onRetry={() => fetchSections(false)} />
       </div>
     );
   }
 
-  const progressPercentage = stats.lessonsCount > 0 ? Math.round((completedLessons / stats.lessonsCount) * 100) : 0;
+  if (error) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-12">
+        <Alert className="border-red-200 bg-red-50">
+          <AlertCircle className="h-6 w-6 text-red-600" />
+          <AlertDescription className="flex items-center justify-between">
+            <div>
+              <p className="text-lg font-medium text-red-800 mb-1">خطأ في تحميل المحتوى</p>
+              <p className="text-red-600">يرجى المحاولة مرة أخرى</p>
+            </div>
+            <Button onClick={() => fetchSections(false)} variant="outline" size="sm" className="mr-4">
+              <RefreshCw className="h-4 w-4 ml-2" />
+              إعادة المحاولة
+            </Button>
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  const progressPercentage = stats.lessonsCount > 0 ? Math.round((completedLessonsCount / stats.lessonsCount) * 100) : 0;
 
   return (
     <div className="max-w-6xl mx-auto px-4">
-      {/* Header Section - أكبر وأوضح */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl p-8 mb-8">
+      {/* مؤشر الشبكة */}
+      {!isOnline && (
+        <Alert className="mb-6 border-orange-200 bg-orange-50">
+          <WifiOff className="h-5 w-5 text-orange-600" />
+          <AlertDescription className="text-orange-800">
+            أنت تعمل في وضع عدم الاتصال. بعض الميزات قد لا تعمل بشكل صحيح.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Header مينيماليست محسن */}
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-100 rounded-3xl p-8 mb-8 shadow-sm">
         <div className="text-center space-y-6">
-          <div className="space-y-3">
-            <h1 className="text-4xl font-bold text-gray-900">دروس الصف الحادي عشر</h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-              استكشف المنهج التعليمي الشامل مع دروس تفاعلية ومتنوعة
+          <div className="space-y-4">
+            <h1 className="text-5xl font-bold text-gray-900 leading-tight">
+              دروس الصف الحادي عشر
+            </h1>
+            <p className="text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+              استكشف المنهج التعليمي الشامل مع دروس تفاعلية وأدوات تعلم متطورة
             </p>
           </div>
           
-          {/* إحصائيات المحتوى - أكبر وأوضح */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-2xl mx-auto">
-            <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-white/50">
-              <div className="flex items-center justify-center gap-3 mb-2">
-                <BookOpen className="h-8 w-8 text-blue-600" />
-                <span className="text-3xl font-bold text-gray-900">{stats.lessonsCount}</span>
+          {/* إحصائيات محسنة */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/60 hover:scale-105 transition-transform duration-300">
+              <div className="flex items-center justify-center gap-3 mb-3">
+                <BookOpen className="h-10 w-10 text-blue-600" />
+                <span className="text-4xl font-bold text-gray-900">{stats.lessonsCount}</span>
               </div>
-              <p className="text-lg font-medium text-gray-600">درس متاح</p>
+              <p className="text-xl font-medium text-gray-600">درس متاح</p>
             </div>
             
-            <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-white/50">
-              <div className="flex items-center justify-center gap-3 mb-2">
-                <Trophy className="h-8 w-8 text-orange-600" />
-                <span className="text-3xl font-bold text-gray-900">{stats.sectionsCount}</span>
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/60 hover:scale-105 transition-transform duration-300">
+              <div className="flex items-center justify-center gap-3 mb-3">
+                <Trophy className="h-10 w-10 text-orange-600" />
+                <span className="text-4xl font-bold text-gray-900">{completedLessons.length}</span>
               </div>
-              <p className="text-lg font-medium text-gray-600">قسم تعليمي</p>
+              <p className="text-xl font-medium text-gray-600">درس مكتمل</p>
             </div>
             
-            <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-white/50">
-              <div className="flex items-center justify-center gap-3 mb-2">
-                <Star className="h-8 w-8 text-yellow-600" />
-                <span className="text-3xl font-bold text-gray-900">{stats.topicsCount}</span>
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/60 hover:scale-105 transition-transform duration-300">
+              <div className="flex items-center justify-center gap-3 mb-3">
+                <Star className="h-10 w-10 text-green-600" />
+                <span className="text-4xl font-bold text-gray-900">{stats.topicsCount}</span>
               </div>
-              <p className="text-lg font-medium text-gray-600">موضوع رئيسي</p>
+              <p className="text-xl font-medium text-gray-600">موضوع رئيسي</p>
+            </div>
+
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/60 hover:scale-105 transition-transform duration-300">
+              <div className="flex items-center justify-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                  <span className="text-2xl">📊</span>
+                </div>
+                <span className="text-4xl font-bold text-gray-900">{Math.round(progressPercentage)}</span>
+              </div>
+              <p className="text-xl font-medium text-gray-600">نسبة الإنجاز</p>
             </div>
           </div>
 
-          {/* شريط التقدم */}
-          {progressPercentage > 0 && (
-            <div className="bg-white/70 backdrop-blur-sm rounded-xl p-6 max-w-md mx-auto">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-lg font-medium text-gray-700">تقدمك في المنهج</span>
-                  <span className="text-lg font-bold text-blue-600">{progressPercentage}%</span>
-                </div>
-                <Progress value={progressPercentage} className="h-3" />
-                <p className="text-sm text-gray-600">
-                  أكملت {completedLessons} من أصل {stats.lessonsCount} درس
-                </p>
-              </div>
-            </div>
-          )}
+          {/* أزرار التحكم */}
+          <div className="flex items-center justify-center gap-4 pt-4">
+            <Button
+              onClick={() => setShowProgressTracker(!showProgressTracker)}
+              variant="outline"
+              size="lg"
+              className="h-12 px-6 text-lg border-2"
+            >
+              📈 تتبع التقدم
+            </Button>
+            <Button
+              onClick={() => fetchSections(false)}
+              variant="outline"  
+              size="lg"
+              className="h-12 px-6 text-lg border-2"
+            >
+              <RefreshCw className="h-5 w-5 ml-2" />
+              تحديث المحتوى
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* شريط البحث - أكبر */}
+      {/* تتبع التقدم */}
+      {showProgressTracker && (
+        <div className="mb-8">
+          <ProgressTracker
+            sections={sections}
+            completedLessons={completedLessons}
+            studyTime={studyTime}
+            onUpdateProgress={handleLessonComplete}
+          />
+        </div>
+      )}
+
+      {/* شريط البحث محسن */}
       <div className="mb-8">
-        <Card className="border-2 border-gray-200">
-          <CardContent className="p-6">
+        <Card className="border-2 border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+          <CardContent className="p-8">
             <div className="relative">
-              <Search className="absolute right-4 top-1/2 transform -translate-y-1/2 h-6 w-6 text-gray-400" />
+              <Search className="absolute right-6 top-1/2 transform -translate-y-1/2 h-7 w-7 text-gray-400" />
               <Input
-                placeholder="ابحث في الدروس والمواضيع..."
+                placeholder="ابحث في الدروس والمواضيع والمحتوى..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="text-lg h-14 pr-14 text-right border-0 bg-gray-50 focus:bg-white transition-colors"
+                className="text-xl h-16 pr-16 text-right border-0 bg-gray-50 focus:bg-white transition-all duration-300 rounded-xl"
               />
+              {searchTerm && (
+                <Button
+                  onClick={() => setSearchTerm('')}
+                  variant="ghost"
+                  size="sm"
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 rounded-full"
+                >
+                  ✕
+                </Button>
+              )}
             </div>
+            {searchTerm && (
+              <p className="text-base text-gray-500 mt-3 text-center">
+                البحث عن: "{searchTerm}" - وجدت {filteredSections.length} نتيجة
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -351,11 +527,12 @@ const Grade11StudentContentViewer: React.FC<Grade11StudentContentViewerProps> = 
                       ) : (
                         <div className="space-y-6 pt-6">
                           {section.topics.map((topic, topicIndex) => (
-                            <TopicCard
+                            <MinimalistTopicCard
                               key={topic.id}
                               topic={topic}
                               topicIndex={topicIndex}
                               onLessonClick={handleLessonClick}
+                              completedLessons={completedLessons}
                             />
                           ))}
                         </div>
@@ -369,15 +546,20 @@ const Grade11StudentContentViewer: React.FC<Grade11StudentContentViewerProps> = 
         )}
       </div>
 
-      {/* Modal لتفاصيل الدرس */}
-      <Grade11LessonDetailsModal
-        lesson={selectedLesson}
-        isOpen={isLessonModalOpen}
-        onClose={() => {
-          setIsLessonModalOpen(false);
-          setSelectedLesson(null);
-        }}
-      />
+      {/* Modal محسن للطلاب */}
+      <Suspense fallback={<div>تحميل الدرس...</div>}>
+        <StudentLessonModal
+          lesson={selectedLesson}
+          isOpen={isLessonModalOpen}
+          onClose={() => {
+            setIsLessonModalOpen(false);
+            setSelectedLesson(null);
+          }}
+          onComplete={handleLessonComplete}
+          hasNext={false} // سيتم تحديثه لاحقاً
+          hasPrevious={false} // سيتم تحديثه لاحقاً
+        />
+      </Suspense>
     </div>
   );
 };
