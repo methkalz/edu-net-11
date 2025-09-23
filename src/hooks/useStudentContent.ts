@@ -148,7 +148,7 @@ export const useStudentContent = () => {
         const { data: lessonData, error: lessonError } = await (supabase as any)
           .from('grade11_lessons')
           .select(`
-            id, title, description, content, is_active, order_index, created_at,
+            id, title, content, is_active, order_index, created_at,
             topic:grade11_topics(
               id, title,
               section:grade11_sections(id, title)
@@ -169,6 +169,10 @@ export const useStudentContent = () => {
             mappedItem.media = item.media || [];
             return mappedItem;
           });
+        }
+
+        if (lessonError) {
+          logger.error('Error fetching grade 11 lessons:', lessonError);
         }
       }
       
