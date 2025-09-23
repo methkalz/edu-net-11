@@ -150,24 +150,14 @@ const Grade11VideoLibrary: React.FC<Grade11VideoLibraryProps> = ({
                     alt={video.title}
                     className="w-full h-full object-cover"
                     onError={(e) => {
-                      // If thumbnail fails to load, show video icon
                       e.currentTarget.style.display = 'none';
-                      const parent = e.currentTarget.parentElement;
-                      if (parent) {
-                        const fallback = parent.querySelector('.video-fallback');
-                        if (fallback) {
-                          (fallback as HTMLElement).style.display = 'flex';
-                        }
-                      }
                     }}
                   />
-                ) : null}
-                <div 
-                  className="video-fallback absolute inset-0 w-full h-full flex items-center justify-center" 
-                  style={{ display: video.thumbnail_url ? 'none' : 'flex' }}
-                >
-                  <Video className="h-12 w-12 text-muted-foreground" />
-                </div>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <Video className="h-12 w-12 text-muted-foreground" />
+                  </div>
+                )}
                 <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                   <Button
                     size="sm"
