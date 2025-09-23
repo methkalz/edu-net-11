@@ -382,7 +382,7 @@ export const StudentGrade11Content: React.FC = () => {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {filteredVideos.map((video) => (
                 <Card key={video.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                  <div className="aspect-video bg-gradient-to-r from-red-500 to-pink-500 relative overflow-hidden">
+                  <div className="aspect-video bg-gradient-to-r from-red-500 to-pink-500 relative overflow-hidden cursor-pointer group" onClick={() => setSelectedVideo(video)}>
                     {video.thumbnail_url ? (
                       <img 
                         src={video.thumbnail_url} 
@@ -393,8 +393,8 @@ export const StudentGrade11Content: React.FC = () => {
                         }}
                       />
                     ) : null}
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/40 transition-colors">
-                      <PlayCircle className="w-16 h-16 text-white opacity-80" />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">
+                      <PlayCircle className="w-16 h-16 text-white opacity-80 group-hover:opacity-100 transition-opacity" />
                     </div>
                     <div className="absolute top-2 left-2">
                       <Badge variant="secondary" className="bg-black/60 text-white">
