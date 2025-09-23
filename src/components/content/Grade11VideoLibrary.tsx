@@ -71,6 +71,29 @@ const Grade11VideoLibrary: React.FC<Grade11VideoLibraryProps> = ({
     }
   };
 
+  const getGoogleDriveThumbnail = (videoUrl: string) => {
+    // Extract FILE_ID from Google Drive URL
+    const match = videoUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+    if (match && match[1]) {
+      return `https://drive.google.com/thumbnail?id=${match[1]}`;
+    }
+    return null;
+  };
+
+  const getThumbnailUrl = (video: Video) => {
+    // If thumbnail_url exists, use it
+    if (video.thumbnail_url) {
+      return video.thumbnail_url;
+    }
+    
+    // If it's a Google Drive video, generate thumbnail URL
+    if (video.video_url.includes('drive.google.com')) {
+      return getGoogleDriveThumbnail(video.video_url);
+    }
+    
+    return null;
+  };
+
   const handlePlayVideo = (videoUrl: string) => {
     window.open(videoUrl, '_blank');
   };
@@ -144,20 +167,27 @@ const Grade11VideoLibrary: React.FC<Grade11VideoLibraryProps> = ({
             <Card key={video.id} className="hover:shadow-md transition-shadow overflow-hidden">
               {/* Video thumbnail/preview */}
               <div className="relative aspect-video bg-muted">
-                {video.thumbnail_url ? (
+                {getThumbnailUrl(video) ? (
                   <img 
-                    src={video.thumbnail_url} 
+                    src={getThumbnailUrl(video)!} 
                     alt={video.title}
                     className="w-full h-full object-cover"
                     onError={(e) => {
+                      // If Google Drive thumbnail fails, show video icon
                       e.currentTarget.style.display = 'none';
+                      const parent = e.currentTarget.parentElement;
+                      if (parent) {
+                        const fallback = parent.querySelector('.video-fallback');
+                        if (fallback) {
+                          (fallback as HTMLElement).style.display = 'flex';
+                        }
+                      }
                     }}
                   />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <Video className="h-12 w-12 text-muted-foreground" />
-                  </div>
-                )}
+                ) : null}
+                <div className="video-fallback w-full h-full flex items-center justify-center" style={{ display: getThumbnailUrl(video) ? 'none' : 'flex' }}>
+                  <Video className="h-12 w-12 text-muted-foreground" />
+                </div>
                 <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                   <Button
                     size="sm"
