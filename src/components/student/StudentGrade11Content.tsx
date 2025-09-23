@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
   BookOpen, 
@@ -17,17 +18,22 @@ import {
   FileText,
   BookMarked,
   Target,
-  Trophy
+  Trophy,
+  Video,
+  Calendar
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import Grade11LessonContentDisplay from '../content/Grade11LessonContentDisplay';
+import { Grade11VideoViewer } from '@/components/content/Grade11VideoViewer';
 
 export const StudentGrade11Content: React.FC = () => {
-  const { sections, loading, error, getContentStats } = useStudentGrade11Content();
+  const { sections, videos, loading, error, getContentStats } = useStudentGrade11Content();
   const [openSections, setOpenSections] = useState<string[]>([]);
   const [openTopics, setOpenTopics] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLesson, setSelectedLesson] = useState<any>(null);
+  const [selectedVideo, setSelectedVideo] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState('lessons');
 
   const stats = getContentStats();
 
@@ -68,6 +74,18 @@ export const StudentGrade11Content: React.FC = () => {
     );
   });
 
+  // Filter videos based on search
+  const filteredVideos = videos.filter(video => {
+    if (!searchQuery) return true;
+    
+    const query = searchQuery.toLowerCase();
+    return (
+      video.title.toLowerCase().includes(query) ||
+      video.description?.toLowerCase().includes(query) ||
+      video.category.toLowerCase().includes(query)
+    );
+  });
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -76,8 +94,8 @@ export const StudentGrade11Content: React.FC = () => {
           <p className="text-muted-foreground">جاري تحميل المحتوى التعليمي...</p>
         </div>
         
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => (
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          {[1, 2, 3, 4, 5].map((i) => (
             <Card key={i} className="animate-pulse">
               <CardContent className="p-4">
                 <div className="h-4 bg-muted rounded mb-2"></div>
@@ -134,7 +152,7 @@ export const StudentGrade11Content: React.FC = () => {
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card>
           <CardContent className="p-4 text-center">
             <div className="w-8 h-8 mx-auto mb-2 bg-blue-100 rounded-full flex items-center justify-center">
@@ -174,6 +192,16 @@ export const StudentGrade11Content: React.FC = () => {
             <div className="text-xs text-muted-foreground">وسائط</div>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardContent className="p-4 text-center">
+            <div className="w-8 h-8 mx-auto mb-2 bg-red-100 rounded-full flex items-center justify-center">
+              <Video className="w-4 h-4 text-red-600" />
+            </div>
+            <div className="text-2xl font-bold text-red-600">{stats.totalVideos}</div>
+            <div className="text-xs text-muted-foreground">فيديوهات</div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Search */}
@@ -194,138 +222,204 @@ export const StudentGrade11Content: React.FC = () => {
         )}
       </div>
 
-      {/* Content Sections */}
-      <div className="space-y-4">
-        {filteredSections.length === 0 ? (
-          <Card className="text-center p-8">
-            <div className="space-y-4">
-              <Search className="w-16 h-16 mx-auto text-muted-foreground" />
-              <h3 className="text-lg font-semibold">لا توجد نتائج</h3>
-              <p className="text-muted-foreground">
-                لم يتم العثور على محتوى يطابق البحث "{searchQuery}"
-              </p>
-            </div>
-          </Card>
-        ) : (
-          filteredSections.map((section) => (
-            <Card key={section.id} className="overflow-hidden">
-              <Collapsible 
-                open={openSections.includes(section.id)}
-                onOpenChange={() => toggleSection(section.id)}
-              >
-                <CollapsibleTrigger asChild>
-                  <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
-                          <FolderOpen className="w-5 h-5 text-white" />
+      {/* Content Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="lessons" className="flex items-center gap-2">
+            <BookOpen className="w-4 h-4" />
+            الدروس ({sections.length})
+          </TabsTrigger>
+          <TabsTrigger value="videos" className="flex items-center gap-2">
+            <Video className="w-4 h-4" />
+            الفيديوهات ({videos.length})
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="lessons" className="space-y-4 mt-6">
+          {filteredSections.length === 0 ? (
+            <Card className="text-center p-8">
+              <div className="space-y-4">
+                <Search className="w-16 h-16 mx-auto text-muted-foreground" />
+                <h3 className="text-lg font-semibold">لا توجد نتائج</h3>
+                <p className="text-muted-foreground">
+                  لم يتم العثور على محتوى يطابق البحث "{searchQuery}"
+                </p>
+              </div>
+            </Card>
+          ) : (
+            filteredSections.map((section) => (
+              <Card key={section.id} className="overflow-hidden">
+                <Collapsible 
+                  open={openSections.includes(section.id)}
+                  onOpenChange={() => toggleSection(section.id)}
+                >
+                  <CollapsibleTrigger asChild>
+                    <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
+                            <FolderOpen className="w-5 h-5 text-white" />
+                          </div>
+                          <div className="text-left">
+                            <CardTitle className="text-lg">{section.title}</CardTitle>
+                            {section.description && (
+                              <p className="text-sm text-muted-foreground mt-1">
+                                {section.description}
+                              </p>
+                            )}
+                          </div>
                         </div>
-                        <div className="text-left">
-                          <CardTitle className="text-lg">{section.title}</CardTitle>
-                          {section.description && (
-                            <p className="text-sm text-muted-foreground mt-1">
-                              {section.description}
-                            </p>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary">
+                            {section.topics.length} موضوع
+                          </Badge>
+                          {openSections.includes(section.id) ? (
+                            <ChevronDown className="w-5 h-5" />
+                          ) : (
+                            <ChevronRight className="w-5 h-5" />
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary">
-                          {section.topics.length} موضوع
-                        </Badge>
-                        {openSections.includes(section.id) ? (
-                          <ChevronDown className="w-5 h-5" />
-                        ) : (
-                          <ChevronRight className="w-5 h-5" />
-                        )}
-                      </div>
-                    </div>
-                  </CardHeader>
-                </CollapsibleTrigger>
+                    </CardHeader>
+                  </CollapsibleTrigger>
 
-                <CollapsibleContent>
-                  <CardContent className="pt-0">
-                    <div className="space-y-3">
-                      {section.topics.map((topic) => (
-                        <Card key={topic.id} className="ml-4">
-                          <Collapsible
-                            open={openTopics.includes(topic.id)}
-                            onOpenChange={() => toggleTopic(topic.id)}
-                          >
-                            <CollapsibleTrigger asChild>
-                              <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors py-4">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
-                                      <Target className="w-4 h-4 text-white" />
+                  <CollapsibleContent>
+                    <CardContent className="pt-0">
+                      <div className="space-y-3">
+                        {section.topics.map((topic) => (
+                          <Card key={topic.id} className="ml-4">
+                            <Collapsible
+                              open={openTopics.includes(topic.id)}
+                              onOpenChange={() => toggleTopic(topic.id)}
+                            >
+                              <CollapsibleTrigger asChild>
+                                <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors py-4">
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                      <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
+                                        <Target className="w-4 h-4 text-white" />
+                                      </div>
+                                      <div className="text-left">
+                                        <h4 className="font-medium">{topic.title}</h4>
+                                        {topic.content && (
+                                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                                            {topic.content}
+                                          </p>
+                                        )}
+                                      </div>
                                     </div>
-                                    <div className="text-left">
-                                      <h4 className="font-medium">{topic.title}</h4>
-                                      {topic.content && (
-                                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                                          {topic.content}
-                                        </p>
+                                    <div className="flex items-center gap-2">
+                                      <Badge variant="outline" className="text-xs">
+                                        {topic.lessons.length} درس
+                                      </Badge>
+                                      {openTopics.includes(topic.id) ? (
+                                        <ChevronDown className="w-4 h-4" />
+                                      ) : (
+                                        <ChevronRight className="w-4 h-4" />
                                       )}
                                     </div>
                                   </div>
-                                  <div className="flex items-center gap-2">
-                                    <Badge variant="outline" className="text-xs">
-                                      {topic.lessons.length} درس
-                                    </Badge>
-                                    {openTopics.includes(topic.id) ? (
-                                      <ChevronDown className="w-4 h-4" />
-                                    ) : (
-                                      <ChevronRight className="w-4 h-4" />
-                                    )}
-                                  </div>
-                                </div>
-                              </CardHeader>
-                            </CollapsibleTrigger>
+                                </CardHeader>
+                              </CollapsibleTrigger>
 
-                            <CollapsibleContent>
-                              <CardContent className="pt-0">
-                                <div className="space-y-2">
-                                  {topic.lessons.map((lesson) => (
-                                    <div
-                                      key={lesson.id}
-                                      className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
-                                      onClick={() => setSelectedLesson(lesson)}
-                                    >
-                                      <div className="flex items-center gap-3">
-                                        <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-pink-500 rounded flex items-center justify-center">
-                                          <BookOpen className="w-3 h-3 text-white" />
+                              <CollapsibleContent>
+                                <CardContent className="pt-0">
+                                  <div className="space-y-2">
+                                    {topic.lessons.map((lesson) => (
+                                      <div
+                                        key={lesson.id}
+                                        className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                                        onClick={() => setSelectedLesson(lesson)}
+                                      >
+                                        <div className="flex items-center gap-3">
+                                          <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-pink-500 rounded flex items-center justify-center">
+                                            <BookOpen className="w-3 h-3 text-white" />
+                                          </div>
+                                          <div>
+                                            <h5 className="text-sm font-medium">{lesson.title}</h5>
+                                            {lesson.media && lesson.media.length > 0 && (
+                                              <div className="flex items-center gap-1 mt-1">
+                                                <PlayCircle className="w-3 h-3 text-muted-foreground" />
+                                                <span className="text-xs text-muted-foreground">
+                                                  {lesson.media.length} ملف وسائط
+                                                </span>
+                                              </div>
+                                            )}
+                                          </div>
                                         </div>
-                                        <div>
-                                          <h5 className="text-sm font-medium">{lesson.title}</h5>
-                                          {lesson.media && lesson.media.length > 0 && (
-                                            <div className="flex items-center gap-1 mt-1">
-                                              <PlayCircle className="w-3 h-3 text-muted-foreground" />
-                                              <span className="text-xs text-muted-foreground">
-                                                {lesson.media.length} ملف وسائط
-                                              </span>
-                                            </div>
-                                          )}
-                                        </div>
+                                        <Button variant="ghost" size="sm">
+                                          عرض
+                                        </Button>
                                       </div>
-                                      <Button variant="ghost" size="sm">
-                                        عرض
-                                      </Button>
-                                    </div>
-                                  ))}
-                                </div>
-                              </CardContent>
-                            </CollapsibleContent>
-                          </Collapsible>
-                        </Card>
-                      ))}
+                                    ))}
+                                  </div>
+                                </CardContent>
+                              </CollapsibleContent>
+                            </Collapsible>
+                          </Card>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </CollapsibleContent>
+                </Collapsible>
+              </Card>
+            ))
+          )}
+        </TabsContent>
+
+        <TabsContent value="videos" className="space-y-4 mt-6">
+          {filteredVideos.length === 0 ? (
+            <Card className="text-center p-8">
+              <div className="space-y-4">
+                <Video className="w-16 h-16 mx-auto text-muted-foreground" />
+                <h3 className="text-lg font-semibold">لا توجد فيديوهات</h3>
+                <p className="text-muted-foreground">
+                  {searchQuery ? `لم يتم العثور على فيديوهات تطابق البحث "${searchQuery}"` : 'لا توجد فيديوهات متاحة حالياً'}
+                </p>
+              </div>
+            </Card>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {filteredVideos.map((video) => (
+                <Card key={video.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                  <div className="aspect-video bg-gradient-to-r from-red-500 to-pink-500 relative">
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <PlayCircle className="w-16 h-16 text-white opacity-80" />
+                    </div>
+                    <div className="absolute top-2 left-2">
+                      <Badge variant="secondary" className="bg-black/60 text-white">
+                        <Clock className="w-3 h-3 ml-1" />
+                        {video.duration || 'غير محدد'}
+                      </Badge>
+                    </div>
+                  </div>
+                  <CardContent className="p-4">
+                    <h3 className="font-semibold mb-2 line-clamp-2">{video.title}</h3>
+                    {video.description && (
+                      <p className="text-sm text-muted-foreground mb-3 line-clamp-3">
+                        {video.description}
+                      </p>
+                    )}
+                    <div className="flex items-center justify-between">
+                      <Badge variant="outline" className="text-xs">
+                        {video.category}
+                      </Badge>
+                      <Button 
+                        size="sm"
+                        onClick={() => setSelectedVideo(video)}
+                        className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600"
+                      >
+                        <PlayCircle className="w-4 h-4 ml-1" />
+                        مشاهدة
+                      </Button>
                     </div>
                   </CardContent>
-                </CollapsibleContent>
-              </Collapsible>
-            </Card>
-          ))
-        )}
-      </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
 
       {/* Lesson Viewer Dialog */}
       {selectedLesson && (
@@ -344,6 +438,27 @@ export const StudentGrade11Content: React.FC = () => {
                 defaultExpanded={true}
                 showControls={true}
                 hideHeader={false}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Video Viewer Dialog */}
+      {selectedVideo && (
+        <Dialog open={!!selectedVideo} onOpenChange={() => setSelectedVideo(null)}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Video className="w-5 h-5" />
+                {selectedVideo.title}
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="mt-4">
+              <Grade11VideoViewer 
+                video={selectedVideo}
+                onClose={() => setSelectedVideo(null)}
               />
             </div>
           </DialogContent>

@@ -56,8 +56,28 @@ export interface Grade11LessonWithMedia extends Grade11Lesson {
   media: Grade11LessonMedia[];
 }
 
+export interface Grade11Video {
+  id: string;
+  title: string;
+  description?: string;
+  video_url: string;
+  duration?: string;
+  category: string;
+  thumbnail_url?: string;
+  grade_level: string;
+  school_id: string;
+  owner_user_id: string;
+  is_active: boolean;
+  is_visible: boolean;
+  order_index: number;
+  source_type: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export const useStudentGrade11Content = () => {
   const [sections, setSections] = useState<Grade11SectionWithTopics[]>([]);
+  const [videos, setVideos] = useState<Grade11Video[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -149,6 +169,9 @@ export const useStudentGrade11Content = () => {
       );
 
       setSections(sectionsWithContent);
+      
+      // Fetch videos
+      await fetchVideos();
     } catch (error) {
       console.error('Complete error in fetchSections:', error);
       logger.error('Error fetching Grade 11 content for student', error as Error);
@@ -156,6 +179,28 @@ export const useStudentGrade11Content = () => {
       toast.error('حدث خطأ في تحميل المحتوى التعليمي');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchVideos = async () => {
+    try {
+      const { data: videosData, error: videosError } = await supabase
+        .from('grade11_videos')
+        .select('*')
+        .eq('is_active', true)
+        .eq('is_visible', true)
+        .order('order_index');
+
+      if (videosError) {
+        console.error('Videos error:', videosError);
+        // Don't throw error for videos, just log it
+        return;
+      }
+
+      setVideos(videosData || []);
+    } catch (error) {
+      console.error('Error fetching videos:', error);
+      // Don't throw error for videos
     }
   };
 
@@ -171,12 +216,14 @@ export const useStudentGrade11Content = () => {
         topicAcc + topic.lessons.reduce((lessonAcc, lesson) => lessonAcc + lesson.media.length, 0), 0
       ), 0
     );
+    const totalVideos = videos.length;
 
     return {
       totalSections,
       totalTopics,
       totalLessons,
-      totalMedia
+      totalMedia,
+      totalVideos
     };
   };
 
@@ -186,6 +233,7 @@ export const useStudentGrade11Content = () => {
 
   return {
     sections,
+    videos,
     loading,
     error,
     getContentStats,
