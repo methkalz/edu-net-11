@@ -12,7 +12,8 @@ import {
   Crown,
   Award,
   Brain,
-  Puzzle
+  Puzzle,
+  AlertCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -30,7 +31,8 @@ export const StudentGameSection: React.FC = () => {
       color: 'from-blue-500 to-cyan-500',
       bgColor: 'from-blue-50 to-cyan-50',
       path: '/pair-matching',
-      category: 'شبكات'
+      category: 'شبكات',
+      isAvailable: true  // متوفرة دائماً
     },
     {
       id: 'knowledge-adventure',
@@ -42,9 +44,13 @@ export const StudentGameSection: React.FC = () => {
       color: 'from-purple-500 to-pink-500',
       bgColor: 'from-purple-50 to-pink-50',
       path: '/knowledge-adventure',
-      category: 'تفاعلي'
+      category: 'تفاعلي',
+      isAvailable: true  // متوفرة دائماً
     }
   ];
+
+  // تصفية الألعاب المتوفرة فقط
+  const availableGames = games.filter(game => game.isAvailable);
 
   const achievements = [
     { name: 'نجم الألعاب', description: 'أكمل 10 ألعاب', icon: Star, earned: true },
@@ -107,7 +113,7 @@ export const StudentGameSection: React.FC = () => {
 
       {/* Games Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {games.map((game) => {
+        {availableGames.length > 0 ? availableGames.map((game) => {
           const IconComponent = game.icon;
           
           return (
@@ -157,7 +163,17 @@ export const StudentGameSection: React.FC = () => {
               </CardContent>
             </Card>
           );
-        })}
+        }) : (
+          <div className="col-span-full">
+            <Card className="p-8 text-center">
+              <div className="w-16 h-16 mx-auto bg-muted rounded-full flex items-center justify-center mb-4">
+                <AlertCircle className="w-8 h-8 text-muted-foreground" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">لا توجد ألعاب متاحة حالياً</h3>
+              <p className="text-muted-foreground">سيتم إضافة المزيد من الألعاب قريباً!</p>
+            </Card>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
