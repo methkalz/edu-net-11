@@ -644,7 +644,7 @@ const Dashboard = () => {
         <section className="animate-fade-in-up" style={{animationDelay: '500ms'}}>
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center">
-              <h2 className="text-2xl font-bold font-cairo text-foreground">👥 إدارة المستخدمين</h2>
+              <h2 className="text-2xl font-bold font-cairo text-foreground">إدارة المستخدمين</h2>
               <div className="accent-dot mr-3 animate-gentle-float"></div>
             </div>
             <Button 
