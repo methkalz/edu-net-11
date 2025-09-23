@@ -1,5 +1,5 @@
 import React, { useState, useCallback, memo, useMemo } from 'react';
-import { Play, Clock, FileText, Search, ChevronRight, CheckCircle2, PlayCircle, BookOpen, Trophy, Star, ChevronDown, Loader2 } from 'lucide-react';
+import { Play, Clock, FileText, Search, ChevronRight, CheckCircle2, PlayCircle, BookOpen, Trophy, Star, ChevronDown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -153,84 +153,60 @@ const Grade11StudentContentViewer: React.FC<Grade11StudentContentViewerProps> = 
   onContentClick,
   onContentComplete
 }) => {
-  const { 
-    sections, 
-    loading, 
-    error, 
-    stats,
-    loadSectionTopics,
-    loadTopicLessons,
-    loadLessonMedia
-  } = useOptimizedGrade11Content();
-  
+  const { sections, loading } = useGrade11Content();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedLesson, setSelectedLesson] = useState<OptimizedGrade11Lesson | null>(null);
+  const [selectedLesson, setSelectedLesson] = useState<Grade11LessonWithMedia | null>(null);
   const [isLessonModalOpen, setIsLessonModalOpen] = useState(false);
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
 
-  // Handle section expansion
-  const toggleSection = useCallback(async (sectionId: string) => {
-    const section = sections.find(s => s.id === sectionId);
-    if (!section) return;
-
-    if (openSections.has(sectionId)) {
-      setOpenSections(prev => {
-        const newSet = new Set(prev);
+  // Handle section expansion with simple toggle
+  const toggleSection = useCallback((sectionId: string) => {
+    setOpenSections(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(sectionId)) {
         newSet.delete(sectionId);
-        return newSet;
-      });
-    } else {
-      setOpenSections(prev => new Set(prev).add(sectionId));
-      
-      // Load topics if not loaded
-      if (!section.topicsLoaded && !section.topicsLoading) {
-        await loadSectionTopics(sectionId);
+      } else {
+        newSet.add(sectionId);
       }
-    }
-  }, [sections, openSections, loadSectionTopics]);
+      return newSet;
+    });
+  }, []);
 
-  // Handle topic expansion
-  const toggleTopic = useCallback(async (sectionId: string, topicId: string) => {
-    const section = sections.find(s => s.id === sectionId);
-    const topic = section?.topics.find(t => t.id === topicId);
-    if (!topic) return;
-
-    // Load lessons if not loaded
-    if (!topic.lessonsLoaded && !topic.lessonsLoading) {
-      await loadTopicLessons(sectionId, topicId);
-    }
-  }, [sections, loadTopicLessons]);
-
-  // Handle lesson click
-  const handleLessonClick = useCallback(async (lesson: OptimizedGrade11Lesson) => {
-    // Load media if not loaded
-    const section = sections.find(s => s.topics.some(t => t.lessons.some(l => l.id === lesson.id)));
-    const topic = section?.topics.find(t => t.lessons.some(l => l.id === lesson.id));
-    
-    if (section && topic && !lesson.mediaLoaded && !lesson.mediaLoading) {
-      await loadLessonMedia(section.id, topic.id, lesson.id);
-    }
-
+  // Handle lesson click - simplified without lazy loading
+  const handleLessonClick = useCallback((lesson: Grade11LessonWithMedia) => {
     if (onContentClick) {
       onContentClick(lesson, 'lesson');
     } else {
       setSelectedLesson(lesson);
       setIsLessonModalOpen(true);
     }
-  }, [sections, loadLessonMedia, onContentClick]);
+  }, [onContentClick]);
 
-  // Search filtering
-  const filteredSections = sections.filter(section => {
-    if (!searchTerm) return true;
+  // Memoized search filtering to prevent unnecessary re-renders
+  const filteredSections = useMemo(() => {
+    if (!searchTerm) return sections;
     
-    const matchesSection = section.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesTopics = section.topics.some(topic => 
-      topic.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      topic.lessons.some(lesson => lesson.title.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
-    
-    return matchesSection || matchesTopics;
-  });
+    return sections.filter(section => {
+      const matchesSection = section.title.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesTopics = section.topics.some(topic => 
+        topic.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        topic.lessons.some(lesson => lesson.title.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+      
+      return matchesSection || matchesTopics;
+    });
+  }, [sections, searchTerm]);
+
+  // Memoized statistics - calculated from sections
+  const stats = useMemo(() => {
+    const allTopics = sections.flatMap(section => section.topics);
+    const allLessons = allTopics.flatMap(topic => topic.lessons);
+    return {
+      sectionsCount: sections.length,
+      topicsCount: allTopics.length,
+      lessonsCount: allLessons.length
+    };
+  }, [sections]);
 
   const completedLessons = 0; // سيتم تحديثه لاحقاً مع نظام التقدم
 
