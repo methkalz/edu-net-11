@@ -29,6 +29,7 @@ import TeacherDashboard from '@/components/TeacherDashboard';
 import StudentDashboard from '@/components/student/StudentDashboard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   BookOpen, 
   Users,
@@ -53,7 +54,8 @@ import {
   UserCog,
   ChevronLeft,
   ChevronRight,
-  Calendar as CalendarIcon
+  Calendar as CalendarIcon,
+  Wrench
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
@@ -503,6 +505,15 @@ const Dashboard = () => {
           <TeacherDashboard />
         ) : userProfile?.role === 'superadmin' ? (
           <div className="container mx-auto px-6 py-6 space-y-8">
+            
+            {/* Software Update Notice */}
+            <Alert className="animate-fade-in glass-card soft-shadow border-yellow-200 bg-yellow-50/80 backdrop-blur-sm">
+              <Wrench className="h-4 w-4 text-yellow-600" />
+              <AlertDescription className="text-yellow-800 font-medium">
+                يُجرى حاليًا تحديثات برمجية، وقد تطرأ بعض الأعطال الفنية مؤقتًا.. نشكرك على صبرك الجميل 😊
+              </AlertDescription>
+            </Alert>
+            
             {/* Stats Grid */}
             <section className="animate-fade-in-up">
               <div className="flex items-center mb-6">
