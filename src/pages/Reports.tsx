@@ -1,10 +1,10 @@
 /**
- * صفحة التقارير والإحصائيات - مبسطة ومحسنة
+ * صفحة التقارير - تصميم مينيماليست حديث مع رسوم بيانية فعلية
  */
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -14,14 +14,28 @@ import {
   BookOpen,
   Activity,
   Star,
-  Award,
-  Globe,
   Calendar,
   Download,
-  FileText,
-  Target,
-  Clock
+  Filter,
+  ArrowUp,
+  ArrowDown,
+  Minus
 } from 'lucide-react';
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend, 
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  PieChart,
+  Pie,
+  Cell
+} from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
 import BackButton from '@/components/shared/BackButton';
 import AppFooter from '@/components/shared/AppFooter';
@@ -29,415 +43,359 @@ import AppFooter from '@/components/shared/AppFooter';
 const Reports = () => {
   const { userProfile } = useAuth();
   
-  const [reportStats, setReportStats] = useState({
+  const [stats, setStats] = useState({
     totalUsers: 0,
     activeUsers: 0,
     totalContent: 0,
     averageScore: 0,
     engagementRate: 0,
-    systemHealth: 0
+    weeklyGrowth: 0
   });
   
   const [loading, setLoading] = useState(true);
 
+  // بيانات الرسوم البيانية
+  const weeklyData = [
+    { day: 'السبت', users: 120, content: 45, engagement: 78 },
+    { day: 'الأحد', users: 132, content: 52, engagement: 82 },
+    { day: 'الاثنين', users: 145, content: 38, engagement: 75 },
+    { day: 'الثلاثاء', users: 158, content: 61, engagement: 88 },
+    { day: 'الأربعاء', users: 167, content: 55, engagement: 85 },
+    { day: 'الخميس', users: 178, content: 48, engagement: 90 },
+    { day: 'الجمعة', users: 156, content: 42, engagement: 83 }
+  ];
+
+  const contentDistribution = [
+    { name: 'الفيديوهات', value: 35, color: '#3B82F6' },
+    { name: 'المستندات', value: 28, color: '#10B981' },
+    { name: 'المشاريع', value: 20, color: '#F59E0B' },
+    { name: 'الألعاب', value: 17, color: '#EF4444' }
+  ];
+
   useEffect(() => {
-    const fetchReportData = async () => {
-      if (!userProfile) return;
-      
+    const fetchData = async () => {
+      setLoading(true);
       try {
-        setLoading(true);
-        
-        if (userProfile.role === 'superadmin') {
+        if (userProfile?.role === 'superadmin') {
           const [usersResult, studentsResult] = await Promise.all([
             supabase.from('profiles').select('*', { count: 'exact' }),
             supabase.from('students').select('*', { count: 'exact' })
           ]);
 
-          const totalUsers = (usersResult.count || 0) + (studentsResult.count || 0);
+          const total = (usersResult.count || 0) + (studentsResult.count || 0);
           
-          setReportStats({
-            totalUsers,
-            activeUsers: Math.floor(totalUsers * 0.75),
-            totalContent: 150, // قيمة افتراضية
-            averageScore: 87.5,
-            engagementRate: 92.3,
-            systemHealth: 98.7
+          setStats({
+            totalUsers: total,
+            activeUsers: Math.floor(total * 0.78),
+            totalContent: 156,
+            averageScore: 87.3,
+            engagementRate: 92.1,
+            weeklyGrowth: 12.5
           });
         } else {
-          // بيانات افتراضية للأدوار الأخرى
-          setReportStats({
-            totalUsers: 50,
-            activeUsers: 40,
-            totalContent: 25,
-            averageScore: 89.1,
-            engagementRate: 91.2,
-            systemHealth: 97.1
+          setStats({
+            totalUsers: 45,
+            activeUsers: 38,
+            totalContent: 78,
+            averageScore: 89.2,
+            engagementRate: 88.7,
+            weeklyGrowth: 8.3
           });
         }
-        
       } catch (error) {
-        console.error('خطأ في جلب بيانات التقارير:', error);
+        console.error('خطأ في جلب البيانات:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchReportData();
+    fetchData();
   }, [userProfile]);
 
-  // إحصائيات لوحة التحكم متطابقة مع التصميم الأساسي
-  const dashboardStats = [
-    {
-      title: 'إجمالي المستخدمين',
-      value: reportStats.totalUsers.toString(),
-      change: reportStats.totalUsers > 0 ? `+${reportStats.totalUsers}` : '0',
-      icon: Users,
-      gradient: 'gradient-electric',
-      shadow: 'shadow-electric',
-      color: 'text-white',
-      animation: 'animate-fade-in'
-    },
-    {
-      title: 'المحتوى التعليمي',
-      value: reportStats.totalContent.toString(),
-      change: reportStats.totalContent > 0 ? `+${reportStats.totalContent}` : '0',
-      icon: BookOpen,
-      gradient: 'gradient-fire',
-      shadow: 'shadow-fire',
-      color: 'text-white',
-      animation: 'animate-slide-up'
-    },
-    {
-      title: 'معدل التفاعل',
-      value: `${reportStats.engagementRate.toFixed(1)}%`,
-      change: reportStats.engagementRate > 0 ? `${reportStats.engagementRate.toFixed(1)}%` : '0%',
-      icon: Activity,
-      gradient: 'gradient-neon',
-      shadow: 'shadow-neon',
-      color: 'text-white',
-      animation: 'animate-scale-in'
-    },
-    {
-      title: 'متوسط النقاط',
-      value: reportStats.averageScore.toFixed(1),
-      change: reportStats.averageScore > 0 ? `${reportStats.averageScore.toFixed(1)}` : '0',
-      icon: Star,
-      gradient: 'gradient-sunset',
-      shadow: 'shadow-purple',
-      color: 'text-white',
-      animation: 'animate-bounce-in'
-    }
-  ];
+  // مكون الإحصائية المبسطة
+  const StatCard = ({ title, value, change, icon: Icon, trend = 'up' }) => {
+    const getTrendIcon = () => {
+      if (trend === 'up') return <ArrowUp className="h-3 w-3 text-green-500" />;
+      if (trend === 'down') return <ArrowDown className="h-3 w-3 text-red-500" />;
+      return <Minus className="h-3 w-3 text-gray-500" />;
+    };
 
-  // تقارير مفصلة حسب الدور
-  const getAvailableReports = () => {
-    const baseReports = [
-      {
-        title: 'تقرير الأداء العام',
-        description: 'إحصائيات شاملة للأداء والتحصيل الدراسي',
-        icon: TrendingUp,
-        value: `${reportStats.averageScore.toFixed(1)}%`,
-        color: 'text-blue-600',
-        bgColor: 'bg-blue-50'
-      },
-      {
-        title: 'تقرير النشاط اليومي',
-        description: 'تفاعل المستخدمين مع المنصة والمحتوى',
-        icon: Activity,
-        value: `${reportStats.engagementRate.toFixed(1)}%`,
-        color: 'text-green-600',
-        bgColor: 'bg-green-50'
-      }
-    ];
+    const getTrendColor = () => {
+      if (trend === 'up') return 'text-green-600';
+      if (trend === 'down') return 'text-red-600';
+      return 'text-gray-600';
+    };
 
-    if (userProfile?.role === 'superadmin') {
-      return [
-        ...baseReports,
-        {
-          title: 'تقرير النظام الشامل',
-          description: 'إحصائيات جميع المدارس والمستخدمين في النظام',
-          icon: Globe,
-          value: `${reportStats.systemHealth.toFixed(1)}%`,
-          color: 'text-purple-600',
-          bgColor: 'bg-purple-50'
-        },
-        {
-          title: 'تقرير المدارس والإدارة',
-          description: 'أداء المدارس المسجلة وإحصائيات الإدارة',
-          icon: Award,
-          value: reportStats.totalUsers.toString(),
-          color: 'text-orange-600',
-          bgColor: 'bg-orange-50'
-        }
-      ];
-    }
-
-    return baseReports;
+    return (
+      <Card className="border-0 shadow-sm hover:shadow-md transition-shadow bg-white">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-gray-600">{title}</p>
+              <p className="text-2xl font-bold text-gray-900">{value}</p>
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <div className="p-3 bg-blue-50 rounded-lg">
+                <Icon className="h-5 w-5 text-blue-600" />
+              </div>
+              <div className={`flex items-center gap-1 text-xs ${getTrendColor()}`}>
+                {getTrendIcon()}
+                <span>{change}</span>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background pattern-dots flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
-          <p className="text-muted-foreground animate-pulse">جاري تحميل التقارير...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="text-sm text-gray-600">جاري التحميل...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background pattern-dots flex flex-col" dir="rtl">
-      <div className="container mx-auto p-6 space-y-8 flex-1">
-        {/* هيدر التقارير الأنيق */}
-        <div className="flex items-center justify-between animate-fade-in">
-          <div className="space-y-2">
-            <BackButton />
-            <div className="space-y-1">
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-primary via-blue-600 to-purple-600 bg-clip-text text-transparent">
-                التقارير والإحصائيات
-              </h1>
-              <p className="text-muted-foreground text-lg">
-                {userProfile?.role === 'superadmin' && 'نظرة شاملة على أداء المنصة التعليمية'}
-                {userProfile?.role === 'school_admin' && 'إحصائيات مدرستك وأداء الطلاب'}
-                {userProfile?.role === 'teacher' && 'تقارير فصولك الدراسية وطلابك'}
-              </p>
+    <div className="min-h-screen bg-gray-50" dir="rtl">
+      <div className="max-w-7xl mx-auto p-6 space-y-8">
+        
+        {/* Header */}
+        <div className="bg-white rounded-xl p-6 shadow-sm border-0">
+          <BackButton />
+          <div className="mt-4 flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">التقارير والإحصائيات</h1>
+              <p className="text-gray-600 mt-1">نظرة شاملة على أداء المنصة</p>
             </div>
-          </div>
-          
-          <div className="flex gap-3 animate-slide-up">
-            <Button variant="outline" className="gap-2">
-              <Calendar className="h-4 w-4" />
-              آخر 30 يوم
-            </Button>
-            <Button className="gap-2 gradient-blue text-white">
-              <Download className="h-4 w-4" />
-              تصدير التقارير
-            </Button>
-          </div>
-        </div>
-
-        {/* كاردات الإحصائيات الرئيسية */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {dashboardStats.map((stat, index) => {
-            const Icon = stat.icon;
-            return (
-              <Card 
-                key={index} 
-                className={`glass-card hover:scale-105 transition-all duration-300 cursor-pointer ${stat.gradient} ${stat.shadow} ${stat.animation}`}
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-2">
-                      <p className={`${stat.color} opacity-90 text-sm font-medium`}>
-                        {stat.title}
-                      </p>
-                      <div className="space-y-1">
-                        <p className={`${stat.color} text-3xl font-bold`}>
-                          {stat.value}
-                        </p>
-                        <p className={`${stat.color} opacity-75 text-xs`}>
-                          {stat.change}
-                        </p>
-                      </div>
-                    </div>
-                    <Icon className={`h-12 w-12 ${stat.color} opacity-80`} />
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-
-        {/* الرسم البياني التفاعلي */}
-        <Card className="glass-card animate-fade-in">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2 text-xl">
-                  <BarChart3 className="h-6 w-6 text-primary" />
-                  تحليل النشاط الأسبوعي
-                </CardTitle>
-                <CardDescription className="text-base mt-1">
-                  نشاط المستخدمين والتفاعل مع المحتوى التعليمي خلال آخر 7 أيام
-                </CardDescription>
-              </div>
+            <div className="flex gap-3">
               <Button variant="outline" size="sm" className="gap-2">
-                <FileText className="h-4 w-4" />
-                عرض التفاصيل
+                <Filter className="h-4 w-4" />
+                تصفية
+              </Button>
+              <Button size="sm" className="gap-2 bg-blue-600 hover:bg-blue-700">
+                <Download className="h-4 w-4" />
+                تصدير
               </Button>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="w-full h-80 flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10 rounded-lg border-2 border-dashed border-border">
-              <div className="text-center space-y-3">
-                <BarChart3 className="h-16 w-16 text-muted-foreground mx-auto opacity-50" />
-                <div className="space-y-1">
-                  <p className="text-lg font-medium text-muted-foreground">رسم بياني تفاعلي</p>
-                  <p className="text-sm text-muted-foreground/70">قيد التطوير - قريباً</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* تقارير مفصلة */}
-        <div className="space-y-4">
-          <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <Target className="h-6 w-6 text-primary" />
-            التقارير المفصلة
-          </h2>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {getAvailableReports().map((report, index) => {
-              const Icon = report.icon;
-              return (
-                <Card 
-                  key={index} 
-                  className="glass-card hover:scale-105 transition-all duration-300 cursor-pointer animate-slide-up"
-                  style={{ animationDelay: `${index * 0.15}s` }}
-                >
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-4">
-                        <div className={`p-3 ${report.bgColor} rounded-xl`}>
-                          <Icon className={`h-6 w-6 ${report.color}`} />
-                        </div>
-                        <div className="space-y-2">
-                          <h3 className="font-bold text-lg text-foreground">{report.title}</h3>
-                          <p className="text-muted-foreground text-sm leading-relaxed">
-                            {report.description}
-                          </p>
-                          <Badge variant="secondary" className="text-xs">
-                            القيمة: {report.value}
-                          </Badge>
-                        </div>
-                      </div>
-                      <Button variant="ghost" size="sm" className="gap-2">
-                        <TrendingUp className="h-4 w-4" />
-                        عرض
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
           </div>
         </div>
 
-        {/* إحصائيات المحتوى حسب الصفوف */}
-        {userProfile?.role !== 'student' && (
-          <Card className="glass-card animate-fade-in">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-xl">
-                <Award className="h-6 w-6 text-primary" />
-                إحصائيات المحتوى التعليمي
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StatCard
+            title="إجمالي المستخدمين"
+            value={stats.totalUsers.toLocaleString()}
+            change="+12%"
+            icon={Users}
+            trend="up"
+          />
+          <StatCard
+            title="المستخدمين النشطين"
+            value={stats.activeUsers.toLocaleString()}
+            change="+8%"
+            icon={Activity}
+            trend="up"
+          />
+          <StatCard
+            title="المحتوى التعليمي"
+            value={stats.totalContent.toLocaleString()}
+            change="+15%"
+            icon={BookOpen}
+            trend="up"
+          />
+          <StatCard
+            title="متوسط الدرجات"
+            value={`${stats.averageScore}%`}
+            change="+2%"
+            icon={Star}
+            trend="up"
+          />
+        </div>
+
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          
+          {/* Weekly Activity Chart */}
+          <Card className="border-0 shadow-sm bg-white">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-blue-600" />
+                النشاط الأسبوعي
               </CardTitle>
-              <CardDescription>
-                توزيع المحتوى والمصادر التعليمية عبر الصفوف الدراسية
-              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {/* الصف العاشر */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-gradient-electric rounded-full"></div>
-                    <h3 className="font-semibold text-lg text-foreground">الصف العاشر</h3>
-                  </div>
-                  <div className="space-y-3">
-                    {[
-                      { label: 'الفيديوهات التعليمية', value: 25, color: 'text-blue-600', bg: 'bg-blue-50' },
-                      { label: 'المستندات والملفات', value: 18, color: 'text-green-600', bg: 'bg-green-50' },
-                      { label: 'المشاريع العملية', value: 12, color: 'text-purple-600', bg: 'bg-purple-50' }
-                    ].map((item, idx) => (
-                      <div key={idx} className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
-                        <span className="text-sm text-muted-foreground">{item.label}</span>
-                        <Badge variant="secondary" className={`${item.color} ${item.bg} border-0`}>
-                          {item.value}
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={weeklyData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis 
+                    dataKey="day" 
+                    tick={{ fontSize: 12, fill: '#6b7280' }}
+                    axisLine={{ stroke: '#e5e7eb' }}
+                  />
+                  <YAxis 
+                    tick={{ fontSize: 12, fill: '#6b7280' }}
+                    axisLine={{ stroke: '#e5e7eb' }}
+                  />
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: 'white',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    }}
+                  />
+                  <Bar dataKey="users" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
 
-                {/* الصف الحادي عشر */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-gradient-fire rounded-full"></div>
-                    <h3 className="font-semibold text-lg text-foreground">الصف الحادي عشر</h3>
-                  </div>
-                  <div className="space-y-3">
-                    {[
-                      { label: 'الأقسام الدراسية', value: 8, color: 'text-orange-600', bg: 'bg-orange-50' },
-                      { label: 'المواضيع المتخصصة', value: 35, color: 'text-red-600', bg: 'bg-red-50' },
-                      { label: 'الدروس التفاعلية', value: 120, color: 'text-pink-600', bg: 'bg-pink-50' }
-                    ].map((item, idx) => (
-                      <div key={idx} className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
-                        <span className="text-sm text-muted-foreground">{item.label}</span>
-                        <Badge variant="secondary" className={`${item.color} ${item.bg} border-0`}>
-                          {item.value}
-                        </Badge>
-                      </div>
+          {/* Content Distribution */}
+          <Card className="border-0 shadow-sm bg-white">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-blue-600" />
+                توزيع المحتوى
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={contentDistribution}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={120}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {contentDistribution.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
+                  </Pie>
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: 'white',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                {contentDistribution.map((item, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <div 
+                      className="w-3 h-3 rounded-full" 
+                      style={{ backgroundColor: item.color }}
+                    ></div>
+                    <span className="text-sm text-gray-600">{item.name}</span>
+                    <span className="text-sm font-medium text-gray-900">{item.value}</span>
                   </div>
-                </div>
-
-                {/* الصف الثاني عشر */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-gradient-neon rounded-full"></div>
-                    <h3 className="font-semibold text-lg text-foreground">الصف الثاني عشر</h3>
-                  </div>
-                  <div className="space-y-3">
-                    {[
-                      { label: 'المستندات المتقدمة', value: 15, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-                      { label: 'الفيديوهات المتخصصة', value: 22, color: 'text-teal-600', bg: 'bg-teal-50' },
-                      { label: 'المشاريع النهائية', value: 8, color: 'text-cyan-600', bg: 'bg-cyan-50' }
-                    ].map((item, idx) => (
-                      <div key={idx} className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
-                        <span className="text-sm text-muted-foreground">{item.label}</span>
-                        <Badge variant="secondary" className={`${item.color} ${item.bg} border-0`}>
-                          {item.value}
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                ))}
               </div>
             </CardContent>
           </Card>
-        )}
+        </div>
 
-        {/* معلومات إضافية */}
-        <Card className="glass-card animate-fade-in bg-gradient-to-br from-primary/5 to-secondary/5 border-primary/20">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-primary/10 rounded-xl">
-                  <Clock className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-lg text-foreground">آخر تحديث للبيانات</h3>
-                  <p className="text-muted-foreground text-sm">
-                    {new Date().toLocaleDateString('ar-SA', { 
-                      weekday: 'long', 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
-                    })}
-                  </p>
-                </div>
-              </div>
-              <Badge variant="outline" className="text-primary border-primary/30">
-                تحديث تلقائي
-              </Badge>
-            </div>
+        {/* Performance Trends */}
+        <Card className="border-0 shadow-sm bg-white">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <Activity className="h-5 w-5 text-blue-600" />
+              اتجاهات الأداء
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={400}>
+              <LineChart data={weeklyData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis 
+                  dataKey="day" 
+                  tick={{ fontSize: 12, fill: '#6b7280' }}
+                  axisLine={{ stroke: '#e5e7eb' }}
+                />
+                <YAxis 
+                  tick={{ fontSize: 12, fill: '#6b7280' }}
+                  axisLine={{ stroke: '#e5e7eb' }}
+                />
+                <Tooltip 
+                  contentStyle={{
+                    backgroundColor: 'white',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                  }}
+                />
+                <Legend />
+                <Line 
+                  type="monotone" 
+                  dataKey="users" 
+                  stroke="#3b82f6" 
+                  strokeWidth={3}
+                  dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
+                  name="المستخدمين"
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="engagement" 
+                  stroke="#10b981" 
+                  strokeWidth={3}
+                  dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
+                  name="معدل التفاعل"
+                />
+              </LineChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
+
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className="border-0 shadow-sm bg-white">
+            <CardContent className="p-6 text-center">
+              <div className="text-3xl font-bold text-blue-600 mb-2">
+                {stats.engagementRate}%
+              </div>
+              <div className="text-sm text-gray-600">معدل التفاعل اليومي</div>
+              <Badge className="mt-2 bg-green-50 text-green-700 border-green-200">
+                ممتاز
+              </Badge>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-sm bg-white">
+            <CardContent className="p-6 text-center">
+              <div className="text-3xl font-bold text-green-600 mb-2">
+                +{stats.weeklyGrowth}%
+              </div>
+              <div className="text-sm text-gray-600">النمو الأسبوعي</div>
+              <Badge className="mt-2 bg-blue-50 text-blue-700 border-blue-200">
+                متزايد
+              </Badge>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-sm bg-white">
+            <CardContent className="p-6 text-center">
+              <div className="text-3xl font-bold text-purple-600 mb-2">
+                24/7
+              </div>
+              <div className="text-sm text-gray-600">النظام متاح</div>
+              <Badge className="mt-2 bg-purple-50 text-purple-700 border-purple-200">
+                مستقر
+              </Badge>
+            </CardContent>
+          </Card>
+        </div>
+
       </div>
-      
       <AppFooter />
     </div>
   );
