@@ -4,11 +4,9 @@ import { useAuth } from '@/hooks/useAuth';
 import AppHeader from '@/components/shared/AppHeader';
 import AppFooter from '@/components/shared/AppFooter';
 import { QuestionManagementPanel } from '@/components/games/QuestionManagementPanel';
-import { useBackPath } from '@/hooks/useBackPath';
 
 const QuestionManagement: React.FC = () => {
   const { userProfile } = useAuth();
-  const { gameBackPath } = useBackPath();
   
   // التأكد من صلاحية الوصول
   const canManage = userProfile?.role === 'school_admin' || userProfile?.role === 'superadmin';
@@ -35,7 +33,7 @@ const QuestionManagement: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
-      <AppHeader title="إدارة أسئلة الألعاب التفاعلية" showBackButton={true} backPath={gameBackPath} showLogout={true} />
+      <AppHeader title="إدارة أسئلة الألعاب التفاعلية" showBackButton={true} backPath="/content-management/grade-11" showLogout={true} />
       
       <main className="container mx-auto px-6 py-8 flex-1">
         <QuestionManagementPanel />
