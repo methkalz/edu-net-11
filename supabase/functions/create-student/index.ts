@@ -139,19 +139,6 @@ Deno.serve(async (req) => {
       console.log('Created new user account:', user_id);
     }
 
-    // Helper function to get random avatar for students
-    const getRandomStudentAvatar = () => {
-      const studentAvatars = [
-        'avatars/student-boy-1.png',
-        'avatars/student-boy-2.png', 
-        'avatars/student-creative.png',
-        'avatars/student-girl-1.png',
-        'avatars/student-girl-2.png',
-        'avatars/universal-default.png'
-      ];
-      return studentAvatars[Math.floor(Math.random() * studentAvatars.length)];
-    };
-
     // Only create new student if we don't already have one
     if (!student_id) {
       // Create student record in students table
@@ -175,23 +162,6 @@ Deno.serve(async (req) => {
 
       student_id = studentData.id;
       console.log('New student created successfully:', studentData);
-
-      // Assign random avatar to the user profile if user_id exists
-      if (user_id) {
-        const randomAvatar = getRandomStudentAvatar();
-        const { error: avatarError } = await supabaseAdmin
-          .from('profiles')
-          .update({ avatar_url: randomAvatar })
-          .eq('user_id', user_id);
-
-        if (avatarError) {
-          console.error('Error assigning avatar:', avatarError);
-          // Don't throw error - avatar assignment failure shouldn't fail student creation
-        } else {
-          console.log('Avatar assigned successfully:', randomAvatar);
-        }
-      }
-
     }
 
     return new Response(

@@ -120,18 +120,6 @@ serve(async (req) => {
       }
     }
 
-    // Helper function to get random avatar for teachers
-    const getRandomTeacherAvatar = () => {
-      const teacherAvatars = [
-        'avatars/teacher-female-1.png',
-        'avatars/teacher-female-2.png',
-        'avatars/teacher-male-1.png', 
-        'avatars/teacher-male-2.png',
-        'avatars/universal-default.png'
-      ];
-      return teacherAvatars[Math.floor(Math.random() * teacherAvatars.length)];
-    };
-
     // Check if user already exists and handle different scenarios
     const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
     const existingAuthUser = existingUsers.users?.find(u => u.email === email);
@@ -160,9 +148,6 @@ serve(async (req) => {
         if (existingProfile.role === 'student') {
           console.log('Converting existing student to teacher...');
           
-          // Get random teacher avatar
-          const randomAvatar = getRandomTeacherAvatar();
-          
           // Update existing user's role to teacher
           const { error: updateProfileError } = await supabaseAdmin
             .from('profiles')
@@ -170,8 +155,7 @@ serve(async (req) => {
               role: 'teacher',
               full_name: fullName,
               phone: phone || null,
-              school_id: currentProfile.school_id,
-              avatar_url: randomAvatar
+              school_id: currentProfile.school_id
             })
             .eq('user_id', existingAuthUser.id);
 
@@ -250,20 +234,6 @@ serve(async (req) => {
       newUser = createResult.data;
       userId = newUser.user.id;
       console.log('User created successfully with teacher profile:', newUser.user.id);
-      
-      // Assign random avatar to new teacher
-      const randomAvatar = getRandomTeacherAvatar();
-      const { error: avatarError } = await supabaseAdmin
-        .from('profiles')
-        .update({ avatar_url: randomAvatar })
-        .eq('user_id', userId);
-
-      if (avatarError) {
-        console.error('Error assigning avatar:', avatarError);
-        // Don't throw error - avatar assignment failure shouldn't fail teacher creation
-      } else {
-        console.log('Avatar assigned successfully:', randomAvatar);
-      }
     } else {
       console.log('Using existing user converted to teacher:', userId);
     }
