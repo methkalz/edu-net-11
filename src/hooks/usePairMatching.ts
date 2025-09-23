@@ -146,7 +146,11 @@ export const usePairMatching = (gameId?: string) => {
         return {
           ...game,
           progress,
-          isLocked: !progress?.is_unlocked || false, // تصحيح منطق القفل - إذا لم يوجد تقدم فاللعبة مقفلة
+          // إصلاح منطق القفل: اللعبة الأولى (level 1, stage 1) مفتوحة دائماً
+          // والألعاب الأخرى تعتمد على التقدم المسجل
+          isLocked: game.level_number === 1 && game.stage_number === 1 
+            ? false 
+            : !(progress?.is_unlocked ?? false),
           isCompleted: progress?.is_completed || false
         };
       });
