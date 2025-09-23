@@ -106,6 +106,7 @@ export const useStudentProgress = () => {
     if (!user || !userProfile?.school_id) return;
 
     try {
+      // Update progress in student_progress table
       const updateData = {
         student_id: user.id,
         content_id: contentId,
@@ -118,15 +119,56 @@ export const useStudentProgress = () => {
         updated_at: new Date().toISOString()
       };
 
-      const { data, error } = await supabase
+      const { error: progressError } = await supabase
         .from('student_progress')
         .upsert(updateData, {
           onConflict: 'student_id,content_id,content_type'
-        })
-        .select()
-        .single();
+        });
 
-      if (error) throw error;
+      if (progressError) throw progressError;
+
+      // إذا تم الإكمال (100%)، منح النقاط في النظام الموحد
+      if (progressPercentage >= 100) {
+        const points = contentType === 'video' ? 15 : 
+                     contentType === 'lesson' ? 10 : 
+                     contentType === 'project' ? 20 : 5;
+        
+        // إدراج النقاط في النظام الموحد مباشرة
+        const { error: pointsError } = await supabase
+          .from('student_unified_points')
+          .insert({
+            student_id: user.id,
+            points_value: points,
+            source_type: 'content_completion',
+            source_id: contentId,
+            content_type: contentType,
+            description: `إكمال ${contentType === 'video' ? 'فيديو' : 
+                                 contentType === 'lesson' ? 'درس' : 
+                                 contentType === 'project' ? 'مشروع' : 'محتوى'}`
+          });
+
+        if (pointsError && !pointsError.message?.includes('duplicate key value')) {
+          console.error('Error awarding points:', pointsError);
+        }
+
+        // تحديث النقاط في profiles - احصل على المجموع الكامل أولاً
+        const { data: totalPointsData, error: totalPointsError } = await supabase
+          .rpc('get_student_total_points', { student_uuid: user.id });
+
+        if (!totalPointsError && totalPointsData) {
+          const { error: profileUpdateError } = await supabase
+            .from('profiles')
+            .update({ 
+              points: totalPointsData,
+              updated_at: new Date().toISOString() 
+            })
+            .eq('user_id', user.id);
+
+          if (profileUpdateError) {
+            console.error('Error updating profile points:', profileUpdateError);
+          }
+        }
+      }
 
       // Log activity
       await logActivity(contentType === 'video' ? 'video_watch' : 
@@ -138,7 +180,6 @@ export const useStudentProgress = () => {
       await fetchStudentStats();
 
       logger.info('Progress updated successfully', { contentId, progressPercentage });
-      return data;
     } catch (err) {
       logger.error('Error updating progress', err as Error);
       throw err;

@@ -57,45 +57,32 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
     ? lesson.content.split('\n\n').filter(section => section.trim())
     : ['المحتوى غير متوفر'];
 
+  // النظام المبسط: 5 ثوان = مكتمل + نقاط
   useEffect(() => {
     if (isOpen && !hasStarted) {
       setHasStarted(true);
-      toast.info('بدأت دراسة الدرس', {
-        description: 'ستحصل على النقاط عند إكمال الدراسة'
+      toast("بدء الدراسة", {
+        description: "سيتم احتساب الدرس كمكتمل خلال 5 ثوانٍ",
+        duration: 2000,
       });
-    }
-  }, [isOpen, hasStarted]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const timer = setInterval(() => {
-      setStudyTime(prev => {
-        const newTime = prev + 1;
-        
-        // Calculate progress based on study time, section progress, and scroll
-        const timeProgress = Math.min((newTime / 60) * 100, 100); // 1 minute minimum
-        const sectionProgress = ((currentSection + 1) / sections.length) * 100;
-        const combinedProgress = Math.max(timeProgress, sectionProgress, scrollProgress);
-        
-        setProgress(combinedProgress);
-        onProgress(combinedProgress, newTime);
-
-        // Mark as complete if studied for enough time and viewed all sections
-        if (combinedProgress >= 90 && !isCompleted) {
+      
+      // 5 ثوانٍ = درس مكتمل + نقاط
+      const completionTimer = setTimeout(() => {
+        if (!isCompleted) {
+          setProgress(100);
           setIsCompleted(true);
+          onProgress(100, 5);
           onComplete();
-          toast.success('تم إكمال دراسة الدرس بنجاح!', {
-            description: 'تم إضافة النقاط إلى رصيدك'
+          toast("تم إكمال الدرس!", {
+            description: "أحسنت! لقد أكملت دراسة الدرس بنجاح",
+            duration: 3000,
           });
         }
+      }, 5000); // 5 ثوانٍ فقط
 
-        return newTime;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [isOpen, currentSection, sections.length, scrollProgress, onProgress, onComplete, isCompleted]);
+      return () => clearTimeout(completionTimer);
+    }
+  }, [isOpen, hasStarted, isCompleted, onProgress, onComplete]);
 
   const handleScroll = (scrollTop: number, scrollHeight: number, clientHeight: number) => {
     const maxScroll = scrollHeight - clientHeight;
