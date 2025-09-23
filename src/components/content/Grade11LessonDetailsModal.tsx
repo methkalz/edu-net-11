@@ -172,9 +172,9 @@ const Grade11LessonDetailsModal: React.FC<Grade11LessonDetailsModalProps> = ({ l
                                   {getMediaIcon(media.media_type)}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                   <h4 className="font-medium text-sm mb-1 truncate">
-                                     {media.file_name || `${getMediaTypeLabel(media.media_type)} ${index + 1}`}
-                                   </h4>
+                                  <h4 className="font-medium text-sm mb-1 truncate">
+                                    {media.file_name || `${getMediaTypeLabel(media.media_type)} ${index + 1}`}
+                                  </h4>
                                   <p className="text-xs text-muted-foreground mb-2">
                                     نوع الملف: {getMediaTypeLabel(media.media_type)}
                                   </p>
