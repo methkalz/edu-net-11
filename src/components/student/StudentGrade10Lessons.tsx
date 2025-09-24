@@ -287,7 +287,7 @@ export const StudentGrade10Lessons: React.FC = () => {
           </TabsTrigger>
           <TabsTrigger value="computer" className="flex items-center gap-2 text-base font-medium">
             <Monitor className="w-5 h-5" />
-            تركيبة الحاسوب ({computerLessonsCount} درس)
+            مبنى الحاسوب ({computerLessonsCount} درس)
           </TabsTrigger>
         </TabsList>
 
@@ -435,7 +435,7 @@ export const StudentGrade10Lessons: React.FC = () => {
                 <Monitor className="w-16 h-16 mx-auto text-muted-foreground" />
                 <h3 className="text-lg font-semibold">قريباً</h3>
                 <p className="text-muted-foreground">
-                  محتوى تركيبة الحاسوب قيد التطوير وسيكون متاحاً قريباً
+                  محتوى مبنى الحاسوب قيد التطوير وسيكون متاحاً قريباً
                 </p>
               </div>
             </Card>
