@@ -466,11 +466,11 @@ const LandingPage: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-8">
+      <footer className="bg-gray-600 text-white py-8">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col items-center justify-center text-center">
-            <img src="/logo-edunet.png" alt="شعار المنصة" className="h-12 w-auto mb-4 opacity-90" />
-            <p className="text-gray-300 text-sm">
+          <div className="flex items-center justify-center gap-3">
+            <img src="/logo-edunet.png" alt="شعار المنصة" className="h-8 w-auto opacity-90" />
+            <p className="text-gray-200 text-sm">
               جميع الحقوق محفوظة © 2025
             </p>
           </div>
