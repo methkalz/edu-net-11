@@ -56,7 +56,7 @@ const Grade12Content: React.FC = () => {
       {/* Header */}
       <div className="text-center space-y-4">
         <h1 className="text-3xl font-bold text-foreground text-center">محتوى الصف الثاني عشر</h1>
-        <p className="text-muted-foreground max-w-2xl mx-auto">
+        <p className="text-muted-foreground max-w-2xl mx-auto text-center">
           إدارة شاملة للمشاريع النهائية ومحتوى الصف الثاني عشر
         </p>
       </div>
