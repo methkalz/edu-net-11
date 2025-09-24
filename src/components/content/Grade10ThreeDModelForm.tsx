@@ -6,10 +6,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Box, Upload, Eye } from 'lucide-react';
+import { Box, Upload, Eye, File, Link } from 'lucide-react';
 import { ThreeDModelViewer } from './ThreeDModelViewer';
+import { useGrade10Files } from '@/hooks/useGrade10Files';
 
 interface Grade10ThreeDModelFormProps {
   lessonId: string;
@@ -29,18 +31,62 @@ export const Grade10ThreeDModelForm: React.FC<Grade10ThreeDModelFormProps> = ({
   const [orderIndex, setOrderIndex] = useState(1);
   const [showPreview, setShowPreview] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadMethod, setUploadMethod] = useState<'file' | 'url'>('file');
+  
+  const { uploadFile, getFileUrl } = useGrade10Files();
 
   const getModelType = (path: string): 'glb' | 'obj' => {
     return path.toLowerCase().endsWith('.glb') ? 'glb' : 'obj';
   };
 
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Check if file is a valid 3D model format
+      const validExtensions = ['.glb', '.gltf', '.obj'];
+      const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+      
+      if (!validExtensions.includes(fileExtension)) {
+        toast({
+          title: "نوع ملف غير مدعوم",
+          description: "يرجى اختيار ملف بصيغة GLB، GLTF، أو OBJ",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setSelectedFile(file);
+      setFileName(file.name);
+      setFilePath(''); // Clear URL when file is selected
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!fileName.trim() || !filePath.trim()) {
+    if (!fileName.trim()) {
       toast({
         title: "خطأ في البيانات",
-        description: "يرجى إدخال جميع الحقول المطلوبة",
+        description: "يرجى إدخال اسم الملف",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (uploadMethod === 'file' && !selectedFile) {
+      toast({
+        title: "خطأ في البيانات",
+        description: "يرجى اختيار ملف للرفع",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (uploadMethod === 'url' && !filePath.trim()) {
+      toast({
+        title: "خطأ في البيانات",
+        description: "يرجى إدخال رابط الملف",
         variant: "destructive"
       });
       return;
@@ -49,17 +95,26 @@ export const Grade10ThreeDModelForm: React.FC<Grade10ThreeDModelFormProps> = ({
     setIsSubmitting(true);
 
     try {
+      let finalFilePath = filePath;
+
+      // If uploading a file, upload it first
+      if (uploadMethod === 'file' && selectedFile) {
+        const uploadResult = await uploadFile(selectedFile, `3d-models/${Date.now()}_${selectedFile.name}`);
+        finalFilePath = getFileUrl(uploadResult.path);
+      }
+
       const { error } = await supabase
         .from('grade10_lesson_media')
         .insert({
           lesson_id: lessonId,
           media_type: '3d_model',
-          file_path: filePath,
+          file_path: finalFilePath,
           file_name: fileName,
           metadata: {
-            modelType: getModelType(filePath),
+            modelType: getModelType(finalFilePath),
             autoRotate,
-            description: description || undefined
+            description: description || undefined,
+            uploadMethod
           },
           order_index: orderIndex
         });
@@ -78,6 +133,7 @@ export const Grade10ThreeDModelForm: React.FC<Grade10ThreeDModelFormProps> = ({
       setAutoRotate(true);
       setOrderIndex(1);
       setShowPreview(false);
+      setSelectedFile(null);
 
       if (onSuccess) {
         onSuccess();
@@ -115,6 +171,15 @@ export const Grade10ThreeDModelForm: React.FC<Grade10ThreeDModelFormProps> = ({
   const handleSampleSelect = (sample: typeof sampleModels[0]) => {
     setFileName(`${sample.name}.${sample.type}`);
     setFilePath(sample.url);
+    setUploadMethod('url');
+    setSelectedFile(null);
+  };
+
+  const getCurrentFilePath = () => {
+    if (uploadMethod === 'file' && selectedFile) {
+      return URL.createObjectURL(selectedFile);
+    }
+    return filePath;
   };
 
   return (
@@ -128,29 +193,55 @@ export const Grade10ThreeDModelForm: React.FC<Grade10ThreeDModelFormProps> = ({
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="fileName">اسم الملف</Label>
-                <Input
-                  id="fileName"
-                  value={fileName}
-                  onChange={(e) => setFileName(e.target.value)}
-                  placeholder="مثال: نموذج المعالج.glb"
-                  required
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="fileName">اسم الملف</Label>
+              <Input
+                id="fileName"
+                value={fileName}
+                onChange={(e) => setFileName(e.target.value)}
+                placeholder="مثال: نموذج المعالج.glb"
+                required
+              />
+            </div>
 
-              <div className="space-y-2">
+            <Tabs value={uploadMethod} onValueChange={(value) => setUploadMethod(value as 'file' | 'url')} className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="file" className="flex items-center gap-2">
+                  <File className="w-4 h-4" />
+                  رفع ملف
+                </TabsTrigger>
+                <TabsTrigger value="url" className="flex items-center gap-2">
+                  <Link className="w-4 h-4" />
+                  رابط خارجي
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="file" className="space-y-2">
+                <Label htmlFor="fileUpload">اختر ملف النموذج ثلاثي الأبعاد</Label>
+                <Input
+                  id="fileUpload"
+                  type="file"
+                  accept=".glb,.gltf,.obj"
+                  onChange={handleFileSelect}
+                  className="file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/80"
+                />
+                {selectedFile && (
+                  <div className="text-sm text-muted-foreground">
+                    ملف محدد: {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="url" className="space-y-2">
                 <Label htmlFor="filePath">رابط الملف</Label>
                 <Input
                   id="filePath"
                   value={filePath}
                   onChange={(e) => setFilePath(e.target.value)}
                   placeholder="https://example.com/model.glb"
-                  required
                 />
-              </div>
-            </div>
+              </TabsContent>
+            </Tabs>
 
             <div className="space-y-2">
               <Label htmlFor="description">الوصف (اختياري)</Label>
@@ -190,15 +281,21 @@ export const Grade10ThreeDModelForm: React.FC<Grade10ThreeDModelFormProps> = ({
                 type="button"
                 variant="outline"
                 onClick={() => setShowPreview(!showPreview)}
-                disabled={!filePath}
+                disabled={!getCurrentFilePath()}
               >
                 <Eye className="w-4 h-4 mr-2" />
                 {showPreview ? 'إخفاء المعاينة' : 'معاينة النموذج'}
               </Button>
               
-              {filePath && (
+              {getCurrentFilePath() && (
                 <Badge variant="secondary">
-                  نوع الملف: {getModelType(filePath).toUpperCase()}
+                  نوع الملف: {getModelType(getCurrentFilePath()).toUpperCase()}
+                </Badge>
+              )}
+              
+              {uploadMethod === 'file' && selectedFile && (
+                <Badge variant="outline">
+                  رفع محلي
                 </Badge>
               )}
             </div>
@@ -240,15 +337,15 @@ export const Grade10ThreeDModelForm: React.FC<Grade10ThreeDModelFormProps> = ({
       </Card>
 
       {/* Preview */}
-      {showPreview && filePath && (
+      {showPreview && getCurrentFilePath() && (
         <Card>
           <CardHeader>
             <CardTitle className="text-sm">معاينة النموذج</CardTitle>
           </CardHeader>
           <CardContent>
             <ThreeDModelViewer
-              modelUrl={filePath}
-              modelType={getModelType(filePath)}
+              modelUrl={getCurrentFilePath()}
+              modelType={getModelType(getCurrentFilePath())}
               title={fileName}
               autoRotate={autoRotate}
               showControls={true}
