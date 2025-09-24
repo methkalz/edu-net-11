@@ -48,16 +48,16 @@ const LandingPage: React.FC = () => {
             </div>
             
             <div className="hidden md:flex items-center gap-8">
-              <button onClick={() => scrollToSection('features')} className="relative text-gray-600 hover:text-gray-900 transition-all duration-300 text-sm font-light tracking-wide after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-[-8px] after:left-0 after:bg-gradient-to-r after:from-blue-500 after:to-purple-500 after:transition-all after:duration-300 hover:after:w-full">
+              <button onClick={() => scrollToSection('features')} className="relative text-gray-600 hover:text-gray-900 transition-all duration-300 text-base font-light tracking-wide after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-[-8px] after:left-0 after:bg-gradient-to-r after:from-blue-500 after:to-purple-500 after:transition-all after:duration-300 hover:after:w-full">
                 الميزات
               </button>
-              <button onClick={() => scrollToSection('content')} className="relative text-gray-600 hover:text-gray-900 transition-all duration-300 text-sm font-light tracking-wide after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-[-8px] after:left-0 after:bg-gradient-to-r after:from-blue-500 after:to-purple-500 after:transition-all after:duration-300 hover:after:w-full">
+              <button onClick={() => scrollToSection('content')} className="relative text-gray-600 hover:text-gray-900 transition-all duration-300 text-base font-light tracking-wide after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-[-8px] after:left-0 after:bg-gradient-to-r after:from-blue-500 after:to-purple-500 after:transition-all after:duration-300 hover:after:w-full">
                 المحتوى
               </button>
-              <button onClick={() => scrollToSection('games')} className="relative text-gray-600 hover:text-gray-900 transition-all duration-300 text-sm font-light tracking-wide after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-[-8px] after:left-0 after:bg-gradient-to-r after:from-blue-500 after:to-purple-500 after:transition-all after:duration-300 hover:after:w-full">
+              <button onClick={() => scrollToSection('games')} className="relative text-gray-600 hover:text-gray-900 transition-all duration-300 text-base font-light tracking-wide after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-[-8px] after:left-0 after:bg-gradient-to-r after:from-blue-500 after:to-purple-500 after:transition-all after:duration-300 hover:after:w-full">
                 ألعاب
               </button>
-              <button onClick={() => scrollToSection('special-offer')} className="relative text-gray-600 hover:text-gray-900 transition-all duration-300 text-sm font-light tracking-wide after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-[-8px] after:left-0 after:bg-gradient-to-r after:from-blue-500 after:to-purple-500 after:transition-all after:duration-300 hover:after:w-full">
+              <button onClick={() => scrollToSection('special-offer')} className="relative text-gray-600 hover:text-gray-900 transition-all duration-300 text-base font-light tracking-wide after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-[-8px] after:left-0 after:bg-gradient-to-r after:from-blue-500 after:to-purple-500 after:transition-all after:duration-300 hover:after:w-full">
                 تخفيض خاص
               </button>
             </div>
