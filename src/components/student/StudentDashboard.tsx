@@ -43,8 +43,8 @@ const StudentDashboard: React.FC = () => {
   const { assignedGrade, getProgressPercentage } = useStudentContent();
   const [activeTab, setActiveTab] = useState('overview');
   
-  // Check if student is in Grade 10 (no games available)
-  const isGrade10Student = assignedGrade === "10";
+  // Check if student is in Grade 10 or 12 (no games available)
+  const hasGamesTab = assignedGrade !== "10" && assignedGrade !== "12";
 
   const motivationalMessages = [
     'مرحباً بك في رحلة التعلم الرائعة! 🌟',
@@ -186,7 +186,7 @@ const StudentDashboard: React.FC = () => {
       <section className="container mx-auto px-6 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <div className="flex justify-center">
-            <TabsList className={`grid w-full max-w-2xl ${isGrade10Student ? 'grid-cols-4' : 'grid-cols-5'} bg-white shadow-lg`}>
+            <TabsList className={`grid w-full max-w-2xl ${hasGamesTab ? 'grid-cols-5' : 'grid-cols-4'} bg-white shadow-lg`}>
               <TabsTrigger value="overview" className="flex items-center gap-2">
                 <BookOpen className="w-4 h-4" />
                 <span className="hidden sm:inline">نظرة عامة</span>
@@ -195,7 +195,7 @@ const StudentDashboard: React.FC = () => {
                 <Video className="w-4 h-4" />
                 <span className="hidden sm:inline">المحتوى</span>
               </TabsTrigger>
-              {!isGrade10Student && (
+              {hasGamesTab && (
                 <TabsTrigger value="games" className="flex items-center gap-2">
                   <Gamepad2 className="w-4 h-4" />
                   <span className="hidden sm:inline">الألعاب</span>
@@ -237,7 +237,7 @@ const StudentDashboard: React.FC = () => {
                       <Play className="w-4 h-4 mr-2" />
                       متابعة التعلم
                     </Button>
-                    {!isGrade10Student && (
+                    {hasGamesTab && (
                       <Button 
                         variant="secondary" 
                         className="w-full justify-start bg-white/20 hover:bg-white/30 text-white border-white/20"
@@ -284,7 +284,7 @@ const StudentDashboard: React.FC = () => {
             <StudentGradeContent />
           </TabsContent>
 
-          {!isGrade10Student && (
+          {hasGamesTab && (
             <TabsContent value="games">
               <StudentGameSection />
             </TabsContent>
