@@ -54,14 +54,20 @@ const LandingPage: React.FC = () => {
               <button onClick={() => scrollToSection('content')} className="relative text-gray-600 hover:text-gray-900 transition-all duration-300 text-sm font-light tracking-wide after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-[-8px] after:left-0 after:bg-gradient-to-r after:from-blue-500 after:to-purple-500 after:transition-all after:duration-300 hover:after:w-full">
                 المحتوى
               </button>
+              <button onClick={() => scrollToSection('games')} className="relative text-gray-600 hover:text-gray-900 transition-all duration-300 text-sm font-light tracking-wide after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-[-8px] after:left-0 after:bg-gradient-to-r after:from-blue-500 after:to-purple-500 after:transition-all after:duration-300 hover:after:w-full">
+                ألعاب
+              </button>
+              <button onClick={() => scrollToSection('special-offer')} className="relative text-gray-600 hover:text-gray-900 transition-all duration-300 text-sm font-light tracking-wide after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-[-8px] after:left-0 after:bg-gradient-to-r after:from-blue-500 after:to-purple-500 after:transition-all after:duration-300 hover:after:w-full">
+                تخفيض خاص
+              </button>
             </div>
             
             <div className="flex items-center gap-3">
               <Button variant="outline" onClick={() => navigate('/auth')} className="border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 text-xs md:text-sm px-4 md:px-5 py-2.5 rounded-full transition-all duration-300 font-light hover:shadow-sm">
                 تسجيل الدخول
               </Button>
-              <Button onClick={() => navigate('/auth')} className="bg-gradient-to-r from-gray-900 to-gray-800 text-white hover:from-gray-800 hover:to-gray-700 text-xs md:text-sm px-5 md:px-7 py-2.5 rounded-full transition-all duration-300 font-medium shadow-lg hover:shadow-xl hover:scale-105">
-                ابدأ الآن
+              <Button onClick={() => scrollToSection('contact')} className="bg-gradient-to-r from-gray-900 to-gray-800 text-white hover:from-gray-800 hover:to-gray-700 text-xs md:text-sm px-5 md:px-7 py-2.5 rounded-full transition-all duration-300 font-medium shadow-lg hover:shadow-xl hover:scale-105">
+                تواصل معنا
               </Button>
             </div>
           </div>
@@ -203,7 +209,7 @@ const LandingPage: React.FC = () => {
         </section>
 
         {/* ألعاب شيّقة */}
-        <section className="py-16 md:py-24 bg-gradient-to-br from-orange-50 via-red-50 to-pink-50">
+        <section id="games" className="py-16 md:py-24 bg-gradient-to-br from-orange-50 via-red-50 to-pink-50">
           <div className="container mx-auto px-4">
             <div className="text-center mb-12 md:mb-16">
               <h2 className="text-2xl md:text-3xl lg:text-4xl font-light text-gray-900 mb-4 md:mb-6 text-center">
@@ -406,7 +412,7 @@ const LandingPage: React.FC = () => {
         </section>
 
         {/* عرض خاص للمدارس */}
-        <section className="py-16 md:py-24 bg-gradient-to-br from-green-50 via-blue-50 to-purple-50">
+        <section id="special-offer" className="py-16 md:py-24 bg-gradient-to-br from-green-50 via-blue-50 to-purple-50">
           <div className="container mx-auto px-4 text-center">
             <div className="max-w-5xl mx-auto">
               <div className="flex flex-col items-center mb-8 md:mb-12">
@@ -439,7 +445,7 @@ const LandingPage: React.FC = () => {
                 </div>
               </div>
               
-              <div className="bg-white p-10 rounded-2xl shadow-xl mb-8 border border-gray-100">
+              <div id="contact" className="bg-white p-10 rounded-2xl shadow-xl mb-8 border border-gray-100">
                 <div className="w-20 h-20 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-6">
                   <Phone className="h-10 w-10 text-white" />
                 </div>
