@@ -36,7 +36,7 @@ function GLBModel({ url, autoRotate, onLoaded }: { url: string; autoRotate: bool
   });
 
   return (
-    <group ref={group}>
+    <group ref={group} scale={[0.5, 0.5, 0.5]}>
       <primitive object={scene.clone()} />
     </group>
   );
@@ -76,7 +76,7 @@ function OBJModel({ url, autoRotate, onLoaded }: { url: string; autoRotate: bool
   }, [obj]);
 
   return (
-    <group ref={group}>
+    <group ref={group} scale={[0.5, 0.5, 0.5]}>
       <primitive object={obj.clone()} />
     </group>
   );
@@ -161,7 +161,7 @@ export const ThreeDModelViewer: React.FC<ThreeDModelViewerProps> = ({
         )}
 
         <Canvas
-          camera={{ position: [0, 0, 5], fov: 50 }}
+          camera={{ position: [0, 0, 8], fov: 35 }}
           style={{ background: 'transparent' }}
           onError={(error) => {
             console.error('Canvas error:', error);
@@ -183,9 +183,9 @@ export const ThreeDModelViewer: React.FC<ThreeDModelViewerProps> = ({
             )}
             
             <ContactShadows 
-              position={[0, -1.4, 0]} 
+              position={[0, -2, 0]} 
               opacity={0.4} 
-              scale={10} 
+              scale={8} 
               blur={1.5} 
               far={4.5} 
             />
@@ -198,8 +198,8 @@ export const ThreeDModelViewer: React.FC<ThreeDModelViewerProps> = ({
             enablePan={true}
             enableZoom={true}
             enableRotate={true}
-            minDistance={2}
-            maxDistance={20}
+            minDistance={3}
+            maxDistance={15}
           />
         </Canvas>
 
