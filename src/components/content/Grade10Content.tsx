@@ -1,18 +1,23 @@
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Video, FolderOpen, Box } from 'lucide-react';
+import { Video, FolderOpen, Box, BookOpen } from 'lucide-react';
 import Grade10VideoLibrary from './Grade10VideoLibrary';
 import Grade10MiniProjects from './Grade10MiniProjects';
 import Grade10ThreeDModelManager from './Grade10ThreeDModelManager';
+import Grade10LessonsAdmin from './Grade10LessonsAdmin';
 import { useGrade10Files } from '@/hooks/useGrade10Files';
 
 const Grade10Content: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('videos');
+  const [activeTab, setActiveTab] = useState('lessons');
 
   return (
     <div className="w-full">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="lessons" className="flex items-center gap-2">
+            <BookOpen className="h-4 w-4" />
+            الدروس التعليمية
+          </TabsTrigger>
           <TabsTrigger value="videos" className="flex items-center gap-2">
             <Video className="h-4 w-4" />
             الفيديوهات
@@ -26,6 +31,10 @@ const Grade10Content: React.FC = () => {
             المشاريع المصغرة
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="lessons" className="mt-6">
+          <Grade10LessonsAdmin />
+        </TabsContent>
 
         <TabsContent value="videos" className="mt-6">
           <Grade10VideoLibrary />
