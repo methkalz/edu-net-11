@@ -108,7 +108,7 @@ const StudentDashboard: React.FC = () => {
                   </div>
                 </div>
               </div>
-              <p className="text-xl md:text-2xl opacity-90 font-medium">
+              <p className="text-xl md:text-2xl opacity-90 font-medium text-center">
                 {todayMessage}
               </p>
             </div>
@@ -187,9 +187,8 @@ const StudentDashboard: React.FC = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <div className="flex justify-center px-4">
             <TabsList className={`grid w-full max-w-4xl ${hasGamesTab ? 'grid-cols-5' : 'grid-cols-4'} bg-white/95 backdrop-blur-sm shadow-xl border border-white/20 rounded-2xl p-2 h-16`}>
-              <TabsTrigger value="overview" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105">
-                <BookOpen className="w-6 h-6" />
-                <span className="hidden sm:inline">نظرة عامة</span>
+              <TabsTrigger value="overview" className="flex items-center justify-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105">
+                <span className="text-center">نظرة عامة</span>
               </TabsTrigger>
               <TabsTrigger value="content" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105">
                 <Video className="w-6 h-6" />
