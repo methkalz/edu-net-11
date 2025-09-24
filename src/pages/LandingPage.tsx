@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { ArrowRight, Play, CheckCircle, Star, Gamepad2, Users, Monitor, BookOpen, Gift, Heart, Clock, Phone } from 'lucide-react';
 import TypewriterEffect from '@/components/TypewriterEffect';
 import AnimatedCounter from '@/components/ui/AnimatedCounter';
@@ -13,6 +14,7 @@ import { useTrafficLightEffect } from '@/hooks/useTrafficLightEffect';
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const activeBox = useTrafficLightEffect();
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
 
   // تاريخ انتهاء التجربة المجانية - 29 سبتمبر 2025 الساعة 17:00 توقيت القدس
   const freeTrialEndDate = new Date('2025-09-29T17:00:00+03:00'); // +03:00 is Jerusalem timezone (UTC+3)
@@ -203,6 +205,106 @@ const LandingPage: React.FC = () => {
               </p>
             </div>
             <AdminFeaturesSlider />
+          </div>
+        </section>
+
+        {/* ألعاب شيّقة */}
+        <section className="py-16 md:py-24 bg-gradient-to-br from-orange-50 via-red-50 to-pink-50">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-12 md:mb-16">
+              <h2 className="text-2xl md:text-3xl lg:text-4xl font-light text-gray-900 mb-4 md:mb-6 text-center">
+                ألعاب شيّقة
+              </h2>
+              <div className="w-10 md:w-12 h-px bg-gray-300 mx-auto mb-6 md:mb-8"></div>
+              <p className="text-base md:text-lg text-gray-600 max-w-2xl mx-auto text-center px-4">
+                اكتشف مجموعة من الألعاب التعليمية المحفزة والممتعة
+              </p>
+            </div>
+            
+            <div className="max-w-4xl mx-auto">
+              <Dialog open={isVideoModalOpen} onOpenChange={setIsVideoModalOpen}>
+                <DialogTrigger asChild>
+                  <div className="relative group cursor-pointer overflow-hidden rounded-2xl md:rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 bg-gradient-to-br from-purple-100 via-pink-100 to-orange-100 p-1">
+                    <div className="relative bg-gradient-to-br from-orange-500 via-red-500 to-pink-500 rounded-2xl md:rounded-3xl overflow-hidden">
+                      {/* Video thumbnail */}
+                      <div className="relative aspect-video bg-black flex items-center justify-center">
+                        <video
+                          className="w-full h-full object-cover"
+                          preload="metadata"
+                          poster="/videos/gamevideo1.mp4#t=1"
+                        >
+                          <source src="/videos/gamevideo1.mp4" type="video/mp4" />
+                        </video>
+                        
+                        {/* Play button overlay */}
+                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover:bg-black/20 transition-all duration-300">
+                          <div className="w-20 h-20 md:w-24 md:h-24 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/30 group-hover:scale-110 group-hover:bg-white/30 transition-all duration-300">
+                            <Play className="h-8 w-8 md:h-10 md:w-10 text-white mr-1" fill="currentColor" />
+                          </div>
+                        </div>
+                        
+                        {/* Decorative elements */}
+                        <div className="absolute top-4 right-4 w-8 h-8 md:w-10 md:h-10 bg-white/20 rounded-full animate-pulse"></div>
+                        <div className="absolute bottom-4 left-4 w-6 h-6 md:w-8 md:h-8 bg-white/10 rounded-full animate-bounce" style={{ animationDuration: '3s' }}></div>
+                      </div>
+                      
+                      {/* Content section */}
+                      <div className="p-6 md:p-8 text-center relative overflow-hidden">
+                        {/* Background decoration */}
+                        <div className="absolute top-0 right-0 w-16 h-16 md:w-20 md:h-20 bg-white/10 rounded-full -translate-y-8 translate-x-8"></div>
+                        <div className="absolute bottom-0 left-0 w-12 h-12 md:w-16 md:h-16 bg-white/20 rounded-full translate-y-6 -translate-x-6"></div>
+                        
+                        {/* Game icon */}
+                        <div className="relative mb-4 md:mb-6">
+                          <div className="w-16 h-16 md:w-20 md:h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto border border-white/30 shadow-lg">
+                            <Gamepad2 className="h-8 w-8 md:h-10 md:w-10 text-white" />
+                          </div>
+                        </div>
+                        
+                        <h3 className="text-xl md:text-2xl font-bold text-white mb-3 md:mb-4">شاهد كيف تعمل الألعاب التفاعلية</h3>
+                        <p className="text-white/90 text-sm md:text-base leading-relaxed max-w-md mx-auto mb-6 md:mb-8">
+                          تجربة تعليمية ممتعة تجمع بين المرح والتعلم لتحفيز الطلاب على الإنجاز
+                        </p>
+                        
+                        {/* Features */}
+                        <div className="grid grid-cols-2 gap-3 md:gap-4 max-w-sm mx-auto">
+                          {['تفاعل مباشر', 'تحديات ممتعة', 'مكافآت فورية', 'تقييم ذكي'].map((feature, idx) => (
+                            <div key={idx} className="flex items-center text-white/90 text-xs md:text-sm">
+                              <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-white/60 rounded-full ml-2 flex-shrink-0"></div>
+                              <span className="font-medium">{feature}</span>
+                            </div>
+                          ))}
+                        </div>
+                        
+                        <div className="mt-6 md:mt-8">
+                          <Button 
+                            size="lg" 
+                            className="bg-white/20 backdrop-blur-sm text-white border border-white/30 hover:bg-white/30 hover:scale-105 transition-all duration-300 font-medium px-6 md:px-8 py-3 rounded-xl shadow-lg"
+                          >
+                            شاهد العرض
+                            <Play className="mr-2 h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </DialogTrigger>
+                
+                <DialogContent className="max-w-4xl w-[95vw] p-0 bg-black border-0 overflow-hidden">
+                  <div className="relative aspect-video w-full">
+                    <video
+                      className="w-full h-full object-contain"
+                      controls
+                      autoPlay
+                      preload="metadata"
+                    >
+                      <source src="/videos/gamevideo1.mp4" type="video/mp4" />
+                      متصفحك لا يدعم تشغيل الفيديو.
+                    </video>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
         </section>
 
