@@ -7,6 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useGrade12DefaultTasks } from '@/hooks/useGrade12DefaultTasks';
 import { useAuth } from '@/hooks/useAuth';
 import { format } from 'date-fns';
@@ -25,10 +26,13 @@ import {
   MessageSquare,
   TrendingUp,
   Award,
-  List
+  List,
+  Settings,
+  Eye
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
+import Grade12DefaultTasksManager from './Grade12DefaultTasksManager';
 
 const Grade12DefaultTasks: React.FC = () => {
   const { userProfile } = useAuth();
@@ -44,6 +48,7 @@ const Grade12DefaultTasks: React.FC = () => {
 
   const isStudent = userProfile?.role === 'student';
   const isTeacher = userProfile?.role === 'teacher' || userProfile?.role === 'school_admin' || userProfile?.role === 'superadmin';
+  const isSuperAdmin = userProfile?.role === 'superadmin';
   const overallProgress = getOverallProgress();
 
   // تبديل توسيع المرحلة
@@ -109,6 +114,94 @@ const Grade12DefaultTasks: React.FC = () => {
     return 'bg-gray-100 text-gray-700 border-gray-200';
   };
 
+  // عرض واجهة الإدارة للسوبر آدمن
+  if (isSuperAdmin) {
+    return (
+      <Tabs defaultValue="student-view" className="space-y-6">
+        <TabsList className="grid grid-cols-2 w-full max-w-md">
+          <TabsTrigger value="student-view" className="gap-2">
+            <Eye className="h-4 w-4" />
+            عرض الطلاب
+          </TabsTrigger>
+          <TabsTrigger value="admin-manage" className="gap-2">
+            <Settings className="h-4 w-4" />
+            إدارة المهام
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="student-view">
+          <StudentTasksView 
+            phases={phases}
+            loading={loading}
+            userProfile={userProfile}
+            isStudent={false}
+            isTeacher={true}
+            overallProgress={overallProgress}
+            expandedPhases={expandedPhases}
+            setExpandedPhases={setExpandedPhases}
+            taskNotes={taskNotes}
+            setTaskNotes={setTaskNotes}
+            handleTaskToggle={() => {}}
+            getProgressBadgeColor={getProgressBadgeColor}
+            togglePhaseExpansion={togglePhaseExpansion}
+          />
+        </TabsContent>
+
+        <TabsContent value="admin-manage">
+          <Grade12DefaultTasksManager />
+        </TabsContent>
+      </Tabs>
+    );
+  }
+
+  return <StudentTasksView 
+    phases={phases}
+    loading={loading}
+    userProfile={userProfile}
+    isStudent={isStudent}
+    isTeacher={isTeacher}
+    overallProgress={overallProgress}
+    expandedPhases={expandedPhases}
+    setExpandedPhases={setExpandedPhases}
+    taskNotes={taskNotes}
+    setTaskNotes={setTaskNotes}
+    handleTaskToggle={handleTaskToggle}
+    getProgressBadgeColor={getProgressBadgeColor}
+    togglePhaseExpansion={togglePhaseExpansion}
+  />;
+};
+
+interface StudentTasksViewProps {
+  phases: any[];
+  loading: boolean;
+  userProfile: any;
+  isStudent: boolean;
+  isTeacher: boolean;
+  overallProgress: any;
+  expandedPhases: Set<number>;
+  setExpandedPhases: React.Dispatch<React.SetStateAction<Set<number>>>;
+  taskNotes: Record<string, string>;
+  setTaskNotes: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  handleTaskToggle: (taskId: string, isCompleted: boolean) => void;
+  getProgressBadgeColor: (percentage: number) => string;
+  togglePhaseExpansion: (phaseNumber: number) => void;
+}
+
+const StudentTasksView: React.FC<StudentTasksViewProps> = ({
+  phases,
+  loading,
+  userProfile,
+  isStudent,
+  isTeacher,
+  overallProgress,
+  expandedPhases,
+  setExpandedPhases,
+  taskNotes,
+  setTaskNotes,
+  handleTaskToggle,
+  getProgressBadgeColor,
+  togglePhaseExpansion
+}) => {
   if (loading) {
     return (
       <div className="space-y-6">
