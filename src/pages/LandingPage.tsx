@@ -228,11 +228,7 @@ const LandingPage: React.FC = () => {
                     <div className="relative bg-gradient-to-br from-orange-500 via-red-500 to-pink-500 rounded-2xl md:rounded-3xl overflow-hidden">
                         {/* Video thumbnail */}
                         <div className="relative aspect-video bg-black flex items-center justify-center">
-                          <video
-                            className="w-full h-full object-cover"
-                            preload="metadata"
-                            poster="/images/game-video-poster.png"
-                          >
+                          <video className="w-full h-full object-cover" preload="metadata" poster="/images/game-video-poster.png">
                             <source src="/videos/gamevideo1.mp4" type="video/mp4" />
                           </video>
                         
@@ -245,7 +241,9 @@ const LandingPage: React.FC = () => {
                         
                         {/* Decorative elements */}
                         <div className="absolute top-4 right-4 w-8 h-8 md:w-10 md:h-10 bg-white/20 rounded-full animate-pulse"></div>
-                        <div className="absolute bottom-4 left-4 w-6 h-6 md:w-8 md:h-8 bg-white/10 rounded-full animate-bounce" style={{ animationDuration: '3s' }}></div>
+                        <div className="absolute bottom-4 left-4 w-6 h-6 md:w-8 md:h-8 bg-white/10 rounded-full animate-bounce" style={{
+                        animationDuration: '3s'
+                      }}></div>
                       </div>
                       
                       {/* Content section */}
@@ -261,26 +259,21 @@ const LandingPage: React.FC = () => {
                           </div>
                         </div>
                         
-                        <h3 className="text-xl md:text-2xl font-bold text-white mb-3 md:mb-4">شاهد كيف تعمل الألعاب التفاعلية</h3>
+                        <h3 className="text-xl md:text-2xl font-bold text-white mb-3 md:mb-4 text-center">شاهد كيف تعمل الألعاب التفاعلية</h3>
                         <p className="text-white/90 text-sm md:text-base leading-relaxed max-w-md mx-auto mb-6 md:mb-8">
                           تجربة تعليمية ممتعة تجمع بين المرح والتعلم لتحفيز الطلاب على الإنجاز
                         </p>
                         
                         {/* Features */}
                         <div className="grid grid-cols-2 gap-3 md:gap-4 max-w-sm mx-auto">
-                          {['تفاعل مباشر', 'تحديات ممتعة', 'مكافآت فورية', 'تقييم ذكي'].map((feature, idx) => (
-                            <div key={idx} className="flex items-center text-white/90 text-xs md:text-sm">
+                          {['تفاعل مباشر', 'تحديات ممتعة', 'مكافآت فورية', 'تقييم ذكي'].map((feature, idx) => <div key={idx} className="flex items-center text-white/90 text-xs md:text-sm">
                               <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-white/60 rounded-full ml-2 flex-shrink-0"></div>
                               <span className="font-medium">{feature}</span>
-                            </div>
-                          ))}
+                            </div>)}
                         </div>
                         
                         <div className="mt-6 md:mt-8">
-                          <Button 
-                            size="lg" 
-                            className="bg-white/20 backdrop-blur-sm text-white border border-white/30 hover:bg-white/30 hover:scale-105 transition-all duration-300 font-medium px-6 md:px-8 py-3 rounded-xl shadow-lg"
-                          >
+                          <Button size="lg" className="bg-white/20 backdrop-blur-sm text-white border border-white/30 hover:bg-white/30 hover:scale-105 transition-all duration-300 font-medium px-6 md:px-8 py-3 rounded-xl shadow-lg">
                             شاهد العرض
                             <Play className="mr-2 h-4 w-4" />
                           </Button>
@@ -292,12 +285,7 @@ const LandingPage: React.FC = () => {
                 
                 <DialogContent className="max-w-4xl w-[95vw] p-0 bg-black border-0 overflow-hidden">
                   <div className="relative aspect-video w-full">
-                    <video
-                      className="w-full h-full object-contain"
-                      controls
-                      autoPlay
-                      preload="metadata"
-                    >
+                    <video className="w-full h-full object-contain" controls autoPlay preload="metadata">
                       <source src="/videos/gamevideo1.mp4" type="video/mp4" />
                       متصفحك لا يدعم تشغيل الفيديو.
                     </video>
