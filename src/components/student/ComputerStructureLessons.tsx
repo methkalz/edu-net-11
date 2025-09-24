@@ -233,9 +233,9 @@ export const ComputerStructureLessons: React.FC = () => {
                           <Monitor className="w-4 h-4 text-white" />
                         </div>
                         <div className="text-left">
-                          <CardTitle className="text-base font-semibold">{section.title}</CardTitle>
+                          <CardTitle className="text-lg font-semibold">{section.title}</CardTitle>
                           {section.description && (
-                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+                            <p className="text-sm text-muted-foreground mt-0.5 line-clamp-1">
                               {section.description}
                             </p>
                           )}
@@ -272,9 +272,9 @@ export const ComputerStructureLessons: React.FC = () => {
                                       <Target className="w-3 h-3 text-white" />
                                     </div>
                                     <div className="text-left">
-                                      <h4 className="font-medium text-sm">{topic.title}</h4>
+                                      <h4 className="font-medium text-base">{topic.title}</h4>
                                       {topic.content && (
-                                        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+                                        <p className="text-sm text-muted-foreground mt-0.5 line-clamp-1">
                                           {topic.content}
                                         </p>
                                       )}
@@ -308,9 +308,9 @@ export const ComputerStructureLessons: React.FC = () => {
                                           <BookOpen className="w-2.5 h-2.5 text-white" />
                                         </div>
                                         <div className="text-left">
-                                          <h5 className="font-medium text-xs">{lesson.title}</h5>
+                                          <h5 className="font-medium text-sm">{lesson.title}</h5>
                                           {lesson.content && (
-                                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+                                            <p className="text-sm text-muted-foreground mt-0.5 line-clamp-1">
                                               {lesson.content}
                                             </p>
                                           )}
