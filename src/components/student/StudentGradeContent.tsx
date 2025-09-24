@@ -354,6 +354,7 @@ export const StudentGradeContent: React.FC = () => {
   }
 
   if (!currentContent) {
+    console.log(`[DEBUG] No content found for grade ${assignedGrade}`);
     return (
       <Card className="text-center p-8">
         <div className="space-y-4">
@@ -368,6 +369,10 @@ export const StudentGradeContent: React.FC = () => {
       </Card>
     );
   }
+
+  console.log(`[DEBUG] Grade ${assignedGrade} content:`, currentContent);
+  console.log(`[DEBUG] Grade ${assignedGrade} videos count:`, currentContent?.videos?.length);
+  console.log(`[DEBUG] Grade ${assignedGrade} videos data:`, currentContent?.videos);
 
   // Merge projects based on grade
   const allProjects = assignedGrade === '10' 

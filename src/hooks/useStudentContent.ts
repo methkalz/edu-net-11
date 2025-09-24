@@ -249,6 +249,8 @@ export const useStudentContent = () => {
   const { user, userProfile } = useAuth();
   const { assignedGrade, loading: gradeLoading } = useStudentAssignedGrade();
 
+  console.log(`[DEBUG] useStudentContent - User ID: ${user?.id}, Grade: ${assignedGrade}, Role: ${userProfile?.role}`);
+
   const {
     data: gradeContent = null,
     isLoading,
@@ -268,6 +270,8 @@ export const useStudentContent = () => {
       return failureCount < 2;
     },
   });
+
+  console.log(`[DEBUG] useStudentContent result - Content:`, gradeContent, 'Loading:', isLoading, 'Error:', error);
 
   const loading = isLoading || gradeLoading;
 
