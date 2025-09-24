@@ -2,7 +2,8 @@ import React, { useRef, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { X, Download, ExternalLink, FileText, Image as ImageIcon, Video, Code, Play } from 'lucide-react';
+import { X, Download, ExternalLink, FileText, Image as ImageIcon, Video, Code, Play, Box } from 'lucide-react';
+import { ThreeDModelViewer } from './ThreeDModelViewer';
 import { Grade10LessonMedia } from '@/hooks/useStudentGrade10Lessons';
 import Lottie from 'lottie-react';
 
@@ -31,6 +32,7 @@ const Grade10MediaPreview: React.FC<Grade10MediaPreviewProps> = ({ media, onClos
       case 'image': return <ImageIcon className="w-5 h-5" />;
       case 'code': return <Code className="w-5 h-5" />;
       case 'lottie': return <Play className="w-5 h-5" />;
+      case '3d_model': return <Box className="w-5 h-5" />;
       default: return <FileText className="w-5 h-5" />;
     }
   };
@@ -40,7 +42,8 @@ const Grade10MediaPreview: React.FC<Grade10MediaPreviewProps> = ({ media, onClos
       video: { label: 'فيديو', color: 'bg-blue-100 text-blue-800' },
       image: { label: 'صورة', color: 'bg-green-100 text-green-800' },
       lottie: { label: 'لوتي', color: 'bg-purple-100 text-purple-800' },
-      code: { label: 'كود', color: 'bg-orange-100 text-orange-800' }
+      code: { label: 'كود', color: 'bg-orange-100 text-orange-800' },
+      '3d_model': { label: 'نموذج ثلاثي الأبعاد', color: 'bg-cyan-100 text-cyan-800' }
     };
     
     const config = typeMap[type as keyof typeof typeMap] || { label: type, color: 'bg-gray-100 text-gray-800' };
@@ -186,6 +189,19 @@ const Grade10MediaPreview: React.FC<Grade10MediaPreviewProps> = ({ media, onClos
             </div>
           );
         }
+
+      case '3d_model':
+        const modelType = media.file_path.toLowerCase().endsWith('.glb') ? 'glb' : 'obj';
+        return (
+          <ThreeDModelViewer
+            modelUrl={media.file_path}
+            modelType={modelType}
+            title={media.file_name}
+            showControls={true}
+            autoRotate={media.metadata?.autoRotate !== false}
+            className="w-full"
+          />
+        );
 
       case 'code':
         const codeContent = media.metadata?.code_content || '';
