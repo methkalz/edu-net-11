@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { VideoViewer } from './viewers/VideoViewer';
 import { DocumentViewer } from './viewers/DocumentViewer';
 import { LessonViewer } from './viewers/LessonViewer';
@@ -38,7 +39,8 @@ import {
   Sparkles,
   Plus,
   Edit3,
-  Monitor
+  Monitor,
+  Settings
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { ProjectFormData } from '@/types/grade10-projects';
@@ -517,6 +519,26 @@ export const StudentGradeContent: React.FC = () => {
               </div>
             ) : (
               <>
+                {/* Development Notice for Grade 10 Mini Projects */}
+                {tab.id === 'projects' && assignedGrade === '10' && (
+                  <Alert className="bg-amber-50 border-amber-200 text-amber-800 mb-6">
+                    <Settings className="h-5 w-5 text-amber-600" />
+                    <AlertDescription className="text-base font-medium">
+                      جارٍ أعمال تطويرية.. سيعمل قريباً
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {/* Development Notice for Grade 12 Final Projects */}
+                {tab.id === 'projects' && assignedGrade === '12' && (
+                  <Alert className="bg-amber-50 border-amber-200 text-amber-800 mb-6">
+                    <Settings className="h-5 w-5 text-amber-600" />
+                    <AlertDescription className="text-base font-medium">
+                      جارٍ أعمال تطويرية.. سيعمل قريباً
+                    </AlertDescription>
+                  </Alert>
+                )}
+
                 {/* Add Create Project Button for Grade 10 Projects Tab */}
                 {tab.id === 'projects' && assignedGrade === '10' && (
                   <div className="mb-6 flex justify-center">
