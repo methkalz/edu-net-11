@@ -53,11 +53,32 @@ const Grade12VideoViewer: React.FC<Grade12VideoViewerProps> = ({ videos, loading
     if (video.source_type === 'google_drive') {
       const fileId = extractGoogleDriveId(video.video_url);
       if (fileId) {
-        return `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;
+        // Try Google Drive thumbnail, fallback to placeholder if it fails
+        return `https://drive.google.com/thumbnail?id=${fileId}&sz=w400-h300`;
       }
     }
 
     return '/placeholder.svg';
+  };
+
+  const getEmbedUrl = (url: string, sourceType: string): string => {
+    // Handle YouTube URLs
+    if (sourceType === 'youtube' || url.includes('youtube.com') || url.includes('youtu.be')) {
+      const videoId = extractYouTubeId(url);
+      if (videoId) {
+        return `https://www.youtube.com/embed/${videoId}`;
+      }
+    }
+    
+    // Handle Google Drive URLs - convert to preview format
+    if (sourceType === 'google_drive' || url.includes('drive.google.com/file/d/')) {
+      const fileId = extractGoogleDriveId(url);
+      if (fileId) {
+        return `https://drive.google.com/file/d/${fileId}/preview`;
+      }
+    }
+    
+    return url;
   };
 
   const extractGoogleDriveId = (url: string): string | null => {
@@ -96,27 +117,17 @@ const Grade12VideoViewer: React.FC<Grade12VideoViewerProps> = ({ videos, loading
   };
 
   const renderVideoPlayer = (video: Grade12Video) => {
-    if (video.source_type === 'youtube') {
-      const videoId = extractYouTubeId(video.video_url);
-      if (videoId) {
-        return (
-          <iframe
-            src={`https://www.youtube.com/embed/${videoId}`}
-            className="w-full h-96 rounded-lg"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
-        );
-      }
-    }
+    const embedUrl = getEmbedUrl(video.video_url, video.source_type);
+    const isGoogleDrive = video.source_type === 'google_drive' || video.video_url.includes('drive.google.com');
+    const isYouTube = video.source_type === 'youtube' || video.video_url.includes('youtube.com') || video.video_url.includes('youtu.be');
 
-    if (video.source_type === 'google_drive') {
-      // Use the video URL directly as it comes from the database
+    if (isYouTube || isGoogleDrive) {
       return (
         <iframe
-          src={video.video_url}
-          className="w-full h-96 rounded-lg"
-          allow="autoplay"
+          src={embedUrl}
+          title={video.title}
+          className="w-full h-96 rounded-lg border-0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
         />
       );
@@ -128,6 +139,7 @@ const Grade12VideoViewer: React.FC<Grade12VideoViewerProps> = ({ videos, loading
           src={video.video_url}
           controls
           className="w-full h-96 rounded-lg"
+          preload="metadata"
         >
           متصفحك لا يدعم تشغيل الفيديو
         </video>
