@@ -35,6 +35,32 @@ export const StudentGrade10Lessons: React.FC = () => {
 
   const stats = getContentStats();
 
+  // Auto-open first communication section when data loads
+  React.useEffect(() => {
+    if (sections && sections.length > 0 && openSections.length === 0) {
+      const communicationSections = sections.filter(section => {
+        // Include sections NOT related to computer composition
+        const isComputerTopic = section.title.toLowerCase().includes('تركيبة الحاسوب') ||
+                               section.title.toLowerCase().includes('القطع') ||
+                               section.title.toLowerCase().includes('مبنى الحاسوب') ||
+                               section.description?.toLowerCase().includes('تركيبة الحاسوب') ||
+                               section.description?.toLowerCase().includes('القطع') ||
+                               section.description?.toLowerCase().includes('مبنى الحاسوب');
+        
+        return !isComputerTopic; // Return communication sections
+      });
+      
+      if (communicationSections.length > 0) {
+        setOpenSections([communicationSections[0].id]);
+        
+        // Also auto-open first topic of the first section
+        if (communicationSections[0].topics && communicationSections[0].topics.length > 0) {
+          setOpenTopics([communicationSections[0].topics[0].id]);
+        }
+      }
+    }
+  }, [sections, openSections.length]);
+
   // Toggle section open/close
   const toggleSection = (sectionId: string) => {
     setOpenSections(prev => 
