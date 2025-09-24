@@ -180,7 +180,7 @@ export const ComputerStructureLessons: React.FC = () => {
   return (
     <div className="space-y-8">
       {/* Cute Minimalist Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
         <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-blue-50 to-blue-100/50 border-blue-200/60">
           <CardContent className="p-4 text-center">
             <div className="w-8 h-8 mx-auto mb-2 bg-blue-500/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
