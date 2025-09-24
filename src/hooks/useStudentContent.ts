@@ -71,6 +71,8 @@ const fetchContentForGrade = async (grade: string, userId?: string): Promise<Gra
     const videoTable = grade === '10' ? 'grade10_videos' : 
                       grade === '11' ? 'grade11_videos' : 'grade12_videos';
     
+    console.log(`[DEBUG] Fetching videos for grade ${grade} from table: ${videoTable}`);
+    
     let videoQuery = (supabase as any)
       .from(videoTable)
       .select('id, title, description, video_url, thumbnail_url, duration, category, video_category, is_visible, is_active, order_index, created_at')
@@ -87,19 +89,23 @@ const fetchContentForGrade = async (grade: string, userId?: string): Promise<Gra
     
     console.log(`[DEBUG] Grade ${grade} videos from DB:`, videoData);
     console.log(`[DEBUG] Videos error:`, videoError);
+    console.log(`[DEBUG] Query table: ${videoTable}, Active: true, Visible: true`);
     
     if (!videoError && videoData) {
       videos = videoData.map((item: any) => mapToContentItem(item, 'video', grade));
-      console.log(`[DEBUG] Mapped videos:`, videos);
+      console.log(`[DEBUG] Mapped videos for grade ${grade}:`, videos);
     }
     
     if (videoError) {
       logger.error(`Error fetching ${videoTable}:`, videoError);
+      console.error(`[ERROR] Failed to fetch videos from ${videoTable}:`, videoError);
     } else {
       logger.info(`Found ${videos.length} videos for grade ${grade} from ${videoTable}`);
+      console.log(`[SUCCESS] Found ${videos.length} videos for grade ${grade} from ${videoTable}`);
     }
   } catch (err) {
     logger.warn('Could not fetch videos', { error: err });
+    console.error('[ERROR] Exception while fetching videos:', err);
   }
 
   try {
