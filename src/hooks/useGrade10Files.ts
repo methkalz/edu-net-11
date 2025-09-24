@@ -137,8 +137,11 @@ export const useGrade10Files = () => {
         fileType: file.type
       });
 
+      // Determine bucket based on path or file type
+      const bucketName = bucketPath.startsWith('3d-models/') ? 'grade10-3d-models' : 'grade10-documents';
+
       const { data, error } = await supabase.storage
-        .from('grade10-documents')
+        .from(bucketName)
         .upload(bucketPath, file, {
           cacheControl: '3600',
           upsert: false
@@ -157,7 +160,7 @@ export const useGrade10Files = () => {
         throw error;
       }
 
-      logger.info('File uploaded successfully', { path: data.path });
+      logger.info('File uploaded successfully', { path: data.path, bucket: bucketName });
       return data;
     } catch (error) {
       logger.error('Error uploading file', error as Error, {
@@ -169,8 +172,11 @@ export const useGrade10Files = () => {
   };
 
   const getFileUrl = (path: string) => {
+    // Determine bucket based on path
+    const bucketName = path.startsWith('3d-models/') ? 'grade10-3d-models' : 'grade10-documents';
+    
     const { data } = supabase.storage
-      .from('grade10-documents')
+      .from(bucketName)
       .getPublicUrl(path);
     return data.publicUrl;
   };
