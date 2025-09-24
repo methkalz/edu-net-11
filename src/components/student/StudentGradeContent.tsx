@@ -577,7 +577,7 @@ export const StudentGradeContent: React.FC = () => {
             bg-background/80 border border-border/40 
             rounded-2xl shadow-lg backdrop-blur-md
             transition-all duration-300 hover:shadow-xl
-          `} style={{ maxWidth: '1182px' }}>
+          `} style={{ maxWidth: '1192px' }}>
             {contentTabs.map((tab) => {
               const IconComponent = tab.icon;
               return (
