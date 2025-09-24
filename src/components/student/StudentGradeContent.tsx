@@ -790,76 +790,75 @@ export const StudentGradeContent: React.FC = () => {
           </TabsContent>
         ))}
       </Tabs>
-    </div>
 
-    {/* Content Viewers */}
-    {viewerType === 'video' && selectedContent && (
-      <VideoViewer
-        isOpen={true}
-        onClose={closeViewer}
-        video={selectedContent}
-        onProgress={(progress, watchTime) => 
-          handleContentProgress(selectedContent.id, 'video', progress, watchTime)
-        }
-        onComplete={() => 
-          handleContentComplete(selectedContent.id, 'video', 0)
-        }
-      />
-    )}
+      {/* Content Viewers */}
+      {viewerType === 'video' && selectedContent && (
+        <VideoViewer
+          isOpen={true}
+          onClose={closeViewer}
+          video={selectedContent}
+          onProgress={(progress, watchTime) => 
+            handleContentProgress(selectedContent.id, 'video', progress, watchTime)
+          }
+          onComplete={() => 
+            handleContentComplete(selectedContent.id, 'video', 0)
+          }
+        />
+      )}
 
-    {viewerType === 'document' && selectedContent && (
-      <DocumentViewer
-        isOpen={true}
-        onClose={closeViewer}
-        document={selectedContent}
-        onProgress={(progress, readTime) => 
-          handleContentProgress(selectedContent.id, 'document', progress, readTime)
-        }
-        onComplete={() => 
-          handleContentComplete(selectedContent.id, 'document', 0)
-        }
-      />
-    )}
+      {viewerType === 'document' && selectedContent && (
+        <DocumentViewer
+          isOpen={true}
+          onClose={closeViewer}
+          document={selectedContent}
+          onProgress={(progress, readTime) => 
+            handleContentProgress(selectedContent.id, 'document', progress, readTime)
+          }
+          onComplete={() => 
+            handleContentComplete(selectedContent.id, 'document', 0)
+          }
+        />
+      )}
 
-    {viewerType === 'lesson' && selectedContent && (
-      <LessonViewer
-        isOpen={true}
-        onClose={closeViewer}
-        lesson={selectedContent}
-        onProgress={(progress, studyTime) => 
-          handleContentProgress(selectedContent.id, 'lesson', progress, studyTime)
-        }
-        onComplete={() => 
-          handleContentComplete(selectedContent.id, 'lesson', 0)
-        }
-      />
-    )}
+      {viewerType === 'lesson' && selectedContent && (
+        <LessonViewer
+          isOpen={true}
+          onClose={closeViewer}
+          lesson={selectedContent}
+          onProgress={(progress, studyTime) => 
+            handleContentProgress(selectedContent.id, 'lesson', progress, studyTime)
+          }
+          onComplete={() => 
+            handleContentComplete(selectedContent.id, 'lesson', 0)
+          }
+        />
+      )}
 
-    {viewerType === 'project' && selectedContent && (
-      <ProjectViewer
-        isOpen={true}
-        onClose={closeViewer}
-        project={selectedContent}
-        onProgress={(progress, workTime) => 
-          handleContentProgress(selectedContent.id, 'project', progress, workTime)
-        }
-        onComplete={() => 
-          handleContentComplete(selectedContent.id, 'project', 0)
-        }
-      />
-    )}
+      {viewerType === 'project' && selectedContent && (
+        <ProjectViewer
+          isOpen={true}
+          onClose={closeViewer}
+          project={selectedContent}
+          onProgress={(progress, workTime) => 
+            handleContentProgress(selectedContent.id, 'project', progress, workTime)
+          }
+          onComplete={() => 
+            handleContentComplete(selectedContent.id, 'project', 0)
+          }
+        />
+      )}
 
-    {/* Mini Project Editor */}
-    {currentProject && isProjectEditorOpen && (
-      <AdvancedProjectEditor
-        isOpen={isProjectEditorOpen}
-        onClose={() => {
-          setIsProjectEditorOpen(false);
-          setCurrentProject(null);
-        }}
-        project={currentProject}
-      />
-    )}
+      {/* Mini Project Editor */}
+      {currentProject && isProjectEditorOpen && (
+        <AdvancedProjectEditor
+          isOpen={isProjectEditorOpen}
+          onClose={() => {
+            setIsProjectEditorOpen(false);
+            setCurrentProject(null);
+          }}
+          project={currentProject}
+        />
+      )}
     </div>
   );
 };
