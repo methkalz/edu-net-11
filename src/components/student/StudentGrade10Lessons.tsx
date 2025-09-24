@@ -169,15 +169,6 @@ export const StudentGrade10Lessons: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold text-foreground">
-          أساسيات الاتصال
-        </h2>
-        <p className="text-muted-foreground">
-          استكشف المحتوى التعليمي المنظم في أقسام ومواضيع ودروس
-        </p>
-      </div>
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
