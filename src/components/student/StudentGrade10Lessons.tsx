@@ -171,51 +171,51 @@ export const StudentGrade10Lessons: React.FC = () => {
     <div className="space-y-6">
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="border-2 hover:shadow-md transition-shadow">
-          <CardContent className="p-6 text-center">
-            <div className="w-12 h-12 mx-auto mb-3 bg-blue-100 rounded-full flex items-center justify-center">
-              <FolderOpen className="w-6 h-6 text-blue-600" />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-blue-50 to-blue-100/50 border-blue-200/60">
+          <CardContent className="p-4 flex flex-col items-center justify-center text-center h-full">
+            <div className="w-8 h-8 mx-auto mb-2 bg-blue-500/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <FolderOpen className="w-4 h-4 text-blue-600" />
             </div>
-            <div className="text-3xl font-bold text-blue-600 mb-1">{communicationSections.length}</div>
-            <div className="text-sm text-muted-foreground font-medium">أقسام</div>
+            <div className="text-xl font-bold text-blue-600 mb-0.5">{communicationSections.length}</div>
+            <div className="text-xs text-blue-600/70 font-medium">أقسام</div>
           </CardContent>
         </Card>
 
-        <Card className="border-2 hover:shadow-md transition-shadow">
-          <CardContent className="p-6 text-center">
-            <div className="w-12 h-12 mx-auto mb-3 bg-green-100 rounded-full flex items-center justify-center">
-              <Target className="w-6 h-6 text-green-600" />
+        <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-green-50 to-green-100/50 border-green-200/60">
+          <CardContent className="p-4 flex flex-col items-center justify-center text-center h-full">
+            <div className="w-8 h-8 mx-auto mb-2 bg-green-500/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Target className="w-4 h-4 text-green-600" />
             </div>
-            <div className="text-3xl font-bold text-green-600 mb-1">
+            <div className="text-xl font-bold text-green-600 mb-0.5">
               {communicationSections.reduce((total, section) => total + section.topics.length, 0)}
             </div>
-            <div className="text-sm text-muted-foreground font-medium">مواضيع</div>
+            <div className="text-xs text-green-600/70 font-medium">مواضيع</div>
           </CardContent>
         </Card>
 
-        <Card className="border-2 hover:shadow-md transition-shadow">
-          <CardContent className="p-6 text-center">
-            <div className="w-12 h-12 mx-auto mb-3 bg-purple-100 rounded-full flex items-center justify-center">
-              <BookOpen className="w-6 h-6 text-purple-600" />
+        <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-purple-50 to-purple-100/50 border-purple-200/60">
+          <CardContent className="p-4 flex flex-col items-center justify-center text-center h-full">
+            <div className="w-8 h-8 mx-auto mb-2 bg-purple-500/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <BookOpen className="w-4 h-4 text-purple-600" />
             </div>
-            <div className="text-3xl font-bold text-purple-600 mb-1">
+            <div className="text-xl font-bold text-purple-600 mb-0.5">
               {communicationSections.reduce((total, section) => {
                 return total + section.topics.reduce((sectionTotal: number, topic: any) => {
                   return sectionTotal + topic.lessons.length;
                 }, 0);
               }, 0)}
             </div>
-            <div className="text-sm text-muted-foreground font-medium">دروس</div>
+            <div className="text-xs text-purple-600/70 font-medium">دروس</div>
           </CardContent>
         </Card>
 
-        <Card className="border-2 hover:shadow-md transition-shadow">
-          <CardContent className="p-6 text-center">
-            <div className="w-12 h-12 mx-auto mb-3 bg-orange-100 rounded-full flex items-center justify-center">
-              <PlayCircle className="w-6 h-6 text-orange-600" />
+        <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-orange-50 to-orange-100/50 border-orange-200/60">
+          <CardContent className="p-4 flex flex-col items-center justify-center text-center h-full">
+            <div className="w-8 h-8 mx-auto mb-2 bg-orange-500/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <PlayCircle className="w-4 h-4 text-orange-600" />
             </div>
-            <div className="text-3xl font-bold text-orange-600 mb-1">
+            <div className="text-xl font-bold text-orange-600 mb-0.5">
               {communicationSections.reduce((total, section) => {
                 return total + section.topics.reduce((sectionTotal: number, topic: any) => {
                   return sectionTotal + topic.lessons.reduce((lessonTotal: number, lesson: any) => {
@@ -224,7 +224,7 @@ export const StudentGrade10Lessons: React.FC = () => {
                 }, 0);
               }, 0)}
             </div>
-            <div className="text-sm text-muted-foreground font-medium">وسائط</div>
+            <div className="text-xs text-orange-600/70 font-medium">وسائط</div>
           </CardContent>
         </Card>
       </div>
