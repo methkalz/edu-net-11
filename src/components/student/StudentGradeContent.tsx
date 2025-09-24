@@ -829,15 +829,29 @@ export const StudentGradeContent: React.FC = () => {
                   </Card>
                 ) : (
                   <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {tab.items.map((item: any) => (
-                      <ContentCard
-                        key={item.id}
-                        item={item}
-                        type={tab.id === 'mini_projects' ? 'project' : tab.id.slice(0, -1) as any}
-                        icon={tab.icon}
-                        color={tab.color}
-                      />
-                    ))}
+                    {tab.items.map((item: any) => {
+                      // Determine the correct content type
+                      let contentType: 'video' | 'document' | 'lesson' | 'project' = 'video';
+                      if (tab.id === 'mini_projects') {
+                        contentType = 'project';
+                      } else if (['windows_basics', 'computer_structure', 'network_intro'].includes(tab.id)) {
+                        contentType = 'video';
+                      } else if (tab.id === 'documents') {
+                        contentType = 'document';
+                      } else if (tab.id === 'lessons') {
+                        contentType = 'lesson';
+                      }
+
+                      return (
+                        <ContentCard
+                          key={item.id}
+                          item={item}
+                          type={contentType}
+                          icon={tab.icon}
+                          color={tab.color}
+                        />
+                      );
+                    })}
                   </div>
                 )}
               </>
