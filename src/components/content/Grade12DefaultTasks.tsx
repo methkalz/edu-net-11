@@ -43,7 +43,7 @@ const Grade12DefaultTasks: React.FC = () => {
     getOverallProgress,
   } = useGrade12DefaultTasks();
 
-  const [expandedPhases, setExpandedPhases] = useState<Set<number>>(new Set([1])); // توسيع المرحلة الأولى افتراضياً
+  const [expandedPhases, setExpandedPhases] = useState<Set<number>>(new Set([1]));
   const [taskNotes, setTaskNotes] = useState<Record<string, string>>({});
 
   const isStudent = userProfile?.role === 'student';
@@ -64,34 +64,15 @@ const Grade12DefaultTasks: React.FC = () => {
 
   // تحديث حالة المهمة
   const handleTaskToggle = async (taskId: string, isCompleted: boolean) => {
-    logger.debug('Task toggle initiated', {
-      taskId,
-      isCompleted,
-      userProfile: userProfile ? {
-        user_id: userProfile.user_id,
-        role: userProfile.role,
-        email: userProfile.email
-      } : null,
-      isStudent,
-      isTeacher
-    });
-
     if (!isStudent) {
-      logger.warn('Non-student user trying to toggle task', { 
-        userRole: userProfile?.role,
-        userId: userProfile?.user_id 
-      });
       toast.error('فقط الطلاب يمكنهم تحديث حالة المهام');
       return;
     }
 
     try {
       const notes = taskNotes[taskId] || '';
-      logger.debug('Task notes prepared for submission', { taskId, notes });
-      
       await updateTaskCompletion(taskId, isCompleted, notes);
       
-      // مسح الملاحظات المحلية بعد الحفظ
       if (isCompleted) {
         setTaskNotes(prev => {
           const newNotes = { ...prev };
@@ -101,7 +82,6 @@ const Grade12DefaultTasks: React.FC = () => {
       }
     } catch (error) {
       logger.error('Error in task toggle', error as Error, { taskId, isCompleted });
-      // الخطأ سيتم عرضه بواسطة updateTaskCompletion
     }
   };
 
