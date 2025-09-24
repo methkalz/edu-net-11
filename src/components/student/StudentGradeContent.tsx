@@ -556,21 +556,73 @@ export const StudentGradeContent: React.FC = () => {
 
       {/* Content Tabs */}
       <Tabs value={activeContentTab} onValueChange={setActiveContentTab} className="w-full">
-        <div className="flex justify-center mb-8">
-          <TabsList className={`grid ${assignedGrade === '10' ? 'grid-cols-5' : assignedGrade === '11' ? 'grid-cols-2' : 'grid-cols-3'} w-full ${assignedGrade === '10' ? 'max-w-4xl' : 'max-w-2xl'} h-12 bg-muted/50`}>
+        <div className="flex justify-center mb-10">
+          <TabsList className={`
+            grid ${assignedGrade === '10' ? 'grid-cols-5' : assignedGrade === '11' ? 'grid-cols-2' : 'grid-cols-3'} 
+            w-full ${assignedGrade === '10' ? 'max-w-5xl' : 'max-w-3xl'} 
+            h-auto p-2 gap-2
+            bg-card border border-border/50 
+            rounded-2xl shadow-sm
+            backdrop-blur-sm
+          `}>
             {contentTabs.map((tab) => {
               const IconComponent = tab.icon;
               return (
                 <TabsTrigger 
                   key={tab.id} 
                   value={tab.id} 
-                  className="flex items-center gap-2 text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                  className="
+                    relative flex flex-col items-center gap-3 py-4 px-3
+                    text-sm font-medium text-muted-foreground
+                    bg-transparent border-0 rounded-xl
+                    transition-all duration-300 ease-out
+                    data-[state=active]:bg-background 
+                    data-[state=active]:text-foreground
+                    data-[state=active]:shadow-md
+                    data-[state=active]:shadow-primary/10
+                    hover:bg-accent/50 hover:text-foreground
+                    focus-visible:outline-none focus-visible:ring-2 
+                    focus-visible:ring-primary/20 focus-visible:ring-offset-2
+                    group overflow-hidden
+                  "
                 >
-                  <IconComponent className="w-4 h-4" />
-                  <span className="hidden sm:inline">{tab.label}</span>
-                  <Badge variant="secondary" className="text-xs ml-1 bg-primary/10 text-primary">
-                    {tab.count}
-                  </Badge>
+                  {/* Icon Container */}
+                  <div className="
+                    relative flex items-center justify-center w-10 h-10 
+                    rounded-lg bg-gradient-to-br from-primary/10 to-secondary/5
+                    group-data-[state=active]:from-primary/15 group-data-[state=active]:to-secondary/10
+                    group-hover:from-primary/15 group-hover:to-secondary/10
+                    transition-all duration-300
+                  ">
+                    <IconComponent className="w-5 h-5 transition-all duration-300 group-data-[state=active]:scale-110" />
+                  </div>
+                  
+                  {/* Label and Count */}
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="text-xs font-medium leading-tight text-center min-h-[32px] flex items-center">
+                      {tab.label}
+                    </span>
+                    <Badge 
+                      variant="outline" 
+                      className="
+                        text-xs font-medium px-2 py-0.5 h-5
+                        border-primary/20 bg-primary/5 text-primary
+                        group-data-[state=active]:bg-primary group-data-[state=active]:text-primary-foreground
+                        group-data-[state=active]:border-primary
+                        transition-all duration-300
+                      "
+                    >
+                      {tab.count}
+                    </Badge>
+                  </div>
+                  
+                  {/* Active Indicator */}
+                  <div className="
+                    absolute bottom-0 left-1/2 -translate-x-1/2 
+                    w-8 h-0.5 bg-gradient-to-r from-primary to-secondary
+                    rounded-full transition-all duration-300
+                    opacity-0 scale-x-0 group-data-[state=active]:opacity-100 group-data-[state=active]:scale-x-100
+                  " />
                 </TabsTrigger>
               );
             })}
