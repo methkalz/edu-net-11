@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { ArrowRight, Play, CheckCircle, Star, Gamepad2, Users, Monitor, BookOpen, Gift, Heart, Clock, Phone } from 'lucide-react';
 import TypewriterEffect from '@/components/TypewriterEffect';
@@ -209,78 +210,89 @@ const LandingPage: React.FC = () => {
         </section>
 
         {/* ألعاب شيّقة */}
-        <section className="py-16 md:py-24 bg-gradient-to-br from-orange-50 via-red-50 to-pink-50">
+        <section className="py-16 md:py-24 bg-background">
           <div className="container mx-auto px-4">
             <div className="text-center mb-12 md:mb-16">
-              <h2 className="text-2xl md:text-3xl lg:text-4xl font-light text-gray-900 mb-4 md:mb-6 text-center">
+              <h2 className="text-2xl md:text-3xl lg:text-4xl font-light text-foreground mb-4 md:mb-6 text-center">
                 ألعاب شيّقة
               </h2>
-              <div className="w-10 md:w-12 h-px bg-gray-300 mx-auto mb-6 md:mb-8"></div>
-              <p className="text-base md:text-lg text-gray-600 max-w-2xl mx-auto text-center px-4">
-                اكتشف مجموعة من الألعاب التعليمية المحفزة والممتعة
+              <div className="w-10 md:w-12 h-px bg-border mx-auto mb-6 md:mb-8"></div>
+              <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto text-center px-4">
+                اكتشف مجموعة من الألعاب التعليمية المحفزة والممتعة التي تجمع بين المرح والتعلم
               </p>
             </div>
             
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-5xl mx-auto">
               <Dialog open={isVideoModalOpen} onOpenChange={setIsVideoModalOpen}>
                 <DialogTrigger asChild>
-                  <div className="relative group cursor-pointer overflow-hidden rounded-2xl md:rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 bg-gradient-to-br from-purple-100 via-pink-100 to-orange-100 p-1">
-                    <div className="relative bg-gradient-to-br from-orange-500 via-red-500 to-pink-500 rounded-2xl md:rounded-3xl overflow-hidden">
-                        {/* Video thumbnail */}
-                        <div className="relative aspect-video bg-black flex items-center justify-center">
-                          <video className="w-full h-full object-cover" preload="metadata" poster="/images/game-video-poster.png">
-                            <source src="/videos/gamevideo1.mp4" type="video/mp4" />
-                          </video>
+                  <Card className="group cursor-pointer overflow-hidden border-2 hover:border-primary/20 transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 bg-card">
+                    <div className="grid md:grid-cols-2 gap-0">
+                      {/* Video Section */}
+                      <div className="relative aspect-video md:aspect-square bg-background">
+                        <video 
+                          className="w-full h-full object-cover" 
+                          preload="metadata" 
+                          poster="/images/game-video-poster.png"
+                        >
+                          <source src="/videos/gamevideo1.mp4" type="video/mp4" />
+                        </video>
                         
-                        {/* Play button overlay */}
-                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover:bg-black/20 transition-all duration-300">
-                          <div className="w-20 h-20 md:w-24 md:h-24 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/30 group-hover:scale-110 group-hover:bg-white/30 transition-all duration-300">
-                            <Play className="h-8 w-8 md:h-10 md:w-10 text-white mr-1" fill="currentColor" />
+                        {/* Play Button Overlay */}
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center group-hover:bg-black/30 transition-all duration-300">
+                          <div className="w-16 h-16 md:w-20 md:h-20 bg-primary/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:bg-primary transition-all duration-300">
+                            <Play className="h-6 w-6 md:h-8 md:w-8 text-primary-foreground mr-1" fill="currentColor" />
                           </div>
                         </div>
                         
-                        {/* Decorative elements */}
-                        <div className="absolute top-4 right-4 w-8 h-8 md:w-10 md:h-10 bg-white/20 rounded-full animate-pulse"></div>
-                        <div className="absolute bottom-4 left-4 w-6 h-6 md:w-8 md:h-8 bg-white/10 rounded-full animate-bounce" style={{
-                        animationDuration: '3s'
-                      }}></div>
+                        {/* Video Badge */}
+                        <div className="absolute top-4 right-4 bg-primary/90 backdrop-blur-sm text-primary-foreground px-3 py-1 rounded-full text-xs font-medium">
+                          عرض توضيحي
+                        </div>
                       </div>
                       
-                      {/* Content section */}
-                      <div className="p-6 md:p-8 text-center relative overflow-hidden">
-                        {/* Background decoration */}
-                        <div className="absolute top-0 right-0 w-16 h-16 md:w-20 md:h-20 bg-white/10 rounded-full -translate-y-8 translate-x-8"></div>
-                        <div className="absolute bottom-0 left-0 w-12 h-12 md:w-16 md:h-16 bg-white/20 rounded-full translate-y-6 -translate-x-6"></div>
-                        
-                        {/* Game icon */}
-                        <div className="relative mb-4 md:mb-6">
-                          <div className="w-16 h-16 md:w-20 md:h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto border border-white/30 shadow-lg">
-                            <Gamepad2 className="h-8 w-8 md:h-10 md:w-10 text-white" />
+                      {/* Content Section */}
+                      <div className="p-6 md:p-8 flex flex-col justify-center">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                            <Gamepad2 className="h-6 w-6 text-primary" />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="text-xl md:text-2xl font-semibold text-foreground mb-1">
+                              ألعاب تفاعلية ذكية
+                            </h3>
+                            <p className="text-sm text-muted-foreground">تجربة تعليمية متطورة</p>
                           </div>
                         </div>
                         
-                        <h3 className="text-xl md:text-2xl font-bold text-white mb-3 md:mb-4 text-center">شاهد كيف تعمل الألعاب التفاعلية</h3>
-                        <p className="text-white/90 text-sm md:text-base leading-relaxed max-w-md mx-auto mb-6 md:mb-8">
-                          تجربة تعليمية ممتعة تجمع بين المرح والتعلم لتحفيز الطلاب على الإنجاز
+                        <p className="text-muted-foreground text-sm md:text-base leading-relaxed mb-6">
+                          شاهد كيف تعمل منصتنا التعليمية التفاعلية وكيف يمكن للألعاب أن تحفز الطلاب على التعلم بطريقة ممتعة وفعالة
                         </p>
                         
-                        {/* Features */}
-                        <div className="grid grid-cols-2 gap-3 md:gap-4 max-w-sm mx-auto">
-                          {['تفاعل مباشر', 'تحديات ممتعة', 'مكافآت فورية', 'تقييم ذكي'].map((feature, idx) => <div key={idx} className="flex items-center text-white/90 text-xs md:text-sm">
-                              <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-white/60 rounded-full ml-2 flex-shrink-0"></div>
-                              <span className="font-medium">{feature}</span>
-                            </div>)}
+                        {/* Features Grid */}
+                        <div className="grid grid-cols-2 gap-3 mb-6">
+                          {[
+                            { icon: "✨", title: "تفاعل مباشر", desc: "ردود فعل فورية" },
+                            { icon: "🎯", title: "تحديات ذكية", desc: "مستويات متدرجة" },
+                            { icon: "🏆", title: "مكافآت فورية", desc: "تحفيز مستمر" },
+                            { icon: "📊", title: "تقييم شامل", desc: "تتبع التقدم" }
+                          ].map((feature, idx) => (
+                            <div key={idx} className="flex items-start gap-2">
+                              <span className="text-lg">{feature.icon}</span>
+                              <div>
+                                <h4 className="text-xs md:text-sm font-medium text-foreground">{feature.title}</h4>
+                                <p className="text-xs text-muted-foreground">{feature.desc}</p>
+                              </div>
+                            </div>
+                          ))}
                         </div>
                         
-                        <div className="mt-6 md:mt-8">
-                          <Button size="lg" className="bg-white/20 backdrop-blur-sm text-white border border-white/30 hover:bg-white/30 hover:scale-105 transition-all duration-300 font-medium px-6 md:px-8 py-3 rounded-xl shadow-lg">
-                            شاهد العرض
-                            <Play className="mr-2 h-4 w-4" />
-                          </Button>
-                        </div>
+                        <Button className="w-full md:w-auto group-hover:shadow-md transition-all duration-300">
+                          <Play className="mr-2 h-4 w-4" />
+                          مشاهدة العرض التوضيحي
+                        </Button>
                       </div>
                     </div>
-                  </div>
+                  </Card>
                 </DialogTrigger>
                 
                 <DialogContent className="max-w-4xl w-[95vw] p-0 bg-black border-0 overflow-hidden">
