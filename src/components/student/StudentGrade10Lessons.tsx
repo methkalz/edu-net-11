@@ -358,12 +358,6 @@ export const StudentGrade10Lessons: React.FC = () => {
                                             {lesson.media.length} ملف
                                           </Badge>
                                         )}
-                                        <div className="flex items-center gap-1">
-                                          <Calendar className="w-4 h-4 text-muted-foreground" />
-                                          <span className="text-sm text-muted-foreground">
-                                            {lesson.created_at ? new Date(lesson.created_at).toLocaleDateString('ar-EG') : 'غير محدد'}
-                                          </span>
-                                        </div>
                                       </div>
                                     </div>
                                   ))}
