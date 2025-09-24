@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { ArrowRight, Play, CheckCircle, Star, Gamepad2, Users, Monitor, BookOpen, Gift, Heart, Clock, Phone } from 'lucide-react';
 import TypewriterEffect from '@/components/TypewriterEffect';
@@ -415,8 +416,14 @@ const LandingPage: React.FC = () => {
         <section className="py-16 md:py-24 bg-gradient-to-br from-green-50 via-blue-50 to-purple-50">
           <div className="container mx-auto px-4 text-center">
             <div className="max-w-5xl mx-auto">
-              <h2 className="text-2xl md:text-3xl lg:text-4xl font-light text-gray-900 mb-8 md:mb-12 text-center">عرض خاص للمدارس بمناسبة اطلاق المنصة التعليمية
-تخفيض بنسبة 50%</h2>
+              <div className="flex flex-col items-center mb-8 md:mb-12">
+                <Badge variant="destructive" className="mb-4 px-4 py-2 text-sm font-bold">
+                  تخفيض 50%
+                </Badge>
+                <h2 className="text-2xl md:text-3xl lg:text-4xl font-light text-gray-900 text-center">
+                  عرض خاص للمدارس بمناسبة اطلاق المنصة التعليمية
+                </h2>
+              </div>
               
               {/* العداد التنازلي */}
               <CountdownTimer targetDate={freeTrialEndDate} />
