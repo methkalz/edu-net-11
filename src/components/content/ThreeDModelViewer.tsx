@@ -207,36 +207,39 @@ export const ThreeDModelViewer: React.FC<ThreeDModelViewerProps> = ({
           <div className="absolute bottom-4 left-4 flex gap-2">
             <Button
               size="sm"
-              variant="secondary"
+              variant="outline"
               onClick={handleReset}
-              className="h-8 w-8 p-0 bg-background/80 backdrop-blur-sm hover:bg-background/90"
+              className="h-8 w-8 p-0 bg-card/90 backdrop-blur-sm hover:bg-muted border-border/50 text-foreground hover:text-foreground"
             >
               <RotateCcw className="h-4 w-4" />
             </Button>
             
             <Button
               size="sm"
-              variant="secondary"
+              variant="outline"
               onClick={handleZoomIn}
-              className="h-8 w-8 p-0 bg-background/80 backdrop-blur-sm hover:bg-background/90"
+              className="h-8 w-8 p-0 bg-card/90 backdrop-blur-sm hover:bg-muted border-border/50 text-foreground hover:text-foreground"
             >
               <ZoomIn className="h-4 w-4" />
             </Button>
             
             <Button
               size="sm"
-              variant="secondary"
+              variant="outline"
               onClick={handleZoomOut}
-              className="h-8 w-8 p-0 bg-background/80 backdrop-blur-sm hover:bg-background/90"
+              className="h-8 w-8 p-0 bg-card/90 backdrop-blur-sm hover:bg-muted border-border/50 text-foreground hover:text-foreground"
             >
               <ZoomOut className="h-4 w-4" />
             </Button>
             
             <Button
               size="sm"
-              variant={isAutoRotating ? "default" : "secondary"}
+              variant={isAutoRotating ? "default" : "outline"}
               onClick={toggleAutoRotate}
-              className="h-8 w-8 p-0 bg-background/80 backdrop-blur-sm hover:bg-background/90"
+              className={isAutoRotating 
+                ? "h-8 w-8 p-0" 
+                : "h-8 w-8 p-0 bg-card/90 backdrop-blur-sm hover:bg-muted border-border/50 text-foreground hover:text-foreground"
+              }
             >
               <Move3D className="h-4 w-4" />
             </Button>
