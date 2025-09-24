@@ -35,7 +35,7 @@ export const ComputerStructureLessons: React.FC = () => {
 
   const stats = getContentStats();
 
-  // Auto-open first computer section when data loads
+  // Auto-open first computer section and first topic when data loads
   React.useEffect(() => {
     if (sections && sections.length > 0 && openSections.length === 0) {
       const computerSections = sections.filter(section => {
@@ -49,6 +49,11 @@ export const ComputerStructureLessons: React.FC = () => {
       
       if (computerSections.length > 0) {
         setOpenSections([computerSections[0].id]);
+        
+        // Also auto-open first topic of the first section
+        if (computerSections[0].topics && computerSections[0].topics.length > 0) {
+          setOpenTopics([computerSections[0].topics[0].id]);
+        }
       }
     }
   }, [sections, openSections.length]);
