@@ -308,7 +308,7 @@ const LandingPage: React.FC = () => {
                   <div className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-6">
                     <Heart className="h-6 w-6 md:h-8 md:w-8 text-white" />
                   </div>
-                  <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-3 md:mb-4 text-center">دعم גפ"ן</h3>
+                  <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-3 md:mb-4 text-center">الطلب عبر גפ"ן</h3>
                   <p className="text-gray-600 leading-relaxed text-center">الحصول على المنظومة من خلال גפ"ן</p>
                 </div>
               </div>
