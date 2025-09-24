@@ -182,7 +182,7 @@ export const ComputerStructureLessons: React.FC = () => {
       {/* Cute Minimalist Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-blue-50 to-blue-100/50 border-blue-200/60">
-          <CardContent className="p-4 text-center">
+          <CardContent className="p-4 flex flex-col items-center justify-center text-center h-full">
             <div className="w-8 h-8 mx-auto mb-2 bg-blue-500/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
               <FolderOpen className="w-4 h-4 text-blue-600" />
             </div>
@@ -192,7 +192,7 @@ export const ComputerStructureLessons: React.FC = () => {
         </Card>
 
         <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-green-50 to-green-100/50 border-green-200/60">
-          <CardContent className="p-4 text-center">
+          <CardContent className="p-4 flex flex-col items-center justify-center text-center h-full">
             <div className="w-8 h-8 mx-auto mb-2 bg-green-500/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
               <Target className="w-4 h-4 text-green-600" />
             </div>
@@ -204,7 +204,7 @@ export const ComputerStructureLessons: React.FC = () => {
         </Card>
 
         <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-purple-50 to-purple-100/50 border-purple-200/60">
-          <CardContent className="p-4 text-center">
+          <CardContent className="p-4 flex flex-col items-center justify-center text-center h-full">
             <div className="w-8 h-8 mx-auto mb-2 bg-purple-500/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
               <BookOpen className="w-4 h-4 text-purple-600" />
             </div>
@@ -214,7 +214,7 @@ export const ComputerStructureLessons: React.FC = () => {
         </Card>
 
         <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-orange-50 to-orange-100/50 border-orange-200/60">
-          <CardContent className="p-4 text-center">
+          <CardContent className="p-4 flex flex-col items-center justify-center text-center h-full">
             <div className="w-8 h-8 mx-auto mb-2 bg-orange-500/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
               <Monitor className="w-4 h-4 text-orange-600" />
             </div>
