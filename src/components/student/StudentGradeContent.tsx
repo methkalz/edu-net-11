@@ -7,6 +7,7 @@ import { useGrade12Projects } from '@/hooks/useGrade12Projects';
 import { useStudentGrade10Lessons } from '@/hooks/useStudentGrade10Lessons';
 import { StudentGrade11Content } from './StudentGrade11Content';
 import { StudentGrade10Lessons } from './StudentGrade10Lessons';
+import { ComputerStructureLessons } from './ComputerStructureLessons';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -634,6 +635,8 @@ export const StudentGradeContent: React.FC = () => {
             {/* Special handling for Grade 10 Communication Basics */}
             {tab.id === 'communication_basics' && assignedGrade === '10' ? (
               <StudentGrade10Lessons />
+            ) : tab.id === 'computer_structure' && assignedGrade === '10' ? (
+              <ComputerStructureLessons />
             ) : (
               <>
                 {/* Development Notice for Grade 10 Mini Projects */}
