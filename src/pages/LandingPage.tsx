@@ -11,7 +11,6 @@ import StudentFeaturesSlider from '@/components/landing/StudentFeaturesSlider';
 import AdminFeaturesSlider from '@/components/landing/AdminFeaturesSlider';
 import CountdownTimer from '@/components/ui/CountdownTimer';
 import { useTrafficLightEffect } from '@/hooks/useTrafficLightEffect';
-
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const activeBox = useTrafficLightEffect();
@@ -31,9 +30,7 @@ const LandingPage: React.FC = () => {
       });
     }
   };
-
-  return (
-    <div className="min-h-screen bg-white flex flex-col" dir="rtl">
+  return <div className="min-h-screen bg-white flex flex-col" dir="rtl">
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-sm border-b border-gray-100 z-50">
         <nav className="container mx-auto px-4 py-3">
@@ -140,14 +137,12 @@ const LandingPage: React.FC = () => {
                 suffix: '%',
                 label: 'نسبة الرضا',
                 duration: 4000
-              }].map((stat, index) => (
-                <div key={index} className="text-center">
+              }].map((stat, index) => <div key={index} className="text-center">
                   <div className="text-xl md:text-2xl lg:text-3xl font-light text-gray-900 mb-1 md:mb-2">
                     <AnimatedCounter end={stat.number} duration={stat.duration} suffix={stat.suffix} />
                   </div>
                   <div className="text-gray-600 text-xs md:text-sm">{stat.label}</div>
-                </div>
-              ))}
+                </div>)}
               </div>
 
               {/* أزرار العمل */}
@@ -295,12 +290,7 @@ const LandingPage: React.FC = () => {
                 </DialogTrigger>
                 <DialogContent className="max-w-4xl w-full bg-black border-0 p-0">
                   <div className="relative aspect-video">
-                    <video 
-                      className="w-full h-full object-cover" 
-                      controls 
-                      autoPlay
-                      onEnded={() => setIsVideoModalOpen(false)}
-                    >
+                    <video className="w-full h-full object-cover" controls autoPlay onEnded={() => setIsVideoModalOpen(false)}>
                       <source src="/videos/gamevideo1.mp4" type="video/mp4" />
                       متصفحك لا يدعم تشغيل الفيديو.
                     </video>
@@ -425,9 +415,8 @@ const LandingPage: React.FC = () => {
         <section className="py-16 md:py-24 bg-gradient-to-br from-green-50 via-blue-50 to-purple-50">
           <div className="container mx-auto px-4 text-center">
             <div className="max-w-5xl mx-auto">
-              <h2 className="text-2xl md:text-3xl lg:text-4xl font-light text-gray-900 mb-8 md:mb-12 text-center">
-                عرض خاص للمدارس
-              </h2>
+              <h2 className="text-2xl md:text-3xl lg:text-4xl font-light text-gray-900 mb-8 md:mb-12 text-center">عرض خاص للمدارس بمناسبة اطلاق المنصة التعليمية
+تخفيض بنسبة 50%</h2>
               
               {/* العداد التنازلي */}
               <CountdownTimer targetDate={freeTrialEndDate} />
@@ -476,8 +465,6 @@ const LandingPage: React.FC = () => {
           </div>
         </div>
       </footer>
-    </div>
-  );
+    </div>;
 };
-
 export default LandingPage;
