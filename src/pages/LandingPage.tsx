@@ -17,8 +17,8 @@ const LandingPage: React.FC = () => {
   const activeBox = useTrafficLightEffect();
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
 
-  // تاريخ انتهاء التجربة المجانية - 29 سبتمبر 2025 الساعة 17:00 توقيت القدس
-  const freeTrialEndDate = new Date('2025-09-29T17:00:00+03:00'); // +03:00 is Jerusalem timezone (UTC+3)
+  // تاريخ انتهاء التجربة المجانية - 3 أكتوبر 2025 الساعة 17:00 توقيت القدس
+  const freeTrialEndDate = new Date('2025-10-03T17:00:00+03:00'); // +03:00 is Jerusalem timezone (UTC+3)
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
