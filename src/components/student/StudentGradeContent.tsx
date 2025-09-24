@@ -555,16 +555,15 @@ export const StudentGradeContent: React.FC = () => {
         </p>
       </div>
 
-      {/* Content Tabs */}
+      {/* Content Tabs - Minimalist Design */}
       <Tabs value={activeContentTab} onValueChange={setActiveContentTab} className="w-full">
-        <div className="flex justify-center mb-10">
+        <div className="flex justify-center mb-8">
           <TabsList className={`
             grid ${assignedGrade === '10' ? 'grid-cols-5' : assignedGrade === '11' ? 'grid-cols-2' : 'grid-cols-3'} 
-            w-full ${assignedGrade === '10' ? 'max-w-5xl' : 'max-w-3xl'} 
-            h-auto p-2 gap-2
-            bg-card border border-border/50 
-            rounded-2xl shadow-sm
-            backdrop-blur-sm
+            w-full max-w-6xl h-auto p-1 gap-1
+            bg-background/80 border border-border/40 
+            rounded-2xl shadow-lg backdrop-blur-md
+            transition-all duration-300 hover:shadow-xl
           `}>
             {contentTabs.map((tab) => {
               const IconComponent = tab.icon;
@@ -573,56 +572,68 @@ export const StudentGradeContent: React.FC = () => {
                   key={tab.id} 
                   value={tab.id} 
                   className="
-                    relative flex flex-col items-center gap-3 py-4 px-3
-                    text-sm font-medium text-muted-foreground
+                    relative flex flex-col items-center justify-center gap-2 
+                    py-6 px-4 min-h-[120px]
+                    text-sm font-medium text-muted-foreground/80
                     bg-transparent border-0 rounded-xl
                     transition-all duration-300 ease-out
                     data-[state=active]:bg-background 
                     data-[state=active]:text-foreground
                     data-[state=active]:shadow-md
-                    data-[state=active]:shadow-primary/10
-                    hover:bg-accent/50 hover:text-foreground
+                    data-[state=active]:shadow-primary/20
+                    data-[state=active]:scale-[1.02]
+                    hover:bg-background/50 hover:text-foreground/90
+                    hover:shadow-sm hover:scale-[1.01]
                     focus-visible:outline-none focus-visible:ring-2 
-                    focus-visible:ring-primary/20 focus-visible:ring-offset-2
+                    focus-visible:ring-primary/30 focus-visible:ring-offset-2
                     group overflow-hidden
                   "
                 >
                   {/* Icon Container */}
                   <div className="
-                    relative flex items-center justify-center w-10 h-10 
-                    rounded-lg bg-gradient-to-br from-primary/10 to-secondary/5
-                    group-data-[state=active]:from-primary/15 group-data-[state=active]:to-secondary/10
-                    group-hover:from-primary/15 group-hover:to-secondary/10
+                    relative flex items-center justify-center w-12 h-12 
+                    rounded-xl bg-gradient-to-br from-primary/5 to-primary/10
+                    group-data-[state=active]:from-primary/10 group-data-[state=active]:to-primary/20
+                    group-data-[state=active]:shadow-sm
+                    group-hover:from-primary/8 group-hover:to-primary/15
                     transition-all duration-300
                   ">
-                    <IconComponent className="w-5 h-5 transition-all duration-300 group-data-[state=active]:scale-110" />
+                    <IconComponent className="w-6 h-6 transition-all duration-300 group-data-[state=active]:scale-110 group-data-[state=active]:text-primary" />
                   </div>
                   
-                  {/* Label and Count */}
-                  <div className="flex flex-col items-center gap-1">
-                    <span className="text-xs font-medium leading-tight text-center min-h-[32px] flex items-center">
+                  {/* Label */}
+                  <div className="flex flex-col items-center gap-1.5">
+                    <span className="text-xs font-semibold leading-tight text-center px-1 group-data-[state=active]:text-sm transition-all duration-300">
                       {tab.label}
                     </span>
-                    <Badge 
-                      variant="outline" 
-                      className="
-                        text-xs font-medium px-2 py-0.5 h-5
-                        border-primary/20 bg-primary/5 text-primary
-                        group-data-[state=active]:bg-primary group-data-[state=active]:text-primary-foreground
-                        group-data-[state=active]:border-primary
-                        transition-all duration-300
-                      "
-                    >
+                    
+                    {/* Count Badge */}
+                    <div className="
+                      flex items-center justify-center min-w-[24px] h-6 px-2
+                      bg-muted/50 text-muted-foreground 
+                      group-data-[state=active]:bg-primary group-data-[state=active]:text-primary-foreground
+                      group-data-[state=active]:shadow-sm
+                      rounded-full text-xs font-bold
+                      transition-all duration-300
+                    ">
                       {tab.count}
-                    </Badge>
+                    </div>
                   </div>
                   
-                  {/* Active Indicator */}
+                  {/* Active Indicator - Bottom Bar */}
                   <div className="
                     absolute bottom-0 left-1/2 -translate-x-1/2 
-                    w-8 h-0.5 bg-gradient-to-r from-primary to-secondary
-                    rounded-full transition-all duration-300
-                    opacity-0 scale-x-0 group-data-[state=active]:opacity-100 group-data-[state=active]:scale-x-100
+                    w-12 h-1 bg-gradient-to-r from-primary to-primary/80
+                    rounded-t-full transition-all duration-300
+                    opacity-0 scale-x-0 translate-y-1
+                    group-data-[state=active]:opacity-100 group-data-[state=active]:scale-x-100 group-data-[state=active]:translate-y-0
+                  " />
+                  
+                  {/* Hover Effect Background */}
+                  <div className="
+                    absolute inset-0 rounded-xl bg-gradient-to-br from-primary/5 to-transparent
+                    opacity-0 group-hover:opacity-100 group-data-[state=active]:opacity-20
+                    transition-opacity duration-300 -z-10
                   " />
                 </TabsTrigger>
               );
