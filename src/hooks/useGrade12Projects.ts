@@ -496,7 +496,7 @@ export const useGrade12Projects = () => {
     if (userProfile && !accessLoading) {
       fetchProjects();
     }
-  }, [userProfile, accessLoading, canAccessGrade]);
+  }, [userProfile, accessLoading]);
 
   return {
     projects,
