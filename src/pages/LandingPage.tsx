@@ -146,16 +146,6 @@ const LandingPage: React.FC = () => {
                 </div>)}
               </div>
 
-              {/* أزرار العمل */}
-              <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center items-center mb-16 md:mb-20 px-4">
-                <Button size="lg" onClick={() => window.open('https://api.whatsapp.com/send/?phone=972528359103&text=%D9%85%D8%B1%D8%AD%D8%A8%D8%A7%D9%8B%D8%8C+%D8%A3%D8%B1%D8%BA%D8%A8+%D9%81%D9%8A+%D9%85%D8%B9%D8%B1%D9%81%D8%A9+%D8%A7%D9%84%D9%85%D8%B2%D9%8A%D8%AF+%D8%B9%D9%86+%D9%85%D9%86%D8%B5%D8%A9+%D8%A7%D9%84%D8%AA%D9%82%D9%86%D9%8A%D8%A9+%D8%A8%D8%A8%D8%B3%D8%A7%D8%B7%D8%A9+%D9%84%D9%84%D8%AA%D8%B9%D9%84%D9%8A%D9%85+%D8%A7%D9%84%D8%A5%D9%84%D9%83%D8%AA%D8%B1%D9%88%D9%86%D9%8A&type=phone_number&app_absent=0', '_blank')} className="bg-green-600 hover:bg-green-700 text-white px-6 md:px-8 py-3 rounded-md transition-colors font-medium w-full sm:w-auto text-sm md:text-base">
-                  اطلب الآن
-                  <ArrowRight className="mr-2 h-4 w-4 animate-wiggle" />
-                </Button>
-                <Button size="lg" variant="outline" onClick={() => scrollToSection('features')} className="border border-gray-300 text-gray-700 hover:bg-gray-50 px-6 md:px-8 py-3 rounded-md transition-colors font-medium w-full sm:w-auto text-sm md:text-base">
-                  تعرف على الميزات
-                </Button>
-              </div>
 
             </div>
           </div>
