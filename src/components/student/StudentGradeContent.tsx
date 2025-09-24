@@ -233,6 +233,41 @@ export const StudentGradeContent: React.FC = () => {
     setViewerType(null);
   };
 
+  // Helper functions for video thumbnails
+  const extractYouTubeId = (url: string): string | null => {
+    const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+    const match = url.match(regex);
+    return match ? match[1] : null;
+  };
+
+  const extractGoogleDriveId = (url: string): string | null => {
+    const regex = /(?:drive\.google\.com\/(?:file\/d\/|open\?id=)|docs\.google\.com\/file\/d\/)([a-zA-Z0-9_-]+)/;
+    const match = url.match(regex);
+    return match ? match[1] : null;
+  };
+
+  const getVideoThumbnail = (video: any): string => {
+    if (video.thumbnail_url) {
+      return video.thumbnail_url;
+    }
+
+    if (video.source_type === 'youtube' || video.video_url?.includes('youtube.com') || video.video_url?.includes('youtu.be')) {
+      const videoId = extractYouTubeId(video.video_url);
+      if (videoId) {
+        return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+      }
+    }
+
+    if (video.source_type === 'google_drive' || video.video_url?.includes('drive.google.com/file/d/')) {
+      const fileId = extractGoogleDriveId(video.video_url);
+      if (fileId) {
+        return `https://drive.google.com/thumbnail?id=${fileId}&sz=w400-h300`;
+      }
+    }
+
+    return '/placeholder.svg';
+  };
+
   const ContentCard: React.FC<{ 
     item: any; 
     type: 'video' | 'document' | 'lesson' | 'project';
@@ -244,67 +279,115 @@ export const StudentGradeContent: React.FC = () => {
 
     return (
       <Card className="group hover:shadow-lg transition-all duration-300 border border-border/50 overflow-hidden">
-        <CardContent className="p-6">
-          <div className="space-y-4">
-            {/* Header with icon and title */}
-            <div className="flex items-start gap-3">
-              <div className={`w-10 h-10 rounded-lg bg-gradient-to-r ${color} flex items-center justify-center flex-shrink-0`}>
-                <IconComponent className="w-5 h-5 text-white" />
+        <CardContent className="p-0">
+          {/* Video Thumbnail Section */}
+          {type === 'video' && (
+            <div className="relative h-48 overflow-hidden">
+              <img
+                src={getVideoThumbnail(item)}
+                alt={item.title}
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '/placeholder.svg';
+                }}
+              />
+              {/* Overlay with play button */}
+              <div 
+                className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center cursor-pointer"
+                onClick={() => handleContentClick(item, type)}
+              >
+                <div className="bg-white/20 hover:bg-white/30 rounded-full p-3 backdrop-blur-sm border border-white/20">
+                  <Play className="w-8 h-8 text-white fill-white" />
+                </div>
               </div>
-              
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-foreground line-clamp-2 text-base mb-1">
-                  {item.title}
-                </h3>
-                {item.description && (
-                  <p className="text-sm text-muted-foreground line-clamp-2">
-                    {item.description}
-                  </p>
-                )}
-              </div>
-
+              {/* Completion badge */}
               {isCompleted && (
-                <div className="flex items-center gap-1 text-green-600 flex-shrink-0">
+                <div className="absolute top-3 right-3 bg-green-600 text-white rounded-full p-1">
                   <CheckCircle className="w-4 h-4" />
                 </div>
               )}
             </div>
+          )}
 
-            {/* Progress bar (only if there's progress) */}
-            {progress > 0 && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">التقدم</span>
-                  <span className="font-medium">{progress}%</span>
+          {/* Content Section */}
+          <div className="p-6">
+            <div className="space-y-4">
+              {/* Header with icon and title (only for non-video content) */}
+              {type !== 'video' && (
+                <div className="flex items-start gap-3">
+                  <div className={`w-10 h-10 rounded-lg bg-gradient-to-r ${color} flex items-center justify-center flex-shrink-0`}>
+                    <IconComponent className="w-5 h-5 text-white" />
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-foreground line-clamp-2 text-base mb-1">
+                      {item.title}
+                    </h3>
+                    {item.description && (
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {item.description}
+                      </p>
+                    )}
+                  </div>
+
+                  {isCompleted && (
+                    <div className="flex items-center gap-1 text-green-600 flex-shrink-0">
+                      <CheckCircle className="w-4 h-4" />
+                    </div>
+                  )}
                 </div>
-                <Progress value={progress} className="h-2" />
-              </div>
-            )}
+              )}
 
-            {/* Bottom info and action */}
-            <div className="flex items-center justify-between pt-2">
-              <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                {item.duration && (
-                  <div className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    <span>{item.duration}</span>
-                  </div>
-                )}
-                {item.progress?.points_earned && (
-                  <div className="flex items-center gap-1 text-yellow-600">
-                    <Star className="w-3 h-3" />
-                    <span>{item.progress.points_earned}</span>
-                  </div>
-                )}
-              </div>
+              {/* Video title and description */}
+              {type === 'video' && (
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-foreground line-clamp-2 text-base">
+                    {item.title}
+                  </h3>
+                  {item.description && (
+                    <p className="text-sm text-muted-foreground line-clamp-2">
+                      {item.description}
+                    </p>
+                  )}
+                </div>
+              )}
 
-              <Button
-                size="sm"
-                onClick={() => handleContentClick(item, type)}
-                className="shrink-0"
-              >
-                {isCompleted ? 'مراجعة' : 'ابدأ'}
-              </Button>
+              {/* Progress bar (only if there's progress) */}
+              {progress > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">التقدم</span>
+                    <span className="font-medium">{progress}%</span>
+                  </div>
+                  <Progress value={progress} className="h-2" />
+                </div>
+              )}
+
+              {/* Bottom info and action */}
+              <div className="flex items-center justify-between pt-2">
+                <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                  {item.duration && (
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      <span>{item.duration}</span>
+                    </div>
+                  )}
+                  {item.progress?.points_earned && (
+                    <div className="flex items-center gap-1 text-yellow-600">
+                      <Star className="w-3 h-3" />
+                      <span>{item.progress.points_earned}</span>
+                    </div>
+                  )}
+                </div>
+
+                <Button
+                  size="sm"
+                  onClick={() => handleContentClick(item, type)}
+                  className="shrink-0"
+                >
+                  {isCompleted ? 'مراجعة' : 'ابدأ'}
+                </Button>
+              </div>
             </div>
           </div>
         </CardContent>
