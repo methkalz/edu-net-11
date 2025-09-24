@@ -33,33 +33,36 @@ const LandingPage: React.FC = () => {
   };
   return <div className="min-h-screen bg-white flex flex-col" dir="rtl">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-sm border-b border-gray-100 z-50">
-        <nav className="container mx-auto px-4 py-3">
+      <header className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-md border-b border-gray-200/50 z-50 shadow-sm">
+        <nav className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <img src="/logo-edunet.png" alt="شعار المنصة" className="h-8 w-auto md:h-10" />
+            <div className="flex items-center gap-3 group">
+              <div className="relative">
+                <img src="/logo-edunet.png" alt="شعار المنصة" className="h-9 w-auto md:h-11 transition-transform duration-300 group-hover:scale-105" />
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              </div>
               <div className="hidden sm:block">
-                <h1 className="text-base md:text-lg font-semibold text-gray-900">Edunet</h1>
-                <p className="text-xs text-gray-500 hidden md:block">نظام تعليمي لتخصص الحوسبة</p>
+                <h1 className="text-lg md:text-xl font-light text-gray-900 tracking-wide">Edunet</h1>
+                <p className="text-xs text-gray-500 hidden md:block font-light">نظام تعليمي لتخصص الحوسبة</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="hidden md:flex items-center gap-6">
-                <button onClick={() => scrollToSection('features')} className="text-gray-600 hover:text-gray-900 transition-colors text-sm font-medium">
-                  الميزات
-                </button>
-                <button onClick={() => scrollToSection('content')} className="text-gray-600 hover:text-gray-900 transition-colors text-sm font-medium">
-                  المحتوى
-                </button>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" onClick={() => navigate('/auth')} className="border-gray-300 text-gray-700 hover:bg-gray-50 text-xs md:text-sm px-3 md:px-4 py-2 rounded-md transition-colors">
-                  تسجيل الدخول
-                </Button>
-                <Button onClick={() => navigate('/auth')} className="bg-gray-900 text-white hover:bg-gray-800 text-xs md:text-sm px-3 md:px-6 py-2 rounded-md transition-colors">
-                  ابدأ الآن
-                </Button>
-              </div>
+            
+            <div className="hidden md:flex items-center gap-8">
+              <button onClick={() => scrollToSection('features')} className="relative text-gray-600 hover:text-gray-900 transition-all duration-300 text-sm font-light tracking-wide after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-[-8px] after:left-0 after:bg-gradient-to-r after:from-blue-500 after:to-purple-500 after:transition-all after:duration-300 hover:after:w-full">
+                الميزات
+              </button>
+              <button onClick={() => scrollToSection('content')} className="relative text-gray-600 hover:text-gray-900 transition-all duration-300 text-sm font-light tracking-wide after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-[-8px] after:left-0 after:bg-gradient-to-r after:from-blue-500 after:to-purple-500 after:transition-all after:duration-300 hover:after:w-full">
+                المحتوى
+              </button>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <Button variant="outline" onClick={() => navigate('/auth')} className="border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 text-xs md:text-sm px-4 md:px-5 py-2.5 rounded-full transition-all duration-300 font-light hover:shadow-sm">
+                تسجيل الدخول
+              </Button>
+              <Button onClick={() => navigate('/auth')} className="bg-gradient-to-r from-gray-900 to-gray-800 text-white hover:from-gray-800 hover:to-gray-700 text-xs md:text-sm px-5 md:px-7 py-2.5 rounded-full transition-all duration-300 font-medium shadow-lg hover:shadow-xl hover:scale-105">
+                ابدأ الآن
+              </Button>
             </div>
           </div>
         </nav>
