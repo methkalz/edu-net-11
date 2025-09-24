@@ -185,28 +185,28 @@ const StudentDashboard: React.FC = () => {
       {/* Main Content */}
       <section className="container mx-auto px-6 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <div className="flex justify-center">
-            <TabsList className={`grid w-full max-w-2xl ${hasGamesTab ? 'grid-cols-5' : 'grid-cols-4'} bg-white shadow-lg`}>
-              <TabsTrigger value="overview" className="flex items-center gap-2">
-                <BookOpen className="w-4 h-4" />
+          <div className="flex justify-center px-4">
+            <TabsList className={`grid w-full max-w-4xl ${hasGamesTab ? 'grid-cols-5' : 'grid-cols-4'} bg-white/95 backdrop-blur-sm shadow-xl border border-white/20 rounded-2xl p-2 h-16`}>
+              <TabsTrigger value="overview" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105">
+                <BookOpen className="w-6 h-6" />
                 <span className="hidden sm:inline">نظرة عامة</span>
               </TabsTrigger>
-              <TabsTrigger value="content" className="flex items-center gap-2">
-                <Video className="w-4 h-4" />
+              <TabsTrigger value="content" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105">
+                <Video className="w-6 h-6" />
                 <span className="hidden sm:inline">المحتوى</span>
               </TabsTrigger>
               {hasGamesTab && (
-                <TabsTrigger value="games" className="flex items-center gap-2">
-                  <Gamepad2 className="w-4 h-4" />
+                <TabsTrigger value="games" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105">
+                  <Gamepad2 className="w-6 h-6" />
                   <span className="hidden sm:inline">الألعاب</span>
                 </TabsTrigger>
               )}
-              <TabsTrigger value="challenges" className="flex items-center gap-2">
-                <Target className="w-4 h-4" />
+              <TabsTrigger value="challenges" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105">
+                <Target className="w-6 h-6" />
                 <span className="hidden sm:inline">التحديات</span>
               </TabsTrigger>
-              <TabsTrigger value="profile" className="flex items-center gap-2">
-                <Award className="w-4 h-4" />
+              <TabsTrigger value="profile" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105">
+                <Award className="w-6 h-6" />
                 <span className="hidden sm:inline">الملف الشخصي</span>
               </TabsTrigger>
             </TabsList>
