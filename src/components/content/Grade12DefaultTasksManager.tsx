@@ -58,6 +58,7 @@ const Grade12DefaultTasksManager: React.FC = () => {
   const [editingTask, setEditingTask] = useState<any>(null);
   const [editingPhase, setEditingPhase] = useState<any>(null);
   const [newPhaseTitle, setNewPhaseTitle] = useState('');
+  const [selectedPhaseForNewTask, setSelectedPhaseForNewTask] = useState<number | null>(null);
   const [taskForm, setTaskForm] = useState<TaskFormData>({
     phase_number: 1,
     phase_title: '',
@@ -108,6 +109,35 @@ const Grade12DefaultTasksManager: React.FC = () => {
       task_description: '',
       is_active: true
     });
+    setSelectedPhaseForNewTask(null);
+  };
+
+  // إضافة مهمة جديدة في مرحلة محددة
+  const handleAddTaskToPhase = (phase: any) => {
+    setSelectedPhaseForNewTask(phase.phase_number);
+    setTaskForm({
+      phase_number: phase.phase_number,
+      phase_title: phase.phase_title,
+      task_title: '',
+      task_description: '',
+      is_active: true
+    });
+    setEditingTask(null);
+    setShowTaskDialog(true);
+  };
+
+  // إضافة تاسك فرعي (مهمة جديدة في نفس المرحلة)
+  const handleAddSubTask = (existingTask: any) => {
+    setSelectedPhaseForNewTask(existingTask.phase_number);
+    setTaskForm({
+      phase_number: existingTask.phase_number,
+      phase_title: existingTask.phase_title,
+      task_title: '',
+      task_description: '',
+      is_active: true
+    });
+    setEditingTask(null);
+    setShowTaskDialog(true);
   };
 
   // تعامل مع تحرير المهمة
@@ -458,6 +488,19 @@ const Grade12DefaultTasksManager: React.FC = () => {
               </CardHeader>
               
               <CardContent>
+                {/* زر إضافة مهمة جديدة للمرحلة */}
+                <div className="mb-4">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => handleAddTaskToPhase(phase)}
+                    className="w-full border-dashed gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    إضافة مهمة جديدة للمرحلة
+                  </Button>
+                </div>
+                
                 <div className="space-y-3">
                   {phaseTasks.map((task, index) => (
                     <div
@@ -503,6 +546,15 @@ const Grade12DefaultTasksManager: React.FC = () => {
                             disabled={index === phaseTasks.length - 1}
                           >
                             <ArrowDown className="h-4 w-4" />
+                          </Button>
+                          
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            onClick={() => handleAddSubTask(task)}
+                            title="إضافة مهمة فرعية"
+                          >
+                            <Plus className="h-4 w-4" />
                           </Button>
                           
                           <Button
