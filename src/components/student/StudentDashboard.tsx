@@ -42,6 +42,9 @@ const StudentDashboard: React.FC = () => {
   const { stats, achievements, loading } = useStudentProgress();
   const { assignedGrade, getProgressPercentage } = useStudentContent();
   const [activeTab, setActiveTab] = useState('overview');
+  
+  // Check if student is in Grade 10 (no games available)
+  const isGrade10Student = assignedGrade === "10";
 
   const motivationalMessages = [
     'مرحباً بك في رحلة التعلم الرائعة! 🌟',
@@ -183,7 +186,7 @@ const StudentDashboard: React.FC = () => {
       <section className="container mx-auto px-6 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <div className="flex justify-center">
-            <TabsList className="grid w-full max-w-2xl grid-cols-5 bg-white shadow-lg">
+            <TabsList className={`grid w-full max-w-2xl ${isGrade10Student ? 'grid-cols-4' : 'grid-cols-5'} bg-white shadow-lg`}>
               <TabsTrigger value="overview" className="flex items-center gap-2">
                 <BookOpen className="w-4 h-4" />
                 <span className="hidden sm:inline">نظرة عامة</span>
@@ -192,10 +195,12 @@ const StudentDashboard: React.FC = () => {
                 <Video className="w-4 h-4" />
                 <span className="hidden sm:inline">المحتوى</span>
               </TabsTrigger>
-              <TabsTrigger value="games" className="flex items-center gap-2">
-                <Gamepad2 className="w-4 h-4" />
-                <span className="hidden sm:inline">الألعاب</span>
-              </TabsTrigger>
+              {!isGrade10Student && (
+                <TabsTrigger value="games" className="flex items-center gap-2">
+                  <Gamepad2 className="w-4 h-4" />
+                  <span className="hidden sm:inline">الألعاب</span>
+                </TabsTrigger>
+              )}
               <TabsTrigger value="challenges" className="flex items-center gap-2">
                 <Target className="w-4 h-4" />
                 <span className="hidden sm:inline">التحديات</span>
@@ -232,14 +237,16 @@ const StudentDashboard: React.FC = () => {
                       <Play className="w-4 h-4 mr-2" />
                       متابعة التعلم
                     </Button>
-                    <Button 
-                      variant="secondary" 
-                      className="w-full justify-start bg-white/20 hover:bg-white/30 text-white border-white/20"
-                      onClick={() => setActiveTab('games')}
-                    >
-                      <Gamepad2 className="w-4 h-4 mr-2" />
-                      العب وتعلم
-                    </Button>
+                    {!isGrade10Student && (
+                      <Button 
+                        variant="secondary" 
+                        className="w-full justify-start bg-white/20 hover:bg-white/30 text-white border-white/20"
+                        onClick={() => setActiveTab('games')}
+                      >
+                        <Gamepad2 className="w-4 h-4 mr-2" />
+                        العب وتعلم
+                      </Button>
+                    )}
                     <Button 
                       variant="secondary" 
                       className="w-full justify-start bg-white/20 hover:bg-white/30 text-white border-white/20"
@@ -277,9 +284,11 @@ const StudentDashboard: React.FC = () => {
             <StudentGradeContent />
           </TabsContent>
 
-          <TabsContent value="games">
-            <StudentGameSection />
-          </TabsContent>
+          {!isGrade10Student && (
+            <TabsContent value="games">
+              <StudentGameSection />
+            </TabsContent>
+          )}
 
           <TabsContent value="challenges">
             <StudentDailyChallenges />
