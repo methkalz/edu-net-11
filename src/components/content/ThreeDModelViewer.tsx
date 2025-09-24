@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { RotateCcw, ZoomIn, ZoomOut, Move3D, Loader2 } from 'lucide-react';
+import { RotateCcw, ZoomIn, ZoomOut, Move3D, Loader2, Palette } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 interface ThreeDModelViewerProps {
@@ -15,6 +15,7 @@ interface ThreeDModelViewerProps {
   showControls?: boolean;
   autoRotate?: boolean;
   className?: string;
+  preserveOriginalColors?: boolean;
 }
 
 // Component for GLB models
@@ -63,7 +64,12 @@ function GLBModel({ url, autoRotate, onLoaded }: { url: string; autoRotate: bool
 }
 
 // Component for OBJ models
-function OBJModel({ url, autoRotate, onLoaded }: { url: string; autoRotate: boolean; onLoaded: () => void }) {
+function OBJModel({ url, autoRotate, onLoaded, preserveOriginalColors = false }: { 
+  url: string; 
+  autoRotate: boolean; 
+  onLoaded: () => void;
+  preserveOriginalColors?: boolean;
+}) {
   const group = useRef<THREE.Group>(null);
   const obj = useLoader(OBJLoader, url);
   
@@ -87,33 +93,60 @@ function OBJModel({ url, autoRotate, onLoaded }: { url: string; autoRotate: bool
     const objCopy = obj.clone();
     objCopy.traverse((child) => {
       if (child instanceof THREE.Mesh) {
-        // Only apply default material if no material exists or it's a basic material
-        const hasValidMaterial = child.material && 
-          child.material.type !== 'MeshBasicMaterial' && 
-          (child.material as any).color;
-        
-        if (!hasValidMaterial) {
-          // Apply an enhanced default material
-          child.material = new THREE.MeshStandardMaterial({
-            color: 0xcccccc, // Lighter default color
-            metalness: 0.2,
-            roughness: 0.5,
-            envMapIntensity: 0.8,
-          });
+        if (preserveOriginalColors) {
+          // Keep original materials completely unchanged
+          if (child.material) {
+            child.material = child.material.clone();
+          }
         } else {
-          // Clone existing material to avoid sharing
-          child.material = child.material.clone();
-          // Enhance existing materials for better visibility
-          if (child.material instanceof THREE.MeshStandardMaterial) {
-            child.material.envMapIntensity = 0.8;
-            child.material.needsUpdate = true;
+          // Check if material has actual color information
+          let hasValidColor = false;
+          
+          if (child.material) {
+            if (Array.isArray(child.material)) {
+              hasValidColor = child.material.some(mat => mat && (mat as any).color && 
+                (mat as any).color.getHex && (mat as any).color.getHex() !== 0x000000);
+            } else {
+              const material = child.material as any;
+              hasValidColor = material.color && material.color.getHex && 
+                material.color.getHex() !== 0x000000 && material.color.getHex() !== 0xffffff;
+            }
+          }
+          
+          if (!hasValidColor || !child.material) {
+            // Apply colorful default materials with variety
+            const colors = [0x4f46e5, 0x0ea5e9, 0x10b981, 0xf59e0b, 0xef4444, 0x8b5cf6];
+            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+            
+            child.material = new THREE.MeshStandardMaterial({
+              color: randomColor,
+              metalness: 0.3,
+              roughness: 0.4,
+              envMapIntensity: 1.0,
+            });
+          } else {
+            // Clone and enhance existing material
+            child.material = child.material.clone();
+            if (child.material instanceof THREE.MeshStandardMaterial) {
+              child.material.envMapIntensity = 1.0;
+              child.material.needsUpdate = true;
+            } else if (child.material instanceof THREE.MeshBasicMaterial) {
+              // Convert MeshBasicMaterial to MeshStandardMaterial for better lighting
+              const color = (child.material as any).color;
+              child.material = new THREE.MeshStandardMaterial({
+                color: color,
+                metalness: 0.1,
+                roughness: 0.6,
+                envMapIntensity: 0.8,
+              });
+            }
           }
         }
       }
     });
     
     return objCopy;
-  }, [obj]);
+  }, [obj, preserveOriginalColors]);
 
   return (
     <group ref={group} scale={[0.5, 0.5, 0.5]}>
@@ -128,11 +161,13 @@ export const ThreeDModelViewer: React.FC<ThreeDModelViewerProps> = ({
   title,
   showControls = true,
   autoRotate = false,
-  className = ""
+  className = "",
+  preserveOriginalColors = false
 }) => {
   const [isAutoRotating, setIsAutoRotating] = useState(autoRotate);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [preserveColors, setPreserveColors] = useState(preserveOriginalColors);
   const controlsRef = useRef<any>(null);
 
   const handleLoaded = () => {
@@ -168,6 +203,14 @@ export const ThreeDModelViewer: React.FC<ThreeDModelViewerProps> = ({
     if (controlsRef.current) {
       controlsRef.current.autoRotate = !isAutoRotating;
     }
+  };
+
+  const toggleColorPreservation = () => {
+    setPreserveColors(!preserveColors);
+    toast({
+      title: preserveColors ? "تم تطبيق الألوان الافتراضية" : "تم الحفاظ على الألوان الأصلية",
+      description: preserveColors ? "سيتم استخدام ألوان محسنة" : "سيتم عرض الألوان الأصلية",
+    });
   };
 
   if (error) {
@@ -222,7 +265,7 @@ export const ThreeDModelViewer: React.FC<ThreeDModelViewerProps> = ({
             {modelType === 'glb' ? (
               <GLBModel url={modelUrl} autoRotate={isAutoRotating} onLoaded={handleLoaded} />
             ) : (
-              <OBJModel url={modelUrl} autoRotate={isAutoRotating} onLoaded={handleLoaded} />
+              <OBJModel url={modelUrl} autoRotate={isAutoRotating} onLoaded={handleLoaded} preserveOriginalColors={preserveColors} />
             )}
             
             <ContactShadows 
@@ -283,6 +326,18 @@ export const ThreeDModelViewer: React.FC<ThreeDModelViewerProps> = ({
             >
               <Move3D className="h-4 w-4" />
             </Button>
+            
+            {modelType === 'obj' && (
+              <Button
+                size="sm"
+                variant={preserveColors ? "default" : "secondary"}
+                onClick={toggleColorPreservation}
+                className="h-8 w-8 p-0 bg-background/80 backdrop-blur-sm hover:bg-background/90"
+                title={preserveColors ? "استخدام ألوان افتراضية" : "الحفاظ على الألوان الأصلية"}
+              >
+                <Palette className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         )}
 
