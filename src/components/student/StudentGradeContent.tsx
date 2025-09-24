@@ -40,7 +40,9 @@ import {
   Plus,
   Edit3,
   Monitor,
-  Settings
+  Settings,
+  Network,
+  Phone
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { ProjectFormData } from '@/types/grade10-projects';
@@ -96,7 +98,7 @@ export const StudentGradeContent: React.FC = () => {
     loading: finalProjectsLoading
   } = grade12HooksResult;
   
-  const [activeContentTab, setActiveContentTab] = useState('videos');
+  const [activeContentTab, setActiveContentTab] = useState('computer_structure');
   
   // Viewer states
   // Debug logging for Grade 10 video categories
@@ -464,7 +466,56 @@ export const StudentGradeContent: React.FC = () => {
     ? [...(currentContent?.projects || []), ...(finalProjects || [])]
     : currentContent?.projects || [];
 
-  const contentTabs = [
+  // Filter content for Grade 10 tabs
+  const getFilteredVideos = (category: string) => {
+    if (assignedGrade === '10') {
+      return (currentContent?.videos || []).filter((video: any) => video.video_category === category);
+    }
+    return [];
+  };
+
+  const contentTabs = assignedGrade === '10' ? [
+    {
+      id: 'computer_structure',
+      label: 'مبنى الحاسوب',
+      icon: Monitor,
+      count: getFilteredVideos('educational_explanations').length,
+      items: getFilteredVideos('educational_explanations'),
+      color: 'from-blue-500 to-cyan-500'
+    },
+    {
+      id: 'windows_basics',
+      label: 'أساسيات الويندوز', 
+      icon: Settings,
+      count: getFilteredVideos('windows_basics').length,
+      items: getFilteredVideos('windows_basics'),
+      color: 'from-green-500 to-emerald-500'
+    },
+    {
+      id: 'network_intro',
+      label: 'مقدمة عن الشبكات',
+      icon: Network,
+      count: getFilteredVideos('educational_explanations').length,
+      items: getFilteredVideos('educational_explanations'),
+      color: 'from-purple-500 to-pink-500'
+    },
+    {
+      id: 'communication_basics',
+      label: 'أساسيات الاتصال',
+      icon: Phone,
+      count: grade10LessonsResult.getContentStats().totalLessons,
+      items: [],
+      color: 'from-orange-500 to-red-500'
+    },
+    {
+      id: 'mini_projects',
+      label: 'ميني برويكت',
+      icon: FolderOpen,
+      count: allProjects.length,
+      items: allProjects,
+      color: 'from-amber-500 to-orange-500'
+    }
+  ] : [
     {
       id: 'videos',
       label: 'الفيديوهات',
@@ -473,44 +524,40 @@ export const StudentGradeContent: React.FC = () => {
       items: currentContent?.videos || [],
       color: 'from-blue-500 to-cyan-500'
     },
-    // إضافة تاب الدروس للصف العاشر
-    ...(assignedGrade === '10' ? [{
-      id: 'lessons',
-      label: 'الدروس',
-      icon: BookOpen,
-      count: grade10LessonsResult.getContentStats().totalLessons,
-      items: [],
-      color: 'from-purple-500 to-pink-500'
-    }] : []),
-    // تعطيل المشاريع للصف الحادي عشر
-    ...(assignedGrade !== '11' ? [{
+    {
+      id: 'documents',
+      label: 'الملفات',
+      icon: FileText,
+      count: currentContent?.documents?.length || 0,
+      items: currentContent?.documents || [],
+      color: 'from-green-500 to-emerald-500'
+    },
+    {
       id: 'projects',
-      label: assignedGrade === '10' ? 'ميني بروجكت' : assignedGrade === '12' ? 'المشروع النهائي' : 'المشاريع',
-      icon: Trophy,
+      label: 'المشاريع',
+      icon: FolderOpen,
       count: allProjects.length,
       items: allProjects,
-      color: 'from-orange-500 to-red-500'
-    }] : [])
+      color: 'from-amber-500 to-orange-500'
+    }
   ];
 
-
   return (
-    <>
-      <div className="space-y-8 px-4">
-        {/* Simple Header */}
-        <div className="text-center space-y-2">
-          <h1 className="text-2xl font-bold text-foreground">
-            محتوى الصف {assignedGrade}
-          </h1>
-          <p className="text-muted-foreground text-base">
-            تصفح المواد التعليمية واكتسب النقاط
-          </p>
-        </div>
+    <div className="container mx-auto px-4 py-8 space-y-8">
+      {/* Simple Header */}
+      <div className="text-center space-y-2">
+        <h1 className="text-2xl font-bold text-foreground">
+          محتوى الصف {assignedGrade}
+        </h1>
+        <p className="text-muted-foreground text-base">
+          تصفح المواد التعليمية واكتسب النقاط
+        </p>
+      </div>
 
       {/* Content Tabs */}
       <Tabs value={activeContentTab} onValueChange={setActiveContentTab} className="w-full">
         <div className="flex justify-center mb-8">
-          <TabsList className={`grid ${assignedGrade === '11' ? 'grid-cols-2' : 'grid-cols-3'} w-full max-w-2xl h-12 bg-muted/50`}>
+          <TabsList className={`grid ${assignedGrade === '10' ? 'grid-cols-5' : assignedGrade === '11' ? 'grid-cols-2' : 'grid-cols-3'} w-full ${assignedGrade === '10' ? 'max-w-4xl' : 'max-w-2xl'} h-12 bg-muted/50`}>
             {contentTabs.map((tab) => {
               const IconComponent = tab.icon;
               return (
@@ -532,83 +579,13 @@ export const StudentGradeContent: React.FC = () => {
 
         {contentTabs.map((tab) => (
           <TabsContent key={tab.id} value={tab.id} className="mt-8">
-            {/* Special handling for Grade 10 Lessons */}
-            {tab.id === 'lessons' && assignedGrade === '10' ? (
+            {/* Special handling for Grade 10 Communication Basics */}
+            {tab.id === 'communication_basics' && assignedGrade === '10' ? (
               <StudentGrade10Lessons />
-            ) : /* Special handling for Grade 10 Videos with sub-tabs */
-            tab.id === 'videos' && assignedGrade === '10' ? (
-              <div className="space-y-6">
-                <Tabs defaultValue="educational_explanations" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto">
-                    <TabsTrigger value="educational_explanations" className="flex items-center gap-2">
-                      <BookOpen className="w-4 h-4" />
-                      مقدمة عن الشبكات
-                      <Badge variant="secondary" className="text-xs bg-blue-500/10 text-blue-600">
-                        {tab.items.filter((item: any) => item.video_category === 'educational_explanations').length}
-                      </Badge>
-                    </TabsTrigger>
-                    <TabsTrigger value="windows_basics" className="flex items-center gap-2">
-                      <Monitor className="w-4 h-4" />
-                      أساسيات الويندوز
-                      <Badge variant="secondary" className="text-xs bg-green-500/10 text-green-600">
-                        {tab.items.filter((item: any) => item.video_category === 'windows_basics').length}
-                      </Badge>
-                    </TabsTrigger>
-                  </TabsList>
-
-                  <TabsContent value="educational_explanations" className="mt-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {tab.items.filter((item: any) => item.video_category === 'educational_explanations').length > 0 ? (
-                        tab.items
-                          .filter((item: any) => item.video_category === 'educational_explanations')
-                          .map((item: any) => (
-                            <ContentCard
-                              key={item.id}
-                              item={item}
-                              type="video"
-                              icon={Video}
-                              color={tab.color}
-                            />
-                          ))
-                      ) : (
-                        <div className="col-span-full text-center py-12">
-                          <BookOpen className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-                          <h3 className="text-lg font-semibold mb-2">لا توجد مقدمات عن الشبكات</h3>
-                          <p className="text-muted-foreground">لم يتم رفع أي مقدمات عن الشبكات بعد</p>
-                        </div>
-                      )}
-                    </div>
-                  </TabsContent>
-
-                  <TabsContent value="windows_basics" className="mt-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {tab.items.filter((item: any) => item.video_category === 'windows_basics').length > 0 ? (
-                        tab.items
-                          .filter((item: any) => item.video_category === 'windows_basics')
-                          .map((item: any) => (
-                            <ContentCard
-                              key={item.id}
-                              item={item}
-                              type="video"
-                              icon={Video}
-                              color={tab.color}
-                            />
-                          ))
-                      ) : (
-                        <div className="col-span-full text-center py-12">
-                          <Video className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-                          <h3 className="text-lg font-semibold mb-2">لا توجد فيديوهات أساسيات الويندوز</h3>
-                          <p className="text-muted-foreground">لم يتم رفع أي فيديوهات لأساسيات الويندوز بعد</p>
-                        </div>
-                      )}
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              </div>
             ) : (
               <>
                 {/* Development Notice for Grade 10 Mini Projects */}
-                {tab.id === 'projects' && assignedGrade === '10' && (
+                {tab.id === 'mini_projects' && assignedGrade === '10' && (
                   <Alert className="bg-amber-50 border-amber-200 text-amber-800 mb-6">
                     <Settings className="h-5 w-5 text-amber-600" />
                     <AlertDescription className="text-base font-medium">
@@ -627,8 +604,8 @@ export const StudentGradeContent: React.FC = () => {
                   </Alert>
                 )}
 
-                {/* Add Create Project Button for Grade 10 Projects Tab */}
-                {tab.id === 'projects' && assignedGrade === '10' && (
+                {/* Add Create Project Button for Grade 10 Mini Projects Tab */}
+                {tab.id === 'mini_projects' && assignedGrade === '10' && (
                   <div className="mb-6 flex justify-center">
                     <Dialog open={isCreateProjectDialogOpen} onOpenChange={setIsCreateProjectDialogOpen}>
                       <DialogTrigger asChild>
@@ -760,7 +737,7 @@ export const StudentGradeContent: React.FC = () => {
                         <tab.icon className="w-8 h-8 text-muted-foreground" />
                       </div>
                       <h3 className="text-lg font-medium text-muted-foreground">
-                        {tab.id === 'projects' && assignedGrade === '10' 
+                        {tab.id === 'mini_projects' && assignedGrade === '10' 
                           ? 'لا يوجد مشاريع مصغرة' 
                           : tab.id === 'projects' && assignedGrade === '12'
                           ? 'لا يوجد مشاريع نهائية'
@@ -768,14 +745,14 @@ export const StudentGradeContent: React.FC = () => {
                         }
                       </h3>
                       <p className="text-sm text-muted-foreground">
-                        {tab.id === 'projects' && assignedGrade === '10'
+                        {tab.id === 'mini_projects' && assignedGrade === '10'
                           ? 'ابدأ بإنشاء مشروعك الأول باستخدام الزر أعلاه'
                           : tab.id === 'projects' && assignedGrade === '12'
                           ? 'ابدأ بإنشاء مشروعك النهائي باستخدام الزر أعلاه'
                           : `لم يتم إضافة أي ${tab.label} للصف ${assignedGrade} بعد`
                         }
                       </p>
-                      {tab.id === 'projects' && assignedGrade === '10' && (
+                      {tab.id === 'mini_projects' && assignedGrade === '10' && (
                         <Button 
                           className="gap-2 mt-4"
                           onClick={() => setIsCreateProjectDialogOpen(true)}
@@ -801,7 +778,7 @@ export const StudentGradeContent: React.FC = () => {
                       <ContentCard
                         key={item.id}
                         item={item}
-                        type={tab.id.slice(0, -1) as any}
+                        type={tab.id === 'mini_projects' ? 'project' : tab.id.slice(0, -1) as any}
                         icon={tab.icon}
                         color={tab.color}
                       />
@@ -813,80 +790,76 @@ export const StudentGradeContent: React.FC = () => {
           </TabsContent>
         ))}
       </Tabs>
-      </div>
+    </div>
 
-      {/* Content Viewers */}
-      {viewerType === 'video' && selectedContent && (
-        <VideoViewer
-          isOpen={true}
-          onClose={closeViewer}
-          video={selectedContent}
-          onProgress={(progress, watchTime) => 
-            handleContentProgress(selectedContent.id, 'video', progress, watchTime)
-          }
-          onComplete={() => 
-            handleContentComplete(selectedContent.id, 'video', 0)
-          }
-        />
-      )}
+    {/* Content Viewers */}
+    {viewerType === 'video' && selectedContent && (
+      <VideoViewer
+        isOpen={true}
+        onClose={closeViewer}
+        video={selectedContent}
+        onProgress={(progress, watchTime) => 
+          handleContentProgress(selectedContent.id, 'video', progress, watchTime)
+        }
+        onComplete={() => 
+          handleContentComplete(selectedContent.id, 'video', 0)
+        }
+      />
+    )}
 
-      {viewerType === 'document' && selectedContent && (
-        <DocumentViewer
-          isOpen={true}
-          onClose={closeViewer}
-          document={selectedContent}
-          onProgress={(progress, readTime) => 
-            handleContentProgress(selectedContent.id, 'document', progress, readTime)
-          }
-          onComplete={() => 
-            handleContentComplete(selectedContent.id, 'document', 0)
-          }
-        />
-      )}
+    {viewerType === 'document' && selectedContent && (
+      <DocumentViewer
+        isOpen={true}
+        onClose={closeViewer}
+        document={selectedContent}
+        onProgress={(progress, readTime) => 
+          handleContentProgress(selectedContent.id, 'document', progress, readTime)
+        }
+        onComplete={() => 
+          handleContentComplete(selectedContent.id, 'document', 0)
+        }
+      />
+    )}
 
-      {viewerType === 'lesson' && selectedContent && (
-        <LessonViewer
-          isOpen={true}
-          onClose={closeViewer}
-          lesson={selectedContent}
-          onProgress={(progress, studyTime) => 
-            handleContentProgress(selectedContent.id, 'lesson', progress, studyTime)
-          }
-          onComplete={() => 
-            handleContentComplete(selectedContent.id, 'lesson', 0)
-          }
-        />
-      )}
+    {viewerType === 'lesson' && selectedContent && (
+      <LessonViewer
+        isOpen={true}
+        onClose={closeViewer}
+        lesson={selectedContent}
+        onProgress={(progress, studyTime) => 
+          handleContentProgress(selectedContent.id, 'lesson', progress, studyTime)
+        }
+        onComplete={() => 
+          handleContentComplete(selectedContent.id, 'lesson', 0)
+        }
+      />
+    )}
 
-      {viewerType === 'project' && selectedContent && (
-        <ProjectViewer
-          isOpen={true}
-          onClose={closeViewer}
-          project={selectedContent}
-          onProgress={(progress, workTime) => 
-            handleContentProgress(selectedContent.id, 'project', progress, workTime)
-          }
-          onComplete={() => 
-            handleContentComplete(selectedContent.id, 'project', 0)
-          }
-        />
-      )}
+    {viewerType === 'project' && selectedContent && (
+      <ProjectViewer
+        isOpen={true}
+        onClose={closeViewer}
+        project={selectedContent}
+        onProgress={(progress, workTime) => 
+          handleContentProgress(selectedContent.id, 'project', progress, workTime)
+        }
+        onComplete={() => 
+          handleContentComplete(selectedContent.id, 'project', 0)
+        }
+      />
+    )}
 
-      {/* Mini Project Editor for Grade 10 */}
-      {currentProject && isProjectEditorOpen && assignedGrade === '10' && (
-        <AdvancedProjectEditor 
-          project={currentProject}
-          isOpen={isProjectEditorOpen}
-          onClose={() => {
-            setIsProjectEditorOpen(false);
-            setCurrentProject(null);
-          }}
-          onSave={() => {
-            // Refresh projects list if needed
-          }}
-        />
-      )}
-
-    </>
+    {/* Mini Project Editor */}
+    {currentProject && isProjectEditorOpen && (
+      <AdvancedProjectEditor
+        isOpen={isProjectEditorOpen}
+        onClose={() => {
+          setIsProjectEditorOpen(false);
+          setCurrentProject(null);
+        }}
+        project={currentProject}
+      />
+    )}
+    </div>
   );
 };
