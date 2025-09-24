@@ -282,11 +282,6 @@ const Grade12VideoLibrary: React.FC = () => {
               <CardContent className="space-y-4">
                 {/* Video Info */}
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <Calendar className="h-4 w-4" />
-                    <span>{format(new Date(video.published_at || video.created_at), 'dd MMM yyyy', { locale: ar })}</span>
-                  </div>
-                  
                   {video.source_type && (
                     <div className="flex items-center gap-1">
                       {video.source_type === 'youtube' ? (

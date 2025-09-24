@@ -264,18 +264,12 @@ const Grade12VideoViewer: React.FC<Grade12VideoViewerProps> = ({ videos, loading
                   )}
                 </div>
 
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <Calendar className="h-4 w-4" />
-                    {formatDate(video.created_at)}
+                {video.duration && (
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <Eye className="h-4 w-4" />
+                    {video.duration}
                   </div>
-                  {video.duration && (
-                    <div className="flex items-center gap-1">
-                      <Eye className="h-4 w-4" />
-                      {video.duration}
-                    </div>
-                  )}
-                </div>
+                )}
 
                 <Button 
                   className="w-full" 
