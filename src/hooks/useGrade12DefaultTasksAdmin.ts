@@ -44,6 +44,7 @@ export const useGrade12DefaultTasksAdmin = () => {
   // جلب جميع المهام
   const fetchAllTasks = async () => {
     try {
+      setLoading(true);
       const { data, error } = await supabase
         .from('grade12_default_tasks')
         .select('*')
@@ -75,6 +76,8 @@ export const useGrade12DefaultTasksAdmin = () => {
       logger.error('Error fetching all tasks', error as Error);
       toast.error('خطأ في جلب المهام');
       return [];
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -357,6 +360,8 @@ export const useGrade12DefaultTasksAdmin = () => {
   useEffect(() => {
     if (userProfile && isSuperAdmin) {
       fetchAllTasks();
+    } else {
+      setLoading(false);
     }
   }, [userProfile, isSuperAdmin]);
 
