@@ -17,7 +17,6 @@ import {
   Code,
   Download,
   Play,
-  Search,
   Target,
   PlayCircle,
   Calendar,
@@ -31,7 +30,6 @@ export const ComputerStructureLessons: React.FC = () => {
   const { sections, loading, error, getContentStats } = useStudentGrade10Lessons();
   const [openSections, setOpenSections] = useState<string[]>([]);
   const [openTopics, setOpenTopics] = useState<string[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
   const [selectedLesson, setSelectedLesson] = useState<Grade10LessonWithMedia | null>(null);
   const [previewMedia, setPreviewMedia] = useState<Grade10LessonMedia | null>(null);
 
@@ -64,23 +62,7 @@ export const ComputerStructureLessons: React.FC = () => {
                            section.description?.toLowerCase().includes('القطع') ||
                            section.description?.toLowerCase().includes('مبنى الحاسوب');
     
-    if (!isComputerTopic) return false;
-    
-    if (!searchQuery) return true;
-    
-    const query = searchQuery.toLowerCase();
-    return (
-      section.title.toLowerCase().includes(query) ||
-      section.description?.toLowerCase().includes(query) ||
-      section.topics?.some(topic => 
-        topic.title.toLowerCase().includes(query) ||
-        topic.content?.toLowerCase().includes(query) ||
-        topic.lessons?.some(lesson => 
-          lesson.title.toLowerCase().includes(query) ||
-          lesson.content?.toLowerCase().includes(query)
-        )
-      )
-    );
+    return isComputerTopic;
   });
 
   // Calculate total lessons for computer sections
@@ -224,33 +206,15 @@ export const ComputerStructureLessons: React.FC = () => {
         </Card>
       </div>
 
-      {/* Search Bar - Minimalist */}
-      <div className="flex gap-3 max-w-xl mx-auto">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-          <Input
-            placeholder="ابحث في مبنى الحاسوب..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 py-2 text-sm border-0 bg-muted/30 rounded-xl focus:bg-white transition-colors"
-          />
-        </div>
-        {searchQuery && (
-          <Button variant="ghost" size="sm" onClick={() => setSearchQuery('')} className="px-4 py-2 text-sm rounded-xl">
-            مسح
-          </Button>
-        )}
-      </div>
-
       {/* Content Sections - Compact Design */}
       <div className="space-y-3">
         {computerSections.length === 0 ? (
           <Card className="text-center py-12 bg-muted/30 border-0">
             <div className="space-y-3">
-              <Search className="w-12 h-12 mx-auto text-muted-foreground/60" />
+              <FolderOpen className="w-12 h-12 mx-auto text-muted-foreground/60" />
               <h3 className="text-base font-medium">لا توجد نتائج</h3>
               <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                {searchQuery ? `لم يتم العثور على محتوى يطابق البحث "${searchQuery}"` : 'لا توجد أقسام متاحة حالياً'}
+                لا توجد أقسام متاحة حالياً
               </p>
             </div>
           </Card>
