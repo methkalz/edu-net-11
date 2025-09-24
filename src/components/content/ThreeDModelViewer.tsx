@@ -111,14 +111,14 @@ export const ThreeDModelViewer: React.FC<ThreeDModelViewerProps> = ({
 
   const handleZoomIn = () => {
     if (controlsRef.current) {
-      controlsRef.current.dollyIn(0.9);
+      controlsRef.current.dollyIn(0.8);
       controlsRef.current.update();
     }
   };
 
   const handleZoomOut = () => {
     if (controlsRef.current) {
-      controlsRef.current.dollyOut(1.1);
+      controlsRef.current.dollyOut(1.25);
       controlsRef.current.update();
     }
   };
