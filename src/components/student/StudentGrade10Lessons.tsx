@@ -267,29 +267,29 @@ export const StudentGrade10Lessons: React.FC = () => {
                 onOpenChange={() => toggleSection(section.id)}
               >
                 <CollapsibleTrigger asChild>
-                  <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
+                  <CardHeader className="cursor-pointer hover:bg-muted/20 transition-all duration-200 py-3 px-4 rounded-lg">
                      <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
-                          <FolderOpen className="w-6 h-6 text-white" />
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-sm">
+                          <FolderOpen className="w-4 h-4 text-white" />
                         </div>
                         <div className="text-left">
-                          <CardTitle className="text-xl font-bold">{section.title}</CardTitle>
+                          <CardTitle className="text-lg font-medium text-foreground/95">{section.title}</CardTitle>
                           {section.description && (
-                            <p className="text-base text-muted-foreground mt-2">
+                            <p className="text-sm text-muted-foreground mt-0.5 leading-relaxed">
                               {section.description}
                             </p>
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <Badge variant="secondary" className="text-sm px-3 py-1">
-                          {section.topics.length} موضوع
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="text-xs px-2 py-0.5 rounded-md">
+                          {section.topics.length}
                         </Badge>
                         {openSections.includes(section.id) ? (
-                          <ChevronDown className="w-6 h-6" />
+                          <ChevronDown className="w-4 h-4 text-muted-foreground" />
                         ) : (
-                          <ChevronRight className="w-6 h-6" />
+                          <ChevronRight className="w-4 h-4 text-muted-foreground" />
                         )}
                       </div>
                     </div>
