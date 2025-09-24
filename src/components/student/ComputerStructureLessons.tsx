@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -34,6 +34,24 @@ export const ComputerStructureLessons: React.FC = () => {
   const [previewMedia, setPreviewMedia] = useState<Grade10LessonMedia | null>(null);
 
   const stats = getContentStats();
+
+  // Auto-open first computer section when data loads
+  React.useEffect(() => {
+    if (sections && sections.length > 0 && openSections.length === 0) {
+      const computerSections = sections.filter(section => {
+        return section.title.toLowerCase().includes('تركيبة الحاسوب') ||
+               section.title.toLowerCase().includes('القطع') ||
+               section.title.toLowerCase().includes('مبنى الحاسوب') ||
+               section.description?.toLowerCase().includes('تركيبة الحاسوب') ||
+               section.description?.toLowerCase().includes('القطع') ||
+               section.description?.toLowerCase().includes('مبنى الحاسوب');
+      });
+      
+      if (computerSections.length > 0) {
+        setOpenSections([computerSections[0].id]);
+      }
+    }
+  }, [sections, openSections.length]);
 
   // Toggle section open/close
   const toggleSection = (sectionId: string) => {
