@@ -226,15 +226,15 @@ const LandingPage: React.FC = () => {
                 <DialogTrigger asChild>
                   <div className="relative group cursor-pointer overflow-hidden rounded-2xl md:rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 bg-gradient-to-br from-purple-100 via-pink-100 to-orange-100 p-1">
                     <div className="relative bg-gradient-to-br from-orange-500 via-red-500 to-pink-500 rounded-2xl md:rounded-3xl overflow-hidden">
-                      {/* Video thumbnail */}
-                      <div className="relative aspect-video bg-black flex items-center justify-center">
-                        <video
-                          className="w-full h-full object-cover"
-                          preload="metadata"
-                          poster="/videos/gamevideo1.mp4#t=1"
-                        >
-                          <source src="/videos/gamevideo1.mp4" type="video/mp4" />
-                        </video>
+                        {/* Video thumbnail */}
+                        <div className="relative aspect-video bg-black flex items-center justify-center">
+                          <video
+                            className="w-full h-full object-cover"
+                            preload="metadata"
+                            poster="/images/game-video-poster.png"
+                          >
+                            <source src="/videos/gamevideo1.mp4" type="video/mp4" />
+                          </video>
                         
                         {/* Play button overlay */}
                         <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover:bg-black/20 transition-all duration-300">
