@@ -74,6 +74,14 @@ export const ComputerStructureLessons: React.FC = () => {
     }, 0);
   };
 
+  // Format section title for better display
+  const formatSectionTitle = (title: string) => {
+    if (title.includes('تركيبة الحاسوب') || title.includes('القطع')) {
+      return 'مكونات الحاسوب';
+    }
+    return title;
+  };
+
   const computerLessonsCount = getTotalLessonsInSections(computerSections);
 
   const getMediaIcon = (mediaType: string) => {
@@ -233,7 +241,7 @@ export const ComputerStructureLessons: React.FC = () => {
                           <Monitor className="w-4 h-4 text-white" />
                         </div>
                         <div className="text-left">
-                          <CardTitle className="text-lg font-semibold">{section.title}</CardTitle>
+                          <CardTitle className="text-lg font-semibold">{formatSectionTitle(section.title)}</CardTitle>
                           {section.description && (
                             <p className="text-sm text-muted-foreground mt-0.5 line-clamp-1">
                               {section.description}
