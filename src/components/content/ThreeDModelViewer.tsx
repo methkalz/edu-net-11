@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { RotateCcw, ZoomIn, ZoomOut, Move3D, Loader2, Palette } from 'lucide-react';
+import { RotateCcw, ZoomIn, ZoomOut, Move3D, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 interface ThreeDModelViewerProps {
@@ -15,7 +15,6 @@ interface ThreeDModelViewerProps {
   showControls?: boolean;
   autoRotate?: boolean;
   className?: string;
-  preserveOriginalColors?: boolean;
 }
 
 // Component for GLB models
@@ -36,40 +35,15 @@ function GLBModel({ url, autoRotate, onLoaded }: { url: string; autoRotate: bool
     }
   });
 
-  // Create a copy that preserves original materials
-  const modelCopy = React.useMemo(() => {
-    if (!scene) return null;
-    const copy = scene.clone();
-    
-    // Ensure materials are properly preserved
-    copy.traverse((child) => {
-      if (child instanceof THREE.Mesh && child.material) {
-        // Clone materials to avoid sharing between instances
-        if (Array.isArray(child.material)) {
-          child.material = child.material.map(mat => mat.clone());
-        } else {
-          child.material = child.material.clone();
-        }
-      }
-    });
-    
-    return copy;
-  }, [scene]);
-
   return (
     <group ref={group} scale={[0.5, 0.5, 0.5]}>
-      {modelCopy && <primitive object={modelCopy} />}
+      <primitive object={scene.clone()} />
     </group>
   );
 }
 
 // Component for OBJ models
-function OBJModel({ url, autoRotate, onLoaded, preserveOriginalColors = false }: { 
-  url: string; 
-  autoRotate: boolean; 
-  onLoaded: () => void;
-  preserveOriginalColors?: boolean;
-}) {
+function OBJModel({ url, autoRotate, onLoaded }: { url: string; autoRotate: boolean; onLoaded: () => void }) {
   const group = useRef<THREE.Group>(null);
   const obj = useLoader(OBJLoader, url);
   
@@ -86,71 +60,24 @@ function OBJModel({ url, autoRotate, onLoaded, preserveOriginalColors = false }:
     }
   });
 
-  // Enhanced material handling for OBJ models
-  const processedObj = React.useMemo(() => {
-    if (!obj) return null;
-    
-    const objCopy = obj.clone();
-    objCopy.traverse((child) => {
-      if (child instanceof THREE.Mesh) {
-        if (preserveOriginalColors) {
-          // Keep original materials completely unchanged
-          if (child.material) {
-            child.material = child.material.clone();
-          }
-        } else {
-          // Check if material has actual color information
-          let hasValidColor = false;
-          
-          if (child.material) {
-            if (Array.isArray(child.material)) {
-              hasValidColor = child.material.some(mat => mat && (mat as any).color && 
-                (mat as any).color.getHex && (mat as any).color.getHex() !== 0x000000);
-            } else {
-              const material = child.material as any;
-              hasValidColor = material.color && material.color.getHex && 
-                material.color.getHex() !== 0x000000 && material.color.getHex() !== 0xffffff;
-            }
-          }
-          
-          if (!hasValidColor || !child.material) {
-            // Apply colorful default materials with variety
-            const colors = [0x4f46e5, 0x0ea5e9, 0x10b981, 0xf59e0b, 0xef4444, 0x8b5cf6];
-            const randomColor = colors[Math.floor(Math.random() * colors.length)];
-            
-            child.material = new THREE.MeshStandardMaterial({
-              color: randomColor,
-              metalness: 0.3,
-              roughness: 0.4,
-              envMapIntensity: 1.0,
-            });
-          } else {
-            // Clone and enhance existing material
-            child.material = child.material.clone();
-            if (child.material instanceof THREE.MeshStandardMaterial) {
-              child.material.envMapIntensity = 1.0;
-              child.material.needsUpdate = true;
-            } else if (child.material instanceof THREE.MeshBasicMaterial) {
-              // Convert MeshBasicMaterial to MeshStandardMaterial for better lighting
-              const color = (child.material as any).color;
-              child.material = new THREE.MeshStandardMaterial({
-                color: color,
-                metalness: 0.1,
-                roughness: 0.6,
-                envMapIntensity: 0.8,
-              });
-            }
-          }
+  // Apply basic material to OBJ
+  React.useEffect(() => {
+    if (obj) {
+      obj.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          child.material = new THREE.MeshStandardMaterial({
+            color: 0x606060,
+            metalness: 0.1,
+            roughness: 0.7,
+          });
         }
-      }
-    });
-    
-    return objCopy;
-  }, [obj, preserveOriginalColors]);
+      });
+    }
+  }, [obj]);
 
   return (
     <group ref={group} scale={[0.5, 0.5, 0.5]}>
-      {processedObj && <primitive object={processedObj} />}
+      <primitive object={obj.clone()} />
     </group>
   );
 }
@@ -161,13 +88,11 @@ export const ThreeDModelViewer: React.FC<ThreeDModelViewerProps> = ({
   title,
   showControls = true,
   autoRotate = false,
-  className = "",
-  preserveOriginalColors = false
+  className = ""
 }) => {
   const [isAutoRotating, setIsAutoRotating] = useState(autoRotate);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [preserveColors, setPreserveColors] = useState(preserveOriginalColors);
   const controlsRef = useRef<any>(null);
 
   const handleLoaded = () => {
@@ -203,14 +128,6 @@ export const ThreeDModelViewer: React.FC<ThreeDModelViewerProps> = ({
     if (controlsRef.current) {
       controlsRef.current.autoRotate = !isAutoRotating;
     }
-  };
-
-  const toggleColorPreservation = () => {
-    setPreserveColors(!preserveColors);
-    toast({
-      title: preserveColors ? "تم تطبيق الألوان الافتراضية" : "تم الحفاظ على الألوان الأصلية",
-      description: preserveColors ? "سيتم استخدام ألوان محسنة" : "سيتم عرض الألوان الأصلية",
-    });
   };
 
   if (error) {
@@ -252,12 +169,9 @@ export const ThreeDModelViewer: React.FC<ThreeDModelViewerProps> = ({
             setIsLoading(false);
           }}
         >
-          {/* Enhanced lighting setup for better color visibility */}
-          <ambientLight intensity={0.4} />
-          <directionalLight position={[10, 10, 5]} intensity={1.2} castShadow />
-          <directionalLight position={[-10, -10, -10]} intensity={0.8} />
-          <pointLight position={[5, 5, 5]} intensity={0.6} />
-          <pointLight position={[-5, -5, 5]} intensity={0.4} />
+          <ambientLight intensity={0.6} />
+          <directionalLight position={[10, 10, 5]} intensity={1} />
+          <pointLight position={[-10, -10, -10]} intensity={0.5} />
           
           <Suspense fallback={null}>
             <Environment preset="studio" />
@@ -265,7 +179,7 @@ export const ThreeDModelViewer: React.FC<ThreeDModelViewerProps> = ({
             {modelType === 'glb' ? (
               <GLBModel url={modelUrl} autoRotate={isAutoRotating} onLoaded={handleLoaded} />
             ) : (
-              <OBJModel url={modelUrl} autoRotate={isAutoRotating} onLoaded={handleLoaded} preserveOriginalColors={preserveColors} />
+              <OBJModel url={modelUrl} autoRotate={isAutoRotating} onLoaded={handleLoaded} />
             )}
             
             <ContactShadows 
@@ -326,18 +240,6 @@ export const ThreeDModelViewer: React.FC<ThreeDModelViewerProps> = ({
             >
               <Move3D className="h-4 w-4" />
             </Button>
-            
-            {modelType === 'obj' && (
-              <Button
-                size="sm"
-                variant={preserveColors ? "default" : "secondary"}
-                onClick={toggleColorPreservation}
-                className="h-8 w-8 p-0 bg-background/80 backdrop-blur-sm hover:bg-background/90"
-                title={preserveColors ? "استخدام ألوان افتراضية" : "الحفاظ على الألوان الأصلية"}
-              >
-                <Palette className="h-4 w-4" />
-              </Button>
-            )}
           </div>
         )}
 
