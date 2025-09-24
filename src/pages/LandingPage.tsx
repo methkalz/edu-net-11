@@ -417,8 +417,9 @@ const LandingPage: React.FC = () => {
           <div className="container mx-auto px-4 text-center">
             <div className="max-w-5xl mx-auto">
               <div className="flex flex-col items-center mb-8 md:mb-12">
-                <Badge variant="destructive" className="mb-4 px-4 py-2 text-sm font-bold">
-                  تخفيض 50%
+                <Badge variant="destructive" className="mb-4 px-6 py-3 text-base md:text-lg font-bold animate-pulse hover-scale shadow-lg relative overflow-hidden">
+                  <span className="relative z-10">تخفيض 50%</span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-red-600 animate-[pulse_1.5s_ease-in-out_infinite]"></div>
                 </Badge>
                 <h2 className="text-2xl md:text-3xl lg:text-4xl font-light text-gray-900 text-center">
                   عرض خاص للمدارس بمناسبة اطلاق المنصة التعليمية
