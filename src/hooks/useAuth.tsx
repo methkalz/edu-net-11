@@ -39,7 +39,7 @@ interface AuthContextType {
 }
 
 // Create the authentication context
-import { useImpersonation } from './useImpersonation';
+import { useImpersonation } from './useImpersonation.ts';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
