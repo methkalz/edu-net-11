@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { RotateCcw, ZoomIn, ZoomOut, Move3D } from 'lucide-react';
+import { RotateCcw, ZoomIn, ZoomOut, Move3D, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 interface ThreeDModelViewerProps {
@@ -18,9 +18,16 @@ interface ThreeDModelViewerProps {
 }
 
 // Component for GLB models
-function GLBModel({ url, autoRotate }: { url: string; autoRotate: boolean }) {
+function GLBModel({ url, autoRotate, onLoaded }: { url: string; autoRotate: boolean; onLoaded: () => void }) {
   const group = useRef<THREE.Group>(null);
   const { scene } = useGLTF(url);
+  
+  // Call onLoaded when the model is ready
+  React.useEffect(() => {
+    if (scene) {
+      onLoaded();
+    }
+  }, [scene, onLoaded]);
   
   useFrame((state, delta) => {
     if (autoRotate && group.current) {
@@ -36,9 +43,16 @@ function GLBModel({ url, autoRotate }: { url: string; autoRotate: boolean }) {
 }
 
 // Component for OBJ models
-function OBJModel({ url, autoRotate }: { url: string; autoRotate: boolean }) {
+function OBJModel({ url, autoRotate, onLoaded }: { url: string; autoRotate: boolean; onLoaded: () => void }) {
   const group = useRef<THREE.Group>(null);
   const obj = useLoader(OBJLoader, url);
+  
+  // Call onLoaded when the model is ready
+  React.useEffect(() => {
+    if (obj) {
+      onLoaded();
+    }
+  }, [obj, onLoaded]);
   
   useFrame((state, delta) => {
     if (autoRotate && group.current) {
@@ -68,16 +82,6 @@ function OBJModel({ url, autoRotate }: { url: string; autoRotate: boolean }) {
   );
 }
 
-// Loading fallback component
-function Loader() {
-  return (
-    <div className="flex items-center justify-center h-full">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      <span className="mr-2 text-muted-foreground">جارٍ تحميل النموذج ثلاثي الأبعاد...</span>
-    </div>
-  );
-}
-
 export const ThreeDModelViewer: React.FC<ThreeDModelViewerProps> = ({
   modelUrl,
   modelType,
@@ -88,7 +92,12 @@ export const ThreeDModelViewer: React.FC<ThreeDModelViewerProps> = ({
 }) => {
   const [isAutoRotating, setIsAutoRotating] = useState(autoRotate);
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const controlsRef = useRef<any>(null);
+
+  const handleLoaded = () => {
+    setIsLoading(false);
+  };
 
   const handleReset = () => {
     if (controlsRef.current) {
@@ -141,25 +150,36 @@ export const ThreeDModelViewer: React.FC<ThreeDModelViewerProps> = ({
       )}
       
       <div className="relative" style={{ height: '400px' }}>
+        {/* Loading overlay */}
+        {isLoading && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+            <div className="flex items-center gap-2">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              <span className="text-muted-foreground">جارٍ تحميل النموذج ثلاثي الأبعاد...</span>
+            </div>
+          </div>
+        )}
+
         <Canvas
           camera={{ position: [0, 0, 5], fov: 50 }}
           style={{ background: 'transparent' }}
           onError={(error) => {
             console.error('Canvas error:', error);
             setError('فشل في تهيئة العارض ثلاثي الأبعاد');
+            setIsLoading(false);
           }}
         >
           <ambientLight intensity={0.6} />
           <directionalLight position={[10, 10, 5]} intensity={1} />
           <pointLight position={[-10, -10, -10]} intensity={0.5} />
           
-          <Suspense fallback={<Loader />}>
+          <Suspense fallback={null}>
             <Environment preset="studio" />
             
             {modelType === 'glb' ? (
-              <GLBModel url={modelUrl} autoRotate={isAutoRotating} />
+              <GLBModel url={modelUrl} autoRotate={isAutoRotating} onLoaded={handleLoaded} />
             ) : (
-              <OBJModel url={modelUrl} autoRotate={isAutoRotating} />
+              <OBJModel url={modelUrl} autoRotate={isAutoRotating} onLoaded={handleLoaded} />
             )}
             
             <ContactShadows 
@@ -183,7 +203,7 @@ export const ThreeDModelViewer: React.FC<ThreeDModelViewerProps> = ({
           />
         </Canvas>
 
-        {showControls && (
+        {showControls && !isLoading && (
           <div className="absolute bottom-4 left-4 flex gap-2">
             <Button
               size="sm"
@@ -223,9 +243,11 @@ export const ThreeDModelViewer: React.FC<ThreeDModelViewerProps> = ({
           </div>
         )}
 
-        <div className="absolute top-4 right-4 text-xs text-muted-foreground bg-background/80 backdrop-blur-sm px-2 py-1 rounded">
-          <p>اسحب للدوران • عجلة الفأرة للتكبير</p>
-        </div>
+        {!isLoading && (
+          <div className="absolute top-4 right-4 text-xs text-muted-foreground bg-background/80 backdrop-blur-sm px-2 py-1 rounded">
+            <p>اسحب للدوران • عجلة الفأرة للتكبير</p>
+          </div>
+        )}
       </div>
     </div>
   );
