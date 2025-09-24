@@ -146,12 +146,12 @@ const StudentDashboard: React.FC = () => {
               </Card>
 
               <Card className="bg-white/10 backdrop-blur border-white/20 text-white">
-                <CardContent className="p-4 text-center">
+                <CardContent className="p-4 flex flex-col items-center justify-center text-center">
                   <div className="w-12 h-12 mx-auto mb-2 bg-orange-400/20 rounded-full flex items-center justify-center">
                     <Zap className="w-6 h-6 text-orange-300" />
                   </div>
-                  <div className="text-2xl font-bold">{stats.current_streak}</div>
-                  <div className="text-sm opacity-80">يوم متتالي</div>
+                  <div className="text-2xl font-bold text-center">{stats.current_streak}</div>
+                  <div className="text-sm opacity-80 text-center">يوم متتالي</div>
                 </CardContent>
               </Card>
             </div>
