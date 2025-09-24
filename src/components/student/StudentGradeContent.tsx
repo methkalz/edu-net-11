@@ -542,7 +542,7 @@ export const StudentGradeContent: React.FC = () => {
                   <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto">
                     <TabsTrigger value="educational_explanations" className="flex items-center gap-2">
                       <BookOpen className="w-4 h-4" />
-                      شروحات تعليمية
+                      مقدمة عن الشبكات
                       <Badge variant="secondary" className="text-xs bg-blue-500/10 text-blue-600">
                         {tab.items.filter((item: any) => item.video_category === 'educational_explanations').length}
                       </Badge>
@@ -573,8 +573,8 @@ export const StudentGradeContent: React.FC = () => {
                       ) : (
                         <div className="col-span-full text-center py-12">
                           <BookOpen className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-                          <h3 className="text-lg font-semibold mb-2">لا توجد شروحات تعليمية</h3>
-                          <p className="text-muted-foreground">لم يتم رفع أي شروحات تعليمية بعد</p>
+                          <h3 className="text-lg font-semibold mb-2">لا توجد مقدمات عن الشبكات</h3>
+                          <p className="text-muted-foreground">لم يتم رفع أي مقدمات عن الشبكات بعد</p>
                         </div>
                       )}
                     </div>
