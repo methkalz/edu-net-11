@@ -66,7 +66,7 @@ const LandingPage: React.FC = () => {
               <Button variant="outline" onClick={() => navigate('/auth')} className="border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 text-xs md:text-sm px-4 md:px-5 py-2.5 rounded-full transition-all duration-300 font-light hover:shadow-sm">
                 تسجيل الدخول
               </Button>
-              <Button onClick={() => scrollToSection('contact')} className="bg-gradient-to-r from-gray-900 to-gray-800 text-white hover:from-gray-800 hover:to-gray-700 text-xs md:text-sm px-5 md:px-7 py-2.5 rounded-full transition-all duration-300 font-medium shadow-lg hover:shadow-xl hover:scale-105">
+              <Button onClick={() => scrollToSection('contact')} className="bg-gradient-to-r from-sky-500 to-sky-600 text-white hover:from-sky-600 hover:to-sky-700 text-xs md:text-sm px-5 md:px-7 py-2.5 rounded-full transition-all duration-300 font-medium shadow-lg hover:shadow-xl hover:scale-105">
                 تواصل معنا
               </Button>
             </div>
