@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Upload, X, Image, Globe, FolderOpen } from 'lucide-react';
 import { logger } from '@/lib/logger';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 import SharedMediaPicker from './SharedMediaPicker';
 import type { SharedMediaFile } from '@/hooks/useSharedMediaLibrary';
 
@@ -40,12 +42,45 @@ const LessonImageForm: React.FC<LessonImageFormProps> = ({ onSave, onCancel }) =
     setIsUploading(true);
 
     try {
-      // في التطبيق الحقيقي، يجب رفع الملف إلى Supabase Storage
-      const tempUrl = URL.createObjectURL(file);
-      handleInputChange('image_url', tempUrl);
+      // Generate unique file name
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `grade11-lessons/${fileName}`;
+
+      // Upload file to Supabase Storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('grade11-documents')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      // Get public URL for the uploaded file
+      const { data: urlData } = supabase.storage
+        .from('grade11-documents')
+        .getPublicUrl(filePath);
+
+      const publicUrl = urlData.publicUrl;
+
+      handleInputChange('image_url', publicUrl);
       handleInputChange('source_type', 'upload');
+      
+      toast({
+        title: "تم الرفع بنجاح",
+        description: "تم رفع الصورة إلى المكتبة",
+      });
+
     } catch (error) {
       logger.error('Error uploading image', error as Error);
+      toast({
+        title: "خطأ في الرفع",
+        description: "فشل في رفع الصورة. حاول مرة أخرى.",
+        variant: "destructive",
+      });
     } finally {
       setIsUploading(false);
     }
