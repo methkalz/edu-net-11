@@ -170,49 +170,47 @@ export const ComputerStructureLessons: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="border-2 hover:shadow-md transition-shadow">
-          <CardContent className="p-6 text-center">
-            <div className="w-12 h-12 mx-auto mb-3 bg-blue-100 rounded-full flex items-center justify-center">
-              <FolderOpen className="w-6 h-6 text-blue-600" />
+    <div className="space-y-8">
+      {/* Cute Minimalist Stats Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-blue-50 to-blue-100/50 border-blue-200/60">
+          <CardContent className="p-4 text-center">
+            <div className="w-8 h-8 mx-auto mb-2 bg-blue-500/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <FolderOpen className="w-4 h-4 text-blue-600" />
             </div>
-            <div className="text-3xl font-bold text-blue-600 mb-1">{computerSections.length}</div>
-            <div className="text-sm text-muted-foreground font-medium">أقسام</div>
+            <div className="text-xl font-bold text-blue-600 mb-0.5">{computerSections.length}</div>
+            <div className="text-xs text-blue-600/70 font-medium">أقسام</div>
           </CardContent>
         </Card>
 
-        <Card className="border-2 hover:shadow-md transition-shadow">
-          <CardContent className="p-6 text-center">
-            <div className="w-12 h-12 mx-auto mb-3 bg-green-100 rounded-full flex items-center justify-center">
-              <Target className="w-6 h-6 text-green-600" />
+        <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-green-50 to-green-100/50 border-green-200/60">
+          <CardContent className="p-4 text-center">
+            <div className="w-8 h-8 mx-auto mb-2 bg-green-500/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Target className="w-4 h-4 text-green-600" />
             </div>
-            <div className="text-3xl font-bold text-green-600 mb-1">
+            <div className="text-xl font-bold text-green-600 mb-0.5">
               {computerSections.reduce((acc, section) => acc + section.topics.length, 0)}
             </div>
-            <div className="text-sm text-muted-foreground font-medium">مواضيع</div>
+            <div className="text-xs text-green-600/70 font-medium">مواضيع</div>
           </CardContent>
         </Card>
 
-        <Card className="border-2 hover:shadow-md transition-shadow">
-          <CardContent className="p-6 text-center">
-            <div className="w-12 h-12 mx-auto mb-3 bg-purple-100 rounded-full flex items-center justify-center">
-              <BookOpen className="w-6 h-6 text-purple-600" />
+        <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-purple-50 to-purple-100/50 border-purple-200/60">
+          <CardContent className="p-4 text-center">
+            <div className="w-8 h-8 mx-auto mb-2 bg-purple-500/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <BookOpen className="w-4 h-4 text-purple-600" />
             </div>
-            <div className="text-3xl font-bold text-purple-600 mb-1">{computerLessonsCount}</div>
-            <div className="text-sm text-muted-foreground font-medium">دروس</div>
+            <div className="text-xl font-bold text-purple-600 mb-0.5">{computerLessonsCount}</div>
+            <div className="text-xs text-purple-600/70 font-medium">دروس</div>
           </CardContent>
         </Card>
 
-        <Card className="border-2 hover:shadow-md transition-shadow">
-          <CardContent className="p-6 text-center">
-            <div className="w-12 h-12 mx-auto mb-3 bg-orange-100 rounded-full flex items-center justify-center">
-              <Monitor className="w-6 h-6 text-orange-600" />
+        <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-orange-50 to-orange-100/50 border-orange-200/60">
+          <CardContent className="p-4 text-center">
+            <div className="w-8 h-8 mx-auto mb-2 bg-orange-500/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Monitor className="w-4 h-4 text-orange-600" />
             </div>
-            <div className="text-3xl font-bold text-orange-600 mb-1">
+            <div className="text-xl font-bold text-orange-600 mb-0.5">
               {computerSections.reduce((acc, section) => 
                 acc + section.topics.reduce((topicAcc: number, topic: any) => 
                   topicAcc + topic.lessons.reduce((lessonAcc: number, lesson: any) => 
@@ -221,72 +219,72 @@ export const ComputerStructureLessons: React.FC = () => {
                 ), 0
               )}
             </div>
-            <div className="text-sm text-muted-foreground font-medium">نماذج ثلاثية الأبعاد</div>
+            <div className="text-xs text-orange-600/70 font-medium">نماذج ثلاثية الأبعاد</div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Search */}
-      <div className="flex gap-3">
+      {/* Search Bar - Minimalist */}
+      <div className="flex gap-3 max-w-xl mx-auto">
         <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <Input
             placeholder="ابحث في مبنى الحاسوب..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-12 py-3 text-base border-2"
+            className="pl-10 py-2 text-sm border-0 bg-muted/30 rounded-xl focus:bg-white transition-colors"
           />
         </div>
         {searchQuery && (
-          <Button variant="outline" onClick={() => setSearchQuery('')} className="px-6 py-3">
+          <Button variant="ghost" size="sm" onClick={() => setSearchQuery('')} className="px-4 py-2 text-sm rounded-xl">
             مسح
           </Button>
         )}
       </div>
 
-      {/* Computer Structure Content */}
-      <div className="space-y-4">
+      {/* Content Sections - Compact Design */}
+      <div className="space-y-3">
         {computerSections.length === 0 ? (
-          <Card className="text-center p-8">
-            <div className="space-y-4">
-              <Search className="w-16 h-16 mx-auto text-muted-foreground" />
-              <h3 className="text-lg font-semibold">لا توجد نتائج</h3>
-              <p className="text-muted-foreground">
+          <Card className="text-center py-12 bg-muted/30 border-0">
+            <div className="space-y-3">
+              <Search className="w-12 h-12 mx-auto text-muted-foreground/60" />
+              <h3 className="text-base font-medium">لا توجد نتائج</h3>
+              <p className="text-sm text-muted-foreground max-w-md mx-auto">
                 {searchQuery ? `لم يتم العثور على محتوى يطابق البحث "${searchQuery}"` : 'لا توجد أقسام متاحة حالياً'}
               </p>
             </div>
           </Card>
         ) : (
           computerSections.map((section) => (
-            <Card key={section.id} className="overflow-hidden">
+            <Card key={section.id} className="overflow-hidden border-0 shadow-sm hover:shadow-md transition-all duration-300 bg-white/60 backdrop-blur-sm">
               <Collapsible 
                 open={openSections.includes(section.id)}
                 onOpenChange={() => toggleSection(section.id)}
               >
                 <CollapsibleTrigger asChild>
-                  <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
+                  <CardHeader className="cursor-pointer hover:bg-muted/20 transition-colors py-3 px-4">
                      <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
-                          <Monitor className="w-6 h-6 text-white" />
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
+                          <Monitor className="w-4 h-4 text-white" />
                         </div>
                         <div className="text-left">
-                          <CardTitle className="text-xl font-bold">{section.title}</CardTitle>
+                          <CardTitle className="text-base font-semibold">{section.title}</CardTitle>
                           {section.description && (
-                            <p className="text-base text-muted-foreground mt-2">
+                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
                               {section.description}
                             </p>
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <Badge variant="secondary" className="text-sm px-3 py-1">
-                          {section.topics.length} موضوع
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="text-xs px-2 py-0.5 rounded-md">
+                          {section.topics.length}
                         </Badge>
                         {openSections.includes(section.id) ? (
-                          <ChevronDown className="w-6 h-6" />
+                          <ChevronDown className="w-4 h-4 text-muted-foreground" />
                         ) : (
-                          <ChevronRight className="w-6 h-6" />
+                          <ChevronRight className="w-4 h-4 text-muted-foreground" />
                         )}
                       </div>
                     </div>
@@ -294,38 +292,38 @@ export const ComputerStructureLessons: React.FC = () => {
                 </CollapsibleTrigger>
 
                 <CollapsibleContent>
-                  <CardContent className="pt-0">
-                    <div className="space-y-3">
+                  <CardContent className="pt-0 pb-3 px-4">
+                    <div className="space-y-2">
                       {section.topics.map((topic) => (
-                        <Card key={topic.id} className="ml-4">
+                        <Card key={topic.id} className="ml-3 border-0 bg-muted/30">
                           <Collapsible
                             open={openTopics.includes(topic.id)}
                             onOpenChange={() => toggleTopic(topic.id)}
                           >
                             <CollapsibleTrigger asChild>
-                              <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors py-4">
+                              <CardHeader className="cursor-pointer hover:bg-muted/40 transition-colors py-2.5 px-3">
                                  <div className="flex items-center justify-between">
-                                  <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
-                                      <Target className="w-5 h-5 text-white" />
+                                  <div className="flex items-center gap-2.5">
+                                    <div className="w-6 h-6 bg-gradient-to-r from-green-500 to-emerald-500 rounded-md flex items-center justify-center">
+                                      <Target className="w-3 h-3 text-white" />
                                     </div>
                                     <div className="text-left">
-                                      <h4 className="font-semibold text-lg">{topic.title}</h4>
+                                      <h4 className="font-medium text-sm">{topic.title}</h4>
                                       {topic.content && (
-                                        <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                                        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
                                           {topic.content}
                                         </p>
                                       )}
                                     </div>
                                   </div>
-                                  <div className="flex items-center gap-3">
-                                    <Badge variant="outline" className="text-sm px-3 py-1">
-                                      {topic.lessons.length} درس
+                                  <div className="flex items-center gap-1.5">
+                                    <Badge variant="outline" className="text-xs px-1.5 py-0.5 rounded-md">
+                                      {topic.lessons.length}
                                     </Badge>
                                     {openTopics.includes(topic.id) ? (
-                                      <ChevronDown className="w-5 h-5" />
+                                      <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
                                     ) : (
-                                      <ChevronRight className="w-5 h-5" />
+                                      <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
                                     )}
                                   </div>
                                 </div>
@@ -333,35 +331,35 @@ export const ComputerStructureLessons: React.FC = () => {
                             </CollapsibleTrigger>
 
                             <CollapsibleContent>
-                              <CardContent className="pt-0">
-                                <div className="space-y-2">
+                              <CardContent className="pt-0 pb-2 px-3">
+                                <div className="space-y-1.5">
                                   {topic.lessons.map((lesson) => (
                                      <div
                                       key={lesson.id}
-                                      className="flex items-center justify-between p-4 bg-muted/30 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer"
+                                      className="flex items-center justify-between p-2.5 bg-white/60 rounded-lg border-0 hover:bg-white/80 transition-colors cursor-pointer group"
                                       onClick={() => setSelectedLesson(lesson)}
                                     >
-                            <div className="flex items-center gap-4">
-                                        <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-                                          <BookOpen className="w-4 h-4 text-white" />
+                            <div className="flex items-center gap-2.5">
+                                        <div className="w-5 h-5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-md flex items-center justify-center">
+                                          <BookOpen className="w-2.5 h-2.5 text-white" />
                                         </div>
                                         <div className="text-left">
-                                          <h5 className="font-medium text-base">{lesson.title}</h5>
+                                          <h5 className="font-medium text-xs">{lesson.title}</h5>
                                           {lesson.content && (
-                                            <p className="text-sm text-muted-foreground mt-1 line-clamp-1">
+                                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
                                               {lesson.content}
                                             </p>
                                           )}
                                         </div>
                                       </div>
-                                      <div className="flex items-center gap-2 flex-shrink-0">
+                                      <div className="flex items-center gap-1 flex-shrink-0">
                                         {lesson.media && lesson.media.length > 0 && (
-                                          <Badge variant="outline" className="text-xs px-2 py-1">
-                                            {lesson.media.length} وسائط
+                                          <Badge variant="outline" className="text-xs px-1 py-0.5 rounded">
+                                            {lesson.media.length}
                                           </Badge>
                                         )}
-                                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
-                                          <ChevronRight className="w-4 h-4" />
+                                        <Button size="sm" variant="ghost" className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                                          <ChevronRight className="w-3 h-3" />
                                         </Button>
                                       </div>
                                     </div>
