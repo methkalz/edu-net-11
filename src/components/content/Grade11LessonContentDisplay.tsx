@@ -123,11 +123,11 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
 
       case 'image':
         return (
-          <div className="relative rounded-lg overflow-hidden bg-gray-100">
+          <div className="relative rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center min-h-[200px] max-h-[500px]">
             <img
               src={media.file_path}
               alt={media.file_name}
-              className="w-full h-auto object-cover max-h-96"
+              className="w-full h-auto object-contain max-h-[500px]"
               loading="lazy"
             />
           </div>

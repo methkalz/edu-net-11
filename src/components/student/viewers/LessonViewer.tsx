@@ -203,11 +203,14 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
                           </div>
                         )}
                         {media.media_type === 'image' && (
-                          <img
-                            src={media.media_url}
-                            alt={media.media_title}
-                            className="w-full rounded border"
-                          />
+                          <div className="relative rounded border bg-gray-50 flex items-center justify-center min-h-[150px] max-h-[300px]">
+                            <img
+                              src={media.media_url}
+                              alt={media.media_title}
+                              className="w-full h-auto object-contain max-h-[300px] rounded"
+                              loading="lazy"
+                            />
+                          </div>
                         )}
                         {media.media_type === 'document' && (
                           <div className="text-center p-4 bg-muted rounded">
