@@ -35,9 +35,29 @@ function GLBModel({ url, autoRotate, onLoaded }: { url: string; autoRotate: bool
     }
   });
 
+  // Create a copy that preserves original materials
+  const modelCopy = React.useMemo(() => {
+    if (!scene) return null;
+    const copy = scene.clone();
+    
+    // Ensure materials are properly preserved
+    copy.traverse((child) => {
+      if (child instanceof THREE.Mesh && child.material) {
+        // Clone materials to avoid sharing between instances
+        if (Array.isArray(child.material)) {
+          child.material = child.material.map(mat => mat.clone());
+        } else {
+          child.material = child.material.clone();
+        }
+      }
+    });
+    
+    return copy;
+  }, [scene]);
+
   return (
     <group ref={group} scale={[0.5, 0.5, 0.5]}>
-      <primitive object={scene.clone()} />
+      {modelCopy && <primitive object={modelCopy} />}
     </group>
   );
 }
@@ -60,24 +80,44 @@ function OBJModel({ url, autoRotate, onLoaded }: { url: string; autoRotate: bool
     }
   });
 
-  // Apply basic material to OBJ
-  React.useEffect(() => {
-    if (obj) {
-      obj.traverse((child) => {
-        if (child instanceof THREE.Mesh) {
+  // Enhanced material handling for OBJ models
+  const processedObj = React.useMemo(() => {
+    if (!obj) return null;
+    
+    const objCopy = obj.clone();
+    objCopy.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        // Only apply default material if no material exists or it's a basic material
+        const hasValidMaterial = child.material && 
+          child.material.type !== 'MeshBasicMaterial' && 
+          (child.material as any).color;
+        
+        if (!hasValidMaterial) {
+          // Apply an enhanced default material
           child.material = new THREE.MeshStandardMaterial({
-            color: 0x606060,
-            metalness: 0.1,
-            roughness: 0.7,
+            color: 0xcccccc, // Lighter default color
+            metalness: 0.2,
+            roughness: 0.5,
+            envMapIntensity: 0.8,
           });
+        } else {
+          // Clone existing material to avoid sharing
+          child.material = child.material.clone();
+          // Enhance existing materials for better visibility
+          if (child.material instanceof THREE.MeshStandardMaterial) {
+            child.material.envMapIntensity = 0.8;
+            child.material.needsUpdate = true;
+          }
         }
-      });
-    }
+      }
+    });
+    
+    return objCopy;
   }, [obj]);
 
   return (
     <group ref={group} scale={[0.5, 0.5, 0.5]}>
-      <primitive object={obj.clone()} />
+      {processedObj && <primitive object={processedObj} />}
     </group>
   );
 }
@@ -169,9 +209,12 @@ export const ThreeDModelViewer: React.FC<ThreeDModelViewerProps> = ({
             setIsLoading(false);
           }}
         >
-          <ambientLight intensity={0.6} />
-          <directionalLight position={[10, 10, 5]} intensity={1} />
-          <pointLight position={[-10, -10, -10]} intensity={0.5} />
+          {/* Enhanced lighting setup for better color visibility */}
+          <ambientLight intensity={0.4} />
+          <directionalLight position={[10, 10, 5]} intensity={1.2} castShadow />
+          <directionalLight position={[-10, -10, -10]} intensity={0.8} />
+          <pointLight position={[5, 5, 5]} intensity={0.6} />
+          <pointLight position={[-5, -5, 5]} intensity={0.4} />
           
           <Suspense fallback={null}>
             <Environment preset="studio" />
