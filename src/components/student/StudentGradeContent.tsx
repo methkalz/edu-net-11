@@ -573,11 +573,11 @@ export const StudentGradeContent: React.FC = () => {
         <div className="flex justify-center mb-8">
           <TabsList className={`
             grid ${assignedGrade === '10' ? 'grid-cols-5' : assignedGrade === '11' ? 'grid-cols-2' : 'grid-cols-3'} 
-            w-full max-w-6xl h-auto p-1 gap-1
+            w-full h-auto p-1 gap-1
             bg-background/80 border border-border/40 
             rounded-2xl shadow-lg backdrop-blur-md
             transition-all duration-300 hover:shadow-xl
-          `}>
+          `} style={{ maxWidth: '1182px' }}>
             {contentTabs.map((tab) => {
               const IconComponent = tab.icon;
               return (
