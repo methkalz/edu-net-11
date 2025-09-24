@@ -567,32 +567,6 @@ export const StudentGradeContent: React.FC = () => {
   return (
     <div className="container mx-auto px-6 py-12 space-y-12">
       {/* Enhanced Header Section */}
-      <div className="text-center space-y-6">
-        <div className="space-y-3">
-          <h1 className="text-4xl font-bold bg-gradient-to-l from-primary to-primary/80 bg-clip-text text-transparent">
-            محتوى الصف {assignedGrade}
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            استكشف المواد التعليمية المتنوعة واكتسب النقاط لتطوير مهاراتك
-          </p>
-        </div>
-        
-        {/* Stats Overview */}
-        <div className="flex items-center justify-center gap-8 text-sm text-muted-foreground">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-primary/60"></div>
-            <span>محتوى تفاعلي</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-green-500/60"></div>
-            <span>تتبع التقدم</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-amber-500/60"></div>
-            <span>نقاط وإنجازات</span>
-          </div>
-        </div>
-      </div>
 
       {/* Content Tabs - Minimalist Design */}
       <Tabs value={activeContentTab} onValueChange={setActiveContentTab} className="w-full">
