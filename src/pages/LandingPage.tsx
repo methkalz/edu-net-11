@@ -11,6 +11,7 @@ import StudentFeaturesSlider from '@/components/landing/StudentFeaturesSlider';
 import AdminFeaturesSlider from '@/components/landing/AdminFeaturesSlider';
 import CountdownTimer from '@/components/ui/CountdownTimer';
 import { useTrafficLightEffect } from '@/hooks/useTrafficLightEffect';
+
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const activeBox = useTrafficLightEffect();
@@ -30,7 +31,9 @@ const LandingPage: React.FC = () => {
       });
     }
   };
-  return <div className="min-h-screen bg-white flex flex-col" dir="rtl">
+
+  return (
+    <div className="min-h-screen bg-white flex flex-col" dir="rtl">
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-sm border-b border-gray-100 z-50">
         <nav className="container mx-auto px-4 py-3">
@@ -137,12 +140,14 @@ const LandingPage: React.FC = () => {
                 suffix: '%',
                 label: 'نسبة الرضا',
                 duration: 4000
-              }].map((stat, index) => <div key={index} className="text-center">
-                    <div className="text-xl md:text-2xl lg:text-3xl font-light text-gray-900 mb-1 md:mb-2">
-                      <AnimatedCounter end={stat.number} duration={stat.duration} suffix={stat.suffix} />
-                    </div>
-                    <div className="text-gray-600 text-xs md:text-sm">{stat.label}</div>
-                  </div>)}
+              }].map((stat, index) => (
+                <div key={index} className="text-center">
+                  <div className="text-xl md:text-2xl lg:text-3xl font-light text-gray-900 mb-1 md:mb-2">
+                    <AnimatedCounter end={stat.number} duration={stat.duration} suffix={stat.suffix} />
+                  </div>
+                  <div className="text-gray-600 text-xs md:text-sm">{stat.label}</div>
+                </div>
+              ))}
               </div>
 
               {/* أزرار العمل */}
@@ -265,27 +270,37 @@ const LandingPage: React.FC = () => {
                         </p>
                         
                         {/* Features */}
-                        <div className="grid grid-cols-2 gap-3 md:gap-4 max-w-sm mx-auto">
-                          {['تفاعل مباشر', 'تحديات ممتعة', 'مكافآت فورية', 'تقييم ذكي'].map((feature, idx) => <div key={idx} className="flex items-center text-white/90 text-xs md:text-sm">
-                              <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-white/60 rounded-full ml-2 flex-shrink-0"></div>
-                              <span className="font-medium">{feature}</span>
-                            </div>)}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 mb-6 md:mb-8">
+                          <div className="flex items-center justify-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg md:rounded-xl p-2 md:p-3 border border-white/20">
+                            <CheckCircle className="h-4 w-4 md:h-5 md:w-5 text-white flex-shrink-0" />
+                            <span className="text-white text-xs md:text-sm font-medium">تفاعلية</span>
+                          </div>
+                          <div className="flex items-center justify-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg md:rounded-xl p-2 md:p-3 border border-white/20">
+                            <Star className="h-4 w-4 md:h-5 md:w-5 text-white flex-shrink-0" />
+                            <span className="text-white text-xs md:text-sm font-medium">محفزة</span>
+                          </div>
+                          <div className="flex items-center justify-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg md:rounded-xl p-2 md:p-3 border border-white/20">
+                            <BookOpen className="h-4 w-4 md:h-5 md:w-5 text-white flex-shrink-0" />
+                            <span className="text-white text-xs md:text-sm font-medium">تعليمية</span>
+                          </div>
                         </div>
                         
-                        <div className="mt-6 md:mt-8">
-                          <Button size="lg" className="bg-white/20 backdrop-blur-sm text-white border border-white/30 hover:bg-white/30 hover:scale-105 transition-all duration-300 font-medium px-6 md:px-8 py-3 rounded-xl shadow-lg">
-                            شاهد العرض
-                            <Play className="mr-2 h-4 w-4" />
-                          </Button>
+                        <div className="flex items-center justify-center gap-2 text-white/80 text-sm md:text-base">
+                          <Play className="h-4 w-4 md:h-5 md:w-5" />
+                          <span>اضغط لمشاهدة الفيديو</span>
                         </div>
                       </div>
                     </div>
                   </div>
                 </DialogTrigger>
-                
-                <DialogContent className="max-w-4xl w-[95vw] p-0 bg-black border-0 overflow-hidden">
-                  <div className="relative aspect-video w-full">
-                    <video className="w-full h-full object-contain" controls autoPlay preload="metadata">
+                <DialogContent className="max-w-4xl w-full bg-black border-0 p-0">
+                  <div className="relative aspect-video">
+                    <video 
+                      className="w-full h-full object-cover" 
+                      controls 
+                      autoPlay
+                      onEnded={() => setIsVideoModalOpen(false)}
+                    >
                       <source src="/videos/gamevideo1.mp4" type="video/mp4" />
                       متصفحك لا يدعم تشغيل الفيديو.
                     </video>
@@ -296,87 +311,118 @@ const LandingPage: React.FC = () => {
           </div>
         </section>
 
-        {/* المحتوى حسب الصفوف */}
+        {/* محتوى حسب الصف */}
         <section id="content" className="py-16 md:py-24 bg-white">
           <div className="container mx-auto px-4">
-            <div className="text-center mb-16 md:mb-20">
+            <div className="text-center mb-12 md:mb-16">
               <h2 className="text-2xl md:text-3xl lg:text-4xl font-light text-gray-900 mb-4 md:mb-6 text-center">
-                المحتوى حسب الصفوف
+                محتوى حسب الصف
               </h2>
               <div className="w-10 md:w-12 h-px bg-gray-300 mx-auto mb-6 md:mb-8"></div>
+              <p className="text-base md:text-lg text-gray-600 max-w-2xl mx-auto text-center px-4">
+                مناهج مُخصصة ومتدرجة لكل مرحلة دراسية
+              </p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-5xl mx-auto">
-              {[{
-              grade: 'الصف العاشر',
-              description: 'التعرف على نظام ويندوز، مقدمة في الشبكات، ومشاريع مصغرة مع فيديوهات',
-              avatar: '/avatars/student-boy-1.png',
-              gradeIcon: '🎯',
-              gradeNumber: '10',
-              bgColor: 'from-blue-50 to-blue-100',
-              borderColor: 'border-blue-200',
-              features: ['مشاريع مصغرة', 'ألعاب تفاعلية', 'دروس شيقة', 'رسوم متحركة']
-            }, {
-              grade: 'الصف الحادي عشر',
-              description: 'المادة المطلوبة (70%) لامتحان البجروت',
-              avatar: '/avatars/student-girl-1.png',
-              gradeIcon: '📚',
-              gradeNumber: '11',
-              bgColor: 'from-green-50 to-green-100',
-              borderColor: 'border-green-200',
-              features: ['محتوى البجروت', 'دروس متقدمة', 'ألعاب تحفيزية', 'امتحانات تفاعلية']
-            }, {
-              grade: 'الصف الثاني عشر',
-              description: 'مهام قصيرة وفيديوهات عملية لتنفيذ مشروع التخرج، مع فحص نسبة التشابه',
-              avatar: '/avatars/student-creative.png',
-              gradeIcon: '🎓',
-              gradeNumber: '12',
-              bgColor: 'from-purple-50 to-purple-100',
-              borderColor: 'border-purple-200',
-              features: ['مشروع التخرج', 'فيديوهات عملية', 'Packet Tracer', 'فحص التشابه']
-            }].map((item, index) => <div key={index} className={`relative bg-gradient-to-br ${item.bgColor} p-6 md:p-8 border ${item.borderColor} rounded-2xl md:rounded-3xl hover:shadow-lg transition-all duration-300 hover:-translate-y-1 overflow-hidden group`}>
-                  {/* Decorative background elements */}
-                  <div className="absolute top-0 right-0 w-16 h-16 md:w-20 md:h-20 bg-white/20 rounded-full -translate-y-8 md:-translate-y-10 translate-x-8 md:translate-x-10"></div>
-                  <div className="absolute bottom-0 left-0 w-12 h-12 md:w-16 md:h-16 bg-white/30 rounded-full translate-y-6 md:translate-y-8 -translate-x-6 md:-translate-x-8"></div>
-                  
-                  {/* Avatar section */}
-                  <div className="relative text-center mb-4 md:mb-6">
-                    <div className="inline-block relative">
-                      <img src={item.avatar} alt={item.grade} className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover shadow-lg border-4 border-white mx-auto group-hover:scale-110 transition-transform duration-300" />
-                      
-                      {/* Grade icon overlay with floating animation */}
-                      <div className="absolute -top-1 md:-top-2 -right-1 md:-right-2 w-6 h-6 md:w-8 md:h-8 bg-white rounded-full shadow-lg flex items-center justify-center text-sm md:text-lg border-2 border-gray-100 animate-bounce" style={{
-                    animationDuration: '3s'
-                  }}>
-                        {item.gradeIcon}
-                      </div>
-                      
-                      {/* Grade number badge with subtle float */}
-                      <div className="absolute -bottom-1 md:-bottom-2 -left-1 md:-left-2 w-6 h-6 md:w-7 md:h-7 bg-gradient-to-r from-gray-600 to-gray-800 rounded-full flex items-center justify-center text-white text-xs md:text-sm font-bold shadow-lg animate-pulse" style={{
-                    animationDuration: '4s'
-                  }}>
-                        {item.gradeNumber}
-                      </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-6xl mx-auto">
+              {/* الصف العاشر */}
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 md:p-8 rounded-2xl md:rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300 border border-blue-200">
+                <div className="flex items-center justify-center mb-6 md:mb-8">
+                  <div className="relative">
+                    <div className="w-20 h-20 md:w-24 md:h-24 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg">
+                      <span className="text-white text-xl md:text-2xl font-bold">10</span>
                     </div>
+                    <div className="absolute -top-2 -right-2 w-8 h-8 bg-blue-200 rounded-full opacity-60"></div>
+                    <div className="absolute -bottom-2 -left-2 w-6 h-6 bg-blue-300 rounded-full opacity-40"></div>
                   </div>
+                </div>
+                <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-4 text-center">الصف العاشر</h3>
+                <p className="text-gray-600 leading-relaxed mb-6 text-center text-sm md:text-base">
+                  أساسيات البرمجة والحوسبة لبناء قاعدة معرفية قوية
+                </p>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                    <span className="text-gray-700 text-sm md:text-base">مقدمة في البرمجة</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                    <span className="text-gray-700 text-sm md:text-base">أنظمة التشغيل</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                    <span className="text-gray-700 text-sm md:text-base">شبكات الحاسوب</span>
+                  </div>
+                </div>
+              </div>
 
-                  <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-3 md:mb-4 text-center">{item.grade}</h3>
-                  <p className="text-gray-600 text-xs md:text-sm mb-4 md:mb-6 leading-relaxed text-center">{item.description}</p>
-                  
-                  <ul className="space-y-2 md:space-y-3">
-                    {item.features.map((feature, idx) => <li key={idx} className="flex items-center text-gray-700 text-xs md:text-sm">
-                        <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-gradient-to-r from-current to-current rounded-full ml-2 flex-shrink-0 opacity-60"></div>
-                        <span className="font-medium">{feature}</span>
-                      </li>)}
-                  </ul>
-                </div>)}
+              {/* الصف الحادي عشر */}
+              <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 md:p-8 rounded-2xl md:rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300 border border-green-200 md:transform md:scale-105">
+                <div className="flex items-center justify-center mb-6 md:mb-8">
+                  <div className="relative">
+                    <div className="w-20 h-20 md:w-24 md:h-24 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center shadow-lg">
+                      <span className="text-white text-xl md:text-2xl font-bold">11</span>
+                    </div>
+                    <div className="absolute -top-2 -right-2 w-8 h-8 bg-green-200 rounded-full opacity-60"></div>
+                    <div className="absolute -bottom-2 -left-2 w-6 h-6 bg-green-300 rounded-full opacity-40"></div>
+                  </div>
+                </div>
+                <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-4 text-center">الصف الحادي عشر</h3>
+                <p className="text-gray-600 leading-relaxed mb-6 text-center text-sm md:text-base">
+                  تطوير المهارات المتقدمة والتحضير لامتحانات البجروت
+                </p>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
+                    <span className="text-gray-700 text-sm md:text-base">هياكل البيانات</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
+                    <span className="text-gray-700 text-sm md:text-base">قواعد البيانات</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
+                    <span className="text-gray-700 text-sm md:text-base">تطوير المواقع</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* الصف الثاني عشر */}
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 md:p-8 rounded-2xl md:rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300 border border-purple-200">
+                <div className="flex items-center justify-center mb-6 md:mb-8">
+                  <div className="relative">
+                    <div className="w-20 h-20 md:w-24 md:h-24 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg">
+                      <span className="text-white text-xl md:text-2xl font-bold">12</span>
+                    </div>
+                    <div className="absolute -top-2 -right-2 w-8 h-8 bg-purple-200 rounded-full opacity-60"></div>
+                    <div className="absolute -bottom-2 -left-2 w-6 h-6 bg-purple-300 rounded-full opacity-40"></div>
+                  </div>
+                </div>
+                <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-4 text-center">الصف الثاني عشر</h3>
+                <p className="text-gray-600 leading-relaxed mb-6 text-center text-sm md:text-base">
+                  إتقان المفاهيم المتقدمة والاستعداد المكثف للبجروت
+                </p>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-purple-500 rounded-full flex-shrink-0"></div>
+                    <span className="text-gray-700 text-sm md:text-base">خوارزميات متقدمة</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-purple-500 rounded-full flex-shrink-0"></div>
+                    <span className="text-gray-700 text-sm md:text-base">مشروع التخرج</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-purple-500 rounded-full flex-shrink-0"></div>
+                    <span className="text-gray-700 text-sm md:text-base">إعداد البجروت</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
-      </main>
 
         {/* عرض خاص للمدارس */}
-        <section className="py-16 md:py-24 bg-gradient-to-br from-blue-50 via-purple-50 to-blue-50">
+        <section className="py-16 md:py-24 bg-gradient-to-br from-green-50 via-blue-50 to-purple-50">
           <div className="container mx-auto px-4 text-center">
             <div className="max-w-5xl mx-auto">
               <h2 className="text-2xl md:text-3xl lg:text-4xl font-light text-gray-900 mb-8 md:mb-12 text-center">
@@ -417,6 +463,21 @@ const LandingPage: React.FC = () => {
             </div>
           </div>
         </section>
-    </div>;
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-8">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col items-center justify-center text-center">
+            <img src="/logo-edunet.png" alt="شعار المنصة" className="h-12 w-auto mb-4 opacity-90" />
+            <p className="text-gray-300 text-sm">
+              جميع الحقوق محفوظة © 2025
+            </p>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
 };
+
 export default LandingPage;
