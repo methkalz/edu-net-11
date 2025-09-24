@@ -1390,6 +1390,88 @@ export type Database = {
         }
         Relationships: []
       }
+      grade10_lesson_media: {
+        Row: {
+          created_at: string
+          file_name: string | null
+          file_path: string | null
+          id: string
+          lesson_id: string
+          media_type: string
+          metadata: Json | null
+          order_index: number
+        }
+        Insert: {
+          created_at?: string
+          file_name?: string | null
+          file_path?: string | null
+          id?: string
+          lesson_id: string
+          media_type: string
+          metadata?: Json | null
+          order_index?: number
+        }
+        Update: {
+          created_at?: string
+          file_name?: string | null
+          file_path?: string | null
+          id?: string
+          lesson_id?: string
+          media_type?: string
+          metadata?: Json | null
+          order_index?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grade10_lesson_media_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "grade10_lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      grade10_lessons: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          order_index: number
+          title: string
+          topic_id: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          order_index?: number
+          title: string
+          topic_id: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          order_index?: number
+          title?: string
+          topic_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grade10_lessons_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "grade10_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       grade10_mini_projects: {
         Row: {
           completed_at: string | null
@@ -1572,6 +1654,74 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "grade10_mini_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      grade10_sections: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          order_index: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          order_index?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          order_index?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      grade10_topics: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: string
+          order_index: number
+          section_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          order_index?: number
+          section_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          order_index?: number
+          section_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grade10_topics_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "grade10_sections"
             referencedColumns: ["id"]
           },
         ]
