@@ -14,6 +14,7 @@ import AppHeader from '@/components/shared/AppHeader';
 import AppFooter from '@/components/shared/AppFooter';
 import { PageLoading } from '@/components/ui/LoadingComponents';
 import { logger } from '@/lib/logger';
+import { useAuth } from '@/hooks/useAuth';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -59,6 +60,7 @@ interface Class {
 const SchoolClasses = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { userProfile } = useAuth();
   const [classes, setClasses] = useState<Class[]>([]);
   const [filteredClasses, setFilteredClasses] = useState<Class[]>([]);
   const [gradeLevels, setGradeLevels] = useState<GradeLevel[]>([]);
@@ -109,15 +111,41 @@ const SchoolClasses = () => {
       if (academicYearsError) throw academicYearsError;
       setAcademicYears(academicYearsData || []);
 
-      // Load classes with related data
-      const { data: classesData, error: classesError } = await supabase
+      // Load classes with related data - filter by teacher's assigned grades if user is a teacher
+      let classesQuery = supabase
         .from('classes')
         .select(`
           *,
           grade_level:grade_levels(id, label),
           class_name:class_names(id, name),
           academic_year:academic_years(id, name)
-        `)
+        `);
+
+      // If user is a teacher, only show classes for assigned grade levels
+      if (userProfile?.role === 'teacher') {
+        // Get teacher's assigned grade levels
+        const { data: assignedGrades } = await supabase
+          .from('teacher_assigned_grades')
+          .select('grade_level_label')
+          .eq('teacher_id', userProfile.user_id);
+
+        if (assignedGrades && assignedGrades.length > 0) {
+          const assignedGradeLabels = assignedGrades.map(ag => ag.grade_level_label);
+          
+          // Get grade level IDs that match assigned labels
+          const { data: matchingGradeLevels } = await supabase
+            .from('grade_levels')
+            .select('id')
+            .in('label', assignedGradeLabels);
+
+          if (matchingGradeLevels && matchingGradeLevels.length > 0) {
+            const gradeIds = matchingGradeLevels.map(gl => gl.id);
+            classesQuery = classesQuery.in('grade_level_id', gradeIds);
+          }
+        }
+      }
+
+      const { data: classesData, error: classesError } = await classesQuery
         .order('created_at_utc', { ascending: false });
 
       if (classesError) throw classesError;
