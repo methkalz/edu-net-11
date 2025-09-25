@@ -11,14 +11,35 @@ import {
   Play,
   Crown,
   Award,
-  Puzzle
+  Puzzle,
+  Network
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useStudentContent } from '@/hooks/useStudentContent';
 
 export const StudentGameSection: React.FC = () => {
   const navigate = useNavigate();
+  const { assignedGrade } = useStudentContent();
 
-  const games = [
+  const getGamesForGrade = () => {
+    if (assignedGrade === "10") {
+      return [
+        {
+          id: 'grade10-knowledge-adventure',
+          title: 'مغامرة المعرفة - الصف العاشر',
+          description: 'استكشف أساسيات الشبكات في رحلة تعليمية ممتعة',
+          icon: Network,
+          difficulty: 'متوسط',
+          points: '20-50 نقطة',
+          color: 'from-blue-500 to-purple-500',
+          bgColor: 'from-blue-50 to-purple-50',
+          path: '/grade10-management',
+          category: 'شبكات'
+        }
+      ];
+    }
+    
+    return [
     {
       id: 'pair-matching',
       title: 'لعبة المطابقة',
@@ -43,7 +64,10 @@ export const StudentGameSection: React.FC = () => {
       path: '/knowledge-adventure',
       category: 'تفاعلي'
     }
-  ];
+    ];
+  };
+
+  const games = getGamesForGrade();
 
   const achievements = [
     { name: 'نجم الألعاب', description: 'أكمل 10 ألعاب', icon: Star, earned: true },

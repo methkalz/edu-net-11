@@ -42,8 +42,8 @@ const StudentDashboard: React.FC = () => {
   const { assignedGrade, getProgressPercentage } = useStudentContent();
   const [activeTab, setActiveTab] = useState('overview');
   
-  // Check if student is in Grade 10 or 12 (no games available)
-  const hasGamesTab = assignedGrade !== "10" && assignedGrade !== "12";
+  // Check if student is in Grade 12 (no games available)
+  const hasGamesTab = assignedGrade !== "12";
 
   const motivationalMessages = [
     'مرحباً بك في رحلة التعلم الرائعة! 🌟',
