@@ -72,10 +72,10 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({
 
   const getLogoSize = () => {
     switch (headerSettings.logo_size) {
-      case 'small': return 'h-12 w-auto';
-      case 'medium': return 'h-16 w-auto';
-      case 'large': return 'h-24 w-auto';
-      default: return 'h-16 w-auto';
+      case 'small': return 'h-16 w-auto';
+      case 'medium': return 'h-20 w-auto';
+      case 'large': return 'h-28 w-auto';
+      default: return 'h-20 w-auto';
     }
   };
 
