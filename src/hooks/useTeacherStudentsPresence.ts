@@ -26,8 +26,8 @@ interface StudentWithClass {
 
 export const useTeacherStudentsPresence = () => {
   const { user } = useAuth();
-  const [onlineStudents, setOnlineStudents] = useState<StudentPresence[]>([]);
   const [presenceChannel, setPresenceChannel] = useState<any>(null);
+  const [presenceData, setPresenceData] = useState<Record<string, any>>({});
 
   const {
     data: allStudents = [],
@@ -80,7 +80,7 @@ export const useTeacherStudentsPresence = () => {
 
   // إعداد Realtime presence tracking
   useEffect(() => {
-    if (!user?.id || !allStudents.length) return;
+    if (!user?.id) return;
 
     const channel = supabase.channel('teacher-students-presence', {
       config: {
@@ -94,21 +94,7 @@ export const useTeacherStudentsPresence = () => {
     channel
       .on('presence', { event: 'sync' }, () => {
         const presenceState = channel.presenceState();
-        const onlineUserIds = Object.keys(presenceState).map(key => 
-          key.replace('student-', '')
-        );
-
-        // تحديث حالة الطلاب بناءً على presence
-        setOnlineStudents(current => 
-          allStudents.map(student => ({
-            ...student,
-            is_online: onlineUserIds.includes(student.id),
-            status: onlineUserIds.includes(student.id) ? 'online' : 
-                    student.last_active_at && 
-                    new Date().getTime() - new Date(student.last_active_at).getTime() < 15 * 60 * 1000 
-                    ? 'away' : 'offline'
-          }))
-        );
+        setPresenceData(presenceState);
       })
       .on('presence', { event: 'join' }, ({ key, newPresences }) => {
         console.log('Student joined:', key, newPresences);
@@ -132,20 +118,41 @@ export const useTeacherStudentsPresence = () => {
     return () => {
       channel.unsubscribe();
     };
-  }, [user?.id, allStudents]);
+  }, [user?.id]);
 
-  // تحديث البيانات الأولية عند تغيير allStudents
-  useEffect(() => {
-    setOnlineStudents(allStudents);
-  }, [allStudents]);
+  // دمج بيانات الطلاب مع بيانات الحضور
+  const studentsWithPresence: StudentPresence[] = allStudents.map(student => {
+    const onlineUserIds = Object.keys(presenceData).map(key => 
+      key.replace('student-', '').replace('teacher-', '')
+    );
+    
+    const isCurrentlyOnline = onlineUserIds.includes(student.id);
+    const isRecentlyActive = student.last_active_at && 
+      new Date().getTime() - new Date(student.last_active_at).getTime() < 15 * 60 * 1000;
+
+    let status: 'online' | 'away' | 'offline';
+    if (isCurrentlyOnline) {
+      status = 'online';
+    } else if (isRecentlyActive) {
+      status = 'away';
+    } else {
+      status = 'offline';
+    }
+
+    return {
+      ...student,
+      is_online: isCurrentlyOnline,
+      status
+    };
+  });
 
   // إحصائيات مفيدة
-  const onlineCount = onlineStudents.filter(s => s.status === 'online').length;
-  const awayCount = onlineStudents.filter(s => s.status === 'away').length;
-  const totalCount = onlineStudents.length;
+  const onlineCount = studentsWithPresence.filter(s => s.status === 'online').length;
+  const awayCount = studentsWithPresence.filter(s => s.status === 'away').length;
+  const totalCount = studentsWithPresence.length;
 
   // تجميع حسب الصف
-  const studentsByClass = onlineStudents.reduce((acc, student) => {
+  const studentsByClass = studentsWithPresence.reduce((acc, student) => {
     const classKey = student.class_name || 'غير محدد';
     if (!acc[classKey]) {
       acc[classKey] = [];
@@ -155,7 +162,7 @@ export const useTeacherStudentsPresence = () => {
   }, {} as Record<string, StudentPresence[]>);
 
   return {
-    students: onlineStudents,
+    students: studentsWithPresence,
     studentsByClass,
     onlineCount,
     awayCount,
