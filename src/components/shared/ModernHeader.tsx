@@ -147,7 +147,7 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({
               <img 
                 src={headerSettings.logo_url} 
                 alt="شعار النظام" 
-                className={`${getLogoSize()} object-contain shadow-sm rounded-lg hover:scale-105 transition-transform duration-300`}
+                className={`${getLogoSize()} object-contain shadow-sm hover:scale-105 transition-transform duration-300`}
               />
             )}
           </div>
