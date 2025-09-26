@@ -25,7 +25,6 @@ export const StudentPresenceWidget: React.FC<StudentPresenceWidgetProps> = ({
     classes,
     selectedClasses,
     loading,
-    lastUpdated,
     toggleClassSelection,
     clearClassSelection
   } = useStudentPresence();
@@ -43,7 +42,7 @@ export const StudentPresenceWidget: React.FC<StudentPresenceWidgetProps> = ({
     }
   };
 
-  const getStudentStatus = (lastSeenAt: string, isOnline: boolean) => {
+  const getStudentStatus = (lastSeenAt: string) => {
     const now = Date.now();
     const lastSeen = new Date(lastSeenAt).getTime();
     const timeDiff = now - lastSeen;
@@ -51,7 +50,7 @@ export const StudentPresenceWidget: React.FC<StudentPresenceWidgetProps> = ({
     const oneMinute = 60 * 1000;
     const fiveMinutes = 5 * 60 * 1000;
     
-    if (isOnline && timeDiff <= oneMinute) {
+    if (timeDiff <= oneMinute) {
       return { status: 'online', color: 'text-green-500', bgColor: 'bg-green-500/20', icon: RadioIcon };
     } else if (timeDiff <= fiveMinutes) {
       return { status: 'recent', color: 'text-orange-500', bgColor: 'bg-orange-500/20', icon: Timer };
@@ -88,15 +87,10 @@ export const StudentPresenceWidget: React.FC<StudentPresenceWidgetProps> = ({
             <div className="flex items-center gap-2">
               <Users className="h-5 w-5 text-primary" />
               <h3 className="font-semibold">المتواجدون الآن</h3>
-              <Badge variant="secondary" className="bg-secondary/20 backdrop-blur-sm border border-secondary/30 animate-fade-in">
-                <span className="transition-all duration-300">{onlineStudents.length}</span>
+              <Badge variant="secondary" className="bg-secondary/20 backdrop-blur-sm border border-secondary/30">
+                {onlineStudents.length}
               </Badge>
             </div>
-            {lastUpdated && (
-              <p className="text-xs text-muted-foreground">
-                آخر تحديث: {formatLastSeen(lastUpdated.toISOString())}
-              </p>
-            )}
             <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
@@ -168,7 +162,7 @@ export const StudentPresenceWidget: React.FC<StudentPresenceWidgetProps> = ({
             <ScrollArea className="h-64">
               <div className="space-y-2 pr-4">
                 {onlineStudents.map(student => {
-                  const studentStatus = getStudentStatus(student.last_seen_at, student.is_online);
+                  const studentStatus = getStudentStatus(student.last_seen_at);
                   
                   return (
                     <Tooltip key={student.id}>
@@ -207,7 +201,7 @@ export const StudentPresenceWidget: React.FC<StudentPresenceWidgetProps> = ({
                                 {studentStatus.status === 'online' 
                                   ? 'متصل' 
                                   : studentStatus.status === 'recent'
-                                  ? 'غادر الآن'
+                                  ? 'انقطع حديثاً'
                                   : formatLastSeen(student.last_seen_at)
                                 }
                               </span>
@@ -230,7 +224,7 @@ export const StudentPresenceWidget: React.FC<StudentPresenceWidgetProps> = ({
                             الحالة: {studentStatus.status === 'online' 
                               ? 'متصل الآن' 
                               : studentStatus.status === 'recent'
-                              ? 'غادر الآن'
+                              ? 'انقطع حديثاً'
                               : 'غير متصل'
                             }
                           </p>

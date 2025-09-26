@@ -36,13 +36,6 @@ export const useStudentPresenceUpdater = () => {
     }
   };
 
-  // heartbeat للطلاب النشطين
-  const sendHeartbeat = async () => {
-    if (isOnlineRef.current) {
-      await updatePresence(true);
-    }
-  };
-
   // متابعة نشاط المستخدم
   useEffect(() => {
     if (!user || userProfile?.role !== 'student') return;
@@ -50,15 +43,12 @@ export const useStudentPresenceUpdater = () => {
     // تحديث أولي
     updatePresence(true);
 
-    // تحديث دوري كل 15 ثانية
+    // تحديث دوري كل دقيقتين
     intervalRef.current = setInterval(() => {
       if (isOnlineRef.current) {
         updatePresence(true);
       }
-    }, 15 * 1000); // 15 ثانية
-
-    // heartbeat إضافي كل 10 ثواني للنشاط
-    const heartbeatInterval = setInterval(sendHeartbeat, 10 * 1000);
+    }, 2 * 60 * 1000); // دقيقتان
 
     // استماع لأحداث النشاط
     const handleActivity = () => {
@@ -107,7 +97,6 @@ export const useStudentPresenceUpdater = () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
-      clearInterval(heartbeatInterval);
 
       activityEvents.forEach(event => {
         document.removeEventListener(event, handleActivity);
