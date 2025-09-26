@@ -110,49 +110,45 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({
         {/* Desktop Layout */}
         <div className="hidden lg:flex lg:items-center lg:justify-between lg:gap-6">
           
-          {/* Left Section: Back Button + User Profile */}
+          {/* Left Section: Back Button + User Profile + Greeting */}
           <div className="flex items-center gap-6">
             {showBackButton && (
               <BackButton backPath={backPath} />
             )}
             
             {user && userProfile && (
-              <UserProfileSection
-                avatarUrl={userProfile.avatar_url}
-                userName={userProfile.full_name}
-                userEmail={user.email}
-                role={userProfile.role}
-                displayTitle={userProfile.display_title}
-                points={userProfile.points}
-                level={userProfile.level}
-                greeting={getGreeting()}
-                variant="desktop"
-              />
+              <div className="flex items-center gap-4">
+                <UserProfileSection
+                  avatarUrl={userProfile.avatar_url}
+                  userName={userProfile.full_name}
+                  userEmail={user.email}
+                  role={userProfile.role}
+                  displayTitle={userProfile.display_title}
+                  points={userProfile.points}
+                  level={userProfile.level}
+                  greeting={getGreeting()}
+                  variant="desktop"
+                />
+                <div className="space-y-1">
+                  <div className="text-base text-foreground font-bold">
+                    <span>{getGreeting()}, {userProfile.full_name || user.email}</span>
+                  </div>
+                  <h1 className="font-cairo text-base text-muted-foreground">
+                    {title || headerSettings.title_text}
+                  </h1>
+                </div>
+              </div>
             )}
           </div>
 
-          {/* Center Section: Logo + Title */}
-          <div className="flex items-center gap-4 justify-center flex-1">
+          {/* Center Section: Logo Only */}
+          <div className="flex items-center justify-center flex-1">
             {headerSettings.show_logo && (
               <img 
                 src={headerSettings.logo_url} 
                 alt="شعار النظام" 
                 className={`${getLogoSize()} object-contain shadow-sm rounded-lg hover:scale-105 transition-transform duration-300`}
               />
-            )}
-            {headerSettings.show_title && (
-              <div className="space-y-1 text-center">
-                {user && userProfile && (
-                  <div className="flex items-center gap-2 text-base text-foreground font-bold justify-center">
-                    <span>{getGreeting()}, {userProfile.full_name || user.email}</span>
-                  </div>
-                )}
-                <h1 
-                  className="font-cairo text-base text-muted-foreground"
-                >
-                  {title || headerSettings.title_text}
-                </h1>
-              </div>
             )}
           </div>
 
