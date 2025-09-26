@@ -321,26 +321,38 @@ export const StudentPresenceWidget: React.FC<StudentPresenceWidgetProps> = memo(
               </div>
               
               <CollapsibleContent className="mt-3">
-                <div className="grid grid-cols-2 gap-2">
+                <div className="flex flex-wrap gap-2">
                   {classes.map(classInfo => (
-                    <Badge
+                    <button
                       key={classInfo.id}
-                      variant={selectedClasses.includes(classInfo.id) ? "default" : "outline"}
-                      className="cursor-pointer hover:bg-primary/10 transition-all duration-200 hover:scale-[1.02] justify-between p-2 h-auto"
+                      className={`group relative overflow-hidden rounded-xl px-3 py-2 text-xs font-medium transition-all duration-300 border backdrop-blur-sm ${
+                        selectedClasses.includes(classInfo.id)
+                          ? 'bg-primary/20 text-primary border-primary/30 shadow-lg shadow-primary/10'
+                          : 'bg-white/5 text-muted-foreground border-white/10 hover:bg-white/10 hover:border-white/20 hover:text-foreground'
+                      }`}
                       onClick={() => toggleClassSelection(classInfo.id)}
                     >
-                      <div className="text-right">
-                        <div className="font-medium text-xs">
-                          {classInfo.name}
+                      <div className="flex items-center gap-2">
+                        <div className="text-right">
+                          <div className="font-semibold leading-tight">
+                            {classInfo.name}
+                          </div>
+                          <div className="text-xs opacity-70 leading-tight">
+                            {classInfo.grade_level}
+                          </div>
                         </div>
-                        <div className="text-xs opacity-70">
-                          {classInfo.grade_level}
+                        <div className={`px-1.5 py-0.5 rounded-md text-xs font-bold backdrop-blur-sm ${
+                          selectedClasses.includes(classInfo.id)
+                            ? 'bg-primary/30 text-primary'
+                            : 'bg-white/10 text-muted-foreground/80'
+                        }`}>
+                          {classInfo.student_count}
                         </div>
                       </div>
-                      <div className="text-xs bg-background/20 rounded px-1.5 py-0.5">
-                        {classInfo.student_count}
-                      </div>
-                    </Badge>
+                      
+                      {/* تأثير الـ hover */}
+                      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-transparent via-white/5 to-transparent"></div>
+                    </button>
                   ))}
                 </div>
               </CollapsibleContent>
