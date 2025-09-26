@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { RefreshCw, Clock } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import BackButton from './BackButton';
-import { GlobalSearchBar } from './GlobalSearchBar';
 import { NotificationCenter } from './NotificationCenter';
 import { UserProfileSection } from './UserProfileSection';
 import { QuickSettings } from './QuickSettings';
@@ -19,7 +18,6 @@ interface ModernHeaderProps {
   refreshing?: boolean;
   notificationCount?: number;
   onNotificationClick?: () => void;
-  showSearch?: boolean;
 }
 
 interface HeaderSettings {
@@ -44,8 +42,7 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({
   onRefresh,
   refreshing = false,
   notificationCount = 0,
-  onNotificationClick,
-  showSearch = true
+  onNotificationClick
 }) => {
   const navigate = useNavigate();
   const { signOut, userProfile, user } = useAuth();
@@ -73,11 +70,6 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({
 
   const handleLogout = async () => {
     await signOut();
-  };
-
-  const handleSearch = (query: string) => {
-    // Implement search functionality
-    console.log('Searching for:', query);
   };
 
   const getLogoSize = () => {
@@ -122,7 +114,7 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({
       
       <div className="container mx-auto px-6 py-4">
         {/* Desktop Layout */}
-        <div className="hidden lg:grid lg:grid-cols-3 lg:gap-6 lg:items-center">
+        <div className="hidden lg:flex lg:items-center lg:justify-between lg:gap-6">
           
           {/* Left Section: Back Button + Brand */}
           <div className="flex items-center gap-6">
@@ -154,18 +146,8 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({
             </div>
           </div>
 
-          {/* Center Section: Search */}
-          <div className="flex justify-center">
-            {showSearch && (
-              <GlobalSearchBar 
-                onSearch={handleSearch}
-                className="w-full max-w-md"
-              />
-            )}
-          </div>
-
           {/* Right Section: User Profile + Actions */}
-          <div className="flex items-center justify-end gap-4">
+          <div className="flex items-center gap-4">
             {user && userProfile && (
               <UserProfileSection
                 avatarUrl={userProfile.avatar_url}
@@ -264,13 +246,6 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({
           </div>
 
           {/* Search Bar */}
-          {showSearch && (
-            <GlobalSearchBar 
-              onSearch={handleSearch}
-              className="w-full"
-            />
-          )}
-
           {/* User Profile Section */}
           {user && userProfile && (
             <div className="pt-2 border-t border-border/20">
