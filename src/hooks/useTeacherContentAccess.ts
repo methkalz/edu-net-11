@@ -96,12 +96,20 @@ const fetchTeacherContentAccess = async (userProfile: any) => {
 
   const availableGrades = (packageData as any)?.available_grade_contents || [];
 
+  // Normalize package grades to match teacher assigned grades format (grade10 -> 10)
+  const normalizedPackageGrades = availableGrades.map((grade: string) => {
+    if (grade === 'grade10') return '10';
+    if (grade === 'grade11') return '11';
+    if (grade === 'grade12') return '12';
+    return grade; // fallback to original if not recognized
+  });
+
   // If settings allow all package content, return all grades
   if (settings.show_all_package_content) {
     return {
-      allowedGrades: availableGrades,
+      allowedGrades: normalizedPackageGrades,
       contentSettings: settings,
-      packageGrades: availableGrades
+      packageGrades: normalizedPackageGrades
     };
   }
 
@@ -110,11 +118,24 @@ const fetchTeacherContentAccess = async (userProfile: any) => {
     .rpc('get_teacher_assigned_grade_levels', { teacher_user_id: userProfile.user_id });
 
   if (gradesError) {
-    logger.error('Error fetching teacher assigned grades', gradesError);
+    logger.error('Error fetching teacher assigned grades', gradesError, {
+      teacherId: userProfile.user_id,
+      schoolId: userProfile.school_id
+    });
+    
+    // For teachers, if we can't get assigned grades, don't allow access
+    if (userProfile.role === 'teacher') {
     return {
-      allowedGrades: availableGrades, // Fallback to all package grades
+      allowedGrades: [], // No access if we can't determine grades
       contentSettings: settings,
-      packageGrades: availableGrades
+      packageGrades: normalizedPackageGrades
+    };
+    }
+    
+    return {
+      allowedGrades: normalizedPackageGrades, // Fallback to all package grades for non-teachers
+      contentSettings: settings,
+      packageGrades: normalizedPackageGrades
     };
   }
 
@@ -124,24 +145,27 @@ const fetchTeacherContentAccess = async (userProfile: any) => {
   if (settings.restrict_to_assigned_grades) {
     // Only show assigned grades that are also in the package
     finalGrades = (assignedGrades || []).filter(grade => 
-      availableGrades.includes(grade)
+      normalizedPackageGrades.includes(grade)
     );
   } else {
     // Show all package grades regardless of assignment
-    finalGrades = availableGrades;
+    finalGrades = normalizedPackageGrades;
   }
 
   logger.info('Teacher content access loaded', {
+    teacherId: userProfile.user_id,
     assignedGrades,
     packageGrades: availableGrades,
+    normalizedPackageGrades,
     finalGrades,
-    settings
+    settings,
+    role: userProfile.role
   });
 
   return {
     allowedGrades: finalGrades,
     contentSettings: settings,
-    packageGrades: availableGrades
+    packageGrades: normalizedPackageGrades
   };
 };
 
@@ -179,7 +203,19 @@ export const useTeacherContentAccess = () => {
   const { allowedGrades, contentSettings, packageGrades } = accessData;
 
   const canAccessGrade = (grade: string): boolean => {
-    return allowedGrades.includes(grade);
+    // Ensure both values are strings for proper comparison
+    const normalizedGrade = String(grade);
+    const normalizedAllowedGrades = allowedGrades.map(g => String(g));
+    
+    logger.debug('canAccessGrade check', {
+      inputGrade: grade,
+      normalizedGrade,
+      allowedGrades,
+      normalizedAllowedGrades,
+      includes: normalizedAllowedGrades.includes(normalizedGrade)
+    });
+    
+    return normalizedAllowedGrades.includes(normalizedGrade);
   };
 
   const getAccessibleContentForGrade = (grade: string) => {

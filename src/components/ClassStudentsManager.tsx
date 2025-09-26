@@ -29,9 +29,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useTeacherContentAccess } from '@/hooks/useTeacherContentAccess';
 import { logger } from '@/lib/logger';
 import { UniversalAvatar } from '@/components/shared/UniversalAvatar';
 import { UserTitleBadge } from '@/components/shared/UserTitleBadge';
+import { TeacherPermissionsDebug } from '@/components/debug/TeacherPermissionsDebug';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -95,6 +97,7 @@ export const ClassStudentsManager: React.FC<ClassStudentsManagerProps> = ({
 }) => {
   const { toast } = useToast();
   const { userProfile } = useAuth();
+  const { allowedGrades, canAccessGrade, loading: teacherAccessLoading } = useTeacherContentAccess();
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingStudents, setLoadingStudents] = useState(true);
@@ -277,6 +280,72 @@ export const ClassStudentsManager: React.FC<ClassStudentsManagerProps> = ({
         description: "لم يتم العثور على معرف المدرسة"
       });
       return;
+    }
+
+    // Check teacher permissions for this class grade
+    if (userProfile?.role === 'teacher') {
+      if (teacherAccessLoading) {
+        toast({
+          variant: "destructive",
+          title: "جارٍ التحميل",
+          description: "جارٍ التحقق من الصلاحيات، يرجى المحاولة مرة أخرى"
+        });
+        return;
+      }
+
+      // Get class grade level - handle multiple possible formats
+      const classGradeData = classData.grade_level;
+      let classGrade = '11'; // Default fallback
+      
+      if (classGradeData) {
+        const gradeLabel = classGradeData.label || '';
+        const gradeCode = classGradeData.code || '';
+        
+        // Try to extract grade number from various formats
+        if (gradeLabel.includes('عاشر') || gradeCode === '10' || gradeLabel === '10') {
+          classGrade = '10';
+        } else if (gradeLabel.includes('حادي عشر') || gradeCode === '11' || gradeLabel === '11') {
+          classGrade = '11';
+        } else if (gradeLabel.includes('ثاني عشر') || gradeCode === '12' || gradeLabel === '12') {
+          classGrade = '12';
+        }
+      }
+
+      logger.info('Checking teacher permissions for student addition', {
+        teacherId: userProfile.user_id,
+        teacherName: userProfile.full_name,
+        classGrade,
+        classGradeData,
+        allowedGrades,
+        allowedGradesType: typeof allowedGrades[0],
+        classGradeType: typeof classGrade,
+        canAccess: canAccessGrade(classGrade),
+        classData: {
+          id: classData.id,
+          grade_level: classData.grade_level
+        }
+      });
+
+      // Check if teacher can access this grade
+      if (!canAccessGrade(classGrade)) {
+        const allowedGradesList = allowedGrades.length > 0 ? allowedGrades.join(', ') : 'لا توجد صفوف مُخولة';
+        toast({
+          variant: "destructive",
+          title: "صلاحيات غير كافية",
+          description: `ليس لديك صلاحية لإضافة طلاب للصف ${classGradeData?.label || classGrade}. أنت مخول فقط للصفوف: ${allowedGradesList}`
+        });
+        return;
+      }
+      
+      // If no allowed grades at all, show specific error
+      if (allowedGrades.length === 0) {
+        toast({
+          variant: "destructive", 
+          title: "لا توجد صلاحيات",
+          description: "لم يتم تخويلك لأي صفوف دراسية. يرجى مراجعة إدارة المدرسة"
+        });
+        return;
+      }
     }
 
     setLoading(true);
@@ -776,6 +845,11 @@ export const ClassStudentsManager: React.FC<ClassStudentsManagerProps> = ({
           {students.length} طالب
         </Badge>
       </div>
+
+      {/* Debug component for teachers */}
+      {userProfile?.role === 'teacher' && (
+        <TeacherPermissionsDebug classData={classData} />
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Current Students List */}
