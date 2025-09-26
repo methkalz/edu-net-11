@@ -36,8 +36,8 @@ export const UserProfilePopup: React.FC<UserProfilePopupProps> = ({ children }) 
   };
 
   const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('en-US', {
+    if (!dateString) return 'غير متاح';
+    return new Date(dateString).toLocaleDateString('ar-SA', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -47,8 +47,8 @@ export const UserProfilePopup: React.FC<UserProfilePopupProps> = ({ children }) 
   };
 
   const formatCreatedAt = (dateString: string | null) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('en-US', {
+    if (!dateString) return 'غير متاح';
+    return new Date(dateString).toLocaleDateString('ar-SA', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
@@ -110,7 +110,7 @@ export const UserProfilePopup: React.FC<UserProfilePopupProps> = ({ children }) 
                   <Mail className="h-4 w-4 text-muted-foreground" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-muted-foreground">Email</p>
+                  <p className="text-xs text-muted-foreground">البريد الإلكتروني</p>
                   <p className="text-sm font-medium truncate">{user.email}</p>
                 </div>
               </div>
@@ -120,9 +120,9 @@ export const UserProfilePopup: React.FC<UserProfilePopupProps> = ({ children }) 
                   <Calendar className="h-4 w-4 text-muted-foreground" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-xs text-muted-foreground">Last Login</p>
+                  <p className="text-xs text-muted-foreground">زيارتك الأخيرة</p>
                   <p className="text-sm font-medium">
-                    {lastLoginLoading ? 'Loading...' : formatDate(lastLogin)}
+                    {lastLoginLoading ? 'جارٍ التحميل...' : formatDate(lastLogin)}
                   </p>
                 </div>
               </div>
@@ -132,7 +132,7 @@ export const UserProfilePopup: React.FC<UserProfilePopupProps> = ({ children }) 
                   <User className="h-4 w-4 text-muted-foreground" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-xs text-muted-foreground">Member Since</p>
+                  <p className="text-xs text-muted-foreground">مستخدم للنظام منذ</p>
                   <p className="text-sm font-medium">
                     {formatCreatedAt(userProfile.created_at)}
                   </p>
@@ -148,7 +148,7 @@ export const UserProfilePopup: React.FC<UserProfilePopupProps> = ({ children }) 
                   <div className="text-center p-3 bg-muted/30 rounded-lg">
                     <div className="flex items-center justify-center gap-1 text-amber-600 mb-1">
                       <Star className="h-4 w-4" />
-                      <span className="text-xs font-medium">Points</span>
+                      <span className="text-xs font-medium">نقاط</span>
                     </div>
                     <p className="text-lg font-bold text-foreground">
                       {userProfile.points || 0}
@@ -158,7 +158,7 @@ export const UserProfilePopup: React.FC<UserProfilePopupProps> = ({ children }) 
                   <div className="text-center p-3 bg-muted/30 rounded-lg">
                     <div className="flex items-center justify-center gap-1 text-blue-600 mb-1">
                       <Trophy className="h-4 w-4" />
-                      <span className="text-xs font-medium">Level</span>
+                      <span className="text-xs font-medium">المرحلة</span>
                     </div>
                     <p className="text-lg font-bold text-foreground">
                       {userTitleData.level}
@@ -175,24 +175,11 @@ export const UserProfilePopup: React.FC<UserProfilePopupProps> = ({ children }) 
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="justify-start gap-3 h-10 hover:bg-muted/50 transition-colors"
-                onClick={() => {
-                  setOpen(false);
-                  window.location.href = '/profile-settings';
-                }}
-              >
-                <Settings className="h-4 w-4" />
-                Settings
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                size="sm" 
                 className="justify-start gap-3 h-10 text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/20 transition-colors"
                 onClick={handleLogout}
               >
                 <LogOut className="h-4 w-4" />
-                Logout
+                خروج
               </Button>
             </div>
           </div>
