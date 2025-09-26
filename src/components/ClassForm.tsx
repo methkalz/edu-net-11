@@ -13,7 +13,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logging';
 import { getArabicGradeName } from '@/utils/gradeMapping';
 
 interface GradeLevel {
