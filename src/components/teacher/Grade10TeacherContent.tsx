@@ -1,13 +1,24 @@
-import React, { useState } from 'react';
-import { useGrade10Files } from '@/hooks/useGrade10Files';
+import React, { useState, useEffect } from 'react';
+import { useStudentContent } from '@/hooks/useStudentContent';
 import { useGrade10MiniProjects } from '@/hooks/useGrade10MiniProjects';
 import { useStudentGrade10Lessons } from '@/hooks/useStudentGrade10Lessons';
+import { StudentGrade10Lessons } from '../student/StudentGrade10Lessons';
+import { ComputerStructureLessons } from '../student/ComputerStructureLessons';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { VideoViewer } from '../student/viewers/VideoViewer';
+import { DocumentViewer } from '../student/viewers/DocumentViewer';
+import { LessonViewer } from '../student/viewers/LessonViewer';
+import { ProjectViewer } from '../student/viewers/ProjectViewer';
+
 import { 
   Play, 
   FileText, 
@@ -17,119 +28,144 @@ import {
   Star,
   BookOpen,
   Video,
+  Download,
+  ExternalLink,
+  Trophy,
+  Target,
+  Sparkles,
+  Plus,
+  Edit3,
   Monitor,
   Settings,
   Network,
   Phone,
-  Search,
   Users,
-  TrendingUp
+  BarChart3
 } from 'lucide-react';
+import { toast } from 'sonner';
+import type { ProjectFormData } from '@/types/grade10-projects';
 
-const Grade10TeacherContent: React.FC = () => {
-  const { videos, documents, loading } = useGrade10Files();
-  const { projects: miniProjects, loading: projectsLoading } = useGrade10MiniProjects();
-  const { sections: lessonSections, loading: lessonsLoading } = useStudentGrade10Lessons();
-  
-  const [activeTab, setActiveTab] = useState('computer_structure');
-  const [searchQuery, setSearchQuery] = useState('');
+const Grade10TeacherContent = () => {
+  // Use student hooks to get Grade 10 content
+  const { gradeContent, loading, error, refetch } = useStudentContent();
+  const { projects: miniProjects, loading: projectsLoading, createProject } = useGrade10MiniProjects();
+  const grade10LessonsResult = useStudentGrade10Lessons();
 
-  // Helper functions for video thumbnails
+  // State management (same as student view)
+  const [activeContentTab, setActiveContentTab] = useState('computer_structure');
+  const [selectedVideo, setSelectedVideo] = useState<any>(null);
+  const [selectedDocument, setSelectedDocument] = useState<any>(null);
+  const [selectedLesson, setSelectedLesson] = useState<any>(null);
+  const [selectedProject, setSelectedProject] = useState<any>(null);
+  const [isCreateProjectDialogOpen, setIsCreateProjectDialogOpen] = useState(false);
+  const [projectFormData, setProjectFormData] = useState<ProjectFormData>({
+    title: '',
+    description: '',
+    due_date: ''
+  });
+
+  // Get Grade 10 content
+  const currentContent = gradeContent['10'];
+  const allProjects = miniProjects || [];
+
+  // Helper functions (same as student view)
   const extractYouTubeId = (url: string): string | null => {
-    const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+    const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
     const match = url.match(regex);
     return match ? match[1] : null;
   };
 
   const extractGoogleDriveId = (url: string): string | null => {
-    const regex = /(?:drive\.google\.com\/(?:file\/d\/|open\?id=)|docs\.google\.com\/file\/d\/)([a-zA-Z0-9_-]+)/;
+    const regex = /\/file\/d\/([a-zA-Z0-9_-]+)/;
     const match = url.match(regex);
     return match ? match[1] : null;
   };
 
   const getVideoThumbnail = (video: any): string => {
-    if (video.thumbnail_url) {
-      return video.thumbnail_url;
+    if (!video.video_url) return '/placeholder.svg';
+
+    const youtubeId = extractYouTubeId(video.video_url);
+    if (youtubeId) {
+      return `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`;
     }
 
-    if (video.source_type === 'youtube' || video.video_url?.includes('youtube.com') || video.video_url?.includes('youtu.be')) {
-      const videoId = extractYouTubeId(video.video_url);
-      if (videoId) {
-        return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-      }
-    }
-
-    if (video.source_type === 'google_drive' || video.video_url?.includes('drive.google.com/file/d/')) {
+    if (video.video_url.includes('drive.google.com')) {
       const fileId = extractGoogleDriveId(video.video_url);
       if (fileId) {
         return `https://drive.google.com/thumbnail?id=${fileId}&sz=w400-h300`;
       }
     }
 
-    return '/placeholder.svg';
+    return video.thumbnail_url || '/placeholder.svg';
   };
 
-  // Content filtering
-  const getFilteredVideos = (category: string) => {
-    if (!videos) return [];
-    return videos
-      .filter(video => (video.video_category || 'educational_explanations') === category)
-      .filter(video =>
-        video.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (video.description && video.description.toLowerCase().includes(searchQuery.toLowerCase()))
-      );
-  };
-
-  const getFilteredLessons = (sectionId: string) => {
-    if (!lessonSections) return [];
-    const section = lessonSections.find(s => s.id === sectionId);
-    if (!section) return [];
+  // Filter functions (same as student view)
+  const getFilteredVideos = (category?: string) => {
+    if (!currentContent?.videos) return [];
     
-    // Collect all lessons from all topics in the section
-    const allLessons = section.topics.reduce((acc, topic) => {
-      return [...acc, ...topic.lessons];
-    }, [] as any[]);
+    return currentContent.videos.filter((video: any) => {
+      if (category && video.category !== category) return false;
+      return true;
+    });
+  };
+
+  // Handle content interactions (adapted for teacher - preview instead of start)
+  const handleContentClick = (item: any, type: 'video' | 'document' | 'lesson' | 'project') => {
+    switch (type) {
+      case 'video':
+        setSelectedVideo(item);
+        break;
+      case 'document':
+        setSelectedDocument(item);
+        break;
+      case 'lesson':
+        setSelectedLesson(item);
+        break;
+      case 'project':
+        setSelectedProject(item);
+        break;
+    }
+  };
+
+  const handleCreateMiniProject = async (e: React.FormEvent) => {
+    e.preventDefault();
     
-    return allLessons.filter(lesson =>
-      lesson.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (lesson.description && lesson.description.toLowerCase().includes(searchQuery.toLowerCase()))
-    );
+    if (!projectFormData.title.trim()) {
+      toast.error('يرجى إدخال عنوان المشروع');
+      return;
+    }
+
+    try {
+      await createProject(projectFormData);
+      toast.success('تم إنشاء المشروع بنجاح');
+      setIsCreateProjectDialogOpen(false);
+      setProjectFormData({ title: '', description: '', due_date: '' });
+      refetch();
+    } catch (error) {
+      console.error('Error creating project:', error);
+      toast.error('حدث خطأ في إنشاء المشروع');
+    }
   };
 
-  const getFilteredDocuments = () => {
-    if (!documents) return [];
-    return documents.filter(doc =>
-      doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (doc.description && doc.description.toLowerCase().includes(searchQuery.toLowerCase()))
-    );
-  };
-
-  const getFilteredProjects = () => {
-    if (!miniProjects) return [];
-    return miniProjects.filter(project =>
-      project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (project.description && project.description.toLowerCase().includes(searchQuery.toLowerCase()))
-    );
-  };
-
-  // Teacher-specific content card with analytics
+  // Teacher-adapted ContentCard with student analytics
   const TeacherContentCard: React.FC<{ 
     item: any; 
     type: 'video' | 'document' | 'lesson' | 'project';
     icon: any;
     color: string;
   }> = ({ item, type, icon: IconComponent, color }) => {
-    // Mock student engagement data
+    // Mock teacher analytics data
     const totalStudents = 25;
     const completedStudents = Math.floor(Math.random() * totalStudents);
-    const avgProgress = Math.floor(Math.random() * 100);
+    const completionRate = Math.round((completedStudents / totalStudents) * 100);
 
     return (
       <Card className="group relative hover:shadow-xl transition-all duration-500 border-0 bg-gradient-to-br from-background/80 to-background/40 backdrop-blur-md overflow-hidden hover:scale-[1.02] hover:-translate-y-1">
+        {/* Animated Border */}
         <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-transparent to-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-lg" />
         
         <CardContent className="p-0 relative">
-          {/* Video Thumbnail Section */}
+          {/* Video Thumbnail Section - Enhanced */}
           {type === 'video' && (
             <div className="relative h-52 overflow-hidden">
               <img
@@ -141,7 +177,12 @@ const Grade10TeacherContent: React.FC = () => {
                 }}
               />
               
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-all duration-500 flex items-center justify-center">
+              {/* Enhanced Overlay */}
+              <div 
+                className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-all duration-500 flex items-center justify-center cursor-pointer"
+                onClick={() => handleContentClick(item, type)}
+              >
+                {/* Play Button with Glow Effect */}
                 <div className="opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:scale-110">
                   <div className="relative">
                     <div className="absolute inset-0 bg-white/20 rounded-full blur-xl"></div>
@@ -152,18 +193,15 @@ const Grade10TeacherContent: React.FC = () => {
                 </div>
               </div>
               
-              {/* Teacher Analytics Overlay */}
-              <div className="absolute top-4 left-4 space-y-2">
-                <div className="bg-black/60 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">
-                  <Users className="w-3 h-3 inline mr-1" />
-                  {completedStudents}/{totalStudents} مكتمل
-                </div>
-                <div className="bg-black/60 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">
-                  <TrendingUp className="w-3 h-3 inline mr-1" />
-                  {avgProgress}% متوسط التقدم
+              {/* Teacher Analytics Badge */}
+              <div className="absolute top-4 right-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-full px-3 py-1 text-xs font-medium shadow-lg border-2 border-white/20">
+                <div className="flex items-center gap-1">
+                  <Users className="w-3 h-3" />
+                  {completedStudents}/{totalStudents}
                 </div>
               </div>
               
+              {/* Duration Badge */}
               {item.duration && (
                 <div className="absolute bottom-4 left-4 bg-black/60 text-white text-xs px-3 py-1 rounded-full backdrop-blur-sm border border-white/20">
                   {item.duration}
@@ -172,7 +210,7 @@ const Grade10TeacherContent: React.FC = () => {
             </div>
           )}
 
-          {/* Content Section */}
+          {/* Content Section - Enhanced */}
           <div className="p-7">
             <div className="space-y-5">
               {/* Header with icon and title (for non-video content) */}
@@ -192,6 +230,12 @@ const Grade10TeacherContent: React.FC = () => {
                       </p>
                     )}
                   </div>
+
+                  {/* Teacher Analytics for non-video content */}
+                  <div className="flex items-center gap-1 text-blue-600 flex-shrink-0 bg-blue-50 rounded-full px-3 py-1 text-xs">
+                    <Users className="w-3 h-3" />
+                    {completedStudents}/{totalStudents}
+                  </div>
                 </div>
               )}
 
@@ -209,20 +253,19 @@ const Grade10TeacherContent: React.FC = () => {
                 </div>
               )}
 
-              {/* Teacher Analytics */}
-              <div className="space-y-3 bg-muted/30 rounded-lg p-4">
+              {/* Teacher Analytics Progress bar */}
+              <div className="space-y-3">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground font-medium">إحصائيات الطلاب</span>
-                  <span className="font-bold text-primary">{completedStudents}/{totalStudents}</span>
+                  <span className="text-muted-foreground font-medium">معدل الإكمال</span>
+                  <span className="font-bold text-primary">{completionRate}%</span>
                 </div>
-                <Progress value={(completedStudents / totalStudents) * 100} className="h-2 bg-muted/50" />
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>معدل الإكمال: {Math.round((completedStudents / totalStudents) * 100)}%</span>
-                  <span>متوسط التقدم: {avgProgress}%</span>
+                <div className="relative">
+                  <Progress value={completionRate} className="h-3 bg-muted/50" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-full"></div>
                 </div>
               </div>
 
-              {/* Bottom info and action */}
+              {/* Enhanced Bottom info and action */}
               <div className="flex items-center justify-between pt-4 border-t border-border/50">
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                   {item.duration && (
@@ -231,10 +274,15 @@ const Grade10TeacherContent: React.FC = () => {
                       <span className="font-medium">{item.duration}</span>
                     </div>
                   )}
+                  <div className="flex items-center gap-2 text-blue-600 bg-blue-50 rounded-full px-3 py-1">
+                    <BarChart3 className="w-3 h-3" />
+                    <span className="font-bold">{completionRate}%</span>
+                  </div>
                 </div>
 
                 <Button
                   size="sm"
+                  onClick={() => handleContentClick(item, type)}
                   className="shrink-0 px-6 py-2 text-sm font-semibold shadow-md hover:shadow-lg transition-all duration-300 group-hover:scale-105"
                 >
                   معاينة
@@ -247,7 +295,7 @@ const Grade10TeacherContent: React.FC = () => {
     );
   };
 
-  if (loading || projectsLoading || lessonsLoading) {
+  if (loading || projectsLoading) {
     return (
       <div className="space-y-6">
         <div className="h-8 bg-muted rounded w-1/3 animate-pulse"></div>
@@ -266,184 +314,361 @@ const Grade10TeacherContent: React.FC = () => {
     );
   }
 
-  return (
-    <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border-blue-200 dark:border-blue-800">
-      <CardHeader className="pb-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <CardTitle className="text-lg">محتوى الصف العاشر</CardTitle>
-              <p className="text-sm text-muted-foreground">عرض ومتابعة محتوى طلاب الصف العاشر</p>
-            </div>
+  if (error) {
+    return (
+      <Card className="text-center p-8">
+        <div className="space-y-4">
+          <div className="w-16 h-16 mx-auto bg-red-100 rounded-full flex items-center justify-center">
+            <ExternalLink className="w-8 h-8 text-red-600" />
           </div>
-          
-          {/* Search */}
-          <div className="relative w-64">
-            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              placeholder="البحث في المحتوى..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pr-10"
-            />
-          </div>
+          <h3 className="text-lg font-semibold">حدث خطأ في تحميل المحتوى</h3>
+          <p className="text-muted-foreground">{error}</p>
+          <Button onClick={() => window.location.reload()}>
+            إعادة تحميل الصفحة
+          </Button>
         </div>
-      </CardHeader>
+      </Card>
+    );
+  }
 
-      <CardContent>
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="computer_structure" className="flex items-center gap-2">
-              <Monitor className="h-4 w-4" />
-              مبنى الحاسوب
-            </TabsTrigger>
-            <TabsTrigger value="windows_basics" className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              أساسيات الويندوز  
-            </TabsTrigger>
-            <TabsTrigger value="documents" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              المستندات
-            </TabsTrigger>
-            <TabsTrigger value="mini_projects" className="flex items-center gap-2">
-              <FolderOpen className="h-4 w-4" />
-              ميني برويكت
-            </TabsTrigger>
+  // Define content tabs (exactly like student view)
+  const contentTabs = [
+    {
+      id: 'computer_structure',
+      label: 'مبنى الحاسوب',
+      icon: Monitor,
+      count: getFilteredVideos('educational_explanations').length,
+      items: getFilteredVideos('educational_explanations'),
+      color: 'from-blue-500 to-cyan-500'
+    },
+    {
+      id: 'windows_basics',
+      label: 'أساسيات الويندوز', 
+      icon: Settings,
+      count: getFilteredVideos('windows_basics').length,
+      items: getFilteredVideos('windows_basics'),
+      color: 'from-green-500 to-emerald-500'
+    },
+    {
+      id: 'network_intro',
+      label: 'مقدمة عن الشبكات',
+      icon: Network,
+      count: getFilteredVideos('educational_explanations').length,
+      items: getFilteredVideos('educational_explanations'),
+      color: 'from-purple-500 to-pink-500'
+    },
+    {
+      id: 'communication_basics',
+      label: 'أساسيات الاتصال',
+      icon: Phone,
+      count: grade10LessonsResult.getContentStats().totalLessons,
+      items: [],
+      color: 'from-orange-500 to-red-500'
+    },
+    {
+      id: 'mini_projects',
+      label: 'ميني برويكت',
+      icon: FolderOpen,
+      count: allProjects.length,
+      items: allProjects,
+      color: 'from-amber-500 to-orange-500'
+    }
+  ];
+
+  return (
+    <div className="container mx-auto px-6 py-12 space-y-12">
+      {/* Teacher Header */}
+      <div className="text-center space-y-4 mb-8">
+        <h2 className="text-3xl font-bold text-foreground">محتوى الصف العاشر - المعلم</h2>
+        <p className="text-muted-foreground">عرض وإدارة محتوى الصف العاشر مع إحصائيات الطلاب</p>
+      </div>
+
+      {/* Content Tabs - Exact same design as student view */}
+      <Tabs value={activeContentTab} onValueChange={setActiveContentTab} className="w-full">
+        <div className="flex justify-center mb-8">
+          <TabsList className="grid grid-cols-5 w-full h-auto p-1 gap-1 bg-background/80 border border-border/40 rounded-2xl shadow-lg backdrop-blur-md transition-all duration-300 hover:shadow-xl" style={{ maxWidth: '1192px' }}>
+            {contentTabs.map((tab) => {
+              const IconComponent = tab.icon;
+              return (
+                <TabsTrigger 
+                  key={tab.id} 
+                  value={tab.id} 
+                  className="
+                    relative flex flex-col items-center justify-center gap-2 
+                    py-6 px-4 min-h-[120px]
+                    text-sm font-medium text-muted-foreground/80
+                    bg-transparent border-0 rounded-xl
+                    transition-all duration-300 ease-out
+                    data-[state=active]:bg-background 
+                    data-[state=active]:text-foreground
+                    data-[state=active]:shadow-md
+                    data-[state=active]:shadow-primary/20
+                    data-[state=active]:scale-[1.02]
+                    hover:bg-background/50 hover:text-foreground/90
+                    hover:shadow-sm hover:scale-[1.01]
+                    focus-visible:outline-none focus-visible:ring-2 
+                    focus-visible:ring-primary/30 focus-visible:ring-offset-2
+                    group overflow-hidden
+                  "
+                >
+                  {/* Icon Container */}
+                  <div className="
+                    relative flex items-center justify-center w-12 h-12 
+                    rounded-xl bg-gradient-to-br from-primary/5 to-primary/10
+                    group-data-[state=active]:from-primary/10 group-data-[state=active]:to-primary/20
+                    group-data-[state=active]:shadow-sm
+                    group-hover:from-primary/8 group-hover:to-primary/15
+                    transition-all duration-300
+                  ">
+                    <IconComponent className="w-6 h-6 transition-all duration-300 group-data-[state=active]:scale-110 group-data-[state=active]:text-primary" />
+                  </div>
+                  
+                  {/* Label */}
+                  <div className="flex flex-col items-center gap-1.5">
+                    <span className="text-xs font-semibold leading-tight text-center px-1 group-data-[state=active]:text-sm transition-all duration-300">
+                      {tab.label}
+                    </span>
+                    
+                    {/* Count Badge */}
+                    <div className="
+                      flex items-center justify-center min-w-[24px] h-6 px-2
+                      bg-muted/50 text-muted-foreground 
+                      group-data-[state=active]:bg-primary group-data-[state=active]:text-primary-foreground
+                      group-data-[state=active]:shadow-sm
+                      rounded-full text-xs font-bold
+                      transition-all duration-300
+                    ">
+                      {tab.count}
+                    </div>
+                  </div>
+                  
+                  {/* Active Indicator - Bottom Bar */}
+                  <div className="
+                    absolute bottom-0 left-1/2 -translate-x-1/2 
+                    w-12 h-1 bg-gradient-to-r from-primary to-primary/80
+                    rounded-t-full transition-all duration-300
+                    opacity-0 scale-x-0 translate-y-1
+                    group-data-[state=active]:opacity-100 group-data-[state=active]:scale-x-100 group-data-[state=active]:translate-y-0
+                  " />
+                  
+                  {/* Hover Effect Background */}
+                  <div className="
+                    absolute inset-0 rounded-xl bg-gradient-to-br from-primary/5 to-transparent
+                    opacity-0 group-hover:opacity-100 group-data-[state=active]:opacity-20
+                    transition-opacity duration-300 -z-10
+                  " />
+                </TabsTrigger>
+              );
+            })}
           </TabsList>
+        </div>
 
-          {/* Computer Structure Tab */}
-          <TabsContent value="computer_structure" className="mt-6">
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">مبنى الحاسوب - فيديوهات تعليمية</h3>
-                <Badge variant="secondary">
-                  {getFilteredVideos('educational_explanations').length} فيديو
-                </Badge>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {getFilteredVideos('educational_explanations').map((video) => (
-                  <TeacherContentCard
-                    key={video.id}
-                    item={video}
-                    type="video"
-                    icon={Video}
-                    color="from-blue-500 to-indigo-600"
-                  />
-                ))}
-              </div>
-              
-              {getFilteredVideos('educational_explanations').length === 0 && (
-                <div className="text-center py-12">
-                  <Monitor className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">لا توجد فيديوهات في مبنى الحاسوب</h3>
-                  <p className="text-muted-foreground">لم يتم إضافة أي فيديوهات في هذا القسم بعد</p>
-                </div>
-              )}
-            </div>
-          </TabsContent>
+        {contentTabs.map((tab) => (
+          <TabsContent key={tab.id} value={tab.id} className="mt-8">
+            {/* Special handling for Grade 10 Communication Basics */}
+            {tab.id === 'communication_basics' ? (
+              <StudentGrade10Lessons />
+            ) : tab.id === 'computer_structure' ? (
+              <ComputerStructureLessons />
+            ) : (
+              <>
+                {/* Enhanced Development Notice for Grade 10 Mini Projects */}
+                {tab.id === 'mini_projects' && (
+                  <div className="mb-8">
+                    <Alert className="bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200/60 shadow-sm">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+                          <Settings className="h-5 w-5 text-amber-600" />
+                        </div>
+                        <div>
+                          <AlertDescription className="text-base font-medium text-amber-800">
+                            عرض المعلم - يمكنك معاينة محتوى الطلاب وإحصائياتهم
+                          </AlertDescription>
+                          <p className="text-sm text-amber-700 mt-1">
+                            هذا المحتوى يظهر بنفس الطريقة للطلاب مع إضافة الإحصائيات
+                          </p>
+                        </div>
+                      </div>
+                    </Alert>
+                  </div>
+                )}
 
-          {/* Windows Basics Tab */}
-          <TabsContent value="windows_basics" className="mt-6">
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">أساسيات الويندوز</h3>
-                <Badge variant="secondary">
-                  {getFilteredVideos('windows_basics').length} فيديو
-                </Badge>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {getFilteredVideos('windows_basics').map((video) => (
-                  <TeacherContentCard
-                    key={video.id}
-                    item={video}
-                    type="video"
-                    icon={Settings}
-                    color="from-green-500 to-emerald-600"
-                  />
-                ))}
-              </div>
-              
-              {getFilteredVideos('windows_basics').length === 0 && (
-                <div className="text-center py-12">
-                  <Settings className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">لا توجد فيديوهات في أساسيات الويندوز</h3>
-                  <p className="text-muted-foreground">لم يتم إضافة أي فيديوهات في هذا القسم بعد</p>
-                </div>
-              )}
-            </div>
-          </TabsContent>
+                {/* Add Create Project Button for Grade 10 Mini Projects Tab */}
+                {tab.id === 'mini_projects' && (
+                  <div className="mb-6 flex justify-center">
+                    <Dialog open={isCreateProjectDialogOpen} onOpenChange={setIsCreateProjectDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button className="gap-2" size="lg">
+                          <Plus className="h-5 w-5" />
+                          إنشاء ميني بروجكت جديد
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[500px]">
+                        <DialogHeader>
+                          <DialogTitle>إنشاء ميني بروجكت جديد</DialogTitle>
+                        </DialogHeader>
+                        <form onSubmit={handleCreateMiniProject} className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="title">عنوان المشروع *</Label>
+                            <Input
+                              id="title"
+                              value={projectFormData.title}
+                              onChange={(e) => setProjectFormData(prev => ({ ...prev, title: e.target.value }))}
+                              placeholder="مثال: تقرير عن الشبكات الحاسوبية"
+                              required
+                            />
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label htmlFor="description">وصف المشروع</Label>
+                            <Textarea
+                              id="description"
+                              value={projectFormData.description}
+                              onChange={(e) => setProjectFormData(prev => ({ ...prev, description: e.target.value }))}
+                              placeholder="وصف مختصر عن محتوى المشروع وأهدافه"
+                              rows={3}
+                            />
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label htmlFor="due_date">موعد التسليم (اختياري)</Label>
+                            <Input
+                              id="due_date"
+                              type="datetime-local"
+                              value={projectFormData.due_date}
+                              onChange={(e) => setProjectFormData(prev => ({ ...prev, due_date: e.target.value }))}
+                            />
+                          </div>
+                          
+                          <div className="flex gap-2 pt-4">
+                            <Button type="submit" className="flex-1">إنشاء المشروع</Button>
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              onClick={() => setIsCreateProjectDialogOpen(false)}
+                            >
+                              إلغاء
+                            </Button>
+                          </div>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                )}
+                
+                {tab.items.length === 0 ? (
+                  <div className="flex items-center justify-center min-h-[400px]">
+                    <Card className="text-center p-16 bg-gradient-to-br from-background/50 to-muted/20 border-border/40 shadow-lg backdrop-blur-sm max-w-md mx-auto">
+                      <div className="space-y-6">
+                        {/* Enhanced Icon Container */}
+                        <div className="w-20 h-20 mx-auto bg-gradient-to-br from-muted/30 to-muted/10 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-border/20">
+                          <tab.icon className="w-10 h-10 text-muted-foreground/70" />
+                        </div>
+                        
+                        {/* Title and Description */}
+                        <div className="space-y-3">
+                          <h3 className="text-xl font-semibold text-foreground">
+                            {tab.id === 'mini_projects' 
+                              ? 'لا يوجد مشاريع مصغرة' 
+                              : `لا يوجد ${tab.label} متاح`
+                            }
+                          </h3>
+                          <p className="text-muted-foreground leading-relaxed">
+                            {tab.id === 'mini_projects'
+                              ? 'يمكن للطلاب إنشاء مشاريعهم الأولى'
+                              : `سيتم إضافة ${tab.label} قريباً للصف العاشر`
+                            }
+                          </p>
+                        </div>
+                        
+                        {/* Action Buttons */}
+                        {tab.id === 'mini_projects' && (
+                          <Button 
+                            className="gap-2 px-6 py-3 text-base font-medium shadow-md hover:shadow-lg transition-all duration-300"
+                            onClick={() => setIsCreateProjectDialogOpen(true)}
+                            size="lg"
+                          >
+                            <Plus className="h-5 w-5" />
+                            إنشاء مشروع جديد
+                          </Button>
+                        )}
+                      </div>
+                    </Card>
+                  </div>
+                ) : (
+                  <div className="grid gap-8 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                    {tab.items.map((item: any) => {
+                      // Determine the correct content type
+                      let contentType: 'video' | 'document' | 'lesson' | 'project' = 'video';
+                      if (tab.id === 'mini_projects') {
+                        contentType = 'project';
+                      } else if (['windows_basics', 'computer_structure', 'network_intro'].includes(tab.id)) {
+                        contentType = 'video';
+                      } else if (tab.id === 'documents') {
+                        contentType = 'document';
+                      } else if (tab.id === 'lessons') {
+                        contentType = 'lesson';
+                      }
 
-          {/* Documents Tab */}
-          <TabsContent value="documents" className="mt-6">
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">المستندات والملفات</h3>
-                <Badge variant="secondary">
-                  {getFilteredDocuments().length} مستند
-                </Badge>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {getFilteredDocuments().map((document) => (
-                  <TeacherContentCard
-                    key={document.id}
-                    item={document}
-                    type="document"
-                    icon={FileText}
-                    color="from-purple-500 to-violet-600"
-                  />
-                ))}
-              </div>
-              
-              {getFilteredDocuments().length === 0 && (
-                <div className="text-center py-12">
-                  <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">لا توجد مستندات</h3>
-                  <p className="text-muted-foreground">لم يتم إضافة أي مستندات في هذا القسم بعد</p>
-                </div>
-              )}
-            </div>
+                      return (
+                        <TeacherContentCard
+                          key={item.id}
+                          item={item}
+                          type={contentType}
+                          icon={tab.icon}
+                          color={tab.color}
+                        />
+                      );
+                    })}
+                  </div>
+                )}
+              </>
+            )}
           </TabsContent>
+        ))}
+      </Tabs>
 
-          {/* Mini Projects Tab */}
-          <TabsContent value="mini_projects" className="mt-6">
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">ميني برويكت</h3>
-                <Badge variant="secondary">
-                  {getFilteredProjects().length} مشروع
-                </Badge>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {getFilteredProjects().map((project) => (
-                  <TeacherContentCard
-                    key={project.id}
-                    item={project}
-                    type="project"
-                    icon={FolderOpen}
-                    color="from-teal-500 to-cyan-600"
-                  />
-                ))}
-              </div>
-              
-              {getFilteredProjects().length === 0 && (
-                <div className="text-center py-12">
-                  <FolderOpen className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">لا توجد مشاريع صغيرة</h3>
-                  <p className="text-muted-foreground">لم يتم إنشاء أي مشاريع صغيرة بعد</p>
-                </div>
-              )}
-            </div>
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+      {/* Modals - Same as student view */}
+      {selectedVideo && (
+        <VideoViewer
+          isOpen={!!selectedVideo}
+          onClose={() => setSelectedVideo(null)}
+          video={selectedVideo}
+          onProgress={() => {}}
+          onComplete={() => {}}
+        />
+      )}
+
+      {selectedDocument && (
+        <DocumentViewer
+          isOpen={!!selectedDocument}
+          onClose={() => setSelectedDocument(null)}
+          document={selectedDocument}
+          onProgress={() => {}}
+          onComplete={() => {}}
+        />
+      )}
+
+      {selectedLesson && (
+        <LessonViewer
+          isOpen={!!selectedLesson}
+          onClose={() => setSelectedLesson(null)}
+          lesson={selectedLesson}
+          onProgress={() => {}}
+          onComplete={() => {}}
+        />
+      )}
+
+      {selectedProject && (
+        <ProjectViewer
+          isOpen={!!selectedProject}
+          onClose={() => setSelectedProject(null)}
+          project={selectedProject}
+          onProgress={() => {}}
+          onComplete={() => {}}
+        />
+      )}
+    </div>
   );
 };
 
