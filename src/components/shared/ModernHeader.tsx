@@ -132,7 +132,7 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({
                     </div>
                   )}
                   <h1 
-                    className="font-cairo text-lg text-muted-foreground"
+                    className="font-cairo text-base text-muted-foreground"
                   >
                     {title || headerSettings.title_text}
                   </h1>
