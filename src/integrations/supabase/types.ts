@@ -4713,53 +4713,6 @@ export type Database = {
           },
         ]
       }
-      student_presence: {
-        Row: {
-          created_at: string
-          current_page: string | null
-          device_info: Json | null
-          id: string
-          is_online: boolean
-          last_seen_at: string
-          school_id: string
-          student_id: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          current_page?: string | null
-          device_info?: Json | null
-          id?: string
-          is_online?: boolean
-          last_seen_at?: string
-          school_id: string
-          student_id: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          current_page?: string | null
-          device_info?: Json | null
-          id?: string
-          is_online?: boolean
-          last_seen_at?: string
-          school_id?: string
-          student_id?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "student_presence_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: true
-            referencedRelation: "students"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       student_progress: {
         Row: {
           completed_at: string | null
@@ -5306,14 +5259,6 @@ export type Database = {
       }
       unlock_next_games: {
         Args: { p_completed_game_id: string; p_player_id: string }
-        Returns: undefined
-      }
-      update_student_presence: {
-        Args: {
-          p_current_page?: string
-          p_is_online?: boolean
-          p_student_id: string
-        }
         Returns: undefined
       }
       validate_email_format: {
