@@ -60,22 +60,6 @@ export const UserProfileSection: React.FC<UserProfileSectionProps> = ({
 
   return (
     <div className={cn("flex items-center gap-6", className)}>
-      {/* User Info */}
-      <div className="text-center space-y-2">
-        <h2 className="text-xl font-bold text-foreground whitespace-nowrap">
-          {greeting}, {userName || userEmail}
-        </h2>
-        {role && (
-          <UserTitleBadge
-            role={role}
-            displayTitle={displayTitle}
-            points={points}
-            level={level}
-            size="sm"
-            variant="secondary"
-          />
-        )}
-      </div>
       
       {/* Profile Avatar with Overlap Effect */}
       <div className="relative">
