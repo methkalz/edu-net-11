@@ -121,14 +121,11 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({
             
             <div className="flex items-center gap-4">
               {headerSettings.show_logo && (
-                <div className="relative group">
-                  <div className="absolute -inset-1 bg-gradient-to-r from-primary/30 to-secondary/30 rounded-xl blur opacity-75 group-hover:opacity-100 transition duration-300"></div>
-                  <img 
-                    src={headerSettings.logo_url} 
-                    alt="شعار النظام" 
-                    className={`${getLogoSize()} relative shadow-lg rounded-xl hover:scale-105 transition-transform duration-300`}
-                  />
-                </div>
+                <img 
+                  src={headerSettings.logo_url} 
+                  alt="شعار النظام" 
+                  className={`${getLogoSize()} shadow-sm rounded-lg hover:scale-105 transition-transform duration-300`}
+                />
               )}
               {headerSettings.show_title && (
                 <div className="space-y-1">
@@ -152,7 +149,7 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({
               {/* Greeting */}
               <div className="text-center space-y-2">
                 <p className="text-sm text-muted-foreground font-medium">{getGreeting()}</p>
-                <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                <h2 className="text-xl font-bold text-foreground">
                   {userProfile.full_name || user.email}
                 </h2>
                 <UserTitleBadge
@@ -166,26 +163,15 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({
               </div>
               
               {/* Profile Avatar - Enhanced overlapping design */}
-              <div className="relative group">
-                {/* Glow effect */}
-                <div className="absolute -inset-3 bg-gradient-to-r from-primary/30 via-secondary/20 to-primary/30 rounded-full blur-xl opacity-60 group-hover:opacity-80 transition-opacity duration-500"></div>
-                
-                {/* Avatar container */}
-                <div className="relative bg-background/90 backdrop-blur-md rounded-full p-2 shadow-2xl border border-white/20">
+              <div className="relative">
+                {/* Avatar container with overlapping effect */}
+                <div className="relative -mb-8 bg-background/90 backdrop-blur-md rounded-full p-3 shadow-2xl border border-border/20">
                   <UniversalAvatar
                     avatarUrl={userProfile.avatar_url}
                     userName={userProfile.full_name}
-                    size="lg"
-                    className="border-3 border-gradient-to-r from-primary/30 to-secondary/30 shadow-2xl hover:scale-110 transition-all duration-500"
+                    size="xl"
+                    className="shadow-xl hover:scale-105 transition-all duration-500"
                   />
-                </div>
-                
-                {/* Enhanced online status indicator */}
-                <div className="absolute -bottom-1 -right-1 flex items-center justify-center">
-                  <div className="w-8 h-8 bg-green-500 border-4 border-background rounded-full shadow-lg relative">
-                    <div className="absolute inset-0 bg-green-400 rounded-full animate-ping opacity-75"></div>
-                    <div className="absolute inset-1 bg-green-500 rounded-full"></div>
-                  </div>
                 </div>
               </div>
             </div>
@@ -259,14 +245,13 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({
                 <UniversalAvatar
                   avatarUrl={userProfile.avatar_url}
                   userName={userProfile.full_name}
-                  size="md"
-                  className="relative border-2 border-primary/20 shadow-lg"
+                  size="lg"
+                  className="border-2 border-primary/20 shadow-lg"
                 />
-                <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 border-2 border-background rounded-full"></div>
               </div>
               <div className="flex-1">
                 <p className="text-sm text-muted-foreground font-medium">{getGreeting()}</p>
-                <h2 className="text-lg font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                <h2 className="text-lg font-bold text-foreground">
                   {userProfile.full_name || user.email}
                 </h2>
                 <UserTitleBadge
