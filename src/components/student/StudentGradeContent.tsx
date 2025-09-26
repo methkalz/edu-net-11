@@ -8,6 +8,7 @@ import { useStudentGrade10Lessons } from '@/hooks/useStudentGrade10Lessons';
 import { StudentGrade11Content } from './StudentGrade11Content';
 import { StudentGrade10Lessons } from './StudentGrade10Lessons';
 import { ComputerStructureLessons } from './ComputerStructureLessons';
+import KnowledgeAdventureRealContent from '../games/KnowledgeAdventureRealContent';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -43,7 +44,8 @@ import {
   Monitor,
   Settings,
   Network,
-  Phone
+  Phone,
+  Gamepad2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { ProjectFormData } from '@/types/grade10-projects';
@@ -522,6 +524,14 @@ export const StudentGradeContent: React.FC = () => {
       color: 'from-purple-500 to-pink-500'
     },
     {
+      id: 'knowledge_adventure',
+      label: 'لعبة المعرفة',
+      icon: Gamepad2,
+      count: 0, // سيتم حساب الإحصائيات لاحقاً
+      items: [],
+      color: 'from-violet-500 to-purple-500'
+    },
+    {
       id: 'communication_basics',
       label: 'أساسيات الاتصال',
       icon: Phone,
@@ -572,12 +582,12 @@ export const StudentGradeContent: React.FC = () => {
       <Tabs value={activeContentTab} onValueChange={setActiveContentTab} className="w-full">
         <div className="flex justify-center mb-8">
           <TabsList className={`
-            grid ${assignedGrade === '10' ? 'grid-cols-5' : assignedGrade === '11' ? 'grid-cols-2' : 'grid-cols-3'} 
+            grid ${assignedGrade === '10' ? 'grid-cols-6' : assignedGrade === '11' ? 'grid-cols-2' : 'grid-cols-3'} 
             w-full h-auto p-1 gap-1
             bg-background/80 border border-border/40 
             rounded-2xl shadow-lg backdrop-blur-md
             transition-all duration-300 hover:shadow-xl
-          `} style={{ maxWidth: '1192px' }}>
+          `} style={{ maxWidth: '1400px' }}>
             {contentTabs.map((tab) => {
               const IconComponent = tab.icon;
               return (
@@ -656,8 +666,10 @@ export const StudentGradeContent: React.FC = () => {
 
         {contentTabs.map((tab) => (
           <TabsContent key={tab.id} value={tab.id} className="mt-8">
-            {/* Special handling for Grade 10 Communication Basics */}
-            {tab.id === 'communication_basics' && assignedGrade === '10' ? (
+            {/* Special handling for Grade 10 sections */}
+            {tab.id === 'knowledge_adventure' && assignedGrade === '10' ? (
+              <KnowledgeAdventureRealContent />
+            ) : tab.id === 'communication_basics' && assignedGrade === '10' ? (
               <StudentGrade10Lessons />
             ) : tab.id === 'computer_structure' && assignedGrade === '10' ? (
               <ComputerStructureLessons />
