@@ -528,15 +528,21 @@ const TeacherDashboard: React.FC = () => {
           onRefresh={() => fetchTeacherData(true)}
         />
 
-        {/* Grade 12 Projects and Notifications */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <Grade12ProjectsWidget />
+        {/* Grade 12 Projects and Notifications - عرض حسب الصلاحيات */}
+        {canAccessGrade('12') ? (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <Grade12ProjectsWidget />
+            </div>
+            <div className="lg:col-span-1">
+              <ProjectNotifications />
+            </div>
           </div>
-          <div className="lg:col-span-1">
+        ) : allowedGrades.length > 0 && (
+          <div className="grid grid-cols-1 gap-6">
             <ProjectNotifications />
           </div>
-        </div>
+        )}
 
         {/* الإجراءات السريعة المحسنة */}
         <Card className="glass-card border-0 shadow-xl animate-fade-in-up">
