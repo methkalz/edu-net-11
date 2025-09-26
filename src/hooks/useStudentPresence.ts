@@ -33,9 +33,21 @@ export const useStudentPresence = () => {
   const [onlineStudents, setOnlineStudents] = useState<StudentPresence[]>([]);
   const [allStudentPresence, setAllStudentPresence] = useState<StudentPresence[]>([]);
   const [classes, setClasses] = useState<ClassInfo[]>([]);
-  const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
+  const [selectedClasses, setSelectedClasses] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('student-presence-selected-classes');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [loading, setLoading] = useState(true);
   const { user, userProfile } = useAuth();
+
+  // حفظ الفلاتر في localStorage عند تغييرها
+  useEffect(() => {
+    localStorage.setItem('student-presence-selected-classes', JSON.stringify(selectedClasses));
+  }, [selectedClasses]);
 
   // جلب بيانات الطلاب والصفوف
   const fetchStudentPresence = async () => {
