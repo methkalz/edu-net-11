@@ -31,6 +31,9 @@ interface TeacherStatsCardProps {
   color: string;
   loading?: boolean;
   delay?: number;
+  isClickable?: boolean;
+  hasChart?: boolean;
+  onCardClick?: () => void;
 }
 
 const TeacherStatsCard: React.FC<TeacherStatsCardProps> = ({
@@ -40,7 +43,10 @@ const TeacherStatsCard: React.FC<TeacherStatsCardProps> = ({
   change,
   color,
   loading = false,
-  delay = 0
+  delay = 0,
+  isClickable = false,
+  hasChart = false,
+  onCardClick
 }) => {
   if (loading) {
     return (
@@ -86,9 +92,11 @@ const TeacherStatsCard: React.FC<TeacherStatsCardProps> = ({
     <Card 
       className={cn(
         "modern-card glass-card card-hover group relative overflow-hidden",
-        "animate-fade-in-up transition-all duration-300 hover:shadow-xl"
+        "animate-fade-in-up transition-all duration-300 hover:shadow-xl",
+        isClickable && "cursor-pointer hover:scale-[1.02]"
       )}
       style={{ animationDelay: `${delay}ms` }}
+      onClick={isClickable ? onCardClick : undefined}
     >
       <div className={cn(
         "absolute inset-0 opacity-5 bg-gradient-to-br",
@@ -98,9 +106,18 @@ const TeacherStatsCard: React.FC<TeacherStatsCardProps> = ({
       <CardContent className="p-6 relative">
         <div className="flex items-center justify-between">
           <div className="space-y-2">
-            <p className="text-sm font-medium text-muted-foreground">
-              {title}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-medium text-muted-foreground">
+                {title}
+              </p>
+              {isClickable && (
+                <div className="flex items-center gap-1">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                  <div className="w-1 h-1 rounded-full bg-amber-500"></div>
+                  <div className="w-0.5 h-0.5 rounded-full bg-muted-foreground/50"></div>
+                </div>
+              )}
+            </div>
             <div className="space-y-1">
               <p className={cn(
                 "text-3xl font-bold bg-gradient-to-r bg-clip-text text-transparent",
@@ -114,6 +131,18 @@ const TeacherStatsCard: React.FC<TeacherStatsCardProps> = ({
                   <span className={getChangeColor()}>
                     {change.value > 0 ? '+' : ''}{change.value}
                   </span>
+                </div>
+              )}
+              {hasChart && (
+                <div className="flex items-center gap-1 mt-2">
+                  <div className="flex items-end gap-0.5 h-4">
+                    <div className="w-1 bg-emerald-500/60 rounded-sm h-2"></div>
+                    <div className="w-1 bg-emerald-500/80 rounded-sm h-3"></div>
+                    <div className="w-1 bg-emerald-500 rounded-sm h-4"></div>
+                    <div className="w-1 bg-emerald-400/60 rounded-sm h-3"></div>
+                    <div className="w-1 bg-emerald-400/40 rounded-sm h-2"></div>
+                  </div>
+                  <span className="text-xs text-muted-foreground mr-1">اتجاه متزايد</span>
                 </div>
               )}
             </div>
@@ -132,6 +161,15 @@ const TeacherStatsCard: React.FC<TeacherStatsCardProps> = ({
         <div className="absolute top-2 right-2">
           <div className="w-2 h-2 rounded-full bg-primary/20 accent-dot"></div>
         </div>
+        
+        {isClickable && (
+          <div className="absolute bottom-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <div className="text-xs text-muted-foreground/70 flex items-center gap-1">
+              <span>انقر للتفاصيل</span>
+              <div className="w-1 h-1 rounded-full bg-primary/60"></div>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -143,6 +181,7 @@ interface TeacherDashboardStatsProps {
   refreshing?: boolean;
   error?: string;
   onRefresh?: () => void;
+  onOnlineStudentsClick?: () => void;
 }
 
 export const TeacherDashboardStats: React.FC<TeacherDashboardStatsProps> = ({
@@ -150,7 +189,8 @@ export const TeacherDashboardStats: React.FC<TeacherDashboardStatsProps> = ({
   loading = false,
   refreshing = false,
   error,
-  onRefresh
+  onRefresh,
+  onOnlineStudentsClick
 }) => {
   const statsCards = [
     {
@@ -174,7 +214,9 @@ export const TeacherDashboardStats: React.FC<TeacherDashboardStatsProps> = ({
       color: 'from-emerald-500 to-emerald-600 text-emerald-600',
       change: stats.onlineStudents && stats.onlineStudents > 0 
         ? { value: stats.onlineStudents, type: 'increase' as const }
-        : undefined
+        : undefined,
+      isClickable: true,
+      hasChart: true
     },
     {
       title: 'المضامين المتاحة',
@@ -228,6 +270,9 @@ export const TeacherDashboardStats: React.FC<TeacherDashboardStatsProps> = ({
           color={stat.color}
           loading={loading}
           delay={index * 100}
+          isClickable={stat.isClickable}
+          hasChart={stat.hasChart}
+          onCardClick={stat.title === 'المتواجدون الآن' ? onOnlineStudentsClick : undefined}
         />
       ))}
     </div>

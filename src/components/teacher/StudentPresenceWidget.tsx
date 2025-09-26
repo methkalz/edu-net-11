@@ -73,69 +73,76 @@ const StudentCard = memo(({ student }: { student: any }) => {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className={`group flex items-center justify-between p-4 rounded-xl transition-all duration-300 cursor-pointer border ${studentStatus.bgColor} hover:shadow-md hover:scale-[1.01] hover:border-primary/20`}>
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/30 flex items-center justify-center border border-primary/20 transition-all duration-300 group-hover:border-primary/40">
-                <span className="text-sm font-semibold text-primary">
-                  {student.student.full_name.charAt(0)}
-                </span>
-              </div>
-              <div className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-2 border-background ${studentStatus.bgColor} flex items-center justify-center transition-all duration-300`}>
-                <div className={`w-2 h-2 rounded-full ${
-                  studentStatus.status === 'online' 
-                    ? 'bg-emerald-500' + (studentStatus.pulse ? ' animate-pulse' : '') 
-                    : studentStatus.status === 'recent' 
-                    ? 'bg-amber-500' 
-                    : 'bg-muted-foreground/50'
-                }`} />
-              </div>
-            </div>
-            
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-sm text-foreground truncate mb-0.5">
-                {student.student.full_name}
-              </p>
-              {student.class_info && (
-                <p className="text-xs text-muted-foreground">
-                  {student.class_info.class_name} - {student.class_info.grade_level}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <div className={`flex items-center gap-1.5 ${studentStatus.color} transition-colors duration-300`}>
-              <studentStatus.icon className="h-3.5 w-3.5" />
-              <span className="text-xs font-medium">
-                {studentStatus.label}
+        <div className="group flex items-center gap-3 p-3 rounded-2xl transition-all duration-500 cursor-pointer backdrop-blur-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 hover:shadow-2xl hover:shadow-primary/5 hover:scale-[1.02]">
+          <div className="relative">
+            <div className="w-12 h-12 rounded-full backdrop-blur-sm bg-gradient-to-br from-white/20 to-white/5 flex items-center justify-center border border-white/20 transition-all duration-500 group-hover:border-white/40 group-hover:shadow-lg group-hover:shadow-primary/10">
+              <span className="text-sm font-bold text-foreground/90">
+                {student.student.full_name.charAt(0)}
               </span>
             </div>
+            <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full backdrop-blur-sm border-2 border-white/30 flex items-center justify-center transition-all duration-500 ${
+              studentStatus.status === 'online' 
+                ? 'bg-emerald-500/90 shadow-lg shadow-emerald-500/50' 
+                : studentStatus.status === 'recent' 
+                ? 'bg-amber-500/90 shadow-lg shadow-amber-500/50' 
+                : 'bg-muted-foreground/30'
+            }`}>
+              <div className={`w-2.5 h-2.5 rounded-full ${
+                studentStatus.status === 'online' 
+                  ? 'bg-white animate-pulse' 
+                  : studentStatus.status === 'recent' 
+                  ? 'bg-white/90' 
+                  : 'bg-white/50'
+              }`} />
+            </div>
+          </div>
+          
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-sm text-foreground/90 truncate mb-1">
+              {student.student.full_name}
+            </p>
+            {student.class_info && (
+              <p className="text-xs text-muted-foreground/80">
+                {student.class_info.class_name} • {student.class_info.grade_level}
+              </p>
+            )}
+          </div>
+
+          <div className={`text-xs font-medium px-2 py-1 rounded-full backdrop-blur-sm transition-all duration-300 ${
+            studentStatus.status === 'online' 
+              ? 'bg-emerald-500/20 text-emerald-600 border border-emerald-500/30' 
+              : studentStatus.status === 'recent' 
+              ? 'bg-amber-500/20 text-amber-600 border border-amber-500/30' 
+              : 'bg-muted/20 text-muted-foreground/70 border border-muted/30'
+          }`}>
+            {studentStatus.label}
           </div>
         </div>
       </TooltipTrigger>
-      <TooltipContent side="left" className="bg-popover/95 backdrop-blur-sm border border-border/50 shadow-lg max-w-xs">
-        <div className="space-y-2">
-          <p className="font-semibold text-sm">{student.student.full_name}</p>
+      <TooltipContent side="left" className="backdrop-blur-2xl bg-white/90 dark:bg-black/90 border border-white/20 shadow-2xl max-w-xs rounded-2xl">
+        <div className="space-y-3 p-2">
+          <p className="font-bold text-sm text-foreground">{student.student.full_name}</p>
           {student.class_info && (
-            <p className="text-xs text-muted-foreground">
-              📚 {student.class_info.class_name} - {student.class_info.grade_level}
+            <p className="text-xs text-muted-foreground/80 flex items-center gap-1">
+              📚 {student.class_info.class_name} • {student.class_info.grade_level}
             </p>
           )}
-          <Separator className="opacity-50" />
-          <div className="space-y-1">
+          <Separator className="opacity-30" />
+          <div className="space-y-2">
             <p className="text-xs">
-              <span className="text-muted-foreground">آخر ظهور:</span> {formatLastSeen(student.last_seen_at)}
+              <span className="text-muted-foreground/70">آخر ظهور:</span> 
+              <span className="font-medium mr-1">{formatLastSeen(student.last_seen_at)}</span>
             </p>
             <p className="text-xs">
-              <span className="text-muted-foreground">الحالة:</span> 
-              <span className={`mr-1 font-medium ${studentStatus.color}`}>
+              <span className="text-muted-foreground/70">الحالة:</span> 
+              <span className={`mr-1 font-semibold ${studentStatus.color}`}>
                 {studentStatus.label}
               </span>
             </p>
             {student.current_page && (
               <p className="text-xs">
-                <span className="text-muted-foreground">الصفحة:</span> {student.current_page}
+                <span className="text-muted-foreground/70">الصفحة:</span> 
+                <span className="font-medium mr-1">{student.current_page}</span>
               </p>
             )}
           </div>
@@ -195,25 +202,28 @@ export const StudentPresenceWidget: React.FC<StudentPresenceWidgetProps> = memo(
         <Button
           onClick={onToggle}
           size="lg"
-          className="relative rounded-full shadow-xl bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-300 border border-primary/20 hover:scale-105 backdrop-blur-sm"
+          className="relative rounded-full shadow-2xl backdrop-blur-2xl bg-white/10 hover:bg-white/20 text-foreground border border-white/20 hover:border-white/30 transition-all duration-500 hover:scale-105 hover:shadow-primary/20"
         >
           <Users className="h-5 w-5 ml-2" />
-          <span className="mx-3 font-medium">المتواجدون الآن</span>
+          <span className="mx-3 font-bold">المتواجدون الآن</span>
           
-          <div className="flex items-center gap-1">
-            <Badge variant="secondary" className="bg-emerald-500/20 text-emerald-700 border-emerald-500/20 backdrop-blur-sm">
-              {actualOnlineCount}
-            </Badge>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-sm bg-emerald-500/20 border border-emerald-500/30">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+              <span className="text-xs font-bold text-emerald-600">{actualOnlineCount}</span>
+            </div>
             {totalVisibleCount > actualOnlineCount && (
-              <Badge variant="secondary" className="bg-amber-500/20 text-amber-700 border-amber-500/20 backdrop-blur-sm">
-                +{totalVisibleCount - actualOnlineCount}
-              </Badge>
+              <div className="flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-sm bg-amber-500/20 border border-amber-500/30">
+                <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+                <span className="text-xs font-bold text-amber-600">+{totalVisibleCount - actualOnlineCount}</span>
+              </div>
             )}
           </div>
           
           {refreshing && (
-            <div className="absolute -top-1 -right-1 w-3 h-3">
-              <div className="w-full h-full rounded-full bg-emerald-500 animate-ping opacity-75"></div>
+            <div className="absolute -top-2 -right-2 w-4 h-4">
+              <div className="w-full h-full rounded-full bg-primary/60 animate-ping"></div>
+              <div className="absolute inset-1 w-2 h-2 rounded-full bg-primary"></div>
             </div>
           )}
         </Button>
@@ -223,31 +233,40 @@ export const StudentPresenceWidget: React.FC<StudentPresenceWidgetProps> = memo(
 
   return (
     <TooltipProvider>
-      <div className="fixed bottom-6 right-6 z-50 w-[420px] animate-scale-in">
-        <Card className="shadow-2xl border border-border/30 bg-background/95 backdrop-blur-xl">
-          <CardHeader className="pb-4 space-y-4">
+      <div className="fixed bottom-6 right-6 z-50 w-[440px] animate-scale-in">
+        <Card className="shadow-2xl backdrop-blur-2xl bg-white/5 border border-white/10 rounded-3xl overflow-hidden">
+          <CardHeader className="pb-4 space-y-4 bg-gradient-to-r from-white/5 to-transparent">
             {/* Header العلوي */}
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/10 border border-primary/20">
-                  <Users className="h-5 w-5 text-primary" />
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-2xl backdrop-blur-sm bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/20 shadow-lg">
+                  <Users className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg">المتواجدون الآن</h3>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span>متصل: {actualOnlineCount}</span>
+                  <h3 className="font-bold text-xl text-foreground/90">المتواجدون الآن</h3>
+                  <div className="flex items-center gap-3 text-sm text-muted-foreground/80 mt-1">
+                    <div className="flex items-center gap-1">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                      <span>متصل: {actualOnlineCount}</span>
+                    </div>
                     <span>•</span>
-                    <span>غادر حديثاً: {totalVisibleCount - actualOnlineCount}</span>
+                    <div className="flex items-center gap-1">
+                      <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+                      <span>غادر حديثاً: {totalVisibleCount - actualOnlineCount}</span>
+                    </div>
                   </div>
                 </div>
               </div>
               
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 {refreshing && (
-                  <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-primary/60 animate-pulse"></div>
+                    <span className="text-xs text-muted-foreground/70">تحديث...</span>
+                  </div>
                 )}
-                {lastUpdated && (
-                  <span className="text-xs text-muted-foreground">
+                {lastUpdated && !refreshing && (
+                  <span className="text-xs text-muted-foreground/70 backdrop-blur-sm bg-white/5 px-2 py-1 rounded-full">
                     {formatLastSeen(lastUpdated.toISOString())}
                   </span>
                 )}
@@ -255,30 +274,30 @@ export const StudentPresenceWidget: React.FC<StudentPresenceWidgetProps> = memo(
                   variant="ghost"
                   size="sm"
                   onClick={onToggle}
-                  className="text-muted-foreground hover:text-foreground"
+                  className="text-muted-foreground hover:text-foreground backdrop-blur-sm hover:bg-white/10 rounded-xl"
                 >
-                  <ChevronDown className="h-4 w-4" />
+                  <ChevronDown className="h-5 w-5" />
                 </Button>
               </div>
             </div>
 
             {/* شريط البحث */}
             <div className="relative">
-              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute right-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground/60" />
               <Input
                 placeholder="البحث عن طالب..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pr-10 pl-10 h-9 bg-background/50 border-border/50"
+                className="pr-12 pl-12 h-12 backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl text-foreground placeholder:text-muted-foreground/60 focus:border-primary/40 focus:bg-white/15 transition-all duration-300"
               />
               {searchQuery && (
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setSearchQuery('')}
-                  className="absolute left-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
+                  className="absolute left-2 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 backdrop-blur-sm hover:bg-white/10 rounded-xl"
                 >
-                  <X className="h-3 w-3" />
+                  <X className="h-4 w-4" />
                 </Button>
               )}
             </div>
@@ -357,7 +376,7 @@ export const StudentPresenceWidget: React.FC<StudentPresenceWidgetProps> = memo(
               </div>
             ) : (
               <ScrollArea className="h-80">
-                <div className="space-y-2 pr-4">
+                <div className="space-y-3 pr-4">
                   {filteredStudents.map(student => (
                     <StudentCard key={student.id} student={student} />
                   ))}
