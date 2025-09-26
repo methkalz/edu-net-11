@@ -108,43 +108,41 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({
       
       <div className="container mx-auto px-6 py-4">
         {/* Desktop Layout */}
-        <div className="hidden lg:grid lg:grid-cols-3 lg:items-center lg:gap-6">
+        <div className="hidden lg:flex lg:items-center lg:justify-between lg:gap-6">
           
-          {/* Left Section: Back Button */}
+          {/* Left Section: Back Button + Brand */}
           <div className="flex items-center gap-6">
             {showBackButton && (
               <BackButton backPath={backPath} />
             )}
             
-            {headerSettings.show_title && (
-              <div className="space-y-1">
-                {user && userProfile && (
-                  <div className="flex items-center gap-2 text-base text-foreground font-bold">
-                    <span>{getGreeting()}, {userProfile.full_name || user.email}</span>
-                  </div>
-                )}
-                <h1 
-                  className="font-cairo text-base text-muted-foreground"
-                >
-                  {title || headerSettings.title_text}
-                </h1>
-              </div>
-            )}
-          </div>
-
-          {/* Center Section: Logo */}
-          <div className="flex justify-center">
-            {headerSettings.show_logo && (
-              <img 
-                src={headerSettings.logo_url} 
-                alt="شعار النظام" 
-                className={`${getLogoSize()} object-contain shadow-sm rounded-lg hover:scale-105 transition-transform duration-300`}
-              />
-            )}
+            <div className="flex items-center gap-4">
+              {headerSettings.show_logo && (
+                <img 
+                  src={headerSettings.logo_url} 
+                  alt="شعار النظام" 
+                  className={`${getLogoSize()} object-contain shadow-sm rounded-lg hover:scale-105 transition-transform duration-300`}
+                />
+              )}
+              {headerSettings.show_title && (
+                <div className="space-y-1">
+                  {user && userProfile && (
+                    <div className="flex items-center gap-2 text-base text-foreground font-bold">
+                      <span>{getGreeting()}, {userProfile.full_name || user.email}</span>
+                    </div>
+                  )}
+                  <h1 
+                    className="font-cairo text-base text-muted-foreground"
+                  >
+                    {title || headerSettings.title_text}
+                  </h1>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Right Section: User Profile + Actions */}
-          <div className="flex items-center justify-end gap-4">
+          <div className="flex items-center gap-4">
             {user && userProfile && (
               <UserProfileSection
                 avatarUrl={userProfile.avatar_url}
@@ -195,28 +193,25 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({
 
         {/* Mobile Layout */}
         <div className="lg:hidden space-y-4">
-          {/* Top Row: Back Button + Logo + Actions */}
+          {/* Top Row: Back Button + Brand + Actions */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               {showBackButton && (
                 <BackButton backPath={backPath} />
               )}
               
-              {headerSettings.show_title && (
-                <h1 className="text-lg font-bold text-foreground">
-                  {title || headerSettings.title_text}
-                </h1>
-              )}
-            </div>
-
-            {/* Center Logo */}
-            <div className="absolute left-1/2 transform -translate-x-1/2">
               {headerSettings.show_logo && (
                 <img 
                   src={headerSettings.logo_url} 
                   alt="شعار النظام" 
-                  className="h-10 w-auto object-contain"
+                  className="h-10 w-auto"
                 />
+              )}
+              
+              {headerSettings.show_title && (
+                <h1 className="text-lg font-bold text-foreground">
+                  {title || headerSettings.title_text}
+                </h1>
               )}
             </div>
             
@@ -245,6 +240,7 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({
             </div>
           </div>
 
+          {/* Search Bar */}
           {/* User Profile Section */}
           {user && userProfile && (
             <div className="pt-2 border-t border-border/20">
