@@ -467,6 +467,45 @@ export type Database = {
           },
         ]
       }
+      daily_activity_stats: {
+        Row: {
+          avg_session_duration: number | null
+          class_distribution: Json
+          created_at: string
+          date: string
+          id: string
+          most_visited_pages: Json
+          peak_hour: number | null
+          school_id: string
+          total_active_students: number
+          updated_at: string
+        }
+        Insert: {
+          avg_session_duration?: number | null
+          class_distribution?: Json
+          created_at?: string
+          date: string
+          id?: string
+          most_visited_pages?: Json
+          peak_hour?: number | null
+          school_id: string
+          total_active_students?: number
+          updated_at?: string
+        }
+        Update: {
+          avg_session_duration?: number | null
+          class_distribution?: Json
+          created_at?: string
+          date?: string
+          id?: string
+          most_visited_pages?: Json
+          peak_hour?: number | null
+          school_id?: string
+          total_active_students?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       document_activities: {
         Row: {
           action_details: Json | null
@@ -5183,6 +5222,10 @@ export type Database = {
       }
     }
     Functions: {
+      calculate_daily_activity_stats: {
+        Args: { target_date: string; target_school_id: string }
+        Returns: undefined
+      }
       calculate_student_title: {
         Args: { user_points: number }
         Returns: string
@@ -5309,6 +5352,14 @@ export type Database = {
         Returns: undefined
       }
       update_student_presence: {
+        Args: {
+          p_current_page?: string
+          p_is_online?: boolean
+          p_student_id: string
+        }
+        Returns: undefined
+      }
+      update_student_presence_safe: {
         Args: {
           p_current_page?: string
           p_is_online?: boolean

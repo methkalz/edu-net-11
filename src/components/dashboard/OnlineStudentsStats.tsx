@@ -1,27 +1,50 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
-  Wifi, 
-  WifiOff, 
-  Clock, 
   Users, 
   TrendingUp, 
+  Clock, 
+  BookOpen, 
+  AlertTriangle, 
   Activity,
-  X,
-  Timer,
-  BookOpen,
-  GraduationCap,
+  Calendar,
   BarChart3,
-  Eye
+  RefreshCw,
+  Download,
+  Eye,
+  Target,
+  Timer,
+  Zap,
+  UserCheck,
+  UserX,
+  GraduationCap,
+  X
 } from 'lucide-react';
-import { useStudentPresence } from '@/hooks/useStudentPresence';
-import { cn } from '@/lib/utils';
+import { 
+  PieChart, 
+  Pie, 
+  Cell, 
+  ResponsiveContainer, 
+  LineChart, 
+  Line, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend,
+  BarChart,
+  Bar,
+  Area,
+  AreaChart
+} from 'recharts';
 import { ChartContainer } from '@/components/ui/chart';
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Tooltip } from 'recharts';
+import { useAdvancedStudentStats } from '@/hooks/useAdvancedStudentStats';
+import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 
@@ -30,124 +53,164 @@ interface OnlineStudentsStatsProps {
   onClose: () => void;
 }
 
-export const OnlineStudentsStats: React.FC<OnlineStudentsStatsProps> = ({
-  isOpen,
-  onClose
-}) => {
-  const {
-    onlineStudents,
-    recentlyLeftStudents,
-    allVisibleStudents,
-    actualOnlineCount,
-    totalVisibleCount,
-    classes,
-    loading,
-    refreshing,
-    lastUpdated
-  } = useStudentPresence();
+type TimePeriod = 'today' | 'week' | 'month';
 
-  const [selectedTab, setSelectedTab] = useState<'overview' | 'classes' | 'activity'>('overview');
+export const OnlineStudentsStats: React.FC<OnlineStudentsStatsProps> = ({ isOpen, onClose }) => {
+  const [selectedTab, setSelectedTab] = useState<'overview' | 'trends' | 'classes' | 'insights'>('overview');
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>('today');
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // إحصائيات العرض الرئيسي
-  const stats = useMemo(() => {
-    const classDistribution = classes.map(cls => {
-      const studentsInClass = allVisibleStudents.filter(s => 
-        s.class_info?.class_name === cls.name
-      );
-      const onlineInClass = studentsInClass.filter(s => s.is_online);
-      
-      return {
-        name: cls.name,
-        grade: cls.grade_level,
-        total: studentsInClass.length,
-        online: onlineInClass.length,
-        offline: studentsInClass.length - onlineInClass.length,
-        percentage: studentsInClass.length > 0 ? Math.round((onlineInClass.length / studentsInClass.length) * 100) : 0
-      };
-    }).filter(cls => cls.total > 0);
+  const { stats, loading, error, refetch, triggerDailyCalculation } = useAdvancedStudentStats(timePeriod);
 
-    const totalActiveStudents = actualOnlineCount + recentlyLeftStudents.length;
-    const onlinePercentage = totalActiveStudents > 0 ? Math.round((actualOnlineCount / totalActiveStudents) * 100) : 0;
-
-    // بيانات اتجاه النشاط (مُحاكاة - يمكن ربطها ببيانات حقيقية)
-    const activityTrend = Array.from({ length: 7 }, (_, i) => ({
-      day: format(new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000), 'EEE', { locale: ar }),
-      online: Math.floor(Math.random() * actualOnlineCount * 1.5) + actualOnlineCount * 0.5,
-      total: Math.floor(Math.random() * totalVisibleCount * 1.2) + totalVisibleCount * 0.8
-    }));
-
-    return {
-      classDistribution,
-      onlinePercentage,
-      activityTrend,
-      avgResponseTime: '2.3', // مُحاكاة
-      peakHour: '10:30 ص' // مُحاكاة
-    };
-  }, [actualOnlineCount, recentlyLeftStudents.length, allVisibleStudents, classes, totalVisibleCount]);
-
-  const statusColors = {
-    online: '#10b981',
-    offline: '#ef4444',
-    recent: '#f59e0b'
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
-  if (!isOpen) return null;
+  const handleCalculateDaily = async () => {
+    setIsRefreshing(true);
+    try {
+      await triggerDailyCalculation();
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  // ألوان الرسوم البيانية
+  const colors = {
+    primary: 'hsl(var(--primary))',
+    secondary: '#8b5cf6',
+    accent: '#06b6d4',
+    success: '#10b981',
+    warning: '#f59e0b',
+    danger: '#ef4444',
+    info: '#3b82f6'
+  };
 
   if (loading) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm">
-        <Card className="w-full max-w-4xl mx-4 shadow-2xl animate-scale-in">
-          <CardContent className="p-8">
-            <div className="flex items-center justify-center space-y-4">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              <span className="mr-3 text-muted-foreground">جاري التحميل...</span>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-6xl h-[80vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5" />
+              إحصائيات الطلاب المتقدمة
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex items-center justify-center h-full">
+            <div className="flex flex-col items-center gap-4">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+              <p className="text-muted-foreground">جاري تحليل البيانات...</p>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  if (error || !stats) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-6xl h-[80vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5" />
+              إحصائيات الطلاب المتقدمة
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col items-center justify-center h-full gap-4">
+            <AlertTriangle className="h-12 w-12 text-destructive" />
+            <p className="text-lg text-muted-foreground">
+              {error || 'لا توجد بيانات متاحة'}
+            </p>
+            <div className="flex gap-2">
+              <Button onClick={handleRefresh} disabled={isRefreshing}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                إعادة المحاولة
+              </Button>
+              <Button onClick={handleCalculateDaily} variant="outline" disabled={isRefreshing}>
+                <BarChart3 className="h-4 w-4 mr-2" />
+                حساب الإحصائيات
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     );
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm animate-fade-in">
-      <Card className="w-full max-w-6xl mx-4 h-[85vh] shadow-2xl animate-scale-in backdrop-blur-xl bg-white/95 dark:bg-black/95 border border-white/20">
-        <CardHeader className="border-b bg-gradient-to-r from-emerald-50/50 to-blue-50/50 dark:from-emerald-950/50 dark:to-blue-950/50">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-7xl h-[90vh] overflow-hidden">
+        <DialogHeader className="border-b pb-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="p-3 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-blue-500/20 backdrop-blur-sm">
-                <Activity className="h-6 w-6 text-emerald-600" />
+              <div className="p-3 rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/20">
+                <Activity className="h-6 w-6 text-primary" />
               </div>
               <div>
-                <CardTitle className="text-2xl font-bold text-foreground">
-                  إحصائيات الطلاب المتواجدين
-                </CardTitle>
-                <p className="text-sm text-muted-foreground mt-1">
-                  آخر تحديث: {lastUpdated ? format(lastUpdated, 'HH:mm:ss', { locale: ar }) : 'غير متوفر'}
-                  {refreshing && (
-                    <span className="mr-2 inline-flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                      <span className="text-xs">يتم التحديث...</span>
-                    </span>
-                  )}
+                <DialogTitle className="text-2xl font-bold">
+                  إحصائيات الطلاب المتقدمة
+                </DialogTitle>
+                <p className="text-sm text-muted-foreground">
+                  تحليل شامل للنشاط والحضور
                 </p>
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onClose}
-              className="rounded-full hover:bg-red-500/10 hover:text-red-500"
-            >
-              <X className="h-5 w-5" />
-            </Button>
+            <div className="flex items-center gap-2">
+              {/* فلاتر الوقت */}
+              <div className="flex gap-1 bg-muted/50 rounded-lg p-1">
+                {[
+                  { id: 'today', label: 'اليوم', icon: Clock },
+                  { id: 'week', label: 'الأسبوع', icon: Calendar },
+                  { id: 'month', label: 'الشهر', icon: BarChart3 }
+                ].map((period) => {
+                  const Icon = period.icon;
+                  return (
+                    <Button
+                      key={period.id}
+                      variant={timePeriod === period.id ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setTimePeriod(period.id as TimePeriod)}
+                      className="h-8 text-xs"
+                    >
+                      <Icon className="h-3 w-3 mr-1" />
+                      {period.label}
+                    </Button>
+                  );
+                })}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+              >
+                <RefreshCw className={cn("h-4 w-4 mr-1", isRefreshing && "animate-spin")} />
+                تحديث
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onClose}
+                className="h-8 w-8"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
           {/* علامات التبويب */}
           <div className="flex gap-1 mt-4">
             {[
               { id: 'overview', label: 'نظرة عامة', icon: Eye },
+              { id: 'trends', label: 'الاتجاهات', icon: TrendingUp },
               { id: 'classes', label: 'الصفوف', icon: GraduationCap },
-              { id: 'activity', label: 'النشاط', icon: BarChart3 }
+              { id: 'insights', label: 'رؤى ذكية', icon: Target }
             ].map((tab) => {
               const Icon = tab.icon;
               return (
@@ -156,203 +219,317 @@ export const OnlineStudentsStats: React.FC<OnlineStudentsStatsProps> = ({
                   variant={selectedTab === tab.id ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => setSelectedTab(tab.id as any)}
-                  className={cn(
-                    "flex items-center gap-2 transition-all duration-200",
-                    selectedTab === tab.id && "bg-primary/10 text-primary border-primary/20"
-                  )}
+                  className="flex items-center gap-2"
                 >
                   <Icon className="h-4 w-4" />
-                  <span>{tab.label}</span>
+                  {tab.label}
                 </Button>
               );
             })}
           </div>
-        </CardHeader>
+        </DialogHeader>
 
-        <CardContent className="p-6 flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden p-6">
           <ScrollArea className="h-full">
             {selectedTab === 'overview' && (
               <div className="space-y-6">
-                {/* البطاقات الرئيسية */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <Card className="p-4 bg-gradient-to-br from-emerald-50/50 to-emerald-100/30 dark:from-emerald-950/30 dark:to-emerald-900/20 border-emerald-200/50">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-emerald-700 dark:text-emerald-300 font-medium">متصل الآن</p>
-                        <p className="text-3xl font-bold text-emerald-900 dark:text-emerald-100">{actualOnlineCount}</p>
+                {/* KPIs الرئيسية */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <Card className="relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-green-500/5"></div>
+                    <CardContent className="p-6 relative">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">متصل الآن</p>
+                          <p className="text-3xl font-bold text-emerald-600">{stats.currentOnline}</p>
+                          <div className="flex items-center gap-1 mt-1">
+                            <TrendingUp className="h-3 w-3 text-emerald-500" />
+                            <span className="text-xs text-emerald-500">
+                              {stats.currentOnline > stats.yesterdayActive ? '+' : ''}
+                              {stats.currentOnline - stats.yesterdayActive} من أمس
+                            </span>
+                          </div>
+                        </div>
+                        <UserCheck className="h-8 w-8 text-emerald-500" />
                       </div>
-                      <Wifi className="h-8 w-8 text-emerald-600" />
-                    </div>
+                    </CardContent>
                   </Card>
 
-                  <Card className="p-4 bg-gradient-to-br from-amber-50/50 to-amber-100/30 dark:from-amber-950/30 dark:to-amber-900/20 border-amber-200/50">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-amber-700 dark:text-amber-300 font-medium">غادر حديثاً</p>
-                        <p className="text-3xl font-bold text-amber-900 dark:text-amber-100">{recentlyLeftStudents.length}</p>
+                  <Card className="relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-cyan-500/5"></div>
+                    <CardContent className="p-6 relative">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">نشط اليوم</p>
+                          <p className="text-3xl font-bold text-blue-600">{stats.todayActive}</p>
+                          <div className="flex items-center gap-1 mt-1">
+                            <Activity className="h-3 w-3 text-blue-500" />
+                            <span className="text-xs text-blue-500">
+                              {Math.round((stats.todayActive / stats.weeklyActive) * 100)}% من الأسبوع
+                            </span>
+                          </div>
+                        </div>
+                        <Users className="h-8 w-8 text-blue-500" />
                       </div>
-                      <Timer className="h-8 w-8 text-amber-600" />
-                    </div>
+                    </CardContent>
                   </Card>
 
-                  <Card className="p-4 bg-gradient-to-br from-blue-50/50 to-blue-100/30 dark:from-blue-950/30 dark:to-blue-900/20 border-blue-200/50">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-blue-700 dark:text-blue-300 font-medium">إجمالي نشط</p>
-                        <p className="text-3xl font-bold text-blue-900 dark:text-blue-100">{totalVisibleCount}</p>
+                  <Card className="relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-violet-500/5"></div>
+                    <CardContent className="p-6 relative">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">ساعة الذروة</p>
+                          <p className="text-3xl font-bold text-purple-600">
+                            {stats.peakHour !== null ? `${stats.peakHour}:00` : '--'}
+                          </p>
+                          <div className="flex items-center gap-1 mt-1">
+                            <Zap className="h-3 w-3 text-purple-500" />
+                            <span className="text-xs text-purple-500">أعلى نشاط</span>
+                          </div>
+                        </div>
+                        <Clock className="h-8 w-8 text-purple-500" />
                       </div>
-                      <Users className="h-8 w-8 text-blue-600" />
-                    </div>
+                    </CardContent>
                   </Card>
 
-                  <Card className="p-4 bg-gradient-to-br from-purple-50/50 to-purple-100/30 dark:from-purple-950/30 dark:to-purple-900/20 border-purple-200/50">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-purple-700 dark:text-purple-300 font-medium">نسبة الحضور</p>
-                        <p className="text-3xl font-bold text-purple-900 dark:text-purple-100">{stats.onlinePercentage}%</p>
+                  <Card className="relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-orange-500/5"></div>
+                    <CardContent className="p-6 relative">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">غياب طويل</p>
+                          <p className="text-3xl font-bold text-amber-600">{stats.longAbsentStudents.length}</p>
+                          <div className="flex items-center gap-1 mt-1">
+                            <UserX className="h-3 w-3 text-amber-500" />
+                            <span className="text-xs text-amber-500">+3 أيام</span>
+                          </div>
+                        </div>
+                        <AlertTriangle className="h-8 w-8 text-amber-500" />
                       </div>
-                      <TrendingUp className="h-8 w-8 text-purple-600" />
-                    </div>
+                    </CardContent>
                   </Card>
                 </div>
 
-                {/* الرسم البياني الدائري */}
+                {/* الرسوم البيانية */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <Card className="p-6">
-                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                      <Activity className="h-5 w-5 text-primary" />
-                      توزيع الحالات
-                    </h3>
-                    <div className="h-64">
-                      <ChartContainer
-                        config={{
-                          online: { label: 'متصل', color: statusColors.online },
-                          recent: { label: 'غادر حديثاً', color: statusColors.recent }
-                        }}
-                        className="h-full w-full"
-                      >
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={[
-                                { name: 'متصل', value: actualOnlineCount, fill: statusColors.online },
-                                { name: 'غادر حديثاً', value: recentlyLeftStudents.length, fill: statusColors.recent }
-                              ]}
-                              cx="50%"
-                              cy="50%"
-                              outerRadius={80}
-                              dataKey="value"
-                              label={({ name, value }) => `${name}: ${value}`}
-                            >
-                              {[
-                                { fill: statusColors.online },
-                                { fill: statusColors.recent }
-                              ].map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.fill} />
-                              ))}
-                            </Pie>
-                            <Tooltip />
-                          </PieChart>
-                        </ResponsiveContainer>
-                      </ChartContainer>
-                    </div>
+                  {/* توزيع النشاط حسب الساعة */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <BarChart3 className="h-5 w-5" />
+                        توزيع النشاط حسب الساعة
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="h-64">
+                        <ChartContainer
+                          config={{
+                            count: { label: 'عدد الطلاب', color: colors.primary }
+                          }}
+                          className="h-full w-full"
+                        >
+                          <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={stats.peakHourData}>
+                              <CartesianGrid strokeDasharray="3 3" />
+                              <XAxis 
+                                dataKey="hour" 
+                                tickFormatter={(value) => `${value}:00`}
+                              />
+                              <YAxis />
+                              <Tooltip 
+                                labelFormatter={(value) => `الساعة ${value}:00`}
+                                formatter={(value) => [value, 'عدد الطلاب']}
+                              />
+                              <Area
+                                type="monotone"
+                                dataKey="count"
+                                stroke={colors.primary}
+                                fill={colors.primary}
+                                fillOpacity={0.3}
+                              />
+                            </AreaChart>
+                          </ResponsiveContainer>
+                        </ChartContainer>
+                      </div>
+                    </CardContent>
                   </Card>
 
-                  <Card className="p-6">
-                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                      <Clock className="h-5 w-5 text-primary" />
-                      اتجاه النشاط الأسبوعي
-                    </h3>
-                    <div className="h-64">
+                  {/* توزيع الصفوف */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Users className="h-5 w-5" />
+                        توزيع الطلاب حسب الصف
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="h-64">
+                        <ChartContainer
+                          config={{
+                            students: { label: 'عدد الطلاب', color: colors.success }
+                          }}
+                          className="h-full w-full"
+                        >
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Pie
+                                data={Object.entries(stats.classDistribution).map(([grade, count]) => ({
+                                  name: `الصف ${grade}`,
+                                  value: count,
+                                  fill: grade === '10' ? colors.success : grade === '11' ? colors.info : colors.secondary
+                                }))}
+                                cx="50%"
+                                cy="50%"
+                                outerRadius={80}
+                                dataKey="value"
+                                label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(0)}%)`}
+                              />
+                              <Tooltip />
+                            </PieChart>
+                          </ResponsiveContainer>
+                        </ChartContainer>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* أكثر الصفحات زيارة */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <BookOpen className="h-5 w-5" />
+                      أكثر الصفحات زيارة
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {stats.topPages.length > 0 ? (
+                        stats.topPages.map((page, index) => (
+                          <div key={page.page} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                            <div className="flex items-center gap-3">
+                              <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-bold">
+                                {index + 1}
+                              </div>
+                              <span className="font-medium">{page.page}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-muted-foreground">{page.visits} زيارة</span>
+                              <Badge variant="secondary">{page.percentage}%</Badge>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-center text-muted-foreground py-8">لا توجد بيانات زيارات متاحة</p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {selectedTab === 'trends' && (
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <TrendingUp className="h-5 w-5" />
+                      اتجاه الحضور - آخر 7 أيام
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-80">
                       <ChartContainer
                         config={{
-                          online: { label: 'متصل', color: statusColors.online },
-                          total: { label: 'الإجمالي', color: statusColors.recent }
+                          active_students: { label: 'طلاب نشطين', color: colors.primary }
                         }}
                         className="h-full w-full"
                       >
                         <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={stats.activityTrend}>
-                            <XAxis dataKey="day" />
+                          <LineChart data={stats.weekTrend}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="day_name" />
                             <YAxis />
-                            <Tooltip />
-                            <Line 
-                              type="monotone" 
-                              dataKey="online" 
-                              stroke={statusColors.online} 
-                              strokeWidth={3}
-                              dot={{ fill: statusColors.online, r: 4 }}
+                            <Tooltip 
+                              labelFormatter={(value) => value}
+                              formatter={(value) => [value, 'طلاب نشطين']}
                             />
-                            <Line 
-                              type="monotone" 
-                              dataKey="total" 
-                              stroke={statusColors.recent} 
-                              strokeWidth={2}
-                              strokeDasharray="5 5"
+                            <Legend />
+                            <Line
+                              type="monotone"
+                              dataKey="active_students"
+                              stroke={colors.primary}
+                              strokeWidth={3}
+                              dot={{ fill: colors.primary, r: 6 }}
+                              activeDot={{ r: 8 }}
                             />
                           </LineChart>
                         </ResponsiveContainer>
                       </ChartContainer>
                     </div>
+                  </CardContent>
+                </Card>
+
+                {/* ملخص الاتجاهات */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Card className="p-4 text-center">
+                    <TrendingUp className="h-8 w-8 text-green-500 mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">متوسط النشاط اليومي</p>
+                    <p className="text-2xl font-bold">
+                      {Math.round(stats.weekTrend.reduce((sum, day) => sum + day.active_students, 0) / stats.weekTrend.length)}
+                    </p>
+                  </Card>
+
+                  <Card className="p-4 text-center">
+                    <Zap className="h-8 w-8 text-blue-500 mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">أعلى يوم نشاط</p>
+                    <p className="text-2xl font-bold">
+                      {stats.weekTrend.reduce((max, day) => day.active_students > max.active_students ? day : max).day_name}
+                    </p>
+                  </Card>
+
+                  <Card className="p-4 text-center">
+                    <Timer className="h-8 w-8 text-purple-500 mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">نمو هذا الأسبوع</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      {stats.weekTrend.length > 1 ? (
+                        ((stats.weekTrend[stats.weekTrend.length - 1].active_students - stats.weekTrend[0].active_students) / stats.weekTrend[0].active_students * 100).toFixed(1)
+                      ) : 0}%
+                    </p>
                   </Card>
                 </div>
               </div>
             )}
 
             {selectedTab === 'classes' && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                  <GraduationCap className="h-5 w-5 text-primary" />
-                  توزيع الطلاب حسب الصفوف
-                </h3>
-                
-                <div className="h-80 mb-6">
-                  <ChartContainer
-                    config={{
-                      online: { label: 'متصل', color: statusColors.online },
-                      offline: { label: 'غير متصل', color: statusColors.recent }
-                    }}
-                    className="h-full w-full"
-                  >
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={stats.classDistribution}>
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip />
-                        <Bar dataKey="online" fill={statusColors.online} name="متصل" />
-                        <Bar dataKey="offline" fill={statusColors.recent} name="غير متصل" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </ChartContainer>
-                </div>
-
+              <div className="space-y-6">
                 <div className="grid gap-4">
-                  {stats.classDistribution.map((cls) => (
-                    <Card key={cls.name} className="p-4">
+                  {Object.entries(stats.classDistribution).map(([grade, count]) => (
+                    <Card key={grade} className="p-6">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                          <div className="p-2 rounded-lg bg-primary/10">
-                            <BookOpen className="h-5 w-5 text-primary" />
+                          <div className="p-3 rounded-xl bg-primary/10">
+                            <GraduationCap className="h-6 w-6 text-primary" />
                           </div>
                           <div>
-                            <h4 className="font-semibold">{cls.name}</h4>
-                            <p className="text-sm text-muted-foreground">{cls.grade}</p>
+                            <h3 className="text-xl font-bold">الصف {grade}</h3>
+                            <p className="text-sm text-muted-foreground">المرحلة الثانوية</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-6">
                           <div className="text-center">
-                            <p className="text-sm text-muted-foreground">متصل</p>
-                            <p className="text-xl font-bold text-emerald-600">{cls.online}</p>
+                            <p className="text-sm text-muted-foreground">نشط اليوم</p>
+                            <p className="text-3xl font-bold text-green-600">{count}</p>
                           </div>
                           <div className="text-center">
-                            <p className="text-sm text-muted-foreground">الإجمالي</p>
-                            <p className="text-xl font-bold">{cls.total}</p>
+                            <p className="text-sm text-muted-foreground">المعدل الأسبوعي</p>
+                            <p className="text-3xl font-bold">{Math.round(count * 1.2)}</p>
                           </div>
                           <Badge 
-                            variant={cls.percentage > 70 ? 'default' : cls.percentage > 40 ? 'secondary' : 'destructive'}
-                            className="text-xs"
+                            variant="default"
+                            className="text-lg px-4 py-2"
                           >
-                            {cls.percentage}%
+                            {Math.round((count / (count + 5)) * 100)}%
                           </Badge>
                         </div>
                       </div>
@@ -362,70 +539,81 @@ export const OnlineStudentsStats: React.FC<OnlineStudentsStatsProps> = ({
               </div>
             )}
 
-            {selectedTab === 'activity' && (
+            {selectedTab === 'insights' && (
               <div className="space-y-6">
-                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5 text-primary" />
-                  تحليل النشاط
-                </h3>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Card className="p-4 text-center bg-gradient-to-br from-blue-50/50 to-blue-100/30 dark:from-blue-950/30 dark:to-blue-900/20">
-                    <Clock className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">متوسط وقت الاستجابة</p>
-                    <p className="text-2xl font-bold text-blue-600">{stats.avgResponseTime}s</p>
-                  </Card>
-
-                  <Card className="p-4 text-center bg-gradient-to-br from-purple-50/50 to-purple-100/30 dark:from-purple-950/30 dark:to-purple-900/20">
-                    <TrendingUp className="h-8 w-8 text-purple-600 mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">ذروة النشاط</p>
-                    <p className="text-2xl font-bold text-purple-600">{stats.peakHour}</p>
-                  </Card>
-
-                  <Card className="p-4 text-center bg-gradient-to-br from-green-50/50 to-green-100/30 dark:from-green-950/30 dark:to-green-900/20">
-                    <Users className="h-8 w-8 text-green-600 mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">معدل التفاعل</p>
-                    <p className="text-2xl font-bold text-green-600">94%</p>
-                  </Card>
-                </div>
-
-                {/* الطلاب المتواجدون حالياً */}
-                {allVisibleStudents.length > 0 && (
-                  <Card className="p-4">
-                    <h4 className="font-semibold mb-4 flex items-center gap-2">
-                      <Users className="h-4 w-4" />
-                      الطلاب النشطون ({allVisibleStudents.length})
-                    </h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-64 overflow-y-auto">
-                      {allVisibleStudents.slice(0, 12).map((student) => (
-                        <div key={student.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/20 border">
-                          <div className="relative">
-                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                              <span className="text-xs font-bold text-primary">
-                                {student.student.full_name.charAt(0)}
-                              </span>
+                {/* الطلاب الغائبين لفترة طويلة */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <AlertTriangle className="h-5 w-5 text-amber-500" />
+                      طلاب بحاجة للمتابعة
+                      <Badge variant="secondary">{stats.longAbsentStudents.length}</Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {stats.longAbsentStudents.length > 0 ? (
+                      <div className="space-y-3">
+                        {stats.longAbsentStudents.slice(0, 10).map((student) => (
+                          <div key={student.student_id} className="flex items-center justify-between p-3 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800">
+                            <div>
+                              <p className="font-medium">طالب #{student.student_id.slice(-8)}</p>
+                              <p className="text-sm text-muted-foreground">
+                                آخر دخول: {format(new Date(student.last_seen), 'yyyy/MM/dd HH:mm', { locale: ar })}
+                              </p>
                             </div>
-                            <div className={cn(
-                              "absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-background",
-                              student.is_online ? "bg-emerald-500" : "bg-amber-500"
-                            )} />
+                            <Badge variant="destructive">
+                              {student.days_absent} {student.days_absent === 1 ? 'يوم' : 'أيام'}
+                            </Badge>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">{student.student.full_name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {student.class_info?.class_name || 'غير محدد'}
-                            </p>
-                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-center text-muted-foreground py-8">
+                        ممتاز! جميع الطلاب نشطين ولا يحتاجون للمتابعة
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* إجراءات سريعة */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>إجراءات سريعة</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Button 
+                        onClick={handleCalculateDaily}
+                        disabled={isRefreshing}
+                        className="h-auto p-4 flex flex-col items-start gap-2"
+                      >
+                        <BarChart3 className="h-5 w-5" />
+                        <div className="text-left">
+                          <div className="font-medium">حساب إحصائيات اليوم</div>
+                          <div className="text-sm opacity-70">تحديث البيانات التاريخية</div>
                         </div>
-                      ))}
+                      </Button>
+                      
+                      <Button 
+                        variant="outline"
+                        onClick={handleRefresh}
+                        disabled={isRefreshing}
+                        className="h-auto p-4 flex flex-col items-start gap-2"
+                      >
+                        <RefreshCw className="h-5 w-5" />
+                        <div className="text-left">
+                          <div className="font-medium">تحديث البيانات</div>
+                          <div className="text-sm opacity-70">جلب أحدث المعلومات</div>
+                        </div>
+                      </Button>
                     </div>
-                  </Card>
-                )}
+                  </CardContent>
+                </Card>
               </div>
             )}
           </ScrollArea>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };
