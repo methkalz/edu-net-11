@@ -1,10 +1,8 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { UniversalAvatar } from './UniversalAvatar';
-import { UserTitleBadge } from './UserTitleBadge';
 import { AvatarSelector } from './AvatarSelector';
-import { UserProfilePopup } from './UserProfilePopup';
+import { UserTitleBadge } from './UserTitleBadge';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserAvatar } from '@/hooks/useUserAvatar';
 import { useToast } from '@/hooks/use-toast';
@@ -58,25 +56,6 @@ export const UserProfileSettings: React.FC = () => {
         <CardContent className="space-y-6">
           {/* Avatar Selection */}
           <div className="flex flex-col items-center gap-4">
-            <UserProfilePopup 
-              profile={userProfile}
-              stats={{
-                totalPoints: userProfile.points || 0,
-                level: userProfile.level,
-                joinDate: userProfile.created_at,
-                lastLogin: new Date(Date.now() - 15 * 60 * 1000).toISOString() // منذ 15 دقيقة كمثال
-              }}
-            >
-              <div className="relative">
-                <UniversalAvatar
-                  avatarUrl={userProfile.avatar_url}
-                  userName={userProfile.full_name}
-                  size="xl"
-                  className="ring-4 ring-primary/20 hover:ring-primary/40 transition-all duration-300"
-                  clickable
-                />
-              </div>
-            </UserProfilePopup>
             <AvatarSelector
               currentAvatarUrl={userProfile.avatar_url}
               userRole={userProfile.role}

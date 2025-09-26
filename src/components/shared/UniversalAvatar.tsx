@@ -9,8 +9,6 @@ interface UniversalAvatarProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
   fallbackIcon?: React.ComponentType<{ className?: string }>;
-  onClick?: () => void;
-  clickable?: boolean;
 }
 
 const sizeClasses = {
@@ -32,9 +30,7 @@ export const UniversalAvatar: React.FC<UniversalAvatarProps> = ({
   userName,
   size = 'md',
   className,
-  fallbackIcon: FallbackIcon = User,
-  onClick,
-  clickable = false
+  fallbackIcon: FallbackIcon = User
 }) => {
   // Generate initials from user name if available
   const getInitials = (name?: string) => {
@@ -63,14 +59,7 @@ export const UniversalAvatar: React.FC<UniversalAvatarProps> = ({
   const avatarSrc = getAvatarSrc();
 
   return (
-    <Avatar 
-      className={cn(
-        sizeClasses[size], 
-        clickable && 'cursor-pointer hover:opacity-80 transition-opacity',
-        className
-      )}
-      onClick={onClick}
-    >
+    <Avatar className={cn(sizeClasses[size], className)}>
       {avatarSrc && (
         <AvatarImage 
           src={avatarSrc}

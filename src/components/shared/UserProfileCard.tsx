@@ -3,7 +3,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { UniversalAvatar } from './UniversalAvatar';
 import { UserTitleBadge } from './UserTitleBadge';
-import { UserProfilePopup } from './UserProfilePopup';
 import { useUserTitle } from '@/hooks/useUserTitle';
 import type { Database } from '@/integrations/supabase/types';
 
@@ -28,16 +27,6 @@ export const UserProfileCard: React.FC<UserProfileCardProps> = ({
     points: profile.points,
     level: profile.level
   });
-
-  // إعداد الإحصائيات للبروفايل
-  const profileStats = {
-    totalPoints: profile.points || 0,
-    level: profile.level,
-    completedActivities: 0, // يمكن تحديثها لاحقاً
-    currentStreak: 0, // يمكن تحديثها لاحقاً
-    joinDate: profile.created_at,
-    lastLogin: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString() // منذ ساعة كمثال
-  };
 
   const sizeStyles = {
     sm: {
@@ -66,17 +55,11 @@ export const UserProfileCard: React.FC<UserProfileCardProps> = ({
     <Card className={className}>
       <CardContent className={styles.card}>
         <div className="flex items-start gap-4">
-          <UserProfilePopup 
-            profile={profile}
-            stats={profileStats}
-          >
-            <UniversalAvatar
-              avatarUrl={profile.avatar_url}
-              userName={profile.full_name}
-              size={styles.avatar}
-              clickable
-            />
-          </UserProfilePopup>
+          <UniversalAvatar
+            avatarUrl={profile.avatar_url}
+            userName={profile.full_name}
+            size={styles.avatar}
+          />
           
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
