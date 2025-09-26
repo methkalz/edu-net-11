@@ -403,11 +403,13 @@ const Dashboard = () => {
       <ImpersonationBanner />
       <AdminAccessBanner />
       
-      {/* Modern Header */}
-      <ModernHeader 
-        title="لوحة التحكم"
-        notificationCount={0}
-      />
+      {/* Modern Header - فقط للسوبر آدمن والمدراء، ليس للمدرسين */}
+      {userProfile?.role !== 'teacher' && (
+        <ModernHeader 
+          title="لوحة التحكم"
+          notificationCount={0}
+        />
+      )}
 
         {userProfile?.role === 'teacher' ? (
           <TeacherDashboard />
