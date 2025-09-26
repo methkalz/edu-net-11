@@ -53,6 +53,7 @@ import ProjectNotifications from '@/components/teacher/ProjectNotifications';
 import Grade10TeacherContent from '@/components/teacher/Grade10TeacherContent';
 import { UniversalAvatar } from '@/components/shared/UniversalAvatar';
 import { UserTitleBadge } from '@/components/shared/UserTitleBadge';
+import { StudentPresenceWidget } from '@/components/teacher/StudentPresenceWidget';
 
 interface TeacherClass {
   id: string;
@@ -121,6 +122,7 @@ const TeacherDashboard: React.FC = () => {
     grade12: []
   });
   const [schoolPackageContents, setSchoolPackageContents] = useState<string[]>([]);
+  const [showPresenceWidget, setShowPresenceWidget] = useState(false);
 
   // استخدام هوك صلاحيات المحتوى للمعلم
   const { allowedGrades, canAccessGrade, loading: accessLoading } = useTeacherContentAccess();
@@ -844,6 +846,12 @@ const TeacherDashboard: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Student Presence Widget */}
+      <StudentPresenceWidget 
+        isOpen={showPresenceWidget}
+        onToggle={() => setShowPresenceWidget(!showPresenceWidget)}
+      />
     </div>
   );
 };
