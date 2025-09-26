@@ -20,8 +20,8 @@ import {
 } from 'lucide-react';
 import { useStudentPresence } from '@/hooks/useStudentPresence';
 import { cn } from '@/lib/utils';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
+import { ChartContainer } from '@/components/ui/chart';
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Tooltip } from 'recharts';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 
@@ -224,29 +224,37 @@ export const OnlineStudentsStats: React.FC<OnlineStudentsStatsProps> = ({
                       توزيع الحالات
                     </h3>
                     <div className="h-64">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={[
-                              { name: 'متصل', value: actualOnlineCount, fill: statusColors.online },
-                              { name: 'غادر حديثاً', value: recentlyLeftStudents.length, fill: statusColors.recent }
-                            ]}
-                            cx="50%"
-                            cy="50%"
-                            outerRadius={80}
-                            dataKey="value"
-                            label={({ name, value }) => `${name}: ${value}`}
-                          >
-                            {[
-                              { fill: statusColors.online },
-                              { fill: statusColors.recent }
-                            ].map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.fill} />
-                            ))}
-                          </Pie>
-                          <ChartTooltip content={<ChartTooltipContent />} />
-                        </PieChart>
-                      </ResponsiveContainer>
+                      <ChartContainer
+                        config={{
+                          online: { label: 'متصل', color: statusColors.online },
+                          recent: { label: 'غادر حديثاً', color: statusColors.recent }
+                        }}
+                        className="h-full w-full"
+                      >
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={[
+                                { name: 'متصل', value: actualOnlineCount, fill: statusColors.online },
+                                { name: 'غادر حديثاً', value: recentlyLeftStudents.length, fill: statusColors.recent }
+                              ]}
+                              cx="50%"
+                              cy="50%"
+                              outerRadius={80}
+                              dataKey="value"
+                              label={({ name, value }) => `${name}: ${value}`}
+                            >
+                              {[
+                                { fill: statusColors.online },
+                                { fill: statusColors.recent }
+                              ].map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.fill} />
+                              ))}
+                            </Pie>
+                            <Tooltip />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </ChartContainer>
                     </div>
                   </Card>
 
@@ -256,27 +264,35 @@ export const OnlineStudentsStats: React.FC<OnlineStudentsStatsProps> = ({
                       اتجاه النشاط الأسبوعي
                     </h3>
                     <div className="h-64">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={stats.activityTrend}>
-                          <XAxis dataKey="day" />
-                          <YAxis />
-                          <ChartTooltip content={<ChartTooltipContent />} />
-                          <Line 
-                            type="monotone" 
-                            dataKey="online" 
-                            stroke={statusColors.online} 
-                            strokeWidth={3}
-                            dot={{ fill: statusColors.online, r: 4 }}
-                          />
-                          <Line 
-                            type="monotone" 
-                            dataKey="total" 
-                            stroke={statusColors.recent} 
-                            strokeWidth={2}
-                            strokeDasharray="5 5"
-                          />
-                        </LineChart>
-                      </ResponsiveContainer>
+                      <ChartContainer
+                        config={{
+                          online: { label: 'متصل', color: statusColors.online },
+                          total: { label: 'الإجمالي', color: statusColors.recent }
+                        }}
+                        className="h-full w-full"
+                      >
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={stats.activityTrend}>
+                            <XAxis dataKey="day" />
+                            <YAxis />
+                            <Tooltip />
+                            <Line 
+                              type="monotone" 
+                              dataKey="online" 
+                              stroke={statusColors.online} 
+                              strokeWidth={3}
+                              dot={{ fill: statusColors.online, r: 4 }}
+                            />
+                            <Line 
+                              type="monotone" 
+                              dataKey="total" 
+                              stroke={statusColors.recent} 
+                              strokeWidth={2}
+                              strokeDasharray="5 5"
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </ChartContainer>
                     </div>
                   </Card>
                 </div>
@@ -291,15 +307,23 @@ export const OnlineStudentsStats: React.FC<OnlineStudentsStatsProps> = ({
                 </h3>
                 
                 <div className="h-80 mb-6">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={stats.classDistribution}>
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                      <Bar dataKey="online" fill={statusColors.online} name="متصل" />
-                      <Bar dataKey="offline" fill={statusColors.recent} name="غير متصل" />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  <ChartContainer
+                    config={{
+                      online: { label: 'متصل', color: statusColors.online },
+                      offline: { label: 'غير متصل', color: statusColors.recent }
+                    }}
+                    className="h-full w-full"
+                  >
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={stats.classDistribution}>
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip />
+                        <Bar dataKey="online" fill={statusColors.online} name="متصل" />
+                        <Bar dataKey="offline" fill={statusColors.recent} name="غير متصل" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
                 </div>
 
                 <div className="grid gap-4">
