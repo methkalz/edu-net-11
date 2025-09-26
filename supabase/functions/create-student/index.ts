@@ -162,22 +162,6 @@ Deno.serve(async (req) => {
 
       student_id = studentData.id;
       console.log('New student created successfully:', studentData);
-
-      // Create student_presence record if student has user_id
-      if (user_id) {
-        const { error: presenceError } = await supabaseAdmin
-          .rpc('update_student_presence_safe', {
-            p_student_id: student_id,
-            p_is_online: false
-          });
-
-        if (presenceError) {
-          console.error('Error creating student presence:', presenceError);
-          // Don't fail the whole operation, just log the error
-        } else {
-          console.log('Student presence created successfully for student:', student_id);
-        }
-      }
     }
 
     return new Response(

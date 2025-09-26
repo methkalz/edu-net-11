@@ -7,8 +7,7 @@ import {
   Calendar,
   TrendingUp,
   TrendingDown,
-  Minus,
-  UserCheck
+  Minus
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -17,7 +16,6 @@ interface TeacherStats {
   totalStudents: number;
   availableContents: number;
   upcomingEvents: number;
-  onlineStudents?: number;
 }
 
 interface TeacherStatsCardProps {
@@ -165,13 +163,6 @@ export const TeacherDashboardStats: React.FC<TeacherDashboardStatsProps> = ({
       value: stats.totalStudents.toString(),
       icon: Users,
       color: 'from-green-500 to-green-600 text-green-600',
-      change: undefined
-    },
-    {
-      title: 'الطلاب المتواجدين',
-      value: (stats.onlineStudents || 0).toString(),
-      icon: UserCheck,
-      color: 'from-emerald-500 to-emerald-600 text-emerald-600',
       change: undefined
     },
     {

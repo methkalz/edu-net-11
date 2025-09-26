@@ -1,195 +1,230 @@
-/**
- * Student Presence Hook
- * 
- * Manages student presence tracking and updates.
- * Automatically tracks user activity and sends presence updates to the server.
- */
-
-import { useEffect, useCallback, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { useAuth } from './useAuth';
 
-interface UseStudentPresenceOptions {
-  studentId?: string;
-  updateInterval?: number; // in milliseconds, default 30 seconds
-  enabled?: boolean;
+export interface StudentPresence {
+  id: string;
+  student_id: string;
+  user_id: string;
+  school_id: string;
+  is_online: boolean;
+  last_seen_at: string;
+  current_page?: string;
+  student: {
+    id: string;
+    full_name: string;
+    username?: string;
+    email?: string;
+  };
+  class_info?: {
+    class_name: string;
+    grade_level: string;
+  };
 }
 
-export const useStudentPresence = ({
-  studentId,
-  updateInterval = 30000, // 30 seconds
-  enabled = true
-}: UseStudentPresenceOptions = {}) => {
-  const location = useLocation();
-  const { toast } = useToast();
-  
-  const lastActivityRef = useRef<number>(Date.now());
-  const updateIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const isOnlineRef = useRef<boolean>(true);
+export interface ClassInfo {
+  id: string;
+  name: string;
+  grade_level: string;
+  student_count: number;
+}
 
-  // Update presence function
-  const updatePresence = useCallback(async (isOnline: boolean = true, currentPage?: string) => {
-    if (!studentId || !enabled) return;
+export const useStudentPresence = () => {
+  const [onlineStudents, setOnlineStudents] = useState<StudentPresence[]>([]);
+  const [allStudentPresence, setAllStudentPresence] = useState<StudentPresence[]>([]);
+  const [classes, setClasses] = useState<ClassInfo[]>([]);
+  const [selectedClasses, setSelectedClasses] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('student-presence-selected-classes');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const { user, userProfile } = useAuth();
+  
+  // للتحكم في debouncing
+  const debounceTimeout = useRef<NodeJS.Timeout>();
+
+  // حفظ الفلاتر في localStorage عند تغييرها
+  useEffect(() => {
+    localStorage.setItem('student-presence-selected-classes', JSON.stringify(selectedClasses));
+  }, [selectedClasses]);
+
+  // جلب بيانات الطلاب والصفوف مع debouncing
+  const fetchStudentPresence = useCallback(async () => {
+    if (!user || userProfile?.role !== 'teacher') return;
 
     try {
-      const { error } = await supabase.rpc('update_student_presence_safe', {
-        p_student_id: studentId,
-        p_is_online: isOnline,
-        p_current_page: currentPage || location.pathname
-      });
+      setLoading(true);
 
-      if (error) {
-        console.error('Error updating student presence:', error);
-      } else {
-        console.log('Student presence updated:', { studentId, isOnline, currentPage: currentPage || location.pathname });
-      }
-    } catch (error) {
-      console.error('Failed to update student presence:', error);
-    }
-  }, [studentId, enabled, location.pathname]);
+      // جلب حالة حضور الطلاب
+      const { data: presenceData, error: presenceError } = await supabase
+        .from('student_presence')
+        .select(`
+          *,
+          student:students!inner(
+            id,
+            full_name,
+            username,
+            email
+          )
+        `)
+        .order('last_seen_at', { ascending: false });
 
-  // Track user activity
-  const trackActivity = useCallback(() => {
-    lastActivityRef.current = Date.now();
-    
-    // If user was inactive and now active, update presence
-    if (!isOnlineRef.current) {
-      isOnlineRef.current = true;
-      updatePresence(true);
-    }
-  }, [updatePresence]);
-
-  // Check if user is still active
-  const checkActivityStatus = useCallback(() => {
-    const now = Date.now();
-    const timeSinceLastActivity = now - lastActivityRef.current;
-    const isActive = timeSinceLastActivity < 60000; // 1 minute threshold
-
-    if (isActive !== isOnlineRef.current) {
-      isOnlineRef.current = isActive;
-      updatePresence(isActive);
-    } else if (isActive) {
-      // Send heartbeat for active users
-      updatePresence(true);
-    }
-  }, [updatePresence]);
-
-  // Handle page visibility change
-  const handleVisibilityChange = useCallback(() => {
-    const isVisible = !document.hidden;
-    
-    if (isVisible) {
-      trackActivity();
-    } else {
-      // User switched away, mark as potentially inactive
-      setTimeout(() => {
-        if (document.hidden) {
-          isOnlineRef.current = false;
-          updatePresence(false);
-        }
-      }, 5000); // 5 seconds grace period
-    }
-  }, [trackActivity, updatePresence]);
-
-  // Handle online/offline events
-  const handleOnlineStatus = useCallback(() => {
-    const isOnline = navigator.onLine;
-    isOnlineRef.current = isOnline;
-    
-    if (isOnline) {
-      trackActivity();
-    } else {
-      updatePresence(false);
-    }
-  }, [trackActivity, updatePresence]);
-
-  // Initialize presence tracking
-  useEffect(() => {
-    if (!enabled || !studentId) return;
-
-    console.log('Initializing student presence tracking for:', studentId);
-
-    // Initial presence update
-    updatePresence(true);
-
-    // Set up activity tracking
-    const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
-    
-    activityEvents.forEach(event => {
-      document.addEventListener(event, trackActivity, { passive: true });
-    });
-
-    // Set up visibility change listener
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    // Set up online/offline listeners
-    window.addEventListener('online', handleOnlineStatus);
-    window.addEventListener('offline', handleOnlineStatus);
-
-    // Set up periodic presence updates
-    updateIntervalRef.current = setInterval(checkActivityStatus, updateInterval);
-
-    // Cleanup function
-    return () => {
-      console.log('Cleaning up student presence tracking for:', studentId);
-
-      // Remove event listeners
-      activityEvents.forEach(event => {
-        document.removeEventListener(event, trackActivity);
-      });
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('online', handleOnlineStatus);
-      window.removeEventListener('offline', handleOnlineStatus);
-
-      // Clear interval
-      if (updateIntervalRef.current) {
-        clearInterval(updateIntervalRef.current);
-        updateIntervalRef.current = null;
+      if (presenceError) {
+        console.error('Error fetching student presence:', presenceError);
+        return;
       }
 
-      // Mark as offline on cleanup
-      updatePresence(false);
-    };
-  }, [enabled, studentId, updateInterval, trackActivity, handleVisibilityChange, handleOnlineStatus, checkActivityStatus, updatePresence]);
+      // جلب معلومات الصفوف للطلاب
+      const { data: classesData, error: classesError } = await supabase
+        .from('class_students')
+        .select(`
+          student_id,
+          class:classes!inner(
+            id,
+            class_name:class_names!inner(name),
+            grade_level:grade_levels!inner(label)
+          )
+        `);
 
-  // Update presence when route changes
-  useEffect(() => {
-    if (enabled && studentId && isOnlineRef.current) {
-      console.log('Page changed to:', location.pathname);
-      updatePresence(true, location.pathname);
-    }
-  }, [location.pathname, enabled, studentId, updatePresence]);
+      if (classesError) {
+        console.error('Error fetching classes:', classesError);
+      }
 
-  // Handle page unload
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      if (studentId && enabled) {
-        // Use sendBeacon for reliable offline status update
-        const data = new FormData();
-        data.append('student_id', studentId);
-        data.append('is_online', 'false');
+      // دمج بيانات الصفوف مع بيانات الحضور
+      const enrichedPresence = presenceData?.map(presence => {
+        const classInfo = classesData?.find(c => c.student_id === presence.student_id);
+        return {
+          ...presence,
+          class_info: classInfo ? {
+            class_name: classInfo.class.class_name.name,
+            grade_level: classInfo.class.grade_level.label
+          } : undefined
+        };
+      }) || [];
+
+      setAllStudentPresence(enrichedPresence);
+
+      // فلترة الطلاب المتواجدين والذين غادروا حديثاً
+      const now = Date.now();
+      const oneMinute = 60 * 1000;
+      const fiveMinutes = 5 * 60 * 1000;
+      
+      const online = enrichedPresence.filter(presence => {
+        const lastSeen = new Date(presence.last_seen_at).getTime();
+        const timeDiff = now - lastSeen;
         
-        // Fallback: synchronous request as last resort
-        try {
-          navigator.sendBeacon('/api/update-presence-offline', data);
-        } catch (error) {
-          console.warn('SendBeacon failed, using synchronous update');
-          updatePresence(false);
+        // المتصلون فعلاً أو الذين غادروا خلال 5 دقائق
+        return (presence.is_online && timeDiff <= oneMinute) || timeDiff <= fiveMinutes;
+      });
+      
+      setOnlineStudents(online);
+      setLastUpdated(new Date());
+
+      // جلب قائمة الصفوف الفريدة
+      if (classesData) {
+        const classMap = new Map<string, ClassInfo>();
+        classesData.forEach(item => {
+          const key = item.class.id;
+          if (classMap.has(key)) {
+            classMap.get(key)!.student_count++;
+          } else {
+            classMap.set(key, {
+              id: item.class.id,
+              name: item.class.class_name.name,
+              grade_level: item.class.grade_level.label,
+              student_count: 1
+            });
+          }
+        });
+        setClasses(Array.from(classMap.values()));
+      }
+
+    } catch (error) {
+      console.error('Error in fetchStudentPresence:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [user, userProfile?.role]);
+
+  // دالة تحديث مع debouncing
+  const debouncedFetch = useCallback(() => {
+    if (debounceTimeout.current) {
+      clearTimeout(debounceTimeout.current);
+    }
+    debounceTimeout.current = setTimeout(fetchStudentPresence, 500);
+  }, [fetchStudentPresence]);
+
+  // إعداد realtime للاستماع للتحديثات
+  useEffect(() => {
+    if (!user || userProfile?.role !== 'teacher') return;
+
+    fetchStudentPresence();
+
+    const channel = supabase
+      .channel('student-presence-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'student_presence'
+        },
+        () => {
+          debouncedFetch();
         }
+      )
+      .subscribe();
+
+    // تحديث دوري كل 10 ثواني
+    const interval = setInterval(fetchStudentPresence, 10000);
+
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(interval);
+      if (debounceTimeout.current) {
+        clearTimeout(debounceTimeout.current);
       }
     };
+  }, [user, userProfile?.role, debouncedFetch, fetchStudentPresence]);
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [studentId, enabled, updatePresence]);
+  // فلترة الطلاب حسب الصفوف المختارة مع memoization
+  const filteredStudents = useMemo(() => {
+    return selectedClasses.length > 0 
+      ? onlineStudents.filter(student => {
+          // البحث في بيانات class_info المخزنة مع كل طالب
+          return student.class_info && 
+                 classes.some(c => 
+                   selectedClasses.includes(c.id) && 
+                   c.name === student.class_info!.class_name
+                 );
+        })
+      : onlineStudents;
+  }, [onlineStudents, selectedClasses, classes]);
+
+  const toggleClassSelection = useCallback((classId: string) => {
+    setSelectedClasses(prev => 
+      prev.includes(classId) 
+        ? prev.filter(id => id !== classId)
+        : [...prev, classId]
+    );
+  }, []);
+
+  const clearClassSelection = useCallback(() => setSelectedClasses([]), []);
 
   return {
-    updatePresence,
-    trackActivity,
-    isOnline: isOnlineRef.current
+    onlineStudents: filteredStudents,
+    allStudentPresence,
+    classes,
+    selectedClasses,
+    loading,
+    lastUpdated,
+    toggleClassSelection,
+    clearClassSelection,
+    refresh: fetchStudentPresence
   };
 };

@@ -52,8 +52,8 @@ import Grade12ProjectsWidget from '@/components/teacher/Grade12ProjectsWidget';
 import ProjectNotifications from '@/components/teacher/ProjectNotifications';
 import Grade10TeacherContent from '@/components/teacher/Grade10TeacherContent';
 import { UniversalAvatar } from '@/components/shared/UniversalAvatar';
-import OnlineStudentsWidget from '@/components/presence/OnlineStudentsWidget';
 import { UserTitleBadge } from '@/components/shared/UserTitleBadge';
+import { StudentPresenceWidget } from '@/components/teacher/StudentPresenceWidget';
 
 interface TeacherClass {
   id: string;
@@ -96,7 +96,6 @@ interface TeacherStats {
   totalStudents: number;
   availableContents: number;
   upcomingEvents: number;
-  onlineStudents?: number;
 }
 
 const TeacherDashboard: React.FC = () => {
@@ -108,8 +107,7 @@ const TeacherDashboard: React.FC = () => {
     totalClasses: 0,
     totalStudents: 0,
     availableContents: 0,
-    upcomingEvents: 0,
-    onlineStudents: 0
+    upcomingEvents: 0
   });
   const [myClasses, setMyClasses] = useState<TeacherClass[]>([]);
   const [recentStudents, setRecentStudents] = useState<TeacherStudent[]>([]);
@@ -124,6 +122,7 @@ const TeacherDashboard: React.FC = () => {
     grade12: []
   });
   const [schoolPackageContents, setSchoolPackageContents] = useState<string[]>([]);
+  const [showPresenceWidget, setShowPresenceWidget] = useState(false);
 
   // استخدام هوك صلاحيات المحتوى للمعلم
   const { allowedGrades, canAccessGrade, loading: accessLoading } = useTeacherContentAccess();
@@ -164,9 +163,6 @@ const TeacherDashboard: React.FC = () => {
       
       // جلب المضامين المتاحة حسب باقة المدرسة
       await fetchAvailableContents(schoolId);
-
-      // جلب عدد الطلاب المتواجدين حالياً  
-      await fetchOnlineStudents(schoolId);
 
       if (isRefresh) {
         toast({
@@ -455,54 +451,6 @@ const TeacherDashboard: React.FC = () => {
     }
   };
 
-  const fetchOnlineStudents = async (schoolId: string) => {
-    try {
-      // جلب الطلاب المتواجدين حالياً في صفوف المعلم
-      const { data: teacherClasses } = await supabase
-        .from('teacher_classes')
-        .select('class_id')
-        .eq('teacher_id', user?.id);
-
-      if (!teacherClasses || teacherClasses.length === 0) {
-        setStats(prev => ({ ...prev, onlineStudents: 0 }));
-        return;
-      }
-
-      const classIds = teacherClasses.map(tc => tc.class_id);
-
-      // جلب الطلاب المتواجدين في هذه الصفوف
-      const { data: classStudents } = await supabase
-        .from('class_students')
-        .select('student_id')
-        .in('class_id', classIds);
-
-      if (!classStudents || classStudents.length === 0) {
-        setStats(prev => ({ ...prev, onlineStudents: 0 }));
-        return;
-      }
-
-      const studentIds = classStudents.map(cs => cs.student_id);
-
-      // جلب عدد الطلاب المتواجدين حالياً
-      const { count, error } = await supabase
-        .from('student_presence')
-        .select('*', { count: 'exact', head: true })
-        .in('student_id', studentIds)
-        .eq('is_online', true);
-
-      if (error) throw error;
-
-      setStats(prev => ({
-        ...prev,
-        onlineStudents: count || 0
-      }));
-
-    } catch (error) {
-      logger.error('Error fetching online students', error as Error);
-      setStats(prev => ({ ...prev, onlineStudents: 0 }));
-    }
-  };
-
   const quickActions = [
     { name: 'إدارة الطلاب', icon: Users, path: '/students', color: 'blue' },
     { name: 'مضامين الصفوف', icon: BookOpen, path: '/educational-content', color: 'green' },
@@ -590,37 +538,25 @@ const TeacherDashboard: React.FC = () => {
           onRefresh={() => fetchTeacherData(true)}
         />
 
-        {/* Online Students Widget */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            {/* Grade 12 Projects and Notifications - عرض حسب الصلاحيات */}
-            {canAccessGrade('12') ? (
-              <div className="grid grid-cols-1 gap-6">
-                <Grade12ProjectsWidget />
-              </div>
-            ) : canAccessGrade('10') ? (
-              <div className="space-y-6">
-                <Grade10TeacherContent />
-              </div>
-            ) : allowedGrades.length > 0 && (
-              <div className="grid grid-cols-1 gap-6">
-                <ProjectNotifications />
-              </div>
-            )}
+        {/* Grade 12 Projects and Notifications - عرض حسب الصلاحيات */}
+        {canAccessGrade('12') ? (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <Grade12ProjectsWidget />
+            </div>
+            <div className="lg:col-span-1">
+              <ProjectNotifications />
+            </div>
           </div>
-          
-          <div className="lg:col-span-1">
-            <OnlineStudentsWidget 
-              className="h-fit"
-              maxHeight="500px"
-              classIds={myClasses.map(cls => cls.id)}
-            />
+        ) : canAccessGrade('10') ? (
+          <div className="space-y-6">
+            <Grade10TeacherContent />
+            <ProjectNotifications />
           </div>
-        </div>
-
-        {/* Additional Notifications */}
-        {(canAccessGrade('12') || canAccessGrade('10') || allowedGrades.length > 0) && (
-          <ProjectNotifications />
+        ) : allowedGrades.length > 0 && (
+          <div className="grid grid-cols-1 gap-6">
+            <ProjectNotifications />
+          </div>
         )}
 
         {/* الإجراءات السريعة المحسنة */}
@@ -910,6 +846,12 @@ const TeacherDashboard: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Student Presence Widget */}
+      <StudentPresenceWidget 
+        isOpen={showPresenceWidget}
+        onToggle={() => setShowPresenceWidget(!showPresenceWidget)}
+      />
     </div>
   );
 };

@@ -26,6 +26,7 @@ import App from './App.tsx'
 import './index.css'
 import PerformanceSetup from '@/lib/performance-setup'
 import { ErrorBoundary } from '@/lib/error-boundary'
+import { StudentPresenceProvider } from './components/providers/StudentPresenceProvider.tsx'
 
 // إعداد تحسينات الأداء
 PerformanceSetup.initialize()
@@ -54,11 +55,13 @@ createRoot(document.getElementById('root')!).render(
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <AuthProvider>
-            <TooltipProvider>
-              <App />
-              <Toaster />
-              <Sonner />
-            </TooltipProvider>
+            <StudentPresenceProvider>
+              <TooltipProvider>
+                <App />
+                <Toaster />
+                <Sonner />
+              </TooltipProvider>
+            </StudentPresenceProvider>
           </AuthProvider>
         </BrowserRouter>
       </QueryClientProvider>

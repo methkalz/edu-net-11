@@ -5316,14 +5316,6 @@ export type Database = {
         }
         Returns: undefined
       }
-      update_student_presence_safe: {
-        Args: {
-          p_current_page?: string
-          p_is_online?: boolean
-          p_student_id: string
-        }
-        Returns: undefined
-      }
       validate_email_format: {
         Args: { email_input: string }
         Returns: boolean
