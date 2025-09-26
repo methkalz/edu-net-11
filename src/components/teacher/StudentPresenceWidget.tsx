@@ -202,18 +202,18 @@ export const StudentPresenceWidget: React.FC<StudentPresenceWidgetProps> = memo(
         <Button
           onClick={onToggle}
           size="lg"
-          className="relative rounded-full shadow-2xl backdrop-blur-2xl bg-white/10 hover:bg-white/20 text-foreground border border-white/20 hover:border-white/30 transition-all duration-500 hover:scale-105 hover:shadow-primary/20 animate-fade-in"
+          className="relative rounded-full shadow-2xl backdrop-blur-2xl bg-white/10 hover:bg-white/20 text-foreground border border-white/20 hover:border-white/30 transition-all duration-500 hover:scale-105 hover:shadow-primary/20"
         >
-          <Users className="h-5 w-5 ml-2 transition-transform duration-300 group-hover:scale-110" />
+          <Users className="h-5 w-5 ml-2" />
           <span className="mx-3 font-bold">المتواجدون الآن</span>
           
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-sm bg-emerald-500/20 border border-emerald-500/30 transition-all duration-300 hover:bg-emerald-500/30">
+            <div className="flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-sm bg-emerald-500/20 border border-emerald-500/30">
               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
               <span className="text-xs font-bold text-emerald-600">{actualOnlineCount}</span>
             </div>
             {totalVisibleCount > actualOnlineCount && (
-              <div className="flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-sm bg-amber-500/20 border border-amber-500/30 transition-all duration-300 hover:bg-amber-500/30">
+              <div className="flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-sm bg-amber-500/20 border border-amber-500/30">
                 <div className="w-2 h-2 rounded-full bg-amber-500"></div>
                 <span className="text-xs font-bold text-amber-600">+{totalVisibleCount - actualOnlineCount}</span>
               </div>
@@ -233,66 +233,65 @@ export const StudentPresenceWidget: React.FC<StudentPresenceWidgetProps> = memo(
 
   return (
     <TooltipProvider>
-      <div className="fixed bottom-6 right-6 z-50 w-[440px]">
-        <div className="animate-slide-up-elegant opacity-0 scale-95 [animation-fill-mode:forwards] [animation-duration:600ms] [animation-timing-function:cubic-bezier(0.16,1,0.3,1)]">
-          <Card className="shadow-2xl backdrop-blur-[40px] bg-white/[0.02] dark:bg-white/[0.01] border border-white/[0.08] dark:border-white/[0.05] rounded-3xl overflow-hidden transform transition-all duration-700 hover:shadow-3xl hover:bg-white/[0.04] dark:hover:bg-white/[0.02]">
-            <CardHeader className="pb-4 space-y-4 bg-gradient-to-r from-white/[0.02] to-transparent backdrop-blur-[20px]">
-              {/* Header العلوي */}
-              <div className="flex items-center justify-between animate-fade-in-delayed">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-2xl backdrop-blur-sm bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/20 shadow-lg transition-all duration-500 hover:shadow-primary/20 hover:scale-105">
-                    <Users className="h-6 w-6 text-primary transition-transform duration-300" />
-                  </div>
-                  <div className="transform transition-all duration-500">
-                    <h3 className="font-bold text-xl text-foreground/90">المتواجدون الآن</h3>
-                    <div className="flex items-center gap-3 text-sm text-muted-foreground/80 mt-1">
-                      <div className="flex items-center gap-1 transition-all duration-300">
-                        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                        <span>متصل: {actualOnlineCount}</span>
-                      </div>
-                      <span className="opacity-50">•</span>
-                      <div className="flex items-center gap-1 transition-all duration-300">
-                        <div className="w-2 h-2 rounded-full bg-amber-500"></div>
-                        <span>غادر حديثاً: {totalVisibleCount - actualOnlineCount}</span>
-                      </div>
-                    </div>
-                  </div>
+      <div className="fixed bottom-6 right-6 z-50 w-[440px] animate-scale-in">
+        <Card className="shadow-2xl backdrop-blur-2xl bg-white/5 border border-white/10 rounded-3xl overflow-hidden">
+          <CardHeader className="pb-4 space-y-4 bg-gradient-to-r from-white/5 to-transparent">
+            {/* Header العلوي */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-2xl backdrop-blur-sm bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/20 shadow-lg">
+                  <Users className="h-6 w-6 text-primary" />
                 </div>
-                
-                <div className="flex items-center gap-3">
-                  {refreshing && (
-                    <div className="flex items-center gap-2 animate-pulse">
-                      <div className="w-3 h-3 rounded-full bg-primary/60 animate-pulse"></div>
-                      <span className="text-xs text-muted-foreground/70">تحديث...</span>
+                <div>
+                  <h3 className="font-bold text-xl text-foreground/90">المتواجدون الآن</h3>
+                  <div className="flex items-center gap-3 text-sm text-muted-foreground/80 mt-1">
+                    <div className="flex items-center gap-1">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                      <span>متصل: {actualOnlineCount}</span>
                     </div>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={onToggle}
-                    className="text-muted-foreground hover:text-foreground backdrop-blur-xl hover:bg-white/8 dark:hover:bg-white/5 rounded-xl transition-all duration-300 hover:scale-105 hover:rotate-180"
-                  >
-                    <ChevronDown className="h-5 w-5 transition-transform duration-300" />
-                  </Button>
+                    <span>•</span>
+                    <div className="flex items-center gap-1">
+                      <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+                      <span>غادر حديثاً: {totalVisibleCount - actualOnlineCount}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
+              
+              <div className="flex items-center gap-3">
+                {refreshing && (
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-primary/60 animate-pulse"></div>
+                    <span className="text-xs text-muted-foreground/70">تحديث...</span>
+                  </div>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onToggle}
+                  className="text-muted-foreground hover:text-foreground backdrop-blur-sm hover:bg-white/10 rounded-xl"
+                >
+                  <ChevronDown className="h-5 w-5" />
+                </Button>
+              </div>
+            </div>
 
             {/* شريط البحث */}
-            <div className="relative animate-fade-in-delayed [animation-delay:200ms]">
-              <Search className="absolute right-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground/60 transition-all duration-300" />
+            <div className="relative">
+              <Search className="absolute right-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground/60" />
               <Input
                 placeholder="البحث عن طالب..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pr-12 pl-12 h-12 backdrop-blur-[30px] bg-white/[0.03] dark:bg-white/[0.02] border border-white/[0.08] dark:border-white/[0.05] rounded-2xl text-foreground placeholder:text-muted-foreground/60 focus:border-primary/40 focus:bg-white/[0.06] dark:focus:bg-white/[0.04] transition-all duration-500 focus:scale-[1.02] focus:shadow-lg focus:shadow-primary/10"
+                className="pr-12 pl-12 h-12 backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl text-foreground placeholder:text-muted-foreground/60 focus:border-primary/40 focus:bg-white/15 transition-all duration-300"
               />
               {searchQuery && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSearchQuery('')}
-                    className="absolute left-2 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 backdrop-blur-[20px] hover:bg-white/[0.06] dark:hover:bg-white/[0.04] rounded-xl transition-all duration-300 hover:scale-105 hover:rotate-90"
-                  >
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute left-2 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 backdrop-blur-sm hover:bg-white/10 rounded-xl"
+                >
                   <X className="h-4 w-4" />
                 </Button>
               )}
@@ -300,12 +299,12 @@ export const StudentPresenceWidget: React.FC<StudentPresenceWidgetProps> = memo(
 
             {/* فلتر الصفوف المحسن */}
             <Collapsible open={showClassFilter} onOpenChange={setShowClassFilter}>
-              <div className="flex items-center justify-between animate-fade-in-delayed [animation-delay:300ms]">
+              <div className="flex items-center justify-between">
                 <CollapsibleTrigger asChild>
-                  <Button variant="ghost" className="flex items-center gap-2 text-sm font-medium hover:bg-white/[0.03] dark:hover:bg-white/[0.02] backdrop-blur-[15px] transition-all duration-300 hover:scale-[1.02]">
-                    <Filter className="h-4 w-4 transition-transform duration-300" />
+                  <Button variant="ghost" className="flex items-center gap-2 text-sm font-medium hover:bg-primary/5">
+                    <Filter className="h-4 w-4" />
                     <span>فلترة حسب الصف</span>
-                    <ChevronDown className={`h-4 w-4 transition-transform duration-500 ${showClassFilter ? 'rotate-180' : ''}`} />
+                    <ChevronDown className={`h-4 w-4 transition-transform ${showClassFilter ? 'rotate-180' : ''}`} />
                   </Button>
                 </CollapsibleTrigger>
                 
@@ -314,24 +313,23 @@ export const StudentPresenceWidget: React.FC<StudentPresenceWidgetProps> = memo(
                     variant="ghost"
                     size="sm"
                     onClick={clearClassSelection}
-                    className="text-xs text-muted-foreground hover:text-foreground transition-all duration-300 hover:scale-105"
+                    className="text-xs text-muted-foreground hover:text-foreground"
                   >
                     مسح الكل ({selectedClasses.length})
                   </Button>
                 )}
               </div>
               
-              <CollapsibleContent className="mt-3 animate-accordion-down">
+              <CollapsibleContent className="mt-3">
                 <div className="flex flex-wrap gap-2">
-                  {classes.map((classInfo, index) => (
+                  {classes.map(classInfo => (
                     <button
                       key={classInfo.id}
-                      className={`group relative overflow-hidden rounded-xl px-3 py-2 text-xs font-medium transition-all duration-500 border backdrop-blur-[25px] animate-fade-in-delayed ${
+                      className={`group relative overflow-hidden rounded-xl px-3 py-2 text-xs font-medium transition-all duration-300 border backdrop-blur-sm ${
                         selectedClasses.includes(classInfo.id)
-                          ? 'bg-primary/[0.08] dark:bg-primary/[0.06] text-primary border-primary/[0.15] dark:border-primary/[0.12] shadow-lg shadow-primary/[0.03] scale-105'
-                          : 'bg-white/[0.03] dark:bg-white/[0.02] text-muted-foreground border-white/[0.08] dark:border-white/[0.05] hover:bg-white/[0.06] dark:hover:bg-white/[0.04] hover:border-white/[0.12] dark:hover:border-white/[0.08] hover:text-foreground hover:scale-105'
+                          ? 'bg-primary/20 text-primary border-primary/30 shadow-lg shadow-primary/10'
+                          : 'bg-white/5 text-muted-foreground border-white/10 hover:bg-white/10 hover:border-white/20 hover:text-foreground'
                       }`}
-                      style={{ animationDelay: `${400 + index * 50}ms` }}
                       onClick={() => toggleClassSelection(classInfo.id)}
                     >
                       <div className="flex items-center gap-2">
@@ -343,17 +341,17 @@ export const StudentPresenceWidget: React.FC<StudentPresenceWidgetProps> = memo(
                             {classInfo.grade_level}
                           </div>
                         </div>
-                        <div className={`px-1.5 py-0.5 rounded-md text-xs font-bold backdrop-blur-[15px] transition-all duration-300 ${
+                        <div className={`px-1.5 py-0.5 rounded-md text-xs font-bold backdrop-blur-sm ${
                           selectedClasses.includes(classInfo.id)
-                            ? 'bg-primary/[0.15] dark:bg-primary/[0.12] text-primary'
-                            : 'bg-white/[0.06] dark:bg-white/[0.04] text-muted-foreground/80'
+                            ? 'bg-primary/30 text-primary'
+                            : 'bg-white/10 text-muted-foreground/80'
                         }`}>
                           {classInfo.student_count}
                         </div>
                       </div>
                       
                       {/* تأثير الـ hover */}
-                      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-500 bg-gradient-to-r from-transparent via-white/[0.02] to-transparent backdrop-blur-[10px]"></div>
+                      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-transparent via-white/5 to-transparent"></div>
                     </button>
                   ))}
                 </div>
@@ -384,16 +382,10 @@ export const StudentPresenceWidget: React.FC<StudentPresenceWidgetProps> = memo(
                 )}
               </div>
             ) : (
-              <ScrollArea className="h-80 animate-fade-in-delayed [animation-delay:500ms]">
+              <ScrollArea className="h-80">
                 <div className="space-y-3 pr-4">
-                  {filteredStudents.map((student, index) => (
-                    <div 
-                      key={student.id} 
-                      className="animate-fade-in-delayed"
-                      style={{ animationDelay: `${600 + index * 50}ms` }}
-                    >
-                      <StudentCard student={student} />
-                    </div>
+                  {filteredStudents.map(student => (
+                    <StudentCard key={student.id} student={student} />
                   ))}
                 </div>
               </ScrollArea>
@@ -401,9 +393,8 @@ export const StudentPresenceWidget: React.FC<StudentPresenceWidgetProps> = memo(
           </CardContent>
         </Card>
       </div>
-    </div>
-  </TooltipProvider>
-);
+    </TooltipProvider>
+  );
 });
 
 StudentPresenceWidget.displayName = 'StudentPresenceWidget';

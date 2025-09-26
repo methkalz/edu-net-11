@@ -166,29 +166,6 @@ export default {
 			
 			// Custom keyframe animations
 			keyframes: {
-				// Professional animations for glassmorphism elements
-				'slide-up-elegant': {
-					'0%': { 
-						opacity: '0', 
-						transform: 'translateY(60px) scale(0.85)',
-						filter: 'blur(10px)'
-					},
-					'50%': { 
-						opacity: '0.8',
-						transform: 'translateY(-10px) scale(1.02)',
-						filter: 'blur(2px)'
-					},
-					'100%': { 
-						opacity: '1',
-						transform: 'translateY(0) scale(1)',
-						filter: 'blur(0)'
-					}
-				},
-				'fade-in-delayed': {
-					'0%': { opacity: '0', transform: 'translateY(20px)' },
-					'100%': { opacity: '1', transform: 'translateY(0)' }
-				},
-				
 				// Accordion animations for collapsible content
 				'accordion-down': {
 					from: { height: '0' },
@@ -235,10 +212,6 @@ export default {
 			
 			// Animation utilities combining keyframes with timing
 			animation: {
-				// Professional glassmorphism animations
-				'slide-up-elegant': 'slide-up-elegant 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-				'fade-in-delayed': 'fade-in-delayed 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards',
-				
 				// Component-specific animations
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
