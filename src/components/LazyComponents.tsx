@@ -15,6 +15,7 @@ export const LazyCalendarManagement = lazy(() => retryDynamicImport(() => import
 export const LazySchoolClasses = lazy(() => retryDynamicImport(() => import('@/pages/SchoolClasses')));
 export const LazyUserManagement = lazy(() => retryDynamicImport(() => import('@/pages/UserManagement')));
 export const LazySystemSettings = lazy(() => retryDynamicImport(() => import('@/pages/SystemSettings')));
+export const LazyProfileSettings = lazy(() => retryDynamicImport(() => import('@/pages/ProfileSettings')));
 export const LazyContentManagement = lazy(() => retryDynamicImport(() => import('@/pages/ContentManagement')));
 export const LazyEducationalContent = createLazyComponentWithFallback(
   () => import('@/pages/EducationalContent'),

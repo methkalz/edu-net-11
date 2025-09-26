@@ -1,19 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { AvatarSelector } from './AvatarSelector';
+import { Button } from '@/components/ui/button';
+import { UniversalAvatar } from './UniversalAvatar';
+import { ProfilePictureModal } from './ProfilePictureModal';
 import { UserTitleBadge } from './UserTitleBadge';
 import { useAuth } from '@/hooks/useAuth';
-import { useUserAvatar } from '@/hooks/useUserAvatar';
-import { useToast } from '@/hooks/use-toast';
 import { useUserTitle } from '@/hooks/useUserTitle';
 import { Progress } from '@/components/ui/progress';
-import { Star, Trophy, Target } from 'lucide-react';
+import { Star, Trophy, Target, Camera } from 'lucide-react';
 
 export const UserProfileSettings: React.FC = () => {
   const { userProfile, user } = useAuth();
-  const { updateAvatar } = useUserAvatar();
-  const { toast } = useToast();
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
 
   if (!userProfile || !user) {
     return null;
@@ -33,16 +32,6 @@ export const UserProfileSettings: React.FC = () => {
     level: userProfile.level
   });
 
-  const handleAvatarChange = async (avatarUrl: string) => {
-    const result = await updateAvatar(avatarUrl);
-    if (result.success) {
-      // Refresh the page or trigger a re-fetch of user data
-      window.location.reload();
-    } else {
-      throw new Error('Failed to update avatar');
-    }
-  };
-
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Profile Overview */}
@@ -56,12 +45,22 @@ export const UserProfileSettings: React.FC = () => {
         <CardContent className="space-y-6">
           {/* Avatar Selection */}
           <div className="flex flex-col items-center gap-4">
-            <AvatarSelector
-              currentAvatarUrl={userProfile.avatar_url}
-              userRole={userProfile.role}
-              onAvatarChange={handleAvatarChange}
-              userName={userProfile.full_name}
-            />
+            <div className="relative">
+              <UniversalAvatar
+                avatarUrl={userProfile.avatar_url}
+                userName={userProfile.full_name}
+                size="xl"
+                className="ring-4 ring-primary/20"
+              />
+              <Button
+                size="sm"
+                variant="secondary"
+                className="absolute -bottom-2 -right-2 rounded-full h-8 w-8 p-0 shadow-lg"
+                onClick={() => setShowAvatarModal(true)}
+              >
+                <Camera className="h-4 w-4" />
+              </Button>
+            </div>
             <div className="text-center">
               <h2 className="text-xl font-bold">{userProfile.full_name}</h2>
               <p className="text-muted-foreground">{userProfile.email}</p>
@@ -175,6 +174,13 @@ export const UserProfileSettings: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+
+      <ProfilePictureModal
+        open={showAvatarModal}
+        onOpenChange={setShowAvatarModal}
+        currentAvatarUrl={userProfile.avatar_url}
+        userRole={userProfile.role}
+      />
     </div>
   );
 };

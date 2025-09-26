@@ -39,6 +39,7 @@ import {
   LazySchoolClasses,
   LazyUserManagement,
   LazySystemSettings,
+  LazyProfileSettings,
   LazyContentManagement,
   LazyEducationalContent,
   LazyGrade10Management,
@@ -103,8 +104,9 @@ const App = () => {
               {/* System management routes */}
               <Route path="/plugin-management" element={<LazyPluginManagement />} />
               <Route path="/package-management" element={<LazyPackageManagement />} />
-              <Route path="/users" element={<LazyUserManagement />} />
-              <Route path="/system-settings" element={<LazySystemSettings />} />
+               <Route path="/users" element={<LazyUserManagement />} />
+               <Route path="/system-settings" element={<LazySystemSettings />} />
+               <Route path="/profile-settings" element={<LazyProfileSettings />} />
               
                {/* Academic management routes */}
                <Route path="/academic-years" element={<LazyAcademicYears />} />

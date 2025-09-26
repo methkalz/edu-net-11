@@ -178,7 +178,7 @@ export const UserProfilePopup: React.FC<UserProfilePopupProps> = ({ children }) 
                 className="justify-start gap-3 h-10 hover:bg-muted/50 transition-colors"
                 onClick={() => {
                   setOpen(false);
-                  // Add navigation to settings if needed
+                  window.location.href = '/profile-settings';
                 }}
               >
                 <Settings className="h-4 w-4" />
