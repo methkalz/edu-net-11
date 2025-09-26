@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useStudentContent } from '@/hooks/useStudentContent';
+import { useGrade10Files } from '@/hooks/useGrade10Files';
 import { useGrade10MiniProjects } from '@/hooks/useGrade10MiniProjects';
 import { useStudentGrade10Lessons } from '@/hooks/useStudentGrade10Lessons';
 import { StudentGrade10Lessons } from '../student/StudentGrade10Lessons';
@@ -46,8 +46,8 @@ import { toast } from 'sonner';
 import type { ProjectFormData } from '@/types/grade10-projects';
 
 const Grade10TeacherContent = () => {
-  // Use student hooks to get Grade 10 content
-  const { gradeContent, loading, error, refetch } = useStudentContent();
+  // Use Grade 10 specific hooks instead of general student content
+  const { videos, documents, loading: filesLoading, refetch } = useGrade10Files();
   const { projects: miniProjects, loading: projectsLoading, createProject } = useGrade10MiniProjects();
   const grade10LessonsResult = useStudentGrade10Lessons();
 
@@ -64,9 +64,8 @@ const Grade10TeacherContent = () => {
     due_date: ''
   });
 
-  // Get Grade 10 content with null safety
-  const currentContent = gradeContent?.['10'] || null;
   const allProjects = miniProjects || [];
+  const loading = filesLoading || projectsLoading;
 
   // Helper functions (same as student view)
   const extractYouTubeId = (url: string): string | null => {
@@ -99,14 +98,20 @@ const Grade10TeacherContent = () => {
     return video.thumbnail_url || '/placeholder.svg';
   };
 
-  // Filter functions (same as student view)
+  // Filter functions using direct data from useGrade10Files
   const getFilteredVideos = (category?: string) => {
-    if (!currentContent?.videos) return [];
+    if (!videos) return [];
     
-    return currentContent.videos.filter((video: any) => {
-      if (category && video.category !== category) return false;
-      return true;
+    return videos.filter((video: any) => {
+      if (category === 'educational_explanations' && video.video_category !== 'educational_explanations') return false;
+      if (category === 'windows_basics' && video.video_category !== 'windows_basics') return false;
+      return video.is_visible !== false; // Include videos that are visible or have no visibility set
     });
+  };
+
+  const getFilteredDocuments = () => {
+    if (!documents) return [];
+    return documents.filter((doc: any) => doc.is_visible !== false);
   };
 
   // Handle content interactions (adapted for teacher - preview instead of start)
@@ -295,7 +300,7 @@ const Grade10TeacherContent = () => {
     );
   };
 
-  if (loading || projectsLoading) {
+  if (loading) {
     return (
       <div className="space-y-6">
         <div className="h-8 bg-muted rounded w-1/3 animate-pulse"></div>
@@ -314,24 +319,7 @@ const Grade10TeacherContent = () => {
     );
   }
 
-  if (error) {
-    return (
-      <Card className="text-center p-8">
-        <div className="space-y-4">
-          <div className="w-16 h-16 mx-auto bg-red-100 rounded-full flex items-center justify-center">
-            <ExternalLink className="w-8 h-8 text-red-600" />
-          </div>
-          <h3 className="text-lg font-semibold">حدث خطأ في تحميل المحتوى</h3>
-          <p className="text-muted-foreground">{error}</p>
-          <Button onClick={() => window.location.reload()}>
-            إعادة تحميل الصفحة
-          </Button>
-        </div>
-      </Card>
-    );
-  }
-
-  // Define content tabs (exactly like student view)
+  // Define content tabs with updated data sources
   const contentTabs = [
     {
       id: 'computer_structure',
@@ -372,6 +360,14 @@ const Grade10TeacherContent = () => {
       count: allProjects.length,
       items: allProjects,
       color: 'from-amber-500 to-orange-500'
+    },
+    {
+      id: 'documents',
+      label: 'المستندات',
+      icon: FileText,
+      count: getFilteredDocuments().length,
+      items: getFilteredDocuments(),
+      color: 'from-indigo-500 to-purple-500'
     }
   ];
 
@@ -386,7 +382,7 @@ const Grade10TeacherContent = () => {
       {/* Content Tabs - Exact same design as student view */}
       <Tabs value={activeContentTab} onValueChange={setActiveContentTab} className="w-full">
         <div className="flex justify-center mb-8">
-          <TabsList className="grid grid-cols-5 w-full h-auto p-1 gap-1 bg-background/80 border border-border/40 rounded-2xl shadow-lg backdrop-blur-md transition-all duration-300 hover:shadow-xl" style={{ maxWidth: '1192px' }}>
+          <TabsList className="grid grid-cols-6 w-full h-auto p-1 gap-1 bg-background/80 border border-border/40 rounded-2xl shadow-lg backdrop-blur-md transition-all duration-300 hover:shadow-xl" style={{ maxWidth: '1400px' }}>
             {contentTabs.map((tab) => {
               const IconComponent = tab.icon;
               return (
