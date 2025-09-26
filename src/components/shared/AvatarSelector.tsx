@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { UniversalAvatar } from './UniversalAvatar';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Camera, Users, Palette, Heart } from 'lucide-react';
+import { Loader2, Camera } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
 
 type AvatarImage = Database['public']['Tables']['avatar_images']['Row'];
@@ -79,19 +79,11 @@ export const AvatarSelector: React.FC<AvatarSelectorProps> = ({
     try {
       setSaving(true);
       await onAvatarChange(selectedAvatar);
-      
+      setIsOpen(false);
       toast({
         title: 'تم التحديث',
         description: 'تم تحديث صورة البروفايل بنجاح'
       });
-      
-      setIsOpen(false);
-      
-      // إعادة تحميل الصفحة لإظهار التحديث
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
-      
     } catch (error) {
       console.error('Error updating avatar:', error);
       toast({
@@ -101,58 +93,6 @@ export const AvatarSelector: React.FC<AvatarSelectorProps> = ({
       });
     } finally {
       setSaving(false);
-    }
-  };
-
-  // تجميع الأفاتار حسب الفئات
-  const groupedAvatars = avatars.reduce((groups: Record<string, AvatarImage[]>, avatar) => {
-    const category = avatar.category || 'other';
-    if (!groups[category]) {
-      groups[category] = [];
-    }
-    groups[category].push(avatar);
-    return groups;
-  }, {});
-
-  // الحصول على أيقونة الفئة
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case 'characters':
-        return <Users className="h-4 w-4" />;
-      case '3d':
-        return <Palette className="h-4 w-4" />;
-      case 'animals':
-        return <Heart className="h-4 w-4" />;
-      case 'universal':
-        return <Camera className="h-4 w-4" />;
-      default:
-        return <Camera className="h-4 w-4" />;
-    }
-  };
-
-  // الحصول على اسم الفئة بالعربية
-  const getCategoryLabel = (category: string) => {
-    switch (category) {
-      case 'characters':
-        return 'الشخصيات المهنية';
-      case '3d':
-        return 'ثلاثية الأبعاد';
-      case 'animals':
-        return 'الحيوانات';
-      case 'universal':
-        return 'عالمية';
-      case 'student':
-        return 'الطلاب';
-      case 'teacher':
-        return 'المعلمين';
-      case 'school_admin':
-        return 'إدارة المدرسة';
-      case 'parent':
-        return 'أولياء الأمور';
-      case 'superadmin':
-        return 'إدارة النظام';
-      default:
-        return 'أخرى';
     }
   };
 
@@ -193,48 +133,27 @@ export const AvatarSelector: React.FC<AvatarSelectorProps> = ({
             </div>
           ) : (
             <>
-              <div className="space-y-6 max-h-96 overflow-y-auto">
-                {Object.entries(groupedAvatars).map(([category, categoryAvatars]) => (
-                  <div key={category} className="space-y-3">
-                    {/* عنوان الفئة */}
-                    <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground border-b pb-2">
-                      {getCategoryIcon(category)}
-                      <span>{getCategoryLabel(category)}</span>
-                      <span className="text-xs bg-muted px-2 py-1 rounded-full">
-                        {categoryAvatars.length}
-                      </span>
+              <div className="grid grid-cols-4 md:grid-cols-6 gap-4">
+                {avatars.map((avatar) => (
+                  <button
+                    key={avatar.id}
+                    onClick={() => setSelectedAvatar(avatar.file_path)}
+                    className={`relative p-2 rounded-lg border-2 transition-all hover:bg-muted/50 ${
+                      selectedAvatar === avatar.file_path
+                        ? 'border-primary bg-primary/10'
+                        : 'border-muted hover:border-primary/50'
+                    }`}
+                  >
+                    <UniversalAvatar
+                      avatarUrl={avatar.file_path}
+                      userName={avatar.display_name}
+                      size="lg"
+                      className="mx-auto"
+                    />
+                    <div className="mt-2 text-xs text-center font-medium truncate">
+                      {avatar.display_name}
                     </div>
-                    
-                    {/* أفاتار الفئة */}
-                    <div className="grid grid-cols-4 md:grid-cols-6 gap-3">
-                      {categoryAvatars.map((avatar) => (
-                        <button
-                          key={avatar.id}
-                          onClick={() => setSelectedAvatar(avatar.file_path)}
-                          className={`relative p-2 rounded-lg border-2 transition-all hover:bg-muted/50 ${
-                            selectedAvatar === avatar.file_path
-                              ? 'border-primary bg-primary/10 shadow-md'
-                              : 'border-muted hover:border-primary/50'
-                          }`}
-                        >
-                          <UniversalAvatar
-                            avatarUrl={avatar.file_path}
-                            userName={avatar.display_name}
-                            size="lg"
-                            className="mx-auto"
-                          />
-                          <div className="mt-2 text-xs text-center font-medium truncate">
-                            {avatar.display_name}
-                          </div>
-                          {selectedAvatar === avatar.file_path && (
-                            <div className="absolute -top-1 -right-1 h-5 w-5 bg-primary rounded-full flex items-center justify-center">
-                              <Camera className="h-3 w-3 text-primary-foreground" />
-                            </div>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                  </button>
                 ))}
               </div>
 
