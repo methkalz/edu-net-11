@@ -26,14 +26,17 @@ const iconSizes = {
   xl: 'h-12 w-12'
 };
 
-export const UniversalAvatar: React.FC<UniversalAvatarProps> = ({
+export const UniversalAvatar = React.forwardRef<
+  HTMLDivElement,
+  UniversalAvatarProps
+>(({
   avatarUrl,
   userName,
   size = 'md',
   className,
   fallbackIcon: FallbackIcon = User,
   onClick
-}) => {
+}, ref) => {
   // Generate initials from user name if available
   const getInitials = (name?: string) => {
     if (!name) return '';
@@ -62,6 +65,7 @@ export const UniversalAvatar: React.FC<UniversalAvatarProps> = ({
 
   return (
     <Avatar 
+      ref={ref}
       className={cn(
         sizeClasses[size], 
         onClick && "cursor-pointer hover:opacity-80 transition-opacity",
@@ -85,4 +89,6 @@ export const UniversalAvatar: React.FC<UniversalAvatarProps> = ({
       </AvatarFallback>
     </Avatar>
   );
-};
+});
+
+UniversalAvatar.displayName = "UniversalAvatar";
