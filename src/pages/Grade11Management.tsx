@@ -1,13 +1,16 @@
 import React from 'react';
-import { BookOpen, GraduationCap, Gamepad2, Eye } from 'lucide-react';
+import { BookOpen, GraduationCap, Gamepad2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useBackPath } from '@/hooks/useBackPath';
-import { Badge } from '@/components/ui/badge';
 import AppHeader from '@/components/shared/AppHeader';
 import AppFooter from '@/components/shared/AppFooter';
 import Grade11Content from '@/components/content/Grade11Content';
-import { StudentGradeContent } from '@/components/student/StudentGradeContent';
+import Grade11ContentViewer from '@/components/content/Grade11ContentViewer';
+import Grade11SchoolAdminViewer from '@/components/content/Grade11SchoolAdminViewer';
+import Grade11CourseViewer from '@/components/content/Grade11CourseViewer';
 import GamesSection from '@/components/content/GamesSection';
+import { EducationalTermsManager } from '@/components/content/EducationalTermsManager';
+import { ContentGameLauncher } from '@/components/content/ContentGameLauncher';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Grade11ErrorBoundary } from '@/components/error-boundaries/Grade11ErrorBoundary';
 
@@ -25,7 +28,7 @@ const Grade11Management: React.FC = () => {
   React.useEffect(() => {
     console.log('🔍 Validating Grade11Management dependencies:', {
       Grade11Content: !!Grade11Content,
-      StudentGradeContent: !!StudentGradeContent,
+      Grade11ContentViewer: !!Grade11ContentViewer,
       GamesSection: !!GamesSection,
       useAuth: !!useAuth,
       userProfile: !!userProfile
@@ -35,7 +38,6 @@ const Grade11Management: React.FC = () => {
   // تحديد ما إذا كان المستخدم سوبر آدمن أو مدير مدرسة
   const canManageContent = userProfile?.role === 'superadmin';
   const isSchoolAdmin = userProfile?.role === 'school_admin';
-  const isTeacher = userProfile?.role === 'teacher' || userProfile?.role === 'school_admin';
   
   console.log('✅ Grade11Management permissions check:', { canManageContent });
   
@@ -57,13 +59,6 @@ const Grade11Management: React.FC = () => {
                 <Gamepad2 className="h-5 w-5" />
                 <span className="font-semibold">الألعاب التفاعلية</span>
               </div>
-              
-              {isTeacher && !canManageContent && (
-                <Badge variant="secondary" className="flex items-center gap-2 px-4 py-2">
-                  <Eye className="h-4 w-4" />
-                  وضع عرض الطالب
-                </Badge>
-              )}
             </div>
           </div>
           
@@ -86,7 +81,7 @@ const Grade11Management: React.FC = () => {
                 {canManageContent ? (
                   <Grade11Content />
                 ) : (
-                  <StudentGradeContent grade="11" />
+                  <Grade11CourseViewer />
                 )}
               </div>
             </TabsContent>

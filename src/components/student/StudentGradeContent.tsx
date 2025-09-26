@@ -1,16 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
 import { useStudentContent } from '@/hooks/useStudentContent';
 import { useStudentProgress } from '@/hooks/useStudentProgress';
-import { useTeacherContentAccess } from '@/hooks/useTeacherContentAccess';
 import { useGrade10MiniProjects } from '@/hooks/useGrade10MiniProjects';
 import { useGrade12Projects } from '@/hooks/useGrade12Projects';
 import { useStudentGrade10Lessons } from '@/hooks/useStudentGrade10Lessons';
 import { StudentGrade11Content } from './StudentGrade11Content';
 import { StudentGrade10Lessons } from './StudentGrade10Lessons';
 import { ComputerStructureLessons } from './ComputerStructureLessons';
-import { TeacherGradeSelector } from './TeacherGradeSelector';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -51,77 +48,17 @@ import {
 import { toast } from 'sonner';
 import type { ProjectFormData } from '@/types/grade10-projects';
 
-interface StudentGradeContentProps {
-  grade?: string; // الصف المحدد (اختياري)
-}
-
-export const StudentGradeContent: React.FC<StudentGradeContentProps> = ({ grade }) => {
-  const { userProfile } = useAuth();
-  const isTeacher = userProfile?.role === 'teacher' || userProfile?.role === 'school_admin';
-  
-  // للمعلمين: استخدام useTeacherContentAccess للحصول على الصفوف المسؤول عنها
-  const { allowedGrades, canAccessGrade } = useTeacherContentAccess();
-  
-  // للطلاب: استخدام useStudentContent العادي
-  const studentContentResult = !isTeacher ? useStudentContent() : {
-    gradeContent: null,
-    assignedGrade: '11',
-    loading: false,
-    error: null
-  };
-  
+export const StudentGradeContent: React.FC = () => {
   const { 
     gradeContent, 
     assignedGrade, 
     loading,
     error
-  } = studentContentResult;
-  
+  } = useStudentContent();
   const { updateProgress } = useStudentProgress();
   
-  // للمعلمين: إدارة الصف النشط المحدد
-  const [teacherSelectedGrade, setTeacherSelectedGrade] = useState<string>('');
-  
-  // تهيئة الصف النشط عند تحميل بيانات المعلم
-  useEffect(() => {
-    if (isTeacher && allowedGrades.length > 0 && !teacherSelectedGrade && !grade) {
-      setTeacherSelectedGrade(allowedGrades[0]);
-    }
-  }, [isTeacher, allowedGrades, teacherSelectedGrade, grade]);
-  
-  // تحديد الصف النشط: إذا تم تمرير صف محدد، استخدمه، وإلا استخدم المنطق الحالي
-  const activeGrade = grade || (isTeacher ? teacherSelectedGrade : assignedGrade);
-  
-  // التحقق من صلاحيات المعلم للصف المحدد
-  const hasAccessToGrade = !isTeacher || !grade || canAccessGrade(grade);
-  
-  // إذا كان المعلم لا يملك صلاحية للصف المحدد، عرض رسالة خطأ
-  if (isTeacher && grade && !canAccessGrade(grade)) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex items-center justify-center">
-        <div className="text-center max-w-md">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-            <h2 className="text-xl font-semibold text-red-800 mb-2">
-              غير مسموح بالوصول
-            </h2>
-            <p className="text-red-600 mb-4">
-              ليس لديك صلاحية للوصول إلى محتوى الصف {grade}
-            </p>
-            <Button 
-              onClick={() => window.history.back()}
-              variant="outline"
-              className="border-red-200 text-red-600 hover:bg-red-50"
-            >
-              العودة
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-  
   // استخدام conditional hooks لتجنب أخطاء الجلب غير الضرورية
-  const grade10HooksResult = activeGrade === '10' && (!isTeacher || canAccessGrade('10')) ? useGrade10MiniProjects() : {
+  const grade10HooksResult = assignedGrade === '10' ? useGrade10MiniProjects() : {
     projects: [],
     createProject: async () => null,
     fetchProject: async () => null,
@@ -130,14 +67,14 @@ export const StudentGradeContent: React.FC<StudentGradeContentProps> = ({ grade 
     loading: false
   };
   
-  const grade10LessonsResult = activeGrade === '10' && (!isTeacher || canAccessGrade('10')) ? useStudentGrade10Lessons() : {
+  const grade10LessonsResult = assignedGrade === '10' ? useStudentGrade10Lessons() : {
     sections: [],
     loading: false,
     error: null,
     getContentStats: () => ({ totalLessons: 0 })
   };
   
-  const grade12HooksResult = activeGrade === '12' && (!isTeacher || canAccessGrade('12')) ? useGrade12Projects() : {
+  const grade12HooksResult = assignedGrade === '12' ? useGrade12Projects() : {
     projects: [],
     createProject: async () => null,
     currentProject: null,
@@ -167,13 +104,13 @@ export const StudentGradeContent: React.FC<StudentGradeContentProps> = ({ grade 
   // Viewer states
   // Debug logging for Grade 10 video categories
   useEffect(() => {
-    if (activeGrade === '10' && gradeContent?.videos?.length > 0) {
+    if (assignedGrade === '10' && gradeContent?.videos?.length > 0) {
       console.log('[DEBUG] Grade 10 Videos loaded:', gradeContent.videos.length);
       console.log('[DEBUG] Videos data:', gradeContent.videos);
       console.log('[DEBUG] Educational videos:', gradeContent.videos.filter(v => v.video_category === 'educational_explanations'));
       console.log('[DEBUG] Windows videos:', gradeContent.videos.filter(v => v.video_category === 'windows_basics'));
     }
-  }, [activeGrade, gradeContent]);
+  }, [assignedGrade, gradeContent]);
 
   const [selectedContent, setSelectedContent] = useState<any>(null);
   const [viewerType, setViewerType] = useState<'video' | 'document' | 'lesson' | 'project' | null>(null);
@@ -200,10 +137,10 @@ export const StudentGradeContent: React.FC<StudentGradeContentProps> = ({ grade 
   const currentContent = gradeContent;
 
   const handleContentClick = (content: any, contentType: 'video' | 'document' | 'lesson' | 'project') => {
-    if (contentType === 'project' && activeGrade === '10') {
+    if (contentType === 'project' && assignedGrade === '10') {
       // Handle mini project differently
       handleMiniProjectClick(content);
-    } else if (contentType === 'project' && activeGrade === '12') {
+    } else if (contentType === 'project' && assignedGrade === '12') {
       // Handle final project differently
       handleFinalProjectClick(content);
     } else {
@@ -518,48 +455,13 @@ export const StudentGradeContent: React.FC<StudentGradeContentProps> = ({ grade 
     );
   }
 
-  // للمعلمين: عدم إظهار المحتوى إذا لم يكن لديهم صلاحيات
-  if (isTeacher && !canAccessGrade(activeGrade)) {
-    return (
-      <Card className="text-center p-8">
-        <div className="space-y-4">
-          <div className="w-16 h-16 mx-auto bg-orange-100 rounded-full flex items-center justify-center">
-            <Trophy className="w-8 h-8 text-orange-600" />
-          </div>
-          <h3 className="text-lg font-semibold">غير مصرح بعرض هذا المحتوى</h3>
-          <p className="text-muted-foreground">
-            أنت غير مسؤول عن الصف {activeGrade}. الصفوف المسؤول عنها: {allowedGrades.join(', ')}
-          </p>
-          <div className="flex gap-2 justify-center flex-wrap">
-            {allowedGrades.map(grade => (
-              <Button key={grade} variant="outline" size="sm">
-                الصف {grade}
-              </Button>
-            ))}
-          </div>
-        </div>
-      </Card>
-    );
-  }
-
   // Special handling for Grade 11 - show structured content
-  if (activeGrade === '11') {
-    return (
-      <div>
-        {isTeacher && !grade && (
-          <TeacherGradeSelector 
-            allowedGrades={allowedGrades}
-            activeGrade={activeGrade}
-            onGradeChange={setTeacherSelectedGrade}
-          />
-        )}
-        <StudentGrade11Content />
-      </div>
-    );
+  if (assignedGrade === '11') {
+    return <StudentGrade11Content />;
   }
 
-  if (!currentContent && !isTeacher) {
-    console.log(`[DEBUG] No content found for grade ${activeGrade}`);
+  if (!currentContent) {
+    console.log(`[DEBUG] No content found for grade ${assignedGrade}`);
     return (
       <Card className="text-center p-8">
         <div className="space-y-4">
@@ -568,33 +470,33 @@ export const StudentGradeContent: React.FC<StudentGradeContentProps> = ({ grade 
           </div>
           <h3 className="text-lg font-semibold">لا يوجد محتوى متاح</h3>
           <p className="text-muted-foreground">
-            لا يوجد محتوى متاح للصف {activeGrade} حالياً
+            لا يوجد محتوى متاح للصف {assignedGrade} حالياً
           </p>
         </div>
       </Card>
     );
   }
 
-  console.log(`[DEBUG] Grade ${activeGrade} content:`, currentContent);
-  console.log(`[DEBUG] Grade ${activeGrade} videos count:`, currentContent?.videos?.length);
-  console.log(`[DEBUG] Grade ${activeGrade} videos data:`, currentContent?.videos);
+  console.log(`[DEBUG] Grade ${assignedGrade} content:`, currentContent);
+  console.log(`[DEBUG] Grade ${assignedGrade} videos count:`, currentContent?.videos?.length);
+  console.log(`[DEBUG] Grade ${assignedGrade} videos data:`, currentContent?.videos);
 
   // Merge projects based on grade
-  const allProjects = activeGrade === '10' 
+  const allProjects = assignedGrade === '10' 
     ? [...(currentContent?.projects || []), ...(miniProjects || [])]
-    : activeGrade === '12'
+    : assignedGrade === '12'
     ? [...(currentContent?.projects || []), ...(finalProjects || [])]
     : currentContent?.projects || [];
 
   // Filter content for Grade 10 tabs
   const getFilteredVideos = (category: string) => {
-    if (activeGrade === '10') {
+    if (assignedGrade === '10') {
       return (currentContent?.videos || []).filter((video: any) => video.video_category === category);
     }
     return [];
   };
 
-  const contentTabs = activeGrade === '10' ? [
+  const contentTabs = assignedGrade === '10' ? [
     {
       id: 'computer_structure',
       label: 'مبنى الحاسوب',
@@ -670,9 +572,9 @@ export const StudentGradeContent: React.FC<StudentGradeContentProps> = ({ grade 
       <Tabs value={activeContentTab} onValueChange={setActiveContentTab} className="w-full">
         <div className="flex justify-center mb-8">
           <TabsList className={`
-            grid ${activeGrade === '10' ? 'grid-cols-5' : activeGrade === '11' ? 'grid-cols-2' : 'grid-cols-3'} 
+            grid ${assignedGrade === '10' ? 'grid-cols-5' : assignedGrade === '11' ? 'grid-cols-2' : 'grid-cols-3'} 
             w-full h-auto p-1 gap-1
-            bg-background/80 border border-border/40
+            bg-background/80 border border-border/40 
             rounded-2xl shadow-lg backdrop-blur-md
             transition-all duration-300 hover:shadow-xl
           `} style={{ maxWidth: '1192px' }}>
@@ -755,14 +657,14 @@ export const StudentGradeContent: React.FC<StudentGradeContentProps> = ({ grade 
         {contentTabs.map((tab) => (
           <TabsContent key={tab.id} value={tab.id} className="mt-8">
             {/* Special handling for Grade 10 Communication Basics */}
-            {tab.id === 'communication_basics' && activeGrade === '10' ? (
+            {tab.id === 'communication_basics' && assignedGrade === '10' ? (
               <StudentGrade10Lessons />
-            ) : tab.id === 'computer_structure' && activeGrade === '10' ? (
+            ) : tab.id === 'computer_structure' && assignedGrade === '10' ? (
               <ComputerStructureLessons />
             ) : (
               <>
                 {/* Enhanced Development Notice for Grade 10 Mini Projects */}
-                {tab.id === 'mini_projects' && activeGrade === '10' && (
+                {tab.id === 'mini_projects' && assignedGrade === '10' && (
                   <div className="mb-8">
                     <Alert className="bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200/60 shadow-sm">
                       <div className="flex items-center gap-3">
@@ -783,7 +685,7 @@ export const StudentGradeContent: React.FC<StudentGradeContentProps> = ({ grade 
                 )}
 
                 {/* Enhanced Development Notice for Grade 12 Final Projects */}
-                {tab.id === 'projects' && activeGrade === '12' && (
+                {tab.id === 'projects' && assignedGrade === '12' && (
                   <div className="mb-8">
                     <Alert className="bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200/60 shadow-sm">
                       <div className="flex items-center gap-3">
@@ -804,7 +706,7 @@ export const StudentGradeContent: React.FC<StudentGradeContentProps> = ({ grade 
                 )}
 
                 {/* Add Create Project Button for Grade 10 Mini Projects Tab */}
-                {tab.id === 'mini_projects' && activeGrade === '10' && (
+                {tab.id === 'mini_projects' && assignedGrade === '10' && (
                   <div className="mb-6 flex justify-center">
                     <Dialog open={isCreateProjectDialogOpen} onOpenChange={setIsCreateProjectDialogOpen}>
                       <DialogTrigger asChild>
@@ -867,7 +769,7 @@ export const StudentGradeContent: React.FC<StudentGradeContentProps> = ({ grade 
                 )}
 
                 {/* Add Create Final Project Button for Grade 12 Projects Tab */}
-                {tab.id === 'projects' && activeGrade === '12' && (
+                {tab.id === 'projects' && assignedGrade === '12' && (
                   <div className="mb-6 flex justify-center">
                     <Dialog open={isCreateFinalProjectDialogOpen} onOpenChange={setIsCreateFinalProjectDialogOpen}>
                       <DialogTrigger asChild>
@@ -941,25 +843,25 @@ export const StudentGradeContent: React.FC<StudentGradeContentProps> = ({ grade 
                         {/* Title and Description */}
                         <div className="space-y-3">
                           <h3 className="text-xl font-semibold text-foreground">
-                            {tab.id === 'mini_projects' && activeGrade === '10' 
+                            {tab.id === 'mini_projects' && assignedGrade === '10' 
                               ? 'لا يوجد مشاريع مصغرة' 
-                              : tab.id === 'projects' && activeGrade === '12'
+                              : tab.id === 'projects' && assignedGrade === '12'
                               ? 'لا يوجد مشاريع نهائية'
                               : `لا يوجد ${tab.label} متاح`
                             }
                           </h3>
                           <p className="text-muted-foreground leading-relaxed">
-                            {tab.id === 'mini_projects' && activeGrade === '10'
+                            {tab.id === 'mini_projects' && assignedGrade === '10'
                               ? 'ابدأ رحلتك التعليمية بإنشاء مشروعك الأول'
-                              : tab.id === 'projects' && activeGrade === '12'
+                              : tab.id === 'projects' && assignedGrade === '12'
                               ? 'أنشئ مشروعك النهائي وأظهر مهاراتك المتقدمة'
-                              : `سيتم إضافة ${tab.label} قريباً للصف ${activeGrade}`
+                              : `سيتم إضافة ${tab.label} قريباً للصف ${assignedGrade}`
                             }
                           </p>
                         </div>
                         
                         {/* Action Buttons */}
-                        {tab.id === 'mini_projects' && activeGrade === '10' && (
+                        {tab.id === 'mini_projects' && assignedGrade === '10' && (
                           <Button 
                             className="gap-2 px-6 py-3 text-base font-medium shadow-md hover:shadow-lg transition-all duration-300"
                             onClick={() => setIsCreateProjectDialogOpen(true)}
@@ -969,7 +871,7 @@ export const StudentGradeContent: React.FC<StudentGradeContentProps> = ({ grade 
                             إنشاء مشروع جديد
                           </Button>
                         )}
-                        {tab.id === 'projects' && activeGrade === '12' && (
+                        {tab.id === 'projects' && assignedGrade === '12' && (
                           <Button 
                             className="gap-2 px-6 py-3 text-base font-medium shadow-md hover:shadow-lg transition-all duration-300"
                             onClick={() => setIsCreateFinalProjectDialogOpen(true)}
