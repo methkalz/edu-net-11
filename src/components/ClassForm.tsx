@@ -276,6 +276,19 @@ export const ClassForm: React.FC<ClassFormProps> = ({ editingClass, onSuccess, o
 
         if (classError) throw classError;
         
+        // Link the teacher to the created class
+        const { error: teacherClassError } = await supabase
+          .from('teacher_classes')
+          .insert({
+            teacher_id: userProfile.user_id,
+            class_id: newClass.id
+          });
+
+        if (teacherClassError) {
+          logger.error('Error linking teacher to class', teacherClassError);
+          // Don't throw here - class was created successfully, just log the error
+        }
+        
         setCreatedClass(newClass);
         setCurrentStep(2);
         
