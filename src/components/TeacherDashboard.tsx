@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useStudentPresence } from '@/hooks/useStudentPresence';
 import { supabase } from '@/integrations/supabase/client';
 import { FormattedStudent } from '@/types/student';
 import { GradeContentsData } from '@/types/content';
@@ -96,6 +97,7 @@ interface TeacherStats {
   totalStudents: number;
   availableContents: number;
   upcomingEvents: number;
+  onlineStudents?: number;
 }
 
 const TeacherDashboard: React.FC = () => {
@@ -107,7 +109,8 @@ const TeacherDashboard: React.FC = () => {
     totalClasses: 0,
     totalStudents: 0,
     availableContents: 0,
-    upcomingEvents: 0
+    upcomingEvents: 0,
+    onlineStudents: 0
   });
   const [myClasses, setMyClasses] = useState<TeacherClass[]>([]);
   const [recentStudents, setRecentStudents] = useState<TeacherStudent[]>([]);
@@ -125,13 +128,24 @@ const TeacherDashboard: React.FC = () => {
   const [showPresenceWidget, setShowPresenceWidget] = useState(false);
 
   // استخدام هوك صلاحيات المحتوى للمعلم
-  const { allowedGrades, canAccessGrade, loading: accessLoading } = useTeacherContentAccess();
+  const { canAccessGrade, allowedGrades, loading: accessLoading } = useTeacherContentAccess();
+  
+  // استخدام هوك حضور الطلاب
+  const { actualOnlineCount } = useStudentPresence();
 
   useEffect(() => {
     if (user && userProfile?.role === 'teacher') {
       fetchTeacherData();
     }
   }, [user, userProfile]);
+
+  // تحديث إحصائية الطلاب المتواجدين
+  useEffect(() => {
+    setStats(prev => ({
+      ...prev,
+      onlineStudents: actualOnlineCount
+    }));
+  }, [actualOnlineCount]);
 
   const fetchTeacherData = async (isRefresh = false) => {
     try {

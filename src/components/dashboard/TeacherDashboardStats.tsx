@@ -7,7 +7,8 @@ import {
   Calendar,
   TrendingUp,
   TrendingDown,
-  Minus
+  Minus,
+  Wifi
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -16,6 +17,7 @@ interface TeacherStats {
   totalStudents: number;
   availableContents: number;
   upcomingEvents: number;
+  onlineStudents?: number;
 }
 
 interface TeacherStatsCardProps {
@@ -156,7 +158,7 @@ export const TeacherDashboardStats: React.FC<TeacherDashboardStatsProps> = ({
       value: stats.totalClasses.toString(),
       icon: GraduationCap,
       color: 'from-blue-500 to-blue-600 text-blue-600',
-      change: undefined // يمكن إضافة منطق للمقارنة مع الفترة السابقة
+      change: undefined
     },
     {
       title: 'إجمالي الطلاب',
@@ -164,6 +166,15 @@ export const TeacherDashboardStats: React.FC<TeacherDashboardStatsProps> = ({
       icon: Users,
       color: 'from-green-500 to-green-600 text-green-600',
       change: undefined
+    },
+    {
+      title: 'المتواجدون الآن',
+      value: (stats.onlineStudents || 0).toString(),
+      icon: Wifi,
+      color: 'from-emerald-500 to-emerald-600 text-emerald-600',
+      change: stats.onlineStudents && stats.onlineStudents > 0 
+        ? { value: stats.onlineStudents, type: 'increase' as const }
+        : undefined
     },
     {
       title: 'المضامين المتاحة',
@@ -206,7 +217,7 @@ export const TeacherDashboardStats: React.FC<TeacherDashboardStatsProps> = ({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
       {statsCards.map((stat, index) => (
         <TeacherStatsCard
           key={stat.title}
