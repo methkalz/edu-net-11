@@ -110,39 +110,12 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({
         {/* Desktop Layout */}
         <div className="hidden lg:flex lg:items-center lg:justify-between lg:gap-6">
           
-          {/* Left Section: Back Button + Brand */}
+          {/* Left Section: Back Button + User Profile */}
           <div className="flex items-center gap-6">
             {showBackButton && (
               <BackButton backPath={backPath} />
             )}
             
-            <div className="flex items-center gap-4">
-              {headerSettings.show_logo && (
-                <img 
-                  src={headerSettings.logo_url} 
-                  alt="شعار النظام" 
-                  className={`${getLogoSize()} object-contain shadow-sm rounded-lg hover:scale-105 transition-transform duration-300`}
-                />
-              )}
-              {headerSettings.show_title && (
-                <div className="space-y-1">
-                  {user && userProfile && (
-                    <div className="flex items-center gap-2 text-base text-foreground font-bold">
-                      <span>{getGreeting()}, {userProfile.full_name || user.email}</span>
-                    </div>
-                  )}
-                  <h1 
-                    className="font-cairo text-base text-muted-foreground"
-                  >
-                    {title || headerSettings.title_text}
-                  </h1>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Right Section: User Profile + Actions */}
-          <div className="flex items-center gap-4">
             {user && userProfile && (
               <UserProfileSection
                 avatarUrl={userProfile.avatar_url}
@@ -156,38 +129,63 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({
                 variant="desktop"
               />
             )}
-            
-            {/* Action Buttons */}
-            <div className="flex items-center gap-2 ml-4">
-              {/* Refresh Button */}
-              {onRefresh && (
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={onRefresh}
-                  disabled={refreshing}
-                  className="hover:bg-primary/5 transition-colors"
+          </div>
+
+          {/* Center Section: Logo + Title */}
+          <div className="flex items-center gap-4 justify-center flex-1">
+            {headerSettings.show_logo && (
+              <img 
+                src={headerSettings.logo_url} 
+                alt="شعار النظام" 
+                className={`${getLogoSize()} object-contain shadow-sm rounded-lg hover:scale-105 transition-transform duration-300`}
+              />
+            )}
+            {headerSettings.show_title && (
+              <div className="space-y-1 text-center">
+                {user && userProfile && (
+                  <div className="flex items-center gap-2 text-base text-foreground font-bold justify-center">
+                    <span>{getGreeting()}, {userProfile.full_name || user.email}</span>
+                  </div>
+                )}
+                <h1 
+                  className="font-cairo text-base text-muted-foreground"
                 >
-                  <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-                  <span className="hidden xl:inline mr-2">
-                    {refreshing ? 'جاري التحديث...' : 'تحديث'}
-                  </span>
-                </Button>
-              )}
+                  {title || headerSettings.title_text}
+                </h1>
+              </div>
+            )}
+          </div>
 
-              {/* Notifications */}
-              <NotificationCenter
-                notificationCount={notificationCount}
-                onNotificationClick={onNotificationClick}
-                hasUrgent={notificationCount > 5}
-              />
+          {/* Right Section: Action Buttons */}
+          <div className="flex items-center gap-2">
+            {/* Refresh Button */}
+            {onRefresh && (
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={onRefresh}
+                disabled={refreshing}
+                className="hover:bg-primary/5 transition-colors"
+              >
+                <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+                <span className="hidden xl:inline mr-2">
+                  {refreshing ? 'جاري التحديث...' : 'تحديث'}
+                </span>
+              </Button>
+            )}
 
-              {/* Quick Settings */}
-              <QuickSettings
-                onSettingsClick={() => navigate('/settings')}
-                onLogout={handleLogout}
-              />
-            </div>
+            {/* Notifications */}
+            <NotificationCenter
+              notificationCount={notificationCount}
+              onNotificationClick={onNotificationClick}
+              hasUrgent={notificationCount > 5}
+            />
+
+            {/* Quick Settings */}
+            <QuickSettings
+              onSettingsClick={() => navigate('/settings')}
+              onLogout={handleLogout}
+            />
           </div>
         </div>
 
