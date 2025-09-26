@@ -114,6 +114,9 @@ const TeacherDashboard: React.FC = () => {
   });
   const [schoolPackageContents, setSchoolPackageContents] = useState<string[]>([]);
 
+  // استخدام هوك صلاحيات المحتوى للمعلم
+  const { allowedGrades, canAccessGrade, loading: accessLoading } = useTeacherContentAccess();
+
   useEffect(() => {
     if (user && userProfile?.role === 'teacher') {
       fetchTeacherData();
@@ -758,7 +761,7 @@ const TeacherDashboard: React.FC = () => {
               </div>
             </div>
             
-            {schoolPackageContents.includes('grade10') && availableContents.grade10.length > 0 && (
+            {schoolPackageContents.includes('grade10') && canAccessGrade('10') && availableContents.grade10.length > 0 && (
               <GradeContentViewer
                 grade="grade10"
                 gradeLabel="الصف العاشر"
@@ -767,7 +770,7 @@ const TeacherDashboard: React.FC = () => {
               />
             )}
 
-            {schoolPackageContents.includes('grade11') && availableContents.grade11.length > 0 && (
+            {schoolPackageContents.includes('grade11') && canAccessGrade('11') && availableContents.grade11.length > 0 && (
               <GradeContentViewer
                 grade="grade11"
                 gradeLabel="الصف الحادي عشر"
@@ -776,13 +779,30 @@ const TeacherDashboard: React.FC = () => {
               />
             )}
 
-            {schoolPackageContents.includes('grade12') && availableContents.grade12.length > 0 && (
+            {schoolPackageContents.includes('grade12') && canAccessGrade('12') && availableContents.grade12.length > 0 && (
               <GradeContentViewer
                 grade="grade12"
                 gradeLabel="الصف الثاني عشر"
                 contents={availableContents.grade12}
                 onViewMore={() => navigate('/grade12-management')}
               />
+            )}
+
+            {/* رسالة عند عدم وجود صفوف مخصصة للمعلم */}
+            {schoolPackageContents.length > 0 && allowedGrades.length === 0 && !accessLoading && (
+              <Card className="text-center py-12 border-amber-200 bg-amber-50">
+                <CardContent>
+                  <School className="h-16 w-16 mx-auto mb-4 text-amber-500" />
+                  <h3 className="text-lg font-semibold mb-2 text-amber-800">لم يتم تخصيص صفوف لك بعد</h3>
+                  <p className="text-amber-700 mb-4">
+                    يرجى التواصل مع إدارة المدرسة لتخصيص الصفوف التي ستدرسها
+                  </p>
+                  <div className="flex items-center justify-center gap-2 text-sm text-amber-600">
+                    <Award className="h-4 w-4" />
+                    <span>سيتم عرض المحتوى هنا بمجرد تخصيص الصفوف</span>
+                  </div>
+                </CardContent>
+              </Card>
             )}
 
             {schoolPackageContents.length > 0 && 
