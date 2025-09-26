@@ -79,10 +79,10 @@ const Reports = () => {
         if (userProfile?.role === 'superadmin') {
           const [usersResult, studentsResult] = await Promise.all([
             supabase.from('profiles').select('*', { count: 'exact' }),
-            supabase.from('students').select('*', { count: 'exact' })
+            supabase.rpc('get_students_for_school_admin')
           ]);
 
-          const total = (usersResult.count || 0) + (studentsResult.count || 0);
+          const total = (usersResult.count || 0) + (studentsResult.data?.length || 0);
           
           setStats({
             totalUsers: total,

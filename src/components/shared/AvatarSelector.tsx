@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { UniversalAvatar } from './UniversalAvatar';
 import { supabase } from '@/integrations/supabase/client';
@@ -124,6 +124,9 @@ export const AvatarSelector: React.FC<AvatarSelectorProps> = ({
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>اختيار صورة البروفايل</DialogTitle>
+          <DialogDescription>
+            اختر صورة جديدة للبروفايل من الأفاتار المتاحة أدناه
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
