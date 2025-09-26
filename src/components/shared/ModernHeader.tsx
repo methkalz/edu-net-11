@@ -130,7 +130,7 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({
               {headerSettings.show_title && (
                 <div className="space-y-1">
                   <h1 
-                    className={`font-bold font-cairo ${getTitleSize()} bg-gradient-to-r from-primary via-primary/80 to-secondary bg-clip-text text-transparent`}
+                    className={`font-bold font-cairo ${getTitleSize()} text-foreground`}
                   >
                     {title || headerSettings.title_text}
                   </h1>
@@ -148,9 +148,8 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({
             <div className="hidden lg:flex items-center gap-8 relative">
               {/* Greeting */}
               <div className="text-center space-y-2">
-                <p className="text-sm text-muted-foreground font-medium">{getGreeting()}</p>
                 <h2 className="text-xl font-bold text-foreground">
-                  {userProfile.full_name || user.email}
+                  {getGreeting()}, {userProfile.full_name || user.email}
                 </h2>
                 <UserTitleBadge
                   role={userProfile.role}
@@ -165,13 +164,15 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({
               {/* Profile Avatar - Enhanced overlapping design */}
               <div className="relative">
                 {/* Avatar container with overlapping effect */}
-                <div className="relative -mb-8 bg-background/90 backdrop-blur-md rounded-full p-3 shadow-2xl border border-border/20">
-                  <UniversalAvatar
-                    avatarUrl={userProfile.avatar_url}
-                    userName={userProfile.full_name}
-                    size="xl"
-                    className="shadow-xl hover:scale-105 transition-all duration-500"
-                  />
+                <div className="relative -mb-8 bg-background/90 backdrop-blur-md rounded-full p-1 shadow-2xl border border-border/20">
+                  <div className="w-32 h-32">
+                    <UniversalAvatar
+                      avatarUrl={userProfile.avatar_url}
+                      userName={userProfile.full_name}
+                      size="xl"
+                      className="w-full h-full shadow-xl hover:scale-105 transition-all duration-500"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
