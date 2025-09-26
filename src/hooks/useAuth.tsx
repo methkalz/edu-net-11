@@ -36,6 +36,7 @@ interface AuthContextType {
   loading: boolean;                     // Loading state for auth operations
   signIn: (email: string, password: string) => Promise<AuthResponse>;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;  // Function to refresh user profile
 }
 
 // Create the authentication context
@@ -404,6 +405,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  /**
+   * Refresh User Profile Function
+   * 
+   * Manually refreshes the current user's profile data from the database.
+   * Useful for updating the UI after profile changes like avatar updates.
+   */
+  const refreshProfile = async () => {
+    if (!user) return;
+    
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*, schools(name, plan)')
+        .eq('user_id', user.id)
+        .single();
+        
+      if (!error && profile) {
+        setUserProfile(profile as UserProfile);
+      }
+    } catch (error) {
+      logError('Error refreshing user profile', error as Error);
+    }
+  };
+
   // Provide authentication context to all child components
   // Note: signUp is intentionally NOT included in the context for security reasons
   // Account creation is handled through authorized administrative systems only
@@ -418,7 +443,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       userProfile: effectiveUserProfile, 
       loading, 
       signIn, 
-      signOut 
+      signOut,
+      refreshProfile
     }}>
       {children}
     </AuthContext.Provider>

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { UniversalAvatar } from './UniversalAvatar';
 import { useUserAvatar } from '@/hooks/useUserAvatar';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -24,6 +25,7 @@ export const ProfilePictureModal: React.FC<ProfilePictureModalProps> = ({
   const [availableAvatars, setAvailableAvatars] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const { updateAvatar, getAvatarsByRole, updating } = useUserAvatar();
+  const { refreshProfile } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -51,6 +53,9 @@ export const ProfilePictureModal: React.FC<ProfilePictureModalProps> = ({
     const result = await updateAvatar(selectedAvatar);
     
     if (result.success) {
+      // Refresh profile to update the UI immediately
+      await refreshProfile();
+      
       toast({
         title: 'تم التحديث',
         description: 'تم تحديث صورة البروفايل بنجاح',
