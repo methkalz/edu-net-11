@@ -42,13 +42,27 @@ export const UniversalAvatar: React.FC<UniversalAvatarProps> = ({
     return (words[0][0] + words[words.length - 1][0]).toUpperCase();
   };
 
+  // Get avatar source with proper fallback handling
+  const getAvatarSrc = () => {
+    if (!avatarUrl) return null;
+    
+    // If it's already a full path, use it as is
+    if (avatarUrl.startsWith('/') || avatarUrl.startsWith('http')) {
+      return avatarUrl;
+    }
+    
+    // Otherwise, assume it's in the avatars directory
+    return `/avatars/${avatarUrl}`;
+  };
+
   const initials = getInitials(userName);
+  const avatarSrc = getAvatarSrc();
 
   return (
     <Avatar className={cn(sizeClasses[size], className)}>
-      {avatarUrl && (
+      {avatarSrc && (
         <AvatarImage 
-          src={avatarUrl.startsWith('/') ? avatarUrl : `/avatars/${avatarUrl}`}
+          src={avatarSrc}
           alt={userName || 'User avatar'}
           className="object-cover"
           onError={(e) => {
