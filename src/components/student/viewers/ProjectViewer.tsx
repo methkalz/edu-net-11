@@ -23,8 +23,9 @@ interface ProjectViewerProps {
     due_date?: string;
     max_points?: number;
   };
-  onProgress: (progress: number, workTime: number) => void;
-  onComplete: () => void;
+  onProgress?: (progress: number, workTime: number) => void;
+  onComplete?: () => void;
+  isTeacherPreview?: boolean; // Add teacher preview flag
 }
 
 export const ProjectViewer: React.FC<ProjectViewerProps> = ({ 
@@ -32,7 +33,8 @@ export const ProjectViewer: React.FC<ProjectViewerProps> = ({
   onClose, 
   project, 
   onProgress,
-  onComplete 
+  onComplete,
+  isTeacherPreview = false
 }) => {
   const { assignedGrade } = useStudentAssignedGrade();
   const [workTime, setWorkTime] = useState(0);
@@ -52,16 +54,16 @@ export const ProjectViewer: React.FC<ProjectViewerProps> = ({
   }, [requirements.length]);
 
   useEffect(() => {
-    if (isOpen && !hasStarted) {
+    if (isOpen && !hasStarted && !isTeacherPreview) {
       setHasStarted(true);
       toast.info('بدأت العمل على المشروع', {
         description: 'ستحصل على النقاط عند إكمال المتطلبات'
       });
     }
-  }, [isOpen, hasStarted]);
+  }, [isOpen, hasStarted, isTeacherPreview]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || isTeacherPreview) return;
 
     const timer = setInterval(() => {
       setWorkTime(prev => {
@@ -76,12 +78,12 @@ export const ProjectViewer: React.FC<ProjectViewerProps> = ({
         const combinedProgress = timeProgress + requirementProgress;
         
         setProgress(combinedProgress);
-        onProgress(combinedProgress, newTime);
+        onProgress?.(combinedProgress, newTime);
 
         // Mark as complete if worked enough time and checked all requirements
         if (combinedProgress >= 90 && !isCompleted) {
           setIsCompleted(true);
-          onComplete();
+          onComplete?.();
           toast.success('تم إكمال العمل على المشروع بنجاح!', {
             description: 'تم إضافة النقاط إلى رصيدك'
           });
@@ -92,7 +94,7 @@ export const ProjectViewer: React.FC<ProjectViewerProps> = ({
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isOpen, checkedRequirements, requirements.length, onProgress, onComplete, isCompleted]);
+  }, [isOpen, checkedRequirements, requirements.length, onProgress, onComplete, isCompleted, isTeacherPreview]);
 
   const handleClose = () => {
     // Save final progress before closing

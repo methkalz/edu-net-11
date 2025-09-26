@@ -16,35 +16,41 @@ interface VideoViewerProps {
     source_type?: string;
     duration?: number;
   };
-  onProgress: (progress: number, watchTime: number) => void;
-  onComplete: () => void;
+  onProgress?: (progress: number, watchTime: number) => void;
+  onComplete?: () => void;
+  isTeacherPreview?: boolean; // Add teacher preview flag
 }
 
 export const VideoViewer: React.FC<VideoViewerProps> = ({ 
   isOpen, 
   onClose, 
   video, 
-  onComplete 
+  onProgress,
+  onComplete,
+  isTeacherPreview = false
 }) => {
   const [hasStarted, setHasStarted] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
 
   useEffect(() => {
-    if (isOpen && !hasStarted) {
+    if (isOpen && !hasStarted && !isTeacherPreview) {
       setHasStarted(true);
       toast.info('بدأت مشاهدة الفيديو', {
         description: 'ستحصل على النقاط عند تشغيل الفيديو'
       });
     }
-  }, [isOpen, hasStarted]);
+  }, [isOpen, hasStarted, isTeacherPreview]);
 
   const handleVideoPlay = () => {
-    if (!isCompleted) {
+    if (!isCompleted && !isTeacherPreview) {
       setIsCompleted(true);
-      onComplete();
+      onComplete?.();
       toast.success('تم إكمال الفيديو بنجاح!', {
         description: 'تم إضافة النقاط إلى رصيدك'
       });
+    } else if (isTeacherPreview && !isCompleted) {
+      setIsCompleted(true);
+      // No progress or completion tracking for teachers - just mark as viewed for UI
     }
   };
 

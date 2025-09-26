@@ -17,8 +17,9 @@ interface DocumentViewerProps {
     file_path: string;
     file_type: string;
   };
-  onProgress: (progress: number, readTime: number) => void;
-  onComplete: () => void;
+  onProgress?: (progress: number, readTime: number) => void;
+  onComplete?: () => void;
+  isTeacherPreview?: boolean; // Add teacher preview flag
 }
 
 export const DocumentViewer: React.FC<DocumentViewerProps> = ({ 
@@ -26,7 +27,8 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   onClose, 
   document, 
   onProgress,
-  onComplete 
+  onComplete,
+  isTeacherPreview = false
 }) => {
   const [readTime, setReadTime] = useState(0);
   const [progress, setProgress] = useState(0);
@@ -35,16 +37,16 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   const [scrollProgress, setScrollProgress] = useState(0);
 
   useEffect(() => {
-    if (isOpen && !hasStarted) {
+    if (isOpen && !hasStarted && !isTeacherPreview) {
       setHasStarted(true);
       toast.info('بدأت قراءة المستند', {
         description: 'ستحصل على النقاط عند إكمال القراءة'
       });
     }
-  }, [isOpen, hasStarted]);
+  }, [isOpen, hasStarted, isTeacherPreview]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || isTeacherPreview) return;
 
     const timer = setInterval(() => {
       setReadTime(prev => {
@@ -56,14 +58,14 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
         const combinedProgress = Math.max(timeProgress, scrollProgress);
         
         setProgress(combinedProgress);
-        onProgress(combinedProgress, newTime);
+        onProgress?.(combinedProgress, newTime);
 
         // Mark as complete if read for 30 seconds and scrolled significantly
         if (combinedProgress >= 90 && !isCompleted) {
           setIsCompleted(true);
-          onComplete();
+          onComplete?.();
           toast.success('تم إكمال قراءة المستند بنجاح!', {
-            description: 'تم إضافة النقاط إلى رصيدك'
+            description: 'تم إضافة النقاط إلى رصيدك'  
           });
         }
 
@@ -72,7 +74,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isOpen, scrollProgress, onProgress, onComplete, isCompleted]);
+  }, [isOpen, scrollProgress, onProgress, onComplete, isCompleted, isTeacherPreview]);
 
   const handleScroll = (scrollTop: number, scrollHeight: number, clientHeight: number) => {
     const maxScroll = scrollHeight - clientHeight;
@@ -83,9 +85,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   };
 
   const handleClose = () => {
-    // Save final progress before closing
-    if (progress > 0) {
-      onProgress(progress, readTime);
+    // Save final progress before closing (only for students)
+    if (progress > 0 && !isTeacherPreview) {
+      onProgress?.(progress, readTime);
     }
     onClose();
   };

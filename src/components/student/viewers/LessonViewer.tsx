@@ -34,8 +34,9 @@ interface LessonViewerProps {
       order_index: number;
     }>;
   };
-  onProgress: (progress: number, studyTime: number) => void;
-  onComplete: () => void;
+  onProgress?: (progress: number, studyTime: number) => void;
+  onComplete?: () => void;
+  isTeacherPreview?: boolean; // Add teacher preview flag
 }
 
 export const LessonViewer: React.FC<LessonViewerProps> = ({ 
@@ -43,7 +44,8 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
   onClose, 
   lesson, 
   onProgress,
-  onComplete 
+  onComplete,
+  isTeacherPreview = false
 }) => {
   const [studyTime, setStudyTime] = useState(0);
   const [progress, setProgress] = useState(0);
@@ -58,13 +60,13 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
     : ['المحتوى غير متوفر'];
 
   useEffect(() => {
-    if (isOpen && !hasStarted) {
+    if (isOpen && !hasStarted && !isTeacherPreview) {
       setHasStarted(true);
       toast.info('بدأت دراسة الدرس', {
         description: 'ستحصل على النقاط عند إكمال الدراسة'
       });
     }
-  }, [isOpen, hasStarted]);
+  }, [isOpen, hasStarted, isTeacherPreview]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -106,9 +108,9 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
   };
 
   const handleClose = () => {
-    // Save final progress before closing
-    if (progress > 0) {
-      onProgress(progress, studyTime);
+    // Save final progress before closing (only for students)
+    if (progress > 0 && !isTeacherPreview) {
+      onProgress?.(progress, studyTime);
     }
     onClose();
   };

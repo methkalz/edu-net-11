@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 import { useGrade10Files } from '@/hooks/useGrade10Files';
 import { useGrade10MiniProjects } from '@/hooks/useGrade10MiniProjects';
 import { useStudentGrade10Lessons } from '@/hooks/useStudentGrade10Lessons';
@@ -46,6 +47,10 @@ import { toast } from 'sonner';
 import type { ProjectFormData } from '@/types/grade10-projects';
 
 const Grade10TeacherContent = () => {
+  // Get user profile to check role
+  const { userProfile } = useAuth();
+  const isTeacher = userProfile?.role === 'teacher';
+  
   // Use Grade 10 specific hooks instead of general student content
   const { videos, documents, loading: filesLoading, refetch } = useGrade10Files();
   const { projects: miniProjects, loading: projectsLoading, createProject } = useGrade10MiniProjects();
@@ -624,14 +629,15 @@ const Grade10TeacherContent = () => {
         ))}
       </Tabs>
 
-      {/* Modals - Same as student view */}
+      {/* Modals - Same as student view but with teacher-specific behavior */}
       {selectedVideo && (
         <VideoViewer
           isOpen={!!selectedVideo}
           onClose={() => setSelectedVideo(null)}
           video={selectedVideo}
-          onProgress={() => {}}
-          onComplete={() => {}}
+          onProgress={isTeacher ? () => {} : undefined}
+          onComplete={isTeacher ? () => {} : undefined}
+          isTeacherPreview={isTeacher}
         />
       )}
 
@@ -640,8 +646,9 @@ const Grade10TeacherContent = () => {
           isOpen={!!selectedDocument}
           onClose={() => setSelectedDocument(null)}
           document={selectedDocument}
-          onProgress={() => {}}
-          onComplete={() => {}}
+          onProgress={isTeacher ? () => {} : undefined}
+          onComplete={isTeacher ? () => {} : undefined}
+          isTeacherPreview={isTeacher}
         />
       )}
 
@@ -650,8 +657,9 @@ const Grade10TeacherContent = () => {
           isOpen={!!selectedLesson}
           onClose={() => setSelectedLesson(null)}
           lesson={selectedLesson}
-          onProgress={() => {}}
-          onComplete={() => {}}
+          onProgress={isTeacher ? () => {} : undefined}
+          onComplete={isTeacher ? () => {} : undefined}
+          isTeacherPreview={isTeacher}
         />
       )}
 
@@ -660,8 +668,8 @@ const Grade10TeacherContent = () => {
           isOpen={!!selectedProject}
           onClose={() => setSelectedProject(null)}
           project={selectedProject}
-          onProgress={() => {}}
-          onComplete={() => {}}
+          onProgress={isTeacher ? () => {} : undefined}
+          onComplete={isTeacher ? () => {} : undefined}
         />
       )}
     </div>
