@@ -139,7 +139,7 @@ Deno.serve(async (req) => {
         }
       } catch (error) {
         console.error(`❌ Exception deleting user ${user.email}:`, error);
-        errors.push(`Exception deleting ${user.email}: ${error.message}`);
+        errors.push(`Exception deleting ${user.email}: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
 
@@ -165,7 +165,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         error: 'Internal server error',
-        message: error.message
+        message: error instanceof Error ? error.message : String(error)
       }),
       { 
         status: 500, 

@@ -42,6 +42,23 @@ Deno.serve(async (req) => {
     
     console.log(`Creating user: ${email} for school: ${school_name}`)
     
+    // Create school first
+    const { data: schoolData, error: schoolError } = await supabaseAdmin
+      .from('schools')
+      .insert([{
+        name: school_name,
+        city: city,
+      }])
+      .select()
+      .single()
+    
+    if (schoolError) {
+      console.error('School creation error:', schoolError)
+      throw schoolError
+    }
+    
+    console.log(`School created successfully: ${schoolData.id}`)
+    
     // Create user using admin client (this won't trigger login)
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: email,
@@ -60,23 +77,6 @@ Deno.serve(async (req) => {
     }
     
     console.log(`User created successfully: ${authData.user.id}`)
-    
-    // Create school
-    const { data: schoolData, error: schoolError } = await supabaseAdmin
-      .from('schools')
-      .insert([{
-        name: school_name,
-        city: city,
-      }])
-      .select()
-      .single()
-    
-    if (schoolError) {
-      console.error('School creation error:', schoolError)
-      throw schoolError
-    }
-    
-    console.log(`School created successfully: ${schoolData.id}`)
     
     console.log(`User created successfully with school admin profile: ${authData.user.id}`)
 
@@ -136,7 +136,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message 
+        error: error instanceof Error ? error.message : String(error) 
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

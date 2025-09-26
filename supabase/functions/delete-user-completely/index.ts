@@ -230,7 +230,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         error: 'Deletion failed',
-        message: error.message
+        message: error instanceof Error ? error.message : String(error)
       }),
       { 
         status: 500, 

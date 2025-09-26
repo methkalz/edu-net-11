@@ -124,7 +124,7 @@ serve(async (req) => {
     const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
     const existingAuthUser = existingUsers.users?.find(u => u.email === email);
     
-    let userId: string;
+    let userId: string = "";
     let isExistingUser = false;
     
     if (existingAuthUser) {

@@ -181,7 +181,7 @@ Deno.serve(async (req) => {
     console.error('Error in create-student function:', error);
     return new Response(
       JSON.stringify({ 
-        error: error.message || 'An unexpected error occurred',
+        error: error instanceof Error ? error.message : 'An unexpected error occurred',
         success: false
       }),
       {

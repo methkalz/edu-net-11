@@ -91,7 +91,7 @@ serve(async (req) => {
     
     return new Response(
       JSON.stringify({ 
-        error: error.message || 'Internal server error',
+        error: error instanceof Error ? error.message : 'Internal server error',
         details: 'Failed to reset game data'
       }),
       { 
@@ -257,7 +257,7 @@ async function resetAllGameData(supabaseClient: any, adminId: string) {
       affectedTables.push('player_game_progress');
     }
   } catch (error) {
-    errors.push(`Player progress deletion error: ${error.message}`);
+    errors.push(`Player progress deletion error: ${error instanceof Error ? error.message : String(error)}`);
   }
 
   // حذف جميع جلسات ألعاب المطابقة
@@ -273,7 +273,7 @@ async function resetAllGameData(supabaseClient: any, adminId: string) {
       affectedTables.push('pair_matching_sessions');
     }
   } catch (error) {
-    errors.push(`Pair matching sessions deletion error: ${error.message}`);
+    errors.push(`Pair matching sessions deletion error: ${error instanceof Error ? error.message : String(error)}`);
   }
 
   // حذف جميع نتائج ألعاب المطابقة
@@ -289,7 +289,7 @@ async function resetAllGameData(supabaseClient: any, adminId: string) {
       affectedTables.push('pair_matching_results');
     }
   } catch (error) {
-    errors.push(`Pair matching results deletion error: ${error.message}`);
+    errors.push(`Pair matching results deletion error: ${error instanceof Error ? error.message : String(error)}`);
   }
 
   // تسجيل العملية في سجل المراجعة
