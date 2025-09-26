@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -27,7 +27,7 @@ interface StudentWithClass {
 export const useTeacherStudentsPresence = () => {
   const { user } = useAuth();
   const [presenceChannel, setPresenceChannel] = useState<any>(null);
-  const [presenceData, setPresenceData] = useState<Record<string, any>>({});
+  const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
 
   const {
     data: allStudents = [],
@@ -39,50 +39,111 @@ export const useTeacherStudentsPresence = () => {
     queryFn: async (): Promise<StudentPresence[]> => {
       if (!user?.id) return [];
 
-      // استخدام دالة get_students_for_teacher الموجودة
-      const { data: studentsData, error: studentsError } = await supabase
-        .rpc('get_students_for_teacher');
+      try {
+        // جلب الطلاب المكلف بهم المعلم
+        const { data: studentsData, error: studentsError } = await supabase
+          .rpc('get_students_for_teacher');
 
-      if (studentsError) throw studentsError;
+        if (studentsError) {
+          console.error('Error fetching students:', studentsError);
+          throw studentsError;
+        }
 
-      // جلب آخر نشاط لكل طالب
-      const studentIds = studentsData?.map(s => s.id) || [];
-      const { data: activitiesData } = await supabase
-        .from('student_activity_log')
-        .select('student_id, created_at')
-        .in('student_id', studentIds)
-        .order('created_at', { ascending: false });
+        if (!studentsData || studentsData.length === 0) {
+          return [];
+        }
 
-      // تنسيق البيانات
-      const studentsWithPresence: StudentPresence[] = (studentsData || []).map(student => {
-        const lastActivity = activitiesData?.find(a => a.student_id === student.id);
-        const lastActiveAt = lastActivity?.created_at;
-        const isRecent = lastActiveAt && 
-          new Date().getTime() - new Date(lastActiveAt).getTime() < 5 * 60 * 1000; // آخر 5 دقائق
+        // جلب معلومات الصفوف
+        const studentIds = studentsData.map(s => s.id);
+        const { data: classData } = await supabase
+          .from('class_students')
+          .select(`
+            student_id,
+            classes (
+              grade_level_id,
+              class_name_id,
+              grade_levels (
+                label,
+                code
+              ),
+              class_names (
+                name
+              )
+            )
+          `)
+          .in('student_id', studentIds);
 
-        return {
-          id: student.id,
-          full_name: student.full_name,
-          username: student.username,
-          class_name: undefined, // سيتم إضافة معلومات الصف لاحقاً
-          grade_level: undefined,
-          is_online: !!isRecent,
-          last_active_at: lastActiveAt,
-          status: isRecent ? 'online' : 'offline'
-        };
-      });
+        // جلب آخر نشاط لكل طالب من جدول student_activity_log
+        const { data: activitiesData } = await supabase
+          .from('student_activity_log')
+          .select('student_id, created_at, activity_type')
+          .in('student_id', studentIds)
+          .order('created_at', { ascending: false });
 
-      return studentsWithPresence;
+        // تجميع آخر نشاط لكل طالب
+        const lastActivities = activitiesData?.reduce((acc, activity) => {
+          if (!acc[activity.student_id]) {
+            acc[activity.student_id] = activity;
+          }
+          return acc;
+        }, {} as Record<string, any>) || {};
+
+        // تنسيق البيانات النهائية
+        const studentsWithPresence: StudentPresence[] = studentsData.map(student => {
+          const classInfo = classData?.find(c => c.student_id === student.id);
+          const lastActivity = lastActivities[student.id];
+          const lastActiveAt = lastActivity?.created_at;
+          
+          // تحديد الحالة بناءً على آخر نشاط وحالة الحضور
+          const now = new Date().getTime();
+          const lastActiveTime = lastActiveAt ? new Date(lastActiveAt).getTime() : 0;
+          const timeDiff = now - lastActiveTime;
+          
+          // الطالب متواجد إذا كان في قائمة المتواجدين أو كان نشطاً في آخر 3 دقائق
+          const isCurrentlyOnline = onlineUsers.has(student.id) || timeDiff < 3 * 60 * 1000;
+          
+          let status: 'online' | 'away' | 'offline';
+          if (isCurrentlyOnline) {
+            status = 'online';
+          } else if (timeDiff < 15 * 60 * 1000) { // آخر 15 دقيقة
+            status = 'away';
+          } else {
+            status = 'offline';
+          }
+
+          return {
+            id: student.id,
+            full_name: student.full_name,
+            username: student.username,
+            class_name: classInfo?.classes?.class_names?.name || 'غير محدد',
+            grade_level: classInfo?.classes?.grade_levels?.label || classInfo?.classes?.grade_levels?.code || '',
+            is_online: isCurrentlyOnline,
+            last_active_at: lastActiveAt,
+            status
+          };
+        });
+
+        return studentsWithPresence;
+      } catch (error) {
+        console.error('Error in useTeacherStudentsPresence:', error);
+        throw error;
+      }
     },
     enabled: !!user?.id,
-    refetchInterval: 30000, // تحديث كل 30 ثانية
+    refetchInterval: 20000, // تحديث كل 20 ثانية
+    retry: 2,
+    staleTime: 10000, // البيانات تعتبر قديمة بعد 10 ثوان
   });
 
-  // إعداد Realtime presence tracking
+  // إعداد Realtime presence tracking - نظام محسن
   useEffect(() => {
     if (!user?.id) return;
 
-    const channel = supabase.channel('teacher-students-presence', {
+    const schoolId = user.user_metadata?.school_id;
+    if (!schoolId) return;
+
+    // إنشاء channel خاص بالمدرسة
+    const channel = supabase.channel(`school-${schoolId}-presence`, {
       config: {
         presence: {
           key: `teacher-${user.id}`,
@@ -90,61 +151,99 @@ export const useTeacherStudentsPresence = () => {
       },
     });
 
-    // تتبع انضمام/مغادرة الطلاب
-    channel
-      .on('presence', { event: 'sync' }, () => {
-        const presenceState = channel.presenceState();
-        setPresenceData(presenceState);
-      })
-      .on('presence', { event: 'join' }, ({ key, newPresences }) => {
-        console.log('Student joined:', key, newPresences);
-      })
-      .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
-        console.log('Student left:', key, leftPresences);
-      })
-      .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
-          // تتبع وجود المعلم
-          await channel.track({
-            user_id: user.id,
-            role: 'teacher',
-            online_at: new Date().toISOString(),
-          });
-        }
-      });
+    let heartbeatInterval: NodeJS.Timeout;
 
-    setPresenceChannel(channel);
+    const setupChannel = async () => {
+      try {
+        channel
+          .on('presence', { event: 'sync' }, () => {
+            const presenceState = channel.presenceState();
+            
+            // استخراج IDs الطلاب المتواجدين
+            const onlineUserIds = new Set<string>();
+            Object.values(presenceState).forEach((presences: any) => {
+              presences.forEach((presence: any) => {
+                if (presence.user_id && presence.role === 'student') {
+                  onlineUserIds.add(presence.user_id);
+                }
+              });
+            });
+            
+            setOnlineUsers(onlineUserIds);
+          })
+          .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+            console.log('User joined:', key, newPresences);
+          })
+          .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+            console.log('User left:', key, leftPresences);
+          })
+          .subscribe(async (status) => {
+            if (status === 'SUBSCRIBED') {
+              // تتبع وجود المعلم
+              await channel.track({
+                user_id: user.id,
+                role: 'teacher',
+                full_name: user.user_metadata?.full_name || user.email,
+                online_at: new Date().toISOString(),
+                school_id: schoolId
+              });
+
+              // إعداد heartbeat للحفاظ على الاتصال
+              heartbeatInterval = setInterval(async () => {
+                try {
+                  await channel.track({
+                    user_id: user.id,
+                    role: 'teacher',
+                    full_name: user.user_metadata?.full_name || user.email,
+                    online_at: new Date().toISOString(),
+                    school_id: schoolId,
+                    last_heartbeat: new Date().toISOString()
+                  });
+                } catch (error) {
+                  console.error('Heartbeat error:', error);
+                }
+              }, 30000); // كل 30 ثانية
+            }
+          });
+
+        setPresenceChannel(channel);
+      } catch (error) {
+        console.error('Error setting up presence channel:', error);
+      }
+    };
+
+    setupChannel();
 
     return () => {
+      if (heartbeatInterval) clearInterval(heartbeatInterval);
       channel.unsubscribe();
     };
-  }, [user?.id]);
+  }, [user?.id, user?.user_metadata?.school_id]);
 
-  // دمج بيانات الطلاب مع بيانات الحضور
-  const studentsWithPresence: StudentPresence[] = allStudents.map(student => {
-    const onlineUserIds = Object.keys(presenceData).map(key => 
-      key.replace('student-', '').replace('teacher-', '')
-    );
-    
-    const isCurrentlyOnline = onlineUserIds.includes(student.id);
-    const isRecentlyActive = student.last_active_at && 
-      new Date().getTime() - new Date(student.last_active_at).getTime() < 15 * 60 * 1000;
+  // البيانات محدثة بالفعل في queryFn، نستخدم البيانات المحدثة مباشرة
+  const studentsWithPresence = useMemo(() => {
+    return allStudents.map(student => {
+      // تحديث الحالة بناءً على أحدث بيانات presence
+      const isCurrentlyOnline = onlineUsers.has(student.id);
+      const isRecentlyActive = student.last_active_at && 
+        new Date().getTime() - new Date(student.last_active_at).getTime() < 15 * 60 * 1000;
 
-    let status: 'online' | 'away' | 'offline';
-    if (isCurrentlyOnline) {
-      status = 'online';
-    } else if (isRecentlyActive) {
-      status = 'away';
-    } else {
-      status = 'offline';
-    }
+      let status: 'online' | 'away' | 'offline';
+      if (isCurrentlyOnline) {
+        status = 'online';
+      } else if (isRecentlyActive) {
+        status = 'away';
+      } else {
+        status = 'offline';
+      }
 
-    return {
-      ...student,
-      is_online: isCurrentlyOnline,
-      status
-    };
-  });
+      return {
+        ...student,
+        is_online: isCurrentlyOnline,
+        status
+      };
+    });
+  }, [allStudents, onlineUsers]);
 
   // إحصائيات مفيدة
   const onlineCount = studentsWithPresence.filter(s => s.status === 'online').length;
