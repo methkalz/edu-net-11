@@ -51,7 +51,11 @@ import {
 import { toast } from 'sonner';
 import type { ProjectFormData } from '@/types/grade10-projects';
 
-export const StudentGradeContent: React.FC = () => {
+interface StudentGradeContentProps {
+  grade?: string; // الصف المحدد (اختياري)
+}
+
+export const StudentGradeContent: React.FC<StudentGradeContentProps> = ({ grade }) => {
   const { userProfile } = useAuth();
   const isTeacher = userProfile?.role === 'teacher' || userProfile?.role === 'school_admin';
   
@@ -80,13 +84,41 @@ export const StudentGradeContent: React.FC = () => {
   
   // تهيئة الصف النشط عند تحميل بيانات المعلم
   useEffect(() => {
-    if (isTeacher && allowedGrades.length > 0 && !teacherSelectedGrade) {
+    if (isTeacher && allowedGrades.length > 0 && !teacherSelectedGrade && !grade) {
       setTeacherSelectedGrade(allowedGrades[0]);
     }
-  }, [isTeacher, allowedGrades, teacherSelectedGrade]);
+  }, [isTeacher, allowedGrades, teacherSelectedGrade, grade]);
   
-  // للمعلمين: عرض محتوى أول صف مسؤول عنه كافتراضي
-  const activeGrade = isTeacher ? teacherSelectedGrade : assignedGrade;
+  // تحديد الصف النشط: إذا تم تمرير صف محدد، استخدمه، وإلا استخدم المنطق الحالي
+  const activeGrade = grade || (isTeacher ? teacherSelectedGrade : assignedGrade);
+  
+  // التحقق من صلاحيات المعلم للصف المحدد
+  const hasAccessToGrade = !isTeacher || !grade || canAccessGrade(grade);
+  
+  // إذا كان المعلم لا يملك صلاحية للصف المحدد، عرض رسالة خطأ
+  if (isTeacher && grade && !canAccessGrade(grade)) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+            <h2 className="text-xl font-semibold text-red-800 mb-2">
+              غير مسموح بالوصول
+            </h2>
+            <p className="text-red-600 mb-4">
+              ليس لديك صلاحية للوصول إلى محتوى الصف {grade}
+            </p>
+            <Button 
+              onClick={() => window.history.back()}
+              variant="outline"
+              className="border-red-200 text-red-600 hover:bg-red-50"
+            >
+              العودة
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
   
   // استخدام conditional hooks لتجنب أخطاء الجلب غير الضرورية
   const grade10HooksResult = activeGrade === '10' && (!isTeacher || canAccessGrade('10')) ? useGrade10MiniProjects() : {
@@ -514,7 +546,7 @@ export const StudentGradeContent: React.FC = () => {
   if (activeGrade === '11') {
     return (
       <div>
-        {isTeacher && (
+        {isTeacher && !grade && (
           <TeacherGradeSelector 
             allowedGrades={allowedGrades}
             activeGrade={activeGrade}

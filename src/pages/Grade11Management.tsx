@@ -86,7 +86,7 @@ const Grade11Management: React.FC = () => {
                 {canManageContent ? (
                   <Grade11Content />
                 ) : (
-                  <StudentGradeContent />
+                  <StudentGradeContent grade="11" />
                 )}
               </div>
             </TabsContent>

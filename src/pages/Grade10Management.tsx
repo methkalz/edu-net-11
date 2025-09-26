@@ -64,7 +64,7 @@ const Grade10Management: React.FC = () => {
           </div>
           
           <div className="animate-fade-in">
-            {canManageContent ? <Grade10Content /> : <StudentGradeContent />}
+            {canManageContent ? <Grade10Content /> : <StudentGradeContent grade="10" />}
           </div>
         </div>
       </main>
