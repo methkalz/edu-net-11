@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
@@ -42,15 +42,19 @@ export const useStudentPresence = () => {
     }
   });
   const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const { user, userProfile } = useAuth();
+  
+  // للتحكم في debouncing
+  const debounceTimeout = useRef<NodeJS.Timeout>();
 
   // حفظ الفلاتر في localStorage عند تغييرها
   useEffect(() => {
     localStorage.setItem('student-presence-selected-classes', JSON.stringify(selectedClasses));
   }, [selectedClasses]);
 
-  // جلب بيانات الطلاب والصفوف
-  const fetchStudentPresence = async () => {
+  // جلب بيانات الطلاب والصفوف مع debouncing
+  const fetchStudentPresence = useCallback(async () => {
     if (!user || userProfile?.role !== 'teacher') return;
 
     try {
@@ -105,12 +109,21 @@ export const useStudentPresence = () => {
 
       setAllStudentPresence(enrichedPresence);
 
-      // فلترة الطلاب المتواجدين حاليا (آخر 5 دقائق)
-      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-      const online = enrichedPresence.filter(presence => 
-        presence.is_online || new Date(presence.last_seen_at) > fiveMinutesAgo
-      );
+      // فلترة الطلاب المتواجدين والذين غادروا حديثاً
+      const now = Date.now();
+      const oneMinute = 60 * 1000;
+      const fiveMinutes = 5 * 60 * 1000;
+      
+      const online = enrichedPresence.filter(presence => {
+        const lastSeen = new Date(presence.last_seen_at).getTime();
+        const timeDiff = now - lastSeen;
+        
+        // المتصلون فعلاً أو الذين غادروا خلال 5 دقائق
+        return (presence.is_online && timeDiff <= oneMinute) || timeDiff <= fiveMinutes;
+      });
+      
       setOnlineStudents(online);
+      setLastUpdated(new Date());
 
       // جلب قائمة الصفوف الفريدة
       if (classesData) {
@@ -136,7 +149,15 @@ export const useStudentPresence = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, userProfile?.role]);
+
+  // دالة تحديث مع debouncing
+  const debouncedFetch = useCallback(() => {
+    if (debounceTimeout.current) {
+      clearTimeout(debounceTimeout.current);
+    }
+    debounceTimeout.current = setTimeout(fetchStudentPresence, 500);
+  }, [fetchStudentPresence]);
 
   // إعداد realtime للاستماع للتحديثات
   useEffect(() => {
@@ -154,41 +175,46 @@ export const useStudentPresence = () => {
           table: 'student_presence'
         },
         () => {
-          fetchStudentPresence();
+          debouncedFetch();
         }
       )
       .subscribe();
 
-    // تحديث دوري كل دقيقة
-    const interval = setInterval(fetchStudentPresence, 60000);
+    // تحديث دوري كل 10 ثواني
+    const interval = setInterval(fetchStudentPresence, 10000);
 
     return () => {
       supabase.removeChannel(channel);
       clearInterval(interval);
+      if (debounceTimeout.current) {
+        clearTimeout(debounceTimeout.current);
+      }
     };
-  }, [user, userProfile?.role]);
+  }, [user, userProfile?.role, debouncedFetch, fetchStudentPresence]);
 
-  // فلترة الطلاب حسب الصفوف المختارة
-  const filteredStudents = selectedClasses.length > 0 
-    ? onlineStudents.filter(student => {
-        // البحث في بيانات class_info المخزنة مع كل طالب
-        return student.class_info && 
-               classes.some(c => 
-                 selectedClasses.includes(c.id) && 
-                 c.name === student.class_info!.class_name
-               );
-      })
-    : onlineStudents;
+  // فلترة الطلاب حسب الصفوف المختارة مع memoization
+  const filteredStudents = useMemo(() => {
+    return selectedClasses.length > 0 
+      ? onlineStudents.filter(student => {
+          // البحث في بيانات class_info المخزنة مع كل طالب
+          return student.class_info && 
+                 classes.some(c => 
+                   selectedClasses.includes(c.id) && 
+                   c.name === student.class_info!.class_name
+                 );
+        })
+      : onlineStudents;
+  }, [onlineStudents, selectedClasses, classes]);
 
-  const toggleClassSelection = (classId: string) => {
+  const toggleClassSelection = useCallback((classId: string) => {
     setSelectedClasses(prev => 
       prev.includes(classId) 
         ? prev.filter(id => id !== classId)
         : [...prev, classId]
     );
-  };
+  }, []);
 
-  const clearClassSelection = () => setSelectedClasses([]);
+  const clearClassSelection = useCallback(() => setSelectedClasses([]), []);
 
   return {
     onlineStudents: filteredStudents,
@@ -196,6 +222,7 @@ export const useStudentPresence = () => {
     classes,
     selectedClasses,
     loading,
+    lastUpdated,
     toggleClassSelection,
     clearClassSelection,
     refresh: fetchStudentPresence
