@@ -127,12 +127,12 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({
               {headerSettings.show_title && (
                 <div className="space-y-1">
                   {user && userProfile && (
-                    <div className="flex items-center gap-2 text-base text-muted-foreground font-medium">
+                    <div className="flex items-center gap-2 text-base text-foreground font-bold">
                       <span>{getGreeting()}, {userProfile.full_name || user.email}</span>
                     </div>
                   )}
                   <h1 
-                    className={`font-bold font-cairo ${getTitleSize()} text-foreground`}
+                    className={`font-cairo ${getTitleSize()} text-muted-foreground`}
                   >
                     {title || headerSettings.title_text}
                   </h1>
