@@ -617,11 +617,23 @@ All colors MUST be HSL.
     box-shadow: var(--shadow-cyber);
   }
 
-  /* Simple Glass Effects */
+  /* Enhanced Glass Effects */
   .glass-card {
-    backdrop-filter: blur(10px);
-    background: hsl(var(--card) / 0.8);
-    border: 1px solid hsl(var(--border) / 0.5);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    background: hsl(var(--card) / 0.85);
+    border: 1px solid hsl(var(--border) / 0.3);
+    box-shadow: 
+      0 8px 32px -8px hsl(var(--foreground) / 0.1),
+      inset 0 1px 0 hsl(var(--background) / 0.1);
+  }
+
+  .dark .glass-card {
+    background: hsl(var(--card) / 0.75);
+    border: 1px solid hsl(var(--border) / 0.2);
+    box-shadow: 
+      0 8px 32px -8px hsl(var(--foreground) / 0.2),
+      inset 0 1px 0 hsl(var(--background) / 0.05);
   }
 
   .soft-shadow {

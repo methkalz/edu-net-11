@@ -52,8 +52,7 @@ import { ContentFilterBadge } from '@/components/teacher/ContentFilterBadge';
 import Grade12ProjectsWidget from '@/components/teacher/Grade12ProjectsWidget';
 import ProjectNotifications from '@/components/teacher/ProjectNotifications';
 import Grade10TeacherContent from '@/components/teacher/Grade10TeacherContent';
-import { UniversalAvatar } from '@/components/shared/UniversalAvatar';
-import { UserTitleBadge } from '@/components/shared/UserTitleBadge';
+import ModernHeader from '@/components/shared/ModernHeader';
 import { StudentPresenceWidget } from '@/components/teacher/StudentPresenceWidget';
 import { OnlineStudentsStats } from '@/components/dashboard/OnlineStudentsStats';
 
@@ -495,56 +494,21 @@ const TeacherDashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5" dir="rtl">
+      <ModernHeader 
+        title="لوحة تحكم المعلم"
+        onRefresh={() => fetchTeacherData(true)}
+        refreshing={refreshing}
+        notificationCount={0}
+        onNotificationClick={() => {
+          toast({
+            title: "الإشعارات",
+            description: "لا توجد إشعارات جديدة",
+          });
+        }}
+      />
+      
       <div className="container mx-auto px-6 py-8 space-y-8">
-        {/* الترحيب المحسن */}
-        <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-secondary/10 rounded-2xl -z-10"></div>
-          <div className="glass-card p-8 rounded-2xl backdrop-blur-sm border-0 shadow-xl">
-            <div className="flex items-center justify-between">
-              <div className="space-y-2">
-                <div className="flex items-center gap-4">
-                  <UniversalAvatar
-                    avatarUrl={userProfile?.avatar_url}
-                    userName={userProfile?.full_name}
-                    size="xl"
-                    className="border-4 border-white/20 shadow-xl"
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h1 className="text-3xl font-bold bg-gradient-to-r from-primary via-primary/80 to-secondary bg-clip-text text-transparent">
-                        أهلاً وسهلاً {userProfile?.full_name}
-                      </h1>
-                      <UserTitleBadge
-                        role={userProfile?.role || 'teacher'}
-                        displayTitle={userProfile?.display_title}
-                        size="lg"
-                        variant="secondary"
-                      />
-                    </div>
-                    <p className="text-muted-foreground text-lg">
-                      مرحباً بك في لوحة تحكم المعلم - إدارة صفوفك وطلابك بسهولة
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <Button 
-                  variant="outline" 
-                  onClick={() => fetchTeacherData(true)}
-                  disabled={refreshing}
-                  className="glass-card hover:shadow-lg transition-all duration-300"
-                >
-                  <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-                  {refreshing ? 'جاري التحديث...' : 'تحديث'}
-                </Button>
-                <Button className="bg-gradient-to-r from-primary to-primary/80 hover:shadow-lg transition-all duration-300">
-                  <Bell className="h-4 w-4 mr-2" />
-                  الإشعارات
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* تم نقل الترحيب إلى الهيدر الموحد */}
 
         {/* الإحصائيات المحسنة */}
         <TeacherDashboardStats 
