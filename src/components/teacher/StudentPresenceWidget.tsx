@@ -368,16 +368,16 @@ export const StudentPresenceWidget: React.FC<StudentPresenceWidgetProps> = memo(
                 </div>
               </div>
             ) : filteredStudents.length === 0 ? (
-              <div className="text-center py-8">
+              <div className="text-center py-12">
                 {searchQuery ? (
-                  <div className="space-y-2">
-                    <Search className="h-8 w-8 mx-auto text-muted-foreground/50" />
-                    <p className="text-muted-foreground">لا توجد نتائج للبحث "{searchQuery}"</p>
+                  <div className="space-y-3">
+                    <Search className="h-12 w-12 mx-auto text-muted-foreground/40" />
+                    <p className="text-muted-foreground text-center">لا توجد نتائج للبحث "{searchQuery}"</p>
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    <Users className="h-8 w-8 mx-auto text-muted-foreground/50" />
-                    <p className="text-muted-foreground">لا يوجد طلاب متواجدون حالياً</p>
+                  <div className="space-y-3">
+                    <Users className="h-12 w-12 mx-auto text-muted-foreground/40" />
+                    <p className="text-muted-foreground text-center">لا يوجد طلاب متواجدون حالياً</p>
                   </div>
                 )}
               </div>
