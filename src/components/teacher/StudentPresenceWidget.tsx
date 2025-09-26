@@ -265,11 +265,6 @@ export const StudentPresenceWidget: React.FC<StudentPresenceWidgetProps> = memo(
                     <span className="text-xs text-muted-foreground/70">تحديث...</span>
                   </div>
                 )}
-                {lastUpdated && !refreshing && (
-                  <span className="text-xs text-muted-foreground/70 backdrop-blur-sm bg-white/5 px-2 py-1 rounded-full">
-                    {formatLastSeen(lastUpdated.toISOString())}
-                  </span>
-                )}
                 <Button
                   variant="ghost"
                   size="sm"
