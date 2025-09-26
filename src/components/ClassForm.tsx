@@ -344,10 +344,6 @@ export const ClassForm: React.FC<ClassFormProps> = ({ editingClass, onSuccess, o
     setLoading(true);
 
     try {
-      // Generate password if not provided
-      const password = newStudent.password || generatePassword();
-      const hashedPassword = password; // In real app, you'd hash this
-
       // Check if student already exists
       let studentId: string;
       const { data: existingStudent } = await supabase
@@ -377,7 +373,7 @@ export const ClassForm: React.FC<ClassFormProps> = ({ editingClass, onSuccess, o
           return;
         }
       } else {
-        // Create new student
+        // Create new student (without password)
         const { data: newStudentData, error: studentError } = await supabase
           .from('students')
           .insert({
@@ -385,8 +381,7 @@ export const ClassForm: React.FC<ClassFormProps> = ({ editingClass, onSuccess, o
             full_name: newStudent.full_name.trim(),
             username: newStudent.email || null, // Use email as username
             email: newStudent.email || null,
-            phone: newStudent.phone || null,
-            password_hash: hashedPassword
+            phone: newStudent.phone || null
           })
           .select()
           .single();
