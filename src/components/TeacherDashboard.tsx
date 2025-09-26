@@ -53,7 +53,6 @@ import ProjectNotifications from '@/components/teacher/ProjectNotifications';
 import Grade10TeacherContent from '@/components/teacher/Grade10TeacherContent';
 import { UniversalAvatar } from '@/components/shared/UniversalAvatar';
 import { UserTitleBadge } from '@/components/shared/UserTitleBadge';
-import TeacherStudentsPresence from '@/components/teacher/TeacherStudentsPresence';
 
 interface TeacherClass {
   id: string;
@@ -845,9 +844,6 @@ const TeacherDashboard: React.FC = () => {
           </div>
         )}
       </div>
-      
-      {/* عرض لوحة الطلاب المتواجدين */}
-      <TeacherStudentsPresence />
     </div>
   );
 };

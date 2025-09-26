@@ -275,19 +275,6 @@ export const ClassForm: React.FC<ClassFormProps> = ({ editingClass, onSuccess, o
           .single();
 
         if (classError) throw classError;
-
-        // Automatically assign the teacher to the class they created
-        const { error: teacherAssignmentError } = await supabase
-          .from('teacher_classes')
-          .insert({
-            teacher_id: userProfile.user_id,
-            class_id: newClass.id
-          });
-
-        if (teacherAssignmentError) {
-          logger.error('Error assigning teacher to class', teacherAssignmentError);
-          // Don't throw error, just log it since the class was created successfully
-        }
         
         setCreatedClass(newClass);
         setCurrentStep(2);
