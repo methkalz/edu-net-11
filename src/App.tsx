@@ -56,6 +56,7 @@ const Grade12ProjectEditorPage = React.lazy(() => import('@/pages/Grade12Project
 const LandingPage = React.lazy(() => import('@/pages/LandingPage'));
 const KnowledgeAdventurePage = React.lazy(() => import('@/pages/KnowledgeAdventurePage'));
 import { PageLoading } from "@/components/ui/LoadingComponents";
+import StudentPresenceTracker from "@/components/presence/StudentPresenceTracker";
 
 /**
  * Main App Component
@@ -80,6 +81,8 @@ const App = () => {
         <Sonner />
         {/* Suspense boundary for lazy-loaded components */}
         <Suspense fallback={<PageLoading message="Loading..." />}>
+          {/* Student presence tracker - runs in background for all pages */}
+          <StudentPresenceTracker />
           <Routes>
               {/* Public routes */}
               <Route path="/" element={<Suspense fallback={<PageLoading message="لحظة.. منجهزلك الصفحة" />}><LandingPage /></Suspense>} />
