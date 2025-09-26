@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { LogOut, Bell, RefreshCw, Settings, Clock } from 'lucide-react';
+import { RefreshCw, Clock } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import BackButton from './BackButton';
-import { UniversalAvatar } from './UniversalAvatar';
-import { UserTitleBadge } from './UserTitleBadge';
+import { GlobalSearchBar } from './GlobalSearchBar';
+import { NotificationCenter } from './NotificationCenter';
+import { UserProfileSection } from './UserProfileSection';
+import { QuickSettings } from './QuickSettings';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 
@@ -18,6 +19,7 @@ interface ModernHeaderProps {
   refreshing?: boolean;
   notificationCount?: number;
   onNotificationClick?: () => void;
+  showSearch?: boolean;
 }
 
 interface HeaderSettings {
@@ -42,7 +44,8 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({
   onRefresh,
   refreshing = false,
   notificationCount = 0,
-  onNotificationClick
+  onNotificationClick,
+  showSearch = true
 }) => {
   const navigate = useNavigate();
   const { signOut, userProfile, user } = useAuth();
@@ -72,6 +75,11 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({
     await signOut();
   };
 
+  const handleSearch = (query: string) => {
+    // Implement search functionality
+    console.log('Searching for:', query);
+  };
+
   const getLogoSize = () => {
     switch (headerSettings.logo_size) {
       case 'small': return 'h-8 w-auto';
@@ -98,8 +106,10 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({
 
   return (
     <header 
-      className={`sticky top-0 z-50 border-0 shadow-xl ${
-        headerSettings.enable_glass_effect ? 'glass-card' : 'bg-background'
+      className={`sticky top-0 z-50 border-0 shadow-lg ${
+        headerSettings.enable_glass_effect 
+          ? 'bg-background/95 backdrop-blur-md' 
+          : 'bg-background'
       }`}
       style={{ 
         backgroundColor: !headerSettings.enable_glass_effect 
@@ -107,13 +117,14 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({
           : undefined
       }}
     >
-      {/* Elegant gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-r from-primary/8 via-background/50 to-secondary/8 -z-10"></div>
+      {/* Subtle gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-background/50 to-secondary/5 -z-10"></div>
       
       <div className="container mx-auto px-6 py-4">
-        <div className="flex items-center justify-between">
+        {/* Desktop Layout */}
+        <div className="hidden lg:grid lg:grid-cols-3 lg:gap-6 lg:items-center">
           
-          {/* Left Section: Back Button + Logo + Title */}
+          {/* Left Section: Back Button + Brand */}
           <div className="flex items-center gap-6">
             {showBackButton && (
               <BackButton backPath={backPath} />
@@ -136,137 +147,147 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({
                   </h1>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Clock className="h-3 w-3" />
-                    <span className="hidden md:block">{getCurrentTime()}</span>
+                    <span>{getCurrentTime()}</span>
                   </div>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Center Section: User Welcome & Avatar */}
-          {user && userProfile && (
-            <div className="hidden lg:flex items-center gap-8 relative">
-              {/* Greeting */}
-              <div className="text-center space-y-2">
-                <h2 className="text-xl font-bold text-foreground">
-                  {getGreeting()}, {userProfile.full_name || user.email}
-                </h2>
-                <UserTitleBadge
-                  role={userProfile.role}
-                  displayTitle={userProfile.display_title}
-                  points={userProfile.points}
-                  level={userProfile.level}
-                  size="sm"
-                  variant="secondary"
-                />
-              </div>
-              
-              {/* Profile Avatar - Enhanced overlapping design */}
-              <div className="relative">
-                {/* Avatar container with overlapping effect */}
-                <div className="relative -mb-8 bg-background/90 backdrop-blur-md rounded-full p-1 shadow-2xl border border-border/20">
-                  <div className="w-32 h-32">
-                    <UniversalAvatar
-                      avatarUrl={userProfile.avatar_url}
-                      userName={userProfile.full_name}
-                      size="xl"
-                      className="w-full h-full shadow-xl hover:scale-105 transition-all duration-500"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Right Section: Actions */}
-          <div className="flex items-center gap-2">
-            {/* Refresh Button */}
-            {onRefresh && (
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={onRefresh}
-                disabled={refreshing}
-                className="glass-card hover:shadow-lg transition-all duration-300 border border-primary/10 hover:border-primary/30 hover:bg-primary/5"
-              >
-                <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-                <span className="hidden md:inline mr-2">
-                  {refreshing ? 'جاري التحديث...' : 'تحديث'}
-                </span>
-              </Button>
+          {/* Center Section: Search */}
+          <div className="flex justify-center">
+            {showSearch && (
+              <GlobalSearchBar 
+                onSearch={handleSearch}
+                className="w-full max-w-md"
+              />
             )}
+          </div>
 
-            {/* Notifications */}
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={onNotificationClick}
-              className="glass-card hover:shadow-lg transition-all duration-300 border border-secondary/10 hover:border-secondary/30 hover:bg-secondary/5 relative"
-            >
-              <Bell className="h-4 w-4" />
-              {notificationCount > 0 && (
-                <Badge 
-                  className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs bg-gradient-to-r from-destructive to-destructive/80 text-white rounded-full flex items-center justify-center animate-pulse"
+          {/* Right Section: User Profile + Actions */}
+          <div className="flex items-center justify-end gap-4">
+            {user && userProfile && (
+              <UserProfileSection
+                avatarUrl={userProfile.avatar_url}
+                userName={userProfile.full_name}
+                userEmail={user.email}
+                role={userProfile.role}
+                displayTitle={userProfile.display_title}
+                points={userProfile.points}
+                level={userProfile.level}
+                greeting={getGreeting()}
+                variant="desktop"
+              />
+            )}
+            
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2 ml-4">
+              {/* Refresh Button */}
+              {onRefresh && (
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={onRefresh}
+                  disabled={refreshing}
+                  className="hover:bg-primary/5 transition-colors"
                 >
-                  {notificationCount > 99 ? '99+' : notificationCount}
-                </Badge>
+                  <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+                  <span className="hidden xl:inline mr-2">
+                    {refreshing ? 'جاري التحديث...' : 'تحديث'}
+                  </span>
+                </Button>
               )}
-              <span className="hidden md:inline mr-2">الإشعارات</span>
-            </Button>
 
-            {/* Settings */}
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => navigate('/settings')}
-              className="hover:bg-muted/50 transition-all duration-300 opacity-70 hover:opacity-100"
-            >
-              <Settings className="h-4 w-4" />
-            </Button>
+              {/* Notifications */}
+              <NotificationCenter
+                notificationCount={notificationCount}
+                onNotificationClick={onNotificationClick}
+                hasUrgent={notificationCount > 5}
+              />
 
-            {/* Logout */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleLogout}
-              className="glass-card hover:shadow-lg transition-all duration-300 border border-destructive/10 hover:border-destructive/30 hover:bg-destructive/5 text-destructive/80 hover:text-destructive"
-            >
-              <LogOut className="h-4 w-4" />
-              <span className="hidden md:inline mr-2">خروج</span>
-            </Button>
+              {/* Quick Settings */}
+              <QuickSettings
+                onSettingsClick={() => navigate('/settings')}
+                onLogout={handleLogout}
+              />
+            </div>
           </div>
         </div>
 
-        {/* Mobile User Info - Enhanced for smaller screens */}
-        {user && userProfile && (
-          <div className="lg:hidden mt-6 pt-4 border-t border-border/30">
+        {/* Mobile Layout */}
+        <div className="lg:hidden space-y-4">
+          {/* Top Row: Back Button + Brand + Actions */}
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="relative">
-                <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-secondary/20 rounded-full blur"></div>
-                <UniversalAvatar
-                  avatarUrl={userProfile.avatar_url}
-                  userName={userProfile.full_name}
-                  size="lg"
-                  className="border-2 border-primary/20 shadow-lg"
+              {showBackButton && (
+                <BackButton backPath={backPath} />
+              )}
+              
+              {headerSettings.show_logo && (
+                <img 
+                  src={headerSettings.logo_url} 
+                  alt="شعار النظام" 
+                  className="h-10 w-auto"
                 />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm text-muted-foreground font-medium">{getGreeting()}</p>
-                <h2 className="text-lg font-bold text-foreground">
-                  {userProfile.full_name || user.email}
-                </h2>
-                <UserTitleBadge
-                  role={userProfile.role}
-                  displayTitle={userProfile.display_title}
-                  points={userProfile.points}
-                  level={userProfile.level}
+              )}
+              
+              {headerSettings.show_title && (
+                <h1 className="text-lg font-bold text-foreground">
+                  {title || headerSettings.title_text}
+                </h1>
+              )}
+            </div>
+            
+            <div className="flex items-center gap-2">
+              {onRefresh && (
+                <Button 
+                  variant="ghost" 
                   size="sm"
-                  variant="outline"
-                />
-              </div>
+                  onClick={onRefresh}
+                  disabled={refreshing}
+                >
+                  <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+                </Button>
+              )}
+              
+              <NotificationCenter
+                notificationCount={notificationCount}
+                onNotificationClick={onNotificationClick}
+                hasUrgent={notificationCount > 5}
+              />
+              
+              <QuickSettings
+                onLogout={handleLogout}
+                onSettingsClick={() => navigate('/settings')}
+              />
             </div>
           </div>
-        )}
+
+          {/* Search Bar */}
+          {showSearch && (
+            <GlobalSearchBar 
+              onSearch={handleSearch}
+              className="w-full"
+            />
+          )}
+
+          {/* User Profile Section */}
+          {user && userProfile && (
+            <div className="pt-2 border-t border-border/20">
+              <UserProfileSection
+                avatarUrl={userProfile.avatar_url}
+                userName={userProfile.full_name}
+                userEmail={user.email}
+                role={userProfile.role}
+                displayTitle={userProfile.display_title}
+                points={userProfile.points}
+                level={userProfile.level}
+                greeting={getGreeting()}
+                variant="mobile"
+              />
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );
