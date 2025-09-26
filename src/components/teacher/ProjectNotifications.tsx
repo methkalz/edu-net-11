@@ -17,7 +17,8 @@ import {
   User,
   FileText,
   Send,
-  AlertCircle
+  AlertCircle,
+  Settings
 } from 'lucide-react';
 import { useProjectNotifications } from '@/hooks/useProjectNotifications';
 import { useTeacherProjects } from '@/hooks/useTeacherProjects';
@@ -75,102 +76,120 @@ const ProjectNotifications: React.FC = () => {
   const recentNotifications = notifications.slice(0, 10);
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="glass-card border-0 shadow-lg">
+      <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Bell className="h-5 w-5 text-primary" />
-              الإشعارات
-              {unreadCount > 0 && (
-                <Badge variant="destructive" className="text-xs">
-                  {unreadCount}
-                </Badge>
-              )}
-            </CardTitle>
-            <CardDescription>
-              تعليقات جديدة وتحديثات المشاريع
-            </CardDescription>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center">
+              <Bell className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <CardTitle className="text-lg font-bold text-foreground flex items-center gap-2">
+                الإشعارات
+                {unreadCount > 0 && (
+                  <Badge variant="destructive" className="text-xs px-2 py-1 rounded-full">
+                    {unreadCount}
+                  </Badge>
+                )}
+              </CardTitle>
+              <CardDescription className="text-sm text-muted-foreground">
+                تعليقات جديدة وتحديثات المشاريع
+              </CardDescription>
+            </div>
           </div>
           
-          {unreadCount > 0 && (
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={markAllAsRead}
-              className="text-xs"
-            >
-              <CheckCheck className="h-4 w-4 mr-1" />
-              تحديد الكل كمقروء
+          <div className="flex items-center gap-2">
+            {unreadCount > 0 && (
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={markAllAsRead}
+                className="text-xs h-8 px-3"
+              >
+                <CheckCheck className="h-4 w-4 mr-1" />
+                تحديد الكل كمقروء
+              </Button>
+            )}
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+              <Settings className="h-4 w-4" />
             </Button>
-          )}
+          </div>
         </div>
       </CardHeader>
       
-      <CardContent>
-        <ScrollArea className="h-96">
+      <CardContent className="pt-0">
+        <ScrollArea className="h-80">
           {loading ? (
             <div className="space-y-4">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="animate-pulse">
-                  <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
-                  <div className="h-3 bg-muted rounded w-1/2"></div>
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="animate-pulse p-4 rounded-lg border bg-muted/30">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 bg-muted rounded-full"></div>
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 bg-muted rounded w-3/4"></div>
+                      <div className="h-3 bg-muted rounded w-1/2"></div>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
           ) : recentNotifications.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Bell className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>لا توجد إشعارات</p>
-              <p className="text-sm">ستظهر هنا الإشعارات الجديدة من الطلاب</p>
+            <div className="text-center py-12">
+              <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center">
+                <Bell className="h-10 w-10 text-blue-400" />
+              </div>
+              <h3 className="font-semibold text-foreground mb-2">لا توجد إشعارات</h3>
+              <p className="text-sm text-muted-foreground">
+                ستظهر هنا الإشعارات الجديدة من الطلاب
+              </p>
             </div>
           ) : (
             <div className="space-y-3">
               {recentNotifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`p-4 rounded-lg border transition-all hover:shadow-sm cursor-pointer ${
+                  className={`relative p-4 rounded-xl border transition-all hover:shadow-md cursor-pointer group ${
                     !notification.is_read 
-                      ? 'bg-primary/5 border-primary/20' 
-                      : 'bg-background hover:bg-muted/50'
+                      ? 'bg-gradient-to-r from-blue-50/50 to-blue-50/30 border-blue-200/50 shadow-sm' 
+                      : 'bg-card hover:bg-muted/30 border-border'
                   }`}
                   onClick={() => handleNotificationClick(notification)}
                 >
-                  <div className="flex items-start justify-between gap-3">
+                  {!notification.is_read && (
+                    <div className="absolute top-2 right-2 w-3 h-3 bg-blue-500 rounded-full"></div>
+                  )}
+                  
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
+                      {notification.notification_type === 'new_comment' ? (
+                        <MessageCircle className="h-5 w-5 text-primary" />
+                      ) : (
+                        <AlertCircle className="h-5 w-5 text-orange-500" />
+                      )}
+                    </div>
+                    
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-2">
-                        <div className="flex-shrink-0">
-                          {notification.notification_type === 'new_comment' ? (
-                            <MessageCircle className="h-4 w-4 text-blue-600" />
-                          ) : (
-                            <AlertCircle className="h-4 w-4 text-orange-600" />
-                          )}
-                        </div>
-                        
-                        <h4 className="font-medium text-sm text-foreground truncate">
+                        <h4 className="font-semibold text-sm text-foreground truncate">
                           {notification.title}
                         </h4>
-                        
-                        {!notification.is_read && (
-                          <div className="flex-shrink-0 w-2 h-2 bg-primary rounded-full"></div>
-                        )}
                       </div>
                       
-                      <p className="text-sm text-muted-foreground mb-2 leading-relaxed">
+                      <p className="text-sm text-muted-foreground mb-3 leading-relaxed">
                         {notification.message}
                       </p>
                       
                       <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <User className="h-3 w-3" />
+                        <span className="flex items-center gap-1.5">
+                          <User className="h-3.5 w-3.5" />
                           {notification.student_name}
                         </span>
-                        <span className="flex items-center gap-1">
-                          <FileText className="h-3 w-3" />
+                        <span className="flex items-center gap-1.5">
+                          <FileText className="h-3.5 w-3.5" />
                           {notification.project_title}
                         </span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
+                        <span className="flex items-center gap-1.5">
+                          <Clock className="h-3.5 w-3.5" />
                           {formatDistanceToNow(new Date(notification.created_at), { 
                             addSuffix: true, 
                             locale: ar 
@@ -179,7 +198,7 @@ const ProjectNotifications: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1 flex-shrink-0">
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 flex-shrink-0">
                       <Button
                         variant="ghost"
                         size="sm"
@@ -187,7 +206,7 @@ const ProjectNotifications: React.FC = () => {
                           e.stopPropagation();
                           handleViewProject(notification.project_id);
                         }}
-                        className="h-8 w-8 p-0"
+                        className="h-8 w-8 p-0 hover:bg-primary/10"
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
@@ -201,12 +220,12 @@ const ProjectNotifications: React.FC = () => {
                               e.stopPropagation();
                               setSelectedProject(notification.project_id);
                             }}
-                            className="h-8 w-8 p-0"
+                            className="h-8 w-8 p-0 hover:bg-green-100"
                           >
                             <Send className="h-4 w-4" />
                           </Button>
                         </DialogTrigger>
-                        <DialogContent>
+                        <DialogContent className="max-w-lg">
                           <DialogHeader>
                             <DialogTitle>رد سريع على التعليق</DialogTitle>
                             <DialogDescription>
@@ -218,7 +237,7 @@ const ProjectNotifications: React.FC = () => {
                               placeholder="اكتب ردك هنا..."
                               value={replyText}
                               onChange={(e) => setReplyText(e.target.value)}
-                              className="min-h-[100px]"
+                              className="min-h-[100px] resize-none"
                             />
                             <div className="flex justify-end gap-2">
                               <Button
@@ -233,6 +252,7 @@ const ProjectNotifications: React.FC = () => {
                               <Button
                                 onClick={handleQuickReply}
                                 disabled={!replyText.trim() || sendingReply}
+                                className="bg-primary hover:bg-primary/90"
                               >
                                 {sendingReply ? (
                                   <>
@@ -258,7 +278,7 @@ const ProjectNotifications: React.FC = () => {
                           e.stopPropagation();
                           deleteNotification(notification.id);
                         }}
-                        className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                        className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10"
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -271,9 +291,12 @@ const ProjectNotifications: React.FC = () => {
         </ScrollArea>
         
         {notifications.length > 10 && (
-          <div className="text-center pt-4">
-            <Separator className="mb-4" />
-            <Button variant="link" className="text-xs text-muted-foreground">
+          <div className="pt-4 border-t mt-4">
+            <Button 
+              variant="ghost" 
+              className="w-full text-sm text-muted-foreground hover:text-foreground"
+              onClick={() => navigate('/notifications')}
+            >
               عرض جميع الإشعارات ({notifications.length})
             </Button>
           </div>

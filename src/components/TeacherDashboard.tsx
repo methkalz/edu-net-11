@@ -538,6 +538,61 @@ const TeacherDashboard: React.FC = () => {
               <ProjectNotifications />
             </div>
           </div>
+        ) : canAccessGrade('10') ? (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <Card className="glass-card border-0 shadow-lg">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-green-500 to-green-600 flex items-center justify-center">
+                      <BookOpen className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-xl font-bold bg-gradient-to-r from-green-600 to-green-500 bg-clip-text text-transparent">
+                        محتوى الصف العاشر
+                      </CardTitle>
+                      <CardDescription>
+                        إدارة ومراجعة المواد التعليمية
+                      </CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <Button
+                      variant="outline"
+                      className="h-24 flex flex-col items-center justify-center gap-2 hover:bg-green-50 border-green-200"
+                      onClick={() => navigate('/grade10-management')}
+                    >
+                      <Video className="h-6 w-6 text-green-600" />
+                      <span className="text-sm font-medium">مكتبة الفيديوهات</span>
+                    </Button>
+                    
+                    <Button
+                      variant="outline"
+                      className="h-24 flex flex-col items-center justify-center gap-2 hover:bg-blue-50 border-blue-200"
+                      onClick={() => navigate('/grade10-content')}
+                    >
+                      <FileText className="h-6 w-6 text-blue-600" />
+                      <span className="text-sm font-medium">الدروس والمواد</span>
+                    </Button>
+                    
+                    <Button
+                      variant="outline"
+                      className="h-24 flex flex-col items-center justify-center gap-2 hover:bg-purple-50 border-purple-200"
+                      onClick={() => navigate('/grade10-projects')}
+                    >
+                      <Target className="h-6 w-6 text-purple-600" />
+                      <span className="text-sm font-medium">المشاريع الصغيرة</span>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            <div className="lg:col-span-1">
+              <ProjectNotifications />
+            </div>
+          </div>
         ) : allowedGrades.length > 0 && (
           <div className="grid grid-cols-1 gap-6">
             <ProjectNotifications />
