@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useStudentContent } from '@/hooks/useStudentContent';
+import { useGrade10Files } from '@/hooks/useGrade10Files';
 import { useGrade10MiniProjects } from '@/hooks/useGrade10MiniProjects';
 import { useStudentGrade10Lessons } from '@/hooks/useStudentGrade10Lessons';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 
 const Grade10TeacherContent: React.FC = () => {
-  const { gradeContent, loading } = useStudentContent();
+  const { videos, documents, loading } = useGrade10Files();
   const { projects: miniProjects, loading: projectsLoading } = useGrade10MiniProjects();
   const { sections: lessonSections, loading: lessonsLoading } = useStudentGrade10Lessons();
   
@@ -71,8 +71,8 @@ const Grade10TeacherContent: React.FC = () => {
 
   // Content filtering
   const getFilteredVideos = (category: string) => {
-    if (!gradeContent?.videos) return [];
-    return gradeContent.videos
+    if (!videos) return [];
+    return videos
       .filter(video => (video.video_category || 'educational_explanations') === category)
       .filter(video =>
         video.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -93,6 +93,14 @@ const Grade10TeacherContent: React.FC = () => {
     return allLessons.filter(lesson =>
       lesson.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (lesson.description && lesson.description.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
+  };
+
+  const getFilteredDocuments = () => {
+    if (!documents) return [];
+    return documents.filter(doc =>
+      doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (doc.description && doc.description.toLowerCase().includes(searchQuery.toLowerCase()))
     );
   };
 
@@ -287,7 +295,7 @@ const Grade10TeacherContent: React.FC = () => {
 
       <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="computer_structure" className="flex items-center gap-2">
               <Monitor className="h-4 w-4" />
               مبنى الحاسوب
@@ -296,13 +304,9 @@ const Grade10TeacherContent: React.FC = () => {
               <Settings className="h-4 w-4" />
               أساسيات الويندوز  
             </TabsTrigger>
-            <TabsTrigger value="networking" className="flex items-center gap-2">
-              <Network className="h-4 w-4" />
-              مقدمة عن الشبكات
-            </TabsTrigger>
-            <TabsTrigger value="communication" className="flex items-center gap-2">
-              <Phone className="h-4 w-4" />
-              أساسيات الاتصال
+            <TabsTrigger value="documents" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              المستندات
             </TabsTrigger>
             <TabsTrigger value="mini_projects" className="flex items-center gap-2">
               <FolderOpen className="h-4 w-4" />
@@ -374,65 +378,33 @@ const Grade10TeacherContent: React.FC = () => {
             </div>
           </TabsContent>
 
-          {/* Networking Tab */}
-          <TabsContent value="networking" className="mt-6">
+          {/* Documents Tab */}
+          <TabsContent value="documents" className="mt-6">
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">مقدمة عن الشبكات</h3>
+                <h3 className="text-lg font-semibold">المستندات والملفات</h3>
                 <Badge variant="secondary">
-                  {getFilteredLessons('networking-fundamentals').length} درس
+                  {getFilteredDocuments().length} مستند
                 </Badge>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {getFilteredLessons('networking-fundamentals').map((lesson) => (
+                {getFilteredDocuments().map((document) => (
                   <TeacherContentCard
-                    key={lesson.id}
-                    item={lesson}
-                    type="lesson"
-                    icon={Network}
+                    key={document.id}
+                    item={document}
+                    type="document"
+                    icon={FileText}
                     color="from-purple-500 to-violet-600"
                   />
                 ))}
               </div>
               
-              {getFilteredLessons('networking-fundamentals').length === 0 && (
+              {getFilteredDocuments().length === 0 && (
                 <div className="text-center py-12">
-                  <Network className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">لا توجد دروس في مقدمة عن الشبكات</h3>
-                  <p className="text-muted-foreground">لم يتم إضافة أي دروس في هذا القسم بعد</p>
-                </div>
-              )}
-            </div>
-          </TabsContent>
-
-          {/* Communication Tab */}
-          <TabsContent value="communication" className="mt-6">
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">أساسيات الاتصال</h3>
-                <Badge variant="secondary">
-                  {getFilteredLessons('communication-basics').length} درس
-                </Badge>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {getFilteredLessons('communication-basics').map((lesson) => (
-                  <TeacherContentCard
-                    key={lesson.id}
-                    item={lesson}
-                    type="lesson"
-                    icon={Phone}
-                    color="from-orange-500 to-red-600"
-                  />
-                ))}
-              </div>
-              
-              {getFilteredLessons('communication-basics').length === 0 && (
-                <div className="text-center py-12">
-                  <Phone className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">لا توجد دروس في أساسيات الاتصال</h3>
-                  <p className="text-muted-foreground">لم يتم إضافة أي دروس في هذا القسم بعد</p>
+                  <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">لا توجد مستندات</h3>
+                  <p className="text-muted-foreground">لم يتم إضافة أي مستندات في هذا القسم بعد</p>
                 </div>
               )}
             </div>
