@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, Clock } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import BackButton from './BackButton';
 import { NotificationCenter } from './NotificationCenter';
 import { UserProfileSection } from './UserProfileSection';
 import { QuickSettings } from './QuickSettings';
-import { format } from 'date-fns';
-import { ar } from 'date-fns/locale';
 
 interface ModernHeaderProps {
   title?: string;
@@ -92,10 +90,6 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({
     return 'مساء الخير';
   };
 
-  const getCurrentTime = () => {
-    return format(new Date(), 'EEEE، dd MMMM yyyy', { locale: ar });
-  };
-
   return (
     <header 
       className={`sticky top-0 z-50 border-0 shadow-lg ${
@@ -137,10 +131,11 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({
                   >
                     {title || headerSettings.title_text}
                   </h1>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Clock className="h-3 w-3" />
-                    <span>{getCurrentTime()}</span>
-                  </div>
+                  {user && userProfile && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span>{getGreeting()}, {userProfile.full_name || user.email}</span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
