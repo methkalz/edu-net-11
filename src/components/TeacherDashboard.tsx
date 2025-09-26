@@ -55,6 +55,7 @@ import Grade10TeacherContent from '@/components/teacher/Grade10TeacherContent';
 import { UniversalAvatar } from '@/components/shared/UniversalAvatar';
 import { UserTitleBadge } from '@/components/shared/UserTitleBadge';
 import { StudentPresenceWidget } from '@/components/teacher/StudentPresenceWidget';
+import { OnlineStudentsStats } from '@/components/dashboard/OnlineStudentsStats';
 
 interface TeacherClass {
   id: string;
@@ -126,6 +127,7 @@ const TeacherDashboard: React.FC = () => {
   });
   const [schoolPackageContents, setSchoolPackageContents] = useState<string[]>([]);
   const [showPresenceWidget, setShowPresenceWidget] = useState(false);
+  const [isOnlineStatsOpen, setIsOnlineStatsOpen] = useState(false);
 
   // استخدام هوك صلاحيات المحتوى للمعلم
   const { canAccessGrade, allowedGrades, loading: accessLoading } = useTeacherContentAccess();
@@ -550,6 +552,7 @@ const TeacherDashboard: React.FC = () => {
           loading={loading}
           refreshing={refreshing}
           onRefresh={() => fetchTeacherData(true)}
+          onOnlineStudentsClick={() => setIsOnlineStatsOpen(true)}
         />
 
         {/* Grade 12 Projects and Notifications - عرض حسب الصلاحيات */}
@@ -865,6 +868,12 @@ const TeacherDashboard: React.FC = () => {
       <StudentPresenceWidget 
         isOpen={showPresenceWidget}
         onToggle={() => setShowPresenceWidget(!showPresenceWidget)}
+      />
+
+      {/* Online Students Stats Modal */}
+      <OnlineStudentsStats
+        isOpen={isOnlineStatsOpen}
+        onClose={() => setIsOnlineStatsOpen(false)}
       />
     </div>
   );
