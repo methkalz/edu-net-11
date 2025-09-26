@@ -1,6 +1,7 @@
 import React from 'react';
 import { UniversalAvatar } from './UniversalAvatar';
 import { UserTitleBadge } from './UserTitleBadge';
+import { UserProfilePopup } from './UserProfilePopup';
 import { cn } from '@/lib/utils';
 
 interface UserProfileSectionProps {
@@ -24,33 +25,49 @@ export const UserProfileSection: React.FC<UserProfileSectionProps> = ({
   displayTitle,
   points,
   level,
-  greeting = "مرحباً",
-  variant = "desktop",
+  greeting,
+  variant = 'desktop',
   className
 }) => {
+  
+  // إعداد الإحصائيات للبروفايل
+  const profileStats = {
+    totalPoints: points,
+    level: level,
+    joinDate: new Date().toISOString(), // يمكن تحديثها بالتاريخ الفعلي
+    lastLogin: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() // منذ ساعتين كمثال
+  };
+
   if (variant === 'mobile') {
     return (
       <div className={cn("flex items-center gap-3", className)}>
-        <div className="relative">
+        <UserProfilePopup 
+          profile={{ 
+            full_name: userName, 
+            email: userEmail, 
+            role: role,
+            avatar_url: avatarUrl 
+          }}
+          stats={profileStats}
+        >
           <UniversalAvatar
             avatarUrl={avatarUrl}
             userName={userName}
-            size="md"
-            className="shadow-lg"
+            size={variant === 'mobile' ? 'sm' : 'lg'}
+            clickable
           />
-        </div>
-        <div className="flex-1 min-w-0">
-          <h2 className="text-sm font-bold text-foreground truncate">
-            {greeting}, {userName || userEmail}
-          </h2>
-          {role && (
-            <UserTitleBadge
+        </UserProfilePopup>
+        <div className="flex flex-col">
+          {greeting && (
+            <span className="text-sm text-muted-foreground">{greeting}</span>
+          )}
+          <h2 className="text-lg font-semibold">{userName}</h2>
+          {displayTitle && (
+            <UserTitleBadge 
               role={role}
               displayTitle={displayTitle}
               points={points}
               level={level}
-              size="sm"
-              variant="outline"
             />
           )}
         </div>
@@ -60,17 +77,40 @@ export const UserProfileSection: React.FC<UserProfileSectionProps> = ({
 
   return (
     <div className={cn("flex items-center gap-6", className)}>
-      
-      {/* Profile Avatar with Overlap Effect */}
-      <div className="relative">
-        <div className="relative -mb-8 bg-background/90 backdrop-blur-md rounded-full p-1 shadow-2xl border border-border/20">
-          <div className="w-32 h-32">
+      <div className="flex items-center gap-4">
+        <div className="relative">
+          <UserProfilePopup 
+            profile={{ 
+              full_name: userName, 
+              email: userEmail, 
+              role: role,
+              avatar_url: avatarUrl 
+            }}
+            stats={profileStats}
+          >
             <UniversalAvatar
               avatarUrl={avatarUrl}
               userName={userName}
               size="xl"
-              className="w-full h-full shadow-xl hover:scale-105 transition-all duration-500"
+              className="ring-4 ring-primary/10"
+              clickable
             />
+          </UserProfilePopup>
+        </div>
+        <div className="flex-1">
+          {greeting && (
+            <p className="text-muted-foreground text-sm mb-1">{greeting}</p>
+          )}
+          <h1 className="text-2xl font-bold">{userName}</h1>
+          <div className="flex items-center gap-2 mt-1">
+            {displayTitle && (
+              <UserTitleBadge 
+                role={role}
+                displayTitle={displayTitle}
+                points={points}
+                level={level}
+              />
+            )}
           </div>
         </div>
       </div>
