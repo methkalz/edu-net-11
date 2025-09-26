@@ -130,7 +130,7 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({
                   variant="desktop"
                 />
                 <div className="space-y-1">
-                  <div className="text-base text-foreground">
+                  <div className="text-lg text-foreground">
                     <span>{getGreeting()}, {userProfile.full_name || user.email}</span>
                   </div>
                   <h1 className="font-cairo text-base text-muted-foreground">
