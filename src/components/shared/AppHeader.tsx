@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import BackButton from './BackButton';
 import { UniversalAvatar } from './UniversalAvatar';
 import { UserTitleBadge } from './UserTitleBadge';
+import { UserProfilePopup } from './UserProfilePopup';
 
 interface AppHeaderProps {
   title?: string;
@@ -136,12 +137,14 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                     </div>
                   </div>
                   
-                  <UniversalAvatar
-                    avatarUrl={userProfile.avatar_url}
-                    userName={userProfile.full_name}
-                    size="sm"
-                    className="border-2 border-primary/20"
-                  />
+                  <UserProfilePopup>
+                    <UniversalAvatar
+                      avatarUrl={userProfile.avatar_url}
+                      userName={userProfile.full_name}
+                      size="sm"
+                      className="border-2 border-primary/20"
+                    />
+                  </UserProfilePopup>
                 </>
               )}
               

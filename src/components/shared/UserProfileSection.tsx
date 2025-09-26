@@ -1,6 +1,7 @@
 import React from 'react';
 import { UniversalAvatar } from './UniversalAvatar';
 import { UserTitleBadge } from './UserTitleBadge';
+import { UserProfilePopup } from './UserProfilePopup';
 import { cn } from '@/lib/utils';
 
 interface UserProfileSectionProps {
@@ -32,12 +33,14 @@ export const UserProfileSection: React.FC<UserProfileSectionProps> = ({
     return (
       <div className={cn("flex items-center gap-3", className)}>
         <div className="relative">
-          <UniversalAvatar
-            avatarUrl={avatarUrl}
-            userName={userName}
-            size="md"
-            className="shadow-lg"
-          />
+          <UserProfilePopup>
+            <UniversalAvatar
+              avatarUrl={avatarUrl}
+              userName={userName}
+              size="md"
+              className="shadow-lg"
+            />
+          </UserProfilePopup>
         </div>
         <div className="flex-1 min-w-0">
           <h2 className="text-sm font-bold text-foreground truncate">
@@ -65,12 +68,14 @@ export const UserProfileSection: React.FC<UserProfileSectionProps> = ({
       <div className="relative">
         <div className="relative -mb-8 bg-background/90 backdrop-blur-md rounded-full p-1 shadow-2xl border border-border/20">
           <div className="w-32 h-32">
-            <UniversalAvatar
-              avatarUrl={avatarUrl}
-              userName={userName}
-              size="xl"
-              className="w-full h-full shadow-xl hover:scale-105 transition-all duration-500"
-            />
+            <UserProfilePopup>
+              <UniversalAvatar
+                avatarUrl={avatarUrl}
+                userName={userName}
+                size="xl"
+                className="w-full h-full shadow-xl hover:scale-105 transition-all duration-500"
+              />
+            </UserProfilePopup>
           </div>
         </div>
       </div>
