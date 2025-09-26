@@ -48,9 +48,17 @@ export const useTeacherProjects = () => {
       setLoading(true);
       setError(null);
 
+      // تسجيل مفصل للتشخيص
+      console.log('🔍 fetchTeacherProjects - معلومات المعلم:', {
+        teacherId: userProfile.user_id,
+        teacherName: userProfile.full_name,
+        allowedGrades,
+        accessLoading
+      });
+
       // التحقق من الصفوف المسموح بها
       if (allowedGrades.length === 0) {
-        console.log('Teacher has no allowed grades');
+        console.log('❌ المعلم ليس لديه صفوف مخولة');
         setProjects([]);
         return;
       }
@@ -60,19 +68,37 @@ export const useTeacherProjects = () => {
 
       // جلب مشاريع كل صف مسموح به
       for (const grade of allowedGrades) {
+        console.log(`🔎 معالجة الصف: ${grade} من الصفوف المخولة:`, allowedGrades);
+        
+        // التحقق الإضافي من أن الصف مخول فعلاً
+        if (!allowedGrades.includes(grade)) {
+          console.log(`❌ الصف ${grade} غير مخول - تم تجاهله`);
+          continue;
+        }
         let query;
         
         if (grade === '12') {
+          console.log('📚 معالجة مشاريع الصف الثاني عشر...');
+          
           // فلترة المشاريع حسب الطلاب المسؤول عنهم أولاً
-          const { data: authorizedStudents } = await supabase
+          const { data: authorizedStudents, error: authError } = await supabase
             .rpc('get_teacher_assigned_projects', { 
               teacher_user_id: userProfile.user_id, 
               project_grade: '12' 
             });
 
+          if (authError) {
+            console.error('❌ خطأ في جلب الطلاب المخولين للصف 12:', authError);
+            continue;
+          }
+
+          console.log('👥 الطلاب المخولين للصف 12:', authorizedStudents);
+
           const authorizedStudentIds = authorizedStudents
             ?.filter(s => s.is_authorized)
             ?.map(s => s.student_id) || [];
+
+          console.log('📋 معرفات الطلاب المخولين للصف 12:', authorizedStudentIds);
 
           if (authorizedStudentIds.length > 0) {
             // جلب مشاريع الصف الثاني عشر للطلاب المصرح لهم
@@ -91,6 +117,8 @@ export const useTeacherProjects = () => {
               .eq('school_id', userProfile.school_id);
 
             if (!error && grade12Projects) {
+              console.log(`✅ تم جلب ${grade12Projects.length} مشروع من الصف 12`);
+              
               const formattedGrade12Projects = grade12Projects.map(project => ({
                 ...project,
                 grade: 12,
@@ -101,21 +129,36 @@ export const useTeacherProjects = () => {
               }));
 
               allProjects.push(...formattedGrade12Projects);
+            } else if (error) {
+              console.error('❌ خطأ في جلب مشاريع الصف 12:', error);
             }
+          } else {
+            console.log('⚠️ لا يوجد طلاب مخولين للصف 12');
           }
         }
 
         if (grade === '10') {
+          console.log('📚 معالجة مشاريع الصف العاشر...');
+          
           // جلب مشاريع الصف العاشر 
-          const { data: authorizedStudents } = await supabase
+          const { data: authorizedStudents, error: authError } = await supabase
             .rpc('get_teacher_assigned_projects', { 
               teacher_user_id: userProfile.user_id, 
               project_grade: '10' 
             });
 
+          if (authError) {
+            console.error('❌ خطأ في جلب الطلاب المخولين للصف 10:', authError);
+            continue;
+          }
+
+          console.log('👥 الطلاب المخولين للصف 10:', authorizedStudents);
+
           const authorizedStudentIds = authorizedStudents
             ?.filter(s => s.is_authorized)
             ?.map(s => s.student_id) || [];
+
+          console.log('📋 معرفات الطلاب المخولين للصف 10:', authorizedStudentIds);
 
           if (authorizedStudentIds.length > 0) {
             const { data: grade10Projects, error } = await supabase
@@ -134,6 +177,8 @@ export const useTeacherProjects = () => {
               .eq('school_id', userProfile.school_id);
 
             if (!error && grade10Projects) {
+              console.log(`✅ تم جلب ${grade10Projects.length} مشروع من الصف 10`);
+              
               // تحويل مشاريع الصف العاشر لنفس التنسيق
               const formattedGrade10Projects = grade10Projects.map(project => ({
                 ...project,
@@ -145,8 +190,14 @@ export const useTeacherProjects = () => {
               }));
 
               allProjects.push(...formattedGrade10Projects);
+            } else if (error) {
+              console.error('❌ خطأ في جلب مشاريع الصف 10:', error);
             }
+          } else {
+            console.log('⚠️ لا يوجد طلاب مخولين للصف 10');
           }
+        } else {
+          console.log(`⚠️ صف غير مدعوم: ${grade} - تم تجاهله`);
         }
       }
 
@@ -155,6 +206,9 @@ export const useTeacherProjects = () => {
 
       // تحديد البيانات إلى أول 10 مشاريع
       const limitedProjects = allProjects.slice(0, 10);
+
+      console.log(`📊 إجمالي المشاريع المجمعة: ${allProjects.length}، المعروضة: ${limitedProjects.length}`);
+      console.log('📋 تفاصيل المشاريع المعروضة:', limitedProjects.map(p => ({ id: p.id, title: p.title, grade: p.grade })));
 
       setProjects(limitedProjects);
     } catch (error: any) {
@@ -177,15 +231,24 @@ export const useTeacherProjects = () => {
     try {
       // التحقق من الصفوف المسموح بها
       if (allowedGrades.length === 0) {
-        console.log('Teacher has no allowed grades - no comments');
+        console.log('❌ المعلم ليس لديه صفوف مخولة - لا توجد تعليقات');
         setRecentComments([]);
         return;
       }
+
+      console.log('🔍 جلب التعليقات للصفوف المخولة:', allowedGrades);
 
       let allComments: ProjectComment[] = [];
 
       // جلب التعليقات من كل صف مسموح به
       for (const grade of allowedGrades) {
+        console.log(`💬 جلب تعليقات الصف: ${grade}`);
+        
+        // التحقق الإضافي من أن الصف مخول
+        if (!allowedGrades.includes(grade)) {
+          console.log(`❌ الصف ${grade} غير مخول للتعليقات - تم تجاهله`);
+          continue;
+        }
         if (grade === '12') {
           // جلب تعليقات مشاريع الصف الثاني عشر
           const { data: grade12Comments, error: commentsError } = await supabase
