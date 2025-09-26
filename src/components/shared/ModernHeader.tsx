@@ -132,7 +132,7 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({
                     {title || headerSettings.title_text}
                   </h1>
                   {user && userProfile && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-2 text-base text-muted-foreground font-medium">
                       <span>{getGreeting()}, {userProfile.full_name || user.email}</span>
                     </div>
                   )}
