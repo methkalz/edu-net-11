@@ -92,6 +92,7 @@ interface TeacherStats {
 const TeacherDashboard: React.FC = () => {
   const { user, userProfile } = useAuth();
   const navigate = useNavigate();
+  const { allowedGrades, canAccessGrade } = useTeacherContentAccess();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [stats, setStats] = useState<TeacherStats>({
@@ -525,15 +526,17 @@ const TeacherDashboard: React.FC = () => {
           onRefresh={() => fetchTeacherData(true)}
         />
 
-        {/* Grade 12 Projects and Notifications */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <Grade12ProjectsWidget />
+        {/* Grade 12 Projects and Notifications - Only show if teacher has access to grade 12 */}
+        {canAccessGrade('12') && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <Grade12ProjectsWidget />
+            </div>
+            <div className="lg:col-span-1">
+              <ProjectNotifications />
+            </div>
           </div>
-          <div className="lg:col-span-1">
-            <ProjectNotifications />
-          </div>
-        </div>
+        )}
 
         {/* الإجراءات السريعة المحسنة */}
         <Card className="glass-card border-0 shadow-xl animate-fade-in-up">
