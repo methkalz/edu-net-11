@@ -63,6 +63,7 @@ import AppFooter from '@/components/shared/AppFooter';
 import { PageLoading } from '@/components/ui/LoadingComponents';
 import { AdminAccessBanner } from '@/components/admin/AdminAccessBanner';
 import { ImpersonationBanner } from '@/components/admin/ImpersonationBanner';
+import ModernHeader from '@/components/shared/ModernHeader';
 
 /**
  * Dashboard Component Implementation
@@ -91,36 +92,8 @@ const Dashboard = () => {
   // Calendar events state - displays upcoming events from localStorage
   const [upcomingEvents, setUpcomingEvents] = useState<CalendarEvent[]>([]);
 
-  // Dashboard header customization settings
-  // These settings are persisted in localStorage and allow customization of:
-  // - Logo display and size
-  // - Title text, color, and size
-  // - Background colors and opacity
-  // - Glass effect with blur intensity
-  const [dashboardHeaderSettings, setDashboardHeaderSettings] = useState({
-    logo_url: '/lovable-uploads/f942a38c-ddca-45fc-82fc-239e22268abe.png',
-    logo_size: 'medium' as 'small' | 'medium' | 'large',
-    title_text: 'لوحة التحكم',
-    title_color: '#2563eb',
-    title_size: '2xl' as 'sm' | 'base' | 'lg' | 'xl' | '2xl' | '3xl',
-    show_logo: true,
-    show_title: true,
-    background_color: '#ffffff',
-    text_color: '#1f2937',
-    background_opacity: 0.95,
-    blur_intensity: 10,
-    enable_glass_effect: true
-  });
-
   const [pluginStatsIndex, setPluginStatsIndex] = useState(0);
 
-  useEffect(() => {
-    // جلب إعدادات هيدر الصفحة الرئيسية
-    const dashboardHeaderData = localStorage.getItem('dashboard_header_settings');
-    if (dashboardHeaderData) {
-      setDashboardHeaderSettings(JSON.parse(dashboardHeaderData));
-    }
-  }, []);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -423,19 +396,6 @@ const Dashboard = () => {
     { title: 'معدل الرضا', value: '4.8', icon: Star, color: 'purple-mystic' }
   ];
 
-  // Helper functions for header styling
-  const getLogoSize = () => {
-    switch (dashboardHeaderSettings.logo_size) {
-      case 'small': return 'h-8 w-auto';
-      case 'medium': return 'h-12 w-auto';
-      case 'large': return 'h-16 w-auto';
-      default: return 'h-12 w-auto';
-    }
-  };
-
-  const getTitleSize = () => {
-    return `text-${dashboardHeaderSettings.title_size}`;
-  };
 
   return (
     <div className="min-h-screen bg-background pattern-dots flex flex-col" dir="rtl">
@@ -443,62 +403,11 @@ const Dashboard = () => {
       <ImpersonationBanner />
       <AdminAccessBanner />
       
-      {/* Modern Header مع الإعدادات المخصصة والتأثيرات */}
-      <header 
-        className={`glass-card sticky top-0 z-50 soft-shadow ${
-          dashboardHeaderSettings.enable_glass_effect ? 'backdrop-blur supports-[backdrop-filter]:bg-background/60' : ''
-        }`}
-        style={{ 
-          backgroundColor: dashboardHeaderSettings.enable_glass_effect 
-            ? `${dashboardHeaderSettings.background_color}${Math.round(dashboardHeaderSettings.background_opacity * 255).toString(16).padStart(2, '0')}`
-            : dashboardHeaderSettings.background_color,
-          backdropFilter: dashboardHeaderSettings.enable_glass_effect ? `blur(${dashboardHeaderSettings.blur_intensity}px)` : 'none'
-        }}
-      >
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="animate-fade-in-up">
-              <h1 
-                className={`font-bold font-cairo ${getTitleSize()} flex items-center gap-3`}
-                style={{ color: dashboardHeaderSettings.title_color }}
-              >
-                {dashboardHeaderSettings.show_logo && (
-                  <img 
-                    src={dashboardHeaderSettings.logo_url} 
-                    alt="شعار النظام" 
-                    className={getLogoSize()}
-                  />
-                )}
-                {dashboardHeaderSettings.show_title && dashboardHeaderSettings.title_text}
-              </h1>
-              <p 
-                className="text-base mt-3 flex items-center"
-                style={{ color: dashboardHeaderSettings.text_color }}
-              >
-                <div className="accent-dot ml-2"></div>
-                أهلاً وسهلاً{' '}
-                <span className="font-semibold mr-2" style={{ color: dashboardHeaderSettings.title_color }}>
-                  {userProfile?.full_name || user.email}
-                </span>
-                <span className="mr-2 px-3 py-1 rounded-full text-xs btn-elegant text-white">
-                  {userProfile?.role || 'user'}
-                </span>
-              </p>
-            </div>
-            
-            <div className="flex items-center gap-3">
-              <Button variant="outline" size="sm" className="card-hover">
-                <Bell className="h-4 w-4 ml-1 icon-glow" />
-                الإشعارات
-              </Button>
-              <Button onClick={signOut} variant="outline" size="sm" className="card-hover">
-                <Shield className="h-4 w-4 ml-1" />
-                تسجيل الخروج
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+      {/* Modern Header */}
+      <ModernHeader 
+        title="لوحة التحكم"
+        notificationCount={0}
+      />
 
         {userProfile?.role === 'teacher' ? (
           <TeacherDashboard />
