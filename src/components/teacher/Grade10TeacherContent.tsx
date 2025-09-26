@@ -64,8 +64,8 @@ const Grade10TeacherContent = () => {
     due_date: ''
   });
 
-  // Get Grade 10 content
-  const currentContent = gradeContent['10'];
+  // Get Grade 10 content with null safety
+  const currentContent = gradeContent?.['10'] || null;
   const allProjects = miniProjects || [];
 
   // Helper functions (same as student view)
