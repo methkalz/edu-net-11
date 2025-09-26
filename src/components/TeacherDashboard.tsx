@@ -29,11 +29,18 @@ import {
   Activity,
   Bell,
   Sparkles,
-  RefreshCw
+  RefreshCw,
+  Box,
+  Play,
+  Monitor,
+  Settings,
+  Rocket,
+  FolderOpen
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import GradeContentViewer from '@/components/content/GradeContentViewer';
@@ -539,59 +546,206 @@ const TeacherDashboard: React.FC = () => {
             </div>
           </div>
         ) : canAccessGrade('10') ? (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
-              <Card className="glass-card border-0 shadow-lg">
-                <CardHeader className="pb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-green-500 to-green-600 flex items-center justify-center">
-                      <BookOpen className="h-6 w-6 text-white" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-xl font-bold bg-gradient-to-r from-green-600 to-green-500 bg-clip-text text-transparent">
-                        محتوى الصف العاشر
-                      </CardTitle>
-                      <CardDescription>
-                        إدارة ومراجعة المواد التعليمية
-                      </CardDescription>
-                    </div>
+          <div className="space-y-6">
+            {/* محتوى الصف العاشر - نظام التابات مثل الطالب */}
+            <Card className="glass-card border-0 shadow-lg">
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-green-500 to-green-600 flex items-center justify-center">
+                    <BookOpen className="h-6 w-6 text-white" />
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <Button
-                      variant="outline"
-                      className="h-24 flex flex-col items-center justify-center gap-2 hover:bg-green-50 border-green-200"
-                      onClick={() => navigate('/grade10-management')}
-                    >
-                      <Video className="h-6 w-6 text-green-600" />
-                      <span className="text-sm font-medium">مكتبة الفيديوهات</span>
-                    </Button>
-                    
-                    <Button
-                      variant="outline"
-                      className="h-24 flex flex-col items-center justify-center gap-2 hover:bg-blue-50 border-blue-200"
-                      onClick={() => navigate('/grade10-content')}
-                    >
-                      <FileText className="h-6 w-6 text-blue-600" />
-                      <span className="text-sm font-medium">الدروس والمواد</span>
-                    </Button>
-                    
-                    <Button
-                      variant="outline"
-                      className="h-24 flex flex-col items-center justify-center gap-2 hover:bg-purple-50 border-purple-200"
-                      onClick={() => navigate('/grade10-projects')}
-                    >
-                      <Target className="h-6 w-6 text-purple-600" />
-                      <span className="text-sm font-medium">المشاريع الصغيرة</span>
-                    </Button>
+                  <div>
+                    <CardTitle className="text-xl font-bold bg-gradient-to-r from-green-600 to-green-500 bg-clip-text text-transparent">
+                      محتوى الصف العاشر
+                    </CardTitle>
+                    <CardDescription>
+                      إدارة ومراجعة المواد التعليمية
+                    </CardDescription>
                   </div>
-                </CardContent>
-              </Card>
-            </div>
-            <div className="lg:col-span-1">
-              <ProjectNotifications />
-            </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Tabs defaultValue="lessons" className="w-full">
+                  <TabsList className="grid w-full grid-cols-4 bg-muted/50">
+                    <TabsTrigger value="lessons" className="flex items-center gap-2 data-[state=active]:bg-background">
+                      <BookOpen className="h-4 w-4" />
+                      الدروس التعليمية
+                    </TabsTrigger>
+                    <TabsTrigger value="videos" className="flex items-center gap-2 data-[state=active]:bg-background">
+                      <Video className="h-4 w-4" />
+                      الفيديوهات
+                    </TabsTrigger>
+                    <TabsTrigger value="3d-models" className="flex items-center gap-2 data-[state=active]:bg-background">
+                      <Box className="h-4 w-4" />
+                      النماذج ثلاثية الأبعاد
+                    </TabsTrigger>
+                    <TabsTrigger value="projects" className="flex items-center gap-2 data-[state=active]:bg-background">
+                      <FolderOpen className="h-4 w-4" />
+                      المشاريع المصغرة
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="lessons" className="mt-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <Button
+                        variant="outline"
+                        className="h-32 flex flex-col items-center justify-center gap-3 hover:bg-blue-50 border-blue-200 group"
+                        onClick={() => navigate('/grade10-lessons')}
+                      >
+                        <div className="w-12 h-12 rounded-xl bg-blue-100 group-hover:bg-blue-200 flex items-center justify-center transition-colors">
+                          <BookOpen className="h-6 w-6 text-blue-600" />
+                        </div>
+                        <div className="text-center">
+                          <div className="font-medium text-sm">الدروس التفاعلية</div>
+                          <div className="text-xs text-muted-foreground">شرح مفصل للمفاهيم</div>
+                        </div>
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        className="h-32 flex flex-col items-center justify-center gap-3 hover:bg-green-50 border-green-200 group"
+                        onClick={() => navigate('/grade10-content')}
+                      >
+                        <div className="w-12 h-12 rounded-xl bg-green-100 group-hover:bg-green-200 flex items-center justify-center transition-colors">
+                          <FileText className="h-6 w-6 text-green-600" />
+                        </div>
+                        <div className="text-center">
+                          <div className="font-medium text-sm">المواد الإضافية</div>
+                          <div className="text-xs text-muted-foreground">ملفات وشروحات</div>
+                        </div>
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        className="h-32 flex flex-col items-center justify-center gap-3 hover:bg-purple-50 border-purple-200 group"
+                        onClick={() => navigate('/grade10-quizzes')}
+                      >
+                        <div className="w-12 h-12 rounded-xl bg-purple-100 group-hover:bg-purple-200 flex items-center justify-center transition-colors">
+                          <Target className="h-6 w-6 text-purple-600" />
+                        </div>
+                        <div className="text-center">
+                          <div className="font-medium text-sm">التمارين والاختبارات</div>
+                          <div className="text-xs text-muted-foreground">تقييم الفهم</div>
+                        </div>
+                      </Button>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="videos" className="mt-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <Button
+                        variant="outline"
+                        className="h-32 flex flex-col items-center justify-center gap-3 hover:bg-red-50 border-red-200 group"
+                        onClick={() => navigate('/grade10-management?tab=videos')}
+                      >
+                        <div className="w-12 h-12 rounded-xl bg-red-100 group-hover:bg-red-200 flex items-center justify-center transition-colors">
+                          <Play className="h-6 w-6 text-red-600" />
+                        </div>
+                        <div className="text-center">
+                          <div className="font-medium text-sm">مكتبة الفيديوهات</div>
+                          <div className="text-xs text-muted-foreground">شروحات مرئية</div>
+                        </div>
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        className="h-32 flex flex-col items-center justify-center gap-3 hover:bg-orange-50 border-orange-200 group"
+                        onClick={() => navigate('/video-tutorials')}
+                      >
+                        <div className="w-12 h-12 rounded-xl bg-orange-100 group-hover:bg-orange-200 flex items-center justify-center transition-colors">
+                          <Monitor className="h-6 w-6 text-orange-600" />
+                        </div>
+                        <div className="text-center">
+                          <div className="font-medium text-sm">تطبيقات عملية</div>
+                          <div className="text-xs text-muted-foreground">أمثلة تطبيقية</div>
+                        </div>
+                      </Button>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="3d-models" className="mt-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Button
+                        variant="outline"
+                        className="h-32 flex flex-col items-center justify-center gap-3 hover:bg-indigo-50 border-indigo-200 group"
+                        onClick={() => navigate('/3d-models')}
+                      >
+                        <div className="w-12 h-12 rounded-xl bg-indigo-100 group-hover:bg-indigo-200 flex items-center justify-center transition-colors">
+                          <Box className="h-6 w-6 text-indigo-600" />
+                        </div>
+                        <div className="text-center">
+                          <div className="font-medium text-sm">النماذج التفاعلية</div>
+                          <div className="text-xs text-muted-foreground">مكونات الكمبيوتر</div>
+                        </div>
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        className="h-32 flex flex-col items-center justify-center gap-3 hover:bg-teal-50 border-teal-200 group"
+                        onClick={() => navigate('/virtual-lab')}
+                      >
+                        <div className="w-12 h-12 rounded-xl bg-teal-100 group-hover:bg-teal-200 flex items-center justify-center transition-colors">
+                          <Settings className="h-6 w-6 text-teal-600" />
+                        </div>
+                        <div className="text-center">
+                          <div className="font-medium text-sm">المختبر الافتراضي</div>
+                          <div className="text-xs text-muted-foreground">تجارب تفاعلية</div>
+                        </div>
+                      </Button>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="projects" className="mt-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <Button
+                        variant="outline"
+                        className="h-32 flex flex-col items-center justify-center gap-3 hover:bg-cyan-50 border-cyan-200 group"
+                        onClick={() => navigate('/grade10-projects')}
+                      >
+                        <div className="w-12 h-12 rounded-xl bg-cyan-100 group-hover:bg-cyan-200 flex items-center justify-center transition-colors">
+                          <Rocket className="h-6 w-6 text-cyan-600" />
+                        </div>
+                        <div className="text-center">
+                          <div className="font-medium text-sm">مشاريع الطلاب</div>
+                          <div className="text-xs text-muted-foreground">أعمال الطلاب</div>
+                        </div>
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        className="h-32 flex flex-col items-center justify-center gap-3 hover:bg-yellow-50 border-yellow-200 group"
+                        onClick={() => navigate('/project-templates')}
+                      >
+                        <div className="w-12 h-12 rounded-xl bg-yellow-100 group-hover:bg-yellow-200 flex items-center justify-center transition-colors">
+                          <FolderOpen className="h-6 w-6 text-yellow-600" />
+                        </div>
+                        <div className="text-center">
+                          <div className="font-medium text-sm">قوالب المشاريع</div>
+                          <div className="text-xs text-muted-foreground">نماذج جاهزة</div>
+                        </div>
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        className="h-32 flex flex-col items-center justify-center gap-3 hover:bg-pink-50 border-pink-200 group"
+                        onClick={() => navigate('/assessments')}
+                      >
+                        <div className="w-12 h-12 rounded-xl bg-pink-100 group-hover:bg-pink-200 flex items-center justify-center transition-colors">
+                          <Award className="h-6 w-6 text-pink-600" />
+                        </div>
+                        <div className="text-center">
+                          <div className="font-medium text-sm">تقييم المشاريع</div>
+                          <div className="text-xs text-muted-foreground">درجات وملاحظات</div>
+                        </div>
+                      </Button>
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
+            
+            {/* الإشعارات */}
+            <ProjectNotifications />
           </div>
         ) : allowedGrades.length > 0 && (
           <div className="grid grid-cols-1 gap-6">
