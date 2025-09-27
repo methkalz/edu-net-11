@@ -596,6 +596,93 @@ const TeacherDashboard: React.FC = () => {
           </div>
         ) : null}
 
+        {/* المضامين التعليمية المتاحة - مكان بارز */}
+        {schoolPackageContents.length > 0 && (
+          <div className="space-y-6">
+            <div className="glass-card p-6 rounded-2xl border-0 shadow-xl bg-gradient-to-r from-purple-50/50 to-indigo-50/50">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-purple-500 to-purple-600 flex items-center justify-center">
+                    <BookMarked className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-500 bg-clip-text text-transparent">
+                      المضامين التعليمية المتاحة
+                    </h2>
+                    <p className="text-muted-foreground">استكشف المواد التعليمية المتاحة لمدرستك</p>
+                  </div>
+                </div>
+                <Badge variant="secondary" className="bg-purple-100 text-purple-700 border-purple-200 px-4 py-2">
+                  <span className="font-semibold">{stats.availableContents}</span>
+                  <span className="mr-1">عنصر متاح</span>
+                </Badge>
+              </div>
+            </div>
+            
+            {schoolPackageContents.includes('grade10') && canAccessGrade('10') && availableContents.grade10.length > 0 && (
+              <GradeContentViewer
+                grade="grade10"
+                gradeLabel="الصف العاشر"
+                contents={availableContents.grade10}
+                onViewMore={() => navigate('/grade10-management')}
+              />
+            )}
+
+            {schoolPackageContents.includes('grade11') && canAccessGrade('11') && availableContents.grade11.length > 0 && (
+              <GradeContentViewer
+                grade="grade11"
+                gradeLabel="الصف الحادي عشر"
+                contents={availableContents.grade11}
+                onViewMore={() => navigate('/grade11-management')}
+              />
+            )}
+
+            {schoolPackageContents.includes('grade12') && canAccessGrade('12') && availableContents.grade12.length > 0 && (
+              <GradeContentViewer
+                grade="grade12"
+                gradeLabel="الصف الثاني عشر"
+                contents={availableContents.grade12}
+                onViewMore={() => navigate('/grade12-management')}
+              />
+            )}
+
+            {/* رسالة عند عدم وجود صفوف مخصصة للمعلم */}
+            {schoolPackageContents.length > 0 && allowedGrades.length === 0 && !accessLoading && (
+              <Card className="text-center py-12 border-amber-200 bg-amber-50">
+                <CardContent>
+                  <School className="h-16 w-16 mx-auto mb-4 text-amber-500" />
+                  <h3 className="text-lg font-semibold mb-2 text-amber-800">لم يتم تخصيص صفوف لك بعد</h3>
+                  <p className="text-amber-700 mb-4">
+                    يرجى التواصل مع إدارة المدرسة لتخصيص الصفوف التي ستدرسها
+                  </p>
+                  <div className="flex items-center justify-center gap-2 text-sm text-amber-600">
+                    <Award className="h-4 w-4" />
+                    <span>سيتم عرض المحتوى هنا بمجرد تخصيص الصفوف</span>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {schoolPackageContents.length > 0 && 
+             (availableContents.grade10.length === 0 && 
+              availableContents.grade11.length === 0 && 
+              availableContents.grade12.length === 0) && (
+              <Card className="text-center py-12">
+                <CardContent>
+                  <BookMarked className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <h3 className="text-lg font-semibold mb-2">لا توجد مضامين متاحة حالياً</h3>
+                  <p className="text-muted-foreground mb-4">
+                    لم يتم إضافة مضامين تعليمية لباقة مدرستك بعد
+                  </p>
+                  <Button variant="outline" onClick={() => navigate('/content-management')}>
+                    استكشاف إدارة المضامين
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* صفوفي الدراسية المحسنة */}
           <Card className="glass-card border-0 shadow-xl animate-fade-in-up">
@@ -764,92 +851,7 @@ const TeacherDashboard: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* المضامين المتاحة المحسنة */}
-        {schoolPackageContents.length > 0 && (
-          <div className="space-y-8 animate-fade-in-up">
-            <div className="glass-card p-6 rounded-2xl border-0 shadow-xl">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-purple-500 to-purple-600 flex items-center justify-center">
-                    <BookMarked className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-500 bg-clip-text text-transparent">
-                      المضامين التعليمية المتاحة
-                    </h2>
-                    <p className="text-muted-foreground">استكشف المواد التعليمية المتاحة لمدرستك</p>
-                  </div>
-                </div>
-                <Badge variant="secondary" className="bg-purple-100 text-purple-700 border-purple-200 px-4 py-2">
-                  <span className="font-semibold">{stats.availableContents}</span>
-                  <span className="mr-1">عنصر متاح</span>
-                </Badge>
-              </div>
-            </div>
-            
-            {schoolPackageContents.includes('grade10') && canAccessGrade('10') && availableContents.grade10.length > 0 && (
-              <GradeContentViewer
-                grade="grade10"
-                gradeLabel="الصف العاشر"
-                contents={availableContents.grade10}
-                onViewMore={() => navigate('/grade10-management')}
-              />
-            )}
-
-            {schoolPackageContents.includes('grade11') && canAccessGrade('11') && availableContents.grade11.length > 0 && (
-              <GradeContentViewer
-                grade="grade11"
-                gradeLabel="الصف الحادي عشر"
-                contents={availableContents.grade11}
-                onViewMore={() => navigate('/grade11-management')}
-              />
-            )}
-
-            {schoolPackageContents.includes('grade12') && canAccessGrade('12') && availableContents.grade12.length > 0 && (
-              <GradeContentViewer
-                grade="grade12"
-                gradeLabel="الصف الثاني عشر"
-                contents={availableContents.grade12}
-                onViewMore={() => navigate('/grade12-management')}
-              />
-            )}
-
-            {/* رسالة عند عدم وجود صفوف مخصصة للمعلم */}
-            {schoolPackageContents.length > 0 && allowedGrades.length === 0 && !accessLoading && (
-              <Card className="text-center py-12 border-amber-200 bg-amber-50">
-                <CardContent>
-                  <School className="h-16 w-16 mx-auto mb-4 text-amber-500" />
-                  <h3 className="text-lg font-semibold mb-2 text-amber-800">لم يتم تخصيص صفوف لك بعد</h3>
-                  <p className="text-amber-700 mb-4">
-                    يرجى التواصل مع إدارة المدرسة لتخصيص الصفوف التي ستدرسها
-                  </p>
-                  <div className="flex items-center justify-center gap-2 text-sm text-amber-600">
-                    <Award className="h-4 w-4" />
-                    <span>سيتم عرض المحتوى هنا بمجرد تخصيص الصفوف</span>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {schoolPackageContents.length > 0 && 
-             (availableContents.grade10.length === 0 && 
-              availableContents.grade11.length === 0 && 
-              availableContents.grade12.length === 0) && (
-              <Card className="text-center py-12">
-                <CardContent>
-                  <BookMarked className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-                  <h3 className="text-lg font-semibold mb-2">لا توجد مضامين متاحة حالياً</h3>
-                  <p className="text-muted-foreground mb-4">
-                    لم يتم إضافة مضامين تعليمية لباقة مدرستك بعد
-                  </p>
-                  <Button variant="outline" onClick={() => navigate('/content-management')}>
-                    استكشاف إدارة المضامين
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        )}
+        {/* إزالة القسم المكرر للمضامين التعليمية من الأسفل */}
       </div>
 
       {/* Student Presence Widget */}
