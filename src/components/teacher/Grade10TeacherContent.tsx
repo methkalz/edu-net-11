@@ -40,6 +40,7 @@ import {
   Settings,
   Network,
   Phone,
+  Radio,
   Users
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -321,7 +322,7 @@ const Grade10TeacherContent = () => {
     {
       id: 'communication_basics',
       label: 'أساسيات الاتصال',
-      icon: Network,
+      icon: Radio,
       count: grade10LessonsResult.getContentStats().totalLessons,
       items: [],
       color: 'from-orange-500 to-red-500'

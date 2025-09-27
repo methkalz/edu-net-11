@@ -45,6 +45,7 @@ import {
   Settings,
   Network,
   Phone,
+  Radio,
   Gamepad2
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -534,7 +535,7 @@ export const StudentGradeContent: React.FC = () => {
     {
       id: 'communication_basics',
       label: 'أساسيات الاتصال',
-      icon: Network,
+      icon: Radio,
       count: grade10LessonsResult.getContentStats().totalLessons,
       items: [],
       color: 'from-orange-500 to-red-500'
