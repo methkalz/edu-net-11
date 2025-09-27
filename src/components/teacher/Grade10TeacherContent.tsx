@@ -388,7 +388,7 @@ const Grade10TeacherContent = () => {
         contentCount={getFilteredVideos().length + getFilteredDocuments().length + allProjects.length}
         completionRate={78}
         isTeacherView={true}
-        onBackToDashboard={() => window.history.back()}
+        
         onSettings={() => console.log('إعدادات الصف')}
       />
 

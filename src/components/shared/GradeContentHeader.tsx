@@ -77,18 +77,7 @@ const GradeContentHeader: React.FC<GradeContentHeaderProps> = ({
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
             {/* Content Section */}
             <div className="flex-1 space-y-4">
-              {/* Breadcrumb */}
-              {isTeacherView && onBackToDashboard && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onBackToDashboard}
-                  className="text-muted-foreground hover:text-foreground p-0 h-auto"
-                >
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                  العودة إلى لوحة المعلم
-                </Button>
-              )}
+              {/* Breadcrumb - Removed as not needed in teacher dashboard */}
 
               {/* Grade Title */}
               <div className="space-y-2">
