@@ -474,15 +474,6 @@ export const TeacherContentViewer: React.FC<TeacherContentViewerProps> = ({ grad
   if (grade === '12') {
     const { videos, documents, projects, loading } = grade12ContentResult;
     
-    // Debug logging
-    console.log('Grade 12 Content Debug:', {
-      videosLength: videos?.length || 0,
-      documentsLength: documents?.length || 0,
-      projectsLength: projects?.length || 0,
-      loading,
-      videos: videos?.slice(0, 3) // Show first 3 videos for debugging
-    });
-    
     if (loading) {
       return (
         <div className="space-y-6">
@@ -528,34 +519,69 @@ export const TeacherContentViewer: React.FC<TeacherContentViewerProps> = ({ grad
         </div>
 
         {allContent.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {videos?.map((video) => (
-              <ContentCard
-                key={video.id}
-                item={video}
-                type="video"
-                icon={Video}
-                color="from-red-500 to-red-600"
-              />
-            ))}
-            {documents?.map((document) => (
-              <ContentCard
-                key={document.id}
-                item={document}
-                type="document"
-                icon={FileText}
-                color="from-blue-500 to-blue-600"
-              />
-            ))}
-            {projects?.map((project) => (
-              <ContentCard
-                key={project.id}
-                item={project}
-                type="project"
-                icon={Trophy}
-                color="from-purple-500 to-purple-600"
-              />
-            ))}
+          <div className="space-y-8">
+            {/* Videos Section */}
+            {videos && videos.length > 0 && (
+              <div>
+                <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                  <Video className="h-5 w-5 text-red-500" />
+                  الفيديوهات التعليمية ({videos.length})
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {videos.map((video) => (
+                    <ContentCard
+                      key={video.id}
+                      item={video}
+                      type="video"
+                      icon={Video}
+                      color="from-red-500 to-red-600"
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Documents Section */}
+            {documents && documents.length > 0 && (
+              <div>
+                <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-blue-500" />
+                  الملفات والمراجع ({documents.length})
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {documents.map((document) => (
+                    <ContentCard
+                      key={document.id}
+                      item={document}
+                      type="document"
+                      icon={FileText}
+                      color="from-blue-500 to-blue-600"
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Projects Section */}
+            {projects && projects.length > 0 && (
+              <div>
+                <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                  <Trophy className="h-5 w-5 text-purple-500" />
+                  المشاريع النهائية ({projects.length})
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {projects.map((project) => (
+                    <ContentCard
+                      key={project.id}
+                      item={project}
+                      type="project"
+                      icon={Trophy}
+                      color="from-purple-500 to-purple-600"
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="text-center py-12 space-y-4">

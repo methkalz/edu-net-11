@@ -8,6 +8,7 @@ import { useStudentGrade10Lessons } from '@/hooks/useStudentGrade10Lessons';
 import { StudentGrade11Content } from './StudentGrade11Content';
 import { StudentGrade10Lessons } from './StudentGrade10Lessons';
 import { ComputerStructureLessons } from './ComputerStructureLessons';
+import StudentGrade12Content from './StudentGrade12Content';
 import KnowledgeAdventureRealContent from '../games/KnowledgeAdventureRealContent';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -461,6 +462,11 @@ export const StudentGradeContent: React.FC = () => {
   // Special handling for Grade 11 - show structured content
   if (assignedGrade === '11') {
     return <StudentGrade11Content />;
+  }
+
+  // Special handling for Grade 12 - show grade 12 specific content
+  if (assignedGrade === '12') {
+    return <StudentGrade12Content />;
   }
 
   if (!currentContent) {
