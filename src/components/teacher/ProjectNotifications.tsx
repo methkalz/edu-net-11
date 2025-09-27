@@ -103,28 +103,28 @@ const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({
   const recentNotifications = filteredNotifications.slice(0, 10);
 
   return (
-    <Card className="border-0 bg-card shadow-sm">
+    <Card className="border-0 bg-gradient-to-br from-surface-light to-card shadow-sm">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
-              <Bell className="h-5 w-5 text-primary" />
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-orange-500/5 to-orange-500/10 flex items-center justify-center border border-orange-500/10">
+              <Bell className="h-5 w-5 text-orange-500" />
             </div>
             <div>
               <CardTitle className="text-lg font-medium text-foreground flex items-center gap-2">
                 {title}
                 {gradeFilter && (
-                  <Badge variant="outline" className="text-xs">
+                  <Badge variant="outline" className="text-xs border-divider">
                     الصف {gradeFilter === '10' ? 'العاشر' : 'الثاني عشر'}
                   </Badge>
                 )}
                 {unreadCount > 0 && (
-                  <Badge variant="destructive" className="text-xs px-2 py-1 rounded-full">
+                  <Badge variant="destructive" className="text-xs px-2 py-1 rounded-full bg-red-500/10 text-red-600 border-red-200">
                     {unreadCount}
                   </Badge>
                 )}
               </CardTitle>
-              <CardDescription className="text-sm text-muted-foreground">
+              <CardDescription className="text-sm text-text-soft">
                 تعليقات جديدة وتحديثات المشاريع {gradeFilter ? `للصف ${gradeFilter === '10' ? 'العاشر' : 'الثاني عشر'}` : ''}
               </CardDescription>
             </div>
@@ -136,13 +136,13 @@ const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({
                 variant="outline" 
                 size="sm"
                 onClick={markAllAsRead}
-                className="text-xs h-8 px-3"
+                className="text-xs h-8 px-3 border-divider hover:bg-surface-hover"
               >
                 <CheckCheck className="h-4 w-4 mr-1" />
                 تحديد الكل كمقروء
               </Button>
             )}
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-surface-hover">
               <Settings className="h-4 w-4" />
             </Button>
           </div>

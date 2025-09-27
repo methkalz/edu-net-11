@@ -8,15 +8,15 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Ultra Modern Color Palette */
-    --background: 218 15% 98%;
-    --foreground: 215 25% 12%;
+    /* Ultra Light Elegant Palette */
+    --background: 220 25% 98%;
+    --foreground: 215 20% 15%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 215 25% 12%;
+    --card: 220 30% 99%;
+    --card-foreground: 215 20% 15%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 215 25% 12%;
+    --popover: 220 30% 99%;
+    --popover-foreground: 215 20% 15%;
 
     /* Extended Color System */
     /* Clean Blue Palette */
@@ -71,22 +71,28 @@ All colors MUST be HSL.
     --match-color-7: 15 85% 60%;   /* Red-Orange */
     --match-color-8: 120 60% 50%;  /* Light Green */
 
-    /* Accent Colors */
-    --accent: 220 20% 95%;
-    --accent-foreground: 215 25% 12%;
+    /* Elegant Light Accents */
+    --accent: 220 30% 96%;
+    --accent-foreground: 215 20% 15%;
 
-    /* Muted Colors */
-    --muted: 220 15% 94%;
-    --muted-foreground: 215 15% 40%;
+    /* Soft Muted Colors */
+    --muted: 220 25% 95%;
+    --muted-foreground: 215 15% 45%;
 
-    /* Destructive */
-    --destructive: 0 85% 60%;
+    /* Gentle Destructive */
+    --destructive: 0 70% 65%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Border & Input */
-    --border: 220 15% 88%;
-    --input: 220 15% 88%;
-    --ring: 220 85% 60%;
+    /* Refined Borders */
+    --border: 220 20% 90%;
+    --input: 220 20% 90%;
+    --ring: 220 70% 65%;
+
+    /* Elegant Surface Colors */
+    --surface-light: 220 40% 97%;
+    --surface-hover: 220 30% 94%;
+    --text-soft: 215 12% 50%;
+    --divider: 220 15% 92%;
 
     /* Simple Clean Gradients */
     --gradient-blue: linear-gradient(135deg, hsl(214 85% 55%), hsl(214 95% 45%));

@@ -77,6 +77,16 @@ export default {
 					dark: 'hsl(var(--secondary-dark))'
 				},
 				
+				// Elegant light surfaces
+				surface: {
+					light: 'hsl(var(--surface-light))',
+					hover: 'hsl(var(--surface-hover))'
+				},
+				text: {
+					soft: 'hsl(var(--text-soft))'
+				},
+				divider: 'hsl(var(--divider))',
+				
 				// Extended color palette for rich visual experiences
 				blue: {
 					electric: 'hsl(var(--blue-electric))',
