@@ -423,7 +423,8 @@ const SchoolAdminDashboard = () => {
   }
   return <div className="min-h-screen bg-background pattern-dots flex flex-col" dir="rtl">
       {/* Modern Header */}
-      <header className="glass-card sticky top-0 z-50 soft-shadow backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6 py-4">
+      <header className="glass-card sticky top-0 z-50 soft-shadow backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <UniversalAvatar
@@ -458,6 +459,7 @@ const SchoolAdminDashboard = () => {
               </div>
             )}
           </div>
+        </div>
       </header>
 
       <div className="container mx-auto px-6 py-6 space-y-8">
