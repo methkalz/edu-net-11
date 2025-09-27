@@ -8,7 +8,6 @@ import Grade11Content from '@/components/content/Grade11Content';
 import Grade11ContentViewer from '@/components/content/Grade11ContentViewer';
 import Grade11SchoolAdminViewer from '@/components/content/Grade11SchoolAdminViewer';
 import Grade11CourseViewer from '@/components/content/Grade11CourseViewer';
-import StudentGrade11ModernContent from '@/components/student/StudentGrade11ModernContent';
 import GamesSection from '@/components/content/GamesSection';
 import { EducationalTermsManager } from '@/components/content/EducationalTermsManager';
 import { ContentGameLauncher } from '@/components/content/ContentGameLauncher';
@@ -82,7 +81,7 @@ const Grade11Management: React.FC = () => {
                 {canManageContent ? (
                   <Grade11Content />
                 ) : (
-                  <StudentGrade11ModernContent />
+                  <Grade11CourseViewer />
                 )}
               </div>
             </TabsContent>
