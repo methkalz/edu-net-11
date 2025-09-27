@@ -596,7 +596,7 @@ const TeacherDashboard: React.FC = () => {
           </div>
         ) : null}
 
-        {/* المضامين التعليمية المتاحة - مكان بارز */}
+        {/* المضامين التعليمية المتاحة - عرض كامل كما يراها الطلاب */}
         {schoolPackageContents.length > 0 && (
           <div className="space-y-6">
             <div className="glass-card p-6 rounded-2xl border-0 shadow-xl bg-gradient-to-r from-purple-50/50 to-indigo-50/50">
@@ -609,7 +609,7 @@ const TeacherDashboard: React.FC = () => {
                     <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-500 bg-clip-text text-transparent">
                       المضامين التعليمية المتاحة
                     </h2>
-                    <p className="text-muted-foreground">استكشف المواد التعليمية المتاحة لمدرستك</p>
+                    <p className="text-muted-foreground">اطلع على المواد التعليمية تماماً كما يراها الطلاب</p>
                   </div>
                 </div>
                 <Badge variant="secondary" className="bg-purple-100 text-purple-700 border-purple-200 px-4 py-2">
@@ -618,33 +618,138 @@ const TeacherDashboard: React.FC = () => {
                 </Badge>
               </div>
             </div>
-            
-            {schoolPackageContents.includes('grade10') && canAccessGrade('10') && availableContents.grade10.length > 0 && (
-              <GradeContentViewer
-                grade="grade10"
-                gradeLabel="الصف العاشر"
-                contents={availableContents.grade10}
-                onViewMore={() => navigate('/grade10-management')}
-              />
-            )}
 
-            {schoolPackageContents.includes('grade11') && canAccessGrade('11') && availableContents.grade11.length > 0 && (
-              <GradeContentViewer
-                grade="grade11"
-                gradeLabel="الصف الحادي عشر"
-                contents={availableContents.grade11}
-                onViewMore={() => navigate('/grade11-management')}
-              />
-            )}
+            {/* بطاقات الصفوف - تشبه ما يراه الطلاب */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {schoolPackageContents.includes('grade10') && canAccessGrade('10') && (
+                <Card className="group hover:shadow-lg transition-all duration-300 border-l-4 border-l-blue-500 bg-gradient-to-br from-blue-50/50 to-blue-100/30">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                        <Video className="h-6 w-6 text-blue-600" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-xl text-blue-800">الصف العاشر</CardTitle>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <p className="text-muted-foreground text-sm">
+                      جميع المواد التعليمية للصف العاشر - فيديوهات، ملفات، ألعاب تعليمية وتمارين
+                    </p>
+                    
+                    {availableContents.grade10.length > 0 && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Badge variant="outline" className="gap-1">
+                          <PlayCircle className="h-3 w-3" />
+                          {availableContents.grade10.filter(c => c.type === 'video').length} فيديو
+                        </Badge>
+                        <Badge variant="outline" className="gap-1">
+                          <FileText className="h-3 w-3" />
+                          {availableContents.grade10.filter(c => c.type === 'document').length} ملف
+                        </Badge>
+                      </div>
+                    )}
 
-            {schoolPackageContents.includes('grade12') && canAccessGrade('12') && availableContents.grade12.length > 0 && (
-              <GradeContentViewer
-                grade="grade12"
-                gradeLabel="الصف الثاني عشر"
-                contents={availableContents.grade12}
-                onViewMore={() => navigate('/grade12-management')}
-              />
-            )}
+                    <div className="flex gap-2 pt-2">
+                      <Button 
+                        className="flex-1 bg-blue-600 hover:bg-blue-700"
+                        onClick={() => navigate('/grade10-management')}
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        استكشاف المحتوى
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {schoolPackageContents.includes('grade11') && canAccessGrade('11') && (
+                <Card className="group hover:shadow-lg transition-all duration-300 border-l-4 border-l-green-500 bg-gradient-to-br from-green-50/50 to-green-100/30">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center group-hover:bg-green-200 transition-colors">
+                        <BookOpen className="h-6 w-6 text-green-600" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-xl text-green-800">الصف الحادي عشر</CardTitle>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <p className="text-muted-foreground text-sm">
+                      جميع المواد التعليمية للصف الحادي عشر - محتوى تفاعلي شامل
+                    </p>
+                    
+                    {availableContents.grade11.length > 0 && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Badge variant="outline" className="gap-1">
+                          <PlayCircle className="h-3 w-3" />
+                          {availableContents.grade11.filter(c => c.type === 'video').length} فيديو
+                        </Badge>
+                        <Badge variant="outline" className="gap-1">
+                          <FileText className="h-3 w-3" />
+                          {availableContents.grade11.filter(c => c.type === 'document').length} ملف
+                        </Badge>
+                      </div>
+                    )}
+
+                    <div className="flex gap-2 pt-2">
+                      <Button 
+                        className="flex-1 bg-green-600 hover:bg-green-700"
+                        onClick={() => navigate('/grade11-management')}
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        استكشاف المحتوى
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {schoolPackageContents.includes('grade12') && canAccessGrade('12') && (
+                <Card className="group hover:shadow-lg transition-all duration-300 border-l-4 border-l-purple-500 bg-gradient-to-br from-purple-50/50 to-purple-100/30">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center group-hover:bg-purple-200 transition-colors">
+                        <BookMarked className="h-6 w-6 text-purple-600" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-xl text-purple-800">الصف الثاني عشر</CardTitle>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <p className="text-muted-foreground text-sm">
+                      جميع المواد التعليمية للصف الثاني عشر - مشاريع الطلاب والمحتوى التعليمي
+                    </p>
+                    
+                    {availableContents.grade12.length > 0 && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Badge variant="outline" className="gap-1">
+                          <PlayCircle className="h-3 w-3" />
+                          {availableContents.grade12.filter(c => c.type === 'video').length} فيديو
+                        </Badge>
+                        <Badge variant="outline" className="gap-1">
+                          <FileText className="h-3 w-3" />
+                          {availableContents.grade12.filter(c => c.type === 'document').length} ملف
+                        </Badge>
+                      </div>
+                    )}
+
+                    <div className="flex gap-2 pt-2">
+                      <Button 
+                        className="flex-1 bg-purple-600 hover:bg-purple-700"
+                        onClick={() => navigate('/grade12-management')}
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        استكشاف المحتوى
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
 
             {/* رسالة عند عدم وجود صفوف مخصصة للمعلم */}
             {schoolPackageContents.length > 0 && allowedGrades.length === 0 && !accessLoading && (
@@ -674,8 +779,8 @@ const TeacherDashboard: React.FC = () => {
                   <p className="text-muted-foreground mb-4">
                     لم يتم إضافة مضامين تعليمية لباقة مدرستك بعد
                   </p>
-                  <Button variant="outline" onClick={() => navigate('/content-management')}>
-                    استكشاف إدارة المضامين
+                  <Button variant="outline" onClick={() => navigate('/educational-content')}>
+                    استكشاف جميع المضامين
                   </Button>
                 </CardContent>
               </Card>
