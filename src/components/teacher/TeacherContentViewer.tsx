@@ -312,7 +312,7 @@ export const TeacherContentViewer: React.FC<TeacherContentViewerProps> = ({ grad
                 className="relative flex flex-col items-center justify-center gap-2 py-6 px-4 min-h-[120px] text-sm font-medium text-muted-foreground/80 bg-transparent border-0 rounded-xl transition-all duration-300 ease-out data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-md data-[state=active]:shadow-primary/20 data-[state=active]:scale-[1.02] hover:bg-background/50 hover:text-foreground/90 hover:shadow-sm hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 group overflow-hidden"
               >
                 <div className="relative flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-primary/5 to-primary/10 group-data-[state=active]:from-primary/10 group-data-[state=active]:to-primary/20 group-data-[state=active]:shadow-sm group-hover:from-primary/8 group-hover:to-primary/15 transition-all duration-300">
-                  <Phone className="w-6 h-6 transition-all duration-300 group-data-[state=active]:scale-110 group-data-[state=active]:text-primary" />
+                  <Network className="w-6 h-6 transition-all duration-300 group-data-[state=active]:scale-110 group-data-[state=active]:text-primary" />
                 </div>
                 <div className="flex flex-col items-center gap-1.5">
                   <span className="text-xs font-semibold leading-tight text-center px-1 group-data-[state=active]:text-sm transition-all duration-300">أساسيات الاتصال</span>

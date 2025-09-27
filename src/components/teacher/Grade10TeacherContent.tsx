@@ -321,7 +321,7 @@ const Grade10TeacherContent = () => {
     {
       id: 'communication_basics',
       label: 'أساسيات الاتصال',
-      icon: Phone,
+      icon: Network,
       count: grade10LessonsResult.getContentStats().totalLessons,
       items: [],
       color: 'from-orange-500 to-red-500'
