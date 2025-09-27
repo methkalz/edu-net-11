@@ -18,6 +18,9 @@ import EnhancedDashboardStats from '@/components/dashboard/EnhancedDashboardStat
 import PackageStatusCard from '@/components/dashboard/PackageStatusCard';
 import { UniversalAvatar } from '@/components/shared/UniversalAvatar';
 import { UserTitleBadge } from '@/components/shared/UserTitleBadge';
+
+// إعدادات العرض - يمكن تغييرها لإظهار أو إخفاء السعر
+const SHOW_PRICING = false;
 interface SchoolStats {
   totalStudents: number;
   totalTeachers: number;
@@ -589,7 +592,9 @@ const SchoolAdminDashboard = () => {
                     <div className="text-center p-4 bg-muted/50 rounded-lg">
                       <div className="flex items-center justify-center space-x-reverse space-x-2">
                         <CreditCard className="w-5 h-5 text-secondary" />
-                        <span className="font-semibold text-lg">{schoolPackage.price} {schoolPackage.currency === 'ILS' ? '₪' : schoolPackage.currency}</span>
+                        <span className="font-semibold text-lg">
+                          {SHOW_PRICING ? `${schoolPackage.price} ${schoolPackage.currency === 'ILS' ? '₪' : schoolPackage.currency}` : '*****'}
+                        </span>
                       </div>
                       <p className="text-sm text-muted-foreground mt-1 text-center">السعر السنوي</p>
                     </div>
