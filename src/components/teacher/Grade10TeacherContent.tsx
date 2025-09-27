@@ -386,7 +386,10 @@ const Grade10TeacherContent = () => {
         gradeNumber={10}
         studentsCount={125}
         contentCount={getFilteredVideos().length + getFilteredDocuments().length + allProjects.length}
+        completionRate={78}
         isTeacherView={true}
+        
+        
       />
 
       {/* Content Tabs - Exact same design as student view */}
