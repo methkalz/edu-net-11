@@ -86,10 +86,10 @@ const GradeContentHeader: React.FC<GradeContentHeaderProps> = ({
               <div className="space-y-2">
                 <div className="flex items-center gap-3">
                   <div className={cn(
-                    "p-3 rounded-xl backdrop-blur-sm border border-white/20",
+                    "p-4 rounded-xl backdrop-blur-sm border border-white/20",
                     "bg-white/10"
                   )}>
-                    <Folder className={cn("w-6 h-6", getIconColor())} />
+                    <Folder className={cn("w-7 h-7", getIconColor())} />
                   </div>
                   <div>
                     <h1 className="text-xl font-bold text-foreground">
