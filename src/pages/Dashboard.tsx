@@ -64,7 +64,6 @@ import { PageLoading } from '@/components/ui/LoadingComponents';
 import { AdminAccessBanner } from '@/components/admin/AdminAccessBanner';
 import { ImpersonationBanner } from '@/components/admin/ImpersonationBanner';
 import ModernHeader from '@/components/shared/ModernHeader';
-import { AutoSignOut } from '@/components/auth/AutoSignOut';
 
 /**
  * Dashboard Component Implementation
@@ -210,11 +209,6 @@ const Dashboard = () => {
   }
 
   if (!user) return null;
-
-  // Check if we need to sign out مبروك عبد الحق
-  if (userProfile?.full_name === 'مبروك عبد الحق') {
-    return <AutoSignOut />;
-  }
 
   const dashboardStats = [
     {
