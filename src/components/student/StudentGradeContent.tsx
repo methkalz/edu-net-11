@@ -5,6 +5,7 @@ import { useStudentProgress } from '@/hooks/useStudentProgress';
 import { useGrade10MiniProjects } from '@/hooks/useGrade10MiniProjects';
 import { useGrade12Projects } from '@/hooks/useGrade12Projects';
 import { useStudentGrade10Lessons } from '@/hooks/useStudentGrade10Lessons';
+import { useGrade10Games } from '@/hooks/useGrade10Games';
 import { StudentGrade11Content } from './StudentGrade11Content';
 import { StudentGrade10Lessons } from './StudentGrade10Lessons';
 import { ComputerStructureLessons } from './ComputerStructureLessons';
@@ -75,6 +76,13 @@ export const StudentGradeContent: React.FC = () => {
     loading: false,
     error: null,
     getContentStats: () => ({ totalLessons: 0 })
+  };
+  
+  const grade10GamesResult = assignedGrade === '10' ? useGrade10Games() : {
+    allGames: [],
+    totalGames: 0,
+    loading: false,
+    error: null
   };
   
   const grade12HooksResult = assignedGrade === '12' ? useGrade12Projects() : {
@@ -528,8 +536,8 @@ export const StudentGradeContent: React.FC = () => {
       id: 'knowledge_adventure',
       label: 'لعبة المعرفة',
       icon: Gamepad2,
-      count: 0, // سيتم حساب الإحصائيات لاحقاً
-      items: [],
+      count: grade10GamesResult.totalGames,
+      items: grade10GamesResult.allGames,
       color: 'from-violet-500 to-purple-500'
     },
     {
