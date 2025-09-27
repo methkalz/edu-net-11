@@ -103,23 +103,23 @@ const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({
   const recentNotifications = filteredNotifications.slice(0, 10);
 
   return (
-    <Card className="border-0 bg-gradient-to-br from-surface-light to-card shadow-sm">
+    <Card className="border border-divider/60 bg-gradient-to-br from-surface-light to-card shadow-lg">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-orange-500/5 to-orange-500/10 flex items-center justify-center border border-orange-500/10">
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-orange-500/5 to-orange-500/10 flex items-center justify-center border-2 border-orange-500/15">
               <Bell className="h-5 w-5 text-orange-500" />
             </div>
             <div>
               <CardTitle className="text-lg font-medium text-foreground flex items-center gap-2">
                 {title}
                 {gradeFilter && (
-                  <Badge variant="outline" className="text-xs border-divider">
+                  <Badge variant="outline" className="text-xs border-divider/60">
                     الصف {gradeFilter === '10' ? 'العاشر' : 'الثاني عشر'}
                   </Badge>
                 )}
                 {unreadCount > 0 && (
-                  <Badge variant="destructive" className="text-xs px-2 py-1 rounded-full bg-red-500/10 text-red-600 border-red-200">
+                  <Badge variant="destructive" className="text-xs px-2 py-1 rounded-full bg-red-500/10 text-red-600 border-2 border-red-200/60">
                     {unreadCount}
                   </Badge>
                 )}
@@ -136,7 +136,7 @@ const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({
                 variant="outline" 
                 size="sm"
                 onClick={markAllAsRead}
-                className="text-xs h-8 px-3 border-divider hover:bg-surface-hover"
+                className="text-xs h-8 px-3 border-divider/60 hover:bg-surface-hover"
               >
                 <CheckCheck className="h-4 w-4 mr-1" />
                 تحديد الكل كمقروء

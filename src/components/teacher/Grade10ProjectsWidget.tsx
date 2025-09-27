@@ -106,11 +106,11 @@ const Grade10ProjectsWidget: React.FC = () => {
   }
 
   return (
-    <Card className="border-0 bg-gradient-to-br from-surface-light to-card shadow-sm">
+    <Card className="border border-divider/60 bg-gradient-to-br from-surface-light to-card shadow-lg">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-primary/5 to-primary/10 flex items-center justify-center border border-primary/10">
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-primary/5 to-primary/10 flex items-center justify-center border-2 border-primary/15">
               <Zap className="h-5 w-5 text-primary" />
             </div>
             <div>
@@ -127,7 +127,7 @@ const Grade10ProjectsWidget: React.FC = () => {
               variant="outline" 
               size="sm"
               onClick={() => navigate('/grade10-management')}
-              className="text-sm border-divider hover:bg-surface-hover"
+              className="text-sm border-divider/60 hover:bg-surface-hover"
             >
               عرض الكل
             </Button>
@@ -147,7 +147,7 @@ const Grade10ProjectsWidget: React.FC = () => {
       <CardContent className="space-y-6">
         {/* إحصائيات سريعة */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="text-center p-5 bg-gradient-to-br from-blue-50/30 to-blue-50/10 rounded-2xl border border-blue-100/30">
+          <div className="text-center p-5 bg-gradient-to-br from-blue-50/30 to-blue-50/10 rounded-2xl border-2 border-blue-100/40">
             <div className="flex items-center justify-center mb-3">
               <div className="w-8 h-8 rounded-xl bg-blue-100/40 flex items-center justify-center">
                 <Users className="h-4 w-4 text-blue-600/70" />
@@ -161,7 +161,7 @@ const Grade10ProjectsWidget: React.FC = () => {
             </div>
           </div>
           
-          <div className="text-center p-5 bg-gradient-to-br from-emerald-50/30 to-emerald-50/10 rounded-2xl border border-emerald-100/30">
+          <div className="text-center p-5 bg-gradient-to-br from-emerald-50/30 to-emerald-50/10 rounded-2xl border-2 border-emerald-100/40">
             <div className="flex items-center justify-center mb-3">
               <div className="w-8 h-8 rounded-xl bg-emerald-100/40 flex items-center justify-center">
                 <CheckCircle className="h-4 w-4 text-emerald-600/70" />
@@ -175,7 +175,7 @@ const Grade10ProjectsWidget: React.FC = () => {
             </div>
           </div>
           
-          <div className="text-center p-5 bg-gradient-to-br from-amber-50/30 to-amber-50/10 rounded-2xl border border-amber-100/30">
+          <div className="text-center p-5 bg-gradient-to-br from-amber-50/30 to-amber-50/10 rounded-2xl border-2 border-amber-100/40">
             <div className="flex items-center justify-center mb-3">
               <div className="w-8 h-8 rounded-xl bg-amber-100/40 flex items-center justify-center">
                 <Clock className="h-4 w-4 text-amber-600/70" />
@@ -189,7 +189,7 @@ const Grade10ProjectsWidget: React.FC = () => {
             </div>
           </div>
           
-          <div className="text-center p-5 bg-gradient-to-br from-violet-50/30 to-violet-50/10 rounded-2xl border border-violet-100/30">
+          <div className="text-center p-5 bg-gradient-to-br from-violet-50/30 to-violet-50/10 rounded-2xl border-2 border-violet-100/40">
             <div className="flex items-center justify-center mb-3">
               <div className="w-8 h-8 rounded-xl bg-violet-100/40 flex items-center justify-center">
                 <TrendingUp className="h-4 w-4 text-violet-600/70" />
@@ -230,7 +230,7 @@ const Grade10ProjectsWidget: React.FC = () => {
               {projects.slice(0, 5).map((project) => (
                 <div
                   key={project.id}
-                  className="p-5 border border-divider rounded-2xl hover:bg-surface-hover hover:border-primary/20 transition-all duration-200"
+                  className="p-5 border-2 border-divider/50 rounded-2xl hover:bg-surface-hover hover:border-primary/30 transition-all duration-200"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
