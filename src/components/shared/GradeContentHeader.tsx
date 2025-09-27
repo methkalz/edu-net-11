@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight, Users, BookOpen, Target, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useGradeStudentCount } from '@/hooks/useGradeStudentCount';
 
 interface GradeContentHeaderProps {
   /** عنوان الصف */
@@ -37,6 +38,8 @@ const GradeContentHeader: React.FC<GradeContentHeaderProps> = ({
   onBackToDashboard,
   onSettings
 }) => {
+  // جلب العدد الحقيقي لطلاب الصف
+  const { studentCount: realStudentCount, isLoading } = useGradeStudentCount(gradeNumber);
   // تحديد اللون الأساسي بناءً على رقم الصف
   const getGradeGradient = () => {
     switch (gradeNumber) {
@@ -105,7 +108,7 @@ const GradeContentHeader: React.FC<GradeContentHeaderProps> = ({
                   <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20">
                     <Users className="w-4 h-4 text-primary" />
                     <span className="text-sm font-medium">
-                      {studentsCount} طالب
+                      {isLoading ? '...' : realStudentCount} طالب
                     </span>
                   </div>
                   
