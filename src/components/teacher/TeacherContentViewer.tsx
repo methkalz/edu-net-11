@@ -255,67 +255,113 @@ export const TeacherContentViewer: React.FC<TeacherContentViewerProps> = ({ grad
         </div>
 
         <Tabs value={activeContentTab} onValueChange={setActiveContentTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-6 bg-muted/50 rounded-xl p-1">
-            <TabsTrigger value="computer_structure" className="flex items-center gap-2 text-sm">
-              <Monitor className="h-4 w-4" />
-              بنية الحاسوب
-            </TabsTrigger>
-            <TabsTrigger value="educational_explanations" className="flex items-center gap-2 text-sm">
-              <BookOpen className="h-4 w-4" />
-              شروحات تعليمية
-            </TabsTrigger>
-            <TabsTrigger value="windows_basics" className="flex items-center gap-2 text-sm">
-              <Settings className="h-4 w-4" />
-              أساسيات ويندوز
-            </TabsTrigger>
-            <TabsTrigger value="networks" className="flex items-center gap-2 text-sm">
-              <Network className="h-4 w-4" />
-              الشبكات
-            </TabsTrigger>
-            <TabsTrigger value="mobile_devices" className="flex items-center gap-2 text-sm">
-              <Phone className="h-4 w-4" />
-              الأجهزة المحمولة
-            </TabsTrigger>
-            <TabsTrigger value="knowledge_adventure" className="flex items-center gap-2 text-sm">
-              <Gamepad2 className="h-4 w-4" />
-              لعبة المعرفة
-            </TabsTrigger>
-          </TabsList>
+          <div className="flex justify-center mb-8">
+            <TabsList className="grid grid-cols-6 w-full h-auto p-1 gap-1 bg-background/80 border border-border/40 rounded-2xl shadow-lg backdrop-blur-md transition-all duration-300 hover:shadow-xl" style={{ maxWidth: '1400px' }}>
+              <TabsTrigger 
+                value="computer_structure" 
+                className="relative flex flex-col items-center justify-center gap-2 py-6 px-4 min-h-[120px] text-sm font-medium text-muted-foreground/80 bg-transparent border-0 rounded-xl transition-all duration-300 ease-out data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-md data-[state=active]:shadow-primary/20 data-[state=active]:scale-[1.02] hover:bg-background/50 hover:text-foreground/90 hover:shadow-sm hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 group overflow-hidden"
+              >
+                <div className="relative flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-primary/5 to-primary/10 group-data-[state=active]:from-primary/10 group-data-[state=active]:to-primary/20 group-data-[state=active]:shadow-sm group-hover:from-primary/8 group-hover:to-primary/15 transition-all duration-300">
+                  <Monitor className="w-6 h-6 transition-all duration-300 group-data-[state=active]:scale-110 group-data-[state=active]:text-primary" />
+                </div>
+                <div className="flex flex-col items-center gap-1.5">
+                  <span className="text-xs font-semibold leading-tight text-center px-1 group-data-[state=active]:text-sm transition-all duration-300">مبنى الحاسوب</span>
+                </div>
+              </TabsTrigger>
+              
+              <TabsTrigger 
+                value="windows_basics" 
+                className="relative flex flex-col items-center justify-center gap-2 py-6 px-4 min-h-[120px] text-sm font-medium text-muted-foreground/80 bg-transparent border-0 rounded-xl transition-all duration-300 ease-out data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-md data-[state=active]:shadow-primary/20 data-[state=active]:scale-[1.02] hover:bg-background/50 hover:text-foreground/90 hover:shadow-sm hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 group overflow-hidden"
+              >
+                <div className="relative flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-primary/5 to-primary/10 group-data-[state=active]:from-primary/10 group-data-[state=active]:to-primary/20 group-data-[state=active]:shadow-sm group-hover:from-primary/8 group-hover:to-primary/15 transition-all duration-300">
+                  <Settings className="w-6 h-6 transition-all duration-300 group-data-[state=active]:scale-110 group-data-[state=active]:text-primary" />
+                </div>
+                <div className="flex flex-col items-center gap-1.5">
+                  <span className="text-xs font-semibold leading-tight text-center px-1 group-data-[state=active]:text-sm transition-all duration-300">أساسيات الويندوز</span>
+                </div>
+              </TabsTrigger>
+              
+              <TabsTrigger 
+                value="network_intro" 
+                className="relative flex flex-col items-center justify-center gap-2 py-6 px-4 min-h-[120px] text-sm font-medium text-muted-foreground/80 bg-transparent border-0 rounded-xl transition-all duration-300 ease-out data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-md data-[state=active]:shadow-primary/20 data-[state=active]:scale-[1.02] hover:bg-background/50 hover:text-foreground/90 hover:shadow-sm hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 group overflow-hidden"
+              >
+                <div className="relative flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-primary/5 to-primary/10 group-data-[state=active]:from-primary/10 group-data-[state=active]:to-primary/20 group-data-[state=active]:shadow-sm group-hover:from-primary/8 group-hover:to-primary/15 transition-all duration-300">
+                  <Network className="w-6 h-6 transition-all duration-300 group-data-[state=active]:scale-110 group-data-[state=active]:text-primary" />
+                </div>
+                <div className="flex flex-col items-center gap-1.5">
+                  <span className="text-xs font-semibold leading-tight text-center px-1 group-data-[state=active]:text-sm transition-all duration-300">مقدمة عن الشبكات</span>
+                </div>
+              </TabsTrigger>
+              
+              <TabsTrigger 
+                value="knowledge_adventure" 
+                className="relative flex flex-col items-center justify-center gap-2 py-6 px-4 min-h-[120px] text-sm font-medium text-muted-foreground/80 bg-transparent border-0 rounded-xl transition-all duration-300 ease-out data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-md data-[state=active]:shadow-primary/20 data-[state=active]:scale-[1.02] hover:bg-background/50 hover:text-foreground/90 hover:shadow-sm hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 group overflow-hidden"
+              >
+                <div className="relative flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-primary/5 to-primary/10 group-data-[state=active]:from-primary/10 group-data-[state=active]:to-primary/20 group-data-[state=active]:shadow-sm group-hover:from-primary/8 group-hover:to-primary/15 transition-all duration-300">
+                  <Gamepad2 className="w-6 h-6 transition-all duration-300 group-data-[state=active]:scale-110 group-data-[state=active]:text-primary" />
+                </div>
+                <div className="flex flex-col items-center gap-1.5">
+                  <span className="text-xs font-semibold leading-tight text-center px-1 group-data-[state=active]:text-sm transition-all duration-300">لعبة المعرفة</span>
+                </div>
+              </TabsTrigger>
+              
+              <TabsTrigger 
+                value="communication_basics" 
+                className="relative flex flex-col items-center justify-center gap-2 py-6 px-4 min-h-[120px] text-sm font-medium text-muted-foreground/80 bg-transparent border-0 rounded-xl transition-all duration-300 ease-out data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-md data-[state=active]:shadow-primary/20 data-[state=active]:scale-[1.02] hover:bg-background/50 hover:text-foreground/90 hover:shadow-sm hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 group overflow-hidden"
+              >
+                <div className="relative flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-primary/5 to-primary/10 group-data-[state=active]:from-primary/10 group-data-[state=active]:to-primary/20 group-data-[state=active]:shadow-sm group-hover:from-primary/8 group-hover:to-primary/15 transition-all duration-300">
+                  <Phone className="w-6 h-6 transition-all duration-300 group-data-[state=active]:scale-110 group-data-[state=active]:text-primary" />
+                </div>
+                <div className="flex flex-col items-center gap-1.5">
+                  <span className="text-xs font-semibold leading-tight text-center px-1 group-data-[state=active]:text-sm transition-all duration-300">أساسيات الاتصال</span>
+                </div>
+              </TabsTrigger>
+              
+              <TabsTrigger 
+                value="mini_projects" 
+                className="relative flex flex-col items-center justify-center gap-2 py-6 px-4 min-h-[120px] text-sm font-medium text-muted-foreground/80 bg-transparent border-0 rounded-xl transition-all duration-300 ease-out data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-md data-[state=active]:shadow-primary/20 data-[state=active]:scale-[1.02] hover:bg-background/50 hover:text-foreground/90 hover:shadow-sm hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 group overflow-hidden"
+              >
+                <div className="relative flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-primary/5 to-primary/10 group-data-[state=active]:from-primary/10 group-data-[state=active]:to-primary/20 group-data-[state=active]:shadow-sm group-hover:from-primary/8 group-hover:to-primary/15 transition-all duration-300">
+                  <FolderOpen className="w-6 h-6 transition-all duration-300 group-data-[state=active]:scale-110 group-data-[state=active]:text-primary" />
+                </div>
+                <div className="flex flex-col items-center gap-1.5">
+                  <span className="text-xs font-semibold leading-tight text-center px-1 group-data-[state=active]:text-sm transition-all duration-300">ميني بروجكت</span>
+                </div>
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="computer_structure" className="mt-6">
             <ComputerStructureLessons />
           </TabsContent>
 
-          <TabsContent value="educational_explanations" className="mt-6">
-            <div className="text-center py-8">
-              <h3 className="text-lg font-semibold mb-2">الشروحات التعليمية</h3>
-              <p className="text-muted-foreground">سيتم عرض الفيديوهات التعليمية هنا</p>
-            </div>
-          </TabsContent>
-
           <TabsContent value="windows_basics" className="mt-6">
             <div className="text-center py-8">
-              <h3 className="text-lg font-semibold mb-2">أساسيات ويندوز</h3>
-              <p className="text-muted-foreground">سيتم عرض دروس ويندوز هنا</p>
+              <h3 className="text-lg font-semibold mb-2">أساسيات الويندوز</h3>
+              <p className="text-muted-foreground">سيتم عرض دروس الويندوز هنا</p>
             </div>
           </TabsContent>
 
-          <TabsContent value="networks" className="mt-6">
+          <TabsContent value="network_intro" className="mt-6">
             <div className="text-center py-8">
-              <h3 className="text-lg font-semibold mb-2">الشبكات</h3>
-              <p className="text-muted-foreground">سيتم عرض دروس الشبكات هنا</p>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="mobile_devices" className="mt-6">
-            <div className="text-center py-8">
-              <h3 className="text-lg font-semibold mb-2">الأجهزة المحمولة</h3>
-              <p className="text-muted-foreground">سيتم عرض دروس الأجهزة المحمولة هنا</p>
+              <h3 className="text-lg font-semibold mb-2">مقدمة عن الشبكات</h3>
+              <p className="text-muted-foreground">سيتم عرض مقدمة الشبكات هنا</p>
             </div>
           </TabsContent>
 
           <TabsContent value="knowledge_adventure" className="mt-6">
             <KnowledgeAdventureRealContent />
+          </TabsContent>
+
+          <TabsContent value="communication_basics" className="mt-6">
+            <StudentGrade10Lessons />
+          </TabsContent>
+
+          <TabsContent value="mini_projects" className="mt-6">
+            <div className="text-center py-8">
+              <h3 className="text-lg font-semibold mb-2">ميني بروجكت</h3>
+              <p className="text-muted-foreground">سيتم عرض المشاريع الصغيرة هنا</p>
+            </div>
           </TabsContent>
         </Tabs>
 
