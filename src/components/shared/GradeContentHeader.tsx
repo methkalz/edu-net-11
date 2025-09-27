@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, Users, Folder, Target, Settings } from 'lucide-react';
+import { ArrowRight, Users, Folder, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useGradeStudentCount } from '@/hooks/useGradeStudentCount';
 
@@ -17,8 +17,6 @@ interface GradeContentHeaderProps {
   studentsCount?: number;
   /** عدد المحتويات المتاحة */
   contentCount?: number;
-  /** نسبة الإكمال العامة */
-  completionRate?: number;
   /** معرف المدرس */
   isTeacherView?: boolean;
   /** دالة العودة للوحة الرئيسية */
@@ -33,7 +31,6 @@ const GradeContentHeader: React.FC<GradeContentHeaderProps> = ({
   gradeNumber,
   studentsCount = 0,
   contentCount = 0,
-  completionRate = 0,
   isTeacherView = false,
   onBackToDashboard,
   onSettings
