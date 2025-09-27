@@ -36,12 +36,15 @@ import {
   Monitor,
   Settings,
   Rocket,
-  FolderOpen
+  FolderOpen,
+  ChevronDown,
+  Trophy
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import GradeContentViewer from '@/components/content/GradeContentViewer';
@@ -55,6 +58,12 @@ import Grade10ProjectsWidget from '@/components/teacher/Grade10ProjectsWidget';
 import ModernHeader from '@/components/shared/ModernHeader';
 import { StudentPresenceWidget } from '@/components/teacher/StudentPresenceWidget';
 import { OnlineStudentsStats } from '@/components/dashboard/OnlineStudentsStats';
+import Grade10Content from '@/components/content/Grade10Content';
+import Grade11Content from '@/components/content/Grade11Content';
+import Grade12Content from '@/components/content/Grade12Content';
+import { useGrade10Content } from '@/hooks/useGrade10Content';
+import { useGrade11Files } from '@/hooks/useGrade11Files';
+import { useGrade12Content } from '@/hooks/useGrade12Content';
 
 interface TeacherClass {
   id: string;
@@ -133,6 +142,11 @@ const TeacherDashboard: React.FC = () => {
   
   // استخدام هوك حضور الطلاب
   const { actualOnlineCount } = useStudentPresence();
+
+  // استخدام هوكات المحتوى للحصول على البيانات
+  const { videos: grade10Videos, documents: grade10Documents } = useGrade10Content();
+  const { documents: grade11Documents, videos: grade11Videos } = useGrade11Files();
+  const { projects, documents: grade12Documents } = useGrade12Content();
 
   useEffect(() => {
     if (user && userProfile?.role === 'teacher') {
@@ -598,163 +612,106 @@ const TeacherDashboard: React.FC = () => {
 
         {/* المضامين التعليمية المتاحة - عرض كامل كما يراها الطلاب */}
         {schoolPackageContents.length > 0 && (
-          <div className="space-y-6">
-            <div className="glass-card p-6 rounded-2xl border-0 shadow-xl bg-gradient-to-r from-purple-50/50 to-indigo-50/50">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-purple-500 to-purple-600 flex items-center justify-center">
-                    <BookMarked className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-500 bg-clip-text text-transparent">
-                      المضامين التعليمية المتاحة
-                    </h2>
-                    <p className="text-muted-foreground">اطلع على المواد التعليمية تماماً كما يراها الطلاب</p>
-                  </div>
+          <Card className="glass-card border-0 shadow-xl animate-fade-in-up">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-3 text-xl">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-purple-500 to-purple-600 flex items-center justify-center">
+                  <BookMarked className="h-4 w-4 text-white" />
                 </div>
-                <Badge variant="secondary" className="bg-purple-100 text-purple-700 border-purple-200 px-4 py-2">
-                  <span className="font-semibold">{stats.availableContents}</span>
-                  <span className="mr-1">عنصر متاح</span>
-                </Badge>
-              </div>
-            </div>
+                <span className="bg-gradient-to-r from-purple-600 to-purple-500 bg-clip-text text-transparent">
+                  المضامين التعليمية
+                </span>
+              </CardTitle>
+              <CardDescription className="text-base">
+                استكشف وأدر المحتوى التعليمي للصفوف المختلفة تماماً كما يراه الطلاب
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
 
-            {/* بطاقات الصفوف - تشبه ما يراه الطلاب */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Grade 10 Content */}
               {schoolPackageContents.includes('grade10') && canAccessGrade('10') && (
-                <Card className="group hover:shadow-lg transition-all duration-300 border-l-4 border-l-blue-500 bg-gradient-to-br from-blue-50/50 to-blue-100/30">
-                  <CardHeader className="pb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center group-hover:bg-blue-200 transition-colors">
-                        <Video className="h-6 w-6 text-blue-600" />
+                <Collapsible>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="outline" className="w-full justify-between text-lg h-14 hover:bg-blue-50">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                          <Video className="h-5 w-5 text-blue-600" />
+                        </div>
+                        <div className="text-right">
+                          <div className="font-bold">الصف العاشر</div>
+                          <div className="text-sm text-muted-foreground">
+                            {grade10Videos.length} فيديو • {grade10Documents.length} مستند
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <CardTitle className="text-xl text-blue-800">الصف العاشر</CardTitle>
-                      </div>
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-4">
+                    <div className="border rounded-lg p-4 bg-muted/20">
+                      <Grade10Content />
                     </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <p className="text-muted-foreground text-sm">
-                      جميع المواد التعليمية للصف العاشر - فيديوهات، ملفات، ألعاب تعليمية وتمارين
-                    </p>
-                    
-                    {availableContents.grade10.length > 0 && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Badge variant="outline" className="gap-1">
-                          <PlayCircle className="h-3 w-3" />
-                          {availableContents.grade10.filter(c => c.type === 'video').length} فيديو
-                        </Badge>
-                        <Badge variant="outline" className="gap-1">
-                          <FileText className="h-3 w-3" />
-                          {availableContents.grade10.filter(c => c.type === 'document').length} ملف
-                        </Badge>
-                      </div>
-                    )}
-
-                    <div className="flex gap-2 pt-2">
-                      <Button 
-                        className="flex-1 bg-blue-600 hover:bg-blue-700"
-                        onClick={() => navigate('/grade10-management')}
-                      >
-                        <Eye className="h-4 w-4 mr-2" />
-                        استكشاف المحتوى
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                  </CollapsibleContent>
+                </Collapsible>
               )}
 
+              {/* Grade 11 Content */}
               {schoolPackageContents.includes('grade11') && canAccessGrade('11') && (
-                <Card className="group hover:shadow-lg transition-all duration-300 border-l-4 border-l-green-500 bg-gradient-to-br from-green-50/50 to-green-100/30">
-                  <CardHeader className="pb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center group-hover:bg-green-200 transition-colors">
-                        <BookOpen className="h-6 w-6 text-green-600" />
+                <Collapsible>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="outline" className="w-full justify-between text-lg h-14 hover:bg-green-50">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                          <BookOpen className="h-5 w-5 text-green-600" />
+                        </div>
+                        <div className="text-right">
+                          <div className="font-bold">الصف الحادي عشر</div>
+                          <div className="text-sm text-muted-foreground">
+                            {grade11Documents.length} مستند • {grade11Videos.length} فيديو
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <CardTitle className="text-xl text-green-800">الصف الحادي عشر</CardTitle>
-                      </div>
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-4">
+                    <div className="border rounded-lg p-4 bg-muted/20">
+                      <Grade11Content />
                     </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <p className="text-muted-foreground text-sm">
-                      جميع المواد التعليمية للصف الحادي عشر - محتوى تفاعلي شامل
-                    </p>
-                    
-                    {availableContents.grade11.length > 0 && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Badge variant="outline" className="gap-1">
-                          <PlayCircle className="h-3 w-3" />
-                          {availableContents.grade11.filter(c => c.type === 'video').length} فيديو
-                        </Badge>
-                        <Badge variant="outline" className="gap-1">
-                          <FileText className="h-3 w-3" />
-                          {availableContents.grade11.filter(c => c.type === 'document').length} ملف
-                        </Badge>
-                      </div>
-                    )}
-
-                    <div className="flex gap-2 pt-2">
-                      <Button 
-                        className="flex-1 bg-green-600 hover:bg-green-700"
-                        onClick={() => navigate('/grade11-management')}
-                      >
-                        <Eye className="h-4 w-4 mr-2" />
-                        استكشاف المحتوى
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                  </CollapsibleContent>
+                </Collapsible>
               )}
 
+              {/* Grade 12 Content */}
               {schoolPackageContents.includes('grade12') && canAccessGrade('12') && (
-                <Card className="group hover:shadow-lg transition-all duration-300 border-l-4 border-l-purple-500 bg-gradient-to-br from-purple-50/50 to-purple-100/30">
-                  <CardHeader className="pb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center group-hover:bg-purple-200 transition-colors">
-                        <BookMarked className="h-6 w-6 text-purple-600" />
+                <Collapsible>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="outline" className="w-full justify-between text-lg h-14 hover:bg-purple-50">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                          <Trophy className="h-5 w-5 text-purple-600" />
+                        </div>
+                        <div className="text-right">
+                          <div className="font-bold">الصف الثاني عشر</div>
+                          <div className="text-sm text-muted-foreground">
+                            {projects.length} مشروع نهائي • {grade12Documents.length} مستند
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <CardTitle className="text-xl text-purple-800">الصف الثاني عشر</CardTitle>
-                      </div>
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-4">
+                    <div className="border rounded-lg p-4 bg-muted/20">
+                      <Grade12Content />
                     </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <p className="text-muted-foreground text-sm">
-                      جميع المواد التعليمية للصف الثاني عشر - مشاريع الطلاب والمحتوى التعليمي
-                    </p>
-                    
-                    {availableContents.grade12.length > 0 && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Badge variant="outline" className="gap-1">
-                          <PlayCircle className="h-3 w-3" />
-                          {availableContents.grade12.filter(c => c.type === 'video').length} فيديو
-                        </Badge>
-                        <Badge variant="outline" className="gap-1">
-                          <FileText className="h-3 w-3" />
-                          {availableContents.grade12.filter(c => c.type === 'document').length} ملف
-                        </Badge>
-                      </div>
-                    )}
-
-                    <div className="flex gap-2 pt-2">
-                      <Button 
-                        className="flex-1 bg-purple-600 hover:bg-purple-700"
-                        onClick={() => navigate('/grade12-management')}
-                      >
-                        <Eye className="h-4 w-4 mr-2" />
-                        استكشاف المحتوى
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                  </CollapsibleContent>
+                </Collapsible>
               )}
-            </div>
 
-            {/* رسالة عند عدم وجود صفوف مخصصة للمعلم */}
-            {schoolPackageContents.length > 0 && allowedGrades.length === 0 && !accessLoading && (
-              <Card className="text-center py-12 border-amber-200 bg-amber-50">
-                <CardContent>
+              {/* رسالة عند عدم وجود صفوف مخصصة للمعلم */}
+              {schoolPackageContents.length > 0 && allowedGrades.length === 0 && !accessLoading && (
+                <div className="text-center py-12 border border-amber-200 bg-amber-50 rounded-lg">
                   <School className="h-16 w-16 mx-auto mb-4 text-amber-500" />
                   <h3 className="text-lg font-semibold mb-2 text-amber-800">لم يتم تخصيص صفوف لك بعد</h3>
                   <p className="text-amber-700 mb-4">
@@ -764,28 +721,10 @@ const TeacherDashboard: React.FC = () => {
                     <Award className="h-4 w-4" />
                     <span>سيتم عرض المحتوى هنا بمجرد تخصيص الصفوف</span>
                   </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {schoolPackageContents.length > 0 && 
-             (availableContents.grade10.length === 0 && 
-              availableContents.grade11.length === 0 && 
-              availableContents.grade12.length === 0) && (
-              <Card className="text-center py-12">
-                <CardContent>
-                  <BookMarked className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-                  <h3 className="text-lg font-semibold mb-2">لا توجد مضامين متاحة حالياً</h3>
-                  <p className="text-muted-foreground mb-4">
-                    لم يتم إضافة مضامين تعليمية لباقة مدرستك بعد
-                  </p>
-                  <Button variant="outline" onClick={() => navigate('/educational-content')}>
-                    استكشاف جميع المضامين
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
