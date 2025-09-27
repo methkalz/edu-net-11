@@ -58,9 +58,7 @@ import Grade10ProjectsWidget from '@/components/teacher/Grade10ProjectsWidget';
 import ModernHeader from '@/components/shared/ModernHeader';
 import { StudentPresenceWidget } from '@/components/teacher/StudentPresenceWidget';
 import { OnlineStudentsStats } from '@/components/dashboard/OnlineStudentsStats';
-import Grade10Content from '@/components/content/Grade10Content';
-import Grade11Content from '@/components/content/Grade11Content';
-import Grade12Content from '@/components/content/Grade12Content';
+import TeacherContentViewer from './teacher/TeacherContentViewer';
 import { useGrade10Content } from '@/hooks/useGrade10Content';
 import { useGrade11Files } from '@/hooks/useGrade11Files';
 import { useGrade12Content } from '@/hooks/useGrade12Content';
@@ -649,7 +647,7 @@ const TeacherDashboard: React.FC = () => {
                   </CollapsibleTrigger>
                   <CollapsibleContent className="mt-4">
                     <div className="border rounded-lg p-4 bg-muted/20">
-                      <Grade10Content />
+                      <TeacherContentViewer grade="10" />
                     </div>
                   </CollapsibleContent>
                 </Collapsible>
@@ -676,7 +674,7 @@ const TeacherDashboard: React.FC = () => {
                   </CollapsibleTrigger>
                   <CollapsibleContent className="mt-4">
                     <div className="border rounded-lg p-4 bg-muted/20">
-                      <Grade11Content />
+                      <TeacherContentViewer grade="11" />
                     </div>
                   </CollapsibleContent>
                 </Collapsible>
@@ -703,7 +701,7 @@ const TeacherDashboard: React.FC = () => {
                   </CollapsibleTrigger>
                   <CollapsibleContent className="mt-4">
                     <div className="border rounded-lg p-4 bg-muted/20">
-                      <Grade12Content />
+                      <TeacherContentViewer grade="12" />
                     </div>
                   </CollapsibleContent>
                 </Collapsible>
