@@ -5,7 +5,7 @@ import { useStudentProgress } from '@/hooks/useStudentProgress';
 import { useGrade10MiniProjects } from '@/hooks/useGrade10MiniProjects';
 import { useGrade12Projects } from '@/hooks/useGrade12Projects';
 import { useStudentGrade10Lessons } from '@/hooks/useStudentGrade10Lessons';
-import StudentGrade11ModernContent from '../student/StudentGrade11ModernContent';
+import { StudentGrade11Content } from '../student/StudentGrade11Content';
 import { StudentGrade10Lessons } from '../student/StudentGrade10Lessons';
 import { ComputerStructureLessons } from '../student/ComputerStructureLessons';
 import KnowledgeAdventureRealContent from '../games/KnowledgeAdventureRealContent';
@@ -434,7 +434,7 @@ export const TeacherContentViewer: React.FC<TeacherContentViewerProps> = ({ grad
           </div>
         </div>
 
-        <StudentGrade11ModernContent />
+        <StudentGrade11Content />
       </div>
     );
   }
