@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { AuthErrorHandler } from '@/components/auth/AuthErrorHandler';
 import { BookOpen, Eye, EyeOff, Shield, Lock, Users, GraduationCap } from 'lucide-react';
+import { sessionMonitor } from '@/lib/auth/session-monitor';
 const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loginData, setLoginData] = useState({
@@ -31,9 +32,34 @@ const Auth = () => {
   const navigate = useNavigate();
   
   useEffect(() => {
-    if (user) {
+    // Don't auto-redirect if logout is in progress or recently completed
+    const logoutInProgress = localStorage.getItem('logout_in_progress');
+    const recentLogout = localStorage.getItem('recent_manual_logout');
+    
+    if (user && !logoutInProgress && !recentLogout) {
       navigate('/dashboard');
     }
+    
+    // Clear recent logout flag after a short delay
+    if (recentLogout) {
+      setTimeout(() => {
+        localStorage.removeItem('recent_manual_logout');
+      }, 2000);
+    }
+
+    // إيقاف مراقبة الجلسة في صفحة المصادقة
+    sessionMonitor.stopMonitoring();
+    
+    // تنظيف البيانات في حال وصل المستخدم هنا بسبب جلسة منتهية
+    const cleanupInvalidSession = async () => {
+      const isInvalid = await sessionMonitor.isInvalidSessionState();
+      if (isInvalid) {
+        localStorage.removeItem('logout_in_progress');
+        localStorage.removeItem('recent_manual_logout');
+      }
+    };
+    
+    cleanupInvalidSession();
   }, [user, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {

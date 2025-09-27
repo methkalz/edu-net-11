@@ -22,6 +22,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { UserProfile, AuthResponse } from '@/types/common';
 import { logError, logInfo } from '@/lib/logger';
+import { sessionMonitor } from '@/lib/auth/session-monitor';
+import { authErrorHandler } from '@/lib/error-handling/handlers/auth-error-handler';
 
 /**
  * Authentication Context Type Definition
@@ -58,6 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const { isImpersonating, getEffectiveUser, getEffectiveUserProfile } = useImpersonation();
 
   /**
@@ -138,10 +141,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
      */
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        // Don't process auth changes during manual logout
+        if (isSigningOut || localStorage.getItem('logout_in_progress')) {
+          return;
+        }
+        
         setSession(session);
         setUser(session?.user ?? null);
         
-        if (session?.user) {
+        if (session?.user && event !== 'SIGNED_OUT') {
+          // بدء مراقبة الجلسة عند تسجيل الدخول
+          sessionMonitor.startMonitoring();
+          
           // Fetch user profile with school information
           // Using setTimeout to avoid blocking the auth state change
           setTimeout(async () => {
@@ -160,6 +171,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
           }, 0);
         } else {
+          // إيقاف مراقبة الجلسة عند تسجيل الخروج
+          sessionMonitor.stopMonitoring();
+          
           // Clear profile when user signs out
           setUserProfile(null);
         }
@@ -171,12 +185,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      
+      // بدء المراقبة إذا كانت هناك جلسة نشطة
+      if (session?.user) {
+        sessionMonitor.startMonitoring();
+      }
+      
       setLoading(false);
     });
 
     // Cleanup subscription on unmount
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      subscription.unsubscribe();
+      sessionMonitor.stopMonitoring();
+    };
+  }, [isSigningOut]);
 
 
   
@@ -388,56 +411,78 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    */
   const signOut = async () => {
     try {
-      // First check if we have a current session
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      // Prevent multiple simultaneous sign out attempts
+      if (isSigningOut) return;
+      setIsSigningOut(true);
       
-      // If no session exists, just clear local state and redirect
-      if (!session || sessionError) {
-        console.log('No active session found during signOut, clearing local state');
-        toast({
-          title: "تم تسجيل الخروج",
-          description: "نراك قريباً",
+      // Mark logout in progress to prevent auto-redirect
+      localStorage.setItem('logout_in_progress', 'true');
+      
+      // Clear local state immediately to prevent UI confusion
+      setUser(null);
+      setSession(null);
+      setUserProfile(null);
+      
+      // Try to sign out from Supabase (but don't depend on it)
+      try {
+        const { error } = await supabase.auth.signOut();
+        
+        if (error) {
+          // استخدام معالج الأخطاء المتخصص
+          authErrorHandler.handleLogoutError(error, { 
+            component: 'useAuth',
+            action: 'manual_logout' 
+          });
+          return; // لا نحتاج للمتابعة، معالج الأخطاء سيتولى الأمر
+        }
+      } catch (supabaseError) {
+        // استخدام معالج الأخطاء المتخصص
+        authErrorHandler.handleLogoutError(supabaseError, {
+          component: 'useAuth', 
+          action: 'manual_logout',
+          type: 'supabase_exception'
         });
-        window.location.href = '/auth';
         return;
       }
-
-      // If session exists, attempt normal signout
-      const { error } = await supabase.auth.signOut();
       
-      // Handle sign out result with user feedback
-      if (error) {
-        // Handle specific "session not found" errors gracefully
-        if (error.message.includes('session') || error.message.includes('Session') || error.status === 403) {
-          console.log('Session already expired during signOut, redirecting to auth');
-          toast({
-            title: "تم تسجيل الخروج",
-            description: "انتهت صلاحية الجلسة",
-          });
-          window.location.href = '/auth';
-        } else {
-          toast({
-            title: "خطأ في تسجيل الخروج",
-            description: error.message,
-            variant: "destructive",
-          });
-        }
-      } else {
-        toast({
-          title: "تم تسجيل الخروج",
-          description: "نراك قريباً",
+      // إذا نجح تسجيل الخروج، قم بالتنظيف العادي
+      try {
+        localStorage.removeItem('supabase.auth.token');
+        sessionStorage.clear();
+        
+        // Clear any persistent session data
+        const keys = Object.keys(localStorage);
+        keys.forEach(key => {
+          if (key.includes('supabase') || key.includes('auth') || key.includes('session')) {
+            localStorage.removeItem(key);
+          }
         });
-        // Automatic redirection after successful logout
-        window.location.href = '/auth';
+      } catch (storageError) {
+        console.warn('Storage clearing error:', storageError);
       }
-    } catch (criticalError) {
-      // If any critical error occurs, still redirect to auth page
-      console.error('Critical error during sign out:', criticalError);
+      
+      // Show success message
       toast({
         title: "تم تسجيل الخروج",
-        description: "انتهت الجلسة",
+        description: "نراك قريباً",
       });
-      window.location.href = '/auth';
+      
+      // Small delay then redirect
+      setTimeout(() => {
+        localStorage.removeItem('logout_in_progress');
+        setIsSigningOut(false);
+        window.location.href = '/auth';
+      }, 500);
+      
+    } catch (criticalError) {
+      console.error('Critical error during sign out:', criticalError);
+      
+      // استخدام معالج الأخطاء المتخصص للحالات الطارئة
+      authErrorHandler.handleLogoutError(criticalError, {
+        component: 'useAuth',
+        action: 'manual_logout', 
+        type: 'critical_error'
+      });
     }
   };
 
@@ -477,7 +522,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user: effectiveUser as User, 
       session, 
       userProfile: effectiveUserProfile, 
-      loading, 
+      loading: loading || isSigningOut, 
       signIn, 
       signOut,
       refreshProfile
