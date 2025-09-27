@@ -92,7 +92,7 @@ const GradeContentHeader: React.FC<GradeContentHeaderProps> = ({
                     <h1 className="text-xl font-bold text-foreground">
                       {gradeTitle}
                     </h1>
-                    <p className="text-lg text-muted-foreground">
+                    <p className="text-base text-muted-foreground">
                       {gradeDescription}
                     </p>
                   </div>
