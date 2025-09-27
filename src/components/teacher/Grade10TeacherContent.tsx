@@ -19,6 +19,7 @@ import { VideoViewer } from '../student/viewers/VideoViewer';
 import { DocumentViewer } from '../student/viewers/DocumentViewer';
 import { LessonViewer } from '../student/viewers/LessonViewer';
 import { ProjectViewer } from '../student/viewers/ProjectViewer';
+import GradeContentHeader from '@/components/shared/GradeContentHeader';
 
 import { 
   Play, 
@@ -378,11 +379,18 @@ const Grade10TeacherContent = () => {
 
   return (
     <div className="container mx-auto px-6 py-12 space-y-12">
-      {/* Teacher Header */}
-      <div className="text-center space-y-4 mb-8">
-        <h2 className="text-2xl font-bold text-foreground">محتوى الصف العاشر - المعلم</h2>
-        <p className="text-lg text-muted-foreground">عرض وإدارة محتوى الصف العاشر مع إحصائيات الطلاب</p>
-      </div>
+      {/* Modern Grade Header */}
+      <GradeContentHeader
+        gradeTitle="محتوى الصف العاشر"
+        gradeDescription="عرض وإدارة محتوى الصف العاشر مع إحصائيات الطلاب"
+        gradeNumber={10}
+        studentsCount={125}
+        contentCount={getFilteredVideos().length + getFilteredDocuments().length + allProjects.length}
+        completionRate={78}
+        isTeacherView={true}
+        onBackToDashboard={() => window.history.back()}
+        onSettings={() => console.log('إعدادات الصف')}
+      />
 
       {/* Content Tabs - Exact same design as student view */}
       <Tabs value={activeContentTab} onValueChange={setActiveContentTab} className="w-full">

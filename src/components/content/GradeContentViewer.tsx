@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 import { 
   PlayCircle, 
   FileText, 
@@ -98,12 +99,18 @@ const GradeContentViewer: React.FC<GradeContentViewerProps> = ({
 
   return (
     <>
-      <Card className={`border-l-4 ${getGradeColor()}`}>
-        <CardHeader>
+      <Card className={cn(
+        "border-0 shadow-lg backdrop-blur-md overflow-hidden",
+        "bg-gradient-to-br from-primary/10 via-primary/5 to-background/80"
+      )}>
+        <div className="absolute inset-0 creative-background opacity-20" />
+        <CardHeader className="relative">
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-xl">
-              {getGradeIcon()}
-              مضامين {gradeLabel}
+            <CardTitle className="flex items-center gap-3 text-2xl">
+              <div className="p-2 rounded-lg bg-white/10 backdrop-blur-sm border border-white/20">
+                {getGradeIcon()}
+              </div>
+              <span className="text-gradient-blue">مضامين {gradeLabel}</span>
             </CardTitle>
             <div className="flex items-center gap-2">
               <Badge variant="secondary" className="gap-1">
