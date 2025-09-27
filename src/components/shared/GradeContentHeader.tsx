@@ -102,31 +102,6 @@ const GradeContentHeader: React.FC<GradeContentHeaderProps> = ({
                 </div>
               </div>
 
-              {/* Stats */}
-              {isTeacherView && (
-                <div className="flex flex-wrap gap-4 mt-6">
-                  <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20">
-                    <Users className="w-4 h-4 text-primary" />
-                    <span className="text-sm font-medium">
-                      {isLoading ? '...' : realStudentCount} طالب
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20">
-                    <BookOpen className="w-4 h-4 text-secondary" />
-                    <span className="text-sm font-medium">
-                      {contentCount} محتوى
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20">
-                    <Target className="w-4 h-4 text-green-emerald" />
-                    <span className="text-sm font-medium">
-                      {completionRate}% مكتمل
-                    </span>
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* Actions Section - Removed teacher mode badge and settings */}
