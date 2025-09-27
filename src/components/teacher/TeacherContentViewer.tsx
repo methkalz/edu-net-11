@@ -474,6 +474,15 @@ export const TeacherContentViewer: React.FC<TeacherContentViewerProps> = ({ grad
   if (grade === '12') {
     const { videos, documents, projects, loading } = grade12ContentResult;
     
+    // Debug logging
+    console.log('Grade 12 Content Debug:', {
+      videosLength: videos?.length || 0,
+      documentsLength: documents?.length || 0,
+      projectsLength: projects?.length || 0,
+      loading,
+      videos: videos?.slice(0, 3) // Show first 3 videos for debugging
+    });
+    
     if (loading) {
       return (
         <div className="space-y-6">
