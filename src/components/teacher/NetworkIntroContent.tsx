@@ -1,6 +1,6 @@
 import React from 'react';
 import { useGrade10Files } from '@/hooks/useGrade10Files';
-import Grade10VideoViewer from '../content/Grade10VideoViewer';
+import DirectVideoViewer from './DirectVideoViewer';
 
 const NetworkIntroContent: React.FC = () => {
   const { videos, loading } = useGrade10Files();
@@ -12,9 +12,10 @@ const NetworkIntroContent: React.FC = () => {
 
   return (
     <div className="w-full">
-      <Grade10VideoViewer
+      <DirectVideoViewer
         videos={networkIntroVideos}
         loading={loading}
+        title="مقدمة عن الشبكات"
       />
     </div>
   );
