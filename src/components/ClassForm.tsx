@@ -8,8 +8,33 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, ArrowRight, Users, Upload, Plus, X, Check, AlertCircle, UserPlus, Mail } from 'lucide-react';
+import { 
+  ArrowLeft, 
+  ArrowRight, 
+  Users, 
+  Upload, 
+  Plus, 
+  X, 
+  Check, 
+  AlertCircle, 
+  UserPlus, 
+  Mail,
+  Download,
+  FileUp,
+  HelpCircle,
+  User,
+  AtSign,
+  Phone,
+  Lock
+} from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -102,6 +127,9 @@ export const ClassForm: React.FC<ClassFormProps> = ({ editingClass, onSuccess, o
   
   // Step 2 - Additional states
   const [sendWelcomeEmail, setSendWelcomeEmail] = useState(false);
+  const [sendWelcomeEmailBulk, setSendWelcomeEmailBulk] = useState(true);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(false);
   
   // Step 2 - Import data
   const [importData, setImportData] = useState<Student[]>([]);
@@ -429,10 +457,42 @@ export const ClassForm: React.FC<ClassFormProps> = ({ editingClass, onSuccess, o
     }
   };
 
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+  
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+  
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    
+    const files = Array.from(e.dataTransfer.files);
+    const file = files[0];
+    
+    if (file && (file.type === 'text/csv' || file.name.endsWith('.csv'))) {
+      processFile(file);
+    } else {
+      toast({
+        variant: "destructive",
+        title: "نوع ملف غير مدعوم",
+        description: "يرجى رفع ملف CSV فقط"
+      });
+    }
+  };
+
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (file) {
+      processFile(file);
+    }
+  };
 
+  const processFile = (file: File) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
@@ -449,12 +509,14 @@ export const ClassForm: React.FC<ClassFormProps> = ({ editingClass, onSuccess, o
         }
 
         // Parse CSV data
-        const headers = lines[0].split(',').map(h => h.trim());
+        const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
         const students: Student[] = [];
         const errors: ImportError[] = [];
 
         for (let i = 1; i < lines.length; i++) {
           const values = lines[i].split(',').map(v => v.trim());
+          
+          if (values.every(v => !v)) continue; // Skip empty rows
           
           if (values.length !== headers.length) {
             errors.push({
@@ -477,9 +539,11 @@ export const ClassForm: React.FC<ClassFormProps> = ({ editingClass, onSuccess, o
           headers.forEach((header, index) => {
             const value = values[index];
             
-            switch (header.toLowerCase()) {
+            switch (header) {
               case 'full_name':
               case 'الاسم الكامل':
+              case 'اسم':
+              case 'name':
                 if (!value) {
                   errors.push({
                     row: i + 1,
@@ -493,14 +557,8 @@ export const ClassForm: React.FC<ClassFormProps> = ({ editingClass, onSuccess, o
                 break;
               case 'email':
               case 'البريد الإلكتروني':
-                if (!value) {
-                  errors.push({
-                    row: i + 1,
-                    field: 'email',
-                    message: 'البريد الإلكتروني مطلوب'
-                  });
-                  hasError = true;
-                } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+              case 'ايميل':
+                if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
                   errors.push({
                     row: i + 1,
                     field: 'email',
@@ -513,6 +571,7 @@ export const ClassForm: React.FC<ClassFormProps> = ({ editingClass, onSuccess, o
                 break;
               case 'phone':
               case 'رقم الهاتف':
+              case 'هاتف':
                 student.phone = value;
                 break;
               case 'password':
@@ -522,7 +581,7 @@ export const ClassForm: React.FC<ClassFormProps> = ({ editingClass, onSuccess, o
             }
           });
 
-          if (!hasError) {
+          if (!hasError && student.full_name) {
             if (!student.password) {
               student.password = generatePassword();
             }
@@ -555,6 +614,41 @@ export const ClassForm: React.FC<ClassFormProps> = ({ editingClass, onSuccess, o
 
     reader.readAsText(file);
   };
+
+  const downloadTemplate = () => {
+    // Create CSV content with proper Arabic support
+    const csvHeaders = 'full_name,email,phone,password';
+    const csvSampleData = [
+      'أحمد محمد الأحمد,ahmed.mohamed@school.edu,+972501234567,',
+      'فاطمة علي السالم,fatima.ali@school.edu,+972507654321,',
+      'خالد حسن المحمود,khalid.hassan@school.edu,+972509876543,',
+      'سارة يوسف القاسم,sara.youssef@school.edu,+972505555555,'
+    ].join('\n');
+    
+    const csvContent = csvHeaders + '\n' + csvSampleData;
+    
+    // Add BOM for proper Arabic encoding support
+    const BOM = '\uFEFF';
+    const fullContent = BOM + csvContent;
+    
+    // Create blob with explicit UTF-8 encoding
+    const blob = new Blob([fullContent], { 
+      type: 'text/csv;charset=utf-8;' 
+    });
+    
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'قالب_الطلاب_students_template.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+    
+    toast({
+      title: "تم تحميل القالب",
+      description: "تم تحميل قالب إضافة الطلاب بنجاح. يرجى ملء البيانات وحفظ الملف بصيغة CSV."
+    });
+  };
+
 
   const handleImportStudents = async () => {
     if (importData.length === 0) {
@@ -926,18 +1020,116 @@ export const ClassForm: React.FC<ClassFormProps> = ({ editingClass, onSuccess, o
 
                 <TabsContent value="import" className="space-y-4">
                   <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="fileUpload">رفع ملف Excel/CSV</Label>
-                      <Input
-                        id="fileUpload"
-                        type="file"
-                        accept=".csv,.xlsx,.xls"
-                        onChange={handleFileUpload}
-                        className="mt-2"
-                      />
-                      <p className="text-sm text-muted-foreground mt-1">
-                        الأعمدة المطلوبة: full_name, email | الأعمدة الاختيارية: phone, password
+                    {/* Template Download */}
+                    <div className="flex items-center justify-between p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
+                      <div>
+                        <h4 className="font-medium">قالب ملف الطلاب</h4>
+                        <p className="text-sm text-muted-foreground">
+                          حمل القالب الجاهز لملء بيانات الطلاب
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Dialog open={showInstructions} onOpenChange={setShowInstructions}>
+                          <DialogTrigger asChild>
+                            <Button variant="ghost" size="sm" className="p-2">
+                              <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-primary" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-md">
+                            <DialogHeader>
+                              <DialogTitle className="text-right flex items-center gap-2">
+                                <HelpCircle className="h-5 w-5 text-primary" />
+                                تعليمات ملء البيانات
+                              </DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4 text-right">
+                              <div className="space-y-3">
+                                <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-950 rounded-lg">
+                                  <User className="h-5 w-5 text-green-600 flex-shrink-0" />
+                                  <div>
+                                    <p className="font-medium text-green-800 dark:text-green-200">full_name</p>
+                                    <p className="text-sm text-green-600 dark:text-green-300">الاسم الكامل للطالب (مطلوب)</p>
+                                  </div>
+                                </div>
+                                
+                                <div className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
+                                  <AtSign className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                                  <div>
+                                    <p className="font-medium text-blue-800 dark:text-blue-200">email</p>
+                                    <p className="text-sm text-blue-600 dark:text-blue-300">البريد الإلكتروني (مطلوب)</p>
+                                  </div>
+                                </div>
+                                
+                                <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                                  <Phone className="h-5 w-5 text-gray-600 flex-shrink-0" />
+                                  <div>
+                                    <p className="font-medium text-gray-800 dark:text-gray-200">phone</p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">رقم الهاتف (اختياري)</p>
+                                  </div>
+                                </div>
+                                
+                                <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                                  <Lock className="h-5 w-5 text-gray-600 flex-shrink-0" />
+                                  <div>
+                                    <p className="font-medium text-gray-800 dark:text-gray-200">password</p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">كلمة المرور (اختياري - سيتم إنشاء كلمة مرور عشوائية إذا تركت فارغة)</p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                        
+                        <Button variant="outline" onClick={downloadTemplate}>
+                          <Download className="h-4 w-4 mr-2" />
+                          تحميل القالب
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Drag & Drop Area */}
+                    <div
+                      className={`
+                        border-2 border-dashed rounded-lg p-8 text-center transition-colors
+                        ${isDragOver 
+                          ? 'border-primary bg-primary/5' 
+                          : 'border-muted-foreground/25 hover:border-primary/50'
+                        }
+                      `}
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                    >
+                      <FileUp className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                      <h3 className="text-lg font-medium mb-2">اسحب وأفلت ملف CSV هنا</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        أو انقر لاختيار ملف من جهازك
                       </p>
+                      <Input
+                        type="file"
+                        accept=".csv"
+                        onChange={handleFileUpload}
+                        className="hidden"
+                        id="file-upload"
+                      />
+                      <Label htmlFor="file-upload">
+                        <Button variant="outline" asChild>
+                          <span>
+                            <Upload className="h-4 w-4 mr-2" />
+                            اختيار ملف
+                          </span>
+                        </Button>
+                      </Label>
+                    </div>
+
+                    <div className="text-sm text-muted-foreground">
+                      <p className="mb-1">متطلبات الملف:</p>
+                      <ul className="list-disc list-inside space-y-1">
+                        <li>نوع الملف: CSV</li>
+                        <li>الأعمدة المطلوبة: full_name, email</li>
+                        <li>الأعمدة الاختيارية: phone, password</li>
+                        <li>ترميز الملف: UTF-8</li>
+                      </ul>
                     </div>
 
                     {importSummary.total > 0 && (
@@ -946,7 +1138,7 @@ export const ClassForm: React.FC<ClassFormProps> = ({ editingClass, onSuccess, o
                           <CardTitle className="text-lg">ملخص الاستيراد</CardTitle>
                         </CardHeader>
                         <CardContent>
-                          <div className="grid grid-cols-3 gap-4 text-center">
+                          <div className="grid grid-cols-3 gap-4 text-center mb-4">
                             <div>
                               <div className="text-2xl font-bold">{importSummary.total}</div>
                               <div className="text-sm text-muted-foreground">إجمالي السجلات</div>
@@ -962,9 +1154,12 @@ export const ClassForm: React.FC<ClassFormProps> = ({ editingClass, onSuccess, o
                           </div>
 
                           {importErrors.length > 0 && (
-                            <div className="mt-4">
-                              <h4 className="font-medium mb-2">الأخطاء:</h4>
-                              <div className="space-y-1 max-h-32 overflow-y-auto">
+                            <div className="mb-4">
+                              <h4 className="font-medium mb-2 flex items-center gap-2">
+                                <AlertCircle className="h-4 w-4 text-red-600" />
+                                الأخطاء:
+                              </h4>
+                              <div className="space-y-1 max-h-32 overflow-y-auto bg-red-50 dark:bg-red-950 p-3 rounded">
                                 {importErrors.map((error, index) => (
                                   <div key={index} className="text-sm text-red-600">
                                     الصف {error.row}: {error.message}
@@ -974,21 +1169,42 @@ export const ClassForm: React.FC<ClassFormProps> = ({ editingClass, onSuccess, o
                             </div>
                           )}
 
-                          {importData.length > 0 && (
-                            <Button 
-                              onClick={handleImportStudents}
-                              disabled={loading}
-                              className="w-full mt-4"
-                            >
-                              {loading ? 'جاري الاستيراد...' : `استيراد ${importData.length} طالب`}
-                            </Button>
-                          )}
-                        </CardContent>
-                      </Card>
-                    )}
-                  </div>
-                </TabsContent>
-              </Tabs>
+                          <div className="flex items-center space-x-2 space-x-reverse mb-4">
+                            <Checkbox
+                              id="sendWelcomeEmailBulk"
+                              checked={sendWelcomeEmailBulk}
+                              onCheckedChange={(checked) => setSendWelcomeEmailBulk(checked as boolean)}
+                            />
+                            <Label htmlFor="sendWelcomeEmailBulk" className="text-sm font-medium flex items-center gap-1">
+                              <Mail className="h-4 w-4" />
+                              إرسال رسائل ترحيبية للطلاب الجدد
+                            </Label>
+                          </div>
+
+                          <Button 
+                            onClick={handleImportStudents}
+                            disabled={loading || importData.length === 0}
+                            className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800"
+                            size="lg"
+                          >
+                            {loading ? (
+                              <div className="flex items-center gap-2">
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                جاري الاستيراد...
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <Users className="h-4 w-4" />
+                                استيراد {importData.length} طالب
+                              </div>
+                            )}
+                           </Button>
+                         </CardContent>
+                       </Card>
+                     )}
+                   </div>
+                 </TabsContent>
+               </Tabs>
 
               <Separator className="my-6" />
 
