@@ -84,6 +84,13 @@ export const useGrade10Projects = () => {
       setLoading(true);
       logger.debug('Starting to fetch Grade 10 mini projects');
       
+      // التحقق من صلاحية الوصول قبل جلب البيانات
+      if (userProfile?.role === 'teacher' && !canAccessGrade('10')) {
+        logger.info('Teacher does not have access to Grade 10 projects');
+        setProjects([]);
+        return;
+      }
+      
       // Fetch projects first
       const { data: projectsData, error: projectsError } = await supabase
         .from('grade10_mini_projects')
@@ -484,10 +491,10 @@ export const useGrade10Projects = () => {
   };
 
   useEffect(() => {
-    if (userProfile && !accessLoading) {
+    if (userProfile && !accessLoading && canAccessGrade('10')) {
       fetchProjects();
     }
-  }, [userProfile, accessLoading, canAccessGrade]);
+  }, [userProfile, accessLoading]); // إزالة canAccessGrade من dependency array
 
   return {
     projects,

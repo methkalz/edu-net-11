@@ -437,7 +437,7 @@ export const useTeacherProjects = () => {
       fetchTeacherProjects();
       fetchRecentComments();
     }
-  }, [userProfile, allowedGrades, accessLoading]);
+  }, [userProfile?.user_id, userProfile?.role, accessLoading]); // تجنب allowedGrades في dependency array
 
   // إعداد real-time subscription للتعليقات الجديدة
   useEffect(() => {

@@ -323,7 +323,7 @@ export const useProjectNotifications = () => {
     if (userProfile?.user_id && userProfile?.role === 'teacher' && !accessLoading) {
       fetchNotifications();
     }
-  }, [userProfile, allowedGrades, accessLoading]);
+  }, [userProfile?.user_id, userProfile?.role, accessLoading]); // تجنب allowedGrades في dependency array
 
   // إعداد real-time subscription للإشعارات الجديدة
   useEffect(() => {

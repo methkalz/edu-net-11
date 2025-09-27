@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   FileText, 
   MessageCircle, 
@@ -17,7 +18,8 @@ import {
   Eye,
   MessageSquare,
   Calendar,
-  Zap
+  Zap,
+  RefreshCw
 } from 'lucide-react';
 import { useGrade10Projects } from '@/hooks/useGrade10Projects';
 import { formatDistanceToNow } from 'date-fns';
@@ -25,16 +27,20 @@ import { ar } from 'date-fns/locale';
 
 const Grade10ProjectsWidget: React.FC = () => {
   const navigate = useNavigate();
-  const { projects, loading } = useGrade10Projects();
+  const { projects, loading, fetchProjects } = useGrade10Projects();
 
-  // Calculate quick stats
-  const quickStats = {
+  // Calculate quick stats with memoization for performance
+  const quickStats = useMemo(() => ({
     totalProjects: projects.length,
     completedProjects: projects.filter(p => p.status === 'completed').length,
     inProgressProjects: projects.filter(p => p.status === 'in_progress').length,
     averageCompletion: projects.length > 0 
-      ? Math.round(projects.reduce((acc, p) => acc + p.progress_percentage, 0) / projects.length)
+      ? Math.round(projects.reduce((acc, p) => acc + (p.progress_percentage || 0), 0) / projects.length)
       : 0
+  }), [projects]);
+
+  const handleRefresh = () => {
+    fetchProjects();
   };
 
   const getStatusIcon = (status: string) => {
@@ -118,6 +124,14 @@ const Grade10ProjectsWidget: React.FC = () => {
             onClick={() => navigate('/grade10-management')}
           >
             عرض جميع المشاريع
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={loading}
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           </Button>
         </div>
       </CardHeader>
