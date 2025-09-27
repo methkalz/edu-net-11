@@ -89,7 +89,7 @@ const GradeContentHeader: React.FC<GradeContentHeaderProps> = ({
                     <BookOpen className={cn("w-6 h-6", getIconColor())} />
                   </div>
                   <div>
-                    <h1 className="text-2xl font-bold text-foreground">
+                    <h1 className="text-xl font-bold text-foreground">
                       {gradeTitle}
                     </h1>
                     <p className="text-lg text-muted-foreground">
