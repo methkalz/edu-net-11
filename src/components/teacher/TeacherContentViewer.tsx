@@ -4,6 +4,7 @@ import { useStudentContent } from '@/hooks/useStudentContent';
 import { useStudentProgress } from '@/hooks/useStudentProgress';
 import { useGrade10MiniProjects } from '@/hooks/useGrade10MiniProjects';
 import { useGrade12Projects } from '@/hooks/useGrade12Projects';
+import { useGrade12Content } from '@/hooks/useGrade12Content';
 import { useStudentGrade10Lessons } from '@/hooks/useStudentGrade10Lessons';
 import { StudentGrade11Content } from '../student/StudentGrade11Content';
 import { StudentGrade10Lessons } from '../student/StudentGrade10Lessons';
@@ -72,6 +73,14 @@ export const TeacherContentViewer: React.FC<TeacherContentViewerProps> = ({ grad
     loading: false,
     error: null,
     getContentStats: () => ({ totalLessons: 0 })
+  };
+
+  // For Grade 12, use the grade12 content hook
+  const grade12ContentResult = grade === '12' ? useGrade12Content() : {
+    videos: [],
+    documents: [],
+    projects: [],
+    loading: false
   };
 
   const handleContentClick = (content: any, contentType: 'video' | 'document' | 'lesson' | 'project') => {
@@ -457,6 +466,159 @@ export const TeacherContentViewer: React.FC<TeacherContentViewerProps> = ({ grad
           <h3 className="text-lg font-semibold mb-2">محتوى الصف الثاني عشر</h3>
           <p className="text-muted-foreground">سيتم عرض محتوى الصف الثاني عشر هنا</p>
         </div>
+      </div>
+    );
+  }
+
+  // Grade 12 Content
+  if (grade === '12') {
+    const { videos, documents, projects, loading } = grade12ContentResult;
+    
+    if (loading) {
+      return (
+        <div className="space-y-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 flex items-center justify-center shadow-lg">
+              <GraduationCap className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-foreground">محتوى الصف الثاني عشر</h2>
+              <p className="text-muted-foreground">جاري تحميل المحتوى...</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="h-64 bg-muted/20 rounded-lg animate-pulse"></div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    const allContent = [
+      ...(videos || []).map(v => ({ ...v, type: 'video' as const })),
+      ...(documents || []).map(d => ({ ...d, type: 'document' as const })),
+      ...(projects || []).map(p => ({ ...p, type: 'project' as const }))
+    ];
+
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 flex items-center justify-center shadow-lg">
+            <GraduationCap className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-foreground">محتوى الصف الثاني عشر</h2>
+            <p className="text-muted-foreground">
+              {allContent.length > 0 
+                ? `${videos?.length || 0} فيديو، ${documents?.length || 0} مستند، ${projects?.length || 0} مشروع`
+                : 'لا يوجد محتوى متاح حالياً'
+              }
+            </p>
+          </div>
+        </div>
+
+        {allContent.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {videos?.map((video) => (
+              <ContentCard
+                key={video.id}
+                item={video}
+                type="video"
+                icon={Video}
+                color="from-red-500 to-red-600"
+              />
+            ))}
+            {documents?.map((document) => (
+              <ContentCard
+                key={document.id}
+                item={document}
+                type="document"
+                icon={FileText}
+                color="from-blue-500 to-blue-600"
+              />
+            ))}
+            {projects?.map((project) => (
+              <ContentCard
+                key={project.id}
+                item={project}
+                type="project"
+                icon={Trophy}
+                color="from-purple-500 to-purple-600"
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12 space-y-4">
+            <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-r from-violet-500/10 to-purple-500/5 flex items-center justify-center">
+              <BookOpen className="h-8 w-8 text-violet-500/50" />
+            </div>
+            <div>
+              <p className="font-medium text-foreground">لم يتم إضافة محتوى للصف الثاني عشر بعد</p>
+              <p className="text-sm text-muted-foreground mt-1">سيتم عرض الفيديوهات والمستندات والمشاريع هنا</p>
+            </div>
+          </div>
+        )}
+
+        {/* Content Viewer Modal */}
+        <Dialog open={!!selectedContent} onOpenChange={closeViewer}>
+          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold">
+                {selectedContent?.title}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="mt-4">
+              {viewerType === 'video' && selectedContent && (
+                <div className="space-y-4">
+                  <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                    <iframe
+                      src={selectedContent.video_url}
+                      className="w-full h-full"
+                      allowFullScreen
+                      title={selectedContent.title}
+                    />
+                  </div>
+                  {selectedContent.description && (
+                    <p className="text-muted-foreground">{selectedContent.description}</p>
+                  )}
+                </div>
+              )}
+              {viewerType === 'document' && selectedContent && (
+                <div className="space-y-4">
+                  <div className="p-6 border rounded-lg bg-muted/10">
+                    <h3 className="font-semibold mb-2">معلومات المستند</h3>
+                    <div className="space-y-2 text-sm">
+                      <p><strong>النوع:</strong> {selectedContent.file_type}</p>
+                      <p><strong>الفئة:</strong> {selectedContent.category}</p>
+                      {selectedContent.description && (
+                        <p><strong>الوصف:</strong> {selectedContent.description}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+              {viewerType === 'project' && selectedContent && (
+                <div className="space-y-4">
+                  <div className="p-6 border rounded-lg bg-muted/10">
+                    <h3 className="font-semibold mb-2">تفاصيل المشروع</h3>
+                    <div className="space-y-3 text-sm">
+                      {selectedContent.description && (
+                        <p><strong>الوصف:</strong> {selectedContent.description}</p>
+                      )}
+                      {selectedContent.requirements && (
+                        <p><strong>المتطلبات:</strong> {selectedContent.requirements}</p>
+                      )}
+                      {selectedContent.deliverables && (
+                        <p><strong>المخرجات:</strong> {selectedContent.deliverables}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }
