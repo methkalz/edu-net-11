@@ -26,7 +26,15 @@ import { formatDistanceToNow } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { toast } from '@/hooks/use-toast';
 
-const ProjectNotifications: React.FC = () => {
+interface ProjectNotificationsProps {
+  gradeFilter?: '10' | '12';
+  title?: string;
+}
+
+const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({ 
+  gradeFilter, 
+  title = 'الإشعارات' 
+}) => {
   const navigate = useNavigate();
   const { 
     notifications, 
@@ -49,7 +57,15 @@ const ProjectNotifications: React.FC = () => {
   };
 
   const handleViewProject = (projectId: string) => {
-    navigate(`/grade12-project-editor/${projectId}?tab=comments`);
+    // Navigate based on gradeFilter 
+    if (gradeFilter === '10') {
+      navigate(`/grade10-project-editor/${projectId}?tab=comments`);
+    } else if (gradeFilter === '12') {
+      navigate(`/grade12-project-editor/${projectId}?tab=comments`);
+    } else {
+      // Default to grade 12 if no filter specified
+      navigate(`/grade12-project-editor/${projectId}?tab=comments`);
+    }
   };
 
   const handleQuickReply = async () => {
@@ -73,7 +89,18 @@ const ProjectNotifications: React.FC = () => {
     }
   };
 
-  const recentNotifications = notifications.slice(0, 10);
+  // Filter notifications by grade if gradeFilter is provided
+  const filteredNotifications = gradeFilter 
+    ? notifications.filter(notification => {
+        // Check if notification is for the specified grade
+        return notification.notification_type?.includes(`grade${gradeFilter}`) ||
+               notification.project_id?.includes('grade' + gradeFilter) ||
+               (!notification.notification_type?.includes('grade12') && gradeFilter === '10') ||
+               (!notification.notification_type?.includes('grade10') && gradeFilter === '12');
+      })
+    : notifications;
+
+  const recentNotifications = filteredNotifications.slice(0, 10);
 
   return (
     <Card className="glass-card border-0 shadow-lg">
@@ -85,7 +112,12 @@ const ProjectNotifications: React.FC = () => {
             </div>
             <div>
               <CardTitle className="text-lg font-bold text-foreground flex items-center gap-2">
-                الإشعارات
+                {title}
+                {gradeFilter && (
+                  <Badge variant="outline" className="text-xs">
+                    الصف {gradeFilter === '10' ? 'العاشر' : 'الثاني عشر'}
+                  </Badge>
+                )}
                 {unreadCount > 0 && (
                   <Badge variant="destructive" className="text-xs px-2 py-1 rounded-full">
                     {unreadCount}
@@ -93,7 +125,7 @@ const ProjectNotifications: React.FC = () => {
                 )}
               </CardTitle>
               <CardDescription className="text-sm text-muted-foreground">
-                تعليقات جديدة وتحديثات المشاريع
+                تعليقات جديدة وتحديثات المشاريع {gradeFilter ? `للصف ${gradeFilter === '10' ? 'العاشر' : 'الثاني عشر'}` : ''}
               </CardDescription>
             </div>
           </div>
@@ -297,7 +329,7 @@ const ProjectNotifications: React.FC = () => {
               className="w-full text-sm text-muted-foreground hover:text-foreground"
               onClick={() => navigate('/notifications')}
             >
-              عرض جميع الإشعارات ({notifications.length})
+              عرض جميع الإشعارات ({filteredNotifications.length})
             </Button>
           </div>
         )}

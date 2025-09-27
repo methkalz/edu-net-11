@@ -51,7 +51,7 @@ import { useTeacherContentAccess } from '@/hooks/useTeacherContentAccess';
 import { ContentFilterBadge } from '@/components/teacher/ContentFilterBadge';
 import Grade12ProjectsWidget from '@/components/teacher/Grade12ProjectsWidget';
 import ProjectNotifications from '@/components/teacher/ProjectNotifications';
-import Grade10TeacherContent from '@/components/teacher/Grade10TeacherContent';
+import Grade10ProjectsWidget from '@/components/teacher/Grade10ProjectsWidget';
 import ModernHeader from '@/components/shared/ModernHeader';
 import { StudentPresenceWidget } from '@/components/teacher/StudentPresenceWidget';
 import { OnlineStudentsStats } from '@/components/dashboard/OnlineStudentsStats';
@@ -550,26 +550,51 @@ const TeacherDashboard: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Grade 12 Projects and Notifications - عرض حسب الصلاحيات */}
-        {canAccessGrade('12') ? (
+        {/* Grade-specific Projects and Notifications */}
+        {canAccessGrade('12') && canAccessGrade('10') ? (
+          // Teacher responsible for both grades - show both blocks
+          <div className="space-y-8">
+            {/* Grade 12 Projects and Notifications */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <Grade12ProjectsWidget />
+              </div>
+              <div className="lg:col-span-1">
+                <ProjectNotifications gradeFilter="12" title="إشعارات الصف الثاني عشر" />
+              </div>
+            </div>
+            
+            {/* Grade 10 Projects and Notifications */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <Grade10ProjectsWidget />
+              </div>
+              <div className="lg:col-span-1">
+                <ProjectNotifications gradeFilter="10" title="إشعارات الصف العاشر" />
+              </div>
+            </div>
+          </div>
+        ) : canAccessGrade('12') ? (
+          // Teacher responsible for grade 12 only
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
               <Grade12ProjectsWidget />
             </div>
             <div className="lg:col-span-1">
-              <ProjectNotifications />
+              <ProjectNotifications gradeFilter="12" title="إشعارات الصف الثاني عشر" />
             </div>
           </div>
         ) : canAccessGrade('10') ? (
-          <div className="space-y-6">
-            <Grade10TeacherContent />
-            <ProjectNotifications />
+          // Teacher responsible for grade 10 only
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <Grade10ProjectsWidget />
+            </div>
+            <div className="lg:col-span-1">
+              <ProjectNotifications gradeFilter="10" title="إشعارات الصف العاشر" />
+            </div>
           </div>
-        ) : allowedGrades.length > 0 && (
-          <div className="grid grid-cols-1 gap-6">
-            <ProjectNotifications />
-          </div>
-        )}
+        ) : null}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* صفوفي الدراسية المحسنة */}
