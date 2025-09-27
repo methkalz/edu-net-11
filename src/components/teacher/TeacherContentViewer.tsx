@@ -9,6 +9,8 @@ import { StudentGrade11Content } from '../student/StudentGrade11Content';
 import { StudentGrade10Lessons } from '../student/StudentGrade10Lessons';
 import { ComputerStructureLessons } from '../student/ComputerStructureLessons';
 import KnowledgeAdventureRealContent from '../games/KnowledgeAdventureRealContent';
+import WindowsBasicsContent from './WindowsBasicsContent';
+import NetworkIntroContent from './NetworkIntroContent';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -336,17 +338,11 @@ export const TeacherContentViewer: React.FC<TeacherContentViewerProps> = ({ grad
           </TabsContent>
 
           <TabsContent value="windows_basics" className="mt-6">
-            <div className="text-center py-8">
-              <h3 className="text-lg font-semibold mb-2">أساسيات الويندوز</h3>
-              <p className="text-muted-foreground">سيتم عرض دروس الويندوز هنا</p>
-            </div>
+            <WindowsBasicsContent />
           </TabsContent>
 
           <TabsContent value="network_intro" className="mt-6">
-            <div className="text-center py-8">
-              <h3 className="text-lg font-semibold mb-2">مقدمة عن الشبكات</h3>
-              <p className="text-muted-foreground">سيتم عرض مقدمة الشبكات هنا</p>
-            </div>
+            <NetworkIntroContent />
           </TabsContent>
 
           <TabsContent value="knowledge_adventure" className="mt-6">
