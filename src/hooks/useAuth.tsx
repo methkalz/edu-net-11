@@ -24,6 +24,7 @@ import { UserProfile, AuthResponse } from '@/types/common';
 import { logError, logInfo } from '@/lib/logger';
 import { sessionMonitor } from '@/lib/auth/session-monitor';
 import { authErrorHandler } from '@/lib/error-handling/handlers/auth-error-handler';
+import { useImpersonation } from './useImpersonation.ts';
 
 /**
  * Authentication Context Type Definition
@@ -42,8 +43,6 @@ interface AuthContextType {
 }
 
 // Create the authentication context
-import { useImpersonation } from './useImpersonation.ts';
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 /**
