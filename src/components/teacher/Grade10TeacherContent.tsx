@@ -7,7 +7,6 @@ import { StudentGrade10Lessons } from '../student/StudentGrade10Lessons';
 import { ComputerStructureLessons } from '../student/ComputerStructureLessons';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -41,8 +40,7 @@ import {
   Settings,
   Network,
   Phone,
-  Users,
-  BarChart3
+  Users
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { ProjectFormData } from '@/types/grade10-projects';
@@ -168,7 +166,6 @@ const Grade10TeacherContent = () => {
     // Mock teacher analytics data
     const totalStudents = 25;
     const completedStudents = Math.floor(Math.random() * totalStudents);
-    const completionRate = Math.round((completedStudents / totalStudents) * 100);
 
     return (
       <Card className="group relative hover:shadow-xl transition-all duration-500 border-0 bg-gradient-to-br from-background/80 to-background/40 backdrop-blur-md overflow-hidden hover:scale-[1.02] hover:-translate-y-1">
@@ -264,17 +261,6 @@ const Grade10TeacherContent = () => {
                 </div>
               )}
 
-              {/* Teacher Analytics Progress bar */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground font-medium">معدل الإكمال</span>
-                  <span className="font-bold text-primary">{completionRate}%</span>
-                </div>
-                <div className="relative">
-                  <Progress value={completionRate} className="h-3 bg-muted/50" />
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-full"></div>
-                </div>
-              </div>
 
               {/* Enhanced Bottom info and action */}
               <div className="flex items-center justify-between pt-4 border-t border-border/50">
@@ -285,10 +271,6 @@ const Grade10TeacherContent = () => {
                       <span className="font-medium">{item.duration}</span>
                     </div>
                   )}
-                  <div className="flex items-center gap-2 text-blue-600 bg-blue-50 rounded-full px-3 py-1">
-                    <BarChart3 className="w-3 h-3" />
-                    <span className="font-bold">{completionRate}%</span>
-                  </div>
                 </div>
 
                 <Button
@@ -386,7 +368,7 @@ const Grade10TeacherContent = () => {
         gradeNumber={10}
         studentsCount={125}
         contentCount={getFilteredVideos().length + getFilteredDocuments().length + allProjects.length}
-        completionRate={78}
+        
         isTeacherView={true}
         
         
