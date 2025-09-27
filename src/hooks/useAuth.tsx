@@ -384,23 +384,59 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    * 
    * Signs out the current user and clears all authentication state.
    * Automatically redirects to the authentication page after successful logout.
+   * Handles expired/missing sessions gracefully.
    */
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    
-    // Handle sign out result with user feedback
-    if (error) {
-      toast({
-        title: "خطأ",
-        description: error.message,
-        variant: "destructive",
-      });
-    } else {
+    try {
+      // First check if we have a current session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      // If no session exists, just clear local state and redirect
+      if (!session || sessionError) {
+        console.log('No active session found during signOut, clearing local state');
+        toast({
+          title: "تم تسجيل الخروج",
+          description: "نراك قريباً",
+        });
+        window.location.href = '/auth';
+        return;
+      }
+
+      // If session exists, attempt normal signout
+      const { error } = await supabase.auth.signOut();
+      
+      // Handle sign out result with user feedback
+      if (error) {
+        // Handle specific "session not found" errors gracefully
+        if (error.message.includes('session') || error.message.includes('Session') || error.status === 403) {
+          console.log('Session already expired during signOut, redirecting to auth');
+          toast({
+            title: "تم تسجيل الخروج",
+            description: "انتهت صلاحية الجلسة",
+          });
+          window.location.href = '/auth';
+        } else {
+          toast({
+            title: "خطأ في تسجيل الخروج",
+            description: error.message,
+            variant: "destructive",
+          });
+        }
+      } else {
+        toast({
+          title: "تم تسجيل الخروج",
+          description: "نراك قريباً",
+        });
+        // Automatic redirection after successful logout
+        window.location.href = '/auth';
+      }
+    } catch (criticalError) {
+      // If any critical error occurs, still redirect to auth page
+      console.error('Critical error during sign out:', criticalError);
       toast({
         title: "تم تسجيل الخروج",
-        description: "نراك قريباً",
+        description: "انتهت الجلسة",
       });
-      // Automatic redirection after successful logout
       window.location.href = '/auth';
     }
   };
