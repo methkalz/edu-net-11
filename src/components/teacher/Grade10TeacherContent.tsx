@@ -380,8 +380,8 @@ const Grade10TeacherContent = () => {
     <div className="container mx-auto px-6 py-12 space-y-12">
       {/* Teacher Header */}
       <div className="text-center space-y-4 mb-8">
-        <h2 className="text-3xl font-bold text-foreground">محتوى الصف العاشر - المعلم</h2>
-        <p className="text-muted-foreground">عرض وإدارة محتوى الصف العاشر مع إحصائيات الطلاب</p>
+        <h2 className="text-2xl font-bold text-foreground">محتوى الصف العاشر - المعلم</h2>
+        <p className="text-lg text-muted-foreground">عرض وإدارة محتوى الصف العاشر مع إحصائيات الطلاب</p>
       </div>
 
       {/* Content Tabs - Exact same design as student view */}

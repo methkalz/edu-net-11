@@ -101,7 +101,7 @@ const GradeContentViewer: React.FC<GradeContentViewerProps> = ({
       <Card className={`border-l-4 ${getGradeColor()}`}>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-xl">
               {getGradeIcon()}
               مضامين {gradeLabel}
             </CardTitle>
