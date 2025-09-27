@@ -519,27 +519,6 @@ const TeacherDashboard: React.FC = () => {
           onOnlineStudentsClick={() => setIsOnlineStatsOpen(true)}
         />
 
-        {/* Grade 12 Projects and Notifications - عرض حسب الصلاحيات */}
-        {canAccessGrade('12') ? (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
-              <Grade12ProjectsWidget />
-            </div>
-            <div className="lg:col-span-1">
-              <ProjectNotifications />
-            </div>
-          </div>
-        ) : canAccessGrade('10') ? (
-          <div className="space-y-6">
-            <Grade10TeacherContent />
-            <ProjectNotifications />
-          </div>
-        ) : allowedGrades.length > 0 && (
-          <div className="grid grid-cols-1 gap-6">
-            <ProjectNotifications />
-          </div>
-        )}
-
         {/* الإجراءات السريعة المحسنة */}
         <Card className="glass-card border-0 shadow-xl animate-fade-in-up">
           <CardHeader className="pb-4">
@@ -571,6 +550,27 @@ const TeacherDashboard: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Grade 12 Projects and Notifications - عرض حسب الصلاحيات */}
+        {canAccessGrade('12') ? (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <Grade12ProjectsWidget />
+            </div>
+            <div className="lg:col-span-1">
+              <ProjectNotifications />
+            </div>
+          </div>
+        ) : canAccessGrade('10') ? (
+          <div className="space-y-6">
+            <Grade10TeacherContent />
+            <ProjectNotifications />
+          </div>
+        ) : allowedGrades.length > 0 && (
+          <div className="grid grid-cols-1 gap-6">
+            <ProjectNotifications />
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* صفوفي الدراسية المحسنة */}
