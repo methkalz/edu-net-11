@@ -103,15 +103,15 @@ const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({
   const recentNotifications = filteredNotifications.slice(0, 10);
 
   return (
-    <Card className="glass-card border-0 shadow-lg">
+    <Card className="border-0 bg-card shadow-sm">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center">
-              <Bell className="h-5 w-5 text-white" />
+            <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
+              <Bell className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <CardTitle className="text-lg font-bold text-foreground flex items-center gap-2">
+              <CardTitle className="text-lg font-medium text-foreground flex items-center gap-2">
                 {title}
                 {gradeFilter && (
                   <Badge variant="outline" className="text-xs">
@@ -167,10 +167,10 @@ const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({
             </div>
           ) : recentNotifications.length === 0 ? (
             <div className="text-center py-12">
-              <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center">
-                <Bell className="h-10 w-10 text-blue-400" />
+              <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-muted flex items-center justify-center">
+                <Bell className="h-8 w-8 text-muted-foreground" />
               </div>
-              <h3 className="font-semibold text-foreground mb-2">لا توجد إشعارات</h3>
+              <h3 className="font-medium text-foreground mb-2">لا توجد إشعارات</h3>
               <p className="text-sm text-muted-foreground">
                 ستظهر هنا الإشعارات الجديدة من الطلاب
               </p>
@@ -180,23 +180,23 @@ const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({
               {recentNotifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`relative p-4 rounded-xl border transition-all hover:shadow-md cursor-pointer group ${
+                  className={`relative p-4 rounded-xl border transition-all hover:shadow-sm cursor-pointer group ${
                     !notification.is_read 
-                      ? 'bg-gradient-to-r from-blue-50/50 to-blue-50/30 border-blue-200/50 shadow-sm' 
+                      ? 'bg-muted/30 border-primary/20' 
                       : 'bg-card hover:bg-muted/30 border-border'
                   }`}
                   onClick={() => handleNotificationClick(notification)}
                 >
                   {!notification.is_read && (
-                    <div className="absolute top-2 right-2 w-3 h-3 bg-blue-500 rounded-full"></div>
+                    <div className="absolute top-3 right-3 w-2 h-2 bg-primary rounded-full"></div>
                   )}
                   
                   <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
                       {notification.notification_type === 'new_comment' ? (
                         <MessageCircle className="h-5 w-5 text-primary" />
                       ) : (
-                        <AlertCircle className="h-5 w-5 text-orange-500" />
+                        <AlertCircle className="h-5 w-5 text-muted-foreground" />
                       )}
                     </div>
                     

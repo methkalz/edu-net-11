@@ -29,13 +29,13 @@ const Grade12ProjectsWidget: React.FC = () => {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'completed':
-        return <CheckCircle className="h-4 w-4 text-green-600" />;
+        return <CheckCircle className="h-4 w-4 text-muted-foreground" />;
       case 'in_progress':
-        return <Clock className="h-4 w-4 text-blue-600" />;
+        return <Clock className="h-4 w-4 text-muted-foreground" />;
       case 'draft':
-        return <FileText className="h-4 w-4 text-gray-600" />;
+        return <FileText className="h-4 w-4 text-muted-foreground" />;
       default:
-        return <AlertCircle className="h-4 w-4 text-yellow-600" />;
+        return <AlertCircle className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
@@ -55,19 +55,19 @@ const Grade12ProjectsWidget: React.FC = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
-        return 'bg-green-100 text-green-800 hover:bg-green-200';
+        return 'border-green-200 text-green-700';
       case 'in_progress':
-        return 'bg-blue-100 text-blue-800 hover:bg-blue-200';
+        return 'border-blue-200 text-blue-700';
       case 'draft':
-        return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
+        return 'border-gray-200 text-gray-700';
       default:
-        return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200';
+        return 'border-yellow-200 text-yellow-700';
     }
   };
 
   if (loading) {
     return (
-      <Card className="col-span-full">
+      <Card className="border-0 bg-card shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
@@ -89,24 +89,29 @@ const Grade12ProjectsWidget: React.FC = () => {
   }
 
   return (
-    <Card className="col-span-full">
-      <CardHeader>
+    <Card className="border-0 bg-card shadow-sm">
+      <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
               <FileText className="h-5 w-5 text-primary" />
-              مشاريع الثاني عشر
-            </CardTitle>
-            <CardDescription>
-              متابعة مشاريع الطلاب وآخر التحديثات
-            </CardDescription>
+            </div>
+            <div>
+              <CardTitle className="text-lg font-medium text-foreground">
+                مشاريع الثاني عشر
+              </CardTitle>
+              <CardDescription className="text-sm text-muted-foreground">
+                متابعة مشاريع الطلاب وآخر التحديثات
+              </CardDescription>
+            </div>
           </div>
           <Button 
             variant="outline" 
             size="sm"
             onClick={() => navigate('/grade12-management')}
+            className="text-sm"
           >
-            عرض جميع المشاريع
+            عرض الكل
           </Button>
         </div>
       </CardHeader>
@@ -114,11 +119,11 @@ const Grade12ProjectsWidget: React.FC = () => {
       <CardContent className="space-y-6">
         {/* إحصائيات سريعة */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="text-center p-3 bg-muted/50 rounded-lg">
+          <div className="text-center p-4 bg-muted/50 rounded-lg border">
             <div className="flex items-center justify-center mb-2">
-              <Users className="h-5 w-5 text-blue-600" />
+              <Users className="h-5 w-5 text-muted-foreground" />
             </div>
-            <div className="text-2xl font-bold text-foreground">
+            <div className="text-2xl font-semibold text-foreground">
               {quickStats.totalProjects}
             </div>
             <div className="text-sm text-muted-foreground">
@@ -126,11 +131,11 @@ const Grade12ProjectsWidget: React.FC = () => {
             </div>
           </div>
           
-          <div className="text-center p-3 bg-muted/50 rounded-lg">
+          <div className="text-center p-4 bg-muted/50 rounded-lg border">
             <div className="flex items-center justify-center mb-2">
-              <CheckCircle className="h-5 w-5 text-green-600" />
+              <CheckCircle className="h-5 w-5 text-muted-foreground" />
             </div>
-            <div className="text-2xl font-bold text-foreground">
+            <div className="text-2xl font-semibold text-foreground">
               {quickStats.completedProjects}
             </div>
             <div className="text-sm text-muted-foreground">
@@ -138,11 +143,11 @@ const Grade12ProjectsWidget: React.FC = () => {
             </div>
           </div>
           
-          <div className="text-center p-3 bg-muted/50 rounded-lg">
+          <div className="text-center p-4 bg-muted/50 rounded-lg border">
             <div className="flex items-center justify-center mb-2">
-              <MessageCircle className="h-5 w-5 text-orange-600" />
+              <MessageCircle className="h-5 w-5 text-muted-foreground" />
             </div>
-            <div className="text-2xl font-bold text-foreground">
+            <div className="text-2xl font-semibold text-foreground">
               {quickStats.unreadCommentsTotal}
             </div>
             <div className="text-sm text-muted-foreground">
@@ -150,11 +155,11 @@ const Grade12ProjectsWidget: React.FC = () => {
             </div>
           </div>
           
-          <div className="text-center p-3 bg-muted/50 rounded-lg">
+          <div className="text-center p-4 bg-muted/50 rounded-lg border">
             <div className="flex items-center justify-center mb-2">
-              <TrendingUp className="h-5 w-5 text-purple-600" />
+              <TrendingUp className="h-5 w-5 text-muted-foreground" />
             </div>
-            <div className="text-2xl font-bold text-foreground">
+            <div className="text-2xl font-semibold text-foreground">
               {quickStats.averageCompletion}%
             </div>
             <div className="text-sm text-muted-foreground">
@@ -173,83 +178,87 @@ const Grade12ProjectsWidget: React.FC = () => {
           </h4>
           
           {projects.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>لا توجد مشاريع بعد</p>
-              <p className="text-sm">سيظهر هنا آخر المشاريع عند إنشائها من قبل الطلاب</p>
+            <div className="text-center py-12">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-muted flex items-center justify-center">
+                <FileText className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <h3 className="font-medium text-foreground mb-2">لا توجد مشاريع بعد</h3>
+              <p className="text-sm text-muted-foreground">
+                سيظهر هنا آخر المشاريع عند إنشائها من قبل الطلاب
+              </p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {projects.slice(0, 5).map((project) => (
                 <div
                   key={project.id}
-                  className="flex items-start justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                  className="p-4 border rounded-lg hover:bg-muted/30 transition-colors"
                 >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      {getStatusIcon(project.status)}
-                      <h5 className="font-medium text-foreground truncate">
-                        {project.title}
-                      </h5>
-                      <Badge 
-                        variant="secondary" 
-                        className={getStatusColor(project.status)}
-                      >
-                        {getStatusText(project.status)}
-                      </Badge>
-                    </div>
-                    
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground mb-2">
-                      <span className="flex items-center gap-1">
-                        <Users className="h-3 w-3" />
-                        {project.student_name}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {formatDistanceToNow(new Date(project.updated_at), { 
-                          addSuffix: true, 
-                          locale: ar 
-                        })}
-                      </span>
-                      {project.grade && (
-                        <span className="flex items-center gap-1">
-                          <BarChart3 className="h-3 w-3" />
-                          الدرجة: {project.grade}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* شريط التقدم */}
-                    <div className="flex items-center gap-2 mb-2">
-                      <Progress 
-                        value={project.completion_percentage} 
-                        className="flex-1 h-2"
-                      />
-                      <span className="text-xs text-muted-foreground">
-                        {project.completion_percentage}%
-                      </span>
-                    </div>
-
-                    {/* التعليقات */}
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <MessageSquare className="h-3 w-3" />
-                        {project.total_comments_count} تعليق
-                      </span>
-                      {project.unread_comments_count > 0 && (
-                        <Badge variant="destructive" className="text-xs px-2 py-0">
-                          {project.unread_comments_count} جديد
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2">
+                        {getStatusIcon(project.status)}
+                        <h5 className="font-medium text-foreground truncate">
+                          {project.title}
+                        </h5>
+                        <Badge 
+                          variant="outline" 
+                          className="text-xs"
+                        >
+                          {getStatusText(project.status)}
                         </Badge>
-                      )}
-                    </div>
-                  </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
+                        <span className="flex items-center gap-1">
+                          <Users className="h-3 w-3" />
+                          {project.student_name}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {formatDistanceToNow(new Date(project.updated_at), { 
+                            addSuffix: true, 
+                            locale: ar 
+                          })}
+                        </span>
+                        {project.grade && (
+                          <span className="flex items-center gap-1">
+                            <BarChart3 className="h-3 w-3" />
+                            الدرجة: {project.grade}
+                          </span>
+                        )}
+                      </div>
 
-                  <div className="flex items-center gap-2 ml-4">
+                      {/* شريط التقدم */}
+                      <div className="flex items-center gap-2 mb-2">
+                        <Progress 
+                          value={project.completion_percentage} 
+                          className="flex-1 h-2"
+                        />
+                        <span className="text-xs text-muted-foreground font-medium">
+                          {project.completion_percentage}%
+                        </span>
+                      </div>
+
+                      {/* التعليقات */}
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <MessageSquare className="h-3 w-3" />
+                          {project.total_comments_count} تعليق
+                        </span>
+                        {project.unread_comments_count > 0 && (
+                          <Badge variant="destructive" className="text-xs px-2 py-0">
+                            {project.unread_comments_count} جديد
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => navigate(`/grade12-project-editor/${project.id}`)}
-                      className="h-8 px-3"
+                      className="h-8 w-8 p-0 ml-3"
                     >
                       <Eye className="h-4 w-4" />
                     </Button>
