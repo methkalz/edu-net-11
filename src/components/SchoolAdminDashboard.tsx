@@ -430,9 +430,7 @@ const SchoolAdminDashboard = () => {
   }
   return <div className="min-h-screen bg-background pattern-dots flex flex-col" dir="rtl">
       {/* Modern Header */}
-      <header className="glass-card sticky top-0 z-50 soft-shadow backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        
-      </header>
+      
 
       <div className="container mx-auto px-6 py-6 space-y-8">
         {/* Enhanced Stats Section */}
