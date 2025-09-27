@@ -126,29 +126,7 @@ const GradeContentHeader: React.FC<GradeContentHeaderProps> = ({
               )}
             </div>
 
-            {/* Actions Section */}
-            {isTeacherView && (
-              <div className="flex items-center gap-3">
-                <Badge 
-                  variant="secondary" 
-                  className="px-4 py-2 text-sm font-medium bg-white/10 text-foreground border-white/20"
-                >
-                  وضع المعلم
-                </Badge>
-                
-                {onSettings && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={onSettings}
-                    className="bg-white/10 border-white/20 hover:bg-white/20 backdrop-blur-sm"
-                  >
-                    <Settings className="w-4 h-4 ml-2" />
-                    إعدادات الصف
-                  </Button>
-                )}
-              </div>
-            )}
+            {/* Actions Section - Removed teacher mode badge and settings */}
           </div>
         </CardContent>
       </Card>

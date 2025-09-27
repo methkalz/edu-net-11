@@ -389,7 +389,7 @@ const Grade10TeacherContent = () => {
         completionRate={78}
         isTeacherView={true}
         
-        onSettings={() => console.log('إعدادات الصف')}
+        
       />
 
       {/* Content Tabs - Exact same design as student view */}
