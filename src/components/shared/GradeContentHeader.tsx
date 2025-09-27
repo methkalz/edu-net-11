@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, Users, BookOpen, Target, Settings } from 'lucide-react';
+import { ArrowRight, Users, Folder, Target, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useGradeStudentCount } from '@/hooks/useGradeStudentCount';
 
@@ -89,7 +89,7 @@ const GradeContentHeader: React.FC<GradeContentHeaderProps> = ({
                     "p-3 rounded-xl backdrop-blur-sm border border-white/20",
                     "bg-white/10"
                   )}>
-                    <BookOpen className={cn("w-6 h-6", getIconColor())} />
+                    <Folder className={cn("w-6 h-6", getIconColor())} />
                   </div>
                   <div>
                     <h1 className="text-xl font-bold text-foreground">
