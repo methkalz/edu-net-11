@@ -448,27 +448,6 @@ export const TeacherContentViewer: React.FC<TeacherContentViewerProps> = ({ grad
     );
   }
 
-  // Grade 12 Content
-  if (grade === '12') {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 flex items-center justify-center shadow-lg">
-            <GraduationCap className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold text-foreground">محتوى الصف الثاني عشر</h2>
-            <p className="text-muted-foreground">كما يراه الطلاب في لوحة تحكمهم</p>
-          </div>
-        </div>
-
-        <div className="text-center py-8">
-          <h3 className="text-lg font-semibold mb-2">محتوى الصف الثاني عشر</h3>
-          <p className="text-muted-foreground">سيتم عرض محتوى الصف الثاني عشر هنا</p>
-        </div>
-      </div>
-    );
-  }
 
   // Grade 12 Content
   if (grade === '12') {
