@@ -468,7 +468,6 @@ const TeacherDashboard: React.FC = () => {
 
   const quickActions = [
     { name: 'إدارة الطلاب', icon: Users, path: '/students', color: 'blue' },
-    { name: 'مضامين الصفوف', icon: BookOpen, path: '/educational-content', color: 'green' },
     { name: 'التقويم والأحداث', icon: Calendar, path: '/calendar-management', color: 'purple' },
     { name: 'إدارة الصفوف', icon: School, path: '/school-classes', color: 'orange' }
   ];
