@@ -48,7 +48,7 @@ serve(async (req: Request) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: `التقنية ببساطة <onboarding@resend.dev>`,
+        from: `التقنية ببساطة <welcome@edu-net.site>`,
         to: [studentEmail],
         subject: `أهلاً وسهلاً - مرحباً بك في التقنية ببساطة`,
         html: `
@@ -88,7 +88,7 @@ serve(async (req: Request) => {
               
               <!-- Logo Section -->
               <div style="text-align: center; margin-bottom: 20px; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                <img src="https://edu-net.me/logo-mail.png" alt="شعار التقنية ببساطة" style="max-width: 200px; height: auto;" />
+                <img src="https://edu-net.site/logo-mail.png" alt="شعار التقنية ببساطة" style="max-width: 200px; height: auto;" />
               </div>
 
               <!-- Header Section -->
@@ -115,7 +115,7 @@ serve(async (req: Request) => {
                 
                 <!-- Login Button -->
                 <div style="text-align: center; margin: 25px 0;">
-                  <a href="http://www.edu-net.me" class="login-button" style="display: inline-block; padding: 15px 30px; background: linear-gradient(135deg, #0B5394 0%, #1E88E5 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; text-align: center;">
+                  <a href="https://edu-net.site" class="login-button" style="display: inline-block; padding: 15px 30px; background: linear-gradient(135deg, #0B5394 0%, #1E88E5 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; text-align: center;">
                     تسجيل الدخول للموقع
                   </a>
                 </div>
@@ -143,10 +143,6 @@ serve(async (req: Request) => {
       const errorText = await emailResponse.text();
       
       // Handle specific Resend API errors
-      if (emailResponse.status === 403 && errorText.includes('You can only send testing emails')) {
-        throw new Error(`قيود البيئة التجريبية: يمكن إرسال الإيميلات فقط إلى البريد المسجل في Resend. لإرسال إيميلات لعناوين أخرى، يجب تفعيل نطاق مخصص في resend.com/domains`);
-      }
-      
       throw new Error(`Resend API error: ${emailResponse.status} - ${errorText}`);
     }
 
