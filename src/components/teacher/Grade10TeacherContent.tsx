@@ -168,41 +168,32 @@ const Grade10TeacherContent = () => {
     const completedStudents = Math.floor(Math.random() * totalStudents);
 
     return (
-      <Card className="group relative hover:shadow-xl transition-all duration-500 border-0 bg-gradient-to-br from-background/80 to-background/40 backdrop-blur-md overflow-hidden hover:scale-[1.02] hover:-translate-y-1">
-        {/* Animated Border */}
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-transparent to-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-lg" />
-        
+      <Card className="group relative hover:shadow-md transition-all duration-300 border border-border/30 bg-background">
         <CardContent className="p-0 relative">
-          {/* Video Thumbnail Section - Enhanced */}
+          {/* Video Thumbnail Section - Simplified */}
           {type === 'video' && (
-            <div className="relative h-52 overflow-hidden">
+            <div className="relative h-48 overflow-hidden rounded-t-lg">
               <img
                 src={getVideoThumbnail(item)}
                 alt={item.title}
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                className="w-full h-full object-cover"
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = '/placeholder.svg';
                 }}
               />
               
-              {/* Enhanced Overlay */}
+              {/* Simple Overlay */}
               <div 
-                className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-all duration-500 flex items-center justify-center cursor-pointer"
+                className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center cursor-pointer"
                 onClick={() => handleContentClick(item, type)}
               >
-                {/* Play Button with Glow Effect */}
-                <div className="opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:scale-110">
-                  <div className="relative">
-                    <div className="absolute inset-0 bg-white/20 rounded-full blur-xl"></div>
-                    <div className="relative bg-white/15 hover:bg-white/25 rounded-full p-4 backdrop-blur-md border border-white/20 shadow-2xl">
-                      <Play className="w-8 h-8 text-white fill-white drop-shadow-lg" />
-                    </div>
-                  </div>
+                <div className="bg-white rounded-full p-3">
+                  <Play className="w-6 h-6 text-gray-900 fill-gray-900" />
                 </div>
               </div>
               
-              {/* Teacher Analytics Badge */}
-              <div className="absolute top-4 right-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-full px-3 py-1 text-xs font-medium shadow-lg border-2 border-white/20">
+              {/* Simple Analytics Badge */}
+              <div className="absolute top-3 right-3 bg-white/90 text-gray-700 rounded-lg px-2 py-1 text-xs font-medium">
                 <div className="flex items-center gap-1">
                   <Users className="w-3 h-3" />
                   {completedStudents}/{totalStudents}
@@ -211,67 +202,66 @@ const Grade10TeacherContent = () => {
               
               {/* Duration Badge */}
               {item.duration && (
-                <div className="absolute bottom-4 left-4 bg-black/60 text-white text-xs px-3 py-1 rounded-full backdrop-blur-sm border border-white/20">
+                <div className="absolute bottom-3 left-3 bg-black/70 text-white text-xs px-2 py-1 rounded">
                   {item.duration}
                 </div>
               )}
             </div>
           )}
 
-          {/* Content Section - Enhanced */}
-          <div className="p-7">
-            <div className="space-y-5">
+          {/* Content Section - Minimalist */}
+          <div className="p-5">
+            <div className="space-y-4">
               {/* Header with icon and title (for non-video content) */}
               {type !== 'video' && (
-                <div className="flex items-start gap-4">
-                  <div className={`w-12 h-12 rounded-2xl bg-gradient-to-r ${color} flex items-center justify-center flex-shrink-0 shadow-lg group-hover:shadow-xl group-hover:scale-105 transition-all duration-300`}>
-                    <IconComponent className="w-6 h-6 text-white" />
+                <div className="flex items-start gap-3">
+                  <div className={`w-10 h-10 rounded-lg bg-gradient-to-r ${color} flex items-center justify-center flex-shrink-0`}>
+                    <IconComponent className="w-5 h-5 text-white" />
                   </div>
                   
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-foreground line-clamp-2 text-lg mb-2 group-hover:text-primary transition-colors duration-300">
+                    <h3 className="font-semibold text-foreground line-clamp-2 text-base mb-1">
                       {item.title}
                     </h3>
                     {item.description && (
-                      <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
+                      <p className="text-sm text-muted-foreground line-clamp-2">
                         {item.description}
                       </p>
                     )}
                   </div>
-
                 </div>
               )}
 
               {/* Video title and description */}
               {type === 'video' && (
-                <div className="space-y-3">
-                  <h3 className="font-bold text-foreground line-clamp-2 text-lg group-hover:text-primary transition-colors duration-300">
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-foreground line-clamp-2 text-base">
                     {item.title}
                   </h3>
                   {item.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
+                    <p className="text-sm text-muted-foreground line-clamp-2">
                       {item.description}
                     </p>
                   )}
                 </div>
               )}
 
-
-              {/* Enhanced Bottom info and action */}
-              <div className="flex items-center justify-between pt-4 border-t border-border/50">
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              {/* Simple Bottom info and action */}
+              <div className="flex items-center justify-between pt-3 border-t border-border/30">
+                <div className="flex items-center gap-3 text-sm text-muted-foreground">
                   {item.duration && (
-                    <div className="flex items-center gap-2 bg-muted/50 rounded-full px-3 py-1">
+                    <div className="flex items-center gap-1">
                       <Clock className="w-3 h-3" />
-                      <span className="font-medium">{item.duration}</span>
+                      <span>{item.duration}</span>
                     </div>
                   )}
                 </div>
 
                 <Button
                   size="sm"
+                  variant="outline"
                   onClick={() => handleContentClick(item, type)}
-                  className="shrink-0 px-6 py-2 text-sm font-semibold shadow-md hover:shadow-lg transition-all duration-300 group-hover:scale-105"
+                  className="text-sm"
                 >
                   معاينة
                 </Button>
