@@ -65,7 +65,9 @@ const SchoolAdminDashboard = () => {
   const [error, setError] = useState<string | null>(null);
   const [showTeacherManagement, setShowTeacherManagement] = useState(false);
   const [recentActivities, setRecentActivities] = useState<any[]>([]);
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   useEffect(() => {
     if (userProfile?.school_id) {
       fetchSchoolStats();
@@ -81,7 +83,6 @@ const SchoolAdminDashboard = () => {
         refreshData();
       }
     }, 30000);
-
     return () => clearInterval(interval);
   }, [userProfile?.school_id, loading]);
   const fetchSchoolStats = async (isRefresh = false) => {
@@ -92,7 +93,6 @@ const SchoolAdminDashboard = () => {
         setLoading(true);
       }
       setError(null);
-
       const schoolId = userProfile?.school_id;
       if (!schoolId) return;
 
@@ -106,65 +106,80 @@ const SchoolAdminDashboard = () => {
 
       // Get students count
       try {
-        const { count } = await supabase
-          .from('students')
-          .select('*', { count: 'exact', head: true })
-          .eq('school_id', schoolId);
+        const {
+          count
+        } = await supabase.from('students').select('*', {
+          count: 'exact',
+          head: true
+        }).eq('school_id', schoolId);
         studentsCount = count || 0;
       } catch (error) {
-        logger.warn('Error fetching students count', { error: (error as Error).message });
+        logger.warn('Error fetching students count', {
+          error: (error as Error).message
+        });
       }
 
       // Get teachers count
       try {
-        const { count } = await supabase
-          .from('profiles')
-          .select('*', { count: 'exact', head: true })
-          .eq('school_id', schoolId)
-          .eq('role', 'teacher');
+        const {
+          count
+        } = await supabase.from('profiles').select('*', {
+          count: 'exact',
+          head: true
+        }).eq('school_id', schoolId).eq('role', 'teacher');
         teachersCount = count || 0;
       } catch (error) {
-        logger.warn('Error fetching teachers count', { error: (error as Error).message });
+        logger.warn('Error fetching teachers count', {
+          error: (error as Error).message
+        });
       }
 
       // Get classes stats
       try {
-        const { count: totalCount } = await supabase
-          .from('classes')
-          .select('*', { count: 'exact', head: true })
-          .eq('school_id', schoolId);
+        const {
+          count: totalCount
+        } = await supabase.from('classes').select('*', {
+          count: 'exact',
+          head: true
+        }).eq('school_id', schoolId);
         totalClassesCount = totalCount || 0;
-
-        const { count: activeCount } = await supabase
-          .from('classes')
-          .select('*', { count: 'exact', head: true })
-          .eq('school_id', schoolId)
-          .eq('status', 'active');
+        const {
+          count: activeCount
+        } = await supabase.from('classes').select('*', {
+          count: 'exact',
+          head: true
+        }).eq('school_id', schoolId).eq('status', 'active');
         activeClassesCount = activeCount || 0;
       } catch (error) {
-        logger.warn('Error fetching classes count', { error: (error as Error).message });
+        logger.warn('Error fetching classes count', {
+          error: (error as Error).message
+        });
       }
 
       // Get plugins count with fallback
       try {
-        const { count: totalPlugins } = await supabase
-          .from('plugins')
-          .select('*', { count: 'exact', head: true });
+        const {
+          count: totalPlugins
+        } = await supabase.from('plugins').select('*', {
+          count: 'exact',
+          head: true
+        });
         totalPluginsCount = totalPlugins || 0;
-
-        const { count: activePlugins } = await supabase
-          .from('school_plugins')
-          .select('*', { count: 'exact', head: true })
-          .eq('school_id', schoolId)
-          .eq('status', 'enabled');
+        const {
+          count: activePlugins
+        } = await supabase.from('school_plugins').select('*', {
+          count: 'exact',
+          head: true
+        }).eq('school_id', schoolId).eq('status', 'enabled');
         activePluginsCount = activePlugins || 0;
       } catch (error) {
-        logger.warn('Plugins tables not available', { error: (error as Error).message });
+        logger.warn('Plugins tables not available', {
+          error: (error as Error).message
+        });
         // Fallback values
         totalPluginsCount = 0;
         activePluginsCount = 0;
       }
-
       const newStats = {
         totalStudents: studentsCount,
         totalTeachers: teachersCount,
@@ -174,25 +189,21 @@ const SchoolAdminDashboard = () => {
         activePlugins: activePluginsCount,
         totalPlugins: totalPluginsCount
       };
-
       setStats(newStats);
-      
       if (isRefresh) {
         toast({
           title: "تم التحديث بنجاح",
-          description: "تم تحديث الإحصائيات بنجاح",
+          description: "تم تحديث الإحصائيات بنجاح"
         });
       }
-
     } catch (error) {
       const errorMessage = 'خطأ في جلب إحصائيات المدرسة';
       setError(errorMessage);
       logger.error('Error fetching school stats', error as Error);
-      
       toast({
         title: "خطأ في التحديث",
         description: errorMessage,
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setLoading(false);
@@ -205,14 +216,16 @@ const SchoolAdminDashboard = () => {
       if (!schoolId) return;
 
       // Use unified function to get school package with usage
-      const { data: packageData, error: packageError } = await supabase
-        .rpc('get_school_package_with_usage', { school_uuid: schoolId });
-
+      const {
+        data: packageData,
+        error: packageError
+      } = await supabase.rpc('get_school_package_with_usage', {
+        school_uuid: schoolId
+      });
       if (packageError) {
         logger.error('Error fetching school package', packageError);
         return;
       }
-
       if (packageData) {
         const pkg = packageData as any;
         setSchoolPackage({
@@ -238,18 +251,16 @@ const SchoolAdminDashboard = () => {
   const getUsagePercentage = (used: number, max: number) => {
     if (!max || max <= 0) return 0;
     if (used < 0) return 0;
-    return Math.min((used / max) * 100, 100);
+    return Math.min(used / max * 100, 100);
   };
   const getDaysRemaining = () => {
     if (!schoolPackage?.end_date) return null;
-    
     try {
       const endDate = new Date(schoolPackage.end_date);
       const today = new Date();
-      
+
       // Check for invalid dates
       if (isNaN(endDate.getTime()) || isNaN(today.getTime())) return null;
-      
       const diffTime = endDate.getTime() - today.getTime();
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       return Math.max(diffDays, 0);
@@ -279,21 +290,21 @@ const SchoolAdminDashboard = () => {
     if (!schoolPackage?.duration_days || schoolPackage.duration_days === -1) {
       return "اشتراك دائم";
     }
-    return format(endDate, 'dd.M.yyyy', { locale: ar });
+    return format(endDate, 'dd.M.yyyy', {
+      locale: ar
+    });
   };
-
   const fetchRecentActivities = async () => {
     try {
       const schoolId = userProfile?.school_id;
       if (!schoolId) return;
 
       // Get recent audit logs for activities
-      const { data: auditLogs } = await supabase
-        .from('audit_log')
-        .select('action, created_at_utc, entity')
-        .order('created_at_utc', { ascending: false })
-        .limit(5);
-
+      const {
+        data: auditLogs
+      } = await supabase.from('audit_log').select('action, created_at_utc, entity').order('created_at_utc', {
+        ascending: false
+      }).limit(5);
       if (auditLogs) {
         const activities = auditLogs.map(log => ({
           title: getActionLabel(log.action),
@@ -306,44 +317,51 @@ const SchoolAdminDashboard = () => {
     } catch (error) {
       logger.error('Error fetching recent activities', error as Error);
       // Fallback to mock data
-      setRecentActivities([
-        { title: 'تم إضافة طالب جديد', time: 'منذ 5 دقائق', color: 'green-neon', icon: Users },
-        { title: 'تم إنشاء صف جديد', time: 'منذ 15 دقيقة', color: 'blue-electric', icon: BookOpen },
-        { title: 'تم تحديث المحتوى', time: 'منذ ساعة', color: 'orange-fire', icon: Activity },
-      ]);
+      setRecentActivities([{
+        title: 'تم إضافة طالب جديد',
+        time: 'منذ 5 دقائق',
+        color: 'green-neon',
+        icon: Users
+      }, {
+        title: 'تم إنشاء صف جديد',
+        time: 'منذ 15 دقيقة',
+        color: 'blue-electric',
+        icon: BookOpen
+      }, {
+        title: 'تم تحديث المحتوى',
+        time: 'منذ ساعة',
+        color: 'orange-fire',
+        icon: Activity
+      }]);
     }
   };
-
   const getActionLabel = (action: string) => {
     const labels: Record<string, string> = {
       'USER_CREATED': 'تم إنشاء مستخدم جديد',
       'STUDENT_ENROLLED': 'تم تسجيل طالب جديد',
       'CLASS_CREATED': 'تم إنشاء صف جديد',
-      'CONTENT_UPLOADED': 'تم رفع محتوى جديد',
+      'CONTENT_UPLOADED': 'تم رفع محتوى جديد'
     };
     return labels[action] || action;
   };
-
   const getActionColor = (action: string) => {
     const colors: Record<string, string> = {
       'USER_CREATED': 'green-neon',
       'STUDENT_ENROLLED': 'blue-electric',
       'CLASS_CREATED': 'orange-fire',
-      'CONTENT_UPLOADED': 'purple-mystic',
+      'CONTENT_UPLOADED': 'purple-mystic'
     };
     return colors[action] || 'green-neon';
   };
-
   const getActionIcon = (action: string) => {
     const icons: Record<string, any> = {
       'USER_CREATED': Users,
       'STUDENT_ENROLLED': Users,
       'CLASS_CREATED': BookOpen,
-      'CONTENT_UPLOADED': Activity,
+      'CONTENT_UPLOADED': Activity
     };
     return icons[action] || Activity;
   };
-
   const formatTimeAgo = (dateString: string) => {
     try {
       const date = new Date(dateString);
@@ -352,7 +370,6 @@ const SchoolAdminDashboard = () => {
       const diffMins = Math.floor(diffMs / (1000 * 60));
       const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
       const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
       if (diffMins < 1) return 'الآن';
       if (diffMins < 60) return `منذ ${diffMins} دقيقة`;
       if (diffHours < 24) return `منذ ${diffHours} ساعة`;
@@ -361,26 +378,21 @@ const SchoolAdminDashboard = () => {
       return 'منذ وقت قريب';
     }
   };
-
   const refreshData = useCallback(() => {
     fetchSchoolStats(true);
     fetchSchoolPackage();
     fetchRecentActivities();
   }, [userProfile?.school_id]);
-
   const getPackageStatusColor = () => {
     if (!schoolPackage) return 'gray';
-    
     const daysRemaining = getDaysRemaining();
     if (daysRemaining === null) return 'green'; // Unlimited
     if (daysRemaining <= 7) return 'red';
     if (daysRemaining <= 30) return 'yellow';
     return 'green';
   };
-  const StatsLoadingSkeleton = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {[...Array(4)].map((_, i) => (
-        <Card key={i} className="glass-card">
+  const StatsLoadingSkeleton = () => <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {[...Array(4)].map((_, i) => <Card key={i} className="glass-card">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <Skeleton className="h-8 w-8 rounded-full" />
@@ -391,14 +403,10 @@ const SchoolAdminDashboard = () => {
             <Skeleton className="h-8 w-20 mb-2" />
             <Skeleton className="h-4 w-24" />
           </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
-
+        </Card>)}
+    </div>;
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background pattern-dots flex flex-col" dir="rtl">
+    return <div className="min-h-screen bg-background pattern-dots flex flex-col" dir="rtl">
         <div className="container mx-auto px-6 py-6 space-y-8">
           <div className="flex items-center justify-between mb-6">
             <Skeleton className="h-8 w-48" />
@@ -415,8 +423,7 @@ const SchoolAdminDashboard = () => {
             </div>
           </div>
         </div>
-      </div>
-    );
+      </div>;
   }
   if (showTeacherManagement) {
     return <TeacherManagement onBack={() => setShowTeacherManagement(false)} />;
@@ -424,53 +431,12 @@ const SchoolAdminDashboard = () => {
   return <div className="min-h-screen bg-background pattern-dots flex flex-col" dir="rtl">
       {/* Modern Header */}
       <header className="glass-card sticky top-0 z-50 soft-shadow backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <UniversalAvatar
-                avatarUrl={userProfile?.avatar_url}
-                userName={userProfile?.full_name}
-                size="lg"
-                className="border-2 border-white/20"
-              />
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg gradient-electric flex items-center justify-center">
-                  <School className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <h1 className="text-xl font-bold text-foreground">أهلاً {userProfile?.full_name}</h1>
-                    <UserTitleBadge
-                      role={userProfile?.role || 'school_admin'}
-                      displayTitle={userProfile?.display_title}
-                      size="md"
-                      variant="outline"
-                    />
-                  </div>
-                  <p className="text-sm text-muted-foreground">لوحة تحكم مدير المدرسة - إدارة شاملة للمؤسسة التعليمية</p>
-                </div>
-              </div>
-            </div>
-            
-            {getPackageStatusColor() === 'red' && (
-              <div className="flex items-center gap-2 px-3 py-1 bg-red-50 text-red-700 rounded-lg">
-                <AlertTriangle className="h-4 w-4" />
-                <span className="text-sm font-medium">الباقة تنتهي قريباً!</span>
-              </div>
-            )}
-          </div>
-        </div>
+        
       </header>
 
       <div className="container mx-auto px-6 py-6 space-y-8">
         {/* Enhanced Stats Section */}
-        <EnhancedDashboardStats
-          stats={stats}
-          loading={loading}
-          refreshing={refreshing}
-          error={error}
-          onRefresh={refreshData}
-        />
+        <EnhancedDashboardStats stats={stats} loading={loading} refreshing={refreshing} error={error} onRefresh={refreshData} />
 
         {/* Quick Actions */}
         <section className="animate-fade-in-up" style={{
@@ -669,26 +635,26 @@ const SchoolAdminDashboard = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {[{
-                  title: 'تم إضافة طالب جديد',
-                  time: 'منذ دقيقتين',
-                  icon: Users,
-                  color: 'green-neon'
-                }, {
-                  title: 'تحديث في منهج الشبكات',
-                  time: 'منذ 5 دقائق',
-                  icon: BookOpen,
-                  color: 'blue-electric'
-                }, {
-                  title: 'تم إنشاء فصل جديد',
-                  time: 'منذ 10 دقائق',
-                  icon: School,
-                  color: 'orange-fire'
-                }, {
-                  title: 'تحديث الإعدادات',
-                  time: 'منذ 15 دقيقة',
-                  icon: Settings,
-                  color: 'purple-mystic'
-                }].map((activity, index) => <div key={index} className="flex items-center space-x-reverse space-x-3 p-4 glass-card card-hover group">
+                title: 'تم إضافة طالب جديد',
+                time: 'منذ دقيقتين',
+                icon: Users,
+                color: 'green-neon'
+              }, {
+                title: 'تحديث في منهج الشبكات',
+                time: 'منذ 5 دقائق',
+                icon: BookOpen,
+                color: 'blue-electric'
+              }, {
+                title: 'تم إنشاء فصل جديد',
+                time: 'منذ 10 دقائق',
+                icon: School,
+                color: 'orange-fire'
+              }, {
+                title: 'تحديث الإعدادات',
+                time: 'منذ 15 دقيقة',
+                icon: Settings,
+                color: 'purple-mystic'
+              }].map((activity, index) => <div key={index} className="flex items-center space-x-reverse space-x-3 p-4 glass-card card-hover group">
                       <div className="w-3 h-3 rounded-full bg-primary animate-gentle-float"></div>
                       <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
                         <activity.icon className="h-5 w-5 text-primary" />
