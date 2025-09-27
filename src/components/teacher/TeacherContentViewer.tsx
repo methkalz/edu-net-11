@@ -35,7 +35,10 @@ export const TeacherContentViewer: React.FC<TeacherContentViewerProps> = ({
   } = useAuth();
   const [selectedContent, setSelectedContent] = useState<any>(null);
   const [viewerType, setViewerType] = useState<'video' | 'document' | 'lesson' | 'project' | null>(null);
-  const [activeContentTab, setActiveContentTab] = useState('computer_structure');
+  const [activeContentTab, setActiveContentTab] = useState(() => {
+    if (grade === '12') return 'videos';
+    return 'computer_structure';
+  });
 
   // Mock the student context for the specific grade
   const mockStudentContent = {
@@ -351,6 +354,7 @@ export const TeacherContentViewer: React.FC<TeacherContentViewerProps> = ({
       projects,
       loading
     } = grade12ContentResult;
+    
     if (loading) {
       return <div className="space-y-6">
           <div className="flex items-center gap-3 mb-6">
@@ -367,16 +371,7 @@ export const TeacherContentViewer: React.FC<TeacherContentViewerProps> = ({
           </div>
         </div>;
     }
-    const allContent = [...(videos || []).map(v => ({
-      ...v,
-      type: 'video' as const
-    })), ...(documents || []).map(d => ({
-      ...d,
-      type: 'document' as const
-    })), ...(projects || []).map(p => ({
-      ...p,
-      type: 'project' as const
-    }))];
+
     return <div className="space-y-6">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 flex items-center justify-center shadow-lg">
@@ -385,92 +380,134 @@ export const TeacherContentViewer: React.FC<TeacherContentViewerProps> = ({
           <div>
             <h2 className="text-2xl font-bold text-foreground">محتوى الصف الثاني عشر</h2>
             <p className="text-muted-foreground">
-              {allContent.length > 0 ? `${videos?.length || 0} فيديو، ${documents?.length || 0} مستند، ${projects?.length || 0} مشروع` : 'لا يوجد محتوى متاح حالياً'}
+              {(videos?.length || 0) + (documents?.length || 0) + (projects?.length || 0) > 0 
+                ? `${videos?.length || 0} فيديو، ${documents?.length || 0} مستند، ${projects?.length || 0} مشروع` 
+                : 'لا يوجد محتوى متاح حالياً'}
             </p>
           </div>
         </div>
 
-        {allContent.length > 0 ? <div className="space-y-8">
-            {/* Videos Section */}
-            {videos && videos.length > 0 && <div>
-                <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                  <Video className="h-5 w-5 text-red-500" />
-                  الفيديوهات التعليمية ({videos.length})
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {videos.map(video => <ContentCard key={video.id} item={video} type="video" icon={Video} color="from-red-500 to-red-600" />)}
+        <Tabs value={activeContentTab} onValueChange={setActiveContentTab} className="w-full">
+          <div className="flex justify-center mb-8">
+            <TabsList className="grid grid-cols-3 w-full h-auto p-1 gap-1 bg-background/80 border border-border/40 rounded-2xl shadow-lg backdrop-blur-md transition-all duration-300 hover:shadow-xl" style={{
+            maxWidth: '900px'
+          }}>
+              <TabsTrigger value="videos" className="relative flex flex-col items-center justify-center gap-2 py-6 px-4 min-h-[120px] text-sm font-medium text-muted-foreground/80 bg-transparent border-0 rounded-xl transition-all duration-300 ease-out data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-md data-[state=active]:shadow-primary/20 data-[state=active]:scale-[1.02] hover:bg-background/50 hover:text-foreground/90 hover:shadow-sm hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 group overflow-hidden">
+                <div className="relative flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-primary/5 to-primary/10 group-data-[state=active]:from-primary/10 group-data-[state=active]:to-primary/20 group-data-[state=active]:shadow-sm group-hover:from-primary/8 group-hover:to-primary/15 transition-all duration-300">
+                  <Video className="w-6 h-6 transition-all duration-300 group-data-[state=active]:scale-110 group-data-[state=active]:text-primary" />
                 </div>
-              </div>}
-
-            {/* Documents Section */}
-            {documents && documents.length > 0 && <div>
-                <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-blue-500" />
-                  الملفات والمراجع ({documents.length})
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {documents.map(document => <ContentCard key={document.id} item={document} type="document" icon={FileText} color="from-blue-500 to-blue-600" />)}
+                <div className="flex flex-col items-center gap-1.5">
+                  <span className="text-xs font-semibold leading-tight text-center px-1 group-data-[state=active]:text-sm transition-all duration-300">الفيديوهات التعليمية</span>
+                  <span className="text-xs text-muted-foreground/70 bg-muted/30 rounded-full px-2 py-0.5 group-data-[state=active]:bg-primary/10 group-data-[state=active]:text-primary/80 transition-all duration-300">
+                    {videos?.length || 0}
+                  </span>
                 </div>
-              </div>}
-
-            {/* Projects Section */}
-            {projects && projects.length > 0 && <div>
-                <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                  <Trophy className="h-5 w-5 text-purple-500" />
-                  المشاريع النهائية ({projects.length})
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {projects.map(project => <ContentCard key={project.id} item={project} type="project" icon={Trophy} color="from-purple-500 to-purple-600" />)}
+              </TabsTrigger>
+              
+              <TabsTrigger value="documents" className="relative flex flex-col items-center justify-center gap-2 py-6 px-4 min-h-[120px] text-sm font-medium text-muted-foreground/80 bg-transparent border-0 rounded-xl transition-all duration-300 ease-out data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-md data-[state=active]:shadow-primary/20 data-[state=active]:scale-[1.02] hover:bg-background/50 hover:text-foreground/90 hover:shadow-sm hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 group overflow-hidden">
+                <div className="relative flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-primary/5 to-primary/10 group-data-[state=active]:from-primary/10 group-data-[state=active]:to-primary/20 group-data-[state=active]:shadow-sm group-hover:from-primary/8 group-hover:to-primary/15 transition-all duration-300">
+                  <FileText className="w-6 h-6 transition-all duration-300 group-data-[state=active]:scale-110 group-data-[state=active]:text-primary" />
                 </div>
-              </div>}
-          </div> : <div className="text-center py-12 space-y-4">
-            <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-r from-violet-500/10 to-purple-500/5 flex items-center justify-center">
-              <BookOpen className="h-8 w-8 text-violet-500/50" />
-            </div>
-            <div>
-              <p className="font-medium text-foreground">لم يتم إضافة محتوى للصف الثاني عشر بعد</p>
-              <p className="text-sm text-muted-foreground mt-1">سيتم عرض الفيديوهات والمستندات والمشاريع هنا</p>
-            </div>
-          </div>}
+                <div className="flex flex-col items-center gap-1.5">
+                  <span className="text-xs font-semibold leading-tight text-center px-1 group-data-[state=active]:text-sm transition-all duration-300">الملفات والمراجع</span>
+                  <span className="text-xs text-muted-foreground/70 bg-muted/30 rounded-full px-2 py-0.5 group-data-[state=active]:bg-primary/10 group-data-[state=active]:text-primary/80 transition-all duration-300">
+                    {documents?.length || 0}
+                  </span>
+                </div>
+              </TabsTrigger>
+              
+              <TabsTrigger value="projects" className="relative flex flex-col items-center justify-center gap-2 py-6 px-4 min-h-[120px] text-sm font-medium text-muted-foreground/80 bg-transparent border-0 rounded-xl transition-all duration-300 ease-out data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-md data-[state=active]:shadow-primary/20 data-[state=active]:scale-[1.02] hover:bg-background/50 hover:text-foreground/90 hover:shadow-sm hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 group overflow-hidden">
+                <div className="relative flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-primary/5 to-primary/10 group-data-[state=active]:from-primary/10 group-data-[state=active]:to-primary/20 group-data-[state=active]:shadow-sm group-hover:from-primary/8 group-hover:to-primary/15 transition-all duration-300">
+                  <Trophy className="w-6 h-6 transition-all duration-300 group-data-[state=active]:scale-110 group-data-[state=active]:text-primary" />
+                </div>
+                <div className="flex flex-col items-center gap-1.5">
+                  <span className="text-xs font-semibold leading-tight text-center px-1 group-data-[state=active]:text-sm transition-all duration-300">المشاريع النهائية</span>
+                  <span className="text-xs text-muted-foreground/70 bg-muted/30 rounded-full px-2 py-0.5 group-data-[state=active]:bg-primary/10 group-data-[state=active]:text-primary/80 transition-all duration-300">
+                    {projects?.length || 0}
+                  </span>
+                </div>
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
-        {/* Content Viewer Modal */}
-        <Dialog open={!!selectedContent} onOpenChange={closeViewer}>
-          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="text-xl font-bold">
-                {selectedContent?.title}
-              </DialogTitle>
-            </DialogHeader>
-            <div className="mt-4">
-              {viewerType === 'video' && selectedContent && <div className="space-y-4">
-                  <div className="aspect-video bg-black rounded-lg overflow-hidden">
-                    <iframe src={selectedContent.video_url} className="w-full h-full" allowFullScreen title={selectedContent.title} />
-                  </div>
-                  {selectedContent.description && <p className="text-muted-foreground">{selectedContent.description}</p>}
-                </div>}
-              {viewerType === 'document' && selectedContent && <div className="space-y-4">
-                  <div className="p-6 border rounded-lg bg-muted/10">
-                    <h3 className="font-semibold mb-2">معلومات المستند</h3>
-                    <div className="space-y-2 text-sm">
-                      <p><strong>النوع:</strong> {selectedContent.file_type}</p>
-                      <p><strong>الفئة:</strong> {selectedContent.category}</p>
-                      {selectedContent.description && <p><strong>الوصف:</strong> {selectedContent.description}</p>}
-                    </div>
-                  </div>
-                </div>}
-              {viewerType === 'project' && selectedContent && <div className="space-y-4">
-                  <div className="p-6 border rounded-lg bg-muted/10">
-                    <h3 className="font-semibold mb-2">تفاصيل المشروع</h3>
-                    <div className="space-y-3 text-sm">
-                      {selectedContent.description && <p><strong>الوصف:</strong> {selectedContent.description}</p>}
-                      {selectedContent.requirements && <p><strong>المتطلبات:</strong> {selectedContent.requirements}</p>}
-                      {selectedContent.deliverables && <p><strong>المخرجات:</strong> {selectedContent.deliverables}</p>}
-                    </div>
-                  </div>
-                </div>}
-            </div>
-          </DialogContent>
-        </Dialog>
+          <TabsContent value="videos" className="mt-6">
+            {videos && videos.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {videos.map(video => (
+                  <ContentCard key={video.id} item={video} type="video" icon={Video} color="from-red-500 to-red-600" />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 space-y-4">
+                <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-r from-red-500/10 to-red-600/10 flex items-center justify-center">
+                  <Video className="h-8 w-8 text-red-500/50" />
+                </div>
+                <div>
+                  <p className="font-medium text-foreground">لا توجد فيديوهات متاحة</p>
+                  <p className="text-sm text-muted-foreground mt-1">سيتم عرض الفيديوهات التعليمية هنا</p>
+                </div>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="documents" className="mt-6">
+            {documents && documents.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {documents.map(document => (
+                  <ContentCard key={document.id} item={document} type="document" icon={FileText} color="from-blue-500 to-blue-600" />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 space-y-4">
+                <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-r from-blue-500/10 to-blue-600/10 flex items-center justify-center">
+                  <FileText className="h-8 w-8 text-blue-500/50" />
+                </div>
+                <div>
+                  <p className="font-medium text-foreground">لا توجد ملفات متاحة</p>
+                  <p className="text-sm text-muted-foreground mt-1">سيتم عرض الملفات والمراجع هنا</p>
+                </div>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="projects" className="mt-6">
+            {projects && projects.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {projects.map(project => (
+                  <ContentCard key={project.id} item={project} type="project" icon={Trophy} color="from-purple-500 to-purple-600" />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 space-y-4">
+                <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-r from-purple-500/10 to-purple-600/10 flex items-center justify-center">
+                  <Trophy className="h-8 w-8 text-purple-500/50" />
+                </div>
+                <div>
+                  <p className="font-medium text-foreground">لا توجد مشاريع متاحة</p>
+                  <p className="text-sm text-muted-foreground mt-1">سيتم عرض المشاريع النهائية هنا</p>
+                </div>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+
+        {/* Viewer Dialogs */}
+        {selectedContent && viewerType && <Dialog open={!!selectedContent} onOpenChange={() => closeViewer()}>
+            <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Eye className="w-5 h-5 text-blue-600" />
+                  معاينة المحتوى - {selectedContent.title}
+                </DialogTitle>
+              </DialogHeader>
+              
+              {viewerType === 'video' && <VideoViewer isOpen={!!selectedContent} onClose={closeViewer} video={selectedContent} onProgress={() => {}} onComplete={() => {}} isTeacherPreview={true} />}
+              
+              {viewerType === 'document' && <DocumentViewer isOpen={!!selectedContent} onClose={closeViewer} document={selectedContent} onProgress={() => {}} onComplete={() => {}} />}
+              
+              {viewerType === 'project' && <ProjectViewer isOpen={!!selectedContent} onClose={closeViewer} project={selectedContent} onProgress={() => {}} onComplete={() => {}} />}
+            </DialogContent>
+          </Dialog>}
       </div>;
   }
   return null;
