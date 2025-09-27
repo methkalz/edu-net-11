@@ -88,31 +88,34 @@ export const StudentGrade11Content: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="text-center space-y-2">
-          <h2 className="text-2xl font-bold">محتوى الصف الحادي عشر</h2>
-          <p className="text-muted-foreground">جاري تحميل المحتوى التعليمي...</p>
+      <div className="space-y-8 max-w-7xl mx-auto">
+        <div className="text-center space-y-3">
+          <h2 className="text-3xl font-light text-foreground">محتوى الصف الحادي عشر</h2>
+          <p className="text-text-soft font-light">جاري تحميل المحتوى التعليمي...</p>
         </div>
         
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
           {[1, 2, 3, 4, 5].map((i) => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="p-4">
-                <div className="h-4 bg-muted rounded mb-2"></div>
-                <div className="h-8 bg-muted rounded"></div>
+            <Card key={i} className="border border-divider bg-surface-light shadow-none">
+              <CardContent className="p-6 text-center">
+                <div className="w-14 h-14 mx-auto mb-4 bg-background rounded-2xl border border-divider animate-pulse"></div>
+                <div className="h-6 bg-background rounded-xl mb-2 animate-pulse"></div>
+                <div className="h-4 bg-background rounded-lg animate-pulse"></div>
               </CardContent>
             </Card>
           ))}
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-6">
           {[1, 2, 3].map((i) => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="p-6">
-                <div className="h-6 bg-muted rounded mb-4"></div>
-                <div className="space-y-2">
-                  <div className="h-4 bg-muted rounded w-3/4"></div>
-                  <div className="h-4 bg-muted rounded w-1/2"></div>
+            <Card key={i} className="border border-divider bg-surface-light shadow-none">
+              <CardContent className="p-8">
+                <div className="flex items-center gap-6 mb-6">
+                  <div className="w-16 h-16 bg-background rounded-3xl border border-divider animate-pulse"></div>
+                  <div className="flex-1 space-y-3">
+                    <div className="h-6 bg-background rounded-xl w-3/4 animate-pulse"></div>
+                    <div className="h-4 bg-background rounded-lg w-1/2 animate-pulse"></div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -124,14 +127,14 @@ export const StudentGrade11Content: React.FC = () => {
 
   if (error) {
     return (
-      <Card className="text-center p-8">
-        <div className="space-y-4">
-          <div className="w-16 h-16 mx-auto bg-red-100 rounded-full flex items-center justify-center">
-            <FileText className="w-8 h-8 text-red-600" />
+      <Card className="text-center p-12 border border-divider bg-surface-light shadow-none">
+        <div className="space-y-6">
+          <div className="w-20 h-20 mx-auto bg-background rounded-3xl flex items-center justify-center border border-divider">
+            <FileText className="w-10 h-10 text-text-soft" />
           </div>
-          <h3 className="text-lg font-semibold">حدث خطأ في تحميل المحتوى</h3>
-          <p className="text-muted-foreground">{error}</p>
-          <Button onClick={() => window.location.reload()}>
+          <h3 className="text-xl font-light text-foreground">حدث خطأ في تحميل المحتوى</h3>
+          <p className="text-text-soft font-light">{error}</p>
+          <Button onClick={() => window.location.reload()} variant="ghost" className="font-light">
             إعادة المحاولة
           </Button>
         </div>
@@ -140,143 +143,143 @@ export const StudentGrade11Content: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold text-foreground">
+    <div className="space-y-8 max-w-7xl mx-auto">
+      {/* Minimal Header */}
+      <div className="text-center space-y-3">
+        <h1 className="text-3xl font-light text-foreground">
           محتوى الصف الحادي عشر
-        </h2>
-        <p className="text-muted-foreground">
-          استكشف المحتوى التعليمي المنظم في أقسام ومواضيع ودروس
+        </h1>
+        <p className="text-text-soft text-lg font-light max-w-2xl mx-auto">
+          استكشف المحتوى التعليمي المنظم في أقسام ومواضيع ودروس تفاعلية
         </p>
       </div>
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <Card className="border-2 hover:shadow-md transition-shadow">
+      {/* Clean Statistics Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
+        <Card className="border border-divider bg-surface-light hover:bg-surface-hover transition-all duration-300 shadow-none">
           <CardContent className="p-6 text-center">
-            <div className="w-12 h-12 mx-auto mb-3 bg-blue-100 rounded-full flex items-center justify-center">
-              <FolderOpen className="w-6 h-6 text-blue-600" />
+            <div className="w-14 h-14 mx-auto mb-4 bg-background rounded-2xl flex items-center justify-center border border-divider">
+              <FolderOpen className="w-7 h-7 text-muted-foreground" />
             </div>
-            <div className="text-3xl font-bold text-blue-600 mb-1">{stats.totalSections}</div>
-            <div className="text-sm text-muted-foreground font-medium">أقسام</div>
+            <div className="text-2xl font-light text-foreground mb-1">{stats.totalSections}</div>
+            <div className="text-sm text-text-soft font-light">أقسام</div>
           </CardContent>
         </Card>
 
-        <Card className="border-2 hover:shadow-md transition-shadow">
+        <Card className="border border-divider bg-surface-light hover:bg-surface-hover transition-all duration-300 shadow-none">
           <CardContent className="p-6 text-center">
-            <div className="w-12 h-12 mx-auto mb-3 bg-green-100 rounded-full flex items-center justify-center">
-              <Target className="w-6 h-6 text-green-600" />
+            <div className="w-14 h-14 mx-auto mb-4 bg-background rounded-2xl flex items-center justify-center border border-divider">
+              <Target className="w-7 h-7 text-muted-foreground" />
             </div>
-            <div className="text-3xl font-bold text-green-600 mb-1">{stats.totalTopics}</div>
-            <div className="text-sm text-muted-foreground font-medium">مواضيع</div>
+            <div className="text-2xl font-light text-foreground mb-1">{stats.totalTopics}</div>
+            <div className="text-sm text-text-soft font-light">مواضيع</div>
           </CardContent>
         </Card>
 
-        <Card className="border-2 hover:shadow-md transition-shadow">
+        <Card className="border border-divider bg-surface-light hover:bg-surface-hover transition-all duration-300 shadow-none">
           <CardContent className="p-6 text-center">
-            <div className="w-12 h-12 mx-auto mb-3 bg-purple-100 rounded-full flex items-center justify-center">
-              <BookOpen className="w-6 h-6 text-purple-600" />
+            <div className="w-14 h-14 mx-auto mb-4 bg-background rounded-2xl flex items-center justify-center border border-divider">
+              <BookOpen className="w-7 h-7 text-muted-foreground" />
             </div>
-            <div className="text-3xl font-bold text-purple-600 mb-1">{stats.totalLessons}</div>
-            <div className="text-sm text-muted-foreground font-medium">دروس</div>
+            <div className="text-2xl font-light text-foreground mb-1">{stats.totalLessons}</div>
+            <div className="text-sm text-text-soft font-light">دروس</div>
           </CardContent>
         </Card>
 
-        <Card className="border-2 hover:shadow-md transition-shadow">
+        <Card className="border border-divider bg-surface-light hover:bg-surface-hover transition-all duration-300 shadow-none">
           <CardContent className="p-6 text-center">
-            <div className="w-12 h-12 mx-auto mb-3 bg-orange-100 rounded-full flex items-center justify-center">
-              <PlayCircle className="w-6 h-6 text-orange-600" />
+            <div className="w-14 h-14 mx-auto mb-4 bg-background rounded-2xl flex items-center justify-center border border-divider">
+              <PlayCircle className="w-7 h-7 text-muted-foreground" />
             </div>
-            <div className="text-3xl font-bold text-orange-600 mb-1">{stats.totalMedia}</div>
-            <div className="text-sm text-muted-foreground font-medium">وسائط</div>
+            <div className="text-2xl font-light text-foreground mb-1">{stats.totalMedia}</div>
+            <div className="text-sm text-text-soft font-light">وسائط</div>
           </CardContent>
         </Card>
 
-        <Card className="border-2 hover:shadow-md transition-shadow">
+        <Card className="border border-divider bg-surface-light hover:bg-surface-hover transition-all duration-300 shadow-none">
           <CardContent className="p-6 text-center">
-            <div className="w-12 h-12 mx-auto mb-3 bg-red-100 rounded-full flex items-center justify-center">
-              <Video className="w-6 h-6 text-red-600" />
+            <div className="w-14 h-14 mx-auto mb-4 bg-background rounded-2xl flex items-center justify-center border border-divider">
+              <Video className="w-7 h-7 text-muted-foreground" />
             </div>
-            <div className="text-3xl font-bold text-red-600 mb-1">{stats.totalVideos}</div>
-            <div className="text-sm text-muted-foreground font-medium">فيديوهات</div>
+            <div className="text-2xl font-light text-foreground mb-1">{stats.totalVideos}</div>
+            <div className="text-sm text-text-soft font-light">فيديوهات</div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Search */}
-      <div className="flex gap-3">
+      {/* Minimal Search */}
+      <div className="flex gap-4 max-w-2xl mx-auto">
         <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-text-soft w-5 h-5" />
           <Input
             placeholder="ابحث في المحتوى..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-12 py-3 text-base border-2"
+            className="pl-12 py-4 text-base border-divider bg-surface-light focus:bg-background transition-colors font-light"
           />
         </div>
         {searchQuery && (
-          <Button variant="outline" onClick={() => setSearchQuery('')} className="px-6 py-3">
+          <Button variant="ghost" onClick={() => setSearchQuery('')} className="px-6 py-4 text-text-soft hover:text-foreground">
             مسح
           </Button>
         )}
       </div>
 
-      {/* Content Tabs */}
+      {/* Clean Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2 h-12">
-          <TabsTrigger value="lessons" className="flex items-center gap-2 text-base font-medium">
+        <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 h-14 bg-surface-light border border-divider">
+          <TabsTrigger value="lessons" className="flex items-center gap-3 text-base font-light py-3">
             <BookOpen className="w-5 h-5" />
             الدروس ({(sections || []).length})
           </TabsTrigger>
-          <TabsTrigger value="videos" className="flex items-center gap-2 text-base font-medium">
+          <TabsTrigger value="videos" className="flex items-center gap-3 text-base font-light py-3">
             <Video className="w-5 h-5" />
             الفيديوهات ({(videos || []).length})
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="lessons" className="space-y-4 mt-6">
+        <TabsContent value="lessons" className="space-y-6 mt-8">
           {filteredSections.length === 0 ? (
-            <Card className="text-center p-8">
+            <Card className="text-center p-12 border border-divider bg-surface-light">
               <div className="space-y-4">
-                <Search className="w-16 h-16 mx-auto text-muted-foreground" />
-                <h3 className="text-lg font-semibold">لا توجد نتائج</h3>
-                <p className="text-muted-foreground">
+                <Search className="w-16 h-16 mx-auto text-text-soft" />
+                <h3 className="text-xl font-light text-foreground">لا توجد نتائج</h3>
+                <p className="text-text-soft font-light">
                   لم يتم العثور على محتوى يطابق البحث "{searchQuery}"
                 </p>
               </div>
             </Card>
           ) : (
             filteredSections.map((section) => (
-              <Card key={section.id} className="overflow-hidden">
+              <Card key={section.id} className="border border-divider bg-surface-light shadow-none">
                 <Collapsible 
                   open={openSections.includes(section.id)}
                   onOpenChange={() => toggleSection(section.id)}
                 >
                   <CollapsibleTrigger asChild>
-                    <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
+                    <CardHeader className="cursor-pointer hover:bg-surface-hover transition-colors p-8">
                        <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
-                            <FolderOpen className="w-6 h-6 text-white" />
+                        <div className="flex items-center gap-6">
+                          <div className="w-16 h-16 bg-background rounded-3xl flex items-center justify-center border border-divider">
+                            <FolderOpen className="w-8 h-8 text-text-soft" />
                           </div>
                           <div className="text-left">
-                            <CardTitle className="text-xl font-bold">{section.title}</CardTitle>
+                            <CardTitle className="text-2xl font-light text-foreground">{section.title}</CardTitle>
                             {section.description && (
-                              <p className="text-base text-muted-foreground mt-2">
+                              <p className="text-base text-text-soft mt-3 font-light">
                                 {section.description}
                               </p>
                             )}
                           </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <Badge variant="secondary" className="text-sm px-3 py-1">
+                        <div className="flex items-center gap-4">
+                          <Badge variant="secondary" className="text-sm px-4 py-2 bg-background border border-divider font-light">
                             {section.topics.length} موضوع
                           </Badge>
                           {openSections.includes(section.id) ? (
-                            <ChevronDown className="w-6 h-6" />
+                            <ChevronDown className="w-6 h-6 text-text-soft" />
                           ) : (
-                            <ChevronRight className="w-6 h-6" />
+                            <ChevronRight className="w-6 h-6 text-text-soft" />
                           )}
                         </div>
                       </div>
@@ -284,38 +287,38 @@ export const StudentGrade11Content: React.FC = () => {
                   </CollapsibleTrigger>
 
                   <CollapsibleContent>
-                    <CardContent className="pt-0">
-                      <div className="space-y-3">
+                    <CardContent className="pt-0 px-8 pb-8">
+                      <div className="space-y-4">
                         {section.topics.map((topic) => (
-                          <Card key={topic.id} className="ml-4">
+                          <Card key={topic.id} className="mr-8 border border-divider bg-background shadow-none">
                             <Collapsible
                               open={openTopics.includes(topic.id)}
                               onOpenChange={() => toggleTopic(topic.id)}
                             >
                               <CollapsibleTrigger asChild>
-                                <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors py-4">
+                                <CardHeader className="cursor-pointer hover:bg-surface-light transition-colors py-6">
                                    <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-4">
-                                      <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
-                                        <Target className="w-5 h-5 text-white" />
+                                    <div className="flex items-center gap-5">
+                                      <div className="w-12 h-12 bg-surface-light rounded-2xl flex items-center justify-center border border-divider">
+                                        <Target className="w-6 h-6 text-text-soft" />
                                       </div>
                                       <div className="text-left">
-                                        <h4 className="font-semibold text-lg">{topic.title}</h4>
+                                        <h4 className="font-light text-lg text-foreground">{topic.title}</h4>
                                         {topic.content && (
-                                          <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                                          <p className="text-sm text-text-soft mt-2 line-clamp-2 font-light">
                                             {topic.content}
                                           </p>
                                         )}
                                       </div>
                                     </div>
                                     <div className="flex items-center gap-3">
-                                      <Badge variant="outline" className="text-sm px-3 py-1">
+                                      <Badge variant="outline" className="text-sm px-3 py-1 font-light border-divider">
                                         {topic.lessons.length} درس
                                       </Badge>
                                       {openTopics.includes(topic.id) ? (
-                                        <ChevronDown className="w-5 h-5" />
+                                        <ChevronDown className="w-5 h-5 text-text-soft" />
                                       ) : (
-                                        <ChevronRight className="w-5 h-5" />
+                                        <ChevronRight className="w-5 h-5 text-text-soft" />
                                       )}
                                     </div>
                                   </div>
@@ -323,31 +326,31 @@ export const StudentGrade11Content: React.FC = () => {
                               </CollapsibleTrigger>
 
                               <CollapsibleContent>
-                                <CardContent className="pt-0">
-                                  <div className="space-y-2">
+                                <CardContent className="pt-0 px-6 pb-6">
+                                  <div className="space-y-3">
                                     {topic.lessons.map((lesson) => (
                                        <div
                                         key={lesson.id}
-                                        className="flex items-center justify-between p-4 bg-muted/30 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer"
+                                        className="flex items-center justify-between p-5 bg-surface-light rounded-2xl border border-divider hover:bg-surface-hover transition-colors cursor-pointer"
                                         onClick={() => setSelectedLesson(lesson)}
                                       >
-                                        <div className="flex items-center gap-4">
-                                          <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-                                            <BookOpen className="w-4 h-4 text-white" />
+                                        <div className="flex items-center gap-5">
+                                          <div className="w-10 h-10 bg-background rounded-xl flex items-center justify-center border border-divider">
+                                            <BookOpen className="w-5 h-5 text-text-soft" />
                                           </div>
                                           <div>
-                                            <h5 className="text-base font-semibold">{lesson.title}</h5>
+                                            <h5 className="text-base font-light text-foreground">{lesson.title}</h5>
                                             {lesson.media && lesson.media.length > 0 && (
-                                              <div className="flex items-center gap-2 mt-1">
-                                                <PlayCircle className="w-4 h-4 text-muted-foreground" />
-                                                <span className="text-sm text-muted-foreground">
+                                              <div className="flex items-center gap-2 mt-2">
+                                                <PlayCircle className="w-4 h-4 text-text-soft" />
+                                                <span className="text-sm text-text-soft font-light">
                                                   {lesson.media.length} ملف وسائط
                                                 </span>
                                               </div>
                                             )}
                                           </div>
                                         </div>
-                                        <Button variant="outline" size="sm" className="px-4">
+                                        <Button variant="ghost" className="px-5 text-text-soft hover:text-foreground font-light">
                                           عرض
                                         </Button>
                                       </div>
@@ -362,7 +365,7 @@ export const StudentGrade11Content: React.FC = () => {
                     </CardContent>
                   </CollapsibleContent>
                 </Collapsible>
-              </Card>
+              </Card>  
             ))
           )}
         </TabsContent>
