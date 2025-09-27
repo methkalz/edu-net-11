@@ -239,11 +239,6 @@ const Grade10TeacherContent = () => {
                     )}
                   </div>
 
-                  {/* Teacher Analytics for non-video content */}
-                  <div className="flex items-center gap-1 text-blue-600 flex-shrink-0 bg-blue-50 rounded-full px-3 py-1 text-xs">
-                    <Users className="w-3 h-3" />
-                    {completedStudents}/{totalStudents}
-                  </div>
                 </div>
               )}
 
