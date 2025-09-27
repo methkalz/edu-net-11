@@ -313,6 +313,11 @@ All colors MUST be HSL.
     background: linear-gradient(135deg, hsl(120 100% 60%), hsl(190 100% 65%), hsl(270 85% 65%));
   }
 
+  /* Radial Gradient for Center Fade Effect */
+  .bg-gradient-radial {
+    background: radial-gradient(ellipse at center, hsl(var(--primary) / 0.15) 0%, hsl(var(--primary) / 0.08) 50%, transparent 100%);
+  }
+
   /* Modern Card Effects */
   .modern-card {
     backdrop-filter: blur(10px);

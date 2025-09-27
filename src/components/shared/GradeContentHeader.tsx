@@ -70,8 +70,7 @@ const GradeContentHeader: React.FC<GradeContentHeaderProps> = ({
       <div className="absolute inset-0 creative-background opacity-40" />
       
       <Card className={cn(
-        "relative border-0 shadow-lg backdrop-blur-md",
-        "bg-gradient-to-br", getGradeGradient()
+        "relative border-0 shadow-lg backdrop-blur-md overflow-hidden bg-gradient-radial"
       )}>
         <CardContent className="p-8">
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
