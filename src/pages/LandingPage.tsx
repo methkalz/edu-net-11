@@ -333,15 +333,15 @@ const LandingPage: React.FC = () => {
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
                     <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
-                    <span className="text-gray-700 text-sm md:text-base">مقدمة في البرمجة</span>
+                    <span className="text-gray-700 text-sm md:text-base">شروحات فيديو</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
-                    <span className="text-gray-700 text-sm md:text-base">أنظمة التشغيل</span>
+                    <span className="text-gray-700 text-sm md:text-base">مواد بأسلوب شيّق</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
-                    <span className="text-gray-700 text-sm md:text-base">شبكات الحاسوب</span>
+                    <span className="text-gray-700 text-sm md:text-base">ادارة ميني برويكت</span>
                   </div>
                 </div>
               </div>
@@ -358,21 +358,19 @@ const LandingPage: React.FC = () => {
                   </div>
                 </div>
                 <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-4 text-center">الصف الحادي عشر</h3>
-                <p className="text-gray-600 leading-relaxed mb-6 text-center text-sm md:text-base">
-                  تطوير المهارات المتقدمة والتحضير لامتحانات البجروت
-                </p>
+                <p className="text-gray-600 leading-relaxed mb-6 text-center text-sm md:text-base">تطوير المهارات والتعلّم بطريق وأساليب جديدة وشيّقة مع اكتساب المعرفة</p>
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
                     <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
-                    <span className="text-gray-700 text-sm md:text-base">هياكل البيانات</span>
+                    <span className="text-gray-700 text-sm md:text-base">مضامين دراسية متقدمة</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
-                    <span className="text-gray-700 text-sm md:text-base">قواعد البيانات</span>
+                    <span className="text-gray-700 text-sm md:text-base">ألعاب تعليمية</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
-                    <span className="text-gray-700 text-sm md:text-base">تطوير المواقع</span>
+                    <span className="text-gray-700 text-sm md:text-base">فيديوهات</span>
                   </div>
                 </div>
               </div>
@@ -389,21 +387,19 @@ const LandingPage: React.FC = () => {
                   </div>
                 </div>
                 <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-4 text-center">الصف الثاني عشر</h3>
-                <p className="text-gray-600 leading-relaxed mb-6 text-center text-sm md:text-base">
-                  إتقان المفاهيم المتقدمة والاستعداد المكثف للبجروت
-                </p>
+                <p className="text-gray-600 leading-relaxed mb-6 text-center text-sm md:text-base">إتقان المفاهيم المتقدمة والاستعداد المكثف للمشروع</p>
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
                     <div className="w-2 h-2 bg-purple-500 rounded-full flex-shrink-0"></div>
-                    <span className="text-gray-700 text-sm md:text-base">خوارزميات متقدمة</span>
+                    <span className="text-gray-700 text-sm md:text-base">ادارة المشروع اونلاين</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="w-2 h-2 bg-purple-500 rounded-full flex-shrink-0"></div>
-                    <span className="text-gray-700 text-sm md:text-base">مشروع التخرج</span>
+                    <span className="text-gray-700 text-sm md:text-base">فيديوهات تعليمية</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="w-2 h-2 bg-purple-500 rounded-full flex-shrink-0"></div>
-                    <span className="text-gray-700 text-sm md:text-base">إعداد البجروت</span>
+                    <span className="text-gray-700 text-sm md:text-base">نظام متابعة ومهام</span>
                   </div>
                 </div>
               </div>
