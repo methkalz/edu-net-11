@@ -142,18 +142,18 @@ All colors MUST be HSL.
   .dark,
   :root[data-theme="dark"] {
     /* الخلفيات - تباين محسّن */
-    --background: 220 15% 8%;
-    --card: 220 18% 12%;
-    --surface-elevated: 220 20% 16%;
+    --background: 220 20% 10%;
+    --card: 220 22% 14%;
+    --surface-elevated: 220 24% 18%;
     
     /* النصوص - قابلية قراءة محسّنة */
-    --foreground: 220 15% 92%;
-    --foreground-secondary: 220 12% 75%;
-    --foreground-muted: 220 8% 60%;
+    --foreground: 220 15% 95%;
+    --foreground-secondary: 220 12% 78%;
+    --foreground-muted: 220 8% 65%;
 
-    --card-foreground: 220 15% 92%;
-    --popover: 220 18% 12%;
-    --popover-foreground: 220 15% 92%;
+    --card-foreground: 220 15% 95%;
+    --popover: 220 22% 14%;
+    --popover-foreground: 220 15% 95%;
 
     /* ===== ألوان الإحصائيات - أفضل على الخلفية الداكنة ===== */
     --stat-points: 45 80% 65%;
@@ -200,17 +200,17 @@ All colors MUST be HSL.
     --match-color-7: 15 80% 65%;   /* Red-Orange */
     --match-color-8: 120 55% 55%;  /* Light Green */
 
-    --accent: 215 25% 12%;
+    --accent: 220 25% 18%;
     --accent-foreground: 220 15% 95%;
 
-    --muted: 215 25% 10%;
-    --muted-foreground: 220 15% 65%;
+    --muted: 220 22% 16%;
+    --muted-foreground: 220 12% 70%;
 
     --destructive: 0 80% 65%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 10% 24%;  /* حدود أوضح */
-    --input: 220 10% 24%;
+    --border: 220 15% 25%;
+    --input: 220 15% 22%;
     --ring: 214 85% 62%;
 
     /* Dark Mode Gradients */
@@ -353,25 +353,28 @@ All colors MUST be HSL.
 
   /* ===== بطاقات زجاجية محسّنة ===== */
   .card-glass {
-    background-color: hsl(var(--card) / 0.6);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border: 1px solid hsl(var(--border));
+    background-color: hsl(var(--card) / 0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid hsl(var(--border) / 0.8);
     transition: all 0.3s ease;
+    box-shadow: 0 4px 16px hsl(var(--foreground) / 0.05);
   }
 
   .glass-surface {
-    background-color: hsl(var(--card) / 0.4);
+    background-color: hsl(var(--card) / 0.5);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid hsl(var(--border) / 0.5);
+    border: 1px solid hsl(var(--border) / 0.6);
+    box-shadow: 0 2px 12px hsl(var(--foreground) / 0.03);
   }
 
   .glass-surface-elevated {
-    background-color: hsl(var(--surface-elevated) / 0.5);
+    background-color: hsl(var(--surface-elevated) / 0.6);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid hsl(var(--border) / 0.3);
+    border: 1px solid hsl(var(--border) / 0.4);
+    box-shadow: 0 6px 20px hsl(var(--foreground) / 0.08);
   }
 
   /* ===== خلفيات صفحات ذكية ===== */
@@ -430,9 +433,9 @@ All colors MUST be HSL.
   /* ===== Tabs محسّنة ===== */
   .tabs-elevated {
     background: hsl(var(--card) / 0.95);
-    backdrop-filter: blur(8px);
-    border: 1px solid hsl(var(--border) / 0.2);
-    box-shadow: 0 4px 12px hsl(var(--foreground) / 0.08);
+    backdrop-filter: blur(10px);
+    border: 1px solid hsl(var(--border) / 0.3);
+    box-shadow: 0 4px 16px hsl(var(--foreground) / 0.1);
   }
 
   /* ===== شاشات التحميل ===== */
