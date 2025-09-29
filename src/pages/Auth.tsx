@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useAuth } from '@/hooks/useAuth';
 import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { AuthErrorHandler } from '@/components/auth/AuthErrorHandler';
+import { AuthThemeProvider } from '@/components/auth/AuthThemeProvider';
 import { BookOpen, Eye, EyeOff, Shield, Lock, Users, GraduationCap } from 'lucide-react';
 import { sessionMonitor } from '@/lib/auth/session-monitor';
 const Auth = () => {
@@ -77,7 +78,9 @@ const Auth = () => {
   const handleRetry = () => {
     handleLogin({ preventDefault: () => {} } as React.FormEvent);
   };
-  return <div className="min-h-screen creative-background flex items-center justify-center p-6" dir="rtl">
+  return (
+    <AuthThemeProvider>
+      <div className="min-h-screen creative-background flex items-center justify-center p-6" dir="rtl">
       {/* Advanced Background Effects */}
       <div className="absolute inset-0 overflow-hidden">
         {/* Floating Light Orbs */}
@@ -226,6 +229,8 @@ const Auth = () => {
           </div>
         </CardContent>
       </Card>
-    </div>;
+      </div>
+    </AuthThemeProvider>
+  );
 };
 export default Auth;
