@@ -2,10 +2,12 @@ import React, { useRef, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { X, Download, ExternalLink } from 'lucide-react';
+import { X, Download, ExternalLink, Code } from 'lucide-react';
 import { Grade11LessonMedia } from '@/hooks/useGrade11Content';
 import { useSharedLottieSettings } from '@/hooks/useSharedLottieSettings';
 import Lottie from 'lottie-react';
+import CodeBlock from '@/components/content/CodeBlock';
+import TypewriterCodeBlock from '@/components/content/TypewriterCodeBlock';
 
 interface MediaPreviewProps {
   media: Grade11LessonMedia;
@@ -30,7 +32,8 @@ const MediaPreview: React.FC<MediaPreviewProps> = ({ media, onClose }) => {
     const typeMap = {
       video: { label: 'فيديو', color: 'bg-blue-100 text-blue-800' },
       image: { label: 'صورة', color: 'bg-green-100 text-green-800' },
-      lottie: { label: 'لوتي', color: 'bg-purple-100 text-purple-800' }
+      lottie: { label: 'لوتي', color: 'bg-purple-100 text-purple-800' },
+      code: { label: 'كود', color: 'bg-orange-100 text-orange-800' }
     };
     
     const config = typeMap[type as keyof typeof typeMap] || { label: type, color: 'bg-gray-100 text-gray-800' };
@@ -160,6 +163,51 @@ const MediaPreview: React.FC<MediaPreviewProps> = ({ media, onClose }) => {
           );
         }
 
+      case 'code':
+        const codeData = media.metadata?.metadata?.code || media.metadata;
+        const enableTypewriter = codeData?.enableTypewriter || false;
+        
+        // Apply typewriter settings based on metadata
+        const typewriterSettings = {
+          speed: codeData?.speed || 50,
+          autoStart: codeData?.autoStart !== false,
+          autoRestart: codeData?.autoRestart || false,
+          loop: codeData?.loop || false,
+          pauseDuration: codeData?.pauseDuration || 1000
+        };
+
+        const codeProps = {
+          code: codeData?.code || '',
+          language: codeData?.language || 'javascript',
+          fileName: codeData?.title || media.file_name,
+          showLineNumbers: codeData?.showLineNumbers !== false,
+          theme: codeData?.theme || 'dark',
+          className: "w-full max-h-96 overflow-auto"
+        };
+
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Code className="h-4 w-4" />
+              <span>لغة البرمجة: {codeData?.language || 'javascript'}</span>
+              {enableTypewriter && (
+                <Badge variant="outline" className="text-xs">
+                  تأثير الكتابة مفعل
+                </Badge>
+              )}
+            </div>
+            
+            {enableTypewriter ? (
+              <TypewriterCodeBlock
+                {...codeProps}
+                {...typewriterSettings}
+              />
+            ) : (
+              <CodeBlock {...codeProps} />
+            )}
+          </div>
+        );
+
       default:
         return (
           <div className="flex justify-center items-center h-96 bg-muted rounded-lg">
@@ -242,6 +290,25 @@ const MediaPreview: React.FC<MediaPreviewProps> = ({ media, onClose }) => {
                 <span className="font-medium text-muted-foreground">النص البديل:</span>
                 <p className="mt-1">{media.metadata.alt_text}</p>
               </div>
+            )}
+
+            {/* معلومات إضافية للكود */}
+            {media.media_type === 'code' && (
+              <>
+                {media.metadata?.metadata?.code?.language && (
+                  <div>
+                    <span className="font-medium text-muted-foreground">لغة البرمجة:</span>
+                    <p className="mt-1">{media.metadata.metadata.code.language}</p>
+                  </div>
+                )}
+                
+                {media.metadata?.metadata?.code?.enableTypewriter && (
+                  <div>
+                    <span className="font-medium text-muted-foreground">تأثير الكتابة:</span>
+                    <p className="mt-1">مفعل (السرعة: {media.metadata.metadata.code.speed || 50})</p>
+                  </div>
+                )}
+              </>
             )}
           </div>
 
