@@ -164,24 +164,24 @@ const MediaPreview: React.FC<MediaPreviewProps> = ({ media, onClose }) => {
         }
 
       case 'code':
-        const codeData = media.metadata?.metadata?.code || media.metadata;
-        const enableTypewriter = codeData?.enableTypewriter || false;
+        const codeMetadata = media.metadata?.metadata?.code || media.metadata;
+        const shouldUseTypewriter = codeMetadata.enableTypewriter !== false;
         
         // Apply typewriter settings based on metadata
         const typewriterSettings = {
-          speed: codeData?.speed || 50,
-          autoStart: codeData?.autoStart !== false,
-          autoRestart: codeData?.autoRestart || false,
-          loop: codeData?.loop || false,
-          pauseDuration: codeData?.pauseDuration || 1000
+          speed: codeMetadata?.typewriterSpeed || 50,
+          autoStart: codeMetadata?.autoStart !== false,
+          autoRestart: codeMetadata?.autoRestart || false,
+          loop: codeMetadata?.loop || false,
+          pauseDuration: codeMetadata?.pauseDuration || 1000
         };
 
         const codeProps = {
-          code: codeData?.code || '',
-          language: codeData?.language || 'javascript',
-          fileName: codeData?.title || media.file_name,
-          showLineNumbers: codeData?.showLineNumbers !== false,
-          theme: codeData?.theme || 'dark',
+          code: codeMetadata?.code || '',
+          language: codeMetadata?.language || 'javascript',
+          fileName: codeMetadata?.title || media.file_name,
+          showLineNumbers: codeMetadata?.showLineNumbers !== false,
+          theme: codeMetadata?.theme || 'dark',
           className: "w-full max-h-96 overflow-auto"
         };
 
@@ -189,15 +189,15 @@ const MediaPreview: React.FC<MediaPreviewProps> = ({ media, onClose }) => {
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Code className="h-4 w-4" />
-              <span>لغة البرمجة: {codeData?.language || 'javascript'}</span>
-              {enableTypewriter && (
+              <span>لغة البرمجة: {codeMetadata?.language || 'javascript'}</span>
+              {shouldUseTypewriter && (
                 <Badge variant="outline" className="text-xs">
                   تأثير الكتابة مفعل
                 </Badge>
               )}
             </div>
             
-            {enableTypewriter ? (
+            {shouldUseTypewriter ? (
               <TypewriterCodeBlock
                 {...codeProps}
                 {...typewriterSettings}
