@@ -38,6 +38,17 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
   const [editingLottie, setEditingLottie] = useState<any>(null);
   const { lottieSettings } = useSharedLottieSettings();
 
+  // تحديث previewMedia عند تحديث lesson.media
+  useEffect(() => {
+    if (previewMedia && lesson.media) {
+      const updatedMedia = lesson.media.find(m => m.id === previewMedia.id);
+      if (updatedMedia && JSON.stringify(updatedMedia.metadata) !== JSON.stringify(previewMedia.metadata)) {
+        console.log('Updating preview media with new data:', updatedMedia);
+        setPreviewMedia(updatedMedia);
+      }
+    }
+  }, [lesson.media, previewMedia]);
+
   const handleUpdateLottieMedia = async (updates: Partial<Grade11LessonMedia>) => {
     if (!editingLottie) return;
     
