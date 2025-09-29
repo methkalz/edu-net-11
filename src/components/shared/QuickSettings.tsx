@@ -101,32 +101,65 @@ export const QuickSettings: React.FC<QuickSettingsProps> = ({
 
 // Font Size Settings Component
 const FontSizeSettings: React.FC = () => {
-  const { fontSize, setFontSize, fontSizeConfig } = useFontSize();
+  const { fontSize, setFontSize, decreaseFontSize, increaseFontSize, canDecrease, canIncrease } = useFontSize();
   
-  const fontSizes: FontSize[] = ['small', 'normal', 'large', 'xlarge'];
+  const fontSizeMap: Record<FontSize, string> = {
+    small: 'A-',
+    normal: 'A',
+    large: 'A+',
+    xlarge: 'A++'
+  };
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-        <Type className="h-4 w-4" />
-        <span>حجم النص</span>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+          <Type className="h-4 w-4" />
+          <span>حجم النص</span>
+        </div>
       </div>
       
-      <div className="grid grid-cols-2 gap-2">
-        {fontSizes.map((size) => (
-          <Button
-            key={size}
-            variant={fontSize === size ? "default" : "outline"}
-            size="sm"
-            onClick={() => setFontSize(size)}
-            className={cn(
-              "text-xs transition-all",
-              fontSize === size && "ring-2 ring-primary ring-offset-2"
-            )}
-          >
-            {fontSizeConfig[size].label}
-          </Button>
-        ))}
+      <div className="flex items-center justify-center gap-1">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={decreaseFontSize}
+          disabled={!canDecrease}
+          className={cn(
+            "h-9 px-4 font-semibold transition-all",
+            fontSize === 'small' && "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
+          )}
+          title="تصغير النص"
+        >
+          <span className="text-sm">A-</span>
+        </Button>
+        
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setFontSize('normal')}
+          className={cn(
+            "h-9 px-4 font-semibold transition-all",
+            fontSize === 'normal' && "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
+          )}
+          title="حجم عادي"
+        >
+          <span className="text-base">A</span>
+        </Button>
+        
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={increaseFontSize}
+          disabled={!canIncrease}
+          className={cn(
+            "h-9 px-4 font-semibold transition-all",
+            (fontSize === 'large' || fontSize === 'xlarge') && "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
+          )}
+          title="تكبير النص"
+        >
+          <span className="text-lg">A+</span>
+        </Button>
       </div>
     </div>
   );
