@@ -13,8 +13,10 @@ export type Package = Database['public']['Tables']['packages']['Row'];
 export type Course = Database['public']['Tables']['courses']['Row'];
 
 // أنواع للنماذج والمكونات
-export interface UserProfile extends Profile {
+export interface UserProfile extends Omit<Profile, 'font_size' | 'theme'> {
   schools?: School;
+  font_size?: string | null;
+  theme?: string | null;
 }
 
 export interface AuthError {

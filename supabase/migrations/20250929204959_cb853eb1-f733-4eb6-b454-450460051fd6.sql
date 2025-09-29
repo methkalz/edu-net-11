@@ -1,11 +1,14 @@
--- حذف الجدول القديم إذا كان موجوداً
-DROP TABLE IF EXISTS public.whiteboards CASCADE;
-
 -- إضافة بلاجن اللوح الرقمي
 INSERT INTO public.plugins (
-  name, name_ar, description, description_ar, category, icon, default_status
+  name,
+  name_ar,
+  description,
+  description_ar,
+  category,
+  icon,
+  default_status
 ) VALUES (
-  'Digital Whiteboard', 
+  'Digital Whiteboard',
   'اللوح الرقمي',
   'Interactive digital whiteboard for drawing, writing and teaching',
   'لوح رقمي تفاعلي للرسم والكتابة والشرح أثناء التدريس',
@@ -14,7 +17,7 @@ INSERT INTO public.plugins (
   'enabled'::plugin_status
 );
 
--- إنشاء جدول whiteboards لحفظ اللوحات
+-- إنشاء جدول لحفظ اللوحات الرقمية
 CREATE TABLE public.whiteboards (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,

@@ -1,42 +1,137 @@
-import { useState, useCallback } from "react";
-import { Excalidraw, MainMenu, WelcomeScreen } from "@excalidraw/excalidraw";
+import { useState, useCallback, useEffect } from "react";
+import { Canvas as FabricCanvas } from "fabric";
+import { WhiteboardCanvas } from "@/components/whiteboard/WhiteboardCanvas";
+import { WhiteboardToolbar } from "@/components/whiteboard/WhiteboardToolbar";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Download } from "lucide-react";
-import AppHeader from "@/components/shared/AppHeader";
 
-const WhiteboardPage = () => {
-  const { userProfile } = useAuth();
+export default function Whiteboard() {
+  const [canvas, setCanvas] = useState<FabricCanvas | null>(null);
+  const [currentTool, setCurrentTool] = useState("pen");
+  const [currentColor, setCurrentColor] = useState("#000000");
+  const [brushSize, setBrushSize] = useState(2);
+  const [history, setHistory] = useState<string[]>([]);
+  const [historyStep, setHistoryStep] = useState(-1);
   const { toast } = useToast();
-  const [title, setTitle] = useState("لوح جديد");
-  const [excalidrawAPI, setExcalidrawAPI] = useState<any>(null);
-  const [isSaving, setIsSaving] = useState(false);
+
+  // حفظ الحالة في التاريخ
+  const saveHistory = useCallback(() => {
+    if (!canvas) return;
+    
+    const json = JSON.stringify(canvas.toJSON());
+    const newHistory = history.slice(0, historyStep + 1);
+    newHistory.push(json);
+    setHistory(newHistory);
+    setHistoryStep(newHistory.length - 1);
+  }, [canvas, history, historyStep]);
+
+  // الاستماع للتغييرات على Canvas
+  useEffect(() => {
+    if (!canvas) return;
+
+    const handleModified = () => {
+      saveHistory();
+    };
+
+    canvas.on("object:added", handleModified);
+    canvas.on("object:modified", handleModified);
+    canvas.on("object:removed", handleModified);
+
+    return () => {
+      canvas.off("object:added", handleModified);
+      canvas.off("object:modified", handleModified);
+      canvas.off("object:removed", handleModified);
+    };
+  }, [canvas, saveHistory]);
+
+  const handleToolChange = (tool: string) => {
+    setCurrentTool(tool);
+    if (tool === "eraser" && canvas) {
+      canvas.isDrawingMode = false;
+      canvas.selection = true;
+    }
+  };
+
+  const handleUndo = useCallback(() => {
+    if (historyStep > 0 && canvas) {
+      const prevStep = historyStep - 1;
+      setHistoryStep(prevStep);
+      canvas.loadFromJSON(history[prevStep], () => {
+        canvas.renderAll();
+      });
+    }
+  }, [canvas, history, historyStep]);
+
+  const handleRedo = useCallback(() => {
+    if (historyStep < history.length - 1 && canvas) {
+      const nextStep = historyStep + 1;
+      setHistoryStep(nextStep);
+      canvas.loadFromJSON(history[nextStep], () => {
+        canvas.renderAll();
+      });
+    }
+  }, [canvas, history, historyStep]);
+
+  const handleClear = useCallback(() => {
+    if (canvas) {
+      canvas.clear();
+      canvas.backgroundColor = "#ffffff";
+      canvas.renderAll();
+      saveHistory();
+      toast({
+        title: "تم المسح",
+        description: "تم مسح اللوح بنجاح",
+      });
+    }
+  }, [canvas, saveHistory, toast]);
 
   const handleSave = useCallback(async () => {
-    if (!excalidrawAPI || !userProfile) return;
+    if (!canvas) {
+      toast({
+        title: "خطأ",
+        description: "يجب تسجيل الدخول أولاً",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    setIsSaving(true);
     try {
-      const elements = excalidrawAPI.getSceneElements();
-      const appState = excalidrawAPI.getAppState();
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "خطأ",
+          description: "يجب تسجيل الدخول أولاً",
+          variant: "destructive",
+        });
+        return;
+      }
 
-      const canvasData = {
-        elements,
-        appState: {
-          viewBackgroundColor: appState.viewBackgroundColor,
-          currentItemStrokeColor: appState.currentItemStrokeColor,
-          currentItemBackgroundColor: appState.currentItemBackgroundColor,
-        },
-      };
+      // Get profile for school_id
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("school_id")
+        .eq("user_id", user.id)
+        .single();
+
+      if (!profile?.school_id) {
+        toast({
+          title: "خطأ",
+          description: "لم يتم العثور على معلومات المدرسة",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const canvasData = canvas.toJSON();
+      const thumbnail = canvas.toDataURL({ format: "png", quality: 0.5, multiplier: 1 });
 
       const { error } = await supabase.from("whiteboards").insert({
-        user_id: userProfile.user_id,
-        school_id: userProfile.school_id!,
-        title,
+        user_id: user.id,
+        school_id: profile.school_id,
         canvas_data: canvasData,
+        thumbnail,
+        title: `لوح ${new Date().toLocaleDateString("ar-EG")}`,
       });
 
       if (error) throw error;
@@ -52,88 +147,54 @@ const WhiteboardPage = () => {
         description: "فشل حفظ اللوح",
         variant: "destructive",
       });
-    } finally {
-      setIsSaving(false);
     }
-  }, [excalidrawAPI, userProfile, title, toast]);
+  }, [canvas, toast]);
 
   const handleExport = useCallback(() => {
-    if (!excalidrawAPI) return;
+    if (!canvas) return;
 
-    const elements = excalidrawAPI.getSceneElements();
-    const dataUrl = excalidrawAPI.getSceneElementsIncludingDeleted();
-
-    // Create a download link
+    const dataURL = canvas.toDataURL({ format: "png", quality: 1, multiplier: 1 });
     const link = document.createElement("a");
-    link.download = `${title}.excalidraw`;
-    link.href = `data:text/plain;charset=utf-8,${encodeURIComponent(
-      JSON.stringify({ elements: dataUrl })
-    )}`;
+    link.download = `whiteboard-${Date.now()}.png`;
+    link.href = dataURL;
     link.click();
 
     toast({
       title: "تم التصدير",
-      description: "تم تصدير اللوح بنجاح",
+      description: "تم تصدير اللوح كصورة",
     });
-  }, [excalidrawAPI, title, toast]);
+  }, [canvas, toast]);
 
   return (
-    <div className="min-h-screen bg-background" dir="rtl">
-      <AppHeader />
-      
-      <div className="container mx-auto p-4">
-        <div className="mb-4 flex items-center gap-4">
-          <Input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="عنوان اللوح"
-            className="max-w-md"
-          />
-          <Button onClick={handleSave} disabled={isSaving}>
-            <Save className="ml-2 h-4 w-4" />
-            حفظ
-          </Button>
-          <Button onClick={handleExport} variant="outline">
-            <Download className="ml-2 h-4 w-4" />
-            تصدير
-          </Button>
-        </div>
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto py-6">
+        <h1 className="text-3xl font-bold mb-6">اللوح الرقمي</h1>
+        
+        <WhiteboardToolbar
+          currentTool={currentTool}
+          onToolChange={handleToolChange}
+          currentColor={currentColor}
+          onColorChange={setCurrentColor}
+          brushSize={brushSize}
+          onBrushSizeChange={setBrushSize}
+          onUndo={handleUndo}
+          onRedo={handleRedo}
+          onClear={handleClear}
+          onSave={handleSave}
+          onExport={handleExport}
+          canUndo={historyStep > 0}
+          canRedo={historyStep < history.length - 1}
+        />
 
-        <div className="h-[calc(100vh-200px)] border rounded-lg overflow-hidden" dir="ltr">
-          <Excalidraw
-            excalidrawAPI={(api) => setExcalidrawAPI(api)}
-            initialData={{
-              elements: [],
-              appState: {
-                viewBackgroundColor: "#ffffff",
-              },
-            }}
-          >
-            <WelcomeScreen>
-              <WelcomeScreen.Hints.MenuHint />
-              <WelcomeScreen.Hints.ToolbarHint />
-              <WelcomeScreen.Center>
-                <WelcomeScreen.Center.Heading>
-                  مرحباً باللوح الرقمي!
-                </WelcomeScreen.Center.Heading>
-                <WelcomeScreen.Center.Menu>
-                  <WelcomeScreen.Center.MenuItemLoadScene />
-                  <WelcomeScreen.Center.MenuItemHelp />
-                </WelcomeScreen.Center.Menu>
-              </WelcomeScreen.Center>
-            </WelcomeScreen>
-            <MainMenu>
-              <MainMenu.DefaultItems.LoadScene />
-              <MainMenu.DefaultItems.Export />
-              <MainMenu.DefaultItems.SaveAsImage />
-              <MainMenu.DefaultItems.Help />
-              <MainMenu.DefaultItems.ClearCanvas />
-            </MainMenu>
-          </Excalidraw>
+        <div className="mt-4">
+          <WhiteboardCanvas
+            currentTool={currentTool}
+            currentColor={currentColor}
+            brushSize={brushSize}
+            onCanvasReady={setCanvas}
+          />
         </div>
       </div>
     </div>
   );
-};
-
-export default WhiteboardPage;
+}

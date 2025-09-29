@@ -156,11 +156,11 @@ const App = () => {
                {/* Question management for interactive games */}
                 <Route path="/question-management" element={<LazyTest />} />
                
-               {/* Whiteboard route - Digital board for teachers */}
-               <Route path="/whiteboard" element={<Suspense fallback={<PageLoading message="جاري تحميل اللوح الرقمي..." />}><WhiteboardPage /></Suspense>} />
-               
                {/* Reports dashboard route */}
                 <Route path="/reports" element={<Suspense fallback={<PageLoading message="جاري تحميل التقارير..." />}><LazyReports /></Suspense>} />
+               
+               {/* Whiteboard route - for teachers */}
+                <Route path="/whiteboard" element={<Suspense fallback={<PageLoading message="جاري تحميل اللوح الرقمي..." />}><WhiteboardPage /></Suspense>} />
                
                {/* Development and testing routes */}
                 <Route path="/test" element={<LazyTest />} />
