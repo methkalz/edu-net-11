@@ -371,6 +371,15 @@ All colors MUST be HSL.
   [dir="rtl"] .space-x-reverse > :not([hidden]) ~ :not([hidden]) {
     --tw-space-x-reverse: 1;
   }
+
+  /* Focus Mode - Grayscale + Dimming for concentration */
+  .focus-mode {
+    filter: grayscale(100%) brightness(0.85);
+  }
+
+  .focus-mode * {
+    transition: filter 0.3s ease;
+  }
 }
 
 @layer utilities {

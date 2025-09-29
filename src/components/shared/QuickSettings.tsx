@@ -1,11 +1,12 @@
 import React from 'react';
-import { Settings, Moon, Sun, User, LogOut, Type, ChevronLeft, Contrast } from 'lucide-react';
+import { Settings, Moon, Sun, User, LogOut, Type, ChevronLeft, Contrast, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { useFontSize, FontSize } from '@/hooks/useFontSize';
 import { useHighContrast } from '@/hooks/useHighContrast';
+import { useFocusMode } from '@/hooks/useFocusMode';
 
 interface QuickSettingsProps {
   onSettingsClick?: () => void;
@@ -71,6 +72,10 @@ export const QuickSettings: React.FC<QuickSettingsProps> = ({
             <Separator className="my-3" />
             
             <HighContrastSettings />
+            
+            <Separator className="my-3" />
+            
+            <FocusModeSettings />
           </PopoverContent>
         </Popover>
       )}
@@ -179,6 +184,34 @@ const HighContrastSettings: React.FC = () => {
           {highContrast ? 'مفعّل' : 'معطّل'}
         </Button>
       </div>
+    </div>
+  );
+};
+
+// Focus Mode Settings Component
+const FocusModeSettings: React.FC = () => {
+  const { focusMode, toggleFocusMode } = useFocusMode();
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+          <Eye className="h-4 w-4" />
+          <span>وضع التركيز</span>
+        </div>
+        
+        <Button
+          variant={focusMode ? "default" : "outline"}
+          size="sm"
+          onClick={toggleFocusMode}
+          className="h-8 px-3"
+        >
+          {focusMode ? 'مفعّل' : 'معطّل'}
+        </Button>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        تقليل التشتت البصري للتركيز
+      </p>
     </div>
   );
 };
