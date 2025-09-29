@@ -375,12 +375,7 @@ export const TeacherContentViewer: React.FC<TeacherContentViewerProps> = ({
           <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 flex items-center justify-center shadow-lg">
             <GraduationCap className="w-6 h-6 text-white" />
           </div>
-          <div>
-            <h2 className="text-2xl font-bold text-foreground">محتوى الصف الثاني عشر</h2>
-            <p className="text-muted-foreground">
-              {(videos?.length || 0) + (documents?.length || 0) + (projects?.length || 0) > 0 ? `${videos?.length || 0} فيديو، ${documents?.length || 0} مستند، ${projects?.length || 0} مشروع` : 'لا يوجد محتوى متاح حالياً'}
-            </p>
-          </div>
+          
         </div>
 
         <Tabs value={activeContentTab} onValueChange={setActiveContentTab} className="w-full">
