@@ -610,13 +610,13 @@ const TeacherDashboard: React.FC = () => {
 
         {/* المضامين التعليمية المتاحة - عرض كامل كما يراها الطلاب */}
         {schoolPackageContents.length > 0 && (
-          <Card className="glass-surface border-0 shadow-xl animate-fade-in-up">
+          <Card className="glass-card border-0 shadow-xl animate-fade-in-up">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-3 text-xl">
-                <div className="w-8 h-8 rounded-lg bg-stat-achievements/20 flex items-center justify-center">
-                  <BookMarked className="h-4 w-4 text-stat-achievements" />
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-purple-500 to-purple-600 flex items-center justify-center">
+                  <BookMarked className="h-4 w-4 text-white" />
                 </div>
-                <span className="text-primary font-semibold">
+                <span className="bg-gradient-to-r from-purple-600 to-purple-500 bg-clip-text text-transparent">
                   المضامين التعليمية
                 </span>
               </CardTitle>
@@ -630,14 +630,14 @@ const TeacherDashboard: React.FC = () => {
               {schoolPackageContents.includes('grade10') && canAccessGrade('10') && (
                 <Collapsible>
                   <CollapsibleTrigger asChild>
-                    <Button variant="outline" className="w-full justify-between text-lg h-14 hover:bg-stat-videos/10 transition-colors">
+                    <Button variant="outline" className="w-full justify-between text-lg h-14 hover:bg-blue-50">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 stat-videos-bg rounded-full flex items-center justify-center">
-                          <Video className="h-5 w-5 text-stat-videos" />
+                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                          <Video className="h-5 w-5 text-blue-600" />
                         </div>
                         <div className="text-right">
                           <div className="font-bold">الصف العاشر</div>
-                          <div className="text-sm text-foreground-secondary">
+                          <div className="text-sm text-muted-foreground">
                             {grade10Videos.length} فيديو • {grade10Documents.length} مستند
                           </div>
                         </div>
@@ -646,7 +646,7 @@ const TeacherDashboard: React.FC = () => {
                     </Button>
                   </CollapsibleTrigger>
                   <CollapsibleContent className="mt-4">
-                    <div className="border rounded-lg p-4 glass-surface">
+                    <div className="border rounded-lg p-4 bg-muted/20">
                       <TeacherContentViewer grade="10" />
                     </div>
                   </CollapsibleContent>
@@ -657,14 +657,14 @@ const TeacherDashboard: React.FC = () => {
               {schoolPackageContents.includes('grade11') && canAccessGrade('11') && (
                 <Collapsible>
                   <CollapsibleTrigger asChild>
-                    <Button variant="outline" className="w-full justify-between text-lg h-14 hover:bg-stat-progress/10 transition-colors">
+                    <Button variant="outline" className="w-full justify-between text-lg h-14 hover:bg-green-50">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 stat-progress-bg rounded-full flex items-center justify-center">
-                          <BookOpen className="h-5 w-5 text-stat-progress" />
+                        <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                          <BookOpen className="h-5 w-5 text-green-600" />
                         </div>
                         <div className="text-right">
                           <div className="font-bold">الصف الحادي عشر</div>
-                          <div className="text-sm text-foreground-secondary">
+                          <div className="text-sm text-muted-foreground">
                             {grade11Documents.length} مستند • {grade11Videos.length} فيديو
                           </div>
                         </div>
@@ -673,7 +673,7 @@ const TeacherDashboard: React.FC = () => {
                     </Button>
                   </CollapsibleTrigger>
                   <CollapsibleContent className="mt-4">
-                    <div className="border rounded-lg p-4 glass-surface">
+                    <div className="border rounded-lg p-4 bg-muted/20">
                       <TeacherContentViewer grade="11" />
                     </div>
                   </CollapsibleContent>
@@ -684,14 +684,14 @@ const TeacherDashboard: React.FC = () => {
               {schoolPackageContents.includes('grade12') && canAccessGrade('12') && (
                 <Collapsible>
                   <CollapsibleTrigger asChild>
-                    <Button variant="outline" className="w-full justify-between text-lg h-14 hover:bg-stat-achievements/10 transition-colors">
+                    <Button variant="outline" className="w-full justify-between text-lg h-14 hover:bg-purple-50">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 stat-achievements-bg rounded-full flex items-center justify-center">
-                          <Trophy className="h-5 w-5 text-stat-achievements" />
+                        <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                          <Trophy className="h-5 w-5 text-purple-600" />
                         </div>
                         <div className="text-right">
                           <div className="font-bold">الصف الثاني عشر</div>
-                          <div className="text-sm text-foreground-secondary">
+                          <div className="text-sm text-muted-foreground">
                             {projects.length} مشروع نهائي • {grade12Documents.length} مستند
                           </div>
                         </div>
@@ -700,7 +700,7 @@ const TeacherDashboard: React.FC = () => {
                     </Button>
                   </CollapsibleTrigger>
                   <CollapsibleContent className="mt-4">
-                    <div className="border rounded-lg p-4 glass-surface">
+                    <div className="border rounded-lg p-4 bg-muted/20">
                       <TeacherContentViewer grade="12" />
                     </div>
                   </CollapsibleContent>
@@ -709,13 +709,13 @@ const TeacherDashboard: React.FC = () => {
 
               {/* رسالة عند عدم وجود صفوف مخصصة للمعلم */}
               {schoolPackageContents.length > 0 && allowedGrades.length === 0 && !accessLoading && (
-                <div className="text-center py-12 border border-stat-points/30 stat-points-bg rounded-lg">
-                  <School className="h-16 w-16 mx-auto mb-4 text-stat-points" />
-                  <h3 className="text-lg font-semibold mb-2 text-foreground">لم يتم تخصيص صفوف لك بعد</h3>
-                  <p className="text-foreground-secondary mb-4">
+                <div className="text-center py-12 border border-amber-200 bg-amber-50 rounded-lg">
+                  <School className="h-16 w-16 mx-auto mb-4 text-amber-500" />
+                  <h3 className="text-lg font-semibold mb-2 text-amber-800">لم يتم تخصيص صفوف لك بعد</h3>
+                  <p className="text-amber-700 mb-4">
                     يرجى التواصل مع إدارة المدرسة لتخصيص الصفوف التي ستدرسها
                   </p>
-                  <div className="flex items-center justify-center gap-2 text-sm text-foreground-secondary">
+                  <div className="flex items-center justify-center gap-2 text-sm text-amber-600">
                     <Award className="h-4 w-4" />
                     <span>سيتم عرض المحتوى هنا بمجرد تخصيص الصفوف</span>
                   </div>

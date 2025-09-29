@@ -8,27 +8,15 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* ===== نظام الألوان المحسّن - الوضع الفاتح ===== */
-    /* الخلفيات الأساسية */
+    /* Ultra Light Elegant Palette */
     --background: 220 25% 98%;
-    --card: 220 30% 99%;
-    --surface-elevated: 220 22% 96%;
-    
-    /* النصوص */
     --foreground: 215 20% 15%;
-    --foreground-secondary: 215 10% 35%;
-    --foreground-muted: 215 8% 50%;
 
+    --card: 220 30% 99%;
     --card-foreground: 215 20% 15%;
+
     --popover: 220 30% 99%;
     --popover-foreground: 215 20% 15%;
-
-    /* ===== ألوان الإحصائيات - دلالية ===== */
-    --stat-points: 45 80% 55%;       /* نقاط - ذهبي */
-    --stat-progress: 160 70% 45%;    /* تقدم - أخضر نعناعي */
-    --stat-videos: 210 80% 50%;      /* فيديوهات - أزرق */
-    --stat-projects: 285 75% 60%;    /* مشاريع - بنفسجي */
-    --stat-achievements: 220 75% 60%; /* إنجازات - أزرق فاتح */
 
     /* Extended Color System */
     /* Clean Blue Palette */
@@ -138,32 +126,18 @@ All colors MUST be HSL.
     --sidebar-ring: 220 85% 60%;
   }
 
-  /* ===== الوضع الداكن المحسّن ===== */
-  .dark,
-  :root[data-theme="dark"] {
-    /* الخلفيات - تباين محسّن */
-    --background: 220 20% 10%;
-    --card: 220 22% 14%;
-    --surface-elevated: 220 24% 18%;
-    
-    /* النصوص - قابلية قراءة محسّنة */
+  .dark {
+    --background: 215 25% 6%;
     --foreground: 220 15% 95%;
-    --foreground-secondary: 220 12% 78%;
-    --foreground-muted: 220 8% 65%;
 
+    --card: 215 25% 8%;
     --card-foreground: 220 15% 95%;
-    --popover: 220 22% 14%;
+
+    --popover: 215 25% 8%;
     --popover-foreground: 220 15% 95%;
 
-    /* ===== ألوان الإحصائيات - أفضل على الخلفية الداكنة ===== */
-    --stat-points: 45 80% 65%;
-    --stat-progress: 160 70% 55%;
-    --stat-videos: 210 80% 65%;
-    --stat-projects: 285 75% 70%;
-    --stat-achievements: 220 75% 70%;
-
     /* Dark Mode Extended Colors */
-    --primary: 214 85% 62%;  /* محسّن للخلفية الداكنة */
+    --primary: 220 80% 65%;
     --primary-light: 220 75% 75%;
     --primary-dark: 220 85% 55%;
     --blue-electric: 210 95% 70%;
@@ -200,18 +174,18 @@ All colors MUST be HSL.
     --match-color-7: 15 80% 65%;   /* Red-Orange */
     --match-color-8: 120 55% 55%;  /* Light Green */
 
-    --accent: 220 25% 18%;
+    --accent: 215 25% 12%;
     --accent-foreground: 220 15% 95%;
 
-    --muted: 220 22% 16%;
-    --muted-foreground: 220 12% 70%;
+    --muted: 215 25% 10%;
+    --muted-foreground: 220 15% 65%;
 
     --destructive: 0 80% 65%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 15% 25%;
-    --input: 220 15% 22%;
-    --ring: 214 85% 62%;
+    --border: 215 25% 15%;
+    --input: 215 25% 15%;
+    --ring: 220 80% 65%;
 
     /* Dark Mode Gradients */
     --gradient-primary: linear-gradient(135deg, hsl(220 80% 65%), hsl(25 90% 65%));
@@ -245,14 +219,8 @@ All colors MUST be HSL.
 }
 
 @layer base {
-  /* ===== انتقالات سلسة عالمية ===== */
   * {
     @apply border-border;
-    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
-  }
-
-  html, body, #root { 
-    height: 100%; 
   }
 
   body {
@@ -349,145 +317,6 @@ All colors MUST be HSL.
 
   .gradient-neon {
     background: linear-gradient(135deg, hsl(120 100% 60%), hsl(190 100% 65%), hsl(270 85% 65%));
-  }
-
-  /* ===== بطاقات زجاجية محسّنة ===== */
-  .card-glass {
-    background-color: hsl(var(--card) / 0.7);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid hsl(var(--border) / 0.8);
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 16px hsl(var(--foreground) / 0.05);
-  }
-
-  .glass-surface {
-    background-color: hsl(var(--card) / 0.5);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid hsl(var(--border) / 0.6);
-    box-shadow: 0 2px 12px hsl(var(--foreground) / 0.03);
-  }
-
-  .glass-surface-elevated {
-    background-color: hsl(var(--surface-elevated) / 0.6);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid hsl(var(--border) / 0.4);
-    box-shadow: 0 6px 20px hsl(var(--foreground) / 0.08);
-  }
-
-  /* ===== خلفيات صفحات ذكية ===== */
-  .gradient-bg-page {
-    background: linear-gradient(135deg, 
-      hsl(var(--background)), 
-      hsl(var(--surface-elevated)), 
-      hsl(var(--background))
-    );
-  }
-
-  .gradient-hero {
-    background: linear-gradient(135deg,
-      hsl(var(--primary) / 0.9),
-      hsl(var(--secondary) / 0.85),
-      hsl(var(--primary) / 0.9)
-    );
-  }
-
-  /* ===== خلفيات الإحصائيات - تتكيف تلقائياً ===== */
-  .stat-points-bg {
-    background: linear-gradient(135deg, 
-      hsl(var(--stat-points) / 0.15), 
-      hsl(var(--stat-points) / 0.05)
-    );
-  }
-
-  .stat-progress-bg {
-    background: linear-gradient(135deg, 
-      hsl(var(--stat-progress) / 0.15), 
-      hsl(var(--stat-progress) / 0.05)
-    );
-  }
-
-  .stat-videos-bg {
-    background: linear-gradient(135deg, 
-      hsl(var(--stat-videos) / 0.15), 
-      hsl(var(--stat-videos) / 0.05)
-    );
-  }
-
-  .stat-projects-bg {
-    background: linear-gradient(135deg, 
-      hsl(var(--stat-projects) / 0.15), 
-      hsl(var(--stat-projects) / 0.05)
-    );
-  }
-
-  .stat-achievements-bg {
-    background: linear-gradient(135deg, 
-      hsl(var(--stat-achievements) / 0.15), 
-      hsl(var(--stat-achievements) / 0.05)
-    );
-  }
-
-  /* ===== Tabs محسّنة ===== */
-  .tabs-elevated {
-    background: hsl(var(--card) / 0.95);
-    backdrop-filter: blur(10px);
-    border: 1px solid hsl(var(--border) / 0.3);
-    box-shadow: 0 4px 16px hsl(var(--foreground) / 0.1);
-  }
-
-  /* ===== شاشات التحميل ===== */
-  .loading-screen {
-    background: linear-gradient(135deg,
-      hsl(var(--background)),
-      hsl(var(--surface-elevated))
-    );
-  }
-
-  /* ===== Badges ذكية ===== */
-  .badge-success {
-    background: hsl(var(--stat-progress) / 0.2);
-    color: hsl(var(--stat-progress));
-    border: 1px solid hsl(var(--stat-progress) / 0.3);
-  }
-
-  .badge-info {
-    background: hsl(var(--stat-videos) / 0.2);
-    color: hsl(var(--stat-videos));
-    border: 1px solid hsl(var(--stat-videos) / 0.3);
-  }
-
-  /* ===== نصوص على Gradients ===== */
-  .text-on-gradient {
-    color: hsl(var(--primary-foreground));
-    text-shadow: 0 2px 4px hsl(var(--foreground) / 0.2);
-  }
-
-  .text-contrast {
-    color: hsl(var(--foreground));
-  }
-
-  /* تلوينات خفيفة للبطاقات */
-  .card-tint-blue {
-    background: linear-gradient(180deg, hsl(210 80% 65% / 0.12), transparent);
-  }
-
-  .card-tint-gold {
-    background: linear-gradient(180deg, hsl(45 80% 65% / 0.12), transparent);
-  }
-
-  .card-tint-mint {
-    background: linear-gradient(180deg, hsl(160 70% 55% / 0.12), transparent);
-  }
-
-  .card-tint-purple {
-    background: linear-gradient(180deg, hsl(285 75% 70% / 0.12), transparent);
-  }
-
-  .card-tint-achievements {
-    background: linear-gradient(180deg, hsl(220 75% 60% / 0.12), transparent);
   }
 
   /* Modern Card Effects */

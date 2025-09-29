@@ -102,11 +102,11 @@ export const StudentProfile: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Profile Header */}
-      <Card className="gradient-hero text-on-gradient border-0 overflow-hidden relative">
-        <div className="absolute inset-0 bg-foreground/10"></div>
+      <Card className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white border-0 overflow-hidden relative">
+        <div className="absolute inset-0 bg-black/20"></div>
         <div className="absolute inset-0">
-          <div className="absolute top-4 right-4 w-32 h-32 bg-primary-foreground/10 rounded-full animate-float"></div>
-          <div className="absolute bottom-4 left-4 w-24 h-24 bg-stat-points/20 rounded-full animate-bounce-slow"></div>
+          <div className="absolute top-4 right-4 w-32 h-32 bg-white/10 rounded-full animate-float"></div>
+          <div className="absolute bottom-4 left-4 w-24 h-24 bg-yellow-400/20 rounded-full animate-bounce-slow"></div>
         </div>
         
         <CardContent className="p-8 relative">
@@ -132,8 +132,8 @@ export const StudentProfile: React.FC = () => {
                   const IconComponent = stat.icon;
                   return (
                     <div key={stat.label} className="text-center">
-              <div className="w-12 h-12 mx-auto mb-2 glass-surface rounded-full flex items-center justify-center">
-                        <IconComponent className="w-6 h-6 text-on-gradient" />
+                      <div className="w-12 h-12 mx-auto mb-2 bg-white/20 rounded-full flex items-center justify-center">
+                        <IconComponent className="w-6 h-6" />
                       </div>
                       <div className="text-2xl font-bold">{stat.value}</div>
                       <div className="text-sm opacity-80">{stat.label}</div>
@@ -145,13 +145,13 @@ export const StudentProfile: React.FC = () => {
           </div>
           
           {/* Level Progress */}
-          <div className="mt-6 glass-surface rounded-lg p-4">
+          <div className="mt-6 bg-white/10 rounded-lg p-4">
             <div className="flex justify-between text-sm mb-2">
               <span>المستوى {currentLevel}</span>
               <span>{pointsInLevel}/100 نقطة</span>
             </div>
-            <Progress value={(pointsInLevel / 100) * 100} className="h-3 bg-muted/30" />
-            <p className="text-xs mt-2 text-on-gradient/80">
+            <Progress value={(pointsInLevel / 100) * 100} className="h-3 bg-white/20" />
+            <p className="text-xs mt-2 opacity-80">
               تحتاج {pointsToNextLevel} نقطة للوصول للمستوى {currentLevel + 1}
             </p>
           </div>
@@ -176,12 +176,12 @@ export const StudentProfile: React.FC = () => {
                 <div key={stat.category} className="space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <IconComponent className="w-4 h-4 text-primary" />
+                      <div className={`w-8 h-8 rounded-lg bg-gradient-to-r ${stat.color} flex items-center justify-center`}>
+                        <IconComponent className="w-4 h-4 text-white" />
                       </div>
                       <span className="font-medium">{stat.category}</span>
                     </div>
-                    <span className="text-sm text-foreground-secondary">
+                    <span className="text-sm text-muted-foreground">
                       {stat.completed} / {stat.total}
                     </span>
                   </div>
@@ -205,22 +205,22 @@ export const StudentProfile: React.FC = () => {
             {achievements.slice(0, 5).map((achievement, index) => (
               <div 
                 key={achievement.id}
-                className="flex items-center gap-3 p-3 stat-achievements-bg rounded-lg border border-primary/20"
+                className="flex items-center gap-3 p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-100"
               >
-                <div className="w-10 h-10 bg-stat-achievements/20 rounded-full flex items-center justify-center">
-                  <Trophy className="w-5 h-5 text-stat-achievements" />
+                <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                  <Trophy className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1">
-                  <h4 className="font-medium text-foreground">{achievement.achievement_name}</h4>
-                  <p className="text-sm text-foreground-secondary">
+                  <h4 className="font-medium">{achievement.achievement_name}</h4>
+                  <p className="text-sm text-muted-foreground">
                     {format(new Date(achievement.earned_at), 'dd MMMM yyyy', { locale: ar })}
                   </p>
                 </div>
                 <div className="text-right">
-                  <div className="text-lg font-bold text-stat-achievements">
+                  <div className="text-lg font-bold text-purple-600">
                     +{achievement.points_value}
                   </div>
-                  <div className="text-xs text-foreground-secondary">نقطة</div>
+                  <div className="text-xs text-muted-foreground">نقطة</div>
                 </div>
               </div>
             ))}
@@ -251,19 +251,19 @@ export const StudentProfile: React.FC = () => {
                 key={badge.name}
                 className={`text-center p-4 rounded-lg border transition-all duration-200 ${
                   badge.earned 
-                    ? 'stat-points-bg shadow-md' 
-                    : 'glass-surface opacity-60'
+                    ? 'bg-gradient-to-br from-yellow-50 to-orange-50 border-yellow-200 shadow-md' 
+                    : 'bg-gray-50 border-gray-200 opacity-60'
                 }`}
               >
                 <div className="text-4xl mb-2">{badge.icon}</div>
-                <h4 className="font-medium text-sm mb-1 text-foreground">
+                <h4 className={`font-medium text-sm mb-1 ${badge.earned ? 'text-foreground' : 'text-muted-foreground'}`}>
                   {badge.name}
                 </h4>
-                <p className="text-xs text-foreground-secondary">
+                <p className="text-xs text-muted-foreground">
                   {badge.description}
                 </p>
                 {badge.earned && (
-                  <Badge className="mt-2 badge-success text-xs">
+                  <Badge className="mt-2 bg-green-100 text-green-700 text-xs">
                     مكتسب
                   </Badge>
                 )}
@@ -292,17 +292,17 @@ export const StudentProfile: React.FC = () => {
               const IconComponent = activity.icon;
               
               return (
-                <div key={index} className="flex items-center gap-3 p-3 glass-surface rounded-lg">
-                  <div className="w-10 h-10 bg-card rounded-full flex items-center justify-center shadow-sm">
-                    <IconComponent className="w-5 h-5 text-primary" />
+                <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm">
+                    <IconComponent className={`w-5 h-5 ${activity.color}`} />
                   </div>
                   <div className="flex-1">
-                    <p className="font-medium text-foreground">{activity.action}</p>
-                    <p className="text-sm text-foreground-secondary">{activity.time}</p>
+                    <p className="font-medium">{activity.action}</p>
+                    <p className="text-sm text-muted-foreground">{activity.time}</p>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-bold text-stat-progress">+{activity.points}</div>
-                    <div className="text-xs text-foreground-secondary">نقطة</div>
+                    <div className="text-sm font-bold text-green-600">+{activity.points}</div>
+                    <div className="text-xs text-muted-foreground">نقطة</div>
                   </div>
                 </div>
               );

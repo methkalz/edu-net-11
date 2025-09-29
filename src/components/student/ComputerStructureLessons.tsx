@@ -109,23 +109,23 @@ export const ComputerStructureLessons: React.FC = () => {
 
   const getMediaIcon = (mediaType: string) => {
     switch (mediaType) {
-      case 'video': return <Video className="w-4 h-4 text-primary-foreground" />;
-      case 'image': return <ImageIcon className="w-4 h-4 text-primary-foreground" />;
-      case 'code': return <Code className="w-4 h-4 text-primary-foreground" />;
-      case 'lottie': return <Play className="w-4 h-4 text-primary-foreground" />;
-      case '3d_model': return <Monitor className="w-4 h-4 text-primary-foreground" />;
-      default: return <FileText className="w-4 h-4 text-primary-foreground" />;
+      case 'video': return <Video className="w-4 h-4 text-white" />;
+      case 'image': return <ImageIcon className="w-4 h-4 text-white" />;
+      case 'code': return <Code className="w-4 h-4 text-white" />;
+      case 'lottie': return <Play className="w-4 h-4 text-white" />;
+      case '3d_model': return <Monitor className="w-4 h-4 text-white" />;
+      default: return <FileText className="w-4 h-4 text-white" />;
     }
   };
 
   const getMediaColor = (mediaType: string) => {
     switch (mediaType) {
-      case 'video': return 'stat-videos-bg';
-      case 'image': return 'stat-progress-bg';
-      case 'code': return 'stat-achievements-bg';
-      case 'lottie': return 'stat-points-bg';
-      case '3d_model': return 'stat-projects-bg';
-      default: return 'glass-surface';
+      case 'video': return 'bg-gradient-to-r from-blue-500 to-cyan-500';
+      case 'image': return 'bg-gradient-to-r from-green-500 to-emerald-500';
+      case 'code': return 'bg-gradient-to-r from-purple-500 to-violet-500';
+      case 'lottie': return 'bg-gradient-to-r from-pink-500 to-rose-500';
+      case '3d_model': return 'bg-gradient-to-r from-orange-500 to-red-500';
+      default: return 'bg-gradient-to-r from-gray-500 to-slate-500';
     }
   };
 
@@ -186,44 +186,44 @@ export const ComputerStructureLessons: React.FC = () => {
     <div className="space-y-8">
       {/* Cute Minimalist Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 stat-videos-bg">
+        <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-blue-50 to-blue-100/50 border-blue-200/60">
           <CardContent className="p-4 flex flex-col items-center justify-center text-center h-full">
-            <div className="w-8 h-8 mx-auto mb-2 bg-stat-videos/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-              <FolderOpen className="w-4 h-4 text-stat-videos" />
+            <div className="w-8 h-8 mx-auto mb-2 bg-blue-500/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <FolderOpen className="w-4 h-4 text-blue-600" />
             </div>
-            <div className="text-xl font-bold text-foreground mb-0.5">{computerSections.length}</div>
-            <div className="text-xs text-foreground-secondary font-medium">أقسام</div>
+            <div className="text-xl font-bold text-blue-600 mb-0.5">{computerSections.length}</div>
+            <div className="text-xs text-blue-600/70 font-medium">أقسام</div>
           </CardContent>
         </Card>
 
-        <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 stat-progress-bg">
+        <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-green-50 to-green-100/50 border-green-200/60">
           <CardContent className="p-4 flex flex-col items-center justify-center text-center h-full">
-            <div className="w-8 h-8 mx-auto mb-2 bg-stat-progress/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-              <Target className="w-4 h-4 text-stat-progress" />
+            <div className="w-8 h-8 mx-auto mb-2 bg-green-500/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Target className="w-4 h-4 text-green-600" />
             </div>
-            <div className="text-xl font-bold text-foreground mb-0.5">
+            <div className="text-xl font-bold text-green-600 mb-0.5">
               {computerSections.reduce((acc, section) => acc + section.topics.length, 0)}
             </div>
-            <div className="text-xs text-foreground-secondary font-medium">مواضيع</div>
+            <div className="text-xs text-green-600/70 font-medium">مواضيع</div>
           </CardContent>
         </Card>
 
-        <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 stat-achievements-bg">
+        <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-purple-50 to-purple-100/50 border-purple-200/60">
           <CardContent className="p-4 flex flex-col items-center justify-center text-center h-full">
-            <div className="w-8 h-8 mx-auto mb-2 bg-stat-achievements/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-              <BookOpen className="w-4 h-4 text-stat-achievements" />
+            <div className="w-8 h-8 mx-auto mb-2 bg-purple-500/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <BookOpen className="w-4 h-4 text-purple-600" />
             </div>
-            <div className="text-xl font-bold text-foreground mb-0.5">{computerLessonsCount}</div>
-            <div className="text-xs text-foreground-secondary font-medium">دروس</div>
+            <div className="text-xl font-bold text-purple-600 mb-0.5">{computerLessonsCount}</div>
+            <div className="text-xs text-purple-600/70 font-medium">دروس</div>
           </CardContent>
         </Card>
 
-        <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 stat-projects-bg">
+        <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-orange-50 to-orange-100/50 border-orange-200/60">
           <CardContent className="p-4 flex flex-col items-center justify-center text-center h-full">
-            <div className="w-8 h-8 mx-auto mb-2 bg-stat-projects/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-              <Monitor className="w-4 h-4 text-stat-projects" />
+            <div className="w-8 h-8 mx-auto mb-2 bg-orange-500/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Monitor className="w-4 h-4 text-orange-600" />
             </div>
-            <div className="text-xl font-bold text-foreground mb-0.5">
+            <div className="text-xl font-bold text-orange-600 mb-0.5">
               {computerSections.reduce((acc, section) => 
                 acc + section.topics.reduce((topicAcc: number, topic: any) => 
                   topicAcc + topic.lessons.reduce((lessonAcc: number, lesson: any) => 
@@ -232,7 +232,7 @@ export const ComputerStructureLessons: React.FC = () => {
                 ), 0
               )}
             </div>
-            <div className="text-xs text-foreground-secondary font-medium">نماذج ثلاثية الأبعاد</div>
+            <div className="text-xs text-orange-600/70 font-medium">نماذج ثلاثية الأبعاد</div>
           </CardContent>
         </Card>
       </div>
@@ -251,7 +251,7 @@ export const ComputerStructureLessons: React.FC = () => {
           </Card>
         ) : (
           computerSections.map((section) => (
-            <Card key={section.id} className="overflow-hidden border-0 shadow-sm hover:shadow-md transition-all duration-300 glass-surface">
+            <Card key={section.id} className="overflow-hidden border-0 shadow-sm hover:shadow-md transition-all duration-300 bg-white/60 backdrop-blur-sm">
               <Collapsible 
                 open={openSections.includes(section.id)}
                 onOpenChange={() => toggleSection(section.id)}
@@ -260,8 +260,8 @@ export const ComputerStructureLessons: React.FC = () => {
                   <CardHeader className="cursor-pointer hover:bg-muted/20 transition-colors py-3 px-4">
                      <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-stat-videos/20 rounded-lg flex items-center justify-center">
-                          <Monitor className="w-4 h-4 text-stat-videos" />
+                        <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
+                          <Monitor className="w-4 h-4 text-white" />
                         </div>
                         <div className="text-left">
                           <CardTitle className="text-xl font-semibold">{formatSectionTitle(section.title)}</CardTitle>
@@ -290,17 +290,17 @@ export const ComputerStructureLessons: React.FC = () => {
                   <CardContent className="pt-0 pb-3 px-4">
                     <div className="space-y-2">
                       {section.topics.map((topic) => (
-                        <Card key={topic.id} className="ml-3 border-0 glass-surface">
+                        <Card key={topic.id} className="ml-3 border-0 bg-muted/30">
                           <Collapsible
                             open={openTopics.includes(topic.id)}
                             onOpenChange={() => toggleTopic(topic.id)}
                           >
                             <CollapsibleTrigger asChild>
-                              <CardHeader className="cursor-pointer hover:bg-card transition-colors py-2.5 px-3">
+                              <CardHeader className="cursor-pointer hover:bg-muted/40 transition-colors py-2.5 px-3">
                                  <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-2.5">
-                                    <div className="w-6 h-6 bg-stat-progress/20 rounded-md flex items-center justify-center">
-                                      <Target className="w-3 h-3 text-stat-progress" />
+                                    <div className="w-6 h-6 bg-gradient-to-r from-green-500 to-emerald-500 rounded-md flex items-center justify-center">
+                                      <Target className="w-3 h-3 text-white" />
                                     </div>
                                     <div className="text-left">
                                       <h4 className="font-medium text-lg">{topic.title}</h4>
@@ -331,12 +331,12 @@ export const ComputerStructureLessons: React.FC = () => {
                                   {topic.lessons.map((lesson) => (
                                      <div
                                       key={lesson.id}
-                                      className="flex items-center justify-between p-2.5 glass-surface rounded-lg border-0 hover:bg-card transition-colors cursor-pointer group"
+                                      className="flex items-center justify-between p-2.5 bg-white/60 rounded-lg border-0 hover:bg-white/80 transition-colors cursor-pointer group"
                                       onClick={() => setSelectedLesson(lesson)}
                                     >
                             <div className="flex items-center gap-2.5">
-                                        <div className="w-5 h-5 bg-stat-achievements/20 rounded-md flex items-center justify-center">
-                                          <BookOpen className="w-2.5 h-2.5 text-stat-achievements" />
+                                        <div className="w-5 h-5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-md flex items-center justify-center">
+                                          <BookOpen className="w-2.5 h-2.5 text-white" />
                                         </div>
                                         <div className="text-left">
                                           <h5 className="font-medium text-base">{lesson.title}</h5>
