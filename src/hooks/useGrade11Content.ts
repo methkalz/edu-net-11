@@ -390,14 +390,27 @@ export const useGrade11Content = () => {
 
   const updateLessonMedia = async (mediaId: string, updates: Partial<Grade11LessonMedia>) => {
     try {
-      console.log('Refreshing sections after media update:', mediaId);
+      console.log('Updating media locally in state:', mediaId);
       
-      // تحديث البيانات المحلية فقط (التحديث في قاعدة البيانات يتم في الـ hooks)
-      await fetchSections();
+      // تحديث الـ state محلياً بدلاً من إعادة fetch كل البيانات
+      setSections(prevSections => {
+        return prevSections.map(section => ({
+          ...section,
+          topics: section.topics.map(topic => ({
+            ...topic,
+            lessons: topic.lessons?.map(lesson => ({
+              ...lesson,
+              media: lesson.media?.map(media => 
+                media.id === mediaId ? { ...media, ...updates } : media
+              )
+            }))
+          }))
+        }));
+      });
       
-      console.log('Sections refreshed successfully');
+      console.log('Media updated locally in state');
     } catch (error) {
-      logger.error('Error refreshing sections after media update', error as Error);
+      logger.error('Error updating lesson media locally', error as Error);
       throw error;
     }
   };
