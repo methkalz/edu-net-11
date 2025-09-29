@@ -237,6 +237,20 @@ All colors MUST be HSL.
     font-size: calc(var(--app-font-size, 16px) * var(--app-font-scale, 1));
   }
 
+  /* تطبيق حجم الخط على جميع العناصر النصية */
+  body *, #root * {
+    font-size: inherit;
+  }
+  
+  /* استثناءات للعناصر التي تحتاج أحجام خاصة */
+  .text-xs { font-size: calc(var(--app-font-size, 16px) * 0.75 * var(--app-font-scale, 1)) !important; }
+  .text-sm { font-size: calc(var(--app-font-size, 16px) * 0.875 * var(--app-font-scale, 1)) !important; }
+  .text-base { font-size: calc(var(--app-font-size, 16px) * var(--app-font-scale, 1)) !important; }
+  .text-lg { font-size: calc(var(--app-font-size, 16px) * 1.125 * var(--app-font-scale, 1)) !important; }
+  .text-xl { font-size: calc(var(--app-font-size, 16px) * 1.25 * var(--app-font-scale, 1)) !important; }
+  .text-2xl { font-size: calc(var(--app-font-size, 16px) * 1.5 * var(--app-font-scale, 1)) !important; }
+  .text-3xl { font-size: calc(var(--app-font-size, 16px) * 1.875 * var(--app-font-scale, 1)) !important; }
+
   /* Hide scrollbar utility class */
   .scrollbar-hide {
     -ms-overflow-style: none;  /* Internet Explorer 10+ */

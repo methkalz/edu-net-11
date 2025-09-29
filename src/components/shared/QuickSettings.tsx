@@ -72,67 +72,83 @@ export const QuickSettings: React.FC<QuickSettingsProps> = ({
         </DropdownMenuTrigger>
         <DropdownMenuContent 
           align="end" 
-          className="w-56 bg-background/95 backdrop-blur-sm border shadow-lg"
+          className="w-48 bg-background/95 backdrop-blur-lg border border-border/50 shadow-xl rounded-xl p-1"
           style={{ zIndex: 50 }}
         >
-          <DropdownMenuLabel className="text-right">إعدادات العرض</DropdownMenuLabel>
-          
           {/* Theme Section */}
-          <DropdownMenuItem 
-            onClick={() => setTheme('light')}
-            className={cn("flex items-center justify-between cursor-pointer", 
-              theme === 'light' && "bg-accent"
-            )}
-          >
-            <div className="flex items-center gap-2">
-              <Sun className="h-4 w-4" />
-              <span>نهاري</span>
+          <div className="p-2">
+            <p className="text-xs font-medium text-muted-foreground mb-2 px-2">الوضع المرئي</p>
+            <div className="space-y-1">
+              <DropdownMenuItem 
+                onClick={() => setTheme('light')}
+                className={cn(
+                  "flex items-center justify-between cursor-pointer rounded-lg px-3 py-2 transition-all duration-200",
+                  "hover:bg-accent/50 focus:bg-accent/50",
+                  theme === 'light' && "bg-primary/10 text-primary border border-primary/20"
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  <Sun className="h-4 w-4" />
+                  <span className="text-sm">نهاري</span>
+                </div>
+                {theme === 'light' && <div className="w-2 h-2 bg-primary rounded-full" />}
+              </DropdownMenuItem>
+              
+              <DropdownMenuItem 
+                onClick={() => setTheme('dark')}
+                className={cn(
+                  "flex items-center justify-between cursor-pointer rounded-lg px-3 py-2 transition-all duration-200",
+                  "hover:bg-accent/50 focus:bg-accent/50",
+                  theme === 'dark' && "bg-primary/10 text-primary border border-primary/20"
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  <Moon className="h-4 w-4" />
+                  <span className="text-sm">ليلي</span>
+                </div>
+                {theme === 'dark' && <div className="w-2 h-2 bg-primary rounded-full" />}
+              </DropdownMenuItem>
+              
+              <DropdownMenuItem 
+                onClick={() => setTheme('system')}
+                className={cn(
+                  "flex items-center justify-between cursor-pointer rounded-lg px-3 py-2 transition-all duration-200",
+                  "hover:bg-accent/50 focus:bg-accent/50",
+                  theme === 'system' && "bg-primary/10 text-primary border border-primary/20"
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  <Monitor className="h-4 w-4" />
+                  <span className="text-sm">تلقائي</span>
+                </div>
+                {theme === 'system' && <div className="w-2 h-2 bg-primary rounded-full" />}
+              </DropdownMenuItem>
             </div>
-            {theme === 'light' && <div className="w-2 h-2 bg-primary rounded-full" />}
-          </DropdownMenuItem>
-          
-          <DropdownMenuItem 
-            onClick={() => setTheme('dark')}
-            className={cn("flex items-center justify-between cursor-pointer",
-              theme === 'dark' && "bg-accent"
-            )}
-          >
-            <div className="flex items-center gap-2">
-              <Moon className="h-4 w-4" />
-              <span>ليلي</span>
-            </div>
-            {theme === 'dark' && <div className="w-2 h-2 bg-primary rounded-full" />}
-          </DropdownMenuItem>
-          
-          <DropdownMenuItem 
-            onClick={() => setTheme('system')}
-            className={cn("flex items-center justify-between cursor-pointer",
-              theme === 'system' && "bg-accent"
-            )}
-          >
-            <div className="flex items-center gap-2">
-              <Monitor className="h-4 w-4" />
-              <span>تلقائي</span>
-            </div>
-            {theme === 'system' && <div className="w-2 h-2 bg-primary rounded-full" />}
-          </DropdownMenuItem>
+          </div>
 
-          <DropdownMenuSeparator />
-          <DropdownMenuLabel className="text-right">حجم الخط</DropdownMenuLabel>
+          {/* Separator */}
+          <div className="h-px bg-border/30 mx-2 my-2" />
           
           {/* Font Size Section */}
-          {fontSizes.map((size) => (
-            <DropdownMenuItem
-              key={size.value}
-              onClick={() => updateFontSize(size.value)}
-              className={cn("flex items-center justify-between cursor-pointer",
-                fontSize === size.value && "bg-accent"
-              )}
-            >
-              <span>{size.label}</span>
-              {fontSize === size.value && <div className="w-2 h-2 bg-primary rounded-full" />}
-            </DropdownMenuItem>
-          ))}
+          <div className="p-2">
+            <p className="text-xs font-medium text-muted-foreground mb-2 px-2">حجم الخط</p>
+            <div className="space-y-1">
+              {fontSizes.map((size) => (
+                <DropdownMenuItem
+                  key={size.value}
+                  onClick={() => updateFontSize(size.value)}
+                  className={cn(
+                    "flex items-center justify-between cursor-pointer rounded-lg px-3 py-2 transition-all duration-200",
+                    "hover:bg-accent/50 focus:bg-accent/50",
+                    fontSize === size.value && "bg-primary/10 text-primary border border-primary/20"
+                  )}
+                >
+                  <span className="text-sm">{size.label}</span>
+                  {fontSize === size.value && <div className="w-2 h-2 bg-primary rounded-full" />}
+                </DropdownMenuItem>
+              ))}
+            </div>
+          </div>
         </DropdownMenuContent>
       </DropdownMenu>
 
