@@ -94,6 +94,7 @@
     "three": "^0.180.0",
     "tiptap-pagination-breaks": "^1.0.3",
     "tiptap-pagination-plus": "^1.1.8",
+    "tldraw": "^4.0.2",
     "vaul": "^0.9.9",
     "zod": "^4.0.17"
   },
