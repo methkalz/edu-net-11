@@ -20,11 +20,13 @@ import {
 import { Grade11LessonMedia } from '@/hooks/useGrade11Content';
 import { useAuth } from '@/hooks/useAuth';
 import { useEditLottieMedia } from '@/hooks/useEditLottieMedia';
+import { useEditCodeMedia } from '@/hooks/useEditCodeMedia';
 import LessonVideoForm from './LessonVideoForm';
 import LessonImageForm from './LessonImageForm';
 import LessonLottieForm from './LessonLottieForm';
 import LessonCodeForm from './LessonCodeForm';
 import { LottieEditForm } from './LottieEditForm';
+import CodeEditForm from './CodeEditForm';
 import MediaPreview from './MediaPreview';
 import { logger } from '@/lib/logger';
 
@@ -55,12 +57,14 @@ const Grade11LessonMediaManager: React.FC<Grade11LessonMediaManagerProps> = ({
   };
   
   const { updateLottieMedia } = useEditLottieMedia(handleDataRefresh);
+  const { updateCodeMedia } = useEditCodeMedia(handleDataRefresh);
   const [showVideoForm, setShowVideoForm] = useState(false);
   const [showImageForm, setShowImageForm] = useState(false);
   const [showLottieForm, setShowLottieForm] = useState(false);
   const [showCodeForm, setShowCodeForm] = useState(false);
   const [previewMedia, setPreviewMedia] = useState<Grade11LessonMedia | null>(null);
   const [editingLottie, setEditingLottie] = useState<Grade11LessonMedia | null>(null);
+  const [editingCode, setEditingCode] = useState<Grade11LessonMedia | null>(null);
 
   const canEditLottie = userProfile?.role === 'superadmin';
 
@@ -111,6 +115,26 @@ const Grade11LessonMediaManager: React.FC<Grade11LessonMediaManagerProps> = ({
       
     } catch (error) {
       logger.error('Error updating Lottie media', error as Error);
+      console.error('Update failed:', error);
+    }
+  };
+
+  const handleUpdateCodeMedia = async (updates: Partial<Grade11LessonMedia>) => {
+    if (!editingCode) return;
+
+    try {
+      console.log('Starting Code media update process...');
+
+      await updateCodeMedia({
+        mediaId: editingCode.id,
+        updates
+      });
+
+      console.log('Code media updated in database, closing edit form');
+      setEditingCode(null);
+
+    } catch (error) {
+      logger.error('Error updating Code media', error as Error);
       console.error('Update failed:', error);
     }
   };
@@ -260,17 +284,29 @@ const Grade11LessonMediaManager: React.FC<Grade11LessonMediaManagerProps> = ({
                        <Eye className="h-4 w-4" />
                      </Button>
                      
-                     {/* زر تعديل إعدادات اللوتي - ظاهر فقط للسوبر آدمن */}
-                     {item.media_type === 'lottie' && canEditLottie && (
-                       <Button
-                         variant="ghost"
-                         size="sm"
-                         onClick={() => setEditingLottie(item)}
-                         className="text-muted-foreground hover:text-foreground"
-                       >
-                         <Settings className="h-4 w-4" />
-                       </Button>
-                     )}
+                      {/* زر تعديل إعدادات اللوتي - ظاهر فقط للسوبر آدمن */}
+                      {item.media_type === 'lottie' && canEditLottie && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setEditingLottie(item)}
+                          className="text-muted-foreground hover:text-foreground"
+                        >
+                          <Settings className="h-4 w-4" />
+                        </Button>
+                      )}
+                      
+                      {/* زر تعديل إعدادات الكود - ظاهر فقط للسوبر آدمن */}
+                      {item.media_type === 'code' && canEditLottie && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setEditingCode(item)}
+                          className="text-muted-foreground hover:text-foreground"
+                        >
+                          <Settings className="h-4 w-4" />
+                        </Button>
+                      )}
                      
                      <Button
                        variant="ghost"
@@ -341,6 +377,16 @@ const Grade11LessonMediaManager: React.FC<Grade11LessonMediaManagerProps> = ({
           isOpen={true}
           onClose={() => setEditingLottie(null)}
           onUpdate={handleUpdateLottieMedia}
+        />
+      )}
+
+      {/* نموذج تعديل الكود */}
+      {editingCode && (
+        <CodeEditForm
+          media={editingCode}
+          isOpen={true}
+          onClose={() => setEditingCode(null)}
+          onUpdate={handleUpdateCodeMedia}
         />
       )}
     </div>
