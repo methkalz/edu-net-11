@@ -173,15 +173,15 @@ export function ShuffledQuizChallenge({ lessonId, lessons, onComplete, onBack, o
   // Start screen
   if (!isQuizStarted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-4 flex items-center justify-center">
-        <Card className="w-full max-w-lg">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 p-4 flex items-center justify-center transition-colors duration-300">
+        <Card className="w-full max-w-lg dark:bg-card transition-colors duration-300">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold text-gray-800">اختبار الدرس 🎯</CardTitle>
+            <CardTitle className="text-2xl font-bold text-gray-800 dark:text-foreground">اختبار الدرس 🎯</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="text-center space-y-2">
-              <p className="text-gray-600">ستحصل على 10 أسئلة متنوعة لاختبار معرفتك</p>
-              <div className="text-sm text-gray-500 space-y-1">
+              <p className="text-gray-600 dark:text-foreground/80">ستحصل على 10 أسئلة متنوعة لاختبار معرفتك</p>
+              <div className="text-sm text-gray-500 dark:text-foreground/70 space-y-1">
                 <p>• أسئلة متنوعة الصعوبة</p>
                 <p>• مدة الاختبار: 30 دقيقة</p>
                 <p>• تحتاج إلى 70% للنجاح</p>
@@ -207,16 +207,16 @@ export function ShuffledQuizChallenge({ lessonId, lessons, onComplete, onBack, o
     
     return (
       <div className={cn(
-        "min-h-screen p-4 flex items-center justify-center", 
+        "min-h-screen p-4 flex items-center justify-center transition-colors duration-300", 
         isSuccess 
           ? hasUnlockedNewLesson 
-            ? "bg-gradient-to-br from-yellow-50 to-amber-50" 
-            : "bg-gradient-to-br from-green-50 to-emerald-50" 
-          : "bg-gradient-to-br from-orange-50 to-red-50"
+            ? "bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-950/20 dark:to-amber-950/20" 
+            : "bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20" 
+          : "bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20"
       )}>
         <Card className={cn(
-          "w-full max-w-lg relative overflow-hidden",
-          hasUnlockedNewLesson && "level-unlock-glow border-yellow-500/30"
+          "w-full max-w-lg relative overflow-hidden dark:bg-card transition-colors duration-300",
+          hasUnlockedNewLesson && "level-unlock-glow border-yellow-500/30 dark:border-yellow-500/40"
         )}>
           {/* Golden sparkles for new level unlock */}
           {hasUnlockedNewLesson && (
@@ -241,15 +241,15 @@ export function ShuffledQuizChallenge({ lessonId, lessons, onComplete, onBack, o
             <CardTitle className={cn(
               "text-2xl font-bold", 
               isSuccess 
-                ? hasUnlockedNewLesson ? "text-yellow-700" : "text-green-800" 
-                : "text-orange-800"
+                ? hasUnlockedNewLesson ? "text-yellow-700 dark:text-yellow-400" : "text-green-800 dark:text-green-400" 
+                : "text-orange-800 dark:text-orange-400"
             )}>
               {isSuccess ? hasUnlockedNewLesson ? '🎉 مبروك! فتحت درس جديد! 🎉' : '🎉 تهانينا!' : '💪 حاول مرة أخرى!'}
             </CardTitle>
             {isSuccess && (
               <p className={cn(
                 "font-medium level-up-entrance",
-                hasUnlockedNewLesson ? "text-yellow-600" : "text-green-600"
+                hasUnlockedNewLesson ? "text-yellow-600 dark:text-yellow-400" : "text-green-600 dark:text-green-400"
               )}>
                 {isLastLesson() ? '🏆 أكملت جميع الدروس!' : hasUnlockedNewLesson ? '🔓 الدرس التالي متاح الآن!' : 'أحسنت!'}
               </p>
@@ -257,12 +257,12 @@ export function ShuffledQuizChallenge({ lessonId, lessons, onComplete, onBack, o
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="text-center space-y-2">
-              <div className={cn("text-3xl font-bold", isSuccess ? "text-green-600" : "text-orange-600")}>
+              <div className={cn("text-3xl font-bold", isSuccess ? "text-green-600 dark:text-green-400" : "text-orange-600 dark:text-orange-400")}>
                 {quizResults.percentage}%
               </div>
-              <p className="text-gray-600">{quizResults.finalScore} من {quizResults.maxScore} نقطة</p>
+              <p className="text-gray-600 dark:text-foreground/80">{quizResults.finalScore} من {quizResults.maxScore} نقطة</p>
               {!isSuccess && (
-                <p className="text-sm text-orange-600 mt-2">
+                <p className="text-sm text-orange-600 dark:text-orange-400 mt-2">
                   تحتاج إلى 70% أو أكثر للنجاح ({Math.ceil(quizResults.maxScore * 0.7)} نقطة)
                 </p>
               )}
@@ -270,9 +270,9 @@ export function ShuffledQuizChallenge({ lessonId, lessons, onComplete, onBack, o
 
             {/* Auto-progress countdown */}
             {isSuccess && !isLastLesson() && countdown !== null && !autoProgressCanceled && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 rounded-lg p-4 transition-colors duration-300">
                 <div className="text-center space-y-3">
-                  <p className="text-green-700 font-medium">الانتقال للدرس التالي خلال {countdown} ثوان...</p>
+                  <p className="text-green-700 dark:text-green-400 font-medium">الانتقال للدرس التالي خلال {countdown} ثوان...</p>
                   <div className="flex gap-2 justify-center">
                     <Button onClick={goToNextLesson} size="sm" className="bg-green-600 hover:bg-green-700">الانتقال الآن</Button>
                     <Button onClick={cancelAutoProgress} variant="outline" size="sm">البقاء هنا</Button>
@@ -283,10 +283,10 @@ export function ShuffledQuizChallenge({ lessonId, lessons, onComplete, onBack, o
 
             {/* Final completion */}
             {isSuccess && isLastLesson() && (
-              <div className="bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-lg p-4">
+              <div className="bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-500/10 dark:to-amber-500/10 border border-yellow-200 dark:border-yellow-500/20 rounded-lg p-4 transition-colors duration-300">
                 <div className="text-center space-y-2">
                   <div className="text-2xl">🏆</div>
-                  <p className="text-yellow-700 font-medium">مبروك! أنهيت جميع دروس الشبكات بنجاح</p>
+                  <p className="text-yellow-700 dark:text-yellow-400 font-medium">مبروك! أنهيت جميع دروس الشبكات بنجاح</p>
                 </div>
               </div>
             )}
@@ -320,10 +320,10 @@ export function ShuffledQuizChallenge({ lessonId, lessons, onComplete, onBack, o
   // عرض الاختبار
   if (!currentQuestion || !session) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-4 flex items-center justify-center">
-        <Card className="w-full max-w-lg">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 p-4 flex items-center justify-center transition-colors duration-300">
+        <Card className="w-full max-w-lg dark:bg-card transition-colors duration-300">
           <CardContent className="p-6 text-center">
-            <div className="text-lg text-gray-600">جاري تحميل السؤال...</div>
+            <div className="text-lg text-gray-600 dark:text-foreground/80">جاري تحميل السؤال...</div>
           </CardContent>
         </Card>
       </div>
@@ -331,28 +331,28 @@ export function ShuffledQuizChallenge({ lessonId, lessons, onComplete, onBack, o
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 p-4 transition-colors duration-300">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Progress bar */}
-        <Card>
+        <Card className="dark:bg-card transition-colors duration-300">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-4">
-                <Badge variant="outline">سؤال {currentQuestionNumber} من {totalQuestions}</Badge>
-                <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Badge variant="outline" className="dark:bg-background/50 dark:border-border dark:text-foreground/80">سؤال {currentQuestionNumber} من {totalQuestions}</Badge>
+                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-foreground/70">
                   <Clock className="h-4 w-4" />{formatTime(timeRemaining)}
                 </div>
               </div>
-              <div className="text-sm font-medium text-gray-700">النقاط: {currentScore} / {maxScore}</div>
+              <div className="text-sm font-medium text-gray-700 dark:text-foreground/80">النقاط: {currentScore} / {maxScore}</div>
             </div>
             <Progress value={progress} className="h-2" />
           </CardContent>
         </Card>
 
         {/* Question card */}
-        <Card className="relative">
+        <Card className="relative dark:bg-card transition-colors duration-300">
           <CardHeader>
-            <CardTitle className="text-right text-lg leading-8">{currentQuestion.question_text}</CardTitle>
+            <CardTitle className="text-right text-lg leading-8 text-foreground dark:text-foreground">{currentQuestion.question_text}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {currentQuestion.choices.map((choice) => (
@@ -363,18 +363,20 @@ export function ShuffledQuizChallenge({ lessonId, lessons, onComplete, onBack, o
                 className={cn(
                   "w-full p-4 text-right rounded-lg border-2 transition-all duration-200",
                   showFeedback && selectedAnswer === choice.id
-                    ? isCorrect ? "border-green-500 bg-green-50" : "border-red-500 bg-red-50"
-                    : "border-gray-200 bg-white hover:border-gray-300"
+                    ? isCorrect 
+                      ? "border-green-500 bg-green-50 dark:bg-green-500/10 dark:border-green-500/50" 
+                      : "border-red-500 bg-red-50 dark:bg-red-500/10 dark:border-red-500/50"
+                    : "border-gray-200 dark:border-border bg-white dark:bg-card/50 hover:border-gray-300 dark:hover:border-border/80"
                 )}
               >
-                {choice.text}
+                <span className="dark:text-foreground">{choice.text}</span>
               </button>
             ))}
             
             {showFeedback && explanation && (
-              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <h4 className="font-medium text-blue-800 mb-2">التفسير:</h4>
-                <p className="text-blue-700 text-sm">{explanation}</p>
+              <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-lg transition-colors duration-300">
+                <h4 className="font-medium text-blue-800 dark:text-blue-400 mb-2">التفسير:</h4>
+                <p className="text-blue-700 dark:text-blue-300 text-sm">{explanation}</p>
               </div>
             )}
             
