@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Tldraw, Editor, TLRecord } from 'tldraw';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import { Tldraw, Editor, createTLStore, loadSnapshot, getSnapshot } from 'tldraw';
 import 'tldraw/tldraw.css';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -7,25 +7,33 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import AppHeader from '@/components/shared/AppHeader';
-import { Save, Download, Loader2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Save, Download, Loader2, CheckCircle2 } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { throttle } from 'lodash';
 
 const WhiteboardPage = () => {
   const { user, userProfile } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const editorRef = useRef<Editor | null>(null);
   const [title, setTitle] = useState('لوح جديد');
   const [whiteboardId, setWhiteboardId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
 
+  // إنشاء store مخصص
+  const store = useMemo(() => createTLStore(), []);
+
+  // التحقق من الصلاحيات
   useEffect(() => {
     if (!user) {
       navigate('/auth');
       return;
     }
 
-    // التحقق من الصلاحيات
     if (userProfile?.role !== 'teacher' && 
         userProfile?.role !== 'school_admin' && 
         userProfile?.role !== 'superadmin') {
@@ -38,23 +46,69 @@ const WhiteboardPage = () => {
     }
   }, [user, userProfile, navigate, toast]);
 
+  // تحميل اللوح من URL parameter أو إنشاء جديد
+  useEffect(() => {
+    const loadWhiteboard = async () => {
+      const id = searchParams.get('id');
+      
+      if (id) {
+        setLoading(true);
+        try {
+          const { data, error } = await supabase
+            .from('whiteboards')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+          if (error) throw error;
+
+          if (data) {
+            setWhiteboardId(data.id);
+            setTitle(data.title);
+
+            // تحميل البيانات في store
+            if (data.canvas_data) {
+              loadSnapshot(store, data.canvas_data as any);
+            }
+          }
+        } catch (error) {
+          console.error('Error loading whiteboard:', error);
+          toast({
+            title: "خطأ في التحميل",
+            description: "حدث خطأ أثناء تحميل اللوح الرقمي",
+            variant: "destructive"
+          });
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    if (user) {
+      loadWhiteboard();
+    }
+  }, [searchParams, user, toast, store]);
+
   const handleMount = useCallback((editor: Editor) => {
     editorRef.current = editor;
-  }, []);
+    
+    // إذا كان هناك بيانات محملة، نطبقها
+    const id = searchParams.get('id');
+    if (id && whiteboardId) {
+      // البيانات تم تحميلها بالفعل في useEffect
+    }
+  }, [searchParams, whiteboardId]);
 
   const handleSave = useCallback(async () => {
-    if (!user || !editorRef.current || saving) return;
+    if (!user || saving) return;
 
     setSaving(true);
     try {
-      const editor = editorRef.current;
-      const records = editor.store.allRecords() as TLRecord[];
+      // استخدام getSnapshot بدلاً من allRecords للحصول على البيانات بشكل صحيح
+      const snapshot = getSnapshot(store);
       
-      // تحويل البيانات إلى JSON عادي
-      const canvasData = JSON.parse(JSON.stringify({
-        records: records,
-        schema: editor.store.schema.serialize()
-      }));
+      // تحويل snapshot إلى JSON لحفظه في Supabase
+      const canvasData = JSON.parse(JSON.stringify(snapshot));
 
       const whiteboardData = {
         user_id: user.id,
@@ -73,10 +127,7 @@ const WhiteboardPage = () => {
 
         if (error) throw error;
         
-        toast({
-          title: "تم الحفظ",
-          description: "تم حفظ اللوح الرقمي بنجاح"
-        });
+        setLastSaved(new Date());
       } else {
         // إنشاء جديد
         const { data, error } = await supabase
@@ -88,6 +139,8 @@ const WhiteboardPage = () => {
         if (error) throw error;
         
         setWhiteboardId(data.id);
+        setLastSaved(new Date());
+        
         toast({
           title: "تم الإنشاء",
           description: "تم إنشاء اللوح الرقمي بنجاح"
@@ -103,14 +156,11 @@ const WhiteboardPage = () => {
     } finally {
       setSaving(false);
     }
-  }, [user, userProfile, title, whiteboardId, toast]);
+  }, [user, userProfile, title, whiteboardId, toast, store]);
 
   const handleExport = useCallback(() => {
-    if (!editorRef.current) return;
-
-    const editor = editorRef.current;
-    const records = editor.store.allRecords();
-    const dataStr = JSON.stringify(records, null, 2);
+    const snapshot = getSnapshot(store);
+    const dataStr = JSON.stringify(snapshot, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement('a');
@@ -123,64 +173,109 @@ const WhiteboardPage = () => {
       title: "تم التصدير",
       description: "تم تصدير اللوح الرقمي بنجاح"
     });
-  }, [title, toast]);
+  }, [title, toast, store]);
 
-  // حفظ تلقائي كل 30 ثانية
+  // حفظ تلقائي عند التغيير (مع throttle)
+  const throttledSave = useMemo(
+    () => throttle(() => {
+      if (whiteboardId && autoSaveEnabled) {
+        handleSave();
+      }
+    }, 5000),
+    [whiteboardId, autoSaveEnabled, handleSave]
+  );
+
+  // الاستماع لتغييرات store
   useEffect(() => {
-    if (!whiteboardId) return;
+    if (!whiteboardId || !autoSaveEnabled) return;
 
-    const autoSaveInterval = setInterval(() => {
-      handleSave();
-    }, 30000);
+    const unsubscribe = store.listen(() => {
+      throttledSave();
+    }, { scope: 'document' });
 
-    return () => clearInterval(autoSaveInterval);
-  }, [whiteboardId, handleSave]);
+    return () => {
+      unsubscribe();
+      throttledSave.cancel();
+    };
+  }, [store, whiteboardId, autoSaveEnabled, throttledSave]);
+
+  if (loading) {
+    return (
+      <div className="h-screen flex flex-col" dir="rtl">
+        <AppHeader 
+          title="اللوح الرقمي" 
+          showBackButton={true} 
+          showLogout={false}
+        />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+            <p className="text-muted-foreground">جاري تحميل اللوح الرقمي...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="h-screen flex flex-col" dir="rtl">
-      <AppHeader 
-        title="اللوح الرقمي" 
-        showBackButton={true} 
-        showLogout={false}
-      />
-      
-      <div className="bg-background border-b px-4 py-3 flex items-center gap-4">
-        <Input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="عنوان اللوح"
-          className="max-w-xs"
+    <div className="h-screen flex flex-col">
+      {/* UI العلوي مع RTL */}
+      <div dir="rtl">
+        <AppHeader 
+          title="اللوح الرقمي" 
+          showBackButton={true} 
+          showLogout={false}
         />
         
-        <div className="flex gap-2 mr-auto">
-          <Button
-            onClick={handleSave}
-            disabled={saving}
-            size="sm"
-            className="gap-2"
-          >
-            {saving ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Save className="h-4 w-4" />
-            )}
-            حفظ
-          </Button>
+        <div className="bg-background border-b px-4 py-3 flex items-center gap-4">
+          <Input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="عنوان اللوح"
+            className="max-w-xs"
+          />
           
-          <Button
-            onClick={handleExport}
-            variant="outline"
-            size="sm"
-            className="gap-2"
-          >
-            <Download className="h-4 w-4" />
-            تصدير
-          </Button>
+          <div className="flex items-center gap-2 mr-auto">
+            {lastSaved && (
+              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                <CheckCircle2 className="h-3 w-3" />
+                آخر حفظ: {lastSaved.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}
+              </span>
+            )}
+            
+            <Button
+              onClick={handleSave}
+              disabled={saving}
+              size="sm"
+              className="gap-2"
+            >
+              {saving ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+              حفظ
+            </Button>
+            
+            <Button
+              onClick={handleExport}
+              variant="outline"
+              size="sm"
+              className="gap-2"
+            >
+              <Download className="h-4 w-4" />
+              تصدير
+            </Button>
+          </div>
         </div>
       </div>
 
-      <div className="flex-1 overflow-hidden">
-        <Tldraw onMount={handleMount} />
+      {/* Canvas مع LTR لإصلاح مشكلة المحاذاة */}
+      <div dir="ltr" className="flex-1 overflow-hidden relative">
+        <Tldraw 
+          store={store}
+          onMount={handleMount}
+        />
       </div>
     </div>
   );
