@@ -143,66 +143,66 @@ export const StudentGrade11Content: React.FC = () => {
   }
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
+    <div className="space-y-8 max-w-7xl mx-auto transition-colors duration-300">
       {/* Minimal Header */}
       <div className="text-center space-y-3">
-        <h1 className="text-3xl font-light text-foreground">
+        <h1 className="text-3xl font-light text-foreground dark:text-slate-100 transition-colors duration-300">
           محتوى الصف الحادي عشر
         </h1>
-        <p className="text-text-soft text-lg font-light max-w-2xl mx-auto">
+        <p className="text-text-soft dark:text-slate-300 text-lg font-light max-w-2xl mx-auto transition-colors duration-300">
           استكشف المحتوى التعليمي المنظم في أقسام ومواضيع ودروس تفاعلية
         </p>
       </div>
 
       {/* Clean Statistics Cards with Grade 10 Colors */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-blue-50 to-blue-100/50 border-blue-200/60">
+        <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-slate-900/50 dark:to-slate-800/30 border-blue-200/60 dark:border-slate-700/40">
           <CardContent className="p-6 text-center">
-            <div className="w-12 h-12 mx-auto mb-4 bg-blue-500/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-              <FolderOpen className="w-6 h-6 text-blue-600" />
+            <div className="w-12 h-12 mx-auto mb-4 bg-blue-500/10 dark:bg-blue-500/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <FolderOpen className="w-6 h-6 text-blue-600 dark:text-blue-400" />
             </div>
-            <div className="text-2xl font-bold text-blue-600 mb-1">{stats.totalSections}</div>
-            <div className="text-sm text-blue-600/70 font-medium">أقسام</div>
+            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-1">{stats.totalSections}</div>
+            <div className="text-sm text-blue-600/70 dark:text-blue-400/70 font-medium">أقسام</div>
           </CardContent>
         </Card>
 
-        <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-green-50 to-green-100/50 border-green-200/60">
+        <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-green-50 to-green-100/50 dark:from-slate-900/50 dark:to-slate-800/30 border-green-200/60 dark:border-slate-700/40">
           <CardContent className="p-6 text-center">
-            <div className="w-12 h-12 mx-auto mb-4 bg-green-500/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-              <Target className="w-6 h-6 text-green-600" />
+            <div className="w-12 h-12 mx-auto mb-4 bg-green-500/10 dark:bg-green-500/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Target className="w-6 h-6 text-green-600 dark:text-green-400" />
             </div>
-            <div className="text-2xl font-bold text-green-600 mb-1">{stats.totalTopics}</div>
-            <div className="text-sm text-green-600/70 font-medium">مواضيع</div>
+            <div className="text-2xl font-bold text-green-600 dark:text-green-400 mb-1">{stats.totalTopics}</div>
+            <div className="text-sm text-green-600/70 dark:text-green-400/70 font-medium">مواضيع</div>
           </CardContent>
         </Card>
 
-        <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-purple-50 to-purple-100/50 border-purple-200/60">
+        <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-slate-900/50 dark:to-slate-800/30 border-purple-200/60 dark:border-slate-700/40">
           <CardContent className="p-6 text-center">
-            <div className="w-12 h-12 mx-auto mb-4 bg-purple-500/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-              <BookOpen className="w-6 h-6 text-purple-600" />
+            <div className="w-12 h-12 mx-auto mb-4 bg-purple-500/10 dark:bg-purple-500/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <BookOpen className="w-6 h-6 text-purple-600 dark:text-purple-400" />
             </div>
-            <div className="text-2xl font-bold text-purple-600 mb-1">{stats.totalLessons}</div>
-            <div className="text-sm text-purple-600/70 font-medium">دروس</div>
+            <div className="text-2xl font-bold text-purple-600 dark:text-purple-400 mb-1">{stats.totalLessons}</div>
+            <div className="text-sm text-purple-600/70 dark:text-purple-400/70 font-medium">دروس</div>
           </CardContent>
         </Card>
 
-        <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-orange-50 to-orange-100/50 border-orange-200/60">
+        <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-slate-900/50 dark:to-slate-800/30 border-orange-200/60 dark:border-slate-700/40">
           <CardContent className="p-6 text-center">
-            <div className="w-12 h-12 mx-auto mb-4 bg-orange-500/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-              <PlayCircle className="w-6 h-6 text-orange-600" />
+            <div className="w-12 h-12 mx-auto mb-4 bg-orange-500/10 dark:bg-orange-500/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <PlayCircle className="w-6 h-6 text-orange-600 dark:text-orange-400" />
             </div>
-            <div className="text-2xl font-bold text-orange-600 mb-1">{stats.totalMedia}</div>
-            <div className="text-sm text-orange-600/70 font-medium">وسائط</div>
+            <div className="text-2xl font-bold text-orange-600 dark:text-orange-400 mb-1">{stats.totalMedia}</div>
+            <div className="text-sm text-orange-600/70 dark:text-orange-400/70 font-medium">وسائط</div>
           </CardContent>
         </Card>
 
-        <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-rose-50 to-rose-100/50 border-rose-200/60">
+        <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-rose-50 to-rose-100/50 dark:from-slate-900/50 dark:to-slate-800/30 border-rose-200/60 dark:border-slate-700/40">
           <CardContent className="p-6 text-center">
-            <div className="w-12 h-12 mx-auto mb-4 bg-rose-500/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-              <Video className="w-6 h-6 text-rose-600" />
+            <div className="w-12 h-12 mx-auto mb-4 bg-rose-500/10 dark:bg-rose-500/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Video className="w-6 h-6 text-rose-600 dark:text-rose-400" />
             </div>
-            <div className="text-2xl font-bold text-rose-600 mb-1">{stats.totalVideos}</div>
-            <div className="text-sm text-rose-600/70 font-medium">فيديوهات</div>
+            <div className="text-2xl font-bold text-rose-600 dark:text-rose-400 mb-1">{stats.totalVideos}</div>
+            <div className="text-sm text-rose-600/70 dark:text-rose-400/70 font-medium">فيديوهات</div>
           </CardContent>
         </Card>
       </div>
@@ -210,16 +210,16 @@ export const StudentGrade11Content: React.FC = () => {
       {/* Minimal Search */}
       <div className="flex gap-4 max-w-2xl mx-auto">
         <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-text-soft w-5 h-5" />
+          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-text-soft dark:text-slate-400 w-5 h-5 transition-colors duration-300" />
           <Input
             placeholder="ابحث في المحتوى..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-12 py-4 text-base border-divider bg-surface-light focus:bg-background transition-colors font-light"
+            className="pl-12 py-4 text-base border-divider dark:border-slate-700/40 bg-surface-light dark:bg-slate-900/50 focus:bg-background dark:focus:bg-slate-800/50 transition-colors font-light"
           />
         </div>
         {searchQuery && (
-          <Button variant="ghost" onClick={() => setSearchQuery('')} className="px-6 py-4 text-text-soft hover:text-foreground">
+          <Button variant="ghost" onClick={() => setSearchQuery('')} className="px-6 py-4 text-text-soft dark:text-slate-400 hover:text-foreground dark:hover:text-slate-100 transition-colors duration-300">
             مسح
           </Button>
         )}
@@ -227,12 +227,12 @@ export const StudentGrade11Content: React.FC = () => {
 
       {/* Clean Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 h-14 bg-surface-light border border-divider">
-          <TabsTrigger value="lessons" className="flex items-center gap-3 text-base font-light py-3">
+        <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 h-14 bg-surface-light dark:bg-slate-800/50 border border-divider dark:border-slate-700/40 transition-colors duration-300">
+          <TabsTrigger value="lessons" className="flex items-center gap-3 text-base font-light py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground dark:data-[state=active]:bg-primary/90 dark:text-slate-300 dark:hover:bg-slate-700/50 dark:hover:text-slate-100 transition-colors duration-300">
             <BookOpen className="w-5 h-5" />
             الدروس ({(sections || []).length})
           </TabsTrigger>
-          <TabsTrigger value="videos" className="flex items-center gap-3 text-base font-light py-3">
+          <TabsTrigger value="videos" className="flex items-center gap-3 text-base font-light py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground dark:data-[state=active]:bg-primary/90 dark:text-slate-300 dark:hover:bg-slate-700/50 dark:hover:text-slate-100 transition-colors duration-300">
             <Video className="w-5 h-5" />
             الفيديوهات ({(videos || []).length})
           </TabsTrigger>
