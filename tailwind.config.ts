@@ -26,8 +26,8 @@
 import type { Config } from "tailwindcss";
 
 export default {
-	// Dark mode strategy - uses class-based toggling
-	darkMode: ["class"],
+	// Dark mode strategy - دعم كلا النظامين (class & data-theme)
+	darkMode: ["class", '[data-theme="dark"]'],
 	
 	// Content paths for Tailwind to scan for classes
 	content: [
@@ -60,6 +60,23 @@ export default {
 				ring: 'hsl(var(--ring))',
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
+				
+				// ===== ألوان الإحصائيات الدلالية =====
+				'stat-points': 'hsl(var(--stat-points) / <alpha-value>)',
+				'stat-progress': 'hsl(var(--stat-progress) / <alpha-value>)',
+				'stat-videos': 'hsl(var(--stat-videos) / <alpha-value>)',
+				'stat-projects': 'hsl(var(--stat-projects) / <alpha-value>)',
+				'stat-achievements': 'hsl(var(--stat-achievements) / <alpha-value>)',
+				
+				// ===== ألوان الخلفيات والأسطح =====
+				bg: 'hsl(var(--background) / <alpha-value>)',
+				card: 'hsl(var(--card) / <alpha-value>)',
+				surface: 'hsl(var(--surface-elevated) / <alpha-value>)',
+				
+				// ===== ألوان النصوص =====
+				text: 'hsl(var(--foreground) / <alpha-value>)',
+				'text-sec': 'hsl(var(--foreground-secondary) / <alpha-value>)',
+				'text-muted': 'hsl(var(--foreground-muted) / <alpha-value>)',
 				
 				// Primary brand colors
 				primary: {

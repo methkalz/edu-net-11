@@ -8,15 +8,27 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Ultra Light Elegant Palette */
+    /* ===== نظام الألوان المحسّن - الوضع الفاتح ===== */
+    /* الخلفيات الأساسية */
     --background: 220 25% 98%;
-    --foreground: 215 20% 15%;
-
     --card: 220 30% 99%;
-    --card-foreground: 215 20% 15%;
+    --surface-elevated: 220 22% 96%;
+    
+    /* النصوص */
+    --foreground: 215 20% 15%;
+    --foreground-secondary: 215 10% 35%;
+    --foreground-muted: 215 8% 50%;
 
+    --card-foreground: 215 20% 15%;
     --popover: 220 30% 99%;
     --popover-foreground: 215 20% 15%;
+
+    /* ===== ألوان الإحصائيات - دلالية ===== */
+    --stat-points: 45 80% 55%;       /* نقاط - ذهبي */
+    --stat-progress: 160 70% 45%;    /* تقدم - أخضر نعناعي */
+    --stat-videos: 210 80% 50%;      /* فيديوهات - أزرق */
+    --stat-projects: 285 75% 60%;    /* مشاريع - بنفسجي */
+    --stat-achievements: 220 75% 60%; /* إنجازات - أزرق فاتح */
 
     /* Extended Color System */
     /* Clean Blue Palette */
@@ -126,18 +138,32 @@ All colors MUST be HSL.
     --sidebar-ring: 220 85% 60%;
   }
 
-  .dark {
-    --background: 215 25% 6%;
-    --foreground: 220 15% 95%;
+  /* ===== الوضع الداكن المحسّن ===== */
+  .dark,
+  :root[data-theme="dark"] {
+    /* الخلفيات - تباين محسّن */
+    --background: 220 15% 8%;
+    --card: 220 18% 12%;
+    --surface-elevated: 220 20% 16%;
+    
+    /* النصوص - قابلية قراءة محسّنة */
+    --foreground: 220 15% 92%;
+    --foreground-secondary: 220 12% 75%;
+    --foreground-muted: 220 8% 60%;
 
-    --card: 215 25% 8%;
-    --card-foreground: 220 15% 95%;
+    --card-foreground: 220 15% 92%;
+    --popover: 220 18% 12%;
+    --popover-foreground: 220 15% 92%;
 
-    --popover: 215 25% 8%;
-    --popover-foreground: 220 15% 95%;
+    /* ===== ألوان الإحصائيات - أفضل على الخلفية الداكنة ===== */
+    --stat-points: 45 80% 65%;
+    --stat-progress: 160 70% 55%;
+    --stat-videos: 210 80% 65%;
+    --stat-projects: 285 75% 70%;
+    --stat-achievements: 220 75% 70%;
 
     /* Dark Mode Extended Colors */
-    --primary: 220 80% 65%;
+    --primary: 214 85% 62%;  /* محسّن للخلفية الداكنة */
     --primary-light: 220 75% 75%;
     --primary-dark: 220 85% 55%;
     --blue-electric: 210 95% 70%;
@@ -183,9 +209,9 @@ All colors MUST be HSL.
     --destructive: 0 80% 65%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 215 25% 15%;
-    --input: 215 25% 15%;
-    --ring: 220 80% 65%;
+    --border: 220 10% 24%;  /* حدود أوضح */
+    --input: 220 10% 24%;
+    --ring: 214 85% 62%;
 
     /* Dark Mode Gradients */
     --gradient-primary: linear-gradient(135deg, hsl(220 80% 65%), hsl(25 90% 65%));
@@ -219,8 +245,14 @@ All colors MUST be HSL.
 }
 
 @layer base {
+  /* ===== انتقالات سلسة عالمية ===== */
   * {
     @apply border-border;
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  }
+
+  html, body, #root { 
+    height: 100%; 
   }
 
   body {
@@ -317,6 +349,36 @@ All colors MUST be HSL.
 
   .gradient-neon {
     background: linear-gradient(135deg, hsl(120 100% 60%), hsl(190 100% 65%), hsl(270 85% 65%));
+  }
+
+  /* ===== بطاقات زجاجية محسّنة ===== */
+  .card-glass {
+    background-color: hsl(var(--card) / 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid hsl(var(--border));
+    transition: all 0.3s ease;
+  }
+
+  /* تلوينات خفيفة للبطاقات */
+  .card-tint-blue {
+    background: linear-gradient(180deg, hsl(210 80% 65% / 0.12), transparent);
+  }
+
+  .card-tint-gold {
+    background: linear-gradient(180deg, hsl(45 80% 65% / 0.12), transparent);
+  }
+
+  .card-tint-mint {
+    background: linear-gradient(180deg, hsl(160 70% 55% / 0.12), transparent);
+  }
+
+  .card-tint-purple {
+    background: linear-gradient(180deg, hsl(285 75% 70% / 0.12), transparent);
+  }
+
+  .card-tint-achievements {
+    background: linear-gradient(180deg, hsl(220 75% 60% / 0.12), transparent);
   }
 
   /* Modern Card Effects */
