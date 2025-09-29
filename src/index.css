@@ -127,15 +127,15 @@ All colors MUST be HSL.
   }
 
   .dark {
-    /* Background & Surfaces - Deep but not pure black for better readability */
-    --background: 220 15% 9%;           /* Rich dark blue-gray background */
-    --foreground: 220 10% 92%;          /* Soft white for text, high contrast */
+    /* Background & Surfaces - Professional dark mode with excellent readability */
+    --background: 222 47% 11%;          /* Deep slate background */
+    --foreground: 213 31% 91%;          /* Soft white for text, excellent contrast */
 
-    --card: 220 15% 11%;                /* Slightly lighter than background */
-    --card-foreground: 220 8% 90%;      /* Slightly dimmer text for cards */
+    --card: 217 33% 17%;                /* Elevated card surface */
+    --card-foreground: 213 31% 91%;     /* Clear readable text */
 
-    --popover: 220 15% 12%;             /* Even lighter for popovers */
-    --popover-foreground: 220 8% 88%;
+    --popover: 217 33% 17%;             /* Popover surface */
+    --popover-foreground: 213 31% 91%;  /* Clear text */
 
     /* Primary Colors - Brighter and more vibrant in dark mode */
     --primary: 220 85% 65%;             /* Bright blue for primary actions */
@@ -182,25 +182,25 @@ All colors MUST be HSL.
     --match-color-8: 120 55% 58%;       /* Light Green */
 
     /* UI System Colors - Carefully balanced for accessibility */
-    --accent: 220 15% 13%;              /* Subtle accent background */
-    --accent-foreground: 220 8% 85%;    /* Text on accent */
+    --accent: 217 33% 17%;              /* Subtle accent background */
+    --accent-foreground: 213 31% 91%;   /* Text on accent */
 
-    --muted: 220 15% 14%;               /* Muted elements background */
-    --muted-foreground: 220 8% 65%;     /* Muted text - good contrast */
+    --muted: 215 28% 17%;               /* Muted elements background */
+    --muted-foreground: 217 19% 60%;    /* Muted text - WCAG AA compliant */
 
     --destructive: 0 75% 65%;           /* Error red - softer in dark mode */
     --destructive-foreground: 0 0% 98%; /* White text on red */
 
     /* Borders & Inputs - Subtle but visible */
-    --border: 220 15% 18%;              /* Visible borders without harshness */
-    --input: 220 15% 16%;               /* Input field background */
+    --border: 217 33% 24%;              /* Visible borders without harshness */
+    --input: 217 33% 17%;               /* Input field background */
     --ring: 220 80% 65%;                /* Focus ring - bright primary */
 
     /* Surface Colors - Layered elevation system */
-    --surface-light: 220 15% 13%;       /* Elevated surfaces */
-    --surface-hover: 220 15% 16%;       /* Hover states */
-    --text-soft: 220 8% 55%;            /* Soft text for less important content */
-    --divider: 220 15% 20%;             /* Subtle dividers */
+    --surface-light: 217 33% 20%;       /* Elevated surfaces */
+    --surface-hover: 217 33% 24%;       /* Hover states */
+    --text-soft: 217 19% 60%;           /* Soft text for less important content */
+    --divider: 217 33% 24%;             /* Subtle dividers */
 
     /* Enhanced Gradients for Dark Mode */
     --gradient-primary: linear-gradient(135deg, hsl(220 80% 65%), hsl(25 85% 62%));
