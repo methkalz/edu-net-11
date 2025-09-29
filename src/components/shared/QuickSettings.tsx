@@ -2,38 +2,49 @@ import React from 'react';
 import { Settings, Moon, Sun, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useNavigate } from 'react-router-dom';
+import { useDisplaySettings } from '@/hooks/useDisplaySettings';
+import { FontSizeControl } from '@/components/shared/FontSizeControl';
 
 interface QuickSettingsProps {
-  onSettingsClick?: () => void;
-  onThemeToggle?: () => void;
   onProfileClick?: () => void;
   onLogout?: () => void;
-  isDarkMode?: boolean;
   className?: string;
+  showFontControl?: boolean;
 }
 
 export const QuickSettings: React.FC<QuickSettingsProps> = ({
-  onSettingsClick,
-  onThemeToggle,
   onProfileClick,
   onLogout,
-  isDarkMode = false,
-  className
+  className,
+  showFontControl = true
 }) => {
+  const navigate = useNavigate();
+  const { theme, toggleTheme } = useDisplaySettings();
+
+  const handleSettingsClick = () => {
+    navigate('/settings');
+  };
+
   return (
-    <div className={cn("flex items-center gap-1", className)}>
-      {/* Theme Toggle */}
-      {onThemeToggle && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onThemeToggle}
-          className="opacity-70 hover:opacity-100 transition-opacity"
-          title={isDarkMode ? "الوضع المضيء" : "الوضع المظلم"}
-        >
-          {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-        </Button>
+    <div className={cn("flex items-center gap-2", className)}>
+      {/* Font Size Control */}
+      {showFontControl && (
+        <div className="hidden lg:block">
+          <FontSizeControl />
+        </div>
       )}
+
+      {/* Theme Toggle */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={toggleTheme}
+        className="opacity-70 hover:opacity-100 transition-opacity"
+        title={theme === 'dark' ? "الوضع المضيء" : "الوضع المظلم"}
+      >
+        {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+      </Button>
 
       {/* Profile Settings */}
       {onProfileClick && (
@@ -49,17 +60,15 @@ export const QuickSettings: React.FC<QuickSettingsProps> = ({
       )}
 
       {/* General Settings */}
-      {onSettingsClick && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onSettingsClick}
-          className="opacity-70 hover:opacity-100 transition-opacity"
-          title="الإعدادات"
-        >
-          <Settings className="h-4 w-4" />
-        </Button>
-      )}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={handleSettingsClick}
+        className="opacity-70 hover:opacity-100 transition-opacity"
+        title="الإعدادات"
+      >
+        <Settings className="h-4 w-4" />
+      </Button>
 
       {/* Logout */}
       {onLogout && (

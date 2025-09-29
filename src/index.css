@@ -115,6 +115,10 @@ All colors MUST be HSL.
 
     --radius: 16px;
 
+    /* Font Size System */
+    --app-font-size: 16px;
+    --app-font-scale: 1;
+
     /* Sidebar */
     --sidebar-background: 220 25% 96%;
     --sidebar-foreground: 215 25% 12%;
@@ -226,6 +230,11 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground font-cairo;
     direction: rtl;
+    font-size: var(--app-font-size, 16px);
+  }
+
+  #root {
+    font-size: calc(var(--app-font-size, 16px) * var(--app-font-scale, 1));
   }
 
   /* Hide scrollbar utility class */

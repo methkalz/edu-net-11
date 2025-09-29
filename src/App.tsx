@@ -56,6 +56,7 @@ import {
 const Grade12ProjectEditorPage = React.lazy(() => import('@/pages/Grade12ProjectEditor'));
 const LandingPage = React.lazy(() => import('@/pages/LandingPage'));
 const KnowledgeAdventurePage = React.lazy(() => import('@/pages/KnowledgeAdventurePage'));
+const LazySettings = React.lazy(() => import('@/pages/Settings'));
 import { PageLoading } from "@/components/ui/LoadingComponents";
 
 /**
@@ -107,6 +108,7 @@ const App = () => {
                <Route path="/users" element={<LazyUserManagement />} />
                <Route path="/system-settings" element={<LazySystemSettings />} />
                <Route path="/profile-settings" element={<LazyProfileSettings />} />
+               <Route path="/settings" element={<LazySettings />} />
               
                {/* Academic management routes */}
                <Route path="/academic-years" element={<LazyAcademicYears />} />
