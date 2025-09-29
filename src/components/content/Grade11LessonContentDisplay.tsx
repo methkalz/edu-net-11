@@ -421,13 +421,7 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
         <MediaPreview
           media={previewMedia}
           onClose={() => setPreviewMedia(null)}
-        />
-      )}
-      {/* معاينة الوسائط */}
-      {previewMedia && (
-        <MediaPreview 
-          media={previewMedia} 
-          onClose={() => setPreviewMedia(null)} 
+          onUpdateMedia={onUpdateMedia}
         />
       )}
 

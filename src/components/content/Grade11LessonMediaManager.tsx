@@ -367,6 +367,7 @@ const Grade11LessonMediaManager: React.FC<Grade11LessonMediaManagerProps> = ({
         <MediaPreview
           media={previewMedia}
           onClose={() => setPreviewMedia(null)}
+          onUpdateMedia={onUpdateMedia}
         />
       )}
 

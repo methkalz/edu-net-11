@@ -15,12 +15,19 @@ import CodeEditForm from '@/components/content/CodeEditForm';
 interface MediaPreviewProps {
   media: Grade11LessonMedia;
   onClose: () => void;
+  onUpdateMedia?: (mediaId: string, updates: Partial<Grade11LessonMedia>) => Promise<void>;
 }
 
-const MediaPreview: React.FC<MediaPreviewProps> = ({ media, onClose }) => {
+const MediaPreview: React.FC<MediaPreviewProps> = ({ media, onClose, onUpdateMedia }) => {
   const { userProfile } = useAuth();
   const { lottieSettings } = useSharedLottieSettings();
-  const { updateCodeMedia } = useEditCodeMedia();
+  
+  // Create a callback wrapper for the hook
+  const handleRefresh = () => {
+    // This will trigger parent refresh after successful update
+  };
+  
+  const { updateCodeMedia } = useEditCodeMedia(handleRefresh);
   const lottieRef = useRef<any>(null);
   const [editingCode, setEditingCode] = useState<Grade11LessonMedia | null>(null);
   
@@ -32,14 +39,20 @@ const MediaPreview: React.FC<MediaPreviewProps> = ({ media, onClose }) => {
     if (!editingCode) return;
 
     try {
+      // Update in database via hook
       await updateCodeMedia({
         mediaId: editingCode.id,
         updates
       });
 
+      // Call parent refresh callback
+      if (onUpdateMedia) {
+        await onUpdateMedia(editingCode.id, updates);
+      }
+
       setEditingCode(null);
     } catch (error) {
-      console.error('Error updating Code media', error);
+      console.error('Error updating code media:', error);
     }
   };
   
