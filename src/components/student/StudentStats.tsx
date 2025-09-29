@@ -51,8 +51,8 @@ export const StudentStats: React.FC = () => {
       title: 'النقاط الإجمالية',
       value: stats.total_points.toLocaleString(),
       icon: Star,
-      gradient: 'card-tint-gold',
-      bgGradient: '',
+      gradient: 'from-yellow-400 to-orange-400',
+      bgGradient: 'from-yellow-50 to-orange-50',
       description: 'نقطة مكتسبة',
       animation: 'animate-wiggle'
     },
@@ -60,8 +60,8 @@ export const StudentStats: React.FC = () => {
       title: 'معدل التقدم',
       value: `${progressPercentage}%`,
       icon: TrendingUp,
-      gradient: 'card-tint-mint',
-      bgGradient: '',
+      gradient: 'from-green-400 to-emerald-400',
+      bgGradient: 'from-green-50 to-emerald-50',
       description: `${completedContent} من ${totalContent}`,
       animation: 'animate-bounce-slow'
     },
@@ -69,8 +69,8 @@ export const StudentStats: React.FC = () => {
       title: 'الفيديوهات المكتملة',
       value: stats.completed_videos.toString(),
       icon: Video,
-      gradient: 'card-tint-blue',
-      bgGradient: '',
+      gradient: 'from-blue-400 to-cyan-400',
+      bgGradient: 'from-blue-50 to-cyan-50',
       description: 'فيديو تعليمي',
       animation: 'animate-float'
     },
@@ -79,8 +79,8 @@ export const StudentStats: React.FC = () => {
       title: assignedGrade === '10' ? 'المشاريع المصغرة' : 'المشاريع النهائية',
       value: stats.completed_projects.toString(),
       icon: Trophy,
-      gradient: 'card-tint-purple',
-      bgGradient: '',
+      gradient: 'from-purple-400 to-pink-400',
+      bgGradient: 'from-purple-50 to-pink-50',
       description: assignedGrade === '10' ? 'مشروع مصغر مكتمل' : 'مشروع نهائي مكتمل',
       animation: 'animate-glow'
     }] : []),
@@ -88,8 +88,8 @@ export const StudentStats: React.FC = () => {
       title: 'الإنجازات',
       value: stats.achievements_count.toString(),
       icon: Award,
-      gradient: 'card-tint-achievements',
-      bgGradient: '',
+      gradient: 'from-indigo-400 to-purple-400',
+      bgGradient: 'from-indigo-50 to-purple-50',
       description: 'شارة وإنجاز',
       animation: 'animate-pulse-slow'
     },
@@ -97,8 +97,8 @@ export const StudentStats: React.FC = () => {
       title: 'الأيام المتتالية',
       value: stats.current_streak.toString(),
       icon: Flame,
-      gradient: 'card-tint-gold',
-      bgGradient: '',
+      gradient: 'from-red-400 to-pink-400',
+      bgGradient: 'from-red-50 to-pink-50',
       description: 'يوم نشاط متواصل',
       animation: 'animate-bounce'
     }
@@ -116,26 +116,31 @@ export const StudentStats: React.FC = () => {
           return (
             <Card 
               key={stat.title}
-              className={`${stat.gradient} card-glass border shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-300 group overflow-hidden relative`}
+              className={`bg-gradient-to-br ${stat.bgGradient} border-0 shadow-lg hover:shadow-xl transition-all duration-300 group overflow-hidden relative`}
             >
+              {/* Background Pattern */}
+              <div className="absolute inset-0 opacity-5">
+                <div className="absolute inset-0 bg-gradient-to-br from-current to-transparent"></div>
+              </div>
+              
               <CardContent className="p-6 relative">
                 <div className="flex items-start justify-between">
                   <div className="space-y-2 flex-1">
-                    <p className="text-sm font-medium text-foreground/70">
+                    <p className="text-sm font-medium text-muted-foreground">
                       {stat.title}
                     </p>
                     <div className="space-y-1">
                       <p className="text-3xl font-bold text-foreground group-hover:scale-105 transition-transform duration-200">
                         {stat.value}
                       </p>
-                      <p className="text-xs text-foreground/60">
+                      <p className="text-xs text-muted-foreground">
                         {stat.description}
                       </p>
                     </div>
                   </div>
                   
-                  <div className={`w-12 h-12 rounded-full bg-foreground/10 flex items-center justify-center shadow-sm ${stat.animation}`}>
-                    <IconComponent className="w-6 h-6 text-foreground/70" />
+                  <div className={`w-12 h-12 rounded-full bg-gradient-to-r ${stat.gradient} flex items-center justify-center shadow-lg ${stat.animation}`}>
+                    <IconComponent className="w-6 h-6 text-white" />
                   </div>
                 </div>
 
@@ -144,7 +149,7 @@ export const StudentStats: React.FC = () => {
                   <div className="mt-4">
                     <Progress 
                       value={progressPercentage} 
-                      className="h-2 bg-foreground/10"
+                      className="h-2 bg-white/50"
                     />
                   </div>
                 )}

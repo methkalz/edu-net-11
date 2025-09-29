@@ -2,34 +2,38 @@ import React from 'react';
 import { Settings, Moon, Sun, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { useTheme } from '@/hooks/useTheme';
 
 interface QuickSettingsProps {
   onSettingsClick?: () => void;
+  onThemeToggle?: () => void;
   onProfileClick?: () => void;
   onLogout?: () => void;
+  isDarkMode?: boolean;
   className?: string;
 }
 
 export const QuickSettings: React.FC<QuickSettingsProps> = ({
   onSettingsClick,
+  onThemeToggle,
   onProfileClick,
   onLogout,
+  isDarkMode = false,
   className
 }) => {
-  const { isDarkMode, toggleTheme } = useTheme();
   return (
     <div className={cn("flex items-center gap-1", className)}>
       {/* Theme Toggle */}
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={toggleTheme}
-        className="opacity-70 hover:opacity-100 transition-opacity"
-        title={isDarkMode ? "الوضع المضيء" : "الوضع المظلم"}
-      >
-        {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-      </Button>
+      {onThemeToggle && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onThemeToggle}
+          className="opacity-70 hover:opacity-100 transition-opacity"
+          title={isDarkMode ? "الوضع المضيء" : "الوضع المظلم"}
+        >
+          {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        </Button>
+      )}
 
       {/* Profile Settings */}
       {onProfileClick && (

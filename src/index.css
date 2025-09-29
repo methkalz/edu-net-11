@@ -8,15 +8,12 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Light Mode - Enhanced Palette */
+    /* Ultra Light Elegant Palette */
     --background: 220 25% 98%;
     --foreground: 215 20% 15%;
-    --foreground-secondary: 215 10% 35%;
-    --foreground-muted: 215 8% 50%;
 
     --card: 220 30% 99%;
     --card-foreground: 215 20% 15%;
-    --surface-elevated: 220 22% 96%;
 
     --popover: 220 30% 99%;
     --popover-foreground: 215 20% 15%;
@@ -33,13 +30,6 @@ All colors MUST be HSL.
     --secondary-foreground: 0 0% 100%;
     --secondary-light: 25 70% 65%;
     --secondary-dark: 25 95% 45%;
-
-    /* Stats Colors */
-    --stat-points: 45 80% 55%;
-    --stat-progress: 160 70% 45%;
-    --stat-videos: 210 80% 50%;
-    --stat-projects: 285 75% 60%;
-    --stat-achievements: 220 75% 60%;
     
     /* Purples & Magentas */
     --purple-mystic: 270 85% 65%;
@@ -94,9 +84,9 @@ All colors MUST be HSL.
     --destructive-foreground: 0 0% 100%;
 
     /* Refined Borders */
-    --border: 220 14% 90%;
+    --border: 220 20% 90%;
     --input: 220 20% 90%;
-    --ring: 214 85% 55%;
+    --ring: 220 70% 65%;
 
     /* Elegant Surface Colors */
     --surface-light: 220 40% 97%;
@@ -136,41 +126,29 @@ All colors MUST be HSL.
     --sidebar-ring: 220 85% 60%;
   }
 
-  .dark, :root[data-theme="dark"] {
-    --background: 220 15% 8%;
-    --foreground: 220 15% 92%;
-    --foreground-secondary: 220 12% 75%;
-    --foreground-muted: 220 8% 60%;
+  .dark {
+    --background: 215 25% 6%;
+    --foreground: 220 15% 95%;
 
-    --card: 220 18% 12%;
-    --card-foreground: 220 15% 92%;
-    --surface-elevated: 220 20% 16%;
+    --card: 215 25% 8%;
+    --card-foreground: 220 15% 95%;
 
-    --popover: 220 18% 12%;
-    --popover-foreground: 220 15% 92%;
+    --popover: 215 25% 8%;
+    --popover-foreground: 220 15% 95%;
 
     /* Dark Mode Extended Colors */
-    --primary: 214 85% 62%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 220 80% 65%;
     --primary-light: 220 75% 75%;
     --primary-dark: 220 85% 55%;
     --blue-electric: 210 95% 70%;
     --blue-cyber: 200 80% 60%;
     --blue-ocean: 215 70% 50%;
 
-    --secondary: 25 85% 60%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 25 90% 65%;
     --secondary-light: 25 85% 75%;
     --secondary-dark: 25 95% 55%;
     --orange-fire: 15 95% 60%;
     --orange-sunset: 35 85% 70%;
-
-    /* Stats Colors - Dark Mode */
-    --stat-points: 45 80% 65%;
-    --stat-progress: 160 70% 55%;
-    --stat-videos: 210 80% 65%;
-    --stat-projects: 285 75% 70%;
-    --stat-achievements: 220 75% 70%;
     
     --purple-mystic: 270 80% 70%;
     --purple-neon: 285 95% 75%;
@@ -205,9 +183,9 @@ All colors MUST be HSL.
     --destructive: 0 80% 65%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 10% 24%;
-    --input: 220 10% 24%;
-    --ring: 214 85% 62%;
+    --border: 215 25% 15%;
+    --input: 215 25% 15%;
+    --ring: 220 80% 65%;
 
     /* Dark Mode Gradients */
     --gradient-primary: linear-gradient(135deg, hsl(220 80% 65%), hsl(25 90% 65%));
@@ -243,7 +221,6 @@ All colors MUST be HSL.
 @layer base {
   * {
     @apply border-border;
-    transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out, border-color 0.3s ease-in-out;
   }
 
   body {
@@ -354,35 +331,6 @@ All colors MUST be HSL.
   .modern-card:hover {
     transform: translateY(-8px);
     box-shadow: 0 8px 30px hsl(var(--foreground) / 0.1);
-  }
-
-  /* Glassmorphism Card Effects */
-  .card-glass {
-    background-color: hsl(var(--card) / 0.6);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border: 1px solid hsl(var(--border));
-  }
-
-  /* Tinted Card Gradients */
-  .card-tint-blue {
-    background: linear-gradient(180deg, hsl(var(--stat-videos) / 0.12), transparent);
-  }
-
-  .card-tint-gold {
-    background: linear-gradient(180deg, hsl(var(--stat-points) / 0.12), transparent);
-  }
-
-  .card-tint-mint {
-    background: linear-gradient(180deg, hsl(var(--stat-progress) / 0.12), transparent);
-  }
-
-  .card-tint-purple {
-    background: linear-gradient(180deg, hsl(var(--stat-projects) / 0.12), transparent);
-  }
-
-  .card-tint-achievements {
-    background: linear-gradient(180deg, hsl(var(--stat-achievements) / 0.12), transparent);
   }
 
   /* Clean Text Gradients */

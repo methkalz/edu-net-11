@@ -23,7 +23,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Routes, Route } from "react-router-dom";
 import { ErrorBoundary } from "@/lib/error-boundary";
 import useSiteSettings from "@/hooks/useSiteSettings";
-import { ThemeProvider } from "@/hooks/useTheme";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import EnhancedGameDataManagement from "./components/games/EnhancedGameDataManagement";
@@ -75,13 +74,11 @@ const App = () => {
   return (
     // Global error boundary to catch and handle any unhandled errors
     <ErrorBoundary>
-      {/* Theme provider for dark/light mode */}
-      <ThemeProvider>
-        {/* Tooltip provider for UI tooltips throughout the app */}
-        <TooltipProvider>
-          {/* Toast notification systems - dual system for flexibility */}
-          <Toaster />
-          <Sonner />
+      {/* Tooltip provider for UI tooltips throughout the app */}
+      <TooltipProvider>
+        {/* Toast notification systems - dual system for flexibility */}
+        <Toaster />
+        <Sonner />
         {/* Suspense boundary for lazy-loaded components */}
         <Suspense fallback={<PageLoading message="Loading..." />}>
           <Routes>
@@ -169,7 +166,6 @@ const App = () => {
           </Routes>
         </Suspense>
         </TooltipProvider>
-      </ThemeProvider>
     </ErrorBoundary>
   );
 };
