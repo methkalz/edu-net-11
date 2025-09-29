@@ -56,6 +56,7 @@ import {
 const Grade12ProjectEditorPage = React.lazy(() => import('@/pages/Grade12ProjectEditor'));
 const LandingPage = React.lazy(() => import('@/pages/LandingPage'));
 const KnowledgeAdventurePage = React.lazy(() => import('@/pages/KnowledgeAdventurePage'));
+const WhiteboardPage = React.lazy(() => import('@/pages/Whiteboard'));
 import { PageLoading } from "@/components/ui/LoadingComponents";
 
 /**
@@ -154,6 +155,9 @@ const App = () => {
               
                {/* Question management for interactive games */}
                 <Route path="/question-management" element={<LazyTest />} />
+               
+               {/* Whiteboard route - Digital board for teachers */}
+               <Route path="/whiteboard" element={<Suspense fallback={<PageLoading message="جاري تحميل اللوح الرقمي..." />}><WhiteboardPage /></Suspense>} />
                
                {/* Reports dashboard route */}
                 <Route path="/reports" element={<Suspense fallback={<PageLoading message="جاري تحميل التقارير..." />}><LazyReports /></Suspense>} />
