@@ -234,6 +234,15 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
         // Always use typewriter for preview if available, fallback to regular code block
         const shouldUseTypewriter = codeMetadata.enableTypewriter !== false;
         
+        // Create a unique key based on metadata to force re-render on changes
+        const metadataKey = JSON.stringify({
+          theme: codeMetadata.theme,
+          language: codeMetadata.language,
+          showLineNumbers: codeMetadata.showLineNumbers,
+          typewriterSpeed: codeMetadata.typewriterSpeed,
+          code: codeMetadata.code?.substring(0, 50) // Use first 50 chars as part of key
+        });
+        
         if (shouldUseTypewriter) {
           logger.debug('Rendering TypewriterCodeBlock', {
             autoStart: true,
@@ -245,7 +254,7 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
           
           return (
             <TypewriterCodeBlock
-              key={`typewriter-${media.id}-${Date.now()}`}
+              key={`typewriter-${media.id}-${metadataKey}`}
               code={codeMetadata.code}
               language={codeMetadata.language || 'plaintext'}
               fileName={codeTitle}
@@ -261,6 +270,7 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
         } else {
           return (
             <CodeBlock
+              key={`code-${media.id}-${metadataKey}`}
               code={codeMetadata.code}
               language={codeMetadata.language || 'plaintext'}
               fileName={codeTitle}

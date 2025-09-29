@@ -224,6 +224,15 @@ const MediaPreview: React.FC<MediaPreviewProps> = ({ media, onClose, onUpdateMed
         // Always use typewriter for preview if available, fallback to regular code block (same logic as Grade11LessonContentDisplay)
         const shouldUseTypewriter = codeMetadata.enableTypewriter !== false;
         
+        // Create a unique key based on metadata to force re-render on changes
+        const metadataKey = JSON.stringify({
+          theme: codeMetadata.theme,
+          language: codeMetadata.language,
+          showLineNumbers: codeMetadata.showLineNumbers,
+          typewriterSpeed: codeMetadata.typewriterSpeed,
+          code: codeMetadata.code?.substring(0, 50) // Use first 50 chars as part of key
+        });
+        
         if (shouldUseTypewriter) {
           return (
             <div className="space-y-4">
@@ -236,7 +245,7 @@ const MediaPreview: React.FC<MediaPreviewProps> = ({ media, onClose, onUpdateMed
               </div>
               
               <TypewriterCodeBlock
-                key={`typewriter-preview-${media.id}-${Date.now()}`}
+                key={`typewriter-preview-${media.id}-${metadataKey}`}
                 code={codeMetadata.code}
                 language={codeMetadata.language || 'plaintext'}
                 fileName={codeTitle}
@@ -260,6 +269,7 @@ const MediaPreview: React.FC<MediaPreviewProps> = ({ media, onClose, onUpdateMed
               </div>
               
               <CodeBlock
+                key={`code-preview-${media.id}-${metadataKey}`}
                 code={codeMetadata.code}
                 language={codeMetadata.language || 'plaintext'}
                 fileName={codeTitle}
