@@ -2,38 +2,42 @@ import React from 'react';
 import { Settings, Moon, Sun, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { FontSizeControl } from './FontSizeControl';
+import { useDisplaySettings } from '@/hooks/useDisplaySettings';
 
 interface QuickSettingsProps {
   onSettingsClick?: () => void;
-  onThemeToggle?: () => void;
   onProfileClick?: () => void;
   onLogout?: () => void;
-  isDarkMode?: boolean;
   className?: string;
+  showFontControl?: boolean;
 }
 
 export const QuickSettings: React.FC<QuickSettingsProps> = ({
   onSettingsClick,
-  onThemeToggle,
   onProfileClick,
   onLogout,
-  isDarkMode = false,
-  className
+  className,
+  showFontControl = true
 }) => {
+  const { toggleTheme, isDarkMode } = useDisplaySettings();
   return (
     <div className={cn("flex items-center gap-1", className)}>
-      {/* Theme Toggle */}
-      {onThemeToggle && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onThemeToggle}
-          className="opacity-70 hover:opacity-100 transition-opacity"
-          title={isDarkMode ? "الوضع المضيء" : "الوضع المظلم"}
-        >
-          {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-        </Button>
+      {/* Font Size Control */}
+      {showFontControl && (
+        <FontSizeControl />
       )}
+
+      {/* Theme Toggle */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={toggleTheme}
+        className="opacity-70 hover:opacity-100 transition-opacity"
+        title={isDarkMode ? "الوضع المضيء" : "الوضع المظلم"}
+      >
+        {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+      </Button>
 
       {/* Profile Settings */}
       {onProfileClick && (
