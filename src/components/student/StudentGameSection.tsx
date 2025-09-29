@@ -71,33 +71,33 @@ export const StudentGameSection: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Hero Section */}
-      <Card className="bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 text-white border-0 overflow-hidden relative">
-        <div className="absolute inset-0 bg-black/20"></div>
+      <Card className="gradient-hero text-on-gradient border-0 overflow-hidden relative">
+        <div className="absolute inset-0 bg-foreground/10"></div>
         <div className="absolute inset-0">
-          <div className="absolute top-4 right-4 w-20 h-20 bg-white/10 rounded-full animate-float"></div>
-          <div className="absolute bottom-4 left-4 w-16 h-16 bg-yellow-400/20 rounded-full animate-bounce-slow"></div>
-          <div className="absolute top-1/2 left-1/2 w-12 h-12 bg-pink-400/20 rounded-full animate-wiggle"></div>
+          <div className="absolute top-4 right-4 w-20 h-20 bg-primary-foreground/10 rounded-full animate-float"></div>
+          <div className="absolute bottom-4 left-4 w-16 h-16 bg-stat-points/20 rounded-full animate-bounce-slow"></div>
+          <div className="absolute top-1/2 left-1/2 w-12 h-12 bg-stat-achievements/20 rounded-full animate-wiggle"></div>
         </div>
         
         <CardContent className="p-8 relative">
           <div className="text-center space-y-4">
-            <div className="w-16 h-16 mx-auto bg-white/20 rounded-full flex items-center justify-center mb-4">
-              <Gamepad2 className="w-8 h-8" />
+            <div className="w-16 h-16 mx-auto glass-surface rounded-full flex items-center justify-center mb-4">
+              <Gamepad2 className="w-8 h-8 text-on-gradient" />
             </div>
             <h2 className="text-3xl font-bold">مركز الألعاب التعليمية</h2>
-            <p className="text-xl opacity-90">تعلم واستمتع واجمع النقاط!</p>
+            <p className="text-xl text-on-gradient/90">تعلم واستمتع واجمع النقاط!</p>
             <div className="flex justify-center gap-4 mt-6">
               <div className="text-center">
                 <div className="text-2xl font-bold">890</div>
-                <div className="text-sm opacity-80">نقاطك</div>
+                <div className="text-sm text-on-gradient/80">نقاطك</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold">24</div>
-                <div className="text-sm opacity-80">ألعاب مكتملة</div>
+                <div className="text-sm text-on-gradient/80">ألعاب مكتملة</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold">4</div>
-                <div className="text-sm opacity-80">ترتيبك</div>
+                <div className="text-sm text-on-gradient/80">ترتيبك</div>
               </div>
             </div>
           </div>
@@ -112,18 +112,13 @@ export const StudentGameSection: React.FC = () => {
           return (
             <Card 
               key={game.id}
-              className={`bg-gradient-to-br ${game.bgColor} border-0 shadow-lg hover:shadow-xl transition-all duration-300 group cursor-pointer overflow-hidden relative`}
+              className="glass-surface border-0 shadow-lg hover:shadow-xl transition-all duration-300 group cursor-pointer overflow-hidden relative"
               onClick={() => navigate(game.path)}
             >
-              {/* Background decoration */}
-              <div className="absolute top-0 right-0 w-32 h-32 opacity-10">
-                <div className={`w-full h-full rounded-full bg-gradient-to-br ${game.color} transform translate-x-12 -translate-y-12`}></div>
-              </div>
-              
               <CardHeader className="relative">
                 <div className="flex items-start justify-between">
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-r ${game.color} flex items-center justify-center group-hover:scale-110 transition-transform duration-200`}>
-                    <IconComponent className="w-6 h-6 text-white" />
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                    <IconComponent className="w-6 h-6 text-primary" />
                   </div>
                   <Badge className={getDifficultyColor(game.difficulty)}>
                     {game.difficulty}
@@ -135,12 +130,12 @@ export const StudentGameSection: React.FC = () => {
               </CardHeader>
               
               <CardContent className="space-y-4 relative">
-                <p className="text-muted-foreground">
+                <p className="text-foreground-secondary">
                   {game.description}
                 </p>
                 
                 <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-1 text-yellow-600">
+                  <div className="flex items-center gap-1 text-stat-points">
                     <Star className="w-4 h-4" />
                     <span>{game.points}</span>
                   </div>
@@ -177,25 +172,25 @@ export const StudentGameSection: React.FC = () => {
                   key={achievement.name}
                   className={`flex items-center gap-3 p-3 rounded-lg border transition-all duration-200 ${
                     achievement.earned 
-                      ? 'bg-yellow-50 border-yellow-200' 
-                      : 'bg-gray-50 border-gray-200 opacity-70'
+                      ? 'stat-points-bg' 
+                      : 'glass-surface opacity-70'
                   }`}
                 >
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                     achievement.earned 
-                      ? 'bg-yellow-100 text-yellow-600' 
-                      : 'bg-gray-100 text-gray-400'
+                      ? 'bg-stat-points/20 text-stat-points' 
+                      : 'bg-muted text-muted-foreground'
                   }`}>
                     <IconComponent className="w-5 h-5" />
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-medium">{achievement.name}</h4>
-                    <p className="text-sm text-muted-foreground">
+                    <h4 className="font-medium text-foreground">{achievement.name}</h4>
+                    <p className="text-sm text-foreground-secondary">
                       {achievement.description}
                     </p>
                   </div>
                   {achievement.earned && (
-                    <Badge className="bg-yellow-100 text-yellow-700">
+                    <Badge className="badge-success">
                       مكتمل
                     </Badge>
                   )}
@@ -220,20 +215,20 @@ export const StudentGameSection: React.FC = () => {
                 className={`flex items-center gap-3 p-3 rounded-lg border transition-all duration-200 ${
                   player.isCurrentUser 
                     ? 'bg-primary/10 border-primary/20 ring-2 ring-primary/20' 
-                    : 'bg-white border-gray-200 hover:bg-gray-50'
+                    : 'glass-surface hover:bg-card'
                 }`}
               >
                 <div className="text-2xl">{player.avatar}</div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium">{player.name}</span>
+                    <span className="font-medium text-foreground">{player.name}</span>
                     {player.isCurrentUser && (
                       <Badge variant="outline" className="text-xs">
                         أنت
                       </Badge>
                     )}
                   </div>
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-sm text-foreground-secondary">
                     {player.points.toLocaleString()} نقطة
                   </div>
                 </div>

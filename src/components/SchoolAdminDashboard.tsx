@@ -486,35 +486,35 @@ const SchoolAdminDashboard = () => {
             <SchoolCalendarWidget />
             
             {/* School Admin Profile Card */}
-            <Card className="glass-card soft-shadow card-hover">
+            <Card className="glass-surface soft-shadow card-hover">
               <CardHeader className="text-center flex flex-col items-center justify-center">
-                <div className="w-16 h-16 mx-auto btn-elegant rounded-full flex items-center justify-center mb-4 animate-gentle-float">
-                  <School className="h-8 w-8 text-white" />
+                <div className="w-16 h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-4 animate-gentle-float">
+                  <School className="h-8 w-8 text-primary" />
                 </div>
-                <CardTitle className="font-cairo text-lg text-gradient">
+                <CardTitle className="font-cairo text-lg text-foreground">
                   {userProfile?.full_name || 'مدير المدرسة'}
                 </CardTitle>
                 <CardDescription>
-                  <span className="px-3 py-1 rounded-full text-xs btn-elegant text-white font-medium">
+                  <span className="px-3 py-1 rounded-full text-xs bg-primary/10 text-primary font-medium">
                     🎖️ مدير مدرسة
                   </span>
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="text-center space-y-2">
-                  <p className="text-sm text-muted-foreground">📧 البريد الإلكتروني</p>
-                  <p className="font-medium text-xs glass-card rounded-lg p-2 break-all">{userProfile?.email}</p>
+                  <p className="text-sm text-foreground-secondary">📧 البريد الإلكتروني</p>
+                  <p className="font-medium text-xs glass-surface rounded-lg p-2 break-all">{userProfile?.email}</p>
                 </div>
                 
                 <div className="text-center space-y-2">
-                  <p className="text-sm text-muted-foreground">🏫 المؤسسة التعليمية</p>
-                  <p className="font-medium text-sm text-gradient">
+                  <p className="text-sm text-foreground-secondary">🏫 المؤسسة التعليمية</p>
+                  <p className="font-medium text-sm text-primary">
                     🌟 مدرسة نشطة ومتصلة
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 gap-2 mt-6">
-                  <Button size="sm" className="btn-elegant" onClick={() => navigate('/system-settings')}>
+                  <Button size="sm" className="bg-primary hover:bg-primary/90" onClick={() => navigate('/system-settings')}>
                     <Settings className="h-4 w-4 ml-1" />
                     إعدادات المدرسة
                   </Button>
