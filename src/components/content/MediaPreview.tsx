@@ -164,49 +164,77 @@ const MediaPreview: React.FC<MediaPreviewProps> = ({ media, onClose }) => {
         }
 
       case 'code':
-        const codeMetadata = media.metadata?.metadata?.code || media.metadata;
+        // Handle both nested and non-nested metadata structures (same as Grade11LessonContentDisplay)
+        let codeMetadata = media.metadata || {};
+        
+        // Check if metadata is double-nested (metadata.metadata.code)
+        if (codeMetadata.metadata && !codeMetadata.code) {
+          codeMetadata = codeMetadata.metadata;
+        }
+        
+        const codeTitle = codeMetadata.title || media.file_name;
+        
+        // Check if we have actual code content
+        if (!codeMetadata.code || codeMetadata.code.trim() === '') {
+          return (
+            <div className="space-y-3">
+              <div className="text-center p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <Code className="h-8 w-8 mx-auto mb-2 text-yellow-600" />
+                <p className="text-sm text-yellow-700">لا يوجد محتوى كود للعرض</p>
+              </div>
+            </div>
+          );
+        }
+        
+        // Always use typewriter for preview if available, fallback to regular code block (same logic as Grade11LessonContentDisplay)
         const shouldUseTypewriter = codeMetadata.enableTypewriter !== false;
         
-        // Apply typewriter settings based on metadata
-        const typewriterSettings = {
-          speed: codeMetadata?.typewriterSpeed || 50,
-          autoStart: codeMetadata?.autoStart !== false,
-          autoRestart: codeMetadata?.autoRestart || false,
-          loop: codeMetadata?.loop || false,
-          pauseDuration: codeMetadata?.pauseDuration || 1000
-        };
-
-        const codeProps = {
-          code: codeMetadata?.code || '',
-          language: codeMetadata?.language || 'javascript',
-          fileName: codeMetadata?.title || media.file_name,
-          showLineNumbers: codeMetadata?.showLineNumbers !== false,
-          theme: codeMetadata?.theme || 'dark',
-          className: "w-full max-h-96 overflow-auto"
-        };
-
-        return (
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Code className="h-4 w-4" />
-              <span>لغة البرمجة: {codeMetadata?.language || 'javascript'}</span>
-              {shouldUseTypewriter && (
+        if (shouldUseTypewriter) {
+          return (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Code className="h-4 w-4" />
+                <span>لغة البرمجة: {codeMetadata?.language || 'plaintext'}</span>
                 <Badge variant="outline" className="text-xs">
                   تأثير الكتابة مفعل
                 </Badge>
-              )}
-            </div>
-            
-            {shouldUseTypewriter ? (
+              </div>
+              
               <TypewriterCodeBlock
-                {...codeProps}
-                {...typewriterSettings}
+                key={`typewriter-preview-${media.id}-${Date.now()}`}
+                code={codeMetadata.code}
+                language={codeMetadata.language || 'plaintext'}
+                fileName={codeTitle}
+                showLineNumbers={codeMetadata.showLineNumbers}
+                theme={codeMetadata.theme || 'dark'}
+                speed={codeMetadata.typewriterSpeed || 50}
+                autoStart={true}
+                autoRestart={true}
+                loop={true}
+                pauseDuration={4000}
+                className="w-full max-h-96 overflow-auto"
               />
-            ) : (
-              <CodeBlock {...codeProps} />
-            )}
-          </div>
-        );
+            </div>
+          );
+        } else {
+          return (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Code className="h-4 w-4" />
+                <span>لغة البرمجة: {codeMetadata?.language || 'plaintext'}</span>
+              </div>
+              
+              <CodeBlock
+                code={codeMetadata.code}
+                language={codeMetadata.language || 'plaintext'}
+                fileName={codeTitle}
+                showLineNumbers={codeMetadata.showLineNumbers}
+                theme={codeMetadata.theme || 'dark'}
+                className="w-full max-h-96 overflow-auto"
+              />
+            </div>
+          );
+        }
 
       default:
         return (
