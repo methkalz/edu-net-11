@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
+import { useUserSettings } from './useUserSettings';
 
 export type FontSize = 'small' | 'medium' | 'large' | 'extra-large';
 
@@ -21,8 +22,9 @@ const FONT_SIZE_SCALE: Record<FontSize, string> = {
   'extra-large': '1.25'
 };
 
-export const useDisplaySettings = () => {
+export const useDisplaySettings = (userId?: string | null) => {
   const { theme, setTheme } = useTheme();
+  const { saveFontSize, saveTheme } = useUserSettings();
   const [settings, setSettings] = useState<DisplaySettings>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('display-settings');
@@ -51,8 +53,13 @@ export const useDisplaySettings = () => {
     }
   }, [settings]);
 
-  const updateFontSize = (fontSize: FontSize) => {
+  const updateFontSize = async (fontSize: FontSize) => {
     setSettings(prev => ({ ...prev, fontSize }));
+    
+    // حفظ في قاعدة البيانات إذا كان المستخدم مسجل دخول
+    if (userId) {
+      await saveFontSize(userId, fontSize);
+    }
   };
 
   const increaseFontSize = () => {
@@ -71,8 +78,24 @@ export const useDisplaySettings = () => {
     }
   };
 
-  const toggleTheme = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
+  const toggleTheme = async () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    
+    // حفظ في قاعدة البيانات إذا كان المستخدم مسجل دخول
+    if (userId) {
+      await saveTheme(userId, newTheme as 'light' | 'dark');
+    }
+  };
+
+  // دالة مساعدة لتحديث الثيم مع الحفظ في قاعدة البيانات
+  const updateTheme = async (newTheme: string) => {
+    setTheme(newTheme);
+    
+    // حفظ في قاعدة البيانات إذا كان المستخدم مسجل دخول
+    if (userId && (newTheme === 'light' || newTheme === 'dark')) {
+      await saveTheme(userId, newTheme);
+    }
   };
 
   return {
@@ -82,6 +105,6 @@ export const useDisplaySettings = () => {
     increaseFontSize,
     decreaseFontSize,
     toggleTheme,
-    setTheme
+    setTheme: updateTheme
   };
 };

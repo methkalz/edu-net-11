@@ -25,6 +25,8 @@ import { logError, logInfo } from '@/lib/logger';
 import { sessionMonitor } from '@/lib/auth/session-monitor';
 import { authErrorHandler } from '@/lib/error-handling/handlers/auth-error-handler';
 import { useImpersonation } from './useImpersonation.ts';
+import { useUserSettings } from './useUserSettings';
+import { useTheme } from 'next-themes';
 
 /**
  * Authentication Context Type Definition
@@ -61,6 +63,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const { isImpersonating, getEffectiveUser, getEffectiveUserProfile } = useImpersonation();
+  
+  const { loadUserSettings, resetToDefaults } = useUserSettings();
+  const { setTheme } = useTheme();
 
   /**
    * Role-based Redirection Logic
@@ -162,6 +167,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 .eq('user_id', session.user.id)
                 .single();
               setUserProfile(profile as UserProfile);
+              
+              // تحميل إعدادات المستخدم بعد تحميل البروفيل
+              try {
+                await loadUserSettings(session.user.id);
+                console.log('User settings loaded successfully');
+              } catch (error) {
+                console.error('Error loading user settings:', error);
+              }
               
               // Handle role-based redirections after profile is loaded
               redirectBasedOnRole(profile as UserProfile);
@@ -417,6 +430,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Mark logout in progress to prevent auto-redirect
       localStorage.setItem('logout_in_progress', 'true');
       
+      // إعادة تعيين الإعدادات للقيم الافتراضية قبل تسجيل الخروج
+      resetToDefaults();
+      setTheme('light');
+      
       // Clear local state immediately to prevent UI confusion
       setUser(null);
       setSession(null);
@@ -497,7 +514,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('*, schools(name, plan)')
+        .select(`
+          *,
+          schools(name, plan)
+        `)
         .eq('user_id', user.id)
         .single();
         
