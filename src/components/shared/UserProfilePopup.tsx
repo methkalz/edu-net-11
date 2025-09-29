@@ -62,7 +62,7 @@ export const UserProfilePopup: React.FC<UserProfilePopupProps> = ({ children }) 
           {children}
         </PopoverTrigger>
         <PopoverContent 
-          className="w-80 p-0 bg-gradient-to-br from-background via-background to-muted/30 border-border/50 shadow-2xl" 
+          className="w-80 p-0 bg-gradient-to-br from-background via-background to-muted/30 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800/50 border-border/50 dark:border-slate-700/50 shadow-2xl dark:shadow-slate-950/50 transition-colors duration-300" 
           align="end"
           sideOffset={8}
         >
@@ -74,20 +74,20 @@ export const UserProfilePopup: React.FC<UserProfilePopupProps> = ({ children }) 
                   avatarUrl={userProfile.avatar_url}
                   userName={userProfile.full_name}
                   size="xl"
-                  className="ring-4 ring-primary/20 group-hover:ring-primary/40 transition-all duration-300"
+                  className="ring-4 ring-primary/20 dark:ring-primary/30 group-hover:ring-primary/40 dark:group-hover:ring-primary/50 transition-all duration-300"
                 />
                 <Button
                   size="sm"
                   variant="secondary"
-                  className="absolute -bottom-2 -right-2 rounded-full h-8 w-8 p-0 shadow-lg hover:shadow-xl transition-all duration-300"
+                  className="absolute -bottom-2 -right-2 rounded-full h-8 w-8 p-0 shadow-lg hover:shadow-xl dark:shadow-slate-950/50 dark:bg-slate-800 dark:hover:bg-slate-700 transition-all duration-300"
                   onClick={() => setShowAvatarModal(true)}
                 >
-                  <Camera className="h-4 w-4" />
+                  <Camera className="h-4 w-4 text-foreground dark:text-foreground transition-colors duration-300" />
                 </Button>
               </div>
               
               <div className="text-center space-y-1">
-                <h3 className="font-bold text-lg text-foreground leading-tight">
+                <h3 className="font-bold text-lg text-foreground dark:text-foreground leading-tight transition-colors duration-300">
                   {userProfile.full_name || 'User'}
                 </h3>
                 <UserTitleBadge
@@ -101,39 +101,39 @@ export const UserProfilePopup: React.FC<UserProfilePopupProps> = ({ children }) 
               </div>
             </div>
 
-            <Separator className="bg-border/50" />
+            <Separator className="bg-border/50 dark:bg-slate-700/50 transition-colors duration-300" />
 
             {/* User Information */}
             <div className="space-y-3">
               <div className="flex items-center gap-3 text-sm">
-                <div className="flex items-center justify-center w-8 h-8 bg-muted/50 rounded-full">
-                  <Mail className="h-4 w-4 text-muted-foreground" />
+                <div className="flex items-center justify-center w-8 h-8 bg-muted/50 dark:bg-slate-800/60 rounded-full transition-colors duration-300">
+                  <Mail className="h-4 w-4 text-muted-foreground dark:text-slate-400 transition-colors duration-300" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-muted-foreground">البريد الإلكتروني</p>
-                  <p className="text-sm font-medium truncate">{user.email}</p>
+                  <p className="text-xs text-muted-foreground dark:text-slate-400 transition-colors duration-300">البريد الإلكتروني</p>
+                  <p className="text-sm font-medium truncate text-foreground dark:text-foreground transition-colors duration-300">{user.email}</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-3 text-sm">
-                <div className="flex items-center justify-center w-8 h-8 bg-muted/50 rounded-full">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                <div className="flex items-center justify-center w-8 h-8 bg-muted/50 dark:bg-slate-800/60 rounded-full transition-colors duration-300">
+                  <Calendar className="h-4 w-4 text-muted-foreground dark:text-slate-400 transition-colors duration-300" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-xs text-muted-foreground">زيارتك الأخيرة</p>
-                  <p className="text-sm font-medium">
+                  <p className="text-xs text-muted-foreground dark:text-slate-400 transition-colors duration-300">زيارتك الأخيرة</p>
+                  <p className="text-sm font-medium text-foreground dark:text-foreground transition-colors duration-300">
                     {lastLoginLoading ? 'جارٍ التحميل...' : formatDate(lastLogin)}
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-3 text-sm">
-                <div className="flex items-center justify-center w-8 h-8 bg-muted/50 rounded-full">
-                  <User className="h-4 w-4 text-muted-foreground" />
+                <div className="flex items-center justify-center w-8 h-8 bg-muted/50 dark:bg-slate-800/60 rounded-full transition-colors duration-300">
+                  <User className="h-4 w-4 text-muted-foreground dark:text-slate-400 transition-colors duration-300" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-xs text-muted-foreground">مستخدم للنظام منذ</p>
-                  <p className="text-sm font-medium">
+                  <p className="text-xs text-muted-foreground dark:text-slate-400 transition-colors duration-300">مستخدم للنظام منذ</p>
+                  <p className="text-sm font-medium text-foreground dark:text-foreground transition-colors duration-300">
                     {formatCreatedAt(userProfile.created_at)}
                   </p>
                 </div>
@@ -143,24 +143,24 @@ export const UserProfilePopup: React.FC<UserProfilePopupProps> = ({ children }) 
             {/* Student Stats */}
             {userProfile.role === 'student' && (
               <>
-                <Separator className="bg-border/50" />
+                <Separator className="bg-border/50 dark:bg-slate-700/50 transition-colors duration-300" />
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="text-center p-3 bg-muted/30 rounded-lg">
-                    <div className="flex items-center justify-center gap-1 text-amber-600 mb-1">
+                  <div className="text-center p-3 bg-muted/30 dark:bg-slate-800/40 rounded-lg transition-colors duration-300">
+                    <div className="flex items-center justify-center gap-1 text-amber-600 dark:text-amber-500 mb-1 transition-colors duration-300">
                       <Star className="h-4 w-4" />
                       <span className="text-xs font-medium">نقاط</span>
                     </div>
-                    <p className="text-lg font-bold text-foreground">
+                    <p className="text-lg font-bold text-foreground dark:text-foreground transition-colors duration-300">
                       {userProfile.points || 0}
                     </p>
                   </div>
                   
-                  <div className="text-center p-3 bg-muted/30 rounded-lg">
-                    <div className="flex items-center justify-center gap-1 text-blue-600 mb-1">
+                  <div className="text-center p-3 bg-muted/30 dark:bg-slate-800/40 rounded-lg transition-colors duration-300">
+                    <div className="flex items-center justify-center gap-1 text-blue-600 dark:text-blue-500 mb-1 transition-colors duration-300">
                       <Trophy className="h-4 w-4" />
                       <span className="text-xs font-medium">المرحلة</span>
                     </div>
-                    <p className="text-lg font-bold text-foreground">
+                    <p className="text-lg font-bold text-foreground dark:text-foreground transition-colors duration-300">
                       {userTitleData.level}
                     </p>
                   </div>
@@ -168,14 +168,14 @@ export const UserProfilePopup: React.FC<UserProfilePopupProps> = ({ children }) 
               </>
             )}
 
-            <Separator className="bg-border/50" />
+            <Separator className="bg-border/50 dark:bg-slate-700/50 transition-colors duration-300" />
 
             {/* Action Buttons */}
             <div className="flex flex-col gap-2">
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="justify-start gap-3 h-10 text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/20 transition-colors"
+                className="justify-start gap-3 h-10 text-destructive dark:text-red-400 hover:bg-destructive/10 dark:hover:bg-red-500/10 hover:text-destructive dark:hover:text-red-300 border-destructive/20 dark:border-red-500/20 transition-all duration-300"
                 onClick={handleLogout}
               >
                 <LogOut className="h-4 w-4" />

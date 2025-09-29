@@ -188,9 +188,9 @@ const FileManager: React.FC<FileManagerProps> = ({
   return (
     <div className="space-y-6">
       {/* Upload Area */}
-      <Card>
+      <Card className="border-border dark:border-slate-800 bg-card dark:bg-slate-900 transition-colors duration-300">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-foreground dark:text-foreground transition-colors duration-300">
             <Upload className="h-5 w-5" />
             {title}
           </CardTitle>
@@ -198,20 +198,20 @@ const FileManager: React.FC<FileManagerProps> = ({
         <CardContent>
           <div
             {...getRootProps()}
-            className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+            className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all duration-300 ${
               isDragActive 
-                ? 'border-primary bg-primary/5' 
-                : 'border-muted-foreground/25 hover:border-primary/50'
+                ? 'border-primary bg-primary/5 dark:bg-primary/10' 
+                : 'border-muted-foreground/25 dark:border-slate-700 hover:border-primary/50 dark:hover:border-primary/50 bg-background dark:bg-slate-950/50'
             }`}
           >
             <input {...getInputProps()} />
-            <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground dark:text-slate-400 transition-colors duration-300" />
             {isDragActive ? (
-              <p className="text-lg font-medium text-primary">اسحب الملفات هنا...</p>
+              <p className="text-lg font-medium text-primary dark:text-primary transition-colors duration-300">اسحب الملفات هنا...</p>
             ) : (
               <div>
-                <p className="text-lg font-medium mb-2">اسحب الملفات هنا أو اضغط للتصفح</p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-lg font-medium mb-2 text-foreground dark:text-foreground transition-colors duration-300">اسحب الملفات هنا أو اضغط للتصفح</p>
+                <p className="text-sm text-muted-foreground dark:text-slate-400 transition-colors duration-300">
                   الحد الأقصى: {formatFileSize(maxFileSize)} | الأنواع المدعومة: PDF, DOCX, PPTX, صور، فيديو
                 </p>
               </div>

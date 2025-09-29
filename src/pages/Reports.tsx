@@ -151,33 +151,33 @@ const Reports = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background dark:bg-slate-950 flex items-center justify-center transition-colors duration-300">
         <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="text-sm text-gray-600">جاري التحميل...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary dark:border-primary mx-auto"></div>
+          <p className="text-sm text-muted-foreground dark:text-slate-400 transition-colors duration-300">جاري التحميل...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50" dir="rtl">
+    <div className="min-h-screen bg-background dark:bg-slate-950 transition-colors duration-300" dir="rtl">
       <div className="max-w-7xl mx-auto p-6 space-y-8">
         
         {/* Header */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border-0">
+        <div className="bg-card dark:bg-slate-900 rounded-xl p-6 shadow-sm border border-border dark:border-slate-800 transition-colors duration-300">
           <BackButton />
           <div className="mt-4 flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">التقارير والإحصائيات</h1>
-              <p className="text-gray-600 mt-1">نظرة شاملة على أداء المنصة</p>
+              <h1 className="text-3xl font-bold text-foreground dark:text-slate-100 transition-colors duration-300">التقارير والإحصائيات</h1>
+              <p className="text-muted-foreground dark:text-slate-400 mt-1 transition-colors duration-300">نظرة شاملة على أداء المنصة</p>
             </div>
             <div className="flex gap-3">
-              <Button variant="outline" size="sm" className="gap-2">
-                <Filter className="h-4 w-4" />
-                تصفية
+              <Button variant="outline" size="sm" className="gap-2 border-border dark:border-slate-700 hover:bg-accent dark:hover:bg-slate-800 transition-all duration-300">
+                <Filter className="h-4 w-4 text-foreground dark:text-slate-300 transition-colors duration-300" />
+                <span className="text-foreground dark:text-slate-300 transition-colors duration-300">تصفية</span>
               </Button>
-              <Button size="sm" className="gap-2 bg-blue-600 hover:bg-blue-700">
+              <Button size="sm" className="gap-2 bg-primary dark:bg-primary hover:bg-primary/90 dark:hover:bg-primary/80 transition-all duration-300">
                 <Download className="h-4 w-4" />
                 تصدير
               </Button>
