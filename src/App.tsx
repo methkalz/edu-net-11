@@ -52,8 +52,9 @@ import {
   withLazyLoading
 } from "@/components/LazyComponents";
 
-// Lazy load Grade 12 Project Editor and Landing Page
+// Lazy load Grade 12 Project Editor, Whiteboard, and Landing Page
 const Grade12ProjectEditorPage = React.lazy(() => import('@/pages/Grade12ProjectEditor'));
+const WhiteboardPage = React.lazy(() => import('@/pages/Whiteboard'));
 const LandingPage = React.lazy(() => import('@/pages/LandingPage'));
 const KnowledgeAdventurePage = React.lazy(() => import('@/pages/KnowledgeAdventurePage'));
 import { PageLoading } from "@/components/ui/LoadingComponents";
@@ -144,13 +145,20 @@ const App = () => {
                    element={<Suspense fallback={<PageLoading message="جاري تحميل محرر المشروع..." />}><Grade12ProjectEditorPage /></Suspense>} 
                  />
                
-                 {/* Game routes */}
-               <Route path="/pair-matching/:gameId?" element={<LazyPairMatchingPage />} />
-               <Route path="/knowledge-adventure" element={
-                 <Suspense fallback={<PageLoading message="جاري تحميل مغامرة المعرفة..." />}>
-                   <KnowledgeAdventurePage />
-                 </Suspense>
-               } />
+               {/* Game routes */}
+              <Route path="/pair-matching/:gameId?" element={<LazyPairMatchingPage />} />
+              <Route path="/knowledge-adventure" element={
+                <Suspense fallback={<PageLoading message="جاري تحميل مغامرة المعرفة..." />}>
+                  <KnowledgeAdventurePage />
+                </Suspense>
+              } />
+              
+              {/* Whiteboard route - for teachers */}
+              <Route path="/whiteboard" element={
+                <Suspense fallback={<PageLoading message="جاري تحميل اللوح الرقمي..." />}>
+                  <WhiteboardPage />
+                </Suspense>
+              } />
               
                {/* Question management for interactive games */}
                 <Route path="/question-management" element={<LazyTest />} />
