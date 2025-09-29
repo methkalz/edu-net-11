@@ -127,14 +127,18 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 215 25% 6%;
-    --foreground: 220 15% 95%;
+    /* المرحلة الأولى: تحديث لوحة الألوان الأساسية */
+    --background: 220 15% 8%;              /* خلفية أقل قتامة، أكثر راحة */
+    --foreground: 220 15% 92%;             /* نص أساسي عالي الوضوح */
+    --foreground-secondary: 220 12% 75%;   /* نص ثانوي */
+    --foreground-muted: 220 8% 60%;        /* نص خافت */
 
-    --card: 215 25% 8%;
-    --card-foreground: 220 15% 95%;
+    --card: 220 18% 12%;                   /* كاردات بتباين أفضل */
+    --card-foreground: 220 15% 92%;
+    --surface-elevated: 220 20% 16%;       /* للعناصر المرتفعة */
 
-    --popover: 215 25% 8%;
-    --popover-foreground: 220 15% 95%;
+    --popover: 220 18% 12%;
+    --popover-foreground: 220 15% 92%;
 
     /* Dark Mode Extended Colors */
     --primary: 220 80% 65%;
@@ -177,8 +181,16 @@ All colors MUST be HSL.
     --accent: 215 25% 12%;
     --accent-foreground: 220 15% 95%;
 
-    --muted: 215 25% 10%;
-    --muted-foreground: 220 15% 65%;
+    --muted: 220 18% 10%;
+    --muted-foreground: 220 12% 75%;
+
+    /* المرحلة الثانية: ألوان الإحصائيات المحسنة */
+    --stats-points: 45 80% 65%;           /* ذهبي دافئ للنقاط */
+    --stats-progress: 160 70% 55%;        /* أخضر نعناعي للتقدم */
+    --stats-videos: 210 80% 65%;          /* أزرق سماوي للفيديوهات */
+    --stats-projects: 285 75% 70%;        /* بنفسجي مشرق للمشاريع */
+    --stats-achievements: 220 75% 70%;    /* أزرق ملكي للإنجازات */
+    --stats-streak: 15 85% 65%;           /* أحمر نارّي للسلسلة */
 
     --destructive: 0 80% 65%;
     --destructive-foreground: 0 0% 100%;
@@ -221,6 +233,10 @@ All colors MUST be HSL.
 @layer base {
   * {
     @apply border-border;
+    /* المرحلة السادسة: انتقالات سلسة */
+    transition: background-color 300ms ease-in-out, 
+                color 300ms ease-in-out, 
+                border-color 300ms ease-in-out;
   }
 
   body {
@@ -331,6 +347,50 @@ All colors MUST be HSL.
   .modern-card:hover {
     transform: translateY(-8px);
     box-shadow: 0 8px 30px hsl(var(--foreground) / 0.1);
+  }
+
+  /* المرحلة الثالثة: تأثير الزجاج للبطاقات */
+  .glass-stats-card {
+    backdrop-filter: blur(16px);
+    border: 1px solid hsl(var(--stats-color) / 0.2);
+    box-shadow: 0 8px 32px -8px hsl(var(--stats-color) / 0.3);
+    transition: all 300ms ease-in-out;
+  }
+
+  .glass-stats-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px -8px hsl(var(--stats-color) / 0.4);
+  }
+
+  /* بطاقات الإحصائيات المخصصة */
+  .stats-card-points {
+    --stats-color: var(--stats-points);
+    background: hsl(var(--stats-points) / 0.1);
+  }
+
+  .stats-card-progress {
+    --stats-color: var(--stats-progress);
+    background: hsl(var(--stats-progress) / 0.1);
+  }
+
+  .stats-card-videos {
+    --stats-color: var(--stats-videos);
+    background: hsl(var(--stats-videos) / 0.1);
+  }
+
+  .stats-card-projects {
+    --stats-color: var(--stats-projects);
+    background: hsl(var(--stats-projects) / 0.1);
+  }
+
+  .stats-card-achievements {
+    --stats-color: var(--stats-achievements);
+    background: hsl(var(--stats-achievements) / 0.1);
+  }
+
+  .stats-card-streak {
+    --stats-color: var(--stats-streak);
+    background: hsl(var(--stats-streak) / 0.1);
   }
 
   /* Clean Text Gradients */
