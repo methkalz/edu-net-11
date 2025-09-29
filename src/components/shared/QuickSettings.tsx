@@ -66,18 +66,6 @@ export const QuickSettings: React.FC<QuickSettingsProps> = ({
           </PopoverTrigger>
           <PopoverContent className="w-64 p-4" align="end">
             <FontSizeSettings />
-            
-            <Separator className="my-3" />
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onSettingsClick}
-              className="w-full justify-between hover:bg-accent"
-            >
-              <span>الإعدادات الكاملة</span>
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
           </PopoverContent>
         </Popover>
       )}
