@@ -65,17 +65,25 @@ const CodeEditForm: React.FC<CodeEditFormProps> = ({
 
   useEffect(() => {
     if (media && media.metadata) {
+      // Handle both nested and non-nested metadata structures
+      let codeMetadata = media.metadata || {};
+      
+      // Check if metadata is double-nested (metadata.metadata.code)
+      if (codeMetadata.metadata && !codeMetadata.code) {
+        codeMetadata = codeMetadata.metadata;
+      }
+      
       setFormData({
-        title: media.metadata.title || media.file_name || '',
-        code: media.metadata.code || '',
-        language: media.metadata.language || 'cmd',
-        enableTypewriter: media.metadata.enableTypewriter ?? true,
-        typewriterSpeed: media.metadata.typewriterSpeed || 30,
-        autoRestart: media.metadata.autoRestart ?? true,
-        loop: media.metadata.loop ?? true,
-        pauseDuration: media.metadata.pauseDuration || 1000,
-        showLineNumbers: media.metadata.showLineNumbers ?? true,
-        theme: media.metadata.theme || 'dark',
+        title: codeMetadata.title || media.file_name || '',
+        code: codeMetadata.code || '',
+        language: codeMetadata.language || 'cmd',
+        enableTypewriter: codeMetadata.enableTypewriter ?? true,
+        typewriterSpeed: codeMetadata.typewriterSpeed || 30,
+        autoRestart: codeMetadata.autoRestart ?? true,
+        loop: codeMetadata.loop ?? true,
+        pauseDuration: codeMetadata.pauseDuration || 1000,
+        showLineNumbers: codeMetadata.showLineNumbers ?? true,
+        theme: codeMetadata.theme || 'dark',
       });
     }
   }, [media]);
