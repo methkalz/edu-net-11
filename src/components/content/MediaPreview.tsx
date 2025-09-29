@@ -340,35 +340,6 @@ const MediaPreview: React.FC<MediaPreviewProps> = ({ media, onClose }) => {
             )}
           </div>
 
-          {/* أزرار التحكم */}
-          <div className="flex gap-3 justify-end">
-            {media.file_path && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => window.open(media.file_path, '_blank')}
-              >
-                <ExternalLink className="h-4 w-4 ml-1" />
-                فتح في نافذة جديدة
-              </Button>
-            )}
-            
-            {media.media_type !== 'lottie' && media.metadata?.source_type === 'upload' && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  const link = document.createElement('a');
-                  link.href = media.file_path;
-                  link.download = media.file_name;
-                  link.click();
-                }}
-              >
-                <Download className="h-4 w-4 ml-1" />
-                تحميل
-              </Button>
-            )}
-          </div>
         </div>
       </DialogContent>
     </Dialog>
