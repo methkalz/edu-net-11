@@ -118,7 +118,9 @@ export const useImpersonation = () => {
         is_primary_admin: false,
         created_at: '',
         updated_at: '',
-        phone: null
+        phone: null,
+        font_size: null,
+        theme: null
       };
     }
     return null;
