@@ -4150,7 +4150,6 @@ export type Database = {
           created_at: string | null
           display_title: string | null
           email: string | null
-          font_size: string | null
           full_name: string
           is_primary_admin: boolean | null
           level: number | null
@@ -4158,7 +4157,6 @@ export type Database = {
           points: number | null
           role: Database["public"]["Enums"]["app_role"]
           school_id: string | null
-          theme: string | null
           updated_at: string | null
           user_id: string
         }
@@ -4167,7 +4165,6 @@ export type Database = {
           created_at?: string | null
           display_title?: string | null
           email?: string | null
-          font_size?: string | null
           full_name: string
           is_primary_admin?: boolean | null
           level?: number | null
@@ -4175,7 +4172,6 @@ export type Database = {
           points?: number | null
           role: Database["public"]["Enums"]["app_role"]
           school_id?: string | null
-          theme?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -4184,7 +4180,6 @@ export type Database = {
           created_at?: string | null
           display_title?: string | null
           email?: string | null
-          font_size?: string | null
           full_name?: string
           is_primary_admin?: boolean | null
           level?: number | null
@@ -4192,7 +4187,6 @@ export type Database = {
           points?: number | null
           role?: Database["public"]["Enums"]["app_role"]
           school_id?: string | null
-          theme?: string | null
           updated_at?: string | null
           user_id?: string
         }
@@ -5188,39 +5182,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      whiteboards: {
-        Row: {
-          canvas_data: Json
-          created_at: string
-          id: string
-          school_id: string
-          thumbnail: string | null
-          title: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          canvas_data?: Json
-          created_at?: string
-          id?: string
-          school_id: string
-          thumbnail?: string | null
-          title?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          canvas_data?: Json
-          created_at?: string
-          id?: string
-          school_id?: string
-          thumbnail?: string | null
-          title?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
       }
     }
     Views: {
