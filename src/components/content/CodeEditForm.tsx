@@ -103,8 +103,15 @@ const CodeEditForm: React.FC<CodeEditFormProps> = ({
     setIsLoading(true);
     
     try {
+      console.log('=== CODE FORM SUBMIT START ===');
+      console.log('Original media metadata:', JSON.stringify(media.metadata, null, 2));
+      console.log('Form data:', JSON.stringify(formData, null, 2));
+      
+      // Create a properly structured metadata that matches the read format
       const updatedMetadata = {
+        // Preserve any existing metadata at the top level
         ...media.metadata,
+        // Add all the code-specific fields at the same level
         title: formData.title,
         code: formData.code,
         language: formData.language,
@@ -117,6 +124,8 @@ const CodeEditForm: React.FC<CodeEditFormProps> = ({
         theme: formData.theme,
       };
 
+      console.log('Updated metadata to save:', JSON.stringify(updatedMetadata, null, 2));
+
       await onUpdate({
         file_name: formData.title,
         metadata: updatedMetadata
@@ -128,12 +137,14 @@ const CodeEditForm: React.FC<CodeEditFormProps> = ({
         variant: "default",
       });
 
+      console.log('=== CODE FORM SUBMIT SUCCESS ===');
       onClose();
     } catch (error) {
-      console.error('Error updating code:', error);
+      console.error('=== CODE FORM SUBMIT ERROR ===');
+      console.error('Error details:', error);
       toast({
         title: "خطأ",
-        description: "فشل في تحديث الكود",
+        description: "فشل في تحديث الكود. يرجى المحاولة مرة أخرى.",
         variant: "destructive",
       });
     } finally {

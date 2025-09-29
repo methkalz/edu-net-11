@@ -12,22 +12,29 @@ export const useEditCodeMedia = (onSuccess?: () => void) => {
     updates: Partial<Grade11LessonMedia>;
   }) => {
     try {
-      console.log('Updating Code media in database:', mediaId, updates);
+      console.log('=== CODE MEDIA UPDATE START ===');
+      console.log('Media ID:', mediaId);
+      console.log('Updates payload:', JSON.stringify(updates, null, 2));
       
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('grade11_lesson_media')
         .update({
           file_name: updates.file_name,
           metadata: updates.metadata
         })
-        .eq('id', mediaId);
+        .eq('id', mediaId)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database error:', error);
+        throw error;
+      }
 
-      console.log('Database update successful');
+      console.log('Database update successful, updated record:', data);
       
       // Call success callback to refresh local data
       if (onSuccess) {
+        console.log('Calling success callback to refresh data');
         onSuccess();
       }
       
@@ -36,6 +43,8 @@ export const useEditCodeMedia = (onSuccess?: () => void) => {
         description: "تم تحديث ملف الكود بنجاح",
         variant: "default",
       });
+      
+      console.log('=== CODE MEDIA UPDATE END ===');
       
     } catch (error) {
       logger.error('Error updating Code media', error as Error);
