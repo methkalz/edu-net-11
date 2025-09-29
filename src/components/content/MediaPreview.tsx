@@ -1,13 +1,16 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { X, Download, ExternalLink, Code } from 'lucide-react';
+import { X, Download, ExternalLink, Code, Settings } from 'lucide-react';
 import { Grade11LessonMedia } from '@/hooks/useGrade11Content';
 import { useSharedLottieSettings } from '@/hooks/useSharedLottieSettings';
+import { useAuth } from '@/hooks/useAuth';
+import { useEditCodeMedia } from '@/hooks/useEditCodeMedia';
 import Lottie from 'lottie-react';
 import CodeBlock from '@/components/content/CodeBlock';
 import TypewriterCodeBlock from '@/components/content/TypewriterCodeBlock';
+import CodeEditForm from '@/components/content/CodeEditForm';
 
 interface MediaPreviewProps {
   media: Grade11LessonMedia;
@@ -15,11 +18,30 @@ interface MediaPreviewProps {
 }
 
 const MediaPreview: React.FC<MediaPreviewProps> = ({ media, onClose }) => {
+  const { userProfile } = useAuth();
   const { lottieSettings } = useSharedLottieSettings();
+  const { updateCodeMedia } = useEditCodeMedia();
   const lottieRef = useRef<any>(null);
+  const [editingCode, setEditingCode] = useState<Grade11LessonMedia | null>(null);
   
   // Get speed setting for Lottie
   const speedSetting = media.metadata?.speed || lottieSettings?.speed || 1;
+  
+  // Handle code editing
+  const handleUpdateCodeMedia = async (updates: Partial<Grade11LessonMedia>) => {
+    if (!editingCode) return;
+
+    try {
+      await updateCodeMedia({
+        mediaId: editingCode.id,
+        updates
+      });
+
+      setEditingCode(null);
+    } catch (error) {
+      console.error('Error updating Code media', error);
+    }
+  };
   
   // Apply speed when it changes
   useEffect(() => {
@@ -255,9 +277,22 @@ const MediaPreview: React.FC<MediaPreviewProps> = ({ media, onClose }) => {
               {getMediaTypeBadge(media.media_type)}
               {media.metadata?.source_type && getSourceBadge(media.metadata.source_type)}
             </DialogTitle>
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-2">
+              {/* زر تعديل إعدادات الكود - ظاهر فقط للكود وللسوبر آدمن */}
+              {media.media_type === 'code' && userProfile?.role === 'superadmin' && (
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => setEditingCode(media)}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <Settings className="h-4 w-4" />
+                </Button>
+              )}
+              <Button variant="ghost" size="sm" onClick={onClose}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </DialogHeader>
 
@@ -342,6 +377,16 @@ const MediaPreview: React.FC<MediaPreviewProps> = ({ media, onClose }) => {
 
         </div>
       </DialogContent>
+      
+      {/* نموذج تعديل الكود */}
+      {editingCode && (
+        <CodeEditForm
+          media={editingCode}
+          isOpen={true}
+          onClose={() => setEditingCode(null)}
+          onUpdate={handleUpdateCodeMedia}
+        />
+      )}
     </Dialog>
   );
 };
