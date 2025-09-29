@@ -338,7 +338,7 @@ export const TeacherContentViewer: React.FC<TeacherContentViewerProps> = ({
           </div>
           <div>
             <h2 className="text-2xl font-bold text-foreground">محتوى الصف الحادي عشر</h2>
-            <p className="text-muted-foreground">كما يراه الطلاب في لوحة تحكمهم</p>
+            
           </div>
         </div>
 
@@ -354,7 +354,6 @@ export const TeacherContentViewer: React.FC<TeacherContentViewerProps> = ({
       projects,
       loading
     } = grade12ContentResult;
-    
     if (loading) {
       return <div className="space-y-6">
           <div className="flex items-center gap-3 mb-6">
@@ -371,7 +370,6 @@ export const TeacherContentViewer: React.FC<TeacherContentViewerProps> = ({
           </div>
         </div>;
     }
-
     return <div className="space-y-6">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 flex items-center justify-center shadow-lg">
@@ -380,9 +378,7 @@ export const TeacherContentViewer: React.FC<TeacherContentViewerProps> = ({
           <div>
             <h2 className="text-2xl font-bold text-foreground">محتوى الصف الثاني عشر</h2>
             <p className="text-muted-foreground">
-              {(videos?.length || 0) + (documents?.length || 0) + (projects?.length || 0) > 0 
-                ? `${videos?.length || 0} فيديو، ${documents?.length || 0} مستند، ${projects?.length || 0} مشروع` 
-                : 'لا يوجد محتوى متاح حالياً'}
+              {(videos?.length || 0) + (documents?.length || 0) + (projects?.length || 0) > 0 ? `${videos?.length || 0} فيديو، ${documents?.length || 0} مستند، ${projects?.length || 0} مشروع` : 'لا يوجد محتوى متاح حالياً'}
             </p>
           </div>
         </div>
@@ -431,14 +427,9 @@ export const TeacherContentViewer: React.FC<TeacherContentViewerProps> = ({
           </div>
 
           <TabsContent value="videos" className="mt-6">
-            {videos && videos.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {videos.map(video => (
-                  <ContentCard key={video.id} item={video} type="video" icon={Video} color="from-red-500 to-red-600" />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12 space-y-4">
+            {videos && videos.length > 0 ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {videos.map(video => <ContentCard key={video.id} item={video} type="video" icon={Video} color="from-red-500 to-red-600" />)}
+              </div> : <div className="text-center py-12 space-y-4">
                 <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-r from-red-500/10 to-red-600/10 flex items-center justify-center">
                   <Video className="h-8 w-8 text-red-500/50" />
                 </div>
@@ -446,19 +437,13 @@ export const TeacherContentViewer: React.FC<TeacherContentViewerProps> = ({
                   <p className="font-medium text-foreground">لا توجد فيديوهات متاحة</p>
                   <p className="text-sm text-muted-foreground mt-1">سيتم عرض الفيديوهات التعليمية هنا</p>
                 </div>
-              </div>
-            )}
+              </div>}
           </TabsContent>
 
           <TabsContent value="documents" className="mt-6">
-            {documents && documents.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {documents.map(document => (
-                  <ContentCard key={document.id} item={document} type="document" icon={FileText} color="from-blue-500 to-blue-600" />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12 space-y-4">
+            {documents && documents.length > 0 ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {documents.map(document => <ContentCard key={document.id} item={document} type="document" icon={FileText} color="from-blue-500 to-blue-600" />)}
+              </div> : <div className="text-center py-12 space-y-4">
                 <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-r from-blue-500/10 to-blue-600/10 flex items-center justify-center">
                   <FileText className="h-8 w-8 text-blue-500/50" />
                 </div>
@@ -466,19 +451,13 @@ export const TeacherContentViewer: React.FC<TeacherContentViewerProps> = ({
                   <p className="font-medium text-foreground">لا توجد ملفات متاحة</p>
                   <p className="text-sm text-muted-foreground mt-1">سيتم عرض الملفات والمراجع هنا</p>
                 </div>
-              </div>
-            )}
+              </div>}
           </TabsContent>
 
           <TabsContent value="projects" className="mt-6">
-            {projects && projects.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {projects.map(project => (
-                  <ContentCard key={project.id} item={project} type="project" icon={Trophy} color="from-purple-500 to-purple-600" />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12 space-y-4">
+            {projects && projects.length > 0 ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {projects.map(project => <ContentCard key={project.id} item={project} type="project" icon={Trophy} color="from-purple-500 to-purple-600" />)}
+              </div> : <div className="text-center py-12 space-y-4">
                 <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-r from-purple-500/10 to-purple-600/10 flex items-center justify-center">
                   <Trophy className="h-8 w-8 text-purple-500/50" />
                 </div>
@@ -486,8 +465,7 @@ export const TeacherContentViewer: React.FC<TeacherContentViewerProps> = ({
                   <p className="font-medium text-foreground">لا توجد مشاريع متاحة</p>
                   <p className="text-sm text-muted-foreground mt-1">سيتم عرض المشاريع النهائية هنا</p>
                 </div>
-              </div>
-            )}
+              </div>}
           </TabsContent>
         </Tabs>
 
