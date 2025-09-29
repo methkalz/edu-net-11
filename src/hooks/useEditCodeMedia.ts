@@ -18,8 +18,7 @@ export const useEditCodeMedia = (onSuccess?: () => void) => {
         .from('grade11_lesson_media')
         .update({
           file_name: updates.file_name,
-          metadata: updates.metadata,
-          updated_at: new Date().toISOString()
+          metadata: updates.metadata
         })
         .eq('id', mediaId);
 
