@@ -406,7 +406,7 @@ const SchoolAdminDashboard = () => {
         </Card>)}
     </div>;
   if (loading) {
-    return <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 dark:from-background dark:via-background dark:to-primary/10 transition-colors duration-300 pattern-dots flex flex-col" dir="rtl">
+    return <div className="min-h-screen bg-background pattern-dots flex flex-col" dir="rtl">
         <div className="container mx-auto px-6 py-6 space-y-8">
           <div className="flex items-center justify-between mb-6">
             <Skeleton className="h-8 w-48" />
@@ -428,7 +428,7 @@ const SchoolAdminDashboard = () => {
   if (showTeacherManagement) {
     return <TeacherManagement onBack={() => setShowTeacherManagement(false)} />;
   }
-  return <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 dark:from-background dark:via-background dark:to-primary/10 transition-colors duration-300 pattern-dots flex flex-col" dir="rtl">
+  return <div className="min-h-screen bg-background pattern-dots flex flex-col" dir="rtl">
       {/* Modern Header */}
       
 

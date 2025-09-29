@@ -112,7 +112,7 @@ const AppFooter: React.FC = () => {
 
   return (
     <footer 
-      className="py-6 mt-auto transition-colors duration-300 bg-slate-900 dark:bg-slate-950 border-t border-slate-700/50 dark:border-slate-800/50"
+      className="py-6 mt-auto"
       style={{ 
         backgroundColor: footerSettings.footer_background_color,
         color: footerSettings.footer_text_color
@@ -123,7 +123,7 @@ const AppFooter: React.FC = () => {
         <div className="space-y-4 flex flex-col items-center justify-center">
           {/* النص الرئيسي للفوتر */}
           {footerSettings.footer_text && (
-            <h3 className="text-lg font-bold text-slate-100 dark:text-slate-50 transition-colors duration-300">{footerSettings.footer_text}</h3>
+            <h3 className="text-lg font-bold">{footerSettings.footer_text}</h3>
           )}
           
           {/* الروابط العادية */}
@@ -133,7 +133,7 @@ const AppFooter: React.FC = () => {
                 <a
                   key={index}
                   href={link.url}
-                  className="text-sm underline cursor-pointer text-slate-200 dark:text-slate-300 hover:text-slate-50 dark:hover:text-slate-100 hover:opacity-80 transition-all duration-300"
+                  className="text-sm underline cursor-pointer hover:opacity-80 transition-opacity"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -150,7 +150,7 @@ const AppFooter: React.FC = () => {
                 <a
                   key={index}
                   href={social.url}
-                  className="text-sm bg-white/10 dark:bg-white/5 px-3 py-1 rounded text-slate-100 dark:text-slate-200 hover:bg-white/20 dark:hover:bg-white/10 transition-all duration-300"
+                  className="text-sm bg-white/20 px-3 py-1 rounded hover:bg-white/30 transition-colors"
                   target="_blank"
                   rel="noopener noreferrer"
                   title={social.platform}
@@ -163,7 +163,7 @@ const AppFooter: React.FC = () => {
           
           {/* حقوق الطبع والنشر */}
           {footerSettings.show_copyright && footerSettings.copyright_text && (
-            <p className="text-sm opacity-80 text-slate-200 dark:text-slate-300 transition-colors duration-300">{footerSettings.copyright_text}</p>
+            <p className="text-sm opacity-80">{footerSettings.copyright_text}</p>
           )}
         </div>
       </div>

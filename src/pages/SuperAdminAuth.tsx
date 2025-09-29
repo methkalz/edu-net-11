@@ -5,7 +5,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
-import { AuthThemeProvider } from '@/components/auth/AuthThemeProvider';
 import { Shield, Eye, EyeOff } from 'lucide-react';
 
 const SuperAdminAuth = () => {
@@ -57,8 +56,7 @@ const SuperAdminAuth = () => {
   };
 
   return (
-    <AuthThemeProvider>
-      <div className="min-h-screen bg-slate-900 relative overflow-hidden flex items-center justify-center p-6" dir="rtl">
+    <div className="min-h-screen bg-slate-900 relative overflow-hidden flex items-center justify-center p-6" dir="rtl">
       {/* Animated Background */}
       <div className="absolute inset-0">
         <div className="absolute top-20 left-20 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
@@ -159,8 +157,7 @@ const SuperAdminAuth = () => {
           </div>
         </CardContent>
       </Card>
-      </div>
-    </AuthThemeProvider>
+    </div>
   );
 };
 

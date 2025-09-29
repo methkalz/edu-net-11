@@ -18,8 +18,8 @@ export const LoadingSpinner: FC<LoadingSpinnerProps> = ({
   const { lottieSettings } = useSharedLottieSettings();
   
   const containerClasses = fullscreen
-    ? 'min-h-screen bg-background text-foreground flex items-center justify-center transition-colors duration-300'
-    : 'flex items-center justify-center p-8 bg-background text-foreground transition-colors duration-300';
+    ? 'min-h-screen gradient-subtle flex items-center justify-center'
+    : 'flex items-center justify-center p-8';
 
   const loaderSize = size === 'sm' ? 'sm' : size === 'lg' ? 'lg' : 'md';
 
@@ -68,8 +68,8 @@ export const ComponentLoading: FC<ComponentLoadingProps> = ({
   const { lottieSettings } = useSharedLottieSettings();
   
   return (
-    <Card className={`${height} bg-card border-border transition-colors duration-300`}>
-      <CardContent className="flex items-center justify-center h-full bg-card text-card-foreground transition-colors duration-300">
+    <Card className={height}>
+      <CardContent className="flex items-center justify-center h-full">
         {lottieSettings.enabled && lottieSettings.lottie_data ? (
           <LottieLoader
             animationData={lottieSettings.lottie_data}
@@ -97,7 +97,7 @@ export const DataLoading: FC<{ message?: string }> = ({ message = 'Loading data.
   const { lottieSettings } = useSharedLottieSettings();
   
   return (
-    <div className="flex items-center justify-center p-4 bg-background text-foreground transition-colors duration-300">
+    <div className="flex items-center justify-center p-4">
       {lottieSettings.enabled && lottieSettings.lottie_data ? (
         <LottieLoader
           animationData={lottieSettings.lottie_data}
@@ -117,7 +117,7 @@ export const FileUploadLoading: FC<{ message?: string }> = ({ message = 'Uploadi
   const { lottieSettings } = useSharedLottieSettings();
   
   return (
-    <div className="flex items-center justify-center p-4 bg-background text-foreground transition-colors duration-300">
+    <div className="flex items-center justify-center p-4">
       {lottieSettings.enabled && lottieSettings.lottie_data ? (
         <LottieLoader
           animationData={lottieSettings.lottie_data}
@@ -137,7 +137,7 @@ export const NetworkLoading: FC<{ message?: string }> = ({ message = 'Connecting
   const { lottieSettings } = useSharedLottieSettings();
   
   return (
-    <div className="flex items-center justify-center p-4 bg-background text-foreground transition-colors duration-300">
+    <div className="flex items-center justify-center p-4">
       {lottieSettings.enabled && lottieSettings.lottie_data ? (
         <LottieLoader
           animationData={lottieSettings.lottie_data}

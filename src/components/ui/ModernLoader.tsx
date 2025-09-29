@@ -23,7 +23,7 @@ export const ModernLoader: FC<ModernLoaderProps> = ({
     case 'circle':
       return (
         <div className={`${baseClass} relative`}>
-          <div className="absolute inset-0 rounded-full border-4 border-primary/20 dark:border-primary/30"></div>
+          <div className="absolute inset-0 rounded-full border-4 border-primary/20"></div>
           <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-primary animate-modern-spin"></div>
         </div>
       );
@@ -31,45 +31,45 @@ export const ModernLoader: FC<ModernLoaderProps> = ({
     case 'pulse':
       return (
         <div className={`${baseClass} relative flex items-center justify-center`}>
-          <div className="absolute inset-0 rounded-full bg-primary/80 dark:bg-primary/70 animate-modern-pulse"></div>
-          <div className="absolute inset-2 rounded-full bg-primary/60 dark:bg-primary/50 animate-modern-pulse-delay"></div>
-          <div className="absolute inset-4 rounded-full bg-primary/30 dark:bg-primary/40 animate-modern-pulse-slow"></div>
+          <div className="absolute inset-0 rounded-full bg-primary animate-modern-pulse"></div>
+          <div className="absolute inset-2 rounded-full bg-primary/60 animate-modern-pulse-delay"></div>
+          <div className="absolute inset-4 rounded-full bg-primary/30 animate-modern-pulse-slow"></div>
         </div>
       );
 
     case 'wave':
       return (
         <div className={`${baseClass} flex items-end justify-center space-x-1`}>
-          <div className="w-1 bg-primary dark:bg-primary/90 rounded-full animate-modern-wave-1" style={{ height: '60%' }}></div>
-          <div className="w-1 bg-primary dark:bg-primary/90 rounded-full animate-modern-wave-2" style={{ height: '80%' }}></div>
-          <div className="w-1 bg-primary dark:bg-primary/90 rounded-full animate-modern-wave-3" style={{ height: '100%' }}></div>
-          <div className="w-1 bg-primary dark:bg-primary/90 rounded-full animate-modern-wave-4" style={{ height: '80%' }}></div>
-          <div className="w-1 bg-primary dark:bg-primary/90 rounded-full animate-modern-wave-5" style={{ height: '60%' }}></div>
+          <div className="w-1 bg-primary rounded-full animate-modern-wave-1" style={{ height: '60%' }}></div>
+          <div className="w-1 bg-primary rounded-full animate-modern-wave-2" style={{ height: '80%' }}></div>
+          <div className="w-1 bg-primary rounded-full animate-modern-wave-3" style={{ height: '100%' }}></div>
+          <div className="w-1 bg-primary rounded-full animate-modern-wave-4" style={{ height: '80%' }}></div>
+          <div className="w-1 bg-primary rounded-full animate-modern-wave-5" style={{ height: '60%' }}></div>
         </div>
       );
 
     case 'dots':
       return (
         <div className={`${baseClass} flex items-center justify-center space-x-1`}>
-          <div className="w-2 h-2 bg-primary dark:bg-primary/90 rounded-full animate-modern-bounce-1"></div>
-          <div className="w-2 h-2 bg-primary dark:bg-primary/90 rounded-full animate-modern-bounce-2"></div>
-          <div className="w-2 h-2 bg-primary dark:bg-primary/90 rounded-full animate-modern-bounce-3"></div>
+          <div className="w-2 h-2 bg-primary rounded-full animate-modern-bounce-1"></div>
+          <div className="w-2 h-2 bg-primary rounded-full animate-modern-bounce-2"></div>
+          <div className="w-2 h-2 bg-primary rounded-full animate-modern-bounce-3"></div>
         </div>
       );
 
     case 'gradient':
       return (
         <div className={`${baseClass} relative`}>
-          <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-primary via-primary/60 to-primary/20 dark:from-primary/90 dark:via-primary/50 dark:to-primary/30 animate-modern-gradient-spin"></div>
+          <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-primary via-primary/60 to-primary/20 animate-modern-gradient-spin"></div>
           <div className="absolute inset-1 rounded-full bg-background"></div>
-          <div className="absolute inset-3 rounded-full bg-gradient-to-br from-primary/80 to-primary/40 dark:from-primary/70 dark:to-primary/50 animate-modern-pulse"></div>
+          <div className="absolute inset-3 rounded-full bg-gradient-to-br from-primary/80 to-primary/40 animate-modern-pulse"></div>
         </div>
       );
 
     default:
       return (
         <div className={`${baseClass} relative`}>
-          <div className="absolute inset-0 rounded-full border-4 border-primary/20 dark:border-primary/30"></div>
+          <div className="absolute inset-0 rounded-full border-4 border-primary/20"></div>
           <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-primary animate-modern-spin"></div>
         </div>
       );
@@ -94,7 +94,7 @@ export const LoadingText: FC<LoadingTextProps> = ({
   };
 
   return (
-    <div className={`${sizeClasses[size]} font-medium text-foreground/80 dark:text-foreground/90 animate-modern-text-fade transition-colors duration-300 ${className}`}>
+    <div className={`${sizeClasses[size]} font-medium text-foreground/80 animate-modern-text-fade ${className}`}>
       {text}
       <span className="animate-modern-dots">...</span>
     </div>

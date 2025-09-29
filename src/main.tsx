@@ -22,7 +22,6 @@ import { Toaster as Sonner } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from '@/hooks/useAuth'
-import { ThemeProvider } from 'next-themes'
 import App from './App.tsx'
 import './index.css'
 import PerformanceSetup from '@/lib/performance-setup'
@@ -55,22 +54,15 @@ createRoot(document.getElementById('root')!).render(
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="light"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <AuthProvider>
-              <StudentPresenceProvider>
-                <TooltipProvider>
-                  <App />
-                  <Toaster />
-                  <Sonner />
-                </TooltipProvider>
-              </StudentPresenceProvider>
-            </AuthProvider>
-          </ThemeProvider>
+          <AuthProvider>
+            <StudentPresenceProvider>
+              <TooltipProvider>
+                <App />
+                <Toaster />
+                <Sonner />
+              </TooltipProvider>
+            </StudentPresenceProvider>
+          </AuthProvider>
         </BrowserRouter>
       </QueryClientProvider>
     </ErrorBoundary>

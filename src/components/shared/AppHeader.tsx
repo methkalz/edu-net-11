@@ -81,7 +81,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
 
   return (
     <header 
-      className={`glass-card sticky top-0 z-50 soft-shadow bg-background/95 dark:bg-background/90 backdrop-blur-lg transition-colors duration-300 ${
+      className={`glass-card sticky top-0 z-50 soft-shadow ${
         headerSettings.enable_glass_effect ? 'backdrop-blur supports-[backdrop-filter]:bg-background/60' : ''
       }`}
       style={{ 
@@ -91,7 +91,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
         backdropFilter: headerSettings.enable_glass_effect ? `blur(${headerSettings.blur_intensity}px)` : 'none'
       }}
     >
-      <div className="container mx-auto px-6 py-4 bg-background/50 dark:bg-background/60 backdrop-blur-sm transition-colors duration-300">
+      <div className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-6">
             {showBackButton && (
@@ -108,7 +108,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
               )}
               {headerSettings.show_title && (
                 <h1 
-                  className={`font-bold font-cairo ${getTitleSize()} text-foreground dark:text-foreground transition-colors duration-300`}
+                  className={`font-bold font-cairo ${getTitleSize()}`}
                   style={{ color: headerSettings.title_color }}
                 >
                   {title || headerSettings.title_text}
@@ -122,7 +122,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
               {user && userProfile && (
                 <>
                   <div className="text-right">
-                    <div className="text-sm font-medium text-foreground dark:text-foreground transition-colors duration-300" style={{ color: headerSettings.text_color }}>
+                    <div className="text-sm font-medium" style={{ color: headerSettings.text_color }}>
                       {userProfile.full_name || user.email}
                     </div>
                     <div className="text-xs">
@@ -152,7 +152,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                 variant="outline"
                 size="sm"
                 onClick={handleLogout}
-                className="card-hover bg-background/80 dark:bg-background/90 border-border dark:border-border text-foreground dark:text-foreground hover:bg-accent dark:hover:bg-accent transition-colors duration-300"
+                className="card-hover"
               >
                 <LogOut className="h-4 w-4 ml-1" />
                 تسجيل الخروج

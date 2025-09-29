@@ -159,11 +159,11 @@ const Index = () => {
                   </Button>
                 ) : (
                   <>
-                    <Button size="lg" className="auth-login-btn gradient-blue hover:gradient-orange text-white hover:scale-105 transition-all duration-300 text-lg px-8 py-4 rounded-xl shadow-lg" onClick={() => navigate('/auth')}>
+                    <Button size="lg" className="gradient-blue hover:gradient-orange text-white hover:scale-105 transition-all duration-300 text-lg px-8 py-4 rounded-xl shadow-lg" onClick={() => navigate('/auth')}>
                       تسجيل الدخول
                       <ArrowRight className="mr-2 h-5 w-5" />
                     </Button>
-                    <Button size="lg" variant="outline" className="auth-login-btn border-2 border-primary text-primary hover:bg-primary hover:text-white transition-all duration-300 text-lg px-8 py-4 rounded-xl" onClick={() => navigate('/auth')}>
+                    <Button size="lg" variant="outline" className="border-2 border-primary text-primary hover:bg-primary hover:text-white transition-all duration-300 text-lg px-8 py-4 rounded-xl" onClick={() => navigate('/auth')}>
                       ابدأ الآن
                     </Button>
                   </>

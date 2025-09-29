@@ -22,11 +22,11 @@ export const LottieLoader: React.FC<LottieLoaderProps> = ({
   // إذا لم يوجد ملف Lottie، استخدم ModernLoader
   if (!animationData) {
     return (
-      <div className={`flex flex-col items-center justify-center gap-4 bg-background text-foreground transition-colors duration-300 ${className}`}>
+      <div className={`flex flex-col items-center justify-center gap-4 ${className}`}>
         <ModernLoader type="gradient" size={size} />
         <div className="text-center">
           <span className={`
-            font-medium text-muted-foreground dark:text-muted-foreground transition-colors duration-300
+            font-medium text-muted-foreground
             ${size === 'sm' ? 'text-sm' : size === 'lg' ? 'text-lg' : 'text-base'}
           `}>
             {text}
@@ -43,7 +43,7 @@ export const LottieLoader: React.FC<LottieLoaderProps> = ({
   };
 
   return (
-    <div className={`flex flex-col items-center justify-center gap-4 bg-background text-foreground transition-colors duration-300 ${className}`}>
+    <div className={`flex flex-col items-center justify-center gap-4 ${className}`}>
       <div className={`${sizeClasses[size]} animate-fade-in`}>
         <Lottie
           animationData={animationData}
@@ -58,7 +58,7 @@ export const LottieLoader: React.FC<LottieLoaderProps> = ({
       {text && (
         <div className="text-center animate-fade-in-up">
           <span className={`
-            font-medium text-muted-foreground dark:text-muted-foreground transition-all duration-300
+            font-medium text-muted-foreground transition-all duration-300
             ${size === 'sm' ? 'text-sm' : size === 'lg' ? 'text-lg' : 'text-base'}
           `}>
             {text}

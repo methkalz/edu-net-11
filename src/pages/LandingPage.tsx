@@ -63,7 +63,7 @@ const LandingPage: React.FC = () => {
             </div>
             
             <div className="flex items-center gap-3">
-              <Button variant="outline" onClick={() => navigate('/auth')} className="border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 dark:bg-white dark:border-gray-200 dark:text-gray-700 dark:hover:bg-gray-50 dark:hover:border-gray-300 text-xs md:text-sm px-4 md:px-5 py-2.5 rounded-full transition-all duration-300 font-light hover:shadow-sm">
+              <Button variant="outline" onClick={() => navigate('/auth')} className="border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 text-xs md:text-sm px-4 md:px-5 py-2.5 rounded-full transition-all duration-300 font-light hover:shadow-sm">
                 تسجيل الدخول
               </Button>
               <Button onClick={() => scrollToSection('contact')} className="bg-gradient-to-r from-sky-500 to-sky-600 text-white hover:from-sky-600 hover:to-sky-700 text-xs md:text-sm px-5 md:px-7 py-2.5 rounded-full transition-all duration-300 font-medium shadow-lg hover:shadow-xl hover:scale-105">

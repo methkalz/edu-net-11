@@ -11,7 +11,7 @@ const ProfileSettings: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 dark:from-slate-950 dark:to-slate-900/50 transition-colors duration-300">
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
       <AppHeader 
         title="إعدادات البروفيل" 
         showBackButton={true} 

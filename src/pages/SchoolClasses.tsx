@@ -280,7 +280,7 @@ const SchoolClasses = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background dark:bg-slate-950 flex flex-col transition-colors duration-300" dir="rtl">
+    <div className="min-h-screen bg-background flex flex-col" dir="rtl">
       <AppHeader 
         title="الصفوف المدرسية" 
         showBackButton={true} 
@@ -292,7 +292,7 @@ const SchoolClasses = () => {
         <div className="flex justify-end">
           <Button 
             onClick={() => setShowForm(true)}
-            className="flex items-center gap-2 bg-primary dark:bg-primary hover:bg-primary/90 dark:hover:bg-primary/80 transition-all duration-300"
+            className="flex items-center gap-2"
           >
             <Plus className="h-4 w-4" />
             إضافة صف جديد
@@ -300,27 +300,27 @@ const SchoolClasses = () => {
         </div>
 
       {/* Filters */}
-      <Card className="bg-card dark:bg-slate-900 border-border dark:border-slate-800 transition-colors duration-300">
+      <Card>
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="relative">
-              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground dark:text-slate-400 h-4 w-4 transition-colors duration-300" />
+              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
                 placeholder="البحث بالاسم..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pr-10 bg-background dark:bg-slate-950 border-border dark:border-slate-700 text-foreground dark:text-foreground transition-colors duration-300"
+                className="pr-10"
               />
             </div>
 
             <Select value={selectedGradeLevel} onValueChange={setSelectedGradeLevel}>
-              <SelectTrigger className="bg-background dark:bg-slate-950 border-border dark:border-slate-700 text-foreground dark:text-foreground transition-colors duration-300">
+              <SelectTrigger>
                 <SelectValue placeholder="نوع الصف" />
               </SelectTrigger>
-              <SelectContent className="bg-card dark:bg-slate-900 border-border dark:border-slate-800 transition-colors duration-300">
-                <SelectItem value="all" className="text-foreground dark:text-foreground hover:bg-accent dark:hover:bg-slate-800 transition-colors duration-300">جميع الأنواع</SelectItem>
+              <SelectContent>
+                <SelectItem value="all">جميع الأنواع</SelectItem>
                 {gradeLevels.map((grade) => (
-                  <SelectItem key={grade.id} value={grade.id} className="text-foreground dark:text-foreground hover:bg-accent dark:hover:bg-slate-800 transition-colors duration-300">
+                  <SelectItem key={grade.id} value={grade.id}>
                     {grade.label}
                   </SelectItem>
                 ))}
@@ -328,13 +328,13 @@ const SchoolClasses = () => {
             </Select>
 
             <Select value={selectedAcademicYear} onValueChange={setSelectedAcademicYear}>
-              <SelectTrigger className="bg-background dark:bg-slate-950 border-border dark:border-slate-700 text-foreground dark:text-foreground transition-colors duration-300">
+              <SelectTrigger>
                 <SelectValue placeholder="السنة الدراسية" />
               </SelectTrigger>
-              <SelectContent className="bg-card dark:bg-slate-900 border-border dark:border-slate-800 transition-colors duration-300">
-                <SelectItem value="all" className="text-foreground dark:text-foreground hover:bg-accent dark:hover:bg-slate-800 transition-colors duration-300">جميع السنوات</SelectItem>
+              <SelectContent>
+                <SelectItem value="all">جميع السنوات</SelectItem>
                 {academicYears.map((year) => (
-                  <SelectItem key={year.id} value={year.id} className="text-foreground dark:text-foreground hover:bg-accent dark:hover:bg-slate-800 transition-colors duration-300">
+                  <SelectItem key={year.id} value={year.id}>
                     {year.name}
                   </SelectItem>
                 ))}
@@ -342,13 +342,13 @@ const SchoolClasses = () => {
             </Select>
 
             <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-              <SelectTrigger className="bg-background dark:bg-slate-950 border-border dark:border-slate-700 text-foreground dark:text-foreground transition-colors duration-300">
+              <SelectTrigger>
                 <SelectValue placeholder="الحالة" />
               </SelectTrigger>
-              <SelectContent className="bg-card dark:bg-slate-900 border-border dark:border-slate-800 transition-colors duration-300">
-                <SelectItem value="all" className="text-foreground dark:text-foreground hover:bg-accent dark:hover:bg-slate-800 transition-colors duration-300">جميع الحالات</SelectItem>
-                <SelectItem value="active" className="text-foreground dark:text-foreground hover:bg-accent dark:hover:bg-slate-800 transition-colors duration-300">نشط</SelectItem>
-                <SelectItem value="archived" className="text-foreground dark:text-foreground hover:bg-accent dark:hover:bg-slate-800 transition-colors duration-300">مؤرشف</SelectItem>
+              <SelectContent>
+                <SelectItem value="all">جميع الحالات</SelectItem>
+                <SelectItem value="active">نشط</SelectItem>
+                <SelectItem value="archived">مؤرشف</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -357,20 +357,20 @@ const SchoolClasses = () => {
 
       {/* Classes Grid */}
       {filteredClasses.length === 0 ? (
-        <Card className="bg-card dark:bg-slate-900 border-border dark:border-slate-800 transition-colors duration-300">
+        <Card>
           <CardContent className="pt-6">
             <div className="text-center py-8">
-              <Users className="mx-auto h-12 w-12 text-muted-foreground dark:text-slate-400 mb-4 transition-colors duration-300" />
-              <h3 className="text-lg font-medium text-muted-foreground dark:text-slate-300 mb-2 transition-colors duration-300">
+              <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-medium text-muted-foreground mb-2">
                 لا توجد صفوف
               </h3>
-              <p className="text-sm text-muted-foreground dark:text-slate-400 mb-4 transition-colors duration-300">
+              <p className="text-sm text-muted-foreground mb-4">
                 {searchTerm || selectedGradeLevel !== 'all' || selectedAcademicYear !== 'all' || selectedStatus !== 'active' 
                   ? "لا توجد صفوف تطابق المرشحات المحددة" 
                   : "لم يتم إنشاء أي صفوف بعد"}
               </p>
               {!searchTerm && selectedGradeLevel === 'all' && selectedAcademicYear === 'all' && selectedStatus === 'active' && (
-                <Button onClick={() => setShowForm(true)} className="bg-primary dark:bg-primary hover:bg-primary/90 dark:hover:bg-primary/80 transition-all duration-300">
+                <Button onClick={() => setShowForm(true)}>
                   إضافة صف جديد
                 </Button>
               )}
@@ -380,14 +380,14 @@ const SchoolClasses = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredClasses.map((classItem) => (
-            <Card key={classItem.id} className="card-hover bg-card dark:bg-slate-900 border-border dark:border-slate-800 transition-all duration-300">
+            <Card key={classItem.id} className="card-hover">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div>
-                    <CardTitle className="text-lg text-foreground dark:text-foreground transition-colors duration-300">{classItem.class_name.name}</CardTitle>
-                    <p className="text-sm text-muted-foreground dark:text-slate-400 transition-colors duration-300">{classItem.grade_level.label}</p>
+                    <CardTitle className="text-lg">{classItem.class_name.name}</CardTitle>
+                    <p className="text-sm text-muted-foreground">{classItem.grade_level.label}</p>
                   </div>
-                  <Badge variant={classItem.status === 'active' ? 'default' : 'secondary'} className="transition-colors duration-300">
+                  <Badge variant={classItem.status === 'active' ? 'default' : 'secondary'}>
                     {classItem.status === 'active' ? 'نشط' : 'مؤرشف'}
                   </Badge>
                 </div>
@@ -395,19 +395,19 @@ const SchoolClasses = () => {
               <CardContent>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground dark:text-slate-400 transition-colors duration-300">السنة الدراسية:</span>
-                    <span className="text-foreground dark:text-foreground transition-colors duration-300">{classItem.academic_year.name}</span>
+                    <span className="text-muted-foreground">السنة الدراسية:</span>
+                    <span>{classItem.academic_year.name}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground dark:text-slate-400 transition-colors duration-300">عدد الطلاب:</span>
-                    <span className="flex items-center gap-1 text-foreground dark:text-foreground transition-colors duration-300">
+                    <span className="text-muted-foreground">عدد الطلاب:</span>
+                    <span className="flex items-center gap-1">
                       <Users className="h-3 w-3" />
                       {classItem.student_count}
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground dark:text-slate-400 transition-colors duration-300">تاريخ الإنشاء:</span>
-                    <span className="text-foreground dark:text-foreground transition-colors duration-300">{new Date(classItem.created_at_utc).toLocaleDateString('en-GB')}</span>
+                    <span className="text-muted-foreground">تاريخ الإنشاء:</span>
+                    <span>{new Date(classItem.created_at_utc).toLocaleDateString('en-GB')}</span>
                   </div>
                 </div>
 

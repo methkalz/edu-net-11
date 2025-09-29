@@ -204,25 +204,25 @@ const QuizChallenge: React.FC<QuizChallengeProps> = ({
     return (
       <div className="space-y-6">
         <div className="text-center">
-          <h2 className="text-3xl font-bold mb-2 text-foreground dark:text-foreground transition-colors duration-300">المهام والتحديات</h2>
-          <p className="text-muted-foreground dark:text-slate-400 transition-colors duration-300">
+          <h2 className="text-3xl font-bold mb-2">المهام والتحديات</h2>
+          <p className="text-muted-foreground">
             اختبر معرفتك واكسب نقاط الخبرة
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {Object.entries(QUEST_CONFIGS).map(([type, config]) => (
-            <Card key={type} className="hover:shadow-lg transition-all duration-300 cursor-pointer bg-card dark:bg-slate-900 border-border dark:border-slate-800">
+            <Card key={type} className="hover:shadow-lg transition-shadow cursor-pointer">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-foreground dark:text-foreground transition-colors duration-300">
-                  {type === 'daily' && <Trophy className="h-5 w-5 text-yellow-500 dark:text-yellow-400 transition-colors duration-300" />}
-                  {type === 'practice' && <Zap className="h-5 w-5 text-blue-500 dark:text-blue-400 transition-colors duration-300" />}
-                  {type === 'challenge' && <Star className="h-5 w-5 text-purple-500 dark:text-purple-400 transition-colors duration-300" />}
+                <CardTitle className="flex items-center gap-2">
+                  {type === 'daily' && <Trophy className="h-5 w-5 text-yellow-500" />}
+                  {type === 'practice' && <Zap className="h-5 w-5 text-blue-500" />}
+                  {type === 'challenge' && <Star className="h-5 w-5 text-purple-500" />}
                   {config.title}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2 text-sm text-muted-foreground dark:text-slate-400 transition-colors duration-300">
+                <div className="space-y-2 text-sm text-muted-foreground">
                   <div>عدد الأسئلة: {config.questionsCount}</div>
                   <div>الوقت المحدد: {Math.floor(config.timeLimit / 60)} دقائق</div>
                   <div>مكافأة الخبرة: {config.xpReward} نقطة</div>
@@ -230,7 +230,7 @@ const QuizChallenge: React.FC<QuizChallengeProps> = ({
                 
                 <Button 
                   onClick={() => startQuiz(type as keyof typeof QUEST_CONFIGS)}
-                  className="w-full bg-primary dark:bg-primary hover:bg-primary/90 dark:hover:bg-primary/80 transition-all duration-300"
+                  className="w-full"
                   disabled={type === 'daily' && gameState.dailyQuestCompleted}
                 >
                   {type === 'daily' && gameState.dailyQuestCompleted ? 'مكتمل اليوم' : 'ابدأ الآن'}
@@ -295,16 +295,16 @@ const QuizChallenge: React.FC<QuizChallengeProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
-          <Badge variant="outline" className="border-border dark:border-slate-700 text-foreground dark:text-foreground transition-colors duration-300">
+          <Badge variant="outline">
             السؤال {currentQuestionIndex + 1} من {quizQuestions.length}
           </Badge>
           <div className="flex items-center gap-2">
-            <Star className="h-4 w-4 text-yellow-500 dark:text-yellow-400 transition-colors duration-300" />
-            <span className="font-medium text-foreground dark:text-foreground transition-colors duration-300">{score} نقطة</span>
+            <Star className="h-4 w-4 text-yellow-500" />
+            <span className="font-medium">{score} نقطة</span>
           </div>
         </div>
         
-        <div className="flex items-center gap-2 text-muted-foreground dark:text-slate-400 transition-colors duration-300">
+        <div className="flex items-center gap-2 text-muted-foreground">
           <Clock className="h-4 w-4" />
           <span className="font-mono text-lg">{formatTime(timeLeft)}</span>
         </div>
@@ -312,13 +312,13 @@ const QuizChallenge: React.FC<QuizChallengeProps> = ({
 
       {/* Progress */}
       <div className="mb-6">
-        <Progress value={((currentQuestionIndex + 1) / quizQuestions.length) * 100} className="bg-muted dark:bg-slate-800 transition-colors duration-300" />
+        <Progress value={((currentQuestionIndex + 1) / quizQuestions.length) * 100} />
       </div>
 
       {/* Question */}
-      <Card className="bg-card dark:bg-slate-900 border-border dark:border-slate-800 transition-colors duration-300">
+      <Card>
         <CardContent className="p-8">
-          <h3 className="text-xl font-bold mb-6 text-foreground dark:text-foreground transition-colors duration-300">{currentQuestion.question}</h3>
+          <h3 className="text-xl font-bold mb-6">{currentQuestion.question}</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             {currentQuestion.options.map((option, index) => (
@@ -329,12 +329,12 @@ const QuizChallenge: React.FC<QuizChallengeProps> = ({
                   index === currentQuestion.correctAnswer ? "default" :
                   selectedAnswer === index ? "destructive" : "outline"
                 }
-                className={`p-4 h-auto text-right justify-start transition-all duration-300 ${
+                className={`p-4 h-auto text-right justify-start ${
                   selectedAnswer !== null && index === currentQuestion.correctAnswer
-                    ? 'bg-green-500 dark:bg-green-600 hover:bg-green-600 dark:hover:bg-green-700 text-white border-green-600 dark:border-green-700'
+                    ? 'bg-green-500 hover:bg-green-600 text-white'
                     : selectedAnswer === index && index !== currentQuestion.correctAnswer
-                    ? 'bg-red-500 dark:bg-red-600 hover:bg-red-600 dark:hover:bg-red-700 text-white border-red-600 dark:border-red-700'
-                    : 'border-border dark:border-slate-700 hover:bg-accent dark:hover:bg-slate-800 text-foreground dark:text-foreground'
+                    ? 'bg-red-500 hover:bg-red-600 text-white'
+                    : ''
                 }`}
                 onClick={() => handleAnswerSelect(index)}
                 disabled={selectedAnswer !== null}
@@ -353,15 +353,15 @@ const QuizChallenge: React.FC<QuizChallengeProps> = ({
           </div>
 
           {showExplanation && (
-            <div className="p-4 bg-muted dark:bg-slate-800 rounded-lg mb-6 transition-colors duration-300">
-              <h4 className="font-medium mb-2 text-foreground dark:text-foreground transition-colors duration-300">الشرح:</h4>
-              <p className="text-muted-foreground dark:text-slate-400 transition-colors duration-300">{currentQuestion.explanation}</p>
+            <div className="p-4 bg-muted rounded-lg mb-6">
+              <h4 className="font-medium mb-2">الشرح:</h4>
+              <p className="text-muted-foreground">{currentQuestion.explanation}</p>
             </div>
           )}
 
           {showExplanation && (
             <div className="flex justify-end">
-              <Button onClick={handleNextQuestion} className="bg-primary dark:bg-primary hover:bg-primary/90 dark:hover:bg-primary/80 transition-all duration-300">
+              <Button onClick={handleNextQuestion}>
                 {currentQuestionIndex < quizQuestions.length - 1 ? 'السؤال التالي' : 'إنهاء التحدي'}
               </Button>
             </div>

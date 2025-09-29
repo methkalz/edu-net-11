@@ -486,17 +486,17 @@ const TeacherDashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 dark:from-background dark:via-background dark:to-primary/10 flex items-center justify-center transition-colors duration-300">
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="relative">
-            <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary/20 dark:border-primary/30 border-t-primary dark:border-t-primary mx-auto"></div>
-            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-primary/20 dark:from-primary/30 to-transparent animate-pulse"></div>
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary/20 border-t-primary mx-auto"></div>
+            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-primary/20 to-transparent animate-pulse"></div>
           </div>
           <div className="space-y-2">
             <p className="text-lg font-medium bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
               جاري تحميل لوحة تحكم المعلم...
             </p>
-            <p className="text-sm text-muted-foreground dark:text-muted-foreground transition-colors duration-300">يرجى الانتظار قليلاً</p>
+            <p className="text-sm text-muted-foreground">يرجى الانتظار قليلاً</p>
           </div>
         </div>
       </div>
@@ -504,7 +504,7 @@ const TeacherDashboard: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 dark:from-background dark:via-background dark:to-primary/10 transition-colors duration-300" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5" dir="rtl">
       <ModernHeader 
         title="لوحة تحكم المعلم"
         onRefresh={() => fetchTeacherData(true)}

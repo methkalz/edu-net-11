@@ -179,6 +179,7 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({
 
             {/* Quick Settings */}
             <QuickSettings
+              onSettingsClick={() => navigate('/settings')}
               onLogout={handleLogout}
             />
           </div>
@@ -228,6 +229,7 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({
               
               <QuickSettings
                 onLogout={handleLogout}
+                onSettingsClick={() => navigate('/settings')}
               />
             </div>
           </div>

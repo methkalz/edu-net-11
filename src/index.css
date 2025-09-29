@@ -8,264 +8,213 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Light Mode - Enhanced for better contrast and accessibility */
-    --background: 220 20% 98%;          /* Pure but slightly warm white */
-    --foreground: 215 25% 12%;          /* Deep blue-gray for excellent readability */
+    /* Ultra Light Elegant Palette */
+    --background: 220 25% 98%;
+    --foreground: 215 20% 15%;
 
-    --card: 220 25% 99%;                /* Card background slightly off-white */
-    --card-foreground: 215 25% 12%;     /* Same as foreground for consistency */
+    --card: 220 30% 99%;
+    --card-foreground: 215 20% 15%;
 
-    --popover: 220 25% 99%;
-    --popover-foreground: 215 25% 12%;
+    --popover: 220 30% 99%;
+    --popover-foreground: 215 20% 15%;
 
-    /* Primary Colors - Professional blue palette */
-    --primary: 214 85% 52%;             /* Rich professional blue */
-    --primary-foreground: 0 0% 100%;    /* Pure white for contrast */
-    --primary-light: 214 70% 62%;       /* Lighter variant */
-    --primary-dark: 214 90% 42%;        /* Darker variant */
+    /* Extended Color System */
+    /* Clean Blue Palette */
+    --primary: 214 85% 55%;
+    --primary-foreground: 0 0% 100%;
+    --primary-light: 214 70% 65%;
+    --primary-dark: 214 95% 45%;
     
-    /* Secondary Colors - Warm orange accent */
-    --secondary: 25 85% 48%;            /* Professional orange */
-    --secondary-foreground: 0 0% 100%;  /* White text on orange */
-    --secondary-light: 25 70% 58%;      /* Lighter orange */
-    --secondary-dark: 25 90% 38%;       /* Darker orange */
+    /* Clean Orange Palette */
+    --secondary: 25 85% 55%;
+    --secondary-foreground: 0 0% 100%;
+    --secondary-light: 25 70% 65%;
+    --secondary-dark: 25 95% 45%;
     
-    /* Extended Color Palette - Vibrant but accessible */
-    --purple-mystic: 270 75% 58%;       /* Rich purple */
-    --purple-neon: 285 85% 62%;         /* Vibrant purple */
-    --magenta-glow: 320 80% 58%;        /* Magenta accent */
-    --pink-vibrant: 340 75% 62%;        /* Pink accent */
+    /* Purples & Magentas */
+    --purple-mystic: 270 85% 65%;
+    --purple-neon: 285 100% 70%;
+    --magenta-glow: 320 90% 65%;
+    --pink-vibrant: 340 85% 70%;
 
-    --green-emerald: 150 75% 48%;       /* Professional green */
-    --green-neon: 120 85% 52%;          /* Bright green */
-    --teal-bright: 180 75% 48%;         /* Teal accent */
-    --cyan-electric: 190 85% 55%;       /* Electric cyan */
+    /* Greens & Teals */
+    --green-emerald: 150 85% 55%;
+    --green-neon: 120 100% 60%;
+    --teal-bright: 180 85% 55%;
+    --cyan-electric: 190 100% 65%;
 
-    /* Lighter variants for subtle backgrounds */
-    --blue-25: 214 55% 92%;             /* Very light blue */
-    --blue-50: 214 65% 85%;             /* Light blue */
-    --green-25: 150 45% 92%;            /* Very light green */
-    --green-50: 150 55% 85%;            /* Light green */
-    --purple-25: 270 45% 92%;           /* Very light purple */
-    --purple-50: 270 55% 85%;           /* Light purple */
-    --orange-25: 25 45% 92%;            /* Very light orange */
-    --orange-50: 25 55% 85%;            /* Light orange */
+    /* Lighter variants for dimmed states */
+    --blue-25: 214 60% 92%;
+    --blue-50: 214 70% 85%;
+    --green-25: 150 50% 92%;
+    --green-50: 150 60% 85%;
+    --purple-25: 270 50% 92%;
+    --purple-50: 270 60% 85%;
+    --orange-25: 25 50% 92%;
+    --orange-50: 25 60% 85%;
 
-    /* Yellows & Golds - Warm accents */
-    --yellow-bright: 55 85% 58%;        /* Bright yellow */
-    --yellow-electric: 45 80% 55%;      /* Electric yellow */
-    --gold-premium: 45 75% 48%;         /* Premium gold */
-    --gold-celebration: 40 85% 52%;     /* Celebration gold */
-    --gold-bright: 50 90% 62%;          /* Bright gold */
-    --amber-glow: 35 75% 58%;           /* Amber glow */
+    /* Yellows & Golds */
+    --yellow-bright: 55 100% 65%;
+    --yellow-electric: 45 95% 60%;
+    --gold-premium: 45 85% 55%;
+    --gold-celebration: 40 95% 58%;
+    --gold-bright: 50 100% 70%;
+    --amber-glow: 35 85% 65%;
 
-    /* Match colors for games - High contrast for accessibility */
-    --match-color-1: 220 85% 55%;       /* Blue */
-    --match-color-2: 340 75% 58%;       /* Pink */
-    --match-color-3: 160 65% 48%;       /* Green */
-    --match-color-4: 35 85% 52%;        /* Orange */
-    --match-color-5: 280 75% 58%;       /* Purple */
-    --match-color-6: 190 75% 48%;       /* Teal */
-    --match-color-7: 15 80% 55%;        /* Red-Orange */
-    --match-color-8: 120 55% 45%;       /* Light Green */
+    /* Match colors for pair matching game */
+    --match-color-1: 220 90% 60%;  /* Blue */
+    --match-color-2: 340 80% 65%;  /* Pink */
+    --match-color-3: 160 70% 55%;  /* Green */
+    --match-color-4: 35 90% 60%;   /* Orange */
+    --match-color-5: 280 85% 65%;  /* Purple */
+    --match-color-6: 190 85% 55%;  /* Teal */
+    --match-color-7: 15 85% 60%;   /* Red-Orange */
+    --match-color-8: 120 60% 50%;  /* Light Green */
 
-    /* UI System Colors - Carefully balanced */
-    --accent: 220 25% 95%;              /* Light accent background */
-    --accent-foreground: 215 25% 12%;   /* Dark text on light background */
+    /* Elegant Light Accents */
+    --accent: 220 30% 96%;
+    --accent-foreground: 215 20% 15%;
 
-    --muted: 220 20% 94%;               /* Muted backgrounds */
-    --muted-foreground: 215 15% 42%;    /* Muted text with good contrast */
+    /* Soft Muted Colors */
+    --muted: 220 25% 95%;
+    --muted-foreground: 215 15% 45%;
 
-    --destructive: 0 75% 58%;           /* Error red with good contrast */
-    --destructive-foreground: 0 0% 100%; /* White text on red */
+    /* Gentle Destructive */
+    --destructive: 0 70% 65%;
+    --destructive-foreground: 0 0% 100%;
 
-    /* Borders & Inputs - Subtle but clear */
-    --border: 220 15% 88%;              /* Subtle borders */
-    --input: 220 15% 88%;               /* Input field borders */
-    --ring: 220 75% 58%;                /* Focus ring */
+    /* Refined Borders */
+    --border: 220 20% 90%;
+    --input: 220 20% 90%;
+    --ring: 220 70% 65%;
 
-    /* Surface Colors - Layered system */
-    --surface-light: 220 30% 96%;       /* Elevated surfaces */
-    --surface-hover: 220 25% 92%;       /* Hover states */
-    --text-soft: 215 12% 48%;           /* Secondary text */
-    --divider: 220 12% 90%;             /* Dividers */
+    /* Elegant Surface Colors */
+    --surface-light: 220 40% 97%;
+    --surface-hover: 220 30% 94%;
+    --text-soft: 215 12% 50%;
+    --divider: 220 15% 92%;
 
-    /* Refined Gradients */
-    --gradient-blue: linear-gradient(135deg, hsl(214 85% 52%), hsl(214 90% 42%));
-    --gradient-orange: linear-gradient(135deg, hsl(25 85% 48%), hsl(25 90% 38%));
-    --gradient-gold: linear-gradient(135deg, hsl(40 85% 52%), hsl(35 75% 58%));
-    --gradient-celebration: linear-gradient(135deg, hsl(45 90% 62%), hsl(40 85% 52%), hsl(35 75% 58%));
-    --gradient-subtle: linear-gradient(135deg, hsl(218 15% 97%), hsl(214 20% 94%));
-    --gradient-hero: linear-gradient(135deg, hsl(214 85% 52% / 0.08), hsl(25 85% 48% / 0.04));
+    /* Simple Clean Gradients */
+    --gradient-blue: linear-gradient(135deg, hsl(214 85% 55%), hsl(214 95% 45%));
+    --gradient-orange: linear-gradient(135deg, hsl(25 85% 55%), hsl(25 95% 45%));
+    --gradient-gold: linear-gradient(135deg, hsl(40 95% 58%), hsl(35 85% 65%));
+    --gradient-celebration: linear-gradient(135deg, hsl(45 100% 70%), hsl(40 95% 58%), hsl(35 85% 65%));
+    --gradient-subtle: linear-gradient(135deg, hsl(218 15% 98%), hsl(214 25% 96%));
+    --gradient-hero: linear-gradient(135deg, hsl(214 85% 55% / 0.1), hsl(25 85% 55% / 0.05));
     
-    /* Enhanced Shadows with subtle color */
-    --shadow-primary: 0 6px 24px hsl(220 85% 55% / 0.15);
-    --shadow-secondary: 0 6px 24px hsl(25 95% 55% / 0.15);
-    --shadow-gold: 0 6px 24px hsl(40 85% 52% / 0.2);
-    --shadow-celebration: 0 0 32px hsl(45 90% 62% / 0.3);
-    --shadow-electric: 0 6px 24px hsl(210 85% 58% / 0.2);
-    --shadow-fire: 0 6px 24px hsl(15 85% 52% / 0.2);
-    --shadow-purple: 0 6px 24px hsl(270 75% 58% / 0.2);
-    --shadow-neon: 0 0 32px hsl(120 85% 52% / 0.3);
-    --shadow-cyber: 0 0 48px hsl(200 75% 52% / 0.25);
+    /* Advanced Shadows */
+    --shadow-primary: 0 8px 32px hsl(220 85% 60% / 0.3);
+    --shadow-secondary: 0 8px 32px hsl(25 95% 60% / 0.3);
+    --shadow-gold: 0 8px 32px hsl(40 95% 58% / 0.4);
+    --shadow-celebration: 0 0 40px hsl(45 100% 70% / 0.6);
+    --shadow-electric: 0 8px 32px hsl(210 100% 65% / 0.4);
+    --shadow-fire: 0 8px 32px hsl(15 100% 55% / 0.4);
+    --shadow-purple: 0 8px 32px hsl(270 85% 65% / 0.4);
+    --shadow-neon: 0 0 40px hsl(120 100% 60% / 0.6);
+    --shadow-cyber: 0 0 60px hsl(200 85% 55% / 0.5);
 
     --radius: 16px;
 
-    /* Font Size System */
-    --app-font-size: 16px;
-    --app-font-scale: 1;
-
-    /* Sidebar - Light Mode */
-    --sidebar-background: 220 20% 96%;
+    /* Sidebar */
+    --sidebar-background: 220 25% 96%;
     --sidebar-foreground: 215 25% 12%;
-    --sidebar-primary: 220 85% 52%;
+    --sidebar-primary: 220 85% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 15% 90%;
+    --sidebar-accent: 220 20% 92%;
     --sidebar-accent-foreground: 215 25% 12%;
-    --sidebar-border: 220 12% 85%;
-    --sidebar-ring: 220 85% 52%;
+    --sidebar-border: 220 15% 88%;
+    --sidebar-ring: 220 85% 60%;
   }
 
   .dark {
-    /* Background & Surfaces - Professional dark mode with excellent readability */
-    --background: 222 47% 11%;          /* Deep slate background */
-    --foreground: 213 31% 91%;          /* Soft white for text, excellent contrast */
+    --background: 215 25% 6%;
+    --foreground: 220 15% 95%;
 
-    --card: 217 33% 17%;                /* Elevated card surface */
-    --card-foreground: 213 31% 91%;     /* Clear readable text */
+    --card: 215 25% 8%;
+    --card-foreground: 220 15% 95%;
 
-    --popover: 217 33% 17%;             /* Popover surface */
-    --popover-foreground: 213 31% 91%;  /* Clear text */
+    --popover: 215 25% 8%;
+    --popover-foreground: 220 15% 95%;
 
-    /* Primary Colors - Brighter and more vibrant in dark mode */
-    --primary: 220 85% 65%;             /* Bright blue for primary actions */
-    --primary-foreground: 220 5% 5%;    /* Dark text on bright backgrounds */
-    --primary-light: 220 75% 72%;       /* Lighter primary variant */
-    --primary-dark: 220 90% 58%;        /* Darker primary variant */
+    /* Dark Mode Extended Colors */
+    --primary: 220 80% 65%;
+    --primary-light: 220 75% 75%;
+    --primary-dark: 220 85% 55%;
+    --blue-electric: 210 95% 70%;
+    --blue-cyber: 200 80% 60%;
+    --blue-ocean: 215 70% 50%;
+
+    --secondary: 25 90% 65%;
+    --secondary-light: 25 85% 75%;
+    --secondary-dark: 25 95% 55%;
+    --orange-fire: 15 95% 60%;
+    --orange-sunset: 35 85% 70%;
     
-    /* Secondary Colors - Warm orange for contrast */
-    --secondary: 25 85% 62%;            /* Bright orange for secondary actions */
-    --secondary-foreground: 25 10% 8%;  /* Dark text on orange */
-    --secondary-light: 25 75% 68%;      /* Lighter secondary */
-    --secondary-dark: 25 90% 55%;       /* Darker secondary */
+    --purple-mystic: 270 80% 70%;
+    --purple-neon: 285 95% 75%;
+    --magenta-glow: 320 85% 70%;
+    --pink-vibrant: 340 80% 75%;
 
-    /* Extended Vibrant Colors for Dark Mode */
-    --blue-electric: 210 95% 70%;       /* Electric blue */
-    --blue-cyber: 200 85% 65%;          /* Cyber blue */
-    --blue-ocean: 215 75% 58%;          /* Ocean blue */
-    
-    --orange-fire: 15 90% 65%;          /* Fire orange */
-    --orange-sunset: 35 85% 70%;        /* Sunset orange */
-    
-    --purple-mystic: 270 80% 70%;       /* Mystic purple */
-    --purple-neon: 285 90% 75%;         /* Neon purple */
-    --magenta-glow: 320 85% 70%;        /* Magenta glow */
-    --pink-vibrant: 340 80% 75%;        /* Vibrant pink */
+    --green-emerald: 150 80% 60%;
+    --green-neon: 120 95% 65%;
+    --teal-bright: 180 80% 60%;
+    --cyan-electric: 190 95% 70%;
 
-    --green-emerald: 150 75% 62%;       /* Emerald green */
-    --green-neon: 120 85% 68%;          /* Neon green */
-    --teal-bright: 180 75% 62%;         /* Bright teal */
-    --cyan-electric: 190 85% 70%;       /* Electric cyan */
+    --yellow-bright: 55 95% 70%;
+    --yellow-electric: 45 90% 65%;
+    --gold-premium: 45 80% 60%;
 
-    --yellow-bright: 55 85% 72%;        /* Bright yellow */
-    --yellow-electric: 45 80% 68%;      /* Electric yellow */
-    --gold-premium: 45 75% 62%;         /* Premium gold */
+    /* Match colors for pair matching game - Dark Mode */
+    --match-color-1: 220 85% 65%;  /* Blue */
+    --match-color-2: 340 75% 70%;  /* Pink */
+    --match-color-3: 160 65% 60%;  /* Green */
+    --match-color-4: 35 85% 65%;   /* Orange */
+    --match-color-5: 280 80% 70%;  /* Purple */
+    --match-color-6: 190 80% 60%;  /* Teal */
+    --match-color-7: 15 80% 65%;   /* Red-Orange */
+    --match-color-8: 120 55% 55%;  /* Light Green */
 
-    /* Match colors for games - Enhanced visibility */
-    --match-color-1: 220 80% 68%;       /* Blue */
-    --match-color-2: 340 75% 72%;       /* Pink */
-    --match-color-3: 160 65% 62%;       /* Green */
-    --match-color-4: 35 80% 68%;        /* Orange */
-    --match-color-5: 280 75% 72%;       /* Purple */
-    --match-color-6: 190 75% 62%;       /* Teal */
-    --match-color-7: 15 75% 68%;        /* Red-Orange */
-    --match-color-8: 120 55% 58%;       /* Light Green */
+    --accent: 215 25% 12%;
+    --accent-foreground: 220 15% 95%;
 
-    /* UI System Colors - Carefully balanced for accessibility */
-    --accent: 217 33% 17%;              /* Subtle accent background */
-    --accent-foreground: 213 31% 91%;   /* Text on accent */
+    --muted: 215 25% 10%;
+    --muted-foreground: 220 15% 65%;
 
-    --muted: 215 28% 17%;               /* Muted elements background */
-    --muted-foreground: 217 19% 60%;    /* Muted text - WCAG AA compliant */
+    --destructive: 0 80% 65%;
+    --destructive-foreground: 0 0% 100%;
 
-    --destructive: 0 75% 65%;           /* Error red - softer in dark mode */
-    --destructive-foreground: 0 0% 98%; /* White text on red */
+    --border: 215 25% 15%;
+    --input: 215 25% 15%;
+    --ring: 220 80% 65%;
 
-    /* Borders & Inputs - Subtle but visible */
-    --border: 217 33% 24%;              /* Visible borders without harshness */
-    --input: 217 33% 17%;               /* Input field background */
-    --ring: 220 80% 65%;                /* Focus ring - bright primary */
-
-    /* Surface Colors - Layered elevation system */
-    --surface-light: 217 33% 20%;       /* Elevated surfaces */
-    --surface-hover: 217 33% 24%;       /* Hover states */
-    --text-soft: 217 19% 60%;           /* Soft text for less important content */
-    --divider: 217 33% 24%;             /* Subtle dividers */
-
-    /* Enhanced Gradients for Dark Mode */
-    --gradient-primary: linear-gradient(135deg, hsl(220 80% 65%), hsl(25 85% 62%));
-    --gradient-secondary: linear-gradient(135deg, hsl(25 85% 62%), hsl(220 80% 65%));
+    /* Dark Mode Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(220 80% 65%), hsl(25 90% 65%));
+    --gradient-secondary: linear-gradient(135deg, hsl(25 90% 65%), hsl(220 80% 65%));
     --gradient-electric: linear-gradient(135deg, hsl(210 95% 70%), hsl(270 80% 70%));
-    --gradient-fire: linear-gradient(135deg, hsl(15 90% 65%), hsl(35 85% 70%));
-    --gradient-ocean: linear-gradient(135deg, hsl(190 85% 70%), hsl(215 75% 58%));
-    --gradient-sunset: linear-gradient(135deg, hsl(25 85% 62%), hsl(340 80% 75%), hsl(270 80% 70%));
-    --gradient-cyber: linear-gradient(135deg, hsl(200 85% 65%), hsl(285 90% 75%), hsl(15 90% 65%));
-    --gradient-neon: linear-gradient(135deg, hsl(120 85% 68%), hsl(190 85% 70%), hsl(270 80% 70%));
-    --gradient-hero: linear-gradient(135deg, hsl(220 80% 65% / 0.12), hsl(25 85% 62% / 0.08));
+    --gradient-fire: linear-gradient(135deg, hsl(15 95% 60%), hsl(35 85% 70%));
+    --gradient-ocean: linear-gradient(135deg, hsl(190 95% 70%), hsl(215 70% 50%));
+    --gradient-sunset: linear-gradient(135deg, hsl(25 90% 65%), hsl(340 80% 75%), hsl(270 80% 70%));
+    --gradient-cyber: linear-gradient(135deg, hsl(200 80% 60%), hsl(285 95% 75%), hsl(15 95% 60%));
+    --gradient-neon: linear-gradient(135deg, hsl(120 95% 65%), hsl(190 95% 70%), hsl(270 80% 70%));
 
-    /* Enhanced Shadows with Color */
-    --shadow-primary: 0 8px 32px hsl(220 80% 65% / 0.25);
-    --shadow-secondary: 0 8px 32px hsl(25 85% 62% / 0.25);
-    --shadow-electric: 0 8px 32px hsl(210 95% 70% / 0.3);
-    --shadow-fire: 0 8px 32px hsl(15 90% 65% / 0.3);
-    --shadow-purple: 0 8px 32px hsl(270 80% 70% / 0.3);
-    --shadow-neon: 0 0 40px hsl(120 85% 68% / 0.4);
-    --shadow-cyber: 0 0 60px hsl(200 85% 65% / 0.35);
+    /* Dark Mode Shadows */
+    --shadow-primary: 0 8px 32px hsl(220 80% 65% / 0.4);
+    --shadow-secondary: 0 8px 32px hsl(25 90% 65% / 0.4);
+    --shadow-electric: 0 8px 32px hsl(210 95% 70% / 0.5);
+    --shadow-fire: 0 8px 32px hsl(15 95% 60% / 0.5);
+    --shadow-purple: 0 8px 32px hsl(270 80% 70% / 0.5);
+    --shadow-neon: 0 0 40px hsl(120 95% 65% / 0.7);
+    --shadow-cyber: 0 0 60px hsl(200 80% 60% / 0.6);
 
-  /* Sidebar Colors - Dark Mode */
-    --sidebar-background: 220 15% 10%;   /* Slightly lighter than main bg */
-    --sidebar-foreground: 220 8% 88%;    /* Clear text */
-    --sidebar-primary: 220 80% 65%;      /* Bright primary for active states */
-    --sidebar-primary-foreground: 220 5% 5%;
-    --sidebar-accent: 220 15% 14%;       /* Hover/focus backgrounds */
-    --sidebar-accent-foreground: 220 8% 82%;
-    --sidebar-border: 220 15% 18%;       /* Subtle borders */
-    --sidebar-ring: 220 80% 65%;         /* Focus indicators */
-  }
-
-  /* Force light theme for auth pages */
-  .auth-light-only {
-    /* Override any dark mode variables with light mode values */
-    --background: 220 20% 98% !important;
-    --foreground: 215 25% 12% !important;
-    --card: 220 25% 99% !important;
-    --card-foreground: 215 25% 12% !important;
-    --popover: 220 25% 99% !important;
-    --popover-foreground: 215 25% 12% !important;
-    --primary: 214 85% 52% !important;
-    --primary-foreground: 0 0% 100% !important;
-    --secondary: 25 85% 48% !important;
-    --secondary-foreground: 0 0% 100% !important;
-    --accent: 220 25% 95% !important;
-    --accent-foreground: 215 25% 12% !important;
-    --muted: 220 20% 94% !important;
-    --muted-foreground: 215 15% 42% !important;
-    --border: 220 15% 88% !important;
-    --input: 220 15% 88% !important;
-    --ring: 220 75% 58% !important;
-  }
-
-  /* Force light theme for login buttons on landing page */
-  .auth-login-btn {
-    /* These buttons should never be affected by dark mode */
-    background: var(--gradient-blue) !important;
-    color: white !important;
-    border-color: hsl(214 85% 52%) !important;
-  }
-
-  .auth-login-btn:hover {
-    background: var(--gradient-orange) !important;
-    color: white !important;
+    /* Dark Mode Sidebar */
+    --sidebar-background: 215 25% 8%;
+    --sidebar-foreground: 220 15% 95%;
+    --sidebar-primary: 220 80% 65%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 215 25% 12%;
+    --sidebar-accent-foreground: 220 15% 95%;
+    --sidebar-border: 215 25% 15%;
+    --sidebar-ring: 220 80% 65%;
   }
 }
 
@@ -277,26 +226,7 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground font-cairo;
     direction: rtl;
-    font-size: var(--app-font-size, 16px);
   }
-
-  #root {
-    font-size: calc(var(--app-font-size, 16px) * var(--app-font-scale, 1));
-  }
-
-  /* تطبيق حجم الخط على جميع العناصر النصية */
-  body *, #root * {
-    font-size: inherit;
-  }
-  
-  /* استثناءات للعناصر التي تحتاج أحجام خاصة */
-  .text-xs { font-size: calc(var(--app-font-size, 16px) * 0.75 * var(--app-font-scale, 1)) !important; }
-  .text-sm { font-size: calc(var(--app-font-size, 16px) * 0.875 * var(--app-font-scale, 1)) !important; }
-  .text-base { font-size: calc(var(--app-font-size, 16px) * var(--app-font-scale, 1)) !important; }
-  .text-lg { font-size: calc(var(--app-font-size, 16px) * 1.125 * var(--app-font-scale, 1)) !important; }
-  .text-xl { font-size: calc(var(--app-font-size, 16px) * 1.25 * var(--app-font-scale, 1)) !important; }
-  .text-2xl { font-size: calc(var(--app-font-size, 16px) * 1.5 * var(--app-font-scale, 1)) !important; }
-  .text-3xl { font-size: calc(var(--app-font-size, 16px) * 1.875 * var(--app-font-scale, 1)) !important; }
 
   /* Hide scrollbar utility class */
   .scrollbar-hide {

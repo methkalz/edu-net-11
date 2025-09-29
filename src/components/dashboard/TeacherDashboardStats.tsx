@@ -50,14 +50,14 @@ const TeacherStatsCard: React.FC<TeacherStatsCardProps> = ({
 }) => {
   if (loading) {
     return (
-      <Card className="modern-card glass-card hover:shadow-lg transition-all duration-300 bg-card dark:bg-card border-border dark:border-border">
+      <Card className="modern-card glass-card hover:shadow-lg transition-all duration-300">
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div className="space-y-2">
-              <div className="h-4 bg-muted dark:bg-muted animate-pulse rounded"></div>
-              <div className="h-8 bg-muted dark:bg-muted animate-pulse rounded w-16"></div>
+              <div className="h-4 bg-muted animate-pulse rounded"></div>
+              <div className="h-8 bg-muted animate-pulse rounded w-16"></div>
             </div>
-            <div className="h-12 w-12 bg-muted dark:bg-muted animate-pulse rounded-xl"></div>
+            <div className="h-12 w-12 bg-muted animate-pulse rounded-xl"></div>
           </div>
         </CardContent>
       </Card>
@@ -107,7 +107,7 @@ const TeacherStatsCard: React.FC<TeacherStatsCardProps> = ({
         <div className="flex items-center justify-between">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <p className="text-sm font-medium text-muted-foreground dark:text-muted-foreground transition-colors duration-300">
+              <p className="text-sm font-medium text-muted-foreground">
                 {title}
               </p>
               {isClickable && (
@@ -236,12 +236,12 @@ export const TeacherDashboardStats: React.FC<TeacherDashboardStatsProps> = ({
 
   if (error) {
     return (
-      <Card className="border-destructive/50 dark:border-destructive/40 bg-destructive/5 dark:bg-destructive/10 transition-colors duration-300">
+      <Card className="border-destructive/50 bg-destructive/5">
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
-              <p className="font-medium text-destructive dark:text-destructive">خطأ في تحميل الإحصائيات</p>
-              <p className="text-sm text-muted-foreground dark:text-muted-foreground">{error}</p>
+              <p className="font-medium text-destructive">خطأ في تحميل الإحصائيات</p>
+              <p className="text-sm text-muted-foreground">{error}</p>
             </div>
             {onRefresh && (
               <button

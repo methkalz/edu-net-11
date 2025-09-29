@@ -57,19 +57,19 @@ const StudentDashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 dark:from-background dark:via-background dark:to-primary/10 transition-colors duration-300">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
         <div className="text-center space-y-4">
-          <div className="w-16 h-16 mx-auto animate-spin rounded-full border-4 border-primary dark:border-primary border-t-transparent dark:border-t-transparent"></div>
-          <p className="text-lg font-medium text-foreground dark:text-foreground transition-colors duration-300">جاري تحميل لوحة التحكم...</p>
+          <div className="w-16 h-16 mx-auto animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          <p className="text-lg font-medium text-muted-foreground">جاري تحميل لوحة التحكم...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 dark:from-background dark:via-background dark:to-primary/10 transition-colors duration-300" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50" dir="rtl">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-r from-primary via-secondary to-primary/80 dark:from-primary dark:via-secondary dark:to-primary/90 text-white transition-colors duration-300">
+      <section className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white">
         <div className="absolute inset-0 bg-black/20"></div>
         <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
         
@@ -114,40 +114,40 @@ const StudentDashboard: React.FC = () => {
 
             {/* Quick Stats Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 animate-fade-in-up animation-delay-200">
-              <Card className="bg-white/10 dark:bg-white/5 backdrop-blur border-white/20 dark:border-white/10 text-white transition-colors duration-300">
+              <Card className="bg-white/10 backdrop-blur border-white/20 text-white">
                 <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-                  <div className="w-12 h-12 mx-auto mb-2 bg-yellow-400/20 dark:bg-yellow-400/30 rounded-full flex items-center justify-center transition-colors duration-300">
-                    <Star className="w-6 h-6 text-yellow-300 dark:text-yellow-200" />
+                  <div className="w-12 h-12 mx-auto mb-2 bg-yellow-400/20 rounded-full flex items-center justify-center">
+                    <Star className="w-6 h-6 text-yellow-300" />
                   </div>
                   <div className="text-2xl font-bold text-center">{stats.total_points}</div>
                   <div className="text-sm opacity-80 text-center">نقطة إجمالية</div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-white/10 dark:bg-white/5 backdrop-blur border-white/20 dark:border-white/10 text-white transition-colors duration-300">
+              <Card className="bg-white/10 backdrop-blur border-white/20 text-white">
                 <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-                  <div className="w-12 h-12 mx-auto mb-2 bg-green-400/20 dark:bg-green-400/30 rounded-full flex items-center justify-center transition-colors duration-300">
-                    <Trophy className="w-6 h-6 text-green-300 dark:text-green-200" />
+                  <div className="w-12 h-12 mx-auto mb-2 bg-green-400/20 rounded-full flex items-center justify-center">
+                    <Trophy className="w-6 h-6 text-green-300" />
                   </div>
                   <div className="text-2xl font-bold text-center">{stats.achievements_count}</div>
                   <div className="text-sm opacity-80 text-center">إنجاز</div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-white/10 dark:bg-white/5 backdrop-blur border-white/20 dark:border-white/10 text-white transition-colors duration-300">
+              <Card className="bg-white/10 backdrop-blur border-white/20 text-white">
                 <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-                  <div className="w-12 h-12 mx-auto mb-2 bg-blue-400/20 dark:bg-blue-400/30 rounded-full flex items-center justify-center transition-colors duration-300">
-                    <Play className="w-6 h-6 text-blue-300 dark:text-blue-200" />
+                  <div className="w-12 h-12 mx-auto mb-2 bg-blue-400/20 rounded-full flex items-center justify-center">
+                    <Play className="w-6 h-6 text-blue-300" />
                   </div>
                   <div className="text-2xl font-bold text-center">{stats.completed_videos}</div>
                   <div className="text-sm opacity-80 text-center">فيديو مكتمل</div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-white/10 dark:bg-white/5 backdrop-blur border-white/20 dark:border-white/10 text-white transition-colors duration-300">
+              <Card className="bg-white/10 backdrop-blur border-white/20 text-white">
                 <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-                  <div className="w-12 h-12 mx-auto mb-2 bg-orange-400/20 dark:bg-orange-400/30 rounded-full flex items-center justify-center transition-colors duration-300">
-                    <Zap className="w-6 h-6 text-orange-300 dark:text-orange-200" />
+                  <div className="w-12 h-12 mx-auto mb-2 bg-orange-400/20 rounded-full flex items-center justify-center">
+                    <Zap className="w-6 h-6 text-orange-300" />
                   </div>
                   <div className="text-2xl font-bold text-center">{stats.current_streak}</div>
                   <div className="text-sm opacity-80 text-center">يوم متتالي</div>
@@ -156,7 +156,7 @@ const StudentDashboard: React.FC = () => {
             </div>
 
             {/* Overall Progress */}
-            <div className="bg-white/10 dark:bg-white/5 backdrop-blur rounded-xl p-6 mt-8 animate-fade-in-up animation-delay-400 transition-colors duration-300">
+            <div className="bg-white/10 backdrop-blur rounded-xl p-6 mt-8 animate-fade-in-up animation-delay-400">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full flex items-center justify-center">
@@ -185,32 +185,32 @@ const StudentDashboard: React.FC = () => {
       <section className="container mx-auto px-6 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <div className="flex justify-center px-4">
-            <TabsList className={`grid w-full max-w-4xl ${hasGamesTab ? 'grid-cols-5' : 'grid-cols-4'} bg-card/95 dark:bg-slate-800/90 backdrop-blur-sm shadow-xl border border-border/20 dark:border-slate-700/40 rounded-2xl p-2 h-16 transition-colors duration-300`}>
-              <TabsTrigger value="overview" className="flex items-center justify-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground dark:data-[state=active]:bg-primary/90 dark:data-[state=active]:text-primary-foreground dark:text-slate-300 dark:hover:bg-slate-700/50 dark:hover:text-slate-100">
+            <TabsList className={`grid w-full max-w-4xl ${hasGamesTab ? 'grid-cols-5' : 'grid-cols-4'} bg-white/95 backdrop-blur-sm shadow-xl border border-white/20 rounded-2xl p-2 h-16`}>
+              <TabsTrigger value="overview" className="flex items-center justify-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105">
                 <span className="text-center">نظرة عامة</span>
               </TabsTrigger>
-              <TabsTrigger value="content" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground dark:data-[state=active]:bg-primary/90 dark:data-[state=active]:text-primary-foreground dark:text-slate-300 dark:hover:bg-slate-700/50 dark:hover:text-slate-100">
+              <TabsTrigger value="content" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105">
                 <Video className="w-6 h-6" />
                 <span className="hidden sm:inline">المحتوى</span>
               </TabsTrigger>
               {hasGamesTab && (
-                <TabsTrigger value="games" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground dark:data-[state=active]:bg-primary/90 dark:data-[state=active]:text-primary-foreground dark:text-slate-300 dark:hover:bg-slate-700/50 dark:hover:text-slate-100">
+                <TabsTrigger value="games" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105">
                   <Gamepad2 className="w-6 h-6" />
                   <span className="hidden sm:inline">الألعاب</span>
                 </TabsTrigger>
               )}
-              <TabsTrigger value="challenges" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground dark:data-[state=active]:bg-primary/90 dark:data-[state=active]:text-primary-foreground dark:text-slate-300 dark:hover:bg-slate-700/50 dark:hover:text-slate-100">
+              <TabsTrigger value="challenges" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105">
                 <Target className="w-6 h-6" />
                 <span className="hidden sm:inline">التحديات</span>
               </TabsTrigger>
-              <TabsTrigger value="profile" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground dark:data-[state=active]:bg-primary/90 dark:data-[state=active]:text-primary-foreground dark:text-slate-300 dark:hover:bg-slate-700/50 dark:hover:text-slate-100">
+              <TabsTrigger value="profile" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105">
                 <Award className="w-6 h-6" />
                 <span className="hidden sm:inline">الملف الشخصي</span>
               </TabsTrigger>
             </TabsList>
           </div>
 
-          <TabsContent value="overview" className="space-y-6 animate-fade-in">
+          <TabsContent value="overview" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Stats Section */}
               <div className="lg:col-span-2">
@@ -219,7 +219,7 @@ const StudentDashboard: React.FC = () => {
 
               {/* Quick Actions */}
               <div className="space-y-4">
-                <Card className="bg-gradient-to-br from-primary to-secondary dark:from-primary dark:to-secondary text-white transition-colors duration-300">
+                <Card className="bg-gradient-to-br from-purple-500 to-pink-500 text-white">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Rocket className="w-5 h-5" />
@@ -229,7 +229,7 @@ const StudentDashboard: React.FC = () => {
                   <CardContent className="space-y-3">
                     <Button 
                       variant="secondary" 
-                      className="w-full justify-start bg-white/20 hover:bg-white/30 dark:bg-white/10 dark:hover:bg-white/20 text-white border-white/20 dark:border-white/10 transition-colors duration-300"
+                      className="w-full justify-start bg-white/20 hover:bg-white/30 text-white border-white/20"
                       onClick={() => setActiveTab('content')}
                     >
                       <Play className="w-4 h-4 mr-2" />
@@ -238,7 +238,7 @@ const StudentDashboard: React.FC = () => {
                     {hasGamesTab && (
                       <Button 
                         variant="secondary" 
-                        className="w-full justify-start bg-white/20 hover:bg-white/30 dark:bg-white/10 dark:hover:bg-white/20 text-white border-white/20 dark:border-white/10 transition-colors duration-300"
+                        className="w-full justify-start bg-white/20 hover:bg-white/30 text-white border-white/20"
                         onClick={() => setActiveTab('games')}
                       >
                         <Gamepad2 className="w-4 h-4 mr-2" />
@@ -247,7 +247,7 @@ const StudentDashboard: React.FC = () => {
                     )}
                     <Button 
                       variant="secondary" 
-                      className="w-full justify-start bg-white/20 hover:bg-white/30 dark:bg-white/10 dark:hover:bg-white/20 text-white border-white/20 dark:border-white/10 transition-colors duration-300"
+                      className="w-full justify-start bg-white/20 hover:bg-white/30 text-white border-white/20"
                       onClick={() => setActiveTab('challenges')}
                     >
                       <Target className="w-4 h-4 mr-2" />
@@ -260,15 +260,15 @@ const StudentDashboard: React.FC = () => {
                 <StudentNotifications />
 
                 {/* Assigned Grade Info */}
-                <Card className="bg-card dark:bg-card border-border dark:border-border transition-colors duration-300">
+                <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-foreground dark:text-foreground">
+                    <CardTitle className="flex items-center gap-2">
                       <FolderOpen className="w-5 h-5" />
                       صفك الدراسي
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    <div className="text-center p-4 bg-gradient-to-r from-primary to-secondary dark:from-primary dark:to-secondary text-white rounded-lg transition-colors duration-300">
+                    <div className="text-center p-4 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg">
                       <h3 className="text-xl font-bold">الصف {assignedGrade}</h3>
                       <p className="text-sm opacity-90">صفك المخصص</p>
                     </div>
