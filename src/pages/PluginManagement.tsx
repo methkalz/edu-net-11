@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Settings, Gamepad2, ClipboardCheck, Tag, FileCheck, Presentation } from 'lucide-react';
+import { ArrowLeft, Settings, Gamepad2, ClipboardCheck, Tag, FileCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -36,8 +36,7 @@ const iconMap = {
   Gamepad2,
   ClipboardCheck,
   Tag,
-  Settings,
-  Presentation
+  Settings
 };
 
 const statusMap = {
