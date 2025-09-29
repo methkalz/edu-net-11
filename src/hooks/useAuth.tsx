@@ -163,7 +163,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             try {
               const { data: profile } = await supabase
                 .from('profiles')
-                .select('*, schools(name, plan)')
+                .select(`
+                  *,
+                  schools(name, plan)
+                `)
                 .eq('user_id', session.user.id)
                 .single();
               setUserProfile(profile as UserProfile);
@@ -540,7 +543,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider value={{ 
       user: effectiveUser as User, 
       session, 
-      userProfile: effectiveUserProfile, 
+      userProfile: effectiveUserProfile as any, 
       loading: loading || isSigningOut, 
       signIn, 
       signOut,

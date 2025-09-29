@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { useDisplaySettings, FontSize } from '@/hooks/useDisplaySettings';
+import { useAuth } from '@/hooks/useAuth';
 
 interface QuickSettingsProps {
   onProfileClick?: () => void;
@@ -16,7 +17,8 @@ export const QuickSettings: React.FC<QuickSettingsProps> = ({
   onLogout,
   className
 }) => {
-  const { fontSize, theme, updateFontSize, toggleTheme, setTheme } = useDisplaySettings();
+  const { user } = useAuth();
+  const { fontSize, theme, updateFontSize, toggleTheme, setTheme } = useDisplaySettings(user?.id);
 
   const fontSizes: { value: FontSize; label: string }[] = [
     { value: 'small', label: 'صغير' },
@@ -29,142 +31,102 @@ export const QuickSettings: React.FC<QuickSettingsProps> = ({
     return fontSizes.find(f => f.value === fontSize)?.label || 'متوسط';
   };
 
-  const getThemeIcon = () => {
-    if (theme === 'dark') return Moon;
-    if (theme === 'light') return Sun;
-    return Monitor;
-  };
-
-  const getThemeLabel = () => {
-    if (theme === 'dark') return 'ليلي';
-    if (theme === 'light') return 'نهاري';
-    return 'تلقائي';
-  };
-
-  const ThemeIcon = getThemeIcon();
-
   return (
-    <div className={cn("flex items-center gap-2", className)}>
-      {/* Profile Settings */}
-      {onProfileClick && (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
         <Button
-          variant="ghost"
-          size="sm"
-          onClick={onProfileClick}
-          className="opacity-70 hover:opacity-100 transition-opacity"
-          title="ملف الشخصي"
+          variant="outline"
+          size="icon"
+          className={cn(
+            "h-8 w-8 rounded-full border-2 border-border/40 bg-background/80 backdrop-blur-sm hover:bg-background/90 hover:border-border/60 dark:bg-slate-900/80 dark:hover:bg-slate-900/90 dark:border-slate-700/40 dark:hover:border-slate-600/60 transition-all duration-300",
+            className
+          )}
         >
-          <User className="h-4 w-4" />
+          <Settings className="h-4 w-4 text-foreground/70 dark:text-slate-300" />
         </Button>
-      )}
-
-      {/* Settings Dropdown */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="opacity-70 hover:opacity-100 transition-opacity"
-            title="الإعدادات"
+      </DropdownMenuTrigger>
+      <DropdownMenuContent 
+        align="end" 
+        className="w-56 bg-background/95 dark:bg-slate-900/95 backdrop-blur-sm border-border/40 dark:border-slate-700/40 shadow-lg transition-colors duration-300"
+      >
+        <DropdownMenuLabel className="text-foreground/80 dark:text-slate-200">الإعدادات</DropdownMenuLabel>
+        <DropdownMenuSeparator className="bg-border/40 dark:bg-slate-700/40" />
+        
+        {/* Theme Selection */}
+        <DropdownMenuLabel className="text-sm text-muted-foreground dark:text-slate-400">الوضع</DropdownMenuLabel>
+        <div className="flex flex-col space-y-1 px-2 py-1">
+          <DropdownMenuItem 
+            className="flex items-center justify-between hover:bg-background/80 dark:hover:bg-slate-800/80 text-foreground dark:text-slate-200 transition-colors duration-300" 
+            onClick={() => setTheme('light')}
           >
-            <Settings className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent 
-          align="end" 
-          className="w-48 bg-background/95 backdrop-blur-lg border border-border/50 shadow-xl rounded-xl p-1"
-          style={{ zIndex: 50 }}
-        >
-          {/* Theme Section */}
-          <div className="p-2">
-            <p className="text-xs font-medium text-muted-foreground mb-2 px-2">الوضع المرئي</p>
-            <div className="space-y-1">
-              <DropdownMenuItem 
-                onClick={() => setTheme('light')}
-                className={cn(
-                  "flex items-center justify-between cursor-pointer rounded-lg px-3 py-2 transition-all duration-200",
-                  "hover:bg-accent/50 focus:bg-accent/50",
-                  theme === 'light' && "bg-primary/10 text-primary border border-primary/20"
-                )}
-              >
-                <div className="flex items-center gap-3">
-                  <Sun className="h-4 w-4" />
-                  <span className="text-sm">نهاري</span>
-                </div>
-                {theme === 'light' && <div className="w-2 h-2 bg-primary rounded-full" />}
-              </DropdownMenuItem>
-              
-              <DropdownMenuItem 
-                onClick={() => setTheme('dark')}
-                className={cn(
-                  "flex items-center justify-between cursor-pointer rounded-lg px-3 py-2 transition-all duration-200",
-                  "hover:bg-accent/50 focus:bg-accent/50",
-                  theme === 'dark' && "bg-primary/10 text-primary border border-primary/20"
-                )}
-              >
-                <div className="flex items-center gap-3">
-                  <Moon className="h-4 w-4" />
-                  <span className="text-sm">ليلي</span>
-                </div>
-                {theme === 'dark' && <div className="w-2 h-2 bg-primary rounded-full" />}
-              </DropdownMenuItem>
-              
-              <DropdownMenuItem 
-                onClick={() => setTheme('system')}
-                className={cn(
-                  "flex items-center justify-between cursor-pointer rounded-lg px-3 py-2 transition-all duration-200",
-                  "hover:bg-accent/50 focus:bg-accent/50",
-                  theme === 'system' && "bg-primary/10 text-primary border border-primary/20"
-                )}
-              >
-                <div className="flex items-center gap-3">
-                  <Monitor className="h-4 w-4" />
-                  <span className="text-sm">تلقائي</span>
-                </div>
-                {theme === 'system' && <div className="w-2 h-2 bg-primary rounded-full" />}
-              </DropdownMenuItem>
+            <div className="flex items-center gap-2">
+              <Sun className="h-4 w-4" />
+              <span>فاتح</span>
             </div>
-          </div>
-
-          {/* Separator */}
-          <div className="h-px bg-border/30 mx-2 my-2" />
-          
-          {/* Font Size Section */}
-          <div className="p-2">
-            <p className="text-xs font-medium text-muted-foreground mb-2 px-2">حجم الخط</p>
-            <div className="space-y-1">
-              {fontSizes.map((size) => (
-                <DropdownMenuItem
-                  key={size.value}
-                  onClick={() => updateFontSize(size.value)}
-                  className={cn(
-                    "flex items-center justify-between cursor-pointer rounded-lg px-3 py-2 transition-all duration-200",
-                    "hover:bg-accent/50 focus:bg-accent/50",
-                    fontSize === size.value && "bg-primary/10 text-primary border border-primary/20"
-                  )}
-                >
-                  <span className="text-sm">{size.label}</span>
-                  {fontSize === size.value && <div className="w-2 h-2 bg-primary rounded-full" />}
-                </DropdownMenuItem>
-              ))}
+            {theme === 'light' && <div className="w-2 h-2 bg-primary rounded-full" />}
+          </DropdownMenuItem>
+          <DropdownMenuItem 
+            className="flex items-center justify-between hover:bg-background/80 dark:hover:bg-slate-800/80 text-foreground dark:text-slate-200 transition-colors duration-300" 
+            onClick={() => setTheme('dark')}
+          >
+            <div className="flex items-center gap-2">
+              <Moon className="h-4 w-4" />
+              <span>داكن</span>
             </div>
-          </div>
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      {/* Logout */}
-      {onLogout && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onLogout}
-          className="text-destructive/80 hover:text-destructive hover:bg-destructive/5 transition-colors"
-          title="تسجيل الخروج"
-        >
-          <LogOut className="h-4 w-4" />
-          <span className="hidden md:inline mr-2">خروج</span>
-        </Button>
-      )}
-    </div>
+            {theme === 'dark' && <div className="w-2 h-2 bg-primary rounded-full" />}
+          </DropdownMenuItem>
+          <DropdownMenuItem 
+            className="flex items-center justify-between hover:bg-background/80 dark:hover:bg-slate-800/80 text-foreground dark:text-slate-200 transition-colors duration-300" 
+            onClick={() => setTheme('system')}
+          >
+            <div className="flex items-center gap-2">
+              <Monitor className="h-4 w-4" />
+              <span>النظام</span>
+            </div>
+            {theme === 'system' && <div className="w-2 h-2 bg-primary rounded-full" />}
+          </DropdownMenuItem>
+        </div>
+        
+        <DropdownMenuSeparator className="bg-border/40 dark:bg-slate-700/40" />
+        
+        {/* Font Size Selection */}
+        <DropdownMenuLabel className="text-sm text-muted-foreground dark:text-slate-400">حجم الخط</DropdownMenuLabel>
+        <div className="flex flex-col space-y-1 px-2 py-1">
+          {fontSizes.map((size) => (
+            <DropdownMenuItem 
+              key={size.value}
+              className="flex items-center justify-between hover:bg-background/80 dark:hover:bg-slate-800/80 text-foreground dark:text-slate-200 transition-colors duration-300" 
+              onClick={() => updateFontSize(size.value)}
+            >
+              <span>{size.label}</span>
+              {fontSize === size.value && <div className="w-2 h-2 bg-primary rounded-full" />}
+            </DropdownMenuItem>
+          ))}
+        </div>
+        
+        <DropdownMenuSeparator className="bg-border/40 dark:bg-slate-700/40" />
+        
+        {/* Action Buttons */}
+        {onProfileClick && (
+          <DropdownMenuItem 
+            className="hover:bg-background/80 dark:hover:bg-slate-800/80 text-foreground dark:text-slate-200 transition-colors duration-300" 
+            onClick={onProfileClick}
+          >
+            <User className="mr-2 h-4 w-4" />
+            <span>البروفيل</span>
+          </DropdownMenuItem>
+        )}
+        
+        {onLogout && (
+          <DropdownMenuItem 
+            className="hover:bg-destructive/10 dark:hover:bg-red-900/20 text-destructive dark:text-red-400 transition-colors duration-300" 
+            onClick={onLogout}
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            <span>تسجيل الخروج</span>
+          </DropdownMenuItem>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
