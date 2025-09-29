@@ -1,10 +1,11 @@
 import React from 'react';
-import { Settings, Moon, Sun, User, LogOut, Type, ChevronLeft } from 'lucide-react';
+import { Settings, Moon, Sun, User, LogOut, Type, ChevronLeft, Contrast } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { useFontSize, FontSize } from '@/hooks/useFontSize';
+import { useHighContrast } from '@/hooks/useHighContrast';
 
 interface QuickSettingsProps {
   onSettingsClick?: () => void;
@@ -66,6 +67,10 @@ export const QuickSettings: React.FC<QuickSettingsProps> = ({
           </PopoverTrigger>
           <PopoverContent className="w-64 p-4" align="end">
             <FontSizeSettings />
+            
+            <Separator className="my-3" />
+            
+            <HighContrastSettings />
           </PopoverContent>
         </Popover>
       )}
@@ -147,6 +152,31 @@ const FontSizeSettings: React.FC = () => {
           title="تكبير النص"
         >
           <span className="text-lg">A+</span>
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+// High Contrast Settings Component
+const HighContrastSettings: React.FC = () => {
+  const { highContrast, toggleHighContrast } = useHighContrast();
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+          <Contrast className="h-4 w-4" />
+          <span>التباين العالي</span>
+        </div>
+        
+        <Button
+          variant={highContrast ? "default" : "outline"}
+          size="sm"
+          onClick={toggleHighContrast}
+          className="h-8 px-3"
+        >
+          {highContrast ? 'مفعّل' : 'معطّل'}
         </Button>
       </div>
     </div>
