@@ -19,8 +19,8 @@ const EducationalContent: React.FC = () => {
           subtitle: 'مراجعة وإشراف',
           description: 'اطلع على المضامين التعليمية المتاحة للصفوف وراجع المحتوى التعليمي',
           icon: BookMarked,
-          iconColor: 'text-blue-600',
-          bgColor: 'bg-blue-100'
+          bgClass: 'stat-videos-bg',
+          iconColor: 'text-stat-videos'
         };
       case 'teacher':
         return {
@@ -28,8 +28,8 @@ const EducationalContent: React.FC = () => {
           subtitle: 'للمعلمين',
           description: 'اطلع على المضامين التعليمية لصفوفك وأنشئ مخططات دروسك',
           icon: BookOpen,
-          iconColor: 'text-green-600',
-          bgColor: 'bg-green-100'
+          bgClass: 'stat-progress-bg',
+          iconColor: 'text-stat-progress'
         };
       case 'student':
         return {
@@ -37,8 +37,8 @@ const EducationalContent: React.FC = () => {
           subtitle: 'للطلاب',
           description: 'اطلع على المواد التعليمية لصفك وتابع تقدمك الدراسي',
           icon: Video,
-          iconColor: 'text-purple-600',
-          bgColor: 'bg-purple-100'
+          bgClass: 'stat-achievements-bg',
+          iconColor: 'text-stat-achievements'
         };
       default:
         return {
@@ -46,8 +46,8 @@ const EducationalContent: React.FC = () => {
           subtitle: 'مشاهدة',
           description: 'اطلع على المضامين التعليمية المتاحة',
           icon: Eye,
-          iconColor: 'text-gray-600',
-          bgColor: 'bg-gray-100'
+          bgClass: 'glass-surface',
+          iconColor: 'text-foreground-secondary'
         };
     }
   };
@@ -66,27 +66,27 @@ const EducationalContent: React.FC = () => {
       <main className="container mx-auto px-6 py-8 flex-1">
         <div className="max-w-7xl mx-auto space-y-8">
           <div className="text-center space-y-4">
-            <div className={`inline-flex items-center gap-3 ${config.bgColor} ${config.iconColor} px-6 py-3 rounded-full`}>
+            <div className={`inline-flex items-center gap-3 ${config.bgClass} ${config.iconColor} px-6 py-3 rounded-full border border-border/30 shadow-sm`}>
               <config.icon className="h-6 w-6" />
-              <span className="font-semibold">{config.subtitle}</span>
+              <span className="font-semibold text-foreground">{config.subtitle}</span>
             </div>
             <h2 className="text-4xl font-bold text-foreground text-center">
               {config.title}
             </h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+            <p className="text-xl text-foreground-secondary max-w-3xl mx-auto leading-relaxed">
               {config.description}
             </p>
             
             {/* مؤشر مستوى الوصول */}
             <div className="flex justify-center mt-6">
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-muted rounded-full text-sm">
+              <div className="inline-flex items-center gap-2 px-4 py-2 glass-surface rounded-full text-sm border border-border/30">
                 <div className={`w-2 h-2 rounded-full ${
-                  accessLevel === 'MANAGE' ? 'bg-green-500' :
-                  accessLevel === 'REVIEW' ? 'bg-blue-500' :
-                  accessLevel === 'CUSTOM' ? 'bg-yellow-500' :
-                  'bg-gray-500'
+                  accessLevel === 'MANAGE' ? 'bg-stat-progress' :
+                  accessLevel === 'REVIEW' ? 'bg-stat-videos' :
+                  accessLevel === 'CUSTOM' ? 'bg-stat-points' :
+                  'bg-foreground-muted'
                 }`}></div>
-                <span className="text-muted-foreground">
+                <span className="text-foreground-secondary">
                   {accessLevel === 'MANAGE' ? 'صلاحيات إدارية كاملة' :
                    accessLevel === 'REVIEW' ? 'صلاحيات مراجعة وإشراف' :
                    accessLevel === 'CUSTOM' ? 'صلاحيات مخصصة للمعلم' :

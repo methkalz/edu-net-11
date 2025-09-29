@@ -14,32 +14,20 @@ interface Grade11TopicCardProps {
 const Grade11TopicCard: React.FC<Grade11TopicCardProps> = ({ topic, onViewDetails }) => {
   const totalMedia = topic.lessons.reduce((sum, lesson) => sum + (lesson.media?.length || 0), 0);
   
-  const getGradientColor = (index: number) => {
-    const gradients = [
-      'from-blue-50 to-blue-100',
-      'from-green-50 to-green-100', 
-      'from-purple-50 to-purple-100',
-      'from-orange-50 to-orange-100',
-      'from-pink-50 to-pink-100',
-      'from-indigo-50 to-indigo-100'
+  const getCardClass = (index: number) => {
+    const classes = [
+      'stat-videos-bg',
+      'stat-progress-bg',
+      'stat-achievements-bg',
+      'stat-projects-bg',
+      'stat-points-bg',
+      'glass-surface'
     ];
-    return gradients[index % gradients.length];
-  };
-
-  const getBorderColor = (index: number) => {
-    const colors = [
-      'border-blue-200',
-      'border-green-200',
-      'border-purple-200', 
-      'border-orange-200',
-      'border-pink-200',
-      'border-indigo-200'
-    ];
-    return colors[index % colors.length];
+    return classes[index % classes.length];
   };
 
   return (
-    <Card className={`group hover:scale-105 transition-all duration-300 hover:shadow-lg cursor-pointer bg-gradient-to-br ${getGradientColor(topic.order_index)} ${getBorderColor(topic.order_index)} border-2`}>
+    <Card className={`group hover:scale-105 transition-all duration-300 hover:shadow-xl cursor-pointer ${getCardClass(topic.order_index)} border border-border/40 shadow-md`}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex-1">
@@ -47,7 +35,7 @@ const Grade11TopicCard: React.FC<Grade11TopicCardProps> = ({ topic, onViewDetail
               {topic.title}
             </CardTitle>
             {topic.content && (
-              <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
+              <p className="text-sm text-foreground-secondary line-clamp-3 leading-relaxed">
                 {topic.content}
               </p>
             )}
@@ -59,7 +47,7 @@ const Grade11TopicCard: React.FC<Grade11TopicCardProps> = ({ topic, onViewDetail
             }}
             variant="ghost"
             size="sm"
-            className="opacity-0 group-hover:opacity-100 transition-opacity ml-2 hover:bg-white/80"
+            className="opacity-0 group-hover:opacity-100 transition-opacity ml-2 hover:bg-card"
           >
             <Eye className="h-4 w-4" />
           </Button>
@@ -70,31 +58,31 @@ const Grade11TopicCard: React.FC<Grade11TopicCardProps> = ({ topic, onViewDetail
         <div className="space-y-3">
           {/* Statistics */}
           <div className="flex items-center gap-3 text-sm">
-            <div className="flex items-center gap-1 text-blue-600">
+            <div className="flex items-center gap-1 text-stat-videos">
               <BookOpen className="h-4 w-4" />
               <span className="font-medium">{topic.lessons.length}</span>
-              <span className="text-muted-foreground">درس</span>
+              <span className="text-foreground-secondary">درس</span>
             </div>
             
             {totalMedia > 0 && (
-              <div className="flex items-center gap-1 text-purple-600">
+              <div className="flex items-center gap-1 text-stat-achievements">
                 <Play className="h-4 w-4" />
                 <span className="font-medium">{totalMedia}</span>
-                <span className="text-muted-foreground">وسائط</span>
+                <span className="text-foreground-secondary">وسائط</span>
               </div>
             )}
           </div>
 
           {/* Date and Status */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1 text-xs text-foreground-secondary">
               <Calendar className="h-3 w-3" />
               <span>{format(new Date(topic.created_at), 'dd/MM/yyyy')}</span>
             </div>
             
             <Badge 
               variant="secondary" 
-              className="bg-white/60 text-foreground text-xs"
+              className="glass-surface text-foreground text-xs border border-border/30"
             >
               {topic.lessons.length === 0 ? 'فارغ' : 'متاح'}
             </Badge>
@@ -102,8 +90,8 @@ const Grade11TopicCard: React.FC<Grade11TopicCardProps> = ({ topic, onViewDetail
 
           {/* Preview of lessons */}
           {topic.lessons.length > 0 && (
-            <div className="pt-2 border-t border-white/40">
-              <div className="text-xs text-muted-foreground">
+            <div className="pt-2 border-t border-border/30">
+              <div className="text-xs text-foreground-secondary">
                 <span className="font-medium">آخر درس:</span> {topic.lessons[topic.lessons.length - 1]?.title}
               </div>
             </div>
