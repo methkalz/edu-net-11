@@ -1,5 +1,5 @@
 import React from 'react';
-import { Settings, Moon, Sun, User, LogOut, Type, ChevronLeft, Contrast, Eye } from 'lucide-react';
+import { Settings, Moon, Sun, User, LogOut, Type, ChevronLeft, Contrast, Eye, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { useFontSize, FontSize } from '@/hooks/useFontSize';
 import { useHighContrast } from '@/hooks/useHighContrast';
 import { useFocusMode } from '@/hooks/useFocusMode';
+import { useReduceMotion } from '@/hooks/useReduceMotion';
 
 interface QuickSettingsProps {
   onSettingsClick?: () => void;
@@ -76,6 +77,10 @@ export const QuickSettings: React.FC<QuickSettingsProps> = ({
             <Separator className="my-3" />
             
             <FocusModeSettings />
+            
+            <Separator className="my-3" />
+            
+            <ReduceMotionSettings />
           </PopoverContent>
         </Popover>
       )}
@@ -211,6 +216,34 @@ const FocusModeSettings: React.FC = () => {
       </div>
       <p className="text-xs text-muted-foreground">
         تقليل التشتت البصري للتركيز
+      </p>
+    </div>
+  );
+};
+
+// Reduce Motion Settings Component
+const ReduceMotionSettings: React.FC = () => {
+  const { reduceMotion, toggleReduceMotion } = useReduceMotion();
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+          <Zap className="h-4 w-4" />
+          <span>تقليل الحركة</span>
+        </div>
+        
+        <Button
+          variant={reduceMotion ? "default" : "outline"}
+          size="sm"
+          onClick={toggleReduceMotion}
+          className="h-8 px-3"
+        >
+          {reduceMotion ? 'مفعّل' : 'معطّل'}
+        </Button>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        إيقاف الحركات والتأثيرات المتحركة
       </p>
     </div>
   );
