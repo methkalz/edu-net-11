@@ -360,6 +360,112 @@ All colors MUST be HSL.
     transition: all 0.3s ease;
   }
 
+  .glass-surface {
+    background-color: hsl(var(--card) / 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid hsl(var(--border) / 0.5);
+  }
+
+  .glass-surface-elevated {
+    background-color: hsl(var(--surface-elevated) / 0.5);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid hsl(var(--border) / 0.3);
+  }
+
+  /* ===== خلفيات صفحات ذكية ===== */
+  .gradient-bg-page {
+    background: linear-gradient(135deg, 
+      hsl(var(--background)), 
+      hsl(var(--surface-elevated)), 
+      hsl(var(--background))
+    );
+  }
+
+  .gradient-hero {
+    background: linear-gradient(135deg,
+      hsl(var(--primary) / 0.9),
+      hsl(var(--secondary) / 0.85),
+      hsl(var(--primary) / 0.9)
+    );
+  }
+
+  /* ===== خلفيات الإحصائيات - تتكيف تلقائياً ===== */
+  .stat-points-bg {
+    background: linear-gradient(135deg, 
+      hsl(var(--stat-points) / 0.15), 
+      hsl(var(--stat-points) / 0.05)
+    );
+  }
+
+  .stat-progress-bg {
+    background: linear-gradient(135deg, 
+      hsl(var(--stat-progress) / 0.15), 
+      hsl(var(--stat-progress) / 0.05)
+    );
+  }
+
+  .stat-videos-bg {
+    background: linear-gradient(135deg, 
+      hsl(var(--stat-videos) / 0.15), 
+      hsl(var(--stat-videos) / 0.05)
+    );
+  }
+
+  .stat-projects-bg {
+    background: linear-gradient(135deg, 
+      hsl(var(--stat-projects) / 0.15), 
+      hsl(var(--stat-projects) / 0.05)
+    );
+  }
+
+  .stat-achievements-bg {
+    background: linear-gradient(135deg, 
+      hsl(var(--stat-achievements) / 0.15), 
+      hsl(var(--stat-achievements) / 0.05)
+    );
+  }
+
+  /* ===== Tabs محسّنة ===== */
+  .tabs-elevated {
+    background: hsl(var(--card) / 0.95);
+    backdrop-filter: blur(8px);
+    border: 1px solid hsl(var(--border) / 0.2);
+    box-shadow: 0 4px 12px hsl(var(--foreground) / 0.08);
+  }
+
+  /* ===== شاشات التحميل ===== */
+  .loading-screen {
+    background: linear-gradient(135deg,
+      hsl(var(--background)),
+      hsl(var(--surface-elevated))
+    );
+  }
+
+  /* ===== Badges ذكية ===== */
+  .badge-success {
+    background: hsl(var(--stat-progress) / 0.2);
+    color: hsl(var(--stat-progress));
+    border: 1px solid hsl(var(--stat-progress) / 0.3);
+  }
+
+  .badge-info {
+    background: hsl(var(--stat-videos) / 0.2);
+    color: hsl(var(--stat-videos));
+    border: 1px solid hsl(var(--stat-videos) / 0.3);
+  }
+
+  /* ===== نصوص على Gradients ===== */
+  .text-on-gradient {
+    color: hsl(var(--primary-foreground));
+    text-shadow: 0 2px 4px hsl(var(--foreground) / 0.2);
+  }
+
+  .text-contrast {
+    color: hsl(var(--foreground));
+  }
+
   /* تلوينات خفيفة للبطاقات */
   .card-tint-blue {
     background: linear-gradient(180deg, hsl(210 80% 65% / 0.12), transparent);
