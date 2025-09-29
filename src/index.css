@@ -8,6 +8,9 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
+    /* Font Scaling */
+    --font-scale: 1;
+    
     /* Ultra Light Elegant Palette */
     --background: 220 25% 98%;
     --foreground: 215 20% 15%;
@@ -221,6 +224,11 @@ All colors MUST be HSL.
 @layer base {
   * {
     @apply border-border;
+  }
+
+  html {
+    font-size: calc(16px * var(--font-scale));
+    transition: font-size 0.2s ease;
   }
 
   body {

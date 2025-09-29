@@ -1,7 +1,10 @@
 import React from 'react';
-import { Settings, Moon, Sun, User, LogOut } from 'lucide-react';
+import { Settings, Moon, Sun, User, LogOut, Type, ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+import { useFontSize, FontSize } from '@/hooks/useFontSize';
 
 interface QuickSettingsProps {
   onSettingsClick?: () => void;
@@ -48,17 +51,35 @@ export const QuickSettings: React.FC<QuickSettingsProps> = ({
         </Button>
       )}
 
-      {/* General Settings */}
+      {/* Settings Popover */}
       {onSettingsClick && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onSettingsClick}
-          className="opacity-70 hover:opacity-100 transition-opacity"
-          title="الإعدادات"
-        >
-          <Settings className="h-4 w-4" />
-        </Button>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="opacity-70 hover:opacity-100 transition-opacity"
+              title="الإعدادات"
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-64 p-4" align="end">
+            <FontSizeSettings />
+            
+            <Separator className="my-3" />
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onSettingsClick}
+              className="w-full justify-between hover:bg-accent"
+            >
+              <span>الإعدادات الكاملة</span>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+          </PopoverContent>
+        </Popover>
       )}
 
       {/* Logout */}
@@ -74,6 +95,39 @@ export const QuickSettings: React.FC<QuickSettingsProps> = ({
           <span className="hidden md:inline mr-2">خروج</span>
         </Button>
       )}
+    </div>
+  );
+};
+
+// Font Size Settings Component
+const FontSizeSettings: React.FC = () => {
+  const { fontSize, setFontSize, fontSizeConfig } = useFontSize();
+  
+  const fontSizes: FontSize[] = ['small', 'normal', 'large', 'xlarge'];
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+        <Type className="h-4 w-4" />
+        <span>حجم النص</span>
+      </div>
+      
+      <div className="grid grid-cols-2 gap-2">
+        {fontSizes.map((size) => (
+          <Button
+            key={size}
+            variant={fontSize === size ? "default" : "outline"}
+            size="sm"
+            onClick={() => setFontSize(size)}
+            className={cn(
+              "text-xs transition-all",
+              fontSize === size && "ring-2 ring-primary ring-offset-2"
+            )}
+          >
+            {fontSizeConfig[size].label}
+          </Button>
+        ))}
+      </div>
     </div>
   );
 };
