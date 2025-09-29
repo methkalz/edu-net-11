@@ -26,8 +26,8 @@
 import type { Config } from "tailwindcss";
 
 export default {
-	// Dark mode strategy - uses class-based toggling
-	darkMode: ["class"],
+	// Dark mode strategy - supports both class and data-attribute
+	darkMode: ["class", '[data-theme="dark"]'],
 	
 	// Content paths for Tailwind to scan for classes
 	content: [
@@ -123,6 +123,15 @@ export default {
 				},
 				gold: {
 					premium: 'hsl(var(--gold-premium))'
+				},
+
+				// Stats colors
+				stat: {
+					points: 'hsl(var(--stat-points) / <alpha-value>)',
+					progress: 'hsl(var(--stat-progress) / <alpha-value>)',
+					videos: 'hsl(var(--stat-videos) / <alpha-value>)',
+					projects: 'hsl(var(--stat-projects) / <alpha-value>)',
+					achievements: 'hsl(var(--stat-achievements) / <alpha-value>)'
 				},
 				
 				// System utility colors
