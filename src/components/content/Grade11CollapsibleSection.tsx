@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Grade11SectionWithTopics, Grade11TopicWithLessons, Grade11LessonWithMedia, Grade11Section, Grade11Topic, Grade11Lesson } from '@/hooks/useGrade11Content';
+import { Grade11SectionWithTopics, Grade11TopicWithLessons, Grade11LessonWithMedia, Grade11Section, Grade11Topic, Grade11Lesson, Grade11LessonMedia } from '@/hooks/useGrade11Content';
 import Grade11CollapsibleTopic from './Grade11CollapsibleTopic';
 
 interface Grade11CollapsibleSectionProps {
@@ -21,6 +21,7 @@ interface Grade11CollapsibleSectionProps {
   onDeleteLesson: (id: string) => void;
   onReorderTopics: (sectionId: string, newTopics: Grade11TopicWithLessons[]) => void;
   onReorderLessons: (topicId: string, newLessons: Grade11LessonWithMedia[]) => void;
+  onUpdateMedia?: (mediaId: string, updates: Partial<Grade11LessonMedia>) => Promise<void>;
   onDragStart: (e: React.DragEvent, index: number) => void;
   onDragOver: (e: React.DragEvent) => void;
   onDrop: (e: React.DragEvent, targetIndex: number) => void;
@@ -40,6 +41,7 @@ const Grade11CollapsibleSection: React.FC<Grade11CollapsibleSectionProps> = ({
   onDeleteLesson,
   onReorderTopics,
   onReorderLessons,
+  onUpdateMedia,
   onDragStart,
   onDragOver,
   onDrop,
@@ -196,6 +198,7 @@ const Grade11CollapsibleSection: React.FC<Grade11CollapsibleSectionProps> = ({
                     onEditLesson={onEditLesson}
                     onDeleteLesson={onDeleteLesson}
                     onReorderLessons={onReorderLessons}
+                    onUpdateMedia={onUpdateMedia}
                     onDragStart={handleTopicDragStart}
                     onDragOver={handleTopicDragOver}
                     onDrop={handleTopicDrop}

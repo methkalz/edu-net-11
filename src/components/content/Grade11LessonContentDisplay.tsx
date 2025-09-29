@@ -21,13 +21,15 @@ interface Grade11LessonContentDisplayProps {
   defaultExpanded?: boolean;
   showControls?: boolean;
   hideTitle?: boolean; // New prop to hide lesson title only
+  onUpdateMedia?: (mediaId: string, updates: Partial<Grade11LessonMedia>) => Promise<void>;
 }
 
 const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = ({
   lesson,
   defaultExpanded = false,
   showControls = true,
-  hideTitle = false
+  hideTitle = false,
+  onUpdateMedia
 }) => {
   const { userProfile } = useAuth();
   const { updateLottieMedia } = useEditLottieMedia();
@@ -40,10 +42,16 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
     if (!editingLottie) return;
     
     try {
+      // Use the hook's updateLottieMedia which handles DB update
       await updateLottieMedia({
         mediaId: editingLottie.id,
         updates
       });
+      
+      // Then call the parent's onUpdateMedia to refresh the UI
+      if (onUpdateMedia) {
+        await onUpdateMedia(editingLottie.id, updates);
+      }
       
       setEditingLottie(null);
     } catch (error) {

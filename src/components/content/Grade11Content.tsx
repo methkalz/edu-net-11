@@ -426,6 +426,7 @@ const Grade11Content = () => {
                   onDeleteLesson={handleDeleteLesson}
                   onReorderTopics={reorderTopics}
                   onReorderLessons={reorderLessons}
+                  onUpdateMedia={updateLessonMedia}
                   onDragStart={handleSectionDragStart}
                   onDragOver={handleSectionDragOver}
                   onDrop={handleSectionDrop}

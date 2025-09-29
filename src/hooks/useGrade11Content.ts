@@ -390,14 +390,14 @@ export const useGrade11Content = () => {
 
   const updateLessonMedia = async (mediaId: string, updates: Partial<Grade11LessonMedia>) => {
     try {
-      console.log('Updating lesson media and refreshing sections...');
+      console.log('Refreshing sections after media update:', mediaId);
       
-      // After database update, refresh all sections to get updated data
+      // تحديث البيانات المحلية فقط (التحديث في قاعدة البيانات يتم في الـ hooks)
       await fetchSections();
       
-      console.log('Sections refreshed after media update');
+      console.log('Sections refreshed successfully');
     } catch (error) {
-      logger.error('Error updating lesson media', error as Error);
+      logger.error('Error refreshing sections after media update', error as Error);
       throw error;
     }
   };

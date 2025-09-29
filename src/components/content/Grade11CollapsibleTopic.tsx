@@ -5,7 +5,7 @@ import LessonPreviewModal from './LessonPreviewModal';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Grade11TopicWithLessons, Grade11LessonWithMedia, Grade11Topic, Grade11Lesson } from '@/hooks/useGrade11Content';
+import { Grade11TopicWithLessons, Grade11LessonWithMedia, Grade11Topic, Grade11Lesson, Grade11LessonMedia } from '@/hooks/useGrade11Content';
 
 interface Grade11CollapsibleTopicProps {
   topic: Grade11TopicWithLessons;
@@ -17,6 +17,7 @@ interface Grade11CollapsibleTopicProps {
   onEditLesson: (lesson: Grade11Lesson) => void;
   onDeleteLesson: (id: string) => void;
   onReorderLessons: (topicId: string, newLessons: Grade11LessonWithMedia[]) => void;
+  onUpdateMedia?: (mediaId: string, updates: Partial<Grade11LessonMedia>) => Promise<void>;
   onDragStart: (e: React.DragEvent, index: number) => void;
   onDragOver: (e: React.DragEvent) => void;
   onDrop: (e: React.DragEvent, targetIndex: number) => void;
@@ -32,6 +33,7 @@ const Grade11CollapsibleTopic: React.FC<Grade11CollapsibleTopicProps> = ({
   onEditLesson,
   onDeleteLesson,
   onReorderLessons,
+  onUpdateMedia,
   onDragStart,
   onDragOver,
   onDrop,
@@ -236,6 +238,7 @@ const Grade11CollapsibleTopic: React.FC<Grade11CollapsibleTopicProps> = ({
                       lesson={lesson}
                       defaultExpanded={false}
                       showControls={true}
+                      onUpdateMedia={onUpdateMedia}
                     />
                     
                     <div className="flex items-center justify-between text-xs text-muted-foreground mt-3 pt-2 border-t border-emerald-200">
