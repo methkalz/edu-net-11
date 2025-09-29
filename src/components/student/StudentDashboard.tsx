@@ -185,32 +185,32 @@ const StudentDashboard: React.FC = () => {
       <section className="container mx-auto px-6 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <div className="flex justify-center px-4">
-            <TabsList className={`grid w-full max-w-4xl ${hasGamesTab ? 'grid-cols-5' : 'grid-cols-4'} bg-card/95 dark:bg-card/90 backdrop-blur-sm shadow-xl border border-border/20 dark:border-border/30 rounded-2xl p-2 h-16 transition-colors duration-300`}>
-              <TabsTrigger value="overview" className="flex items-center justify-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105">
+            <TabsList className={`grid w-full max-w-4xl ${hasGamesTab ? 'grid-cols-5' : 'grid-cols-4'} bg-card/95 dark:bg-slate-800/90 backdrop-blur-sm shadow-xl border border-border/20 dark:border-slate-700/40 rounded-2xl p-2 h-16 transition-colors duration-300`}>
+              <TabsTrigger value="overview" className="flex items-center justify-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground dark:data-[state=active]:bg-primary/90 dark:data-[state=active]:text-primary-foreground dark:text-slate-300 dark:hover:bg-slate-700/50 dark:hover:text-slate-100">
                 <span className="text-center">نظرة عامة</span>
               </TabsTrigger>
-              <TabsTrigger value="content" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105">
+              <TabsTrigger value="content" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground dark:data-[state=active]:bg-primary/90 dark:data-[state=active]:text-primary-foreground dark:text-slate-300 dark:hover:bg-slate-700/50 dark:hover:text-slate-100">
                 <Video className="w-6 h-6" />
                 <span className="hidden sm:inline">المحتوى</span>
               </TabsTrigger>
               {hasGamesTab && (
-                <TabsTrigger value="games" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105">
+                <TabsTrigger value="games" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground dark:data-[state=active]:bg-primary/90 dark:data-[state=active]:text-primary-foreground dark:text-slate-300 dark:hover:bg-slate-700/50 dark:hover:text-slate-100">
                   <Gamepad2 className="w-6 h-6" />
                   <span className="hidden sm:inline">الألعاب</span>
                 </TabsTrigger>
               )}
-              <TabsTrigger value="challenges" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105">
+              <TabsTrigger value="challenges" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground dark:data-[state=active]:bg-primary/90 dark:data-[state=active]:text-primary-foreground dark:text-slate-300 dark:hover:bg-slate-700/50 dark:hover:text-slate-100">
                 <Target className="w-6 h-6" />
                 <span className="hidden sm:inline">التحديات</span>
               </TabsTrigger>
-              <TabsTrigger value="profile" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105">
+              <TabsTrigger value="profile" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground dark:data-[state=active]:bg-primary/90 dark:data-[state=active]:text-primary-foreground dark:text-slate-300 dark:hover:bg-slate-700/50 dark:hover:text-slate-100">
                 <Award className="w-6 h-6" />
                 <span className="hidden sm:inline">الملف الشخصي</span>
               </TabsTrigger>
             </TabsList>
           </div>
 
-          <TabsContent value="overview" className="space-y-6">
+          <TabsContent value="overview" className="space-y-6 animate-fade-in">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Stats Section */}
               <div className="lg:col-span-2">
