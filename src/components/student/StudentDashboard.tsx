@@ -185,32 +185,32 @@ const StudentDashboard: React.FC = () => {
       <section className="container mx-auto px-6 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <div className="flex justify-center px-4">
-            <TabsList className={`grid w-full max-w-4xl ${hasGamesTab ? 'grid-cols-5' : 'grid-cols-4'} bg-card/95 dark:bg-slate-800/90 backdrop-blur-sm shadow-xl border border-border/20 dark:border-slate-700/40 rounded-2xl p-2 h-16 transition-colors duration-300`}>
-              <TabsTrigger value="overview" className="flex items-center justify-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105 data-[state=active]:bg-background dark:data-[state=active]:bg-primary/90 data-[state=active]:text-foreground dark:data-[state=active]:text-primary-foreground text-muted-foreground dark:text-slate-300 hover:bg-muted/50 dark:hover:bg-slate-700/50">
+            <TabsList className={`grid w-full max-w-4xl ${hasGamesTab ? 'grid-cols-5' : 'grid-cols-4'} bg-card/95 dark:bg-card/90 backdrop-blur-sm shadow-xl border border-border/20 dark:border-border/30 rounded-2xl p-2 h-16 transition-colors duration-300`}>
+              <TabsTrigger value="overview" className="flex items-center justify-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105">
                 <span className="text-center">نظرة عامة</span>
               </TabsTrigger>
-              <TabsTrigger value="content" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105 data-[state=active]:bg-background dark:data-[state=active]:bg-primary/90 data-[state=active]:text-foreground dark:data-[state=active]:text-primary-foreground text-muted-foreground dark:text-slate-300 hover:bg-muted/50 dark:hover:bg-slate-700/50">
+              <TabsTrigger value="content" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105">
                 <Video className="w-6 h-6" />
                 <span className="hidden sm:inline">المحتوى</span>
               </TabsTrigger>
               {hasGamesTab && (
-                <TabsTrigger value="games" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105 data-[state=active]:bg-background dark:data-[state=active]:bg-primary/90 data-[state=active]:text-foreground dark:data-[state=active]:text-primary-foreground text-muted-foreground dark:text-slate-300 hover:bg-muted/50 dark:hover:bg-slate-700/50">
+                <TabsTrigger value="games" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105">
                   <Gamepad2 className="w-6 h-6" />
                   <span className="hidden sm:inline">الألعاب</span>
                 </TabsTrigger>
               )}
-              <TabsTrigger value="challenges" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105 data-[state=active]:bg-background dark:data-[state=active]:bg-primary/90 data-[state=active]:text-foreground dark:data-[state=active]:text-primary-foreground text-muted-foreground dark:text-slate-300 hover:bg-muted/50 dark:hover:bg-slate-700/50">
+              <TabsTrigger value="challenges" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105">
                 <Target className="w-6 h-6" />
                 <span className="hidden sm:inline">التحديات</span>
               </TabsTrigger>
-              <TabsTrigger value="profile" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105 data-[state=active]:bg-background dark:data-[state=active]:bg-primary/90 data-[state=active]:text-foreground dark:data-[state=active]:text-primary-foreground text-muted-foreground dark:text-slate-300 hover:bg-muted/50 dark:hover:bg-slate-700/50">
+              <TabsTrigger value="profile" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105">
                 <Award className="w-6 h-6" />
                 <span className="hidden sm:inline">الملف الشخصي</span>
               </TabsTrigger>
             </TabsList>
           </div>
 
-          <TabsContent value="overview" className="space-y-6 animate-fade-in">
+          <TabsContent value="overview" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Stats Section */}
               <div className="lg:col-span-2">
@@ -219,9 +219,9 @@ const StudentDashboard: React.FC = () => {
 
               {/* Quick Actions */}
               <div className="space-y-4">
-                <Card className="bg-gradient-to-br from-primary to-secondary dark:from-primary dark:to-secondary text-white border-0 shadow-lg transition-colors duration-300">
-                  <CardHeader className="pb-4">
-                    <CardTitle className="flex items-center gap-2 text-white">
+                <Card className="bg-gradient-to-br from-primary to-secondary dark:from-primary dark:to-secondary text-white transition-colors duration-300">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
                       <Rocket className="w-5 h-5" />
                       إجراءات سريعة
                     </CardTitle>
@@ -229,7 +229,7 @@ const StudentDashboard: React.FC = () => {
                   <CardContent className="space-y-3">
                     <Button 
                       variant="secondary" 
-                      className="w-full justify-start bg-white/20 hover:bg-white/30 dark:bg-white/10 dark:hover:bg-white/20 text-white border-white/20 dark:border-white/10 transition-all duration-300 hover:scale-105"
+                      className="w-full justify-start bg-white/20 hover:bg-white/30 dark:bg-white/10 dark:hover:bg-white/20 text-white border-white/20 dark:border-white/10 transition-colors duration-300"
                       onClick={() => setActiveTab('content')}
                     >
                       <Play className="w-4 h-4 mr-2" />
@@ -238,7 +238,7 @@ const StudentDashboard: React.FC = () => {
                     {hasGamesTab && (
                       <Button 
                         variant="secondary" 
-                        className="w-full justify-start bg-white/20 hover:bg-white/30 dark:bg-white/10 dark:hover:bg-white/20 text-white border-white/20 dark:border-white/10 transition-all duration-300 hover:scale-105"
+                        className="w-full justify-start bg-white/20 hover:bg-white/30 dark:bg-white/10 dark:hover:bg-white/20 text-white border-white/20 dark:border-white/10 transition-colors duration-300"
                         onClick={() => setActiveTab('games')}
                       >
                         <Gamepad2 className="w-4 h-4 mr-2" />
@@ -247,7 +247,7 @@ const StudentDashboard: React.FC = () => {
                     )}
                     <Button 
                       variant="secondary" 
-                      className="w-full justify-start bg-white/20 hover:bg-white/30 dark:bg-white/10 dark:hover:bg-white/20 text-white border-white/20 dark:border-white/10 transition-all duration-300 hover:scale-105"
+                      className="w-full justify-start bg-white/20 hover:bg-white/30 dark:bg-white/10 dark:hover:bg-white/20 text-white border-white/20 dark:border-white/10 transition-colors duration-300"
                       onClick={() => setActiveTab('challenges')}
                     >
                       <Target className="w-4 h-4 mr-2" />
@@ -260,15 +260,15 @@ const StudentDashboard: React.FC = () => {
                 <StudentNotifications />
 
                 {/* Assigned Grade Info */}
-                <Card className="bg-card/80 dark:bg-slate-900/50 border-border/40 dark:border-slate-700/40 backdrop-blur-sm transition-colors duration-300">
-                  <CardHeader className="pb-4">
-                    <CardTitle className="flex items-center gap-2 text-foreground dark:text-slate-100">
-                      <FolderOpen className="w-5 h-5 text-primary dark:text-primary/80" />
+                <Card className="bg-card dark:bg-card border-border dark:border-border transition-colors duration-300">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-foreground dark:text-foreground">
+                      <FolderOpen className="w-5 h-5" />
                       صفك الدراسي
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    <div className="text-center p-4 bg-gradient-to-r from-primary to-secondary dark:from-primary dark:to-secondary text-white rounded-lg shadow-sm transition-colors duration-300">
+                    <div className="text-center p-4 bg-gradient-to-r from-primary to-secondary dark:from-primary dark:to-secondary text-white rounded-lg transition-colors duration-300">
                       <h3 className="text-xl font-bold">الصف {assignedGrade}</h3>
                       <p className="text-sm opacity-90">صفك المخصص</p>
                     </div>
@@ -278,21 +278,21 @@ const StudentDashboard: React.FC = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="content" className="animate-fade-in">
+          <TabsContent value="content">
             <StudentGradeContent />
           </TabsContent>
 
           {hasGamesTab && (
-            <TabsContent value="games" className="animate-fade-in">
+            <TabsContent value="games">
               <StudentGameSection />
             </TabsContent>
           )}
 
-          <TabsContent value="challenges" className="animate-fade-in">
+          <TabsContent value="challenges">
             <StudentDailyChallenges />
           </TabsContent>
 
-          <TabsContent value="profile" className="animate-fade-in">
+          <TabsContent value="profile">
             <StudentProfile />
           </TabsContent>
         </Tabs>

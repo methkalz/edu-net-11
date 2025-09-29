@@ -43,7 +43,7 @@ const Grade11Management: React.FC = () => {
   
   return (
     <Grade11ErrorBoundary>
-      <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 dark:from-slate-950 dark:to-slate-900/50 transition-colors duration-300">
+      <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
       <AppHeader title="إدارة محتوى الصف الحادي عشر" showBackButton={true} backPath={contentBackPath} showLogout={true} />
       
       <main className="container mx-auto px-6 py-8 flex-1">
