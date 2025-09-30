@@ -1,5 +1,5 @@
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { QUERY_KEYS, CACHE_TIMES } from '@/lib/query-keys';
@@ -72,6 +72,7 @@ const fetchStudentGameStats = async (userId: string, schoolId?: string): Promise
 
 export const useStudentGameStats = () => {
   const { user, userProfile } = useAuth();
+  const queryClient = useQueryClient();
 
   const {
     data: stats,
@@ -102,7 +103,7 @@ export const useStudentGameStats = () => {
           filter: `player_id=eq.${user.id}`
         },
         () => {
-          refetch();
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.STUDENT.GAME_STATS(user.id) });
         }
       )
       .on(
@@ -114,7 +115,7 @@ export const useStudentGameStats = () => {
           filter: `user_id=eq.${user.id}`
         },
         () => {
-          refetch();
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.STUDENT.GAME_STATS(user.id) });
         }
       )
       .subscribe();
@@ -122,7 +123,7 @@ export const useStudentGameStats = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user?.id, refetch]);
+  }, [user?.id, queryClient]);
 
   return {
     stats: stats || {

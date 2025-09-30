@@ -1,5 +1,5 @@
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useStudentAssignedGrade } from './useStudentAssignedGrade';
@@ -249,6 +249,7 @@ const fetchContentForGrade = async (grade: string, userId?: string): Promise<Gra
 export const useStudentContent = () => {
   const { user, userProfile } = useAuth();
   const { assignedGrade, loading: gradeLoading } = useStudentAssignedGrade();
+  const queryClient = useQueryClient();
 
   console.log(`[DEBUG] useStudentContent - User ID: ${user?.id}, Grade: ${assignedGrade}, Role: ${userProfile?.role}`);
 
@@ -291,7 +292,11 @@ export const useStudentContent = () => {
           filter: `student_id=eq.${user.id}`
         },
         () => {
-          refetch();
+          if (user?.id && assignedGrade) {
+            queryClient.invalidateQueries({ 
+              queryKey: QUERY_KEYS.STUDENT.CONTENT(user.id, assignedGrade) 
+            });
+          }
         }
       )
       .subscribe();
@@ -299,7 +304,7 @@ export const useStudentContent = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user?.id, refetch]);
+  }, [user?.id, assignedGrade, queryClient]);
 
   const getAllContentItems = (): StudentContentItem[] => {
     if (!gradeContent) return [];

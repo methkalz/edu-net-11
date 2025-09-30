@@ -366,7 +366,7 @@ export const useStudentProgress = () => {
           filter: `student_id=eq.${user.id}`
         },
         () => {
-          refetchStats();
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.STUDENT.STATS(user.id) });
           queryClient.invalidateQueries({ queryKey: QUERY_KEYS.STUDENT.PROGRESS(user.id) });
         }
       )
@@ -379,7 +379,7 @@ export const useStudentProgress = () => {
           filter: `student_id=eq.${user.id}`
         },
         () => {
-          refetchStats();
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.STUDENT.STATS(user.id) });
           queryClient.invalidateQueries({ queryKey: QUERY_KEYS.STUDENT.ACHIEVEMENTS(user.id) });
         }
       )
@@ -392,7 +392,7 @@ export const useStudentProgress = () => {
           filter: `student_id=eq.${user.id}`
         },
         () => {
-          refetchStats();
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.STUDENT.STATS(user.id) });
         }
       )
       .subscribe();
