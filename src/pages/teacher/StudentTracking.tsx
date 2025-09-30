@@ -418,69 +418,65 @@ const StudentTracking: React.FC = () => {
         refreshing={refreshing}
       />
       
-      <div className="container mx-auto p-6 space-y-8 animate-fade-in"
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fade-in"
            style={{ direction: 'rtl' }}>
 
-        {/* Statistics Cards with Gradients */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent backdrop-blur-sm hover:shadow-xl transition-all duration-300">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-50" />
-            <CardContent className="p-6 relative">
+        {/* Statistics Cards - Elegant & Minimal */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="group relative overflow-hidden border border-border/40 bg-card/60 backdrop-blur-sm hover:border-primary/30 hover:shadow-lg transition-all duration-500 ease-out hover:scale-[1.02]">
+            <CardContent className="p-5">
               <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground font-medium">إجمالي الطلاب</p>
-                  <p className="text-3xl font-bold bg-gradient-to-br from-primary to-primary/70 bg-clip-text text-transparent">
+                <div className="space-y-1.5">
+                  <p className="text-xs font-medium text-muted-foreground">إجمالي الطلاب</p>
+                  <p className="text-2xl font-bold text-foreground">
                     {students.length}
                   </p>
                 </div>
-                <div className="p-3 rounded-xl bg-primary/10 backdrop-blur-sm">
-                  <Users className="h-7 w-7 text-primary" />
+                <div className="p-2.5 rounded-xl bg-primary/10 group-hover:bg-primary/15 transition-colors duration-300">
+                  <Users className="h-5 w-5 text-primary" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-green-500/10 via-green-500/5 to-transparent backdrop-blur-sm hover:shadow-xl transition-all duration-300">
-            <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent opacity-50" />
-            <CardContent className="p-6 relative">
+          <Card className="group relative overflow-hidden border border-border/40 bg-card/60 backdrop-blur-sm hover:border-green-500/30 hover:shadow-lg transition-all duration-500 ease-out hover:scale-[1.02]">
+            <CardContent className="p-5">
               <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground font-medium">إجمالي الوقت</p>
-                  <p className="text-2xl font-bold bg-gradient-to-br from-green-500 to-green-400 bg-clip-text text-transparent">
+                <div className="space-y-1.5">
+                  <p className="text-xs font-medium text-muted-foreground">إجمالي الوقت</p>
+                  <p className="text-2xl font-bold text-foreground">
                     {formatTime(students.reduce((sum, s) => sum + s.total_time_minutes, 0))}
                   </p>
                 </div>
-                <div className="p-3 rounded-xl bg-green-500/10 backdrop-blur-sm">
-                  <Clock className="h-7 w-7 text-green-500" />
+                <div className="p-2.5 rounded-xl bg-green-500/10 group-hover:bg-green-500/15 transition-colors duration-300">
+                  <Clock className="h-5 w-5 text-green-600 dark:text-green-500" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-yellow-500/10 via-yellow-500/5 to-transparent backdrop-blur-sm hover:shadow-xl transition-all duration-300">
-            <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 to-transparent opacity-50" />
-            <CardContent className="p-6 relative">
+          <Card className="group relative overflow-hidden border border-border/40 bg-card/60 backdrop-blur-sm hover:border-yellow-500/30 hover:shadow-lg transition-all duration-500 ease-out hover:scale-[1.02]">
+            <CardContent className="p-5">
               <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground font-medium">إجمالي النقاط</p>
-                  <p className="text-3xl font-bold bg-gradient-to-br from-yellow-500 to-yellow-400 bg-clip-text text-transparent">
+                <div className="space-y-1.5">
+                  <p className="text-xs font-medium text-muted-foreground">إجمالي النقاط</p>
+                  <p className="text-2xl font-bold text-foreground">
                     {students.reduce((sum, s) => sum + s.total_points, 0)}
                   </p>
                 </div>
-                <div className="p-3 rounded-xl bg-yellow-500/10 backdrop-blur-sm">
-                  <Trophy className="h-7 w-7 text-yellow-500" />
+                <div className="p-2.5 rounded-xl bg-yellow-500/10 group-hover:bg-yellow-500/15 transition-colors duration-300">
+                  <Trophy className="h-5 w-5 text-yellow-600 dark:text-yellow-500" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-purple-500/10 via-purple-500/5 to-transparent backdrop-blur-sm hover:shadow-xl transition-all duration-300">
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent opacity-50" />
-            <CardContent className="p-6 relative">
+          <Card className="group relative overflow-hidden border border-border/40 bg-card/60 backdrop-blur-sm hover:border-purple-500/30 hover:shadow-lg transition-all duration-500 ease-out hover:scale-[1.02]">
+            <CardContent className="p-5">
               <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground font-medium">معدل المشاهدة</p>
-                  <p className="text-3xl font-bold bg-gradient-to-br from-purple-500 to-purple-400 bg-clip-text text-transparent">
+                <div className="space-y-1.5">
+                  <p className="text-xs font-medium text-muted-foreground">معدل المشاهدة</p>
+                  <p className="text-2xl font-bold text-foreground">
                     {students.length > 0 
                       ? Math.round(students.reduce((sum, s) => 
                           sum + (s.progress_details?.content_progress?.length || 0), 0
@@ -488,157 +484,145 @@ const StudentTracking: React.FC = () => {
                       : 0}
                   </p>
                 </div>
-                <div className="p-3 rounded-xl bg-purple-500/10 backdrop-blur-sm">
-                  <TrendingUp className="h-7 w-7 text-purple-500" />
+                <div className="p-2.5 rounded-xl bg-purple-500/10 group-hover:bg-purple-500/15 transition-colors duration-300">
+                  <TrendingUp className="h-5 w-5 text-purple-600 dark:text-purple-500" />
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Search and Filter Section */}
-        <Card className="p-6 border-0 bg-card/50 backdrop-blur-sm">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="ابحث عن طالب..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pr-12 h-12 rounded-xl bg-background/50 border-muted focus:border-primary transition-colors"
-              />
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant={gradeFilter === 'all' ? 'default' : 'outline'}
-                onClick={() => setGradeFilter('all')}
-                className="min-w-24"
-              >
-                الكل
-              </Button>
-              <Button
-                variant={gradeFilter === '10' ? 'default' : 'outline'}
-                onClick={() => setGradeFilter('10')}
-                className="min-w-24"
-              >
-                الصف العاشر
-              </Button>
-              <Button
-                variant={gradeFilter === '11' ? 'default' : 'outline'}
-                onClick={() => setGradeFilter('11')}
-                className="min-w-24"
-              >
-                الصف الحادي عشر
-              </Button>
-            </div>
+        {/* Search and Filter - Clean Design */}
+        <div className="flex flex-col md:flex-row gap-3">
+          <div className="flex-1 relative">
+            <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <Input
+              type="text"
+              placeholder="البحث عن طالب..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pr-10 h-11 rounded-lg bg-background border-border/60 focus:border-primary/60 transition-all duration-300"
+            />
           </div>
-        </Card>
+          <div className="flex gap-2">
+            <Button
+              variant={gradeFilter === 'all' ? 'default' : 'outline'}
+              onClick={() => setGradeFilter('all')}
+              className="px-4 h-11 rounded-lg transition-all duration-300"
+              size="sm"
+            >
+              الكل
+            </Button>
+            <Button
+              variant={gradeFilter === '10' ? 'default' : 'outline'}
+              onClick={() => setGradeFilter('10')}
+              className="px-4 h-11 rounded-lg transition-all duration-300"
+              size="sm"
+            >
+              العاشر
+            </Button>
+            <Button
+              variant={gradeFilter === '11' ? 'default' : 'outline'}
+              onClick={() => setGradeFilter('11')}
+              className="px-4 h-11 rounded-lg transition-all duration-300"
+              size="sm"
+            >
+              الحادي عشر
+            </Button>
+          </div>
+        </div>
 
-        {/* Students List by Grade */}
+        {/* Students List - Minimal & Clean */}
         {filteredStudents.length === 0 ? (
-          <Card className="p-12 text-center border-0 bg-card/50 backdrop-blur-sm">
-            <Users className="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" />
-            <h3 className="text-xl font-semibold mb-2">لا يوجد طلاب</h3>
-            <p className="text-muted-foreground">
+          <div className="py-16 text-center">
+            <div className="inline-flex p-4 rounded-2xl bg-muted/30 mb-4">
+              <Users className="h-12 w-12 text-muted-foreground/60" />
+            </div>
+            <h3 className="text-lg font-semibold mb-1.5">لا يوجد طلاب</h3>
+            <p className="text-sm text-muted-foreground">
               {searchQuery ? 'لم يتم العثور على نتائج للبحث' : 'لم يتم تسجيل أي طلاب بعد'}
             </p>
-          </Card>
+          </div>
         ) : (
-          <div className="space-y-8">
+          <div className="space-y-10">
             {/* Grade 11 Students */}
             {(gradeFilter === 'all' || gradeFilter === '11') && grade11Students.length > 0 && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-1 w-12 bg-gradient-to-r from-primary to-primary/50 rounded-full" />
-                  <h2 className="text-2xl font-bold">الصف الحادي عشر</h2>
-                  <Badge variant="secondary" className="text-sm">
-                    {grade11Students.length} طالب
+              <div className="space-y-5">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-0.5 w-10 bg-primary/50 rounded-full" />
+                  <h2 className="text-xl font-bold text-foreground">الصف الحادي عشر</h2>
+                  <Badge variant="secondary" className="text-xs px-2.5 py-0.5 rounded-full">
+                    {grade11Students.length}
                   </Badge>
                 </div>
-                <div className="grid grid-cols-1 gap-6">
+                <div className="grid grid-cols-1 gap-4">
                   {grade11Students.map((student) => (
-                    <Card key={student.student_id} className="group hover:shadow-xl transition-all duration-300 border-0 bg-card/50 backdrop-blur-sm overflow-hidden">
-                      <div className="absolute inset-0 bg-gradient-to-l from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-                      <CardHeader className="relative">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <div className="relative">
-                              <div className="w-14 h-14 bg-gradient-to-br from-primary to-primary/70 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
-                                {student.student_name.charAt(0)}
-                              </div>
+                    <Card key={student.student_id} className="group border border-border/50 bg-card/60 backdrop-blur-sm hover:border-primary/40 hover:shadow-md transition-all duration-500 ease-out overflow-hidden">
+                      <CardHeader className="pb-3 pt-4 px-5">
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <div className="w-11 h-11 shrink-0 bg-gradient-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center text-white font-bold text-base shadow-sm">
+                              {student.student_name.charAt(0)}
                             </div>
-                            <div>
-                              <CardTitle className="text-xl font-bold">{student.student_name}</CardTitle>
-                              <p className="text-sm text-muted-foreground mt-1">{student.student_email}</p>
+                            <div className="min-w-0 flex-1">
+                              <CardTitle className="text-base font-semibold truncate">{student.student_name}</CardTitle>
+                              <p className="text-xs text-muted-foreground truncate mt-0.5">{student.student_email}</p>
                             </div>
                           </div>
-                          <div className="flex items-center gap-3">
-                            <Badge variant="outline" className="text-sm px-3 py-1 bg-primary/5 border-primary/20">
-                              الصف {student.student_grade}
+                          <div className="flex items-center gap-2 shrink-0">
+                            <Badge variant="outline" className="text-xs px-2 py-0.5 rounded-md border-border/60">
+                              {student.student_grade}
                             </Badge>
                             <Button 
-                              variant="outline" 
+                              variant="ghost" 
                               size="sm"
                               onClick={() => setSelectedStudent(student)}
-                              className="gap-2 hover:bg-primary hover:text-primary-foreground transition-colors"
+                              className="h-8 px-3 gap-1.5 hover:bg-primary/10 transition-colors"
                             >
-                              <Eye className="h-4 w-4" />
-                              عرض التفاصيل
+                              <Eye className="h-3.5 w-3.5" />
+                              <span className="text-xs">التفاصيل</span>
                             </Button>
                           </div>
                         </div>
                       </CardHeader>
-                      <CardContent className="relative">
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                          <div className="flex items-start gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors">
-                            <div className="p-2 rounded-lg bg-background shadow-sm">
-                              <Clock className="h-5 w-5 text-primary" />
+                      <CardContent className="pb-4 px-5">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                          <div className="p-3 rounded-lg bg-muted/40 border border-border/40 hover:bg-muted/60 transition-colors duration-300">
+                            <div className="flex items-center gap-2 mb-1.5">
+                              <Clock className="h-3.5 w-3.5 text-primary shrink-0" />
+                              <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">الوقت</p>
                             </div>
-                            <div className="flex-1">
-                              <p className="text-xs text-muted-foreground font-medium mb-1">الوقت المقضي</p>
-                              <p className="text-base font-bold">{formatTime(student.total_time_minutes)}</p>
-                            </div>
+                            <p className="text-sm font-semibold text-foreground">{formatTime(student.total_time_minutes)}</p>
                           </div>
-                          <div className="flex items-start gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors">
-                            <div className="p-2 rounded-lg bg-background shadow-sm">
-                              <Trophy className="h-5 w-5 text-yellow-500" />
+                          <div className="p-3 rounded-lg bg-muted/40 border border-border/40 hover:bg-muted/60 transition-colors duration-300">
+                            <div className="flex items-center gap-2 mb-1.5">
+                              <Trophy className="h-3.5 w-3.5 text-yellow-600 dark:text-yellow-500 shrink-0" />
+                              <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">النقاط</p>
                             </div>
-                            <div className="flex-1">
-                              <p className="text-xs text-muted-foreground font-medium mb-1">النقاط</p>
-                              <p className="text-base font-bold">{student.total_points}</p>
-                            </div>
+                            <p className="text-sm font-semibold text-foreground">{student.total_points}</p>
                           </div>
-                          <div className="flex items-start gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors">
-                            <div className="p-2 rounded-lg bg-background shadow-sm">
-                              <Video className="h-5 w-5 text-purple-500" />
+                          <div className="p-3 rounded-lg bg-muted/40 border border-border/40 hover:bg-muted/60 transition-colors duration-300">
+                            <div className="flex items-center gap-2 mb-1.5">
+                              <Video className="h-3.5 w-3.5 text-purple-600 dark:text-purple-500 shrink-0" />
+                              <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">المحتوى</p>
                             </div>
-                            <div className="flex-1">
-                              <p className="text-xs text-muted-foreground font-medium mb-1">المحتوى المكتمل</p>
-                              <p className="text-base font-bold">
-                                {student.progress_details?.content_progress?.length || 0}
-                              </p>
-                            </div>
+                            <p className="text-sm font-semibold text-foreground">
+                              {student.progress_details?.content_progress?.length || 0}
+                            </p>
                           </div>
-                          <div className="flex items-start gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors">
-                            <div className="p-2 rounded-lg bg-background shadow-sm">
-                              <Calendar className="h-5 w-5 text-green-500" />
+                          <div className="p-3 rounded-lg bg-muted/40 border border-border/40 hover:bg-muted/60 transition-colors duration-300">
+                            <div className="flex items-center gap-2 mb-1.5">
+                              <Calendar className="h-3.5 w-3.5 text-green-600 dark:text-green-500 shrink-0" />
+                              <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">آخر نشاط</p>
                             </div>
-                            <div className="flex-1">
-                              <p className="text-xs text-muted-foreground font-medium mb-1">آخر نشاط</p>
-                              <p className="text-sm font-bold">
-                                {student.last_activity 
-                                  ? new Date(student.last_activity).toLocaleString('en-GB', {
-                                      year: 'numeric',
-                                      month: '2-digit',
-                                      day: '2-digit',
-                                      hour: '2-digit',
-                                      minute: '2-digit',
-                                      hour12: false
-                                    }).replace(',', ' -')
-                                  : 'لا يوجد'}
-                              </p>
-                            </div>
+                            <p className="text-xs font-semibold text-foreground truncate">
+                              {student.last_activity 
+                                ? new Date(student.last_activity).toLocaleDateString('ar-SA', {
+                                    month: 'short',
+                                    day: 'numeric'
+                                  })
+                                : 'لا يوجد'}
+                            </p>
                           </div>
                         </div>
                       </CardContent>
@@ -650,97 +634,82 @@ const StudentTracking: React.FC = () => {
 
             {/* Grade 10 Students */}
             {(gradeFilter === 'all' || gradeFilter === '10') && grade10Students.length > 0 && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-1 w-12 bg-gradient-to-r from-secondary to-secondary/50 rounded-full" />
-                  <h2 className="text-2xl font-bold">الصف العاشر</h2>
-                  <Badge variant="secondary" className="text-sm">
-                    {grade10Students.length} طالب
+              <div className="space-y-5">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-0.5 w-10 bg-secondary/50 rounded-full" />
+                  <h2 className="text-xl font-bold text-foreground">الصف العاشر</h2>
+                  <Badge variant="secondary" className="text-xs px-2.5 py-0.5 rounded-full">
+                    {grade10Students.length}
                   </Badge>
                 </div>
-                <div className="grid grid-cols-1 gap-6">
+                <div className="grid grid-cols-1 gap-4">
                   {grade10Students.map((student) => (
-                    <Card key={student.student_id} className="group hover:shadow-xl transition-all duration-300 border-0 bg-card/50 backdrop-blur-sm overflow-hidden">
-                      <div className="absolute inset-0 bg-gradient-to-l from-secondary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-                      <CardHeader className="relative">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <div className="relative">
-                              <div className="w-14 h-14 bg-gradient-to-br from-secondary to-secondary/70 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
-                                {student.student_name.charAt(0)}
-                              </div>
+                    <Card key={student.student_id} className="group border border-border/50 bg-card/60 backdrop-blur-sm hover:border-secondary/40 hover:shadow-md transition-all duration-500 ease-out overflow-hidden">
+                      <CardHeader className="pb-3 pt-4 px-5">
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <div className="w-11 h-11 shrink-0 bg-gradient-to-br from-secondary to-secondary/80 rounded-xl flex items-center justify-center text-white font-bold text-base shadow-sm">
+                              {student.student_name.charAt(0)}
                             </div>
-                            <div>
-                              <CardTitle className="text-xl font-bold">{student.student_name}</CardTitle>
-                              <p className="text-sm text-muted-foreground mt-1">{student.student_email}</p>
+                            <div className="min-w-0 flex-1">
+                              <CardTitle className="text-base font-semibold truncate">{student.student_name}</CardTitle>
+                              <p className="text-xs text-muted-foreground truncate mt-0.5">{student.student_email}</p>
                             </div>
                           </div>
-                          <div className="flex items-center gap-3">
-                            <Badge variant="outline" className="text-sm px-3 py-1 bg-secondary/5 border-secondary/20">
-                              الصف {student.student_grade}
+                          <div className="flex items-center gap-2 shrink-0">
+                            <Badge variant="outline" className="text-xs px-2 py-0.5 rounded-md border-border/60">
+                              {student.student_grade}
                             </Badge>
                             <Button 
-                              variant="outline" 
+                              variant="ghost" 
                               size="sm"
                               onClick={() => setSelectedStudent(student)}
-                              className="gap-2 hover:bg-secondary hover:text-secondary-foreground transition-colors"
+                              className="h-8 px-3 gap-1.5 hover:bg-secondary/10 transition-colors"
                             >
-                              <Eye className="h-4 w-4" />
-                              عرض التفاصيل
+                              <Eye className="h-3.5 w-3.5" />
+                              <span className="text-xs">التفاصيل</span>
                             </Button>
                           </div>
                         </div>
                       </CardHeader>
-                      <CardContent className="relative">
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                          <div className="flex items-start gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors">
-                            <div className="p-2 rounded-lg bg-background shadow-sm">
-                              <Clock className="h-5 w-5 text-primary" />
+                      <CardContent className="pb-4 px-5">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                          <div className="p-3 rounded-lg bg-muted/40 border border-border/40 hover:bg-muted/60 transition-colors duration-300">
+                            <div className="flex items-center gap-2 mb-1.5">
+                              <Clock className="h-3.5 w-3.5 text-primary shrink-0" />
+                              <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">الوقت</p>
                             </div>
-                            <div className="flex-1">
-                              <p className="text-xs text-muted-foreground font-medium mb-1">الوقت المقضي</p>
-                              <p className="text-base font-bold">{formatTime(student.total_time_minutes)}</p>
-                            </div>
+                            <p className="text-sm font-semibold text-foreground">{formatTime(student.total_time_minutes)}</p>
                           </div>
-                          <div className="flex items-start gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors">
-                            <div className="p-2 rounded-lg bg-background shadow-sm">
-                              <Trophy className="h-5 w-5 text-yellow-500" />
+                          <div className="p-3 rounded-lg bg-muted/40 border border-border/40 hover:bg-muted/60 transition-colors duration-300">
+                            <div className="flex items-center gap-2 mb-1.5">
+                              <Trophy className="h-3.5 w-3.5 text-yellow-600 dark:text-yellow-500 shrink-0" />
+                              <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">النقاط</p>
                             </div>
-                            <div className="flex-1">
-                              <p className="text-xs text-muted-foreground font-medium mb-1">النقاط</p>
-                              <p className="text-base font-bold">{student.total_points}</p>
-                            </div>
+                            <p className="text-sm font-semibold text-foreground">{student.total_points}</p>
                           </div>
-                          <div className="flex items-start gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors">
-                            <div className="p-2 rounded-lg bg-background shadow-sm">
-                              <Video className="h-5 w-5 text-purple-500" />
+                          <div className="p-3 rounded-lg bg-muted/40 border border-border/40 hover:bg-muted/60 transition-colors duration-300">
+                            <div className="flex items-center gap-2 mb-1.5">
+                              <Video className="h-3.5 w-3.5 text-purple-600 dark:text-purple-500 shrink-0" />
+                              <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">المحتوى</p>
                             </div>
-                            <div className="flex-1">
-                              <p className="text-xs text-muted-foreground font-medium mb-1">المحتوى المكتمل</p>
-                              <p className="text-base font-bold">
-                                {student.progress_details?.content_progress?.length || 0}
-                              </p>
-                            </div>
+                            <p className="text-sm font-semibold text-foreground">
+                              {student.progress_details?.content_progress?.length || 0}
+                            </p>
                           </div>
-                          <div className="flex items-start gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors">
-                            <div className="p-2 rounded-lg bg-background shadow-sm">
-                              <Calendar className="h-5 w-5 text-green-500" />
+                          <div className="p-3 rounded-lg bg-muted/40 border border-border/40 hover:bg-muted/60 transition-colors duration-300">
+                            <div className="flex items-center gap-2 mb-1.5">
+                              <Calendar className="h-3.5 w-3.5 text-green-600 dark:text-green-500 shrink-0" />
+                              <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">آخر نشاط</p>
                             </div>
-                            <div className="flex-1">
-                              <p className="text-xs text-muted-foreground font-medium mb-1">آخر نشاط</p>
-                              <p className="text-sm font-bold">
-                                {student.last_activity 
-                                  ? new Date(student.last_activity).toLocaleString('en-GB', {
-                                      year: 'numeric',
-                                      month: '2-digit',
-                                      day: '2-digit',
-                                      hour: '2-digit',
-                                      minute: '2-digit',
-                                      hour12: false
-                                    }).replace(',', ' -')
-                                  : 'لا يوجد'}
-                              </p>
-                            </div>
+                            <p className="text-xs font-semibold text-foreground truncate">
+                              {student.last_activity 
+                                ? new Date(student.last_activity).toLocaleDateString('ar-SA', {
+                                    month: 'short',
+                                    day: 'numeric'
+                                  })
+                                : 'لا يوجد'}
+                            </p>
                           </div>
                         </div>
                       </CardContent>
