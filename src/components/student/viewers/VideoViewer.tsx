@@ -3,7 +3,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Play, X, CheckCircle, Video, ExternalLink } from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 
 interface VideoViewerProps {
@@ -32,53 +31,26 @@ export const VideoViewer: React.FC<VideoViewerProps> = ({
 }) => {
   const [hasStarted, setHasStarted] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
-  const [watchTime, setWatchTime] = useState(0);
-  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     if (isOpen && !hasStarted && !isTeacherPreview) {
       setHasStarted(true);
       toast.info('بدأت مشاهدة الفيديو', {
-        description: 'ستحصل على النقاط عند إتمام المشاهدة'
+        description: 'ستحصل على النقاط عند تشغيل الفيديو'
       });
     }
   }, [isOpen, hasStarted, isTeacherPreview]);
 
-  // Track watch time and progress
-  useEffect(() => {
-    if (!isOpen || isTeacherPreview || isCompleted) return;
-
-    const timer = setInterval(() => {
-      setWatchTime(prev => {
-        const newTime = prev + 1;
-        
-        // Calculate progress (assuming video duration or minimum watch time)
-        // Minimum 30 seconds for short videos, or based on video.duration if available
-        const minWatchTime = video.duration ? Math.min(video.duration * 0.8, 180) : 30;
-        const currentProgress = Math.min((newTime / minWatchTime) * 100, 100);
-        
-        setProgress(currentProgress);
-        onProgress?.(currentProgress, newTime);
-
-        // Mark as complete if watched for sufficient time
-        if (currentProgress >= 95 && !isCompleted) {
-          setIsCompleted(true);
-          onComplete?.();
-          toast.success('تم إكمال الفيديو بنجاح!', {
-            description: 'تم إضافة النقاط إلى رصيدك'
-          });
-        }
-
-        return newTime;
+  const handleVideoPlay = () => {
+    if (!isCompleted && !isTeacherPreview) {
+      setIsCompleted(true);
+      onComplete?.();
+      toast.success('تم إكمال الفيديو بنجاح!', {
+        description: 'تم إضافة النقاط إلى رصيدك'
       });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [isOpen, isTeacherPreview, isCompleted, onProgress, onComplete, video.duration]);
-
-  const handleVideoStart = () => {
-    if (!hasStarted && !isTeacherPreview) {
-      setHasStarted(true);
+    } else if (isTeacherPreview && !isCompleted) {
+      setIsCompleted(true);
+      // No progress or completion tracking for teachers - just mark as viewed for UI
     }
   };
 
@@ -101,11 +73,11 @@ export const VideoViewer: React.FC<VideoViewerProps> = ({
       if (videoId) {
         return (
           <iframe
-            src={`https://www.youtube.com/embed/${videoId}?enablejsapi=1`}
+            src={`https://www.youtube.com/embed/${videoId}`}
             className="w-full h-96 rounded-lg"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
-            onLoad={handleVideoStart}
+            onLoad={handleVideoPlay}
           />
         );
       }
@@ -118,7 +90,7 @@ export const VideoViewer: React.FC<VideoViewerProps> = ({
           className="w-full h-96 rounded-lg"
           allow="autoplay"
           allowFullScreen
-          onLoad={handleVideoStart}
+          onLoad={handleVideoPlay}
         />
       );
     }
@@ -129,7 +101,7 @@ export const VideoViewer: React.FC<VideoViewerProps> = ({
           src={video.video_url}
           controls
           className="w-full h-96 rounded-lg"
-          onPlay={handleVideoStart}
+          onPlay={handleVideoPlay}
         >
           متصفحك لا يدعم تشغيل الفيديو
         </video>
@@ -144,7 +116,7 @@ export const VideoViewer: React.FC<VideoViewerProps> = ({
           src={`https://player.vimeo.com/video/${videoId}`}
           className="w-full h-96 rounded-lg"
           allowFullScreen
-          onLoad={handleVideoStart}
+          onLoad={handleVideoPlay}
         />
       );
     }
@@ -158,7 +130,7 @@ export const VideoViewer: React.FC<VideoViewerProps> = ({
           <Button 
             onClick={() => {
               window.open(video.video_url, '_blank');
-              handleVideoStart();
+              handleVideoPlay();
             }}
             className="flex items-center gap-2"
           >
@@ -203,29 +175,6 @@ export const VideoViewer: React.FC<VideoViewerProps> = ({
           <div className="bg-black rounded-lg overflow-hidden">
             {renderVideoPlayer()}
           </div>
-
-          {/* Progress Indicators */}
-          {!isTeacherPreview && (
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">تقدم المشاهدة</span>
-                  <span className="font-medium">{Math.round(progress)}%</span>
-                </div>
-                <Progress value={progress} className="h-2" />
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">وقت المشاهدة</span>
-                  <span className="font-medium">
-                    {Math.floor(watchTime / 60)}:{(watchTime % 60).toString().padStart(2, '0')}
-                  </span>
-                </div>
-                <Progress value={Math.min((watchTime / 30) * 100, 100)} className="h-2" />
-              </div>
-            </div>
-          )}
 
           {/* Action Buttons */}
           <div className="flex justify-end gap-3 pt-4">

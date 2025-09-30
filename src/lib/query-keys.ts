@@ -30,7 +30,6 @@ export const QUERY_KEYS = {
   // Teacher data
   TEACHER: {
     CONTENT_ACCESS: (teacherId: string, schoolId: string) => ['teacher', 'content-access', teacherId, schoolId],
-    STUDENT_TRACKING: (teacherId: string, schoolId: string, filters: string) => ['teacher', 'student-tracking', teacherId, schoolId, filters],
   },
   
   // School data  
