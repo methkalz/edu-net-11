@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { logger } from '@/lib/logger';
 import { QUERY_KEYS, CACHE_TIMES } from '@/lib/query-keys';
+import { useGrade11PointsManager } from './useGrade11PointsManager';
 
 export interface StudentStats {
   total_points: number;
@@ -90,6 +91,10 @@ const fetchStudentAchievements = async (userId: string): Promise<Achievement[]> 
 export const useStudentProgress = () => {
   const { user, userProfile } = useAuth();
   const queryClient = useQueryClient();
+  const { 
+    updateLessonPoints, 
+    updateVideoPoints 
+  } = useGrade11PointsManager();
 
   // Stats query
   const {
@@ -188,6 +193,19 @@ export const useStudentProgress = () => {
         .single();
 
       if (error) throw error;
+
+      // Update Grade 11 points system if applicable
+      if (progressPercentage >= 100 && user.id) {
+        try {
+          if (contentType === 'lesson') {
+            updateLessonPoints({ studentId: user.id, lessonId: contentId });
+          } else if (contentType === 'video') {
+            updateVideoPoints({ studentId: user.id, videoId: contentId });
+          }
+        } catch (pointsError) {
+          logger.error('Error updating Grade 11 points', pointsError);
+        }
+      }
 
       // Log activity
       await logActivityMutation.mutateAsync({
