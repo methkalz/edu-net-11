@@ -36,13 +36,25 @@ import { SchoolCalendarWidget } from '@/components/calendar/SchoolCalendarWidget
 import { UniversalAvatar } from '@/components/shared/UniversalAvatar';
 import { UserTitleBadge } from '@/components/shared/UserTitleBadge';
 import { useStudentTeacher } from '@/hooks/useStudentTeacher';
+import { useStudentGameStats } from '@/hooks/useStudentGameStats';
 
 const StudentDashboard: React.FC = () => {
   const { userProfile } = useAuth();
-  const { stats, achievements, loading } = useStudentProgress();
-  const { assignedGrade, getProgressPercentage } = useStudentContent();
+  const { stats, achievements, loading, refetch: refetchProgress } = useStudentProgress();
+  const { assignedGrade, getProgressPercentage, refetch: refetchContent } = useStudentContent();
   const { teacher, loading: teacherLoading } = useStudentTeacher();
+  const { refetch: refetchGameStats } = useStudentGameStats();
   const [activeTab, setActiveTab] = useState('overview');
+  
+  // تحديث البيانات عند الضغط على تاب نظرة عامة
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    if (value === 'overview') {
+      refetchProgress();
+      refetchContent();
+      refetchGameStats();
+    }
+  };
   
   // Check if student is in Grade 10 or 12 (no games available)
   const hasGamesTab = assignedGrade !== "10" && assignedGrade !== "12";
@@ -185,7 +197,7 @@ const StudentDashboard: React.FC = () => {
 
       {/* Main Content */}
       <section className="container mx-auto px-6 py-8">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
           <div className="flex justify-center px-4">
             <TabsList className={`grid w-full max-w-4xl ${hasGamesTab ? 'grid-cols-4' : 'grid-cols-3'} bg-white/95 backdrop-blur-sm shadow-xl border border-white/20 rounded-2xl p-2 h-16`}>
               <TabsTrigger value="overview" className="flex items-center justify-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105">
