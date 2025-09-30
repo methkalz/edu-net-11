@@ -50,12 +50,12 @@ import { ar } from 'date-fns/locale';
 const StudentProgressOverview: React.FC = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
-  const [gradeFilter, setGradeFilter] = useState<string>('');
+  const [gradeFilter, setGradeFilter] = useState<string>('all');
   const [onlineOnly, setOnlineOnly] = useState(false);
 
   const { students, loading, quickStats, refetch } = useTeacherStudentTracking({
     searchQuery,
-    gradeLevel: gradeFilter,
+    gradeLevel: gradeFilter === 'all' ? undefined : gradeFilter,
     onlineOnly
   });
 
@@ -169,7 +169,7 @@ const StudentProgressOverview: React.FC = () => {
                 <SelectValue placeholder="كل الصفوف" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">كل الصفوف</SelectItem>
+                <SelectItem value="all">كل الصفوف</SelectItem>
                 <SelectItem value="عاشر">الصف العاشر</SelectItem>
                 <SelectItem value="حادي عشر">الصف الحادي عشر</SelectItem>
                 <SelectItem value="ثاني عشر">الصف الثاني عشر</SelectItem>
