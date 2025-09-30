@@ -32,6 +32,7 @@ import { StudentGameSection } from './StudentGameSection';
 import { StudentProfile } from './StudentProfile';
 import { StudentDailyChallenges } from './StudentDailyChallenges';
 import StudentNotifications from './StudentNotifications';
+import { SchoolCalendarWidget } from '@/components/calendar/SchoolCalendarWidget';
 // AppFooter is managed by the main Dashboard page
 import { UniversalAvatar } from '@/components/shared/UniversalAvatar';
 import { UserTitleBadge } from '@/components/shared/UserTitleBadge';
@@ -255,6 +256,9 @@ const StudentDashboard: React.FC = () => {
                     </Button>
                   </CardContent>
                 </Card>
+
+                {/* School Calendar Widget */}
+                <SchoolCalendarWidget />
 
                 {/* Student Notifications */}
                 <StudentNotifications />
