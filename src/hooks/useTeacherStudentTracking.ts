@@ -3,18 +3,50 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { CACHE_TIMES } from '@/lib/query-keys';
 
+export interface ContentProgress {
+  content_id: string;
+  content_type: string;
+  progress_percentage: number;
+  time_spent_minutes: number;
+  points_earned: number;
+  completed_at: string | null;
+  updated_at: string;
+}
+
+export interface ProjectProgress {
+  project_id: string;
+  title: string;
+  progress_percentage: number;
+  status: string;
+  last_saved_at: string;
+}
+
+export interface GameProgress {
+  game_id: string;
+  game_title: string;
+  level: number;
+  stage: number;
+  is_completed: boolean;
+  best_score: number;
+  completion_count: number;
+}
+
+export interface ProgressDetails {
+  content_progress: ContentProgress[];
+  grade10_projects: ProjectProgress[];
+  grade12_projects: ProjectProgress[];
+  game_progress: GameProgress[];
+}
+
 export interface StudentTrackingData {
   student_id: string;
   student_name: string;
   student_email: string;
+  student_grade: string;
   total_time_minutes: number;
-  videos_watched: number;
-  documents_read: number;
-  lessons_completed: number;
-  projects_completed: number;
-  games_played: number;
   total_points: number;
   last_activity: string | null;
+  progress_details: ProgressDetails;
 }
 
 export const useTeacherStudentTracking = () => {
@@ -29,7 +61,7 @@ export const useTeacherStudentTracking = () => {
       });
 
       if (error) throw error;
-      return (data || []) as StudentTrackingData[];
+      return (data || []) as unknown as StudentTrackingData[];
     },
     enabled: !!user?.id && !!userProfile?.school_id && userProfile?.role === 'teacher',
     staleTime: CACHE_TIMES.SHORT,

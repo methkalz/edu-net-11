@@ -5377,17 +5377,14 @@ export type Database = {
       get_teacher_student_tracking: {
         Args: { teacher_school_id: string; teacher_user_id: string }
         Returns: {
-          documents_read: number
-          games_played: number
           last_activity: string
-          lessons_completed: number
-          projects_completed: number
+          progress_details: Json
           student_email: string
+          student_grade: string
           student_id: string
           student_name: string
           total_points: number
           total_time_minutes: number
-          videos_watched: number
         }[]
       }
       get_user_role: {
