@@ -15,8 +15,11 @@ import {
 } from 'lucide-react';
 
 export const StudentCalendarSection: React.FC = () => {
-  const { events, loading } = useCalendarEvents();
+  const { events, loading, error } = useCalendarEvents();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+
+  // Debug: log events
+  console.log('Calendar Events:', { total: events.length, events, loading, error });
 
   const getEventTypeColor = (type?: string) => {
     const colors = {
@@ -43,8 +46,15 @@ export const StudentCalendarSection: React.FC = () => {
   };
 
   const upcomingEvents = events
-    .filter(event => new Date(event.date) >= new Date())
+    .filter(event => {
+      const eventDate = new Date(event.date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return eventDate >= today;
+    })
     .slice(0, 5);
+
+  console.log('Upcoming Events:', { total: upcomingEvents.length, upcomingEvents });
 
   const eventDates = events.map(event => parseISO(event.date));
 
@@ -87,10 +97,18 @@ export const StudentCalendarSection: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {upcomingEvents.length === 0 ? (
+          {error && (
+            <div className="text-center py-8 text-red-600">
+              <p className="text-sm">خطأ في تحميل الأحداث: {error}</p>
+            </div>
+          )}
+          {!error && upcomingEvents.length === 0 ? (
             <div className="text-center py-12">
               <CalendarIcon className="w-16 h-16 mx-auto text-muted-foreground mb-4 opacity-20" />
-              <p className="text-muted-foreground text-sm">لا توجد أحداث قادمة</p>
+              <p className="text-muted-foreground text-sm font-medium mb-2">لا توجد أحداث قادمة</p>
+              <p className="text-xs text-muted-foreground">
+                إجمالي الأحداث: {events.length}
+              </p>
             </div>
           ) : (
             <div className="space-y-3 max-h-[400px] overflow-y-auto">
