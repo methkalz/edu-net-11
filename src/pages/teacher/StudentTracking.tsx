@@ -153,7 +153,7 @@ const StudentTracking: React.FC = () => {
 
       if (presenceError) throw presenceError;
 
-      // 7. جلب بيانات الألعاب
+      // 7. جلب بيانات ألعاب الصف الحادي عشر
       const { data: gamesProgressData, error: gamesError } = await supabase
         .from('player_game_progress')
         .select(`
@@ -167,9 +167,51 @@ const StudentTracking: React.FC = () => {
         `)
         .in('player_id', userIds);
 
-      if (gamesError) console.error('Error fetching games:', gamesError);
+      if (gamesError) console.error('Error fetching grade11 games:', gamesError);
 
-      // 8. جلب عناوين الدروس والفيديوهات بطريقة آمنة
+      // 8. جلب بيانات ألعاب الصف العاشر
+      const { data: grade10GamesData, error: grade10GamesError } = await supabase
+        .from('grade10_game_progress')
+        .select(`
+          player_id,
+          lesson_id,
+          question_id,
+          is_completed,
+          score,
+          best_score,
+          attempts,
+          time_spent_seconds,
+          last_attempt_at
+        `)
+        .not('player_id', 'is', null);
+
+      if (grade10GamesError) console.error('Error fetching grade10 games:', grade10GamesError);
+
+      // جلب بيانات grade10_player_profiles للربط
+      const { data: grade10PlayersData, error: grade10PlayersError } = await supabase
+        .from('grade10_player_profiles')
+        .select('id, user_id, player_name');
+
+      if (grade10PlayersError) console.error('Error fetching grade10 players:', grade10PlayersError);
+
+      // جلب عناوين دروس الصف العاشر للألعاب
+      const grade10LessonIds = (grade10GamesData || []).map((g: any) => g.lesson_id).filter(Boolean);
+      const grade10LessonsMap = new Map<string, string>();
+      
+      if (grade10LessonIds.length > 0) {
+        const { data: grade10LessonsData } = await supabase
+          .from('grade10_lessons')
+          .select('id, title')
+          .in('id', grade10LessonIds);
+        
+        if (grade10LessonsData) {
+          grade10LessonsData.forEach((lesson: any) => {
+            grade10LessonsMap.set(lesson.id, lesson.title);
+          });
+        }
+      }
+
+      // 9. جلب عناوين الدروس والفيديوهات بطريقة آمنة
       const contentIds = (progressData || []).map((p: any) => p.content_id).filter(Boolean);
       const contentTitlesMap = new Map<string, string>();
       
@@ -177,11 +219,12 @@ const StudentTracking: React.FC = () => {
         // محاولة جلب من جداول مختلفة
         try {
           const tables = [
+            { name: 'grade10_lessons', idCol: 'id', titleCol: 'title' },
+            { name: 'grade10_videos', idCol: 'id', titleCol: 'title' },
             { name: 'grade11_lessons', idCol: 'id', titleCol: 'title' },
             { name: 'grade11_videos', idCol: 'id', titleCol: 'title' },
             { name: 'grade12_lessons', idCol: 'id', titleCol: 'title' },
-            { name: 'grade12_videos', idCol: 'id', titleCol: 'title' },
-            { name: 'grade10_lessons', idCol: 'id', titleCol: 'title' }
+            { name: 'grade12_videos', idCol: 'id', titleCol: 'title' }
           ];
 
           for (const table of tables) {
@@ -226,6 +269,30 @@ const StudentTracking: React.FC = () => {
           (g: any) => g.player_id === student.user_id
         );
 
+        // جلب ألعاب الصف العاشر
+        const grade10PlayerProfile = (grade10PlayersData || []).find(
+          (p: any) => p.user_id === student.user_id
+        );
+        
+        const studentGrade10Games = grade10PlayerProfile 
+          ? (grade10GamesData || [])
+              .filter((g: any) => g.player_id === grade10PlayerProfile.id)
+              .map((g: any) => ({
+                ...g,
+                pair_matching_games: {
+                  title: grade10LessonsMap.get(g.lesson_id) || 'لعبة الصف العاشر',
+                  level_number: 1,
+                  stage_number: 1
+                },
+                completion_count: g.attempts,
+                is_completed: g.is_completed,
+                best_score: g.best_score || g.score || 0
+              }))
+          : [];
+
+        // دمج الألعاب من الصفين
+        const allGames = [...studentGames, ...studentGrade10Games];
+
         // حساب الوقت الكلي من student_presence + الجلسة الحالية إن وجدت
         let totalTimeMinutes = studentPresence?.total_time_minutes || 0;
         
@@ -241,7 +308,7 @@ const StudentTracking: React.FC = () => {
           (sum: number, p: any) => sum + (p.points_earned || 0), 0
         ) + studentActivity.reduce(
           (sum: number, a: any) => sum + (a.points_earned || 0), 0
-        ) + studentGames.reduce(
+        ) + allGames.reduce(
           (sum: number, g: any) => sum + (g.best_score || 0), 0
         );
 
@@ -267,7 +334,7 @@ const StudentTracking: React.FC = () => {
             content_progress: studentProgress,
             grade10_projects: [],
             grade12_projects: [],
-            game_progress: studentGames
+            game_progress: allGames
           }
         };
       });
