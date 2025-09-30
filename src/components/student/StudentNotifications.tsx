@@ -40,17 +40,19 @@ const StudentNotifications: React.FC = () => {
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Bell className="w-5 h-5" />
+      <Card className="border-border/40 bg-gradient-to-br from-background via-background to-muted/20 shadow-sm">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-lg font-semibold">
+            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Bell className="w-4 h-4 text-primary" />
+            </div>
             الإشعارات
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8">
-            <div className="w-8 h-8 mx-auto animate-spin rounded-full border-2 border-primary border-t-transparent mb-2"></div>
-            <p className="text-sm text-muted-foreground">جاري تحميل الإشعارات...</p>
+          <div className="text-center py-12">
+            <div className="w-10 h-10 mx-auto animate-spin rounded-full border-2 border-primary/20 border-t-primary mb-3"></div>
+            <p className="text-sm text-muted-foreground">جاري التحميل...</p>
           </div>
         </CardContent>
       </Card>
@@ -60,98 +62,95 @@ const StudentNotifications: React.FC = () => {
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'teacher_comment':
-        return <MessageCircle className="w-4 h-4 text-blue-500" />;
+        return <MessageCircle className="w-4 h-4 text-primary" />;
       case 'project_update':
-        return <BookOpen className="w-4 h-4 text-green-500" />;
+        return <BookOpen className="w-4 h-4 text-primary" />;
       default:
-        return <Bell className="w-4 h-4 text-gray-500" />;
-    }
-  };
-
-  const getNotificationColor = (type: string) => {
-    switch (type) {
-      case 'teacher_comment':
-        return 'bg-blue-50 border-blue-200';
-      case 'project_update':
-        return 'bg-green-50 border-green-200';
-      default:
-        return 'bg-gray-50 border-gray-200';
+        return <Bell className="w-4 h-4 text-primary" />;
     }
   };
 
   return (
-    <Card>
+    <Card className="border-border/40 bg-gradient-to-br from-background via-background to-muted/20 shadow-sm hover:shadow-md transition-all duration-300">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Bell className="w-5 h-5" />
+          <CardTitle className="flex items-center gap-2 text-lg font-semibold">
+            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Bell className="w-4 h-4 text-primary" />
+            </div>
             الإشعارات
             {unreadCount > 0 && (
-              <Badge variant="destructive" className="ml-2">
+              <Badge variant="default" className="mr-1 bg-primary/90">
                 {unreadCount}
               </Badge>
             )}
           </CardTitle>
           {unreadCount > 0 && (
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
               onClick={markAllAsRead}
-              className="text-xs"
+              className="text-xs h-8 hover:bg-primary/5"
             >
               <CheckCircle className="w-3 h-3 mr-1" />
-              تحديد الكل كمقروء
+              تحديد الكل
             </Button>
           )}
         </div>
       </CardHeader>
       <CardContent>
         {notifications.length === 0 ? (
-          <div className="text-center py-8">
-            <Bell className="w-12 h-12 mx-auto text-muted-foreground mb-2 opacity-50" />
-            <p className="text-sm text-muted-foreground">لا توجد إشعارات حالياً</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              ستظهر هنا الإشعارات عند وصول تعليقات من المعلمين
+          <div className="text-center py-12">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted/30 flex items-center justify-center">
+              <Bell className="w-8 h-8 text-muted-foreground/40" />
+            </div>
+            <p className="text-sm font-medium text-muted-foreground">لا توجد إشعارات</p>
+            <p className="text-xs text-muted-foreground/70 mt-1">
+              ستظهر هنا تعليقات المعلمين
             </p>
           </div>
         ) : (
           <ScrollArea className="h-80">
-            <div className="space-y-3">
+            <div className="space-y-2">
               {notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`p-3 rounded-lg border transition-all duration-200 hover:shadow-sm cursor-pointer ${
+                  className={`group relative p-4 rounded-xl border transition-all duration-200 cursor-pointer ${
                     notification.is_read 
-                      ? 'bg-white border-gray-200' 
-                      : getNotificationColor(notification.notification_type)
+                      ? 'bg-background border-border/50 hover:border-border' 
+                      : 'bg-primary/5 border-primary/20 hover:border-primary/30'
                   }`}
                   onClick={() => handleNotificationClick(notification)}
                 >
                   <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 mt-1">
-                      {getNotificationIcon(notification.notification_type)}
+                    <div className="flex-shrink-0 mt-0.5">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                        notification.is_read 
+                          ? 'bg-muted/50' 
+                          : 'bg-primary/10'
+                      }`}>
+                        {getNotificationIcon(notification.notification_type)}
+                      </div>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between">
-                        <h4 className={`text-sm font-medium ${
-                          notification.is_read ? 'text-gray-700' : 'text-gray-900'
+                      <div className="flex items-start justify-between mb-1">
+                        <h4 className={`text-sm font-semibold ${
+                          notification.is_read ? 'text-foreground/80' : 'text-foreground'
                         }`}>
                           {notification.title}
                         </h4>
                         {!notification.is_read && (
-                          <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-800">
-                            جديد
-                          </Badge>
+                          <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mr-2" />
                         )}
                       </div>
-                      <p className={`text-sm mt-1 ${
-                        notification.is_read ? 'text-gray-500' : 'text-gray-700'
+                      <p className={`text-sm leading-relaxed ${
+                        notification.is_read ? 'text-muted-foreground' : 'text-foreground/80'
                       }`}>
                         {notification.message}
                       </p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <Clock className="w-3 h-3 text-muted-foreground" />
-                        <span className="text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1.5 mt-2">
+                        <Clock className="w-3 h-3 text-muted-foreground/60" />
+                        <span className="text-xs text-muted-foreground/80">
                           {formatDistanceToNow(new Date(notification.created_at), {
                             addSuffix: true,
                             locale: ar

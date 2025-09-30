@@ -222,39 +222,47 @@ const StudentDashboard: React.FC = () => {
 
               {/* Quick Actions */}
               <div className="space-y-4">
-                <Card className="bg-gradient-to-br from-purple-500 to-pink-500 text-white">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Rocket className="w-5 h-5" />
+                <Card className="border-border/40 bg-gradient-to-br from-background via-background to-muted/20 shadow-sm hover:shadow-md transition-all duration-300">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-lg font-semibold">
+                      <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <Rocket className="w-4 h-4 text-primary" />
+                      </div>
                       إجراءات سريعة
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-3">
+                  <CardContent className="space-y-2">
                     <Button 
-                      variant="secondary" 
-                      className="w-full justify-start bg-white/20 hover:bg-white/30 text-white border-white/20"
+                      variant="ghost" 
+                      className="w-full justify-start h-11 hover:bg-primary/5 hover:text-primary transition-colors group"
                       onClick={() => setActiveTab('content')}
                     >
-                      <Play className="w-4 h-4 mr-2" />
-                      متابعة التعلم
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center mr-3 group-hover:bg-primary/20 transition-colors">
+                        <Play className="w-4 h-4 text-primary" />
+                      </div>
+                      <span className="font-medium">متابعة التعلم</span>
                     </Button>
                     {hasGamesTab && (
                       <Button 
-                        variant="secondary" 
-                        className="w-full justify-start bg-white/20 hover:bg-white/30 text-white border-white/20"
+                        variant="ghost" 
+                        className="w-full justify-start h-11 hover:bg-primary/5 hover:text-primary transition-colors group"
                         onClick={() => setActiveTab('games')}
                       >
-                        <Gamepad2 className="w-4 h-4 mr-2" />
-                        العب وتعلم
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center mr-3 group-hover:bg-primary/20 transition-colors">
+                          <Gamepad2 className="w-4 h-4 text-primary" />
+                        </div>
+                        <span className="font-medium">العب وتعلم</span>
                       </Button>
                     )}
                     <Button 
-                      variant="secondary" 
-                      className="w-full justify-start bg-white/20 hover:bg-white/30 text-white border-white/20"
+                      variant="ghost" 
+                      className="w-full justify-start h-11 hover:bg-primary/5 hover:text-primary transition-colors group"
                       onClick={() => setActiveTab('challenges')}
                     >
-                      <Target className="w-4 h-4 mr-2" />
-                      تحديات اليوم
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center mr-3 group-hover:bg-primary/20 transition-colors">
+                        <Target className="w-4 h-4 text-primary" />
+                      </div>
+                      <span className="font-medium">تحديات اليوم</span>
                     </Button>
                   </CardContent>
                 </Card>
@@ -263,45 +271,48 @@ const StudentDashboard: React.FC = () => {
                 <StudentNotifications />
 
                 {/* Assigned Grade Info */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <FolderOpen className="w-5 h-5" />
+                <Card className="border-border/40 bg-gradient-to-br from-background via-background to-muted/20 shadow-sm hover:shadow-md transition-all duration-300">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-lg font-semibold">
+                      <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <FolderOpen className="w-4 h-4 text-primary" />
+                      </div>
                       صفك الدراسي
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    <div className="text-center p-4 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg">
-                      <h3 className="text-xl font-bold">الصف {assignedGrade}</h3>
+                    <div className="relative overflow-hidden rounded-xl p-4 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20">
+                      <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full blur-2xl" />
+                      <h3 className="text-2xl font-bold text-primary relative">الصف {assignedGrade}</h3>
                     </div>
                     
                     {userProfile?.schools?.name && (
-                      <div className="p-3 bg-muted/30 border border-border rounded-lg">
-                        <p className="text-xs text-muted-foreground mb-1">المدرسة</p>
+                      <div className="p-3 rounded-xl bg-muted/30 border border-border/50">
+                        <p className="text-xs font-medium text-muted-foreground mb-1">المدرسة</p>
                         <p className="font-semibold text-foreground">{userProfile.schools.name}</p>
                       </div>
                     )}
                     
                     {teacherLoading ? (
-                      <div className="text-center p-3 bg-muted/50 rounded-lg">
-                        <p className="text-sm text-muted-foreground">جاري تحميل معلومات المعلم...</p>
+                      <div className="text-center p-3 rounded-xl bg-muted/20">
+                        <p className="text-sm text-muted-foreground">جاري التحميل...</p>
                       </div>
                     ) : teacher ? (
-                      <div className="flex items-center gap-3 p-3 bg-card border border-border rounded-lg">
+                      <div className="flex items-center gap-3 p-3 rounded-xl bg-background border border-border/50 hover:border-primary/30 transition-colors">
                         <UniversalAvatar
                           avatarUrl={teacher.avatar_url}
                           userName={teacher.full_name}
                           size="md"
-                          className="border-2 border-primary/20"
+                          className="ring-2 ring-primary/10"
                         />
-                        <div className="flex-1">
-                          <p className="text-xs text-muted-foreground">معلم الموضوع</p>
-                          <p className="font-semibold text-foreground">{teacher.full_name}</p>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-muted-foreground">معلم الموضوع</p>
+                          <p className="font-semibold text-foreground truncate">{teacher.full_name}</p>
                         </div>
                       </div>
                     ) : (
-                      <div className="text-center p-3 bg-muted/50 rounded-lg">
-                        <p className="text-sm text-muted-foreground">لم يتم تعيين معلم بعد</p>
+                      <div className="text-center p-3 rounded-xl bg-muted/20">
+                        <p className="text-sm text-muted-foreground">لم يتم تعيين معلم</p>
                       </div>
                     )}
                   </CardContent>
