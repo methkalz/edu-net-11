@@ -5,6 +5,7 @@ import { useStudentAssignedGrade } from '@/hooks/useStudentAssignedGrade';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { StudentCalendarSection } from './StudentCalendarSection';
 import { 
   Trophy, 
   Star, 
@@ -258,6 +259,11 @@ export const StudentStats: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Calendar and Events Section */}
+      <div className="mt-6">
+        <StudentCalendarSection />
       </div>
     </div>
   );

@@ -257,9 +257,6 @@ const StudentDashboard: React.FC = () => {
                   </CardContent>
                 </Card>
 
-                {/* School Calendar Widget */}
-                <SchoolCalendarWidget />
-
                 {/* Student Notifications */}
                 <StudentNotifications />
 
