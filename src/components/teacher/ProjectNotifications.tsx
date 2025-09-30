@@ -125,7 +125,7 @@ const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({
                 )}
               </CardTitle>
               <CardDescription className="text-sm text-text-soft">
-                تعليقات جديدة وتحديثات المشاريع {gradeFilter ? `للصف ${gradeFilter === '10' ? 'العاشر' : 'الثاني عشر'}` : ''}
+                تعليقات جديدة وتحديثات المشاريع
               </CardDescription>
             </div>
           </div>
