@@ -394,7 +394,7 @@ const StudentTracking: React.FC = () => {
         <ModernHeader 
           title="تتبع تقدم الطلاب"
           showBackButton={true}
-          backPath="/teacher"
+          backPath="/dashboard"
         />
         <div className="container mx-auto p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -413,7 +413,7 @@ const StudentTracking: React.FC = () => {
       <ModernHeader 
         title="تتبع تقدم الطلاب"
         showBackButton={true}
-        backPath="/teacher"
+        backPath="/dashboard"
         onRefresh={handleRefresh}
         refreshing={refreshing}
       />
