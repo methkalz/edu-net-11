@@ -160,7 +160,6 @@ export interface CalendarEvent {
   updated_at: string;
   school_id?: string;
   created_by?: string;
-  teacher_name?: string | null;
   target_grade_levels?: string[];
   target_class_ids?: string[];
   created_by_role?: string;
