@@ -273,7 +273,6 @@ const StudentDashboard: React.FC = () => {
                   <CardContent className="space-y-3">
                     <div className="text-center p-4 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg">
                       <h3 className="text-xl font-bold">الصف {assignedGrade}</h3>
-                      <p className="text-sm opacity-90">صفك المخصص</p>
                     </div>
                     {teacherLoading ? (
                       <div className="text-center p-3 bg-muted/50 rounded-lg">
