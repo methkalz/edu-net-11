@@ -13,12 +13,21 @@ export interface ContentProgress {
   updated_at: string;
 }
 
-export interface ProjectProgress {
+export interface Grade10ProjectProgress {
   project_id: string;
   title: string;
   progress_percentage: number;
   status: string;
-  last_saved_at: string;
+  updated_at: string;
+}
+
+export interface Grade12ProjectProgress {
+  project_id: string;
+  title: string;
+  status: string;
+  grade: number | null;
+  submitted_at: string | null;
+  updated_at: string;
 }
 
 export interface GameProgress {
@@ -33,8 +42,8 @@ export interface GameProgress {
 
 export interface ProgressDetails {
   content_progress: ContentProgress[];
-  grade10_projects: ProjectProgress[];
-  grade12_projects: ProjectProgress[];
+  grade10_projects: Grade10ProjectProgress[];
+  grade12_projects: Grade12ProjectProgress[];
   game_progress: GameProgress[];
 }
 

@@ -158,8 +158,8 @@ const StudentDetailsCard: React.FC<{ student: StudentTrackingData }> = ({ studen
             <TabsContent value="projects" className="space-y-2 mt-4">
               {(grade10Projects.length > 0 || grade12Projects.length > 0) ? (
                 <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {[...grade10Projects, ...grade12Projects].map((project, idx) => (
-                    <div key={idx} className="p-3 bg-muted/30 rounded space-y-2">
+                  {grade10Projects.map((project, idx) => (
+                    <div key={`g10-${idx}`} className="p-3 bg-muted/30 rounded space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium">{project.title}</span>
                         <Badge variant={project.status === 'completed' ? 'default' : 'secondary'}>
@@ -170,7 +170,26 @@ const StudentDetailsCard: React.FC<{ student: StudentTrackingData }> = ({ studen
                       <div className="flex justify-between text-xs text-muted-foreground">
                         <span>{project.progress_percentage}%</span>
                         <span>
-                          آخر حفظ: {formatDistanceToNow(new Date(project.last_saved_at), { 
+                          آخر تحديث: {formatDistanceToNow(new Date(project.updated_at), { 
+                            addSuffix: true, 
+                            locale: ar 
+                          })}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                  {grade12Projects.map((project, idx) => (
+                    <div key={`g12-${idx}`} className="p-3 bg-muted/30 rounded space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">{project.title}</span>
+                        <Badge variant={project.status === 'completed' ? 'default' : 'secondary'}>
+                          {project.status === 'completed' ? 'مكتمل' : 'قيد العمل'}
+                        </Badge>
+                      </div>
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        {project.grade !== null && <span>العلامة: {project.grade}/100</span>}
+                        <span>
+                          آخر تحديث: {formatDistanceToNow(new Date(project.updated_at), { 
                             addSuffix: true, 
                             locale: ar 
                           })}
