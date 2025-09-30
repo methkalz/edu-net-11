@@ -88,7 +88,6 @@ const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({
             <div>
               <CardTitle className="text-lg font-medium text-foreground flex items-center gap-2">
                 {title}
-                {gradeFilter}
                 {unreadCount > 0 && <Badge variant="destructive" className="text-xs px-2 py-1 rounded-full bg-red-500/10 text-red-600 border-2 border-red-200/60">
                     {unreadCount}
                   </Badge>}
