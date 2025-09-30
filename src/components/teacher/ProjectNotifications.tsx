@@ -93,7 +93,7 @@ const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({
                   </Badge>}
               </CardTitle>
               <CardDescription className="text-sm text-text-soft">
-                تعليقات جديدة وتحديثات المشاريع {gradeFilter ? `للصف ${gradeFilter === '10' ? 'العاشر' : 'الثاني عشر'}` : ''}
+                تعليقات وتحديثات المشاريع
               </CardDescription>
             </div>
           </div>
