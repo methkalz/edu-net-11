@@ -351,57 +351,6 @@ export const useStudentProgress = () => {
     }
   }, [user, userProfile, logLoginActivity]);
 
-  // Real-time subscription for student progress updates
-  React.useEffect(() => {
-    if (!user || userProfile?.role !== 'student') return;
-
-    const channel = supabase
-      .channel('student-progress-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'student_progress',
-          filter: `student_id=eq.${user.id}`
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.STUDENT.STATS(user.id) });
-          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.STUDENT.PROGRESS(user.id) });
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'student_achievements',
-          filter: `student_id=eq.${user.id}`
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.STUDENT.ACHIEVEMENTS(user.id) });
-          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.STUDENT.STATS(user.id) });
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'student_activity_log',
-          filter: `student_id=eq.${user.id}`
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.STUDENT.STATS(user.id) });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user, userProfile, queryClient]);
-
   const refetch = () => {
     refetchStats();
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.STUDENT.PROGRESS(user?.id || '') });

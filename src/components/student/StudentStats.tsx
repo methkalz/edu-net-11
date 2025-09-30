@@ -69,11 +69,6 @@ export const StudentStats: React.FC = () => {
     lesson.progress?.progress_percentage === 100
   ).length;
   
-  // حساب الفيديوهات المكتملة مباشرة من البيانات المحلية
-  const completedVideos = (gradeContent?.videos || []).filter(video => 
-    video.progress?.progress_percentage === 100 || video.progress?.completed_at
-  ).length;
-  
   // حساب الإجمالي الكلي
   const totalCompleted = completedContent + gameStats.completedGames;
   const totalAll = totalContent + totalGameStages;
@@ -97,7 +92,7 @@ export const StudentStats: React.FC = () => {
     },
     {
       title: 'الفيديوهات المكتملة',
-      value: completedVideos.toString(),
+      value: stats.completed_videos.toString(),
       icon: Video,
       gradient: 'from-blue-400 to-cyan-400',
       bgGradient: 'from-blue-50 to-cyan-50',
