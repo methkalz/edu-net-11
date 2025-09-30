@@ -3,7 +3,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import StudentBadge, { BadgeLevel } from '@/components/badges/StudentBadge';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserTitle } from '@/hooks/useUserTitle';
-import { Sparkles, Trophy, Medal, Award, Crown, Gem, Star, Shield, Hexagon, Zap, Circle, Heart } from 'lucide-react';
+import { Sparkles, Trophy, Medal, Award, Crown, Gem, Star, Shield, Hexagon, Zap, Circle, Heart, Flame, Rocket, Target, Gift, Lightbulb, Book, GraduationCap, Brain, Sparkle, Sun, Moon, Cloud } from 'lucide-react';
+import bronzeBadge from '@/assets/badges/bronze-badge.png';
+import silverBadge from '@/assets/badges/silver-badge.png';
+import goldBadge from '@/assets/badges/gold-badge.png';
+import platinumBadge from '@/assets/badges/platinum-badge.png';
+import diamondBadge from '@/assets/badges/diamond-badge.png';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface BadgeInfo {
@@ -69,12 +74,33 @@ const ICON_OPTIONS = [
   { name: 'كأس', icon: Trophy, category: 'classic' },
   { name: 'تاج', icon: Crown, category: 'classic' },
   { name: 'ألماس', icon: Gem, category: 'classic' },
+  { name: 'هدية', icon: Gift, category: 'classic' },
   { name: 'نجمة', icon: Star, category: 'shapes' },
   { name: 'درع', icon: Shield, category: 'shapes' },
   { name: 'سداسي', icon: Hexagon, category: 'shapes' },
+  { name: 'دائرة', icon: Circle, category: 'shapes' },
+  { name: 'شمس', icon: Sun, category: 'shapes' },
+  { name: 'قمر', icon: Moon, category: 'shapes' },
   { name: 'صاعقة', icon: Zap, category: 'modern' },
-  { name: 'دائرة', icon: Circle, category: 'modern' },
   { name: 'قلب', icon: Heart, category: 'modern' },
+  { name: 'نار', icon: Flame, category: 'modern' },
+  { name: 'صاروخ', icon: Rocket, category: 'modern' },
+  { name: 'هدف', icon: Target, category: 'modern' },
+  { name: 'لمبة', icon: Lightbulb, category: 'modern' },
+  { name: 'كتاب', icon: Book, category: 'educational' },
+  { name: 'تخرج', icon: GraduationCap, category: 'educational' },
+  { name: 'دماغ', icon: Brain, category: 'educational' },
+  { name: 'بريق', icon: Sparkle, category: 'educational' },
+  { name: 'سحابة', icon: Cloud, category: 'educational' },
+];
+
+// Badge image options
+const BADGE_IMAGES = [
+  { name: 'وسام البرونز', image: bronzeBadge, level: 'bronze' },
+  { name: 'وسام الفضة', image: silverBadge, level: 'silver' },
+  { name: 'وسام الذهب', image: goldBadge, level: 'gold' },
+  { name: 'وسام البلاتين', image: platinumBadge, level: 'platinum' },
+  { name: 'وسام الألماس', image: diamondBadge, level: 'diamond' },
 ];
 
 // Badge shape variants
@@ -135,8 +161,9 @@ const BadgesGallery: React.FC = () => {
 
       {/* Tabs for different views */}
       <Tabs value={selectedTab} onValueChange={setSelectedTab} className="mb-8">
-        <TabsList className="grid w-full grid-cols-4 max-w-2xl mx-auto">
+        <TabsList className="grid w-full grid-cols-5 max-w-4xl mx-auto">
           <TabsTrigger value="preview">معاينة أوسمتك</TabsTrigger>
+          <TabsTrigger value="images">صور الأوسمة</TabsTrigger>
           <TabsTrigger value="icons">الأيقونات</TabsTrigger>
           <TabsTrigger value="shapes">الأشكال</TabsTrigger>
           <TabsTrigger value="styles">الأنماط</TabsTrigger>
@@ -256,6 +283,40 @@ const BadgesGallery: React.FC = () => {
           </div>
         </TabsContent>
 
+        {/* Images Tab */}
+        <TabsContent value="images" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>أوسمة بالصور</CardTitle>
+              <CardDescription>أوسمة مصممة بشكل احترافي لكل مستوى</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {BADGE_IMAGES.map((badge) => (
+                  <Card key={badge.level} className="hover:shadow-2xl transition-all hover:scale-105">
+                    <CardContent className="p-8 flex flex-col items-center gap-4">
+                      <div className="relative">
+                        <img 
+                          src={badge.image} 
+                          alt={badge.name}
+                          className="w-32 h-32 object-contain drop-shadow-2xl"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-primary/10 to-transparent rounded-full blur-xl -z-10"></div>
+                      </div>
+                      <div className="text-center">
+                        <h3 className="font-bold text-xl mb-2">{badge.name}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {BADGES_INFO.find(b => b.level === badge.level)?.pointsRequired} نقطة
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* Icons Tab */}
         <TabsContent value="icons" className="mt-6">
           <Card>
@@ -265,12 +326,13 @@ const BadgesGallery: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-8">
-                {['classic', 'shapes', 'modern'].map((category) => (
+                {['classic', 'shapes', 'modern', 'educational'].map((category) => (
                   <div key={category}>
                     <h3 className="text-lg font-semibold mb-4">
                       {category === 'classic' && '✨ كلاسيكي'}
                       {category === 'shapes' && '🔷 أشكال'}
                       {category === 'modern' && '⚡ عصري'}
+                      {category === 'educational' && '📚 تعليمي'}
                     </h3>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                       {ICON_OPTIONS.filter(opt => opt.category === category).map((iconOpt) => {
