@@ -36,8 +36,6 @@ import { SchoolCalendarWidget } from '@/components/calendar/SchoolCalendarWidget
 import { UniversalAvatar } from '@/components/shared/UniversalAvatar';
 import { UserTitleBadge } from '@/components/shared/UserTitleBadge';
 import { useStudentTeacher } from '@/hooks/useStudentTeacher';
-import { PointsBreakdownCard } from './PointsBreakdownCard';
-import { useGrade11PointsManager } from '@/hooks/useGrade11PointsManager';
 
 const StudentDashboard: React.FC = () => {
   const { userProfile } = useAuth();
@@ -215,11 +213,6 @@ const StudentDashboard: React.FC = () => {
               {/* Stats Section */}
               <div className="lg:col-span-2 space-y-6">
                 <StudentStats />
-                
-                {/* Points Breakdown Card for Grade 11 students */}
-                {assignedGrade === "11" && (
-                  <PointsBreakdownCard />
-                )}
               </div>
 
               {/* Quick Actions */}
