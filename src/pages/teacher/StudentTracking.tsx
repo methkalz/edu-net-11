@@ -421,62 +421,62 @@ const StudentTracking: React.FC = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fade-in"
            style={{ direction: 'rtl' }}>
 
-        {/* Statistics Cards - Elegant & Minimal */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="group relative overflow-hidden border border-border/40 bg-card/60 backdrop-blur-sm hover:border-primary/30 hover:shadow-lg transition-all duration-500 ease-out hover:scale-[1.02]">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1.5">
-                  <p className="text-xs font-medium text-muted-foreground">إجمالي الطلاب</p>
-                  <p className="text-2xl font-bold text-foreground">
+        {/* Statistics Cards - Elegant Minimalist */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-xl shadow-sm hover:shadow-xl transition-all duration-700 ease-out hover:-translate-y-1">
+            <CardContent className="p-6">
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-2 flex-1">
+                  <p className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">إجمالي الطلاب</p>
+                  <p className="text-3xl font-bold bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">
                     {students.length}
                   </p>
                 </div>
-                <div className="p-2.5 rounded-xl bg-primary/10 group-hover:bg-primary/15 transition-colors duration-300">
+                <div className="p-3 rounded-2xl bg-primary/5 group-hover:bg-primary/10 transition-all duration-500 group-hover:scale-110">
                   <Users className="h-5 w-5 text-primary" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="group relative overflow-hidden border border-border/40 bg-card/60 backdrop-blur-sm hover:border-green-500/30 hover:shadow-lg transition-all duration-500 ease-out hover:scale-[1.02]">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1.5">
-                  <p className="text-xs font-medium text-muted-foreground">إجمالي الوقت</p>
-                  <p className="text-2xl font-bold text-foreground">
+          <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-xl shadow-sm hover:shadow-xl transition-all duration-700 ease-out hover:-translate-y-1">
+            <CardContent className="p-6">
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-2 flex-1">
+                  <p className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">إجمالي الوقت</p>
+                  <p className="text-3xl font-bold bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">
                     {formatTime(students.reduce((sum, s) => sum + s.total_time_minutes, 0))}
                   </p>
                 </div>
-                <div className="p-2.5 rounded-xl bg-green-500/10 group-hover:bg-green-500/15 transition-colors duration-300">
+                <div className="p-3 rounded-2xl bg-green-500/5 group-hover:bg-green-500/10 transition-all duration-500 group-hover:scale-110">
                   <Clock className="h-5 w-5 text-green-600 dark:text-green-500" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="group relative overflow-hidden border border-border/40 bg-card/60 backdrop-blur-sm hover:border-yellow-500/30 hover:shadow-lg transition-all duration-500 ease-out hover:scale-[1.02]">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1.5">
-                  <p className="text-xs font-medium text-muted-foreground">إجمالي النقاط</p>
-                  <p className="text-2xl font-bold text-foreground">
+          <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-xl shadow-sm hover:shadow-xl transition-all duration-700 ease-out hover:-translate-y-1">
+            <CardContent className="p-6">
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-2 flex-1">
+                  <p className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">إجمالي النقاط</p>
+                  <p className="text-3xl font-bold bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">
                     {students.reduce((sum, s) => sum + s.total_points, 0)}
                   </p>
                 </div>
-                <div className="p-2.5 rounded-xl bg-yellow-500/10 group-hover:bg-yellow-500/15 transition-colors duration-300">
+                <div className="p-3 rounded-2xl bg-yellow-500/5 group-hover:bg-yellow-500/10 transition-all duration-500 group-hover:scale-110">
                   <Trophy className="h-5 w-5 text-yellow-600 dark:text-yellow-500" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="group relative overflow-hidden border border-border/40 bg-card/60 backdrop-blur-sm hover:border-purple-500/30 hover:shadow-lg transition-all duration-500 ease-out hover:scale-[1.02]">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1.5">
-                  <p className="text-xs font-medium text-muted-foreground">معدل المشاهدة</p>
-                  <p className="text-2xl font-bold text-foreground">
+          <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-xl shadow-sm hover:shadow-xl transition-all duration-700 ease-out hover:-translate-y-1">
+            <CardContent className="p-6">
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-2 flex-1">
+                  <p className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">معدل المشاهدة</p>
+                  <p className="text-3xl font-bold bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">
                     {students.length > 0 
                       ? Math.round(students.reduce((sum, s) => 
                           sum + (s.progress_details?.content_progress?.length || 0), 0
@@ -484,7 +484,7 @@ const StudentTracking: React.FC = () => {
                       : 0}
                   </p>
                 </div>
-                <div className="p-2.5 rounded-xl bg-purple-500/10 group-hover:bg-purple-500/15 transition-colors duration-300">
+                <div className="p-3 rounded-2xl bg-purple-500/5 group-hover:bg-purple-500/10 transition-all duration-500 group-hover:scale-110">
                   <TrendingUp className="h-5 w-5 text-purple-600 dark:text-purple-500" />
                 </div>
               </div>
