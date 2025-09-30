@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { X, PlayCircle, FileText, Image, Video, Clock, Calendar, Download, CheckCircle } from 'lucide-react';
+import React from 'react';
+import { X, PlayCircle, FileText, Image, Video, Clock, Calendar, Download } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,9 +10,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format } from 'date-fns';
 import { Grade11LessonWithMedia } from '@/hooks/useGrade11Content';
 import Grade11LessonContentDisplay from './Grade11LessonContentDisplay';
-import { useGrade11Points } from '@/hooks/useGrade11Points';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
 
 interface Grade11LessonDetailsModalProps {
   lesson: Grade11LessonWithMedia | null;
@@ -21,45 +18,6 @@ interface Grade11LessonDetailsModalProps {
 }
 
 const Grade11LessonDetailsModal: React.FC<Grade11LessonDetailsModalProps> = ({ lesson, isOpen, onClose }) => {
-  const { user } = useAuth();
-  const { addLessonPoints } = useGrade11Points();
-  const [isCompleted, setIsCompleted] = useState(false);
-  const [isCompletingLesson, setIsCompletingLesson] = useState(false);
-
-  // Check if lesson is already completed
-  useEffect(() => {
-    const checkCompletion = async () => {
-      if (!user || !lesson) return;
-      
-      const { data } = await supabase
-        .from('grade11_game_progress')
-        .select('completed_at')
-        .eq('user_id', user.id)
-        .eq('lesson_id', lesson.id)
-        .maybeSingle();
-      
-      setIsCompleted(!!data?.completed_at);
-    };
-    
-    checkCompletion();
-  }, [user, lesson]);
-
-  const handleCompleteLesson = async () => {
-    if (!user || !lesson || isCompleted) return;
-    
-    setIsCompletingLesson(true);
-    try {
-      // Mark lesson as completed and add points
-      const success = await addLessonPoints(lesson.id);
-      
-      if (success) {
-        setIsCompleted(true);
-      }
-    } finally {
-      setIsCompletingLesson(false);
-    }
-  };
-
   if (!lesson) return null;
 
   const getMediaIcon = (mediaType: string) => {
@@ -97,17 +55,9 @@ const Grade11LessonDetailsModal: React.FC<Grade11LessonDetailsModalProps> = ({ l
         <DialogHeader className="p-6 pb-4 bg-muted/30 border-b">
           <div className="flex items-start justify-between">
             <div className="flex-1 pr-8">
-              <div className="flex items-center gap-3 mb-3">
-                <DialogTitle className="text-2xl font-bold text-foreground">
-                  {lesson.title}
-                </DialogTitle>
-                {isCompleted && (
-                  <Badge variant="default" className="bg-green-500 hover:bg-green-600 text-white">
-                    <CheckCircle className="h-3 w-3 ml-1" />
-                    مكتمل
-                  </Badge>
-                )}
-              </div>
+              <DialogTitle className="text-2xl font-bold text-foreground mb-3">
+                {lesson.title}
+              </DialogTitle>
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Clock className="h-4 w-4" />
@@ -123,19 +73,6 @@ const Grade11LessonDetailsModal: React.FC<Grade11LessonDetailsModalProps> = ({ l
                   </Badge>
                 )}
               </div>
-              
-              {/* Complete Lesson Button */}
-              {!isCompleted && user && (
-                <Button
-                  onClick={handleCompleteLesson}
-                  disabled={isCompletingLesson}
-                  className="mt-4 bg-green-500 hover:bg-green-600 text-white"
-                  size="sm"
-                >
-                  <CheckCircle className="h-4 w-4 ml-2" />
-                  {isCompletingLesson ? 'جاري الحفظ...' : 'تم الإكمال (+2 نقطة)'}
-                </Button>
-              )}
             </div>
             <Button
               variant="ghost"
