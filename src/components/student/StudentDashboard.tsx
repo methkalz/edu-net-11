@@ -188,7 +188,7 @@ const StudentDashboard: React.FC = () => {
       <section className="container mx-auto px-6 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <div className="flex justify-center px-4">
-            <TabsList className={`grid w-full max-w-4xl ${hasGamesTab ? 'grid-cols-5' : 'grid-cols-4'} bg-white/95 backdrop-blur-sm shadow-xl border border-white/20 rounded-2xl p-2 h-16`}>
+            <TabsList className={`grid w-full max-w-4xl ${hasGamesTab ? 'grid-cols-4' : 'grid-cols-3'} bg-white/95 backdrop-blur-sm shadow-xl border border-white/20 rounded-2xl p-2 h-16`}>
               <TabsTrigger value="overview" className="flex items-center justify-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105">
                 <span className="text-center">نظرة عامة</span>
               </TabsTrigger>
@@ -202,10 +202,6 @@ const StudentDashboard: React.FC = () => {
                   <span className="hidden sm:inline">الألعاب</span>
                 </TabsTrigger>
               )}
-              <TabsTrigger value="challenges" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105">
-                <Target className="w-6 h-6" />
-                <span className="hidden sm:inline">التحديات</span>
-              </TabsTrigger>
               <TabsTrigger value="profile" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105">
                 <Award className="w-6 h-6" />
                 <span className="hidden sm:inline">الملف الشخصي</span>
@@ -254,16 +250,6 @@ const StudentDashboard: React.FC = () => {
                         <span className="font-medium">العب وتعلم</span>
                       </Button>
                     )}
-                    <Button 
-                      variant="ghost" 
-                      className="w-full justify-start h-11 hover:bg-gradient-to-r hover:from-amber-50/50 hover:to-orange-50/50 dark:hover:from-amber-950/30 dark:hover:to-orange-950/30 hover:text-amber-700 dark:hover:text-amber-400 transition-all group"
-                      onClick={() => setActiveTab('challenges')}
-                    >
-                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500/10 to-orange-500/10 flex items-center justify-center mr-3 group-hover:from-amber-500/20 group-hover:to-orange-500/20 transition-all">
-                        <Target className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                      </div>
-                      <span className="font-medium">تحديات اليوم</span>
-                    </Button>
                   </CardContent>
                 </Card>
 
@@ -330,10 +316,6 @@ const StudentDashboard: React.FC = () => {
               <StudentGameSection />
             </TabsContent>
           )}
-
-          <TabsContent value="challenges">
-            <StudentDailyChallenges />
-          </TabsContent>
 
           <TabsContent value="profile">
             <StudentProfile />
