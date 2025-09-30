@@ -143,7 +143,7 @@ const fetchTeacherStudents = async (
       .from('student_progress')
       .select('*')
       .in('student_id', studentIds)
-      .order('last_accessed_at', { ascending: false }),
+      .order('updated_at', { ascending: false }),
     
     // Activities data
     supabase

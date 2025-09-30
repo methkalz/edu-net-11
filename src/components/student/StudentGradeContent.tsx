@@ -945,9 +945,11 @@ export const StudentGradeContent: React.FC = () => {
           onProgress={(progress, watchTime) => 
             handleContentProgress(selectedContent.id, 'video', progress, watchTime)
           }
-          onComplete={() => 
-            handleContentComplete(selectedContent.id, 'video', 0)
-          }
+          onComplete={() => {
+            // Get the last watch time from the progress handler
+            // This is a workaround since we can't pass watchTime directly from VideoViewer
+            handleContentComplete(selectedContent.id, 'video', 1); // Will be updated by final progress call
+          }}
         />
       )}
 
@@ -959,9 +961,9 @@ export const StudentGradeContent: React.FC = () => {
           onProgress={(progress, readTime) => 
             handleContentProgress(selectedContent.id, 'document', progress, readTime)
           }
-          onComplete={() => 
-            handleContentComplete(selectedContent.id, 'document', 0)
-          }
+          onComplete={() => {
+            handleContentComplete(selectedContent.id, 'document', 1); // Will be updated by final progress call
+          }}
         />
       )}
 
@@ -974,7 +976,7 @@ export const StudentGradeContent: React.FC = () => {
             handleContentProgress(selectedContent.id, 'lesson', progress, studyTime)
           }
           onComplete={() => 
-            handleContentComplete(selectedContent.id, 'lesson', 0)
+            handleContentComplete(selectedContent.id, 'lesson', 1) // Will be updated by final progress call
           }
         />
       )}
@@ -988,7 +990,7 @@ export const StudentGradeContent: React.FC = () => {
             handleContentProgress(selectedContent.id, 'project', progress, workTime)
           }
           onComplete={() => 
-            handleContentComplete(selectedContent.id, 'project', 0)
+            handleContentComplete(selectedContent.id, 'project', 1) // Will be updated by final progress call
           }
         />
       )}
