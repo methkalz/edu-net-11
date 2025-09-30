@@ -347,16 +347,14 @@ export const useAdvancedStudentStats = (timePeriod: TimePeriod = 'today') => {
 
   useEffect(() => {
     fetchData();
-  }, [timePeriod]);
-
-  // إعادة جلب البيانات كل 2 دقيقة للبيانات الحية
-  useEffect(() => {
+    
+    // إعادة جلب البيانات كل 2 دقيقة للبيانات الحية
     const interval = setInterval(() => {
       fetchData();
     }, 2 * 60 * 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [timePeriod]);
 
   return {
     stats,
