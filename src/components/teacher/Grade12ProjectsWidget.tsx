@@ -105,14 +105,6 @@ const Grade12ProjectsWidget: React.FC = () => {
               </CardDescription>
             </div>
           </div>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => navigate('/grade12-management')}
-            className="text-sm border-divider/60 hover:bg-surface-hover"
-          >
-            عرض الكل
-          </Button>
         </div>
       </CardHeader>
       
