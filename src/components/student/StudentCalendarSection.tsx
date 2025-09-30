@@ -8,38 +8,19 @@ import { ar } from 'date-fns/locale';
 import {
   Calendar as CalendarIcon,
   Clock,
-  MapPin,
   Info,
   Bell,
-  CheckCircle2
+  icons
 } from 'lucide-react';
 
 export const StudentCalendarSection: React.FC = () => {
   const { events, loading } = useCalendarEvents();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
-  const getEventTypeColor = (type?: string) => {
-    const colors = {
-      exam: { bg: 'bg-red-100 dark:bg-red-900/30', text: 'text-red-700 dark:text-red-300', border: 'border-red-200' },
-      deadline: { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-700 dark:text-blue-300', border: 'border-blue-200' },
-      holiday: { bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-700 dark:text-green-300', border: 'border-green-200' },
-      event: { bg: 'bg-purple-100 dark:bg-purple-900/30', text: 'text-purple-700 dark:text-purple-300', border: 'border-purple-200' },
-      meeting: { bg: 'bg-orange-100 dark:bg-orange-900/30', text: 'text-orange-700 dark:text-orange-300', border: 'border-orange-200' },
-      important: { bg: 'bg-yellow-100 dark:bg-yellow-900/30', text: 'text-yellow-700 dark:text-yellow-300', border: 'border-yellow-200' },
-      other: { bg: 'bg-gray-100 dark:bg-gray-900/30', text: 'text-gray-700 dark:text-gray-300', border: 'border-gray-200' }
-    };
-    return colors[type as keyof typeof colors] || colors.event;
-  };
-
-  const getEventTypeIcon = (type?: string) => {
-    switch (type) {
-      case 'exam': return '📝';
-      case 'deadline': return '📚';
-      case 'holiday': return '🎉';
-      case 'meeting': return '👥';
-      case 'important': return '⭐';
-      default: return '📅';
-    }
+  const getIconComponent = (iconName?: string) => {
+    if (!iconName) return CalendarIcon;
+    const IconComponent = icons[iconName as keyof typeof icons];
+    return IconComponent || CalendarIcon;
   };
 
   const upcomingEvents = events
@@ -95,63 +76,107 @@ export const StudentCalendarSection: React.FC = () => {
           ) : (
             <div className="space-y-3">
               {upcomingEvents.map((event, index) => {
-                const colors = getEventTypeColor(event.type);
                 const eventDate = new Date(event.date);
                 const isToday = isSameDay(eventDate, new Date());
+                const EventIcon = getIconComponent(event.icon);
+                const eventColor = event.color || '#3b82f6';
                 
                 return (
                   <div
                     key={event.id}
-                    className={`group relative flex items-start gap-3 p-4 rounded-lg border-2 ${colors.border} ${colors.bg} transition-all duration-300 hover:shadow-lg hover:scale-[1.02] animate-fade-in`}
-                    style={{ animationDelay: `${index * 0.1}s` }}
+                    className="group relative overflow-hidden rounded-xl border-2 transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] animate-fade-in"
+                    style={{ 
+                      animationDelay: `${index * 0.1}s`,
+                      borderColor: eventColor,
+                      background: `linear-gradient(135deg, ${eventColor}15 0%, ${eventColor}08 100%)`
+                    }}
                   >
-                    {/* Event Icon */}
-                    <div className="flex-shrink-0 w-12 h-12 rounded-full bg-white dark:bg-gray-800 shadow-md flex items-center justify-center text-2xl">
-                      {getEventTypeIcon(event.type)}
-                    </div>
-
-                    {/* Event Details */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <h4 className={`font-bold text-base ${colors.text}`}>
-                          {event.title}
-                        </h4>
-                        {isToday && (
-                          <Badge className="bg-red-500 text-white flex-shrink-0">
-                            اليوم
-                          </Badge>
-                        )}
+                    {/* Gradient Overlay */}
+                    <div 
+                      className="absolute top-0 left-0 w-full h-1"
+                      style={{ background: `linear-gradient(90deg, ${eventColor} 0%, ${eventColor}80 100%)` }}
+                    />
+                    
+                    <div className="flex items-start gap-4 p-4">
+                      {/* Event Icon */}
+                      <div 
+                        className="flex-shrink-0 w-14 h-14 rounded-xl shadow-lg flex items-center justify-center relative overflow-hidden"
+                        style={{ 
+                          background: `linear-gradient(135deg, ${eventColor} 0%, ${eventColor}cc 100%)`
+                        }}
+                      >
+                        <EventIcon className="w-7 h-7 text-white relative z-10" />
+                        <div 
+                          className="absolute inset-0 opacity-20"
+                          style={{ background: `radial-gradient(circle at 30% 30%, white 0%, transparent 70%)` }}
+                        />
                       </div>
 
-                      {/* Date & Time */}
-                      <div className="flex flex-wrap gap-2 mb-2">
-                        <div className="flex items-center gap-1 text-xs bg-white/70 dark:bg-gray-800/70 px-2 py-1 rounded">
-                          <CalendarIcon className="w-3 h-3" />
-                          <span>{format(eventDate, 'dd MMMM yyyy', { locale: ar })}</span>
+                      {/* Event Details */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2 mb-3">
+                          <h4 className="font-bold text-lg text-foreground leading-tight">
+                            {event.title}
+                          </h4>
+                          {isToday && (
+                            <Badge 
+                              className="flex-shrink-0 text-white border-0 shadow-md"
+                              style={{ backgroundColor: eventColor }}
+                            >
+                              اليوم
+                            </Badge>
+                          )}
                         </div>
-                        {event.time && (
-                          <div className="flex items-center gap-1 text-xs bg-white/70 dark:bg-gray-800/70 px-2 py-1 rounded">
-                            <Clock className="w-3 h-3" />
-                            <span>{event.time}</span>
+
+                        {/* Date & Time */}
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          <div 
+                            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-medium backdrop-blur-sm"
+                            style={{ 
+                              backgroundColor: `${eventColor}20`,
+                              color: eventColor
+                            }}
+                          >
+                            <CalendarIcon className="w-3.5 h-3.5" />
+                            <span>{format(eventDate, 'dd MMMM yyyy', { locale: ar })}</span>
                           </div>
+                          {event.time && (
+                            <div 
+                              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-medium backdrop-blur-sm"
+                              style={{ 
+                                backgroundColor: `${eventColor}20`,
+                                color: eventColor
+                              }}
+                            >
+                              <Clock className="w-3.5 h-3.5" />
+                              <span>{event.time}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Type Badge */}
+                        <Badge 
+                          variant="outline" 
+                          className="border-2 font-semibold"
+                          style={{ 
+                            borderColor: eventColor,
+                            color: eventColor
+                          }}
+                        >
+                          {event.type === 'exam' ? 'امتحان' :
+                           event.type === 'deadline' ? 'موعد نهائي' :
+                           event.type === 'holiday' ? 'عطلة' :
+                           event.type === 'meeting' ? 'اجتماع' :
+                           event.type === 'important' ? 'مهم' : 'حدث'}
+                        </Badge>
+
+                        {/* Description */}
+                        {event.description && (
+                          <p className="text-sm text-muted-foreground mt-3 line-clamp-2 leading-relaxed">
+                            {event.description}
+                          </p>
                         )}
                       </div>
-
-                      {/* Type Badge */}
-                      <Badge variant="outline" className={`${colors.text} border-current`}>
-                        {event.type === 'exam' ? 'امتحان' :
-                         event.type === 'deadline' ? 'موعد نهائي' :
-                         event.type === 'holiday' ? 'عطلة' :
-                         event.type === 'meeting' ? 'اجتماع' :
-                         event.type === 'important' ? 'مهم' : 'حدث'}
-                      </Badge>
-
-                      {/* Description */}
-                      {event.description && (
-                        <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-                          {event.description}
-                        </p>
-                      )}
                     </div>
                   </div>
                 );
@@ -194,19 +219,31 @@ export const StudentCalendarSection: React.FC = () => {
                 </h4>
                 <div className="space-y-2">
                   {selectedDateEvents.map((event) => {
-                    const colors = getEventTypeColor(event.type);
+                    const EventIcon = getIconComponent(event.icon);
+                    const eventColor = event.color || '#3b82f6';
                     return (
                       <div
                         key={event.id}
-                        className={`flex items-center gap-2 p-2 rounded-lg ${colors.bg} border ${colors.border}`}
+                        className="flex items-center gap-3 p-3 rounded-lg border-2 transition-all hover:shadow-md"
+                        style={{ 
+                          borderColor: eventColor,
+                          background: `linear-gradient(135deg, ${eventColor}15 0%, ${eventColor}08 100%)`
+                        }}
                       >
-                        <span className="text-lg">{getEventTypeIcon(event.type)}</span>
+                        <div 
+                          className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center shadow-sm"
+                          style={{ 
+                            background: `linear-gradient(135deg, ${eventColor} 0%, ${eventColor}cc 100%)`
+                          }}
+                        >
+                          <EventIcon className="w-5 h-5 text-white" />
+                        </div>
                         <div className="flex-1 min-w-0">
-                          <p className={`font-medium text-sm ${colors.text}`}>
+                          <p className="font-semibold text-sm text-foreground">
                             {event.title}
                           </p>
                           {event.time && (
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-xs text-muted-foreground mt-0.5">
                               {event.time}
                             </p>
                           )}
