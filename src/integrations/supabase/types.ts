@@ -2365,6 +2365,7 @@ export type Database = {
           id: string
           lesson_id: string
           max_score: number
+          points_earned: number | null
           score: number
           unlocked: boolean
           user_id: string
@@ -2376,6 +2377,7 @@ export type Database = {
           id?: string
           lesson_id: string
           max_score?: number
+          points_earned?: number | null
           score?: number
           unlocked?: boolean
           user_id: string
@@ -2387,6 +2389,7 @@ export type Database = {
           id?: string
           lesson_id?: string
           max_score?: number
+          points_earned?: number | null
           score?: number
           unlocked?: boolean
           user_id?: string
@@ -4017,6 +4020,7 @@ export type Database = {
           is_unlocked: boolean
           last_played_at: string | null
           player_id: string
+          points_earned: number | null
           updated_at: string
         }
         Insert: {
@@ -4030,6 +4034,7 @@ export type Database = {
           is_unlocked?: boolean
           last_played_at?: string | null
           player_id: string
+          points_earned?: number | null
           updated_at?: string
         }
         Update: {
@@ -4043,6 +4048,7 @@ export type Database = {
           is_unlocked?: boolean
           last_played_at?: string | null
           player_id?: string
+          points_earned?: number | null
           updated_at?: string
         }
         Relationships: [

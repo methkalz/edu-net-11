@@ -75,13 +75,13 @@ export const useGrade11Points = () => {
       // التحقق من عدم وجود نقاط سابقة لهذا الدرس
       const { data: existingProgress } = await supabase
         .from('grade11_game_progress')
-        .select('points_earned')
+        .select('*')
         .eq('user_id', user.id)
         .eq('lesson_id', lessonId)
         .maybeSingle();
 
       // إذا كانت النقاط موجودة بالفعل، لا نضيف مرة أخرى
-      if (existingProgress && existingProgress.points_earned > 0) {
+      if (existingProgress && (existingProgress as any).points_earned > 0) {
         return false;
       }
 
@@ -97,7 +97,7 @@ export const useGrade11Points = () => {
             lesson_id: lessonId,
             points_earned: POINTS.LESSON,
             completed_at: new Date().toISOString()
-          }, {
+          } as any, {
             onConflict: 'user_id,lesson_id'
           });
 
@@ -160,13 +160,13 @@ export const useGrade11Points = () => {
       // التحقق من عدم وجود نقاط سابقة لهذه المرحلة
       const { data: existingProgress } = await supabase
         .from('player_game_progress')
-        .select('points_earned')
+        .select('*')
         .eq('player_id', user.id)
         .eq('game_id', gameId)
         .maybeSingle();
 
       // إذا كانت النقاط موجودة بالفعل، لا نضيف مرة أخرى
-      if (existingProgress && existingProgress.points_earned > 0) {
+      if (existingProgress && (existingProgress as any).points_earned > 0) {
         return false;
       }
 
@@ -179,7 +179,7 @@ export const useGrade11Points = () => {
           .from('player_game_progress')
           .update({
             points_earned: POINTS.GAME_STAGE
-          })
+          } as any)
           .eq('player_id', user.id)
           .eq('game_id', gameId);
 
