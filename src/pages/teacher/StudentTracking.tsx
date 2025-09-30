@@ -17,6 +17,7 @@ import {
   Eye
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
 interface StudentTrackingData {
@@ -44,43 +45,56 @@ interface StudentTrackingData {
 }
 
 const StudentTracking: React.FC = () => {
+  const { user } = useAuth();
   const [students, setStudents] = useState<StudentTrackingData[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStudent, setSelectedStudent] = useState<StudentTrackingData | null>(null);
 
   useEffect(() => {
-    fetchStudentTracking();
-  }, []);
+    if (user) {
+      fetchStudentTracking();
+    }
+  }, [user]);
 
   const fetchStudentTracking = async () => {
     try {
       setLoading(true);
       
-      // جلب بيانات التقدم من جدول student_progress
-      const { data: progressData, error: progressError } = await supabase
-        .from('student_progress')
-        .select(`
-          student_id,
-          content_id,
-          content_type,
-          progress_percentage,
-          time_spent_minutes,
-          points_earned,
-          completed_at,
-          updated_at
-        `);
+      // 1. جلب الصفوف التي يدرسها المعلم
+      const { data: teacherClasses, error: teacherClassesError } = await supabase
+        .from('teacher_classes')
+        .select('class_id')
+        .eq('teacher_id', user?.id);
 
-      if (progressError) throw progressError;
+      if (teacherClassesError) throw teacherClassesError;
 
-      // جلب بيانات الأنشطة
-      const { data: activityData, error: activityError } = await supabase
-        .from('student_activity_log')
-        .select('student_id, activity_type, duration_seconds, points_earned, created_at');
+      if (!teacherClasses || teacherClasses.length === 0) {
+        setStudents([]);
+        setLoading(false);
+        toast.info('لا توجد صفوف مسندة إليك بعد');
+        return;
+      }
 
-      if (activityError) throw activityError;
+      const classIds = teacherClasses.map(tc => tc.class_id);
 
-      // جلب معلومات الطلاب
+      // 2. جلب الطلاب المسجلين في هذه الصفوف
+      const { data: classStudents, error: classStudentsError } = await supabase
+        .from('class_students')
+        .select('student_id')
+        .in('class_id', classIds);
+
+      if (classStudentsError) throw classStudentsError;
+
+      if (!classStudents || classStudents.length === 0) {
+        setStudents([]);
+        setLoading(false);
+        return;
+      }
+
+      const studentIds = classStudents.map(cs => cs.student_id);
+
+      // 3. جلب معلومات الطلاب
       const { data: studentsData, error: studentsError } = await supabase
         .from('students')
         .select(`
@@ -94,11 +108,39 @@ const StudentTracking: React.FC = () => {
               grade_levels(code, label)
             )
           )
-        `);
+        `)
+        .in('id', studentIds);
 
       if (studentsError) throw studentsError;
 
-      // دمج البيانات
+      // 4. جلب بيانات التقدم لطلاب المعلم فقط
+      const userIds = (studentsData || []).map((s: any) => s.user_id).filter(Boolean);
+
+      const { data: progressData, error: progressError } = await supabase
+        .from('student_progress')
+        .select(`
+          student_id,
+          content_id,
+          content_type,
+          progress_percentage,
+          time_spent_minutes,
+          points_earned,
+          completed_at,
+          updated_at
+        `)
+        .in('student_id', userIds);
+
+      if (progressError) throw progressError;
+
+      // 5. جلب بيانات الأنشطة لطلاب المعلم فقط
+      const { data: activityData, error: activityError } = await supabase
+        .from('student_activity_log')
+        .select('student_id, activity_type, duration_seconds, points_earned, created_at')
+        .in('student_id', userIds);
+
+      if (activityError) throw activityError;
+
+      // 6. دمج البيانات
       const combinedData: StudentTrackingData[] = (studentsData || []).map((student: any) => {
         const studentProgress = (progressData || []).filter(
           (p: any) => p.student_id === student.user_id
