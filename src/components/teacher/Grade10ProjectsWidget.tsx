@@ -122,25 +122,6 @@ const Grade10ProjectsWidget: React.FC = () => {
               </CardDescription>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => navigate('/grade10-management')}
-              className="text-sm border-divider/60 hover:bg-surface-hover"
-            >
-              عرض الكل
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={loading}
-              className="h-8 w-8 p-0 hover:bg-surface-hover"
-            >
-              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            </Button>
-          </div>
         </div>
       </CardHeader>
       
