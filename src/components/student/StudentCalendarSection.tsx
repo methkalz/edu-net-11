@@ -111,7 +111,7 @@ export const StudentCalendarSection: React.FC = () => {
               </p>
             </div>
           ) : (
-            <div className="space-y-3 max-h-[400px] overflow-y-auto">
+            <div className="space-y-3 max-h-[400px] overflow-y-auto overflow-x-hidden pr-2">
               {upcomingEvents.map((event, index) => {
                 const colors = getEventTypeColor(event.type);
                 const eventDate = new Date(event.date);
@@ -120,7 +120,7 @@ export const StudentCalendarSection: React.FC = () => {
                 return (
                   <div
                     key={event.id}
-                    className={`group relative flex items-start gap-3 p-4 rounded-lg border-2 ${colors.border} ${colors.bg} transition-all duration-300 hover:shadow-lg hover:scale-[1.02] animate-fade-in`}
+                    className={`group relative flex items-start gap-3 p-4 rounded-lg border-2 ${colors.border} ${colors.bg} transition-all duration-300 hover:shadow-lg animate-fade-in`}
                     style={{ animationDelay: `${index * 0.1}s` }}
                   >
                     {/* Event Icon */}
