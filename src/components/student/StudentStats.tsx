@@ -56,8 +56,7 @@ export const StudentStats: React.FC = () => {
       icon: Star,
       gradient: 'from-yellow-400 to-orange-400',
       bgGradient: 'from-yellow-50 to-orange-50',
-      description: 'نقطة مكتسبة',
-      animation: 'animate-wiggle'
+      description: 'نقطة مكتسبة'
     },
     {
       title: 'معدل التقدم',
@@ -65,8 +64,7 @@ export const StudentStats: React.FC = () => {
       icon: TrendingUp,
       gradient: 'from-green-400 to-emerald-400',
       bgGradient: 'from-green-50 to-emerald-50',
-      description: `${completedContent} من ${totalContent}`,
-      animation: 'animate-bounce-slow'
+      description: `${completedContent} من ${totalContent}`
     },
     {
       title: 'الفيديوهات المكتملة',
@@ -74,8 +72,7 @@ export const StudentStats: React.FC = () => {
       icon: Video,
       gradient: 'from-blue-400 to-cyan-400',
       bgGradient: 'from-blue-50 to-cyan-50',
-      description: 'فيديو تعليمي',
-      animation: 'animate-float'
+      description: 'فيديو تعليمي'
     },
     // إخفاء المشاريع للصف الحادي عشر لأنه لا يحتوي على مشاريع
     ...(assignedGrade !== '11' ? [{
@@ -84,8 +81,7 @@ export const StudentStats: React.FC = () => {
       icon: Trophy,
       gradient: 'from-purple-400 to-pink-400',
       bgGradient: 'from-purple-50 to-pink-50',
-      description: assignedGrade === '10' ? 'مشروع مصغر مكتمل' : 'مشروع نهائي مكتمل',
-      animation: 'animate-glow'
+      description: assignedGrade === '10' ? 'مشروع مصغر مكتمل' : 'مشروع نهائي مكتمل'
     }] : []),
     {
       title: 'الدروس المكتملة',
@@ -93,8 +89,7 @@ export const StudentStats: React.FC = () => {
       icon: BookOpen,
       gradient: 'from-indigo-400 to-purple-400',
       bgGradient: 'from-indigo-50 to-purple-50',
-      description: 'درس مكتمل',
-      animation: 'animate-pulse-slow'
+      description: 'درس مكتمل'
     },
     {
       title: 'المراحل المكتملة',
@@ -102,8 +97,7 @@ export const StudentStats: React.FC = () => {
       icon: Gamepad2,
       gradient: 'from-red-400 to-pink-400',
       bgGradient: 'from-red-50 to-pink-50',
-      description: 'مرحلة لعبة مكتملة',
-      animation: 'animate-bounce'
+      description: 'مرحلة لعبة مكتملة'
     }
   ];
 
@@ -142,7 +136,7 @@ export const StudentStats: React.FC = () => {
                     </div>
                   </div>
                   
-                  <div className={`w-12 h-12 rounded-full bg-gradient-to-r ${stat.gradient} flex items-center justify-center shadow-lg ${stat.animation}`}>
+                  <div className={`w-12 h-12 rounded-full bg-gradient-to-r ${stat.gradient} flex items-center justify-center shadow-lg`}>
                     <IconComponent className="w-6 h-6 text-white" />
                   </div>
                 </div>
