@@ -172,15 +172,32 @@ const CalendarManagement = () => {
       setLoading(true);
       
       // جلب الأحداث من قاعدة البيانات
-      const { data: dbEvents, error } = await supabase
+      let query = supabase
         .from('calendar_events')
         .select('*')
         .order('date', { ascending: true });
 
+      // المعلمون يرون أحداثهم فقط
+      if (userProfile?.role === 'teacher') {
+        query = query.eq('created_by', userProfile.user_id);
+      }
+      // مدراء المدارس يرون أحداث مدرستهم
+      else if (userProfile?.role === 'school_admin') {
+        query = query.eq('school_id', userProfile.school_id);
+      }
+      // السوبر أدمن يرى كل الأحداث
+
+      const { data: dbEvents, error } = await query;
+
       if (error) {
         // في حالة الخطأ، استخدم localStorage كبديل
         const localEvents = localStorage.getItem('calendar_events');
-        setEvents(localEvents ? JSON.parse(localEvents) : []);
+        const parsedEvents = localEvents ? JSON.parse(localEvents) : [];
+        // تصفية الأحداث حسب الدور
+        const filteredEvents = userProfile?.role === 'teacher'
+          ? parsedEvents.filter((e: any) => e.created_by === userProfile.user_id)
+          : parsedEvents;
+        setEvents(filteredEvents);
         logger.error('Error fetching events from DB', error);
       } else {
         setEvents(dbEvents || []);
@@ -492,7 +509,7 @@ const CalendarManagement = () => {
       
       <div className="container mx-auto px-6 py-8">
         <Tabs defaultValue="events" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className={`grid w-full ${userProfile?.role === 'teacher' ? 'grid-cols-2' : 'grid-cols-3'}`}>
             <TabsTrigger value="events" className="gap-2">
               <CalendarIcon className="h-4 w-4" />
               الأحداث
@@ -501,10 +518,13 @@ const CalendarManagement = () => {
               <Eye className="h-4 w-4" />
               عرض التقويم
             </TabsTrigger>
-            <TabsTrigger value="settings" className="gap-2">
-              <Settings className="h-4 w-4" />
-              إعدادات الشريط
-            </TabsTrigger>
+            {/* إعدادات الشريط متاحة فقط للمدراء والسوبر أدمن */}
+            {(userProfile?.role === 'superadmin' || userProfile?.role === 'school_admin') && (
+              <TabsTrigger value="settings" className="gap-2">
+                <Settings className="h-4 w-4" />
+                إعدادات الشريط
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="events" className="space-y-6">
@@ -553,14 +573,19 @@ const CalendarManagement = () => {
                           )}
                         </div>
                       </div>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" onClick={() => openEditDialog(event)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => handleDeleteEvent(event.id)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
+                      {/* المعلمون يمكنهم تعديل أحداثهم فقط، المدراء والسوبر أدمن يمكنهم تعديل كل الأحداث */}
+                      {(userProfile?.role === 'superadmin' || 
+                        userProfile?.role === 'school_admin' || 
+                        (userProfile?.role === 'teacher' && event.created_by === userProfile.user_id)) && (
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm" onClick={() => openEditDialog(event)}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => handleDeleteEvent(event.id)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   ))}
                   {events.length === 0 && (
