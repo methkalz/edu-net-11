@@ -65,6 +65,8 @@ const CodeEditForm: React.FC<CodeEditFormProps> = ({
 
   useEffect(() => {
     if (media && media.metadata) {
+      console.log('CodeEditForm: Media changed, updating formData', media.id);
+      
       // Handle both nested and non-nested metadata structures
       let codeMetadata = media.metadata || {};
       
@@ -86,7 +88,7 @@ const CodeEditForm: React.FC<CodeEditFormProps> = ({
         theme: codeMetadata.theme || 'dark',
       });
     }
-  }, [media]);
+  }, [media, media.metadata]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

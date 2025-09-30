@@ -79,6 +79,28 @@ const Grade11LessonMediaManager: React.FC<Grade11LessonMediaManagerProps> = ({
     }
   }, [media, previewMedia]);
 
+  // تحديث editingCode عند تحديث media prop
+  useEffect(() => {
+    if (editingCode && media) {
+      const updatedMedia = media.find(m => m.id === editingCode.id);
+      if (updatedMedia && JSON.stringify(updatedMedia.metadata) !== JSON.stringify(editingCode.metadata)) {
+        console.log('Updating editing code in LessonMediaManager:', updatedMedia);
+        setEditingCode(updatedMedia);
+      }
+    }
+  }, [media, editingCode]);
+
+  // تحديث editingLottie عند تحديث media prop
+  useEffect(() => {
+    if (editingLottie && media) {
+      const updatedMedia = media.find(m => m.id === editingLottie.id);
+      if (updatedMedia && JSON.stringify(updatedMedia.metadata) !== JSON.stringify(editingLottie.metadata)) {
+        console.log('Updating editing lottie in LessonMediaManager:', updatedMedia);
+        setEditingLottie(updatedMedia);
+      }
+    }
+  }, [media, editingLottie]);
+
   const getMediaIcon = (type: string, sourceType?: string) => {
     if (type === 'video') {
       if (sourceType === 'youtube') return <Youtube className="h-4 w-4" />;
@@ -115,11 +137,16 @@ const Grade11LessonMediaManager: React.FC<Grade11LessonMediaManagerProps> = ({
     try {
       console.log('Starting Lottie media update process...');
       
-      // Update in database first
+      // تحديث قاعدة البيانات
       await updateLottieMedia({
         mediaId: editingLottie.id,
         updates
       });
+      
+      // استدعاء callback لتحديث الـ state في المكون الأب
+      if (onUpdateMedia) {
+        await onUpdateMedia(editingLottie.id, updates);
+      }
       
       console.log('Lottie media updated in database, closing edit form');
       setEditingLottie(null);
@@ -136,10 +163,16 @@ const Grade11LessonMediaManager: React.FC<Grade11LessonMediaManagerProps> = ({
     try {
       console.log('Starting Code media update process...');
 
+      // تحديث قاعدة البيانات
       await updateCodeMedia({
         mediaId: editingCode.id,
         updates
       });
+
+      // استدعاء callback لتحديث الـ state في المكون الأب
+      if (onUpdateMedia) {
+        await onUpdateMedia(editingCode.id, updates);
+      }
 
       console.log('Code media updated in database, closing edit form');
       setEditingCode(null);
