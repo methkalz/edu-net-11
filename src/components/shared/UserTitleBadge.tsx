@@ -92,9 +92,6 @@ export const UserTitleBadge: React.FC<UserTitleBadgeProps> = ({
       {showIcon && <IconComponent className={iconSizes[size]} />}
       {role === 'student' && renderStudentLevel()}
       <span>{getDisplayText()}</span>
-      {role === 'student' && points && (
-        <span className="text-xs opacity-75">({points} نقطة)</span>
-      )}
     </div>
   );
 
