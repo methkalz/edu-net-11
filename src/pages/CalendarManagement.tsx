@@ -464,7 +464,8 @@ const CalendarManagement = () => {
     setIsEventDialogOpen(true);
   };
 
-  if (userProfile?.role !== 'superadmin') {
+  // التحقق من الصلاحيات - المعلمون ومدراء المدارس والسوبر أدمن يمكنهم الوصول
+  if (userProfile?.role !== 'superadmin' && userProfile?.role !== 'school_admin' && userProfile?.role !== 'teacher') {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Alert className="max-w-md">
