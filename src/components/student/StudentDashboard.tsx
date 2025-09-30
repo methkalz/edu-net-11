@@ -222,45 +222,45 @@ const StudentDashboard: React.FC = () => {
 
               {/* Quick Actions */}
               <div className="space-y-4">
-                <Card className="border-border/40 bg-gradient-to-br from-background via-background to-muted/20 shadow-sm hover:shadow-md transition-all duration-300">
+                <Card className="border-border/40 bg-gradient-to-br from-violet-50/50 via-background to-purple-50/30 dark:from-violet-950/20 dark:via-background dark:to-purple-950/10 shadow-sm hover:shadow-md transition-all duration-300">
                   <CardHeader className="pb-3">
                     <CardTitle className="flex items-center gap-2 text-lg font-semibold">
-                      <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
-                        <Rocket className="w-4 h-4 text-primary" />
+                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500/10 to-purple-500/10 flex items-center justify-center">
+                        <Rocket className="w-4 h-4 text-violet-600 dark:text-violet-400" />
                       </div>
-                      إجراءات سريعة
+                      <span className="bg-gradient-to-r from-violet-600 to-purple-600 dark:from-violet-400 dark:to-purple-400 bg-clip-text text-transparent">إجراءات سريعة</span>
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
                     <Button 
                       variant="ghost" 
-                      className="w-full justify-start h-11 hover:bg-primary/5 hover:text-primary transition-colors group"
+                      className="w-full justify-start h-11 hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-cyan-50/50 dark:hover:from-blue-950/30 dark:hover:to-cyan-950/30 hover:text-blue-700 dark:hover:text-blue-400 transition-all group"
                       onClick={() => setActiveTab('content')}
                     >
-                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center mr-3 group-hover:bg-primary/20 transition-colors">
-                        <Play className="w-4 h-4 text-primary" />
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500/10 to-cyan-500/10 flex items-center justify-center mr-3 group-hover:from-blue-500/20 group-hover:to-cyan-500/20 transition-all">
+                        <Play className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                       </div>
                       <span className="font-medium">متابعة التعلم</span>
                     </Button>
                     {hasGamesTab && (
                       <Button 
                         variant="ghost" 
-                        className="w-full justify-start h-11 hover:bg-primary/5 hover:text-primary transition-colors group"
+                        className="w-full justify-start h-11 hover:bg-gradient-to-r hover:from-emerald-50/50 hover:to-teal-50/50 dark:hover:from-emerald-950/30 dark:hover:to-teal-950/30 hover:text-emerald-700 dark:hover:text-emerald-400 transition-all group"
                         onClick={() => setActiveTab('games')}
                       >
-                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center mr-3 group-hover:bg-primary/20 transition-colors">
-                          <Gamepad2 className="w-4 h-4 text-primary" />
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500/10 to-teal-500/10 flex items-center justify-center mr-3 group-hover:from-emerald-500/20 group-hover:to-teal-500/20 transition-all">
+                          <Gamepad2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                         </div>
                         <span className="font-medium">العب وتعلم</span>
                       </Button>
                     )}
                     <Button 
                       variant="ghost" 
-                      className="w-full justify-start h-11 hover:bg-primary/5 hover:text-primary transition-colors group"
+                      className="w-full justify-start h-11 hover:bg-gradient-to-r hover:from-amber-50/50 hover:to-orange-50/50 dark:hover:from-amber-950/30 dark:hover:to-orange-950/30 hover:text-amber-700 dark:hover:text-amber-400 transition-all group"
                       onClick={() => setActiveTab('challenges')}
                     >
-                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center mr-3 group-hover:bg-primary/20 transition-colors">
-                        <Target className="w-4 h-4 text-primary" />
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500/10 to-orange-500/10 flex items-center justify-center mr-3 group-hover:from-amber-500/20 group-hover:to-orange-500/20 transition-all">
+                        <Target className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                       </div>
                       <span className="font-medium">تحديات اليوم</span>
                     </Button>
@@ -271,24 +271,24 @@ const StudentDashboard: React.FC = () => {
                 <StudentNotifications />
 
                 {/* Assigned Grade Info */}
-                <Card className="border-border/40 bg-gradient-to-br from-background via-background to-muted/20 shadow-sm hover:shadow-md transition-all duration-300">
+                <Card className="border-border/40 bg-gradient-to-br from-sky-50/50 via-background to-indigo-50/30 dark:from-sky-950/20 dark:via-background dark:to-indigo-950/10 shadow-sm hover:shadow-md transition-all duration-300">
                   <CardHeader className="pb-3">
                     <CardTitle className="flex items-center gap-2 text-lg font-semibold">
-                      <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
-                        <FolderOpen className="w-4 h-4 text-primary" />
+                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500/10 to-indigo-500/10 flex items-center justify-center">
+                        <FolderOpen className="w-4 h-4 text-sky-600 dark:text-sky-400" />
                       </div>
-                      صفك الدراسي
+                      <span className="bg-gradient-to-r from-sky-600 to-indigo-600 dark:from-sky-400 dark:to-indigo-400 bg-clip-text text-transparent">صفك الدراسي</span>
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    <div className="relative overflow-hidden rounded-xl p-4 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20">
-                      <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full blur-2xl" />
-                      <h3 className="text-2xl font-bold text-primary relative">الصف {assignedGrade}</h3>
+                    <div className="relative overflow-hidden rounded-xl p-4 bg-gradient-to-br from-indigo-100/50 via-purple-50/30 to-pink-100/50 dark:from-indigo-950/30 dark:via-purple-950/20 dark:to-pink-950/30 border border-indigo-200/50 dark:border-indigo-800/30">
+                      <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-indigo-400/10 to-purple-400/10 rounded-full blur-2xl" />
+                      <h3 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent relative">الصف {assignedGrade}</h3>
                     </div>
                     
                     {userProfile?.schools?.name && (
-                      <div className="p-3 rounded-xl bg-muted/30 border border-border/50">
-                        <p className="text-xs font-medium text-muted-foreground mb-1">المدرسة</p>
+                      <div className="p-3 rounded-xl bg-gradient-to-br from-teal-50/50 to-emerald-50/50 dark:from-teal-950/20 dark:to-emerald-950/20 border border-teal-200/50 dark:border-teal-800/30">
+                        <p className="text-xs font-medium text-teal-600 dark:text-teal-400 mb-1">المدرسة</p>
                         <p className="font-semibold text-foreground">{userProfile.schools.name}</p>
                       </div>
                     )}
@@ -298,15 +298,15 @@ const StudentDashboard: React.FC = () => {
                         <p className="text-sm text-muted-foreground">جاري التحميل...</p>
                       </div>
                     ) : teacher ? (
-                      <div className="flex items-center gap-3 p-3 rounded-xl bg-background border border-border/50 hover:border-primary/30 transition-colors">
+                      <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-br from-rose-50/50 to-pink-50/50 dark:from-rose-950/20 dark:to-pink-950/20 border border-rose-200/50 dark:border-rose-800/30 hover:border-rose-300/50 dark:hover:border-rose-700/30 transition-colors">
                         <UniversalAvatar
                           avatarUrl={teacher.avatar_url}
                           userName={teacher.full_name}
                           size="md"
-                          className="ring-2 ring-primary/10"
+                          className="ring-2 ring-rose-200/50 dark:ring-rose-800/30"
                         />
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-muted-foreground">معلم الموضوع</p>
+                          <p className="text-xs font-medium text-rose-600 dark:text-rose-400">معلم الموضوع</p>
                           <p className="font-semibold text-foreground truncate">{teacher.full_name}</p>
                         </div>
                       </div>

@@ -40,18 +40,18 @@ const StudentNotifications: React.FC = () => {
 
   if (loading) {
     return (
-      <Card className="border-border/40 bg-gradient-to-br from-background via-background to-muted/20 shadow-sm">
+      <Card className="border-border/40 bg-gradient-to-br from-amber-50/50 via-background to-orange-50/30 dark:from-amber-950/20 dark:via-background dark:to-orange-950/10 shadow-sm">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-lg font-semibold">
-            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Bell className="w-4 h-4 text-primary" />
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500/10 to-orange-500/10 flex items-center justify-center">
+              <Bell className="w-4 h-4 text-amber-600 dark:text-amber-400" />
             </div>
-            الإشعارات
+            <span className="bg-gradient-to-r from-amber-600 to-orange-600 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent">الإشعارات</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center py-12">
-            <div className="w-10 h-10 mx-auto animate-spin rounded-full border-2 border-primary/20 border-t-primary mb-3"></div>
+            <div className="w-10 h-10 mx-auto animate-spin rounded-full border-2 border-amber-500/20 dark:border-amber-400/20 border-t-amber-500 dark:border-t-amber-400 mb-3"></div>
             <p className="text-sm text-muted-foreground">جاري التحميل...</p>
           </div>
         </CardContent>
@@ -71,16 +71,16 @@ const StudentNotifications: React.FC = () => {
   };
 
   return (
-    <Card className="border-border/40 bg-gradient-to-br from-background via-background to-muted/20 shadow-sm hover:shadow-md transition-all duration-300">
+    <Card className="border-border/40 bg-gradient-to-br from-amber-50/50 via-background to-orange-50/30 dark:from-amber-950/20 dark:via-background dark:to-orange-950/10 shadow-sm hover:shadow-md transition-all duration-300">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-lg font-semibold">
-            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Bell className="w-4 h-4 text-primary" />
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500/10 to-orange-500/10 flex items-center justify-center">
+              <Bell className="w-4 h-4 text-amber-600 dark:text-amber-400" />
             </div>
-            الإشعارات
+            <span className="bg-gradient-to-r from-amber-600 to-orange-600 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent">الإشعارات</span>
             {unreadCount > 0 && (
-              <Badge variant="default" className="mr-1 bg-primary/90">
+              <Badge variant="default" className="mr-1 bg-gradient-to-r from-amber-500 to-orange-500">
                 {unreadCount}
               </Badge>
             )}
@@ -90,7 +90,7 @@ const StudentNotifications: React.FC = () => {
               variant="ghost"
               size="sm"
               onClick={markAllAsRead}
-              className="text-xs h-8 hover:bg-primary/5"
+              className="text-xs h-8 hover:bg-amber-50/50 dark:hover:bg-amber-950/30 hover:text-amber-700 dark:hover:text-amber-400"
             >
               <CheckCircle className="w-3 h-3 mr-1" />
               تحديد الكل
@@ -101,8 +101,8 @@ const StudentNotifications: React.FC = () => {
       <CardContent>
         {notifications.length === 0 ? (
           <div className="text-center py-12">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted/30 flex items-center justify-center">
-              <Bell className="w-8 h-8 text-muted-foreground/40" />
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-amber-100/50 to-orange-100/50 dark:from-amber-950/30 dark:to-orange-950/30 flex items-center justify-center">
+              <Bell className="w-8 h-8 text-amber-500/40 dark:text-amber-400/40" />
             </div>
             <p className="text-sm font-medium text-muted-foreground">لا توجد إشعارات</p>
             <p className="text-xs text-muted-foreground/70 mt-1">
@@ -118,7 +118,7 @@ const StudentNotifications: React.FC = () => {
                   className={`group relative p-4 rounded-xl border transition-all duration-200 cursor-pointer ${
                     notification.is_read 
                       ? 'bg-background border-border/50 hover:border-border' 
-                      : 'bg-primary/5 border-primary/20 hover:border-primary/30'
+                      : 'bg-gradient-to-br from-blue-50/50 to-cyan-50/50 dark:from-blue-950/20 dark:to-cyan-950/20 border-blue-200/50 dark:border-blue-800/30 hover:border-blue-300/50 dark:hover:border-blue-700/30'
                   }`}
                   onClick={() => handleNotificationClick(notification)}
                 >
@@ -127,7 +127,7 @@ const StudentNotifications: React.FC = () => {
                       <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
                         notification.is_read 
                           ? 'bg-muted/50' 
-                          : 'bg-primary/10'
+                          : 'bg-gradient-to-br from-blue-500/10 to-cyan-500/10'
                       }`}>
                         {getNotificationIcon(notification.notification_type)}
                       </div>
@@ -140,7 +140,7 @@ const StudentNotifications: React.FC = () => {
                           {notification.title}
                         </h4>
                         {!notification.is_read && (
-                          <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mr-2" />
+                          <div className="w-2 h-2 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 flex-shrink-0 mr-2 shadow-sm" />
                         )}
                       </div>
                       <p className={`text-sm leading-relaxed ${
