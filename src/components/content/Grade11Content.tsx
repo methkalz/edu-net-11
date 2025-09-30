@@ -84,6 +84,29 @@ const Grade11Content = () => {
   // Drag and drop states
   const [draggedSectionIndex, setDraggedSectionIndex] = useState<number | null>(null);
 
+  // مزامنة editingLesson عند تحديث sections (لإظهار التغييرات فوراً في نافذة التعديل)
+  React.useEffect(() => {
+    if (editingLesson && sections.length > 0) {
+      // البحث عن الدرس المحدث في sections
+      for (const section of sections) {
+        for (const topic of section.topics) {
+          const updatedLesson = topic.lessons?.find(l => l.id === editingLesson.id);
+          if (updatedLesson) {
+            // مقارنة media للتأكد من وجود تغيير حقيقي
+            const currentMediaStr = JSON.stringify(editingLesson.media || []);
+            const updatedMediaStr = JSON.stringify(updatedLesson.media || []);
+            
+            if (currentMediaStr !== updatedMediaStr) {
+              console.log('Syncing editingLesson with updated data from sections');
+              setEditingLesson(updatedLesson as Grade11Lesson);
+            }
+            return;
+          }
+        }
+      }
+    }
+  }, [sections, editingLesson]);
+
   // Drag and drop handlers for sections
   const handleSectionDragStart = (e: React.DragEvent, index: number) => {
     setDraggedSectionIndex(index);
