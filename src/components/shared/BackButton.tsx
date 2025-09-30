@@ -8,7 +8,7 @@ interface BackButtonProps {
   className?: string;
 }
 
-export default function BackButton({ backPath = '/teacher', className = '' }: BackButtonProps) {
+export default function BackButton({ backPath = '/dashboard', className = '' }: BackButtonProps) {
   const navigate = useNavigate();
 
   return (
