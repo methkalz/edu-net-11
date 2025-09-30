@@ -27,7 +27,7 @@ import {
 
 export const StudentStats: React.FC = () => {
   const { stats, achievements, loading } = useStudentProgress();
-  const { getProgressPercentage, getTotalContentCount, getCompletedContentCount } = useStudentContent();
+  const { getProgressPercentage, getTotalContentCount, getCompletedContentCount, gradeContent } = useStudentContent();
   const { assignedGrade } = useStudentAssignedGrade();
   const { stats: gameStats } = useStudentGameStats();
   
@@ -63,6 +63,11 @@ export const StudentStats: React.FC = () => {
   const progressPercentage = getProgressPercentage();
   const totalContent = getTotalContentCount();
   const completedContent = getCompletedContentCount();
+  
+  // حساب الدروس المكتملة فقط (وليس كل المحتوى)
+  const completedLessons = (gradeContent?.lessons || []).filter(lesson => 
+    lesson.progress?.progress_percentage === 100
+  ).length;
   
   // حساب الإجمالي الكلي
   const totalCompleted = completedContent + gameStats.completedGames;
@@ -104,7 +109,7 @@ export const StudentStats: React.FC = () => {
     }] : []),
     {
       title: 'الدروس المكتملة',
-      value: completedContent.toString(),
+      value: completedLessons.toString(),
       icon: BookOpen,
       gradient: 'from-indigo-400 to-purple-400',
       bgGradient: 'from-indigo-50 to-purple-50',
