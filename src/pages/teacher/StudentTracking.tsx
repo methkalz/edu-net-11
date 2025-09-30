@@ -14,11 +14,14 @@ import {
   Calendar,
   TrendingUp,
   Users,
-  Eye
+  Eye,
+  ArrowRight,
+  Activity
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 interface StudentTrackingData {
   student_id: string;
@@ -46,6 +49,7 @@ interface StudentTrackingData {
 
 const StudentTracking: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [students, setStudents] = useState<StudentTrackingData[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -222,17 +226,15 @@ const StudentTracking: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="space-y-6">
-          <div className="h-12 bg-muted rounded animate-pulse" />
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map(i => (
-              <Card key={i} className="animate-pulse">
-                <CardContent className="p-6">
-                  <div className="h-16 bg-muted rounded" />
-                </CardContent>
-              </Card>
-            ))}
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+        <div className="container mx-auto p-6 max-w-7xl">
+          <div className="space-y-8">
+            <div className="h-24 bg-muted/50 rounded-2xl animate-pulse" />
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="h-32 bg-muted/50 rounded-2xl animate-pulse" />
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -240,188 +242,256 @@ const StudentTracking: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">تتبع تقدم الطلاب</h1>
-          <p className="text-muted-foreground">متابعة نشاط الطلاب والمحتوى الذي تم استكماله</p>
-        </div>
-        <Button onClick={fetchStudentTracking} variant="outline">
-          تحديث البيانات
-        </Button>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">إجمالي الطلاب</p>
-                <p className="text-2xl font-bold">{students.length}</p>
-              </div>
-              <Users className="h-8 w-8 text-blue-500" />
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+      <div className="container mx-auto p-6 max-w-7xl space-y-8">
+        {/* Modern Header */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-background border border-primary/20 p-8">
+          <div className="absolute top-0 left-0 w-full h-full bg-grid-white/[0.02] pointer-events-none" />
+          <div className="relative z-10">
+            <div className="flex items-center gap-3 mb-4">
+              <Button 
+                onClick={() => navigate('/teacher')} 
+                variant="ghost" 
+                size="sm"
+                className="gap-2 hover:bg-primary/10"
+              >
+                <ArrowRight className="h-4 w-4" />
+                رجوع
+              </Button>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">إجمالي الوقت</p>
-                <p className="text-2xl font-bold">
-                  {formatTime(students.reduce((sum, s) => sum + s.total_time_minutes, 0))}
-                </p>
-              </div>
-              <Clock className="h-8 w-8 text-green-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">إجمالي النقاط</p>
-                <p className="text-2xl font-bold">
-                  {students.reduce((sum, s) => sum + s.total_points, 0)}
-                </p>
-              </div>
-              <Trophy className="h-8 w-8 text-yellow-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">معدل المشاهدة</p>
-                <p className="text-2xl font-bold">
-                  {students.length > 0 
-                    ? Math.round(students.reduce((sum, s) => 
-                        sum + (s.progress_details?.content_progress?.length || 0), 0
-                      ) / students.length)
-                    : 0}
-                </p>
-              </div>
-              <TrendingUp className="h-8 w-8 text-purple-500" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-        <Input
-          placeholder="البحث عن طالب..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pr-10"
-        />
-      </div>
-
-      {/* Students List */}
-      <div className="grid grid-cols-1 gap-4">
-        {filteredStudents.map((student) => (
-          <Card key={student.student_id} className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold">
-                    {student.student_name.charAt(0)}
-                  </div>
-                  <div>
-                    <CardTitle className="text-lg">{student.student_name}</CardTitle>
-                    <p className="text-sm text-muted-foreground">{student.student_email}</p>
-                  </div>
-                </div>
+              <div className="space-y-2">
                 <div className="flex items-center gap-3">
-                  <Badge variant="outline">الصف {student.student_grade}</Badge>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => setSelectedStudent(student)}
-                  >
-                    <Eye className="h-4 w-4 mr-2" />
-                    عرض التفاصيل
-                  </Button>
+                  <div className="p-3 rounded-xl bg-primary/10 backdrop-blur-sm">
+                    <Activity className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <h1 className="text-4xl font-bold bg-gradient-to-l from-primary to-primary/60 bg-clip-text text-transparent">
+                      تتبع تقدم الطلاب
+                    </h1>
+                    <p className="text-muted-foreground mt-1">متابعة نشاط الطلاب والمحتوى المكتمل</p>
+                  </div>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">الوقت المقضي</p>
-                    <p className="text-sm font-medium">{formatTime(student.total_time_minutes)}</p>
-                  </div>
+              <Button 
+                onClick={fetchStudentTracking} 
+                variant="outline"
+                className="gap-2 bg-background/50 backdrop-blur-sm hover:bg-background/80"
+              >
+                <TrendingUp className="h-4 w-4" />
+                تحديث البيانات
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Modern Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <Card className="relative overflow-hidden border-primary/20 bg-gradient-to-br from-card via-card to-primary/5 hover:shadow-lg transition-all duration-300 group">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <CardContent className="p-6 relative z-10">
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground font-medium">إجمالي الطلاب</p>
+                  <p className="text-3xl font-bold bg-gradient-to-l from-primary to-primary/60 bg-clip-text text-transparent">
+                    {students.length}
+                  </p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Trophy className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">النقاط</p>
-                    <p className="text-sm font-medium">{student.total_points}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Video className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">المحتوى المكتمل</p>
-                    <p className="text-sm font-medium">
-                      {student.progress_details?.content_progress?.length || 0}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">آخر نشاط</p>
-                    <p className="text-sm font-medium">
-                      {student.last_activity 
-                        ? new Date(student.last_activity).toLocaleDateString('ar-SA')
-                        : 'لا يوجد'}
-                    </p>
-                  </div>
+                <div className="p-3 rounded-xl bg-primary/10 backdrop-blur-sm">
+                  <Users className="h-7 w-7 text-primary" />
                 </div>
               </div>
             </CardContent>
           </Card>
+
+          <Card className="relative overflow-hidden border-green-500/20 bg-gradient-to-br from-card via-card to-green-500/5 hover:shadow-lg transition-all duration-300 group">
+            <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <CardContent className="p-6 relative z-10">
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground font-medium">إجمالي الوقت</p>
+                  <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                    {formatTime(students.reduce((sum, s) => sum + s.total_time_minutes, 0))}
+                  </p>
+                </div>
+                <div className="p-3 rounded-xl bg-green-500/10 backdrop-blur-sm">
+                  <Clock className="h-7 w-7 text-green-600 dark:text-green-400" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="relative overflow-hidden border-yellow-500/20 bg-gradient-to-br from-card via-card to-yellow-500/5 hover:shadow-lg transition-all duration-300 group">
+            <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <CardContent className="p-6 relative z-10">
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground font-medium">إجمالي النقاط</p>
+                  <p className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">
+                    {students.reduce((sum, s) => sum + s.total_points, 0)}
+                  </p>
+                </div>
+                <div className="p-3 rounded-xl bg-yellow-500/10 backdrop-blur-sm">
+                  <Trophy className="h-7 w-7 text-yellow-600 dark:text-yellow-400" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="relative overflow-hidden border-purple-500/20 bg-gradient-to-br from-card via-card to-purple-500/5 hover:shadow-lg transition-all duration-300 group">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <CardContent className="p-6 relative z-10">
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground font-medium">معدل المشاهدة</p>
+                  <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">
+                    {students.length > 0 
+                      ? Math.round(students.reduce((sum, s) => 
+                          sum + (s.progress_details?.content_progress?.length || 0), 0
+                        ) / students.length)
+                      : 0}
+                  </p>
+                </div>
+                <div className="p-3 rounded-xl bg-purple-500/10 backdrop-blur-sm">
+                  <TrendingUp className="h-7 w-7 text-purple-600 dark:text-purple-400" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Modern Search */}
+        <div className="relative max-w-md">
+          <Search className="absolute right-4 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
+          <Input
+            placeholder="البحث عن طالب..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pr-12 h-12 rounded-xl border-primary/20 bg-background/50 backdrop-blur-sm focus:bg-background transition-colors"
+          />
+        </div>
+
+        {/* Modern Students List */}
+        <div className="grid grid-cols-1 gap-6">
+          {filteredStudents.map((student) => (
+            <Card key={student.student_id} className="group hover:shadow-xl transition-all duration-300 border-primary/10 hover:border-primary/30 bg-card/50 backdrop-blur-sm overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-l from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+              <CardHeader className="relative z-10">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      <div className="w-14 h-14 bg-gradient-to-br from-primary via-primary/80 to-primary/60 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                        {student.student_name.charAt(0)}
+                      </div>
+                      <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-background" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-xl font-bold">{student.student_name}</CardTitle>
+                      <p className="text-sm text-muted-foreground mt-1">{student.student_email}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Badge variant="outline" className="text-sm px-3 py-1 bg-primary/5 border-primary/20">
+                      الصف {student.student_grade}
+                    </Badge>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setSelectedStudent(student)}
+                      className="gap-2 hover:bg-primary/10 hover:border-primary/30 transition-colors"
+                    >
+                      <Eye className="h-4 w-4" />
+                      عرض التفاصيل
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="relative z-10">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                  <div className="flex items-start gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors">
+                    <div className="p-2 rounded-lg bg-background shadow-sm">
+                      <Clock className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs text-muted-foreground font-medium mb-1">الوقت المقضي</p>
+                      <p className="text-base font-bold">{formatTime(student.total_time_minutes)}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors">
+                    <div className="p-2 rounded-lg bg-background shadow-sm">
+                      <Trophy className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs text-muted-foreground font-medium mb-1">النقاط</p>
+                      <p className="text-base font-bold">{student.total_points}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors">
+                    <div className="p-2 rounded-lg bg-background shadow-sm">
+                      <Video className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs text-muted-foreground font-medium mb-1">المحتوى المكتمل</p>
+                      <p className="text-base font-bold">
+                        {student.progress_details?.content_progress?.length || 0}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors">
+                    <div className="p-2 rounded-lg bg-background shadow-sm">
+                      <Calendar className="h-5 w-5 text-green-600 dark:text-green-400" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs text-muted-foreground font-medium mb-1">آخر نشاط</p>
+                      <p className="text-sm font-bold">
+                        {student.last_activity 
+                          ? new Date(student.last_activity).toLocaleDateString('ar-SA')
+                          : 'لا يوجد'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+          </Card>
         ))}
       </div>
 
-      {filteredStudents.length === 0 && (
-        <Card className="text-center p-12">
-          <Users className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-xl font-semibold mb-2">لا توجد نتائج</h3>
-          <p className="text-muted-foreground">
-            {searchQuery ? 'لم يتم العثور على طلاب' : 'لا يوجد طلاب مسجلين'}
-          </p>
-        </Card>
-      )}
+        {filteredStudents.length === 0 && (
+          <Card className="text-center p-16 bg-card/50 backdrop-blur-sm border-primary/10">
+            <div className="inline-flex p-6 rounded-2xl bg-muted/50 mb-6">
+              <Users className="h-16 w-16 text-muted-foreground" />
+            </div>
+            <h3 className="text-2xl font-bold mb-3">لا توجد نتائج</h3>
+            <p className="text-muted-foreground text-lg">
+              {searchQuery ? 'لم يتم العثور على طلاب' : 'لا يوجد طلاب مسجلين'}
+            </p>
+          </Card>
+        )}
 
-      {/* Student Details Dialog */}
-      {selectedStudent && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <Card className="max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-2xl">
-                  تفاصيل تقدم {selectedStudent.student_name}
-                </CardTitle>
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={() => setSelectedStudent(null)}
-                >
-                  إغلاق
-                </Button>
-              </div>
-            </CardHeader>
+        {/* Modern Student Details Dialog */}
+        {selectedStudent && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+            <Card className="max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border-primary/20 bg-background/95 backdrop-blur-xl">
+              <CardHeader className="border-b border-primary/10 bg-gradient-to-br from-primary/5 to-transparent">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-gradient-to-br from-primary via-primary/80 to-primary/60 rounded-xl flex items-center justify-center text-white font-bold text-lg">
+                      {selectedStudent.student_name.charAt(0)}
+                    </div>
+                    <CardTitle className="text-3xl font-bold">
+                      تفاصيل تقدم {selectedStudent.student_name}
+                    </CardTitle>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => setSelectedStudent(null)}
+                    className="hover:bg-destructive/10 hover:text-destructive"
+                  >
+                    إغلاق ✕
+                  </Button>
+                </div>
+              </CardHeader>
             <CardContent className="space-y-6">
               <Tabs defaultValue="content" className="w-full">
                 <TabsList className="grid w-full grid-cols-3">
@@ -540,6 +610,7 @@ const StudentTracking: React.FC = () => {
           </Card>
         </div>
       )}
+      </div>
     </div>
   );
 };
