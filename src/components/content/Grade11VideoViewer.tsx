@@ -75,7 +75,7 @@ export const Grade11VideoViewer: React.FC<Grade11VideoViewerProps> = ({
               <div className="flex items-center gap-3 text-base text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <Calendar className="w-5 h-5" />
-                  {new Date(video.created_at).toLocaleDateString('ar-SA')}
+                  {new Date(video.created_at).toLocaleDateString('en-GB')}
                 </div>
                 {video.duration && (
                   <div className="flex items-center gap-2">
