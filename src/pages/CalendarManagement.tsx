@@ -38,7 +38,8 @@ import {
   Target,
   CheckCircle,
   XCircle,
-  ArrowLeft
+  ArrowLeft,
+  FileText
 } from 'lucide-react';
 import AppHeader from '@/components/shared/AppHeader';
 import AppFooter from '@/components/shared/AppFooter';
@@ -836,204 +837,258 @@ const CalendarManagement = () => {
           </TabsContent>
         </Tabs>
 
-        {/* Dialog لإضافة/تعديل الأحداث */}
         <Dialog open={isEventDialogOpen} onOpenChange={setIsEventDialogOpen}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>
-                {editingEvent ? 'تعديل الحدث' : 'إضافة حدث جديد'}
-              </DialogTitle>
-              <DialogDescription>
-                {editingEvent ? 'تعديل تفاصيل الحدث' : 'إضافة حدث جديد إلى التقويم'}
-              </DialogDescription>
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader className="pb-6 border-b">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
+                  <CalendarIcon className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <DialogTitle className="text-2xl">
+                    {editingEvent ? 'تعديل الحدث' : 'إضافة حدث جديد'}
+                  </DialogTitle>
+                  <DialogDescription className="text-base mt-1">
+                    {editingEvent ? 'تعديل تفاصيل الحدث في التقويم' : 'أضف حدثاً جديداً إلى تقويم المدرسة'}
+                  </DialogDescription>
+                </div>
+              </div>
             </DialogHeader>
 
             <Form {...eventForm}>
-              <form onSubmit={eventForm.handleSubmit(onEventSubmit)} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <form onSubmit={eventForm.handleSubmit(onEventSubmit)} className="space-y-6 pt-6">
+                {/* معلومات أساسية */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <FileText className="h-4 w-4 text-primary" />
+                    </div>
+                    المعلومات الأساسية
+                  </h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={eventForm.control}
+                      name="title"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium">عنوان الحدث *</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="مثال: يوم المعلم" 
+                              {...field}
+                              className="h-11"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={eventForm.control}
+                      name="type"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium">نوع الحدث *</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger className="h-11">
+                                <SelectValue placeholder="اختر نوع الحدث" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent className="z-50">
+                              {typeOptions.map((type) => (
+                                <SelectItem key={type.value} value={type.value}>
+                                  <span className="flex items-center gap-2">
+                                    <span>{type.icon}</span>
+                                    <span>{type.label}</span>
+                                  </span>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
                   <FormField
                     control={eventForm.control}
-                    name="title"
+                    name="description"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>عنوان الحدث</FormLabel>
+                        <FormLabel className="text-sm font-medium">وصف الحدث</FormLabel>
                         <FormControl>
-                          <Input placeholder="مثال: يوم المعلم" {...field} />
+                          <Textarea
+                            placeholder="أضف وصفاً تفصيلياً للحدث (اختياري)"
+                            className="resize-none min-h-[100px]"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-
-                  <FormField
-                    control={eventForm.control}
-                    name="type"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>نوع الحدث</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="اختر نوع الحدث" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {typeOptions.map((type) => (
-                              <SelectItem key={type.value} value={type.value}>
-                                {type.icon} {type.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
                 </div>
 
-                <FormField
-                  control={eventForm.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>وصف الحدث</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="وصف تفصيلي للحدث (اختياري)"
-                          className="resize-none"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {/* التاريخ واللون */}
+                <div className="space-y-4 pt-4 border-t">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Palette className="h-4 w-4 text-primary" />
+                    </div>
+                    التاريخ والمظهر
+                  </h3>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={eventForm.control}
-                    name="date"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>تاريخ الحدث</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={eventForm.control}
+                      name="date"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel className="text-sm font-medium mb-2">تاريخ الحدث *</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant={"outline"}
+                                  className={cn(
+                                    "w-full h-11 pl-3 text-right font-normal justify-between",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                >
+                                  <CalendarIcon className="ml-2 h-4 w-4 opacity-50" />
+                                  {field.value ? (
+                                    format(field.value, "dd MMMM yyyy", { locale: ar })
+                                  ) : (
+                                    <span>اختر التاريخ</span>
+                                  )}
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0 z-50" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                disabled={(date) => date < new Date("1900-01-01")}
+                                initialFocus
+                                className={cn("p-3 pointer-events-auto")}
+                                locale={ar}
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={eventForm.control}
+                      name="color"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium mb-2">لون الحدث *</FormLabel>
+                          <div className="grid grid-cols-4 gap-2">
+                            {colorOptions.map((color) => (
                               <Button
-                                variant={"outline"}
+                                key={color.value}
+                                type="button"
+                                variant={field.value === color.value ? "default" : "outline"}
+                                size="sm"
                                 className={cn(
-                                  "w-full pl-3 text-left font-normal",
-                                  !field.value && "text-muted-foreground"
+                                  "h-12 flex flex-col items-center justify-center gap-1 transition-all",
+                                  field.value === color.value && "ring-2 ring-primary ring-offset-2 scale-105"
                                 )}
+                                onClick={() => field.onChange(color.value)}
                               >
-                                {field.value ? (
-                                  format(field.value, "dd.M.yyyy")
-                                ) : (
-                                  <span>اختر التاريخ</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                <div className={cn("w-6 h-6 rounded-full shadow-sm", color.class)} />
+                                <span className="text-[10px]">{color.label}</span>
                               </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={field.value}
-                              onSelect={field.onChange}
-                              disabled={(date) => date < new Date("1900-01-01")}
-                              initialFocus
-                              className={cn("p-3 pointer-events-auto")}
-                              locale={ar}
-                            />
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={eventForm.control}
-                    name="color"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>لون الحدث</FormLabel>
-                        <div className="grid grid-cols-4 gap-2">
-                          {colorOptions.map((color) => (
-                            <Button
-                              key={color.value}
-                              type="button"
-                              variant={field.value === color.value ? "default" : "outline"}
-                              size="sm"
-                              className={cn(
-                                "h-10 flex items-center gap-2",
-                                field.value === color.value && "ring-2 ring-offset-2"
-                              )}
-                              onClick={() => field.onChange(color.value)}
-                            >
-                              <div className={cn("w-4 h-4 rounded", color.class)} />
-                            </Button>
-                          ))}
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                            ))}
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
+
 
                 {/* تحديد الفئة المستهدفة */}
-                <FormField
-                  control={eventForm.control}
-                  name="is_for_all"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base">حدث عام للجميع</FormLabel>
-                        <div className="text-sm text-muted-foreground">
-                          إذا تم التفعيل، سيكون الحدث مرئيًا لجميع الطلاب. وإلا يمكنك تحديد صفوف معينة
+                <div className="space-y-4 pt-4 border-t">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Target className="h-4 w-4 text-primary" />
+                    </div>
+                    الجمهور المستهدف
+                  </h3>
+
+                  <FormField
+                    control={eventForm.control}
+                    name="is_for_all"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-xl border-2 p-4 bg-gradient-to-r from-primary/5 to-transparent">
+                        <div className="space-y-1">
+                          <FormLabel className="text-base font-semibold">حدث عام للجميع</FormLabel>
+                          <div className="text-sm text-muted-foreground">
+                            سيكون الحدث مرئياً لجميع الطلاب في المدرسة
+                          </div>
                         </div>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            className="data-[state=checked]:bg-primary"
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
                 {!eventForm.watch('is_for_all') && (
-                  <div className="space-y-4 border rounded-lg p-4 bg-muted/30">
-                    <h4 className="text-sm font-medium flex items-center gap-2">
-                      <Target className="h-4 w-4" />
-                      تحديد الصفوف المستهدفة
-                    </h4>
+                  <div className="space-y-4 rounded-xl border-2 border-dashed p-6 bg-muted/30 animate-in fade-in slide-in-from-top-2">
+                    <div className="flex items-center gap-2 pb-2">
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Target className="h-4 w-4 text-primary" />
+                      </div>
+                      <h4 className="text-base font-semibold">تحديد الصفوف المستهدفة</h4>
+                    </div>
                     
                     <FormField
                       control={eventForm.control}
                       name="target_grade_levels"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>اختر الصفوف الدراسية</FormLabel>
-                          <div className="space-y-2">
+                        <FormItem className="space-y-3">
+                          <FormLabel className="text-sm font-medium">الصفوف الدراسية</FormLabel>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                             {gradeOptions.map((grade) => (
-                              <div key={grade.value} className="flex items-center space-x-2 space-x-reverse">
+                              <div 
+                                key={grade.value} 
+                                className={cn(
+                                  "flex items-center space-x-3 space-x-reverse p-3 rounded-lg border-2 transition-all cursor-pointer hover:bg-accent",
+                                  field.value?.includes(grade.value) && "bg-primary/5 border-primary"
+                                )}
+                                onClick={() => {
+                                  const newValue = field.value?.includes(grade.value)
+                                    ? (field.value || []).filter((v) => v !== grade.value)
+                                    : [...(field.value || []), grade.value];
+                                  field.onChange(newValue);
+                                }}
+                              >
                                 <input
                                   type="checkbox"
                                   id={`grade-${grade.value}`}
                                   checked={field.value?.includes(grade.value)}
-                                  onChange={(e) => {
-                                    const newValue = e.target.checked
-                                      ? [...(field.value || []), grade.value]
-                                      : (field.value || []).filter((v) => v !== grade.value);
-                                    field.onChange(newValue);
-                                  }}
-                                  className="h-4 w-4 rounded border-gray-300"
+                                  onChange={() => {}}
+                                  className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
                                 />
                                 <Label
                                   htmlFor={`grade-${grade.value}`}
-                                  className="text-sm font-normal cursor-pointer"
+                                  className="text-sm font-medium cursor-pointer flex-1"
                                 >
                                   {grade.label}
                                 </Label>
@@ -1049,31 +1104,44 @@ const CalendarManagement = () => {
                       control={eventForm.control}
                       name="target_class_ids"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>أو اختر صفوف محددة (اختياري)</FormLabel>
-                          <div className="space-y-2 max-h-40 overflow-y-auto">
-                            {classes.map((classItem: any) => (
-                              <div key={classItem.id} className="flex items-center space-x-2 space-x-reverse">
-                                <input
-                                  type="checkbox"
-                                  id={`class-${classItem.id}`}
-                                  checked={field.value?.includes(classItem.id)}
-                                  onChange={(e) => {
-                                    const newValue = e.target.checked
-                                      ? [...(field.value || []), classItem.id]
-                                      : (field.value || []).filter((v) => v !== classItem.id);
+                        <FormItem className="space-y-3">
+                          <FormLabel className="text-sm font-medium">صفوف محددة (اختياري)</FormLabel>
+                          <div className="space-y-2 max-h-48 overflow-y-auto p-2 rounded-lg border bg-background/50">
+                            {classes.length > 0 ? (
+                              classes.map((classItem: any) => (
+                                <div 
+                                  key={classItem.id} 
+                                  className={cn(
+                                    "flex items-center space-x-3 space-x-reverse p-2.5 rounded-md border transition-all cursor-pointer hover:bg-accent",
+                                    field.value?.includes(classItem.id) && "bg-primary/5 border-primary"
+                                  )}
+                                  onClick={() => {
+                                    const newValue = field.value?.includes(classItem.id)
+                                      ? (field.value || []).filter((v) => v !== classItem.id)
+                                      : [...(field.value || []), classItem.id];
                                     field.onChange(newValue);
                                   }}
-                                  className="h-4 w-4 rounded border-gray-300"
-                                />
-                                <Label
-                                  htmlFor={`class-${classItem.id}`}
-                                  className="text-sm font-normal cursor-pointer"
                                 >
-                                  {classItem.class_names?.name} - {classItem.grade_levels?.label}
-                                </Label>
-                              </div>
-                            ))}
+                                  <input
+                                    type="checkbox"
+                                    id={`class-${classItem.id}`}
+                                    checked={field.value?.includes(classItem.id)}
+                                    onChange={() => {}}
+                                    className="h-4 w-4 rounded border-gray-300 text-primary"
+                                  />
+                                  <Label
+                                    htmlFor={`class-${classItem.id}`}
+                                    className="text-sm cursor-pointer flex-1"
+                                  >
+                                    {classItem.class_names?.name} - {classItem.grade_levels?.label}
+                                  </Label>
+                                </div>
+                              ))
+                            ) : (
+                              <p className="text-sm text-muted-foreground text-center py-4">
+                                لا توجد صفوف متاحة
+                              </p>
+                            )}
                           </div>
                           <FormMessage />
                         </FormItem>
@@ -1082,36 +1150,52 @@ const CalendarManagement = () => {
                   </div>
                 )}
 
-                <FormField
-                  control={eventForm.control}
-                  name="is_active"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base">حدث نشط</FormLabel>
-                        <div className="text-sm text-muted-foreground">
-                          سيظهر الحدث للمستخدمين فقط إذا كان نشطاً
+                {/* حالة الحدث */}
+                <div className="pt-4 border-t">
+                  <FormField
+                    control={eventForm.control}
+                    name="is_active"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-xl border-2 p-4 bg-gradient-to-r from-green-500/5 to-transparent">
+                        <div className="space-y-1">
+                          <FormLabel className="text-base font-semibold flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4 text-green-600" />
+                            حدث نشط
+                          </FormLabel>
+                          <div className="text-sm text-muted-foreground">
+                            سيظهر الحدث للمستخدمين فقط إذا كان نشطاً
+                          </div>
                         </div>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            className="data-[state=checked]:bg-green-600"
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-                <div className="flex justify-end gap-3">
+                {/* أزرار الإجراءات */}
+                <div className="flex justify-end gap-3 pt-6 border-t">
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setIsEventDialogOpen(false)}
+                    onClick={() => {
+                      setIsEventDialogOpen(false);
+                      setEditingEvent(null);
+                      eventForm.reset();
+                    }}
+                    className="min-w-[100px]"
                   >
                     إلغاء
                   </Button>
-                  <Button type="submit">
+                  <Button 
+                    type="submit" 
+                    className="min-w-[120px] bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+                  >
                     {editingEvent ? 'تحديث الحدث' : 'إضافة الحدث'}
                   </Button>
                 </div>
