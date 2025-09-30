@@ -571,9 +571,14 @@ export const OnlineStudentsStats: React.FC<OnlineStudentsStatsProps> = ({ isOpen
                     <Timer className="h-8 w-8 text-purple-500 mx-auto mb-2" />
                     <p className="text-sm text-muted-foreground">نمو هذا الأسبوع</p>
                     <p className="text-2xl font-bold text-green-600">
-                      {stats.weekTrend.length > 1 ? (
-                        ((stats.weekTrend[stats.weekTrend.length - 1].active_students - stats.weekTrend[0].active_students) / stats.weekTrend[0].active_students * 100).toFixed(1)
-                      ) : 0}%
+                      {(() => {
+                        if (stats.weekTrend.length < 2) return '0';
+                        const firstDay = stats.weekTrend[0].active_students;
+                        const lastDay = stats.weekTrend[stats.weekTrend.length - 1].active_students;
+                        if (firstDay === 0) return lastDay > 0 ? '+∞' : '0';
+                        const growth = ((lastDay - firstDay) / firstDay * 100);
+                        return growth > 0 ? `+${growth.toFixed(1)}` : growth.toFixed(1);
+                      })()}%
                     </p>
                   </Card>
                 </div>
