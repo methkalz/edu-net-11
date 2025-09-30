@@ -93,7 +93,7 @@ export const StudentCalendarSection: React.FC = () => {
               <p className="text-muted-foreground text-sm">لا توجد أحداث قادمة</p>
             </div>
           ) : (
-            <div className="space-y-3 max-h-[400px] overflow-y-auto">
+            <div className="space-y-3">
               {upcomingEvents.map((event, index) => {
                 const colors = getEventTypeColor(event.type);
                 const eventDate = new Date(event.date);
