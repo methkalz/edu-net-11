@@ -600,7 +600,7 @@ export const OnlineStudentsStats: React.FC<OnlineStudentsStatsProps> = ({ isOpen
                             variant="default"
                             className="text-lg px-4 py-2"
                           >
-                            {Math.round((count / (count + 5)) * 100)}%
+                            {stats.todayActive > 0 ? Math.round((count / stats.todayActive) * 100) : 0}%
                           </Badge>
                         </div>
                       </div>
