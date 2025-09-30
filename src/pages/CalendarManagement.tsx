@@ -64,6 +64,9 @@ const eventFormSchema = z.object({
   color: z.string().min(1, 'لون الحدث مطلوب'),
   type: z.enum(['holiday', 'exam', 'meeting', 'event', 'important']),
   is_active: z.boolean().default(true),
+  target_grade_levels: z.array(z.string()).optional(),
+  target_class_ids: z.array(z.string()).optional(),
+  is_for_all: z.boolean().default(true),
 });
 
 const settingsFormSchema = z.object({
@@ -84,6 +87,7 @@ const CalendarManagement = () => {
   const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const [classes, setClasses] = useState<any[]>([]);
 
   const eventForm = useForm<z.infer<typeof eventFormSchema>>({
     resolver: zodResolver(eventFormSchema),
@@ -93,6 +97,9 @@ const CalendarManagement = () => {
       color: '#3b82f6',
       type: 'event',
       is_active: true,
+      target_grade_levels: [],
+      target_class_ids: [],
+      is_for_all: true,
     },
   });
 
@@ -126,11 +133,39 @@ const CalendarManagement = () => {
     { value: 'important', label: 'مهم', icon: '⚠️' },
   ];
 
+  const gradeOptions = [
+    { value: '10', label: 'الصف العاشر' },
+    { value: '11', label: 'الصف الحادي عشر' },
+    { value: '12', label: 'الصف الثاني عشر' },
+  ];
+
   // جلب البيانات
   useEffect(() => {
     fetchEvents();
     fetchSettings();
+    fetchClasses();
   }, []);
+
+  const fetchClasses = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('classes')
+        .select(`
+          id,
+          class_name_id,
+          grade_level_id,
+          class_names(name),
+          grade_levels(label, code)
+        `)
+        .eq('school_id', userProfile?.school_id)
+        .eq('status', 'active');
+
+      if (error) throw error;
+      setClasses(data || []);
+    } catch (error) {
+      logger.error('Error fetching classes', error as Error);
+    }
+  };
 
   const fetchEvents = async () => {
     try {
@@ -252,6 +287,9 @@ const CalendarManagement = () => {
         is_active: values.is_active,
         created_by: userProfile?.user_id,
         school_id: userProfile?.school_id,
+        created_by_role: userProfile?.role,
+        target_grade_levels: values.is_for_all ? null : (values.target_grade_levels || null),
+        target_class_ids: values.is_for_all ? null : (values.target_class_ids || null),
       };
 
       if (editingEvent) {
@@ -403,6 +441,9 @@ const CalendarManagement = () => {
       color: event.color || '#3b82f6',
       type: (event.type || event.event_type) as 'holiday' | 'exam' | 'meeting' | 'event' | 'important',
       is_active: event.is_active,
+      target_grade_levels: event.target_grade_levels || [],
+      target_class_ids: event.target_class_ids || [],
+      is_for_all: !event.target_grade_levels && !event.target_class_ids,
     });
     setIsEventDialogOpen(true);
   };
@@ -416,6 +457,9 @@ const CalendarManagement = () => {
       color: '#3b82f6',
       type: 'event',
       is_active: true,
+      target_grade_levels: [],
+      target_class_ids: [],
+      is_for_all: true,
     });
     setIsEventDialogOpen(true);
   };
@@ -910,6 +954,107 @@ const CalendarManagement = () => {
                     )}
                   />
                 </div>
+
+                {/* تحديد الفئة المستهدفة */}
+                <FormField
+                  control={eventForm.control}
+                  name="is_for_all"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base">حدث عام للجميع</FormLabel>
+                        <div className="text-sm text-muted-foreground">
+                          إذا تم التفعيل، سيكون الحدث مرئيًا لجميع الطلاب. وإلا يمكنك تحديد صفوف معينة
+                        </div>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                {!eventForm.watch('is_for_all') && (
+                  <div className="space-y-4 border rounded-lg p-4 bg-muted/30">
+                    <h4 className="text-sm font-medium flex items-center gap-2">
+                      <Target className="h-4 w-4" />
+                      تحديد الصفوف المستهدفة
+                    </h4>
+                    
+                    <FormField
+                      control={eventForm.control}
+                      name="target_grade_levels"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>اختر الصفوف الدراسية</FormLabel>
+                          <div className="space-y-2">
+                            {gradeOptions.map((grade) => (
+                              <div key={grade.value} className="flex items-center space-x-2 space-x-reverse">
+                                <input
+                                  type="checkbox"
+                                  id={`grade-${grade.value}`}
+                                  checked={field.value?.includes(grade.value)}
+                                  onChange={(e) => {
+                                    const newValue = e.target.checked
+                                      ? [...(field.value || []), grade.value]
+                                      : (field.value || []).filter((v) => v !== grade.value);
+                                    field.onChange(newValue);
+                                  }}
+                                  className="h-4 w-4 rounded border-gray-300"
+                                />
+                                <Label
+                                  htmlFor={`grade-${grade.value}`}
+                                  className="text-sm font-normal cursor-pointer"
+                                >
+                                  {grade.label}
+                                </Label>
+                              </div>
+                            ))}
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={eventForm.control}
+                      name="target_class_ids"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>أو اختر صفوف محددة (اختياري)</FormLabel>
+                          <div className="space-y-2 max-h-40 overflow-y-auto">
+                            {classes.map((classItem: any) => (
+                              <div key={classItem.id} className="flex items-center space-x-2 space-x-reverse">
+                                <input
+                                  type="checkbox"
+                                  id={`class-${classItem.id}`}
+                                  checked={field.value?.includes(classItem.id)}
+                                  onChange={(e) => {
+                                    const newValue = e.target.checked
+                                      ? [...(field.value || []), classItem.id]
+                                      : (field.value || []).filter((v) => v !== classItem.id);
+                                    field.onChange(newValue);
+                                  }}
+                                  className="h-4 w-4 rounded border-gray-300"
+                                />
+                                <Label
+                                  htmlFor={`class-${classItem.id}`}
+                                  className="text-sm font-normal cursor-pointer"
+                                >
+                                  {classItem.class_names?.name} - {classItem.grade_levels?.label}
+                                </Label>
+                              </div>
+                            ))}
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                )}
 
                 <FormField
                   control={eventForm.control}
