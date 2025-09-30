@@ -56,7 +56,6 @@ import {
 const Grade12ProjectEditorPage = React.lazy(() => import('@/pages/Grade12ProjectEditor'));
 const LandingPage = React.lazy(() => import('@/pages/LandingPage'));
 const KnowledgeAdventurePage = React.lazy(() => import('@/pages/KnowledgeAdventurePage'));
-const TeacherStudentTracking = React.lazy(() => import('@/pages/TeacherStudentTracking'));
 import { PageLoading } from "@/components/ui/LoadingComponents";
 
 /**
@@ -109,16 +108,11 @@ const App = () => {
                <Route path="/system-settings" element={<LazySystemSettings />} />
                <Route path="/profile-settings" element={<LazyProfileSettings />} />
               
-              {/* Academic management routes */}
+               {/* Academic management routes */}
                <Route path="/academic-years" element={<LazyAcademicYears />} />
                <Route path="/calendar-management" element={<LazyCalendarManagement />} />
                <Route path="/students" element={<LazyStudentManagement />} />
                <Route path="/student-management" element={<LazyStudentManagement />} />
-               <Route path="/teacher-tracking" element={
-                 <Suspense fallback={<PageLoading message="جاري تحميل تتبع الطلاب..." />}>
-                   <TeacherStudentTracking />
-                 </Suspense>
-               } />
               
                {/* Content management routes - hierarchical structure */}
                <Route path="/content-management" element={<LazyContentManagement />} />

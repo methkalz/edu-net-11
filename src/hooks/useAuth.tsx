@@ -516,18 +516,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const effectiveUser = isImpersonating ? getEffectiveUser() : user;
   const effectiveUserProfile = isImpersonating ? getEffectiveUserProfile() : userProfile;
 
-  // Add default values for missing properties
-  const completeUserProfile = effectiveUserProfile ? {
-    ...effectiveUserProfile,
-    font_size: (effectiveUserProfile as any).font_size || 'medium',
-    theme: (effectiveUserProfile as any).theme || 'light'
-  } as UserProfile : null;
-
   return (
     <AuthContext.Provider value={{ 
       user: effectiveUser as User, 
       session, 
-      userProfile: completeUserProfile, 
+      userProfile: effectiveUserProfile, 
       loading: loading || isSigningOut, 
       signIn, 
       signOut,
