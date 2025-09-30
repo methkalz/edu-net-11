@@ -57,12 +57,14 @@ export const StudentCalendarSection: React.FC = () => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       {/* Upcoming Events List */}
-      <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border-blue-200">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
-            <Bell className="w-5 h-5" />
-            الأحداث القادمة
-            <Badge variant="secondary" className="mr-auto bg-blue-100 text-blue-700">
+      <Card className="border-border/50 shadow-sm">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Bell className="w-5 h-5 text-primary" />
+            </div>
+            <span className="text-xl font-bold">الأحداث القادمة</span>
+            <Badge variant="secondary" className="mr-auto">
               {upcomingEvents.length}
             </Badge>
           </CardTitle>
@@ -74,105 +76,92 @@ export const StudentCalendarSection: React.FC = () => {
               <p className="text-muted-foreground text-sm">لا توجد أحداث قادمة</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {upcomingEvents.map((event, index) => {
                 const eventDate = new Date(event.date);
                 const isToday = isSameDay(eventDate, new Date());
                 const EventIcon = getIconComponent(event.icon);
-                const eventColor = event.color || '#3b82f6';
+                const eventColor = event.color || '#6366f1';
                 
                 return (
                   <div
                     key={event.id}
-                    className="group relative overflow-hidden rounded-xl border-2 transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] animate-fade-in"
-                    style={{ 
-                      animationDelay: `${index * 0.1}s`,
-                      borderColor: eventColor,
-                      background: `linear-gradient(135deg, ${eventColor}15 0%, ${eventColor}08 100%)`
-                    }}
+                    className="group relative bg-card rounded-2xl p-5 border border-border/50 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 animate-fade-in overflow-hidden"
+                    style={{ animationDelay: `${index * 0.1}s` }}
                   >
-                    {/* Gradient Overlay */}
+                    {/* Decorative gradient accent */}
                     <div 
-                      className="absolute top-0 left-0 w-full h-1"
-                      style={{ background: `linear-gradient(90deg, ${eventColor} 0%, ${eventColor}80 100%)` }}
+                      className="absolute top-0 right-0 w-32 h-32 opacity-10 blur-3xl rounded-full"
+                      style={{ backgroundColor: eventColor }}
                     />
                     
-                    <div className="flex items-start gap-4 p-4">
-                      {/* Event Icon */}
-                      <div 
-                        className="flex-shrink-0 w-14 h-14 rounded-xl shadow-lg flex items-center justify-center relative overflow-hidden"
-                        style={{ 
-                          background: `linear-gradient(135deg, ${eventColor} 0%, ${eventColor}cc 100%)`
-                        }}
-                      >
-                        <EventIcon className="w-7 h-7 text-white relative z-10" />
+                    <div className="relative flex gap-4">
+                      {/* Icon with elegant styling */}
+                      <div className="flex-shrink-0">
                         <div 
-                          className="absolute inset-0 opacity-20"
-                          style={{ background: `radial-gradient(circle at 30% 30%, white 0%, transparent 70%)` }}
-                        />
+                          className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg transition-transform group-hover:scale-110"
+                          style={{ backgroundColor: eventColor }}
+                        >
+                          <EventIcon className="w-6 h-6 text-white" strokeWidth={2} />
+                        </div>
                       </div>
 
-                      {/* Event Details */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2 mb-3">
-                          <h4 className="font-bold text-lg text-foreground leading-tight">
+                      {/* Content */}
+                      <div className="flex-1 min-w-0 space-y-3">
+                        {/* Title and today badge */}
+                        <div className="flex items-start justify-between gap-3">
+                          <h3 className="text-lg font-bold text-foreground leading-tight">
                             {event.title}
-                          </h4>
+                          </h3>
                           {isToday && (
-                            <Badge 
-                              className="flex-shrink-0 text-white border-0 shadow-md"
+                            <span 
+                              className="flex-shrink-0 px-3 py-1 rounded-full text-xs font-bold text-white shadow-md"
                               style={{ backgroundColor: eventColor }}
                             >
                               اليوم
-                            </Badge>
+                            </span>
                           )}
                         </div>
 
-                        {/* Date & Time */}
-                        <div className="flex flex-wrap gap-2 mb-3">
-                          <div 
-                            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-medium backdrop-blur-sm"
+                        {/* Date and time with elegant spacing */}
+                        <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-2">
+                            <CalendarIcon className="w-4 h-4" style={{ color: eventColor }} />
+                            <span className="font-medium">
+                              {format(eventDate, 'dd MMMM yyyy', { locale: ar })}
+                            </span>
+                          </div>
+                          {event.time && (
+                            <>
+                              <span className="text-border">•</span>
+                              <div className="flex items-center gap-2">
+                                <Clock className="w-4 h-4" style={{ color: eventColor }} />
+                                <span className="font-medium">{event.time}</span>
+                              </div>
+                            </>
+                          )}
+                        </div>
+
+                        {/* Type badge with subtle styling */}
+                        <div>
+                          <span 
+                            className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold"
                             style={{ 
-                              backgroundColor: `${eventColor}20`,
+                              backgroundColor: `${eventColor}15`,
                               color: eventColor
                             }}
                           >
-                            <CalendarIcon className="w-3.5 h-3.5" />
-                            <span>{format(eventDate, 'dd MMMM yyyy', { locale: ar })}</span>
-                          </div>
-                          {event.time && (
-                            <div 
-                              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-medium backdrop-blur-sm"
-                              style={{ 
-                                backgroundColor: `${eventColor}20`,
-                                color: eventColor
-                              }}
-                            >
-                              <Clock className="w-3.5 h-3.5" />
-                              <span>{event.time}</span>
-                            </div>
-                          )}
+                            {event.type === 'exam' ? 'امتحان' :
+                             event.type === 'deadline' ? 'موعد نهائي' :
+                             event.type === 'holiday' ? 'عطلة' :
+                             event.type === 'meeting' ? 'اجتماع' :
+                             event.type === 'important' ? 'مهم' : 'حدث'}
+                          </span>
                         </div>
 
-                        {/* Type Badge */}
-                        <Badge 
-                          variant="outline" 
-                          className="border-2 font-semibold"
-                          style={{ 
-                            borderColor: eventColor,
-                            color: eventColor
-                          }}
-                        >
-                          {event.type === 'exam' ? 'امتحان' :
-                           event.type === 'deadline' ? 'موعد نهائي' :
-                           event.type === 'holiday' ? 'عطلة' :
-                           event.type === 'meeting' ? 'اجتماع' :
-                           event.type === 'important' ? 'مهم' : 'حدث'}
-                        </Badge>
-
-                        {/* Description */}
+                        {/* Description with better typography */}
                         {event.description && (
-                          <p className="text-sm text-muted-foreground mt-3 line-clamp-2 leading-relaxed">
+                          <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
                             {event.description}
                           </p>
                         )}
@@ -187,11 +176,13 @@ export const StudentCalendarSection: React.FC = () => {
       </Card>
 
       {/* Visual Calendar */}
-      <Card className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 border-purple-200">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-purple-700 dark:text-purple-300">
-            <CalendarIcon className="w-5 h-5" />
-            التقويم
+      <Card className="border-border/50 shadow-sm">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+              <CalendarIcon className="w-5 h-5 text-primary" />
+            </div>
+            <span className="text-xl font-bold">التقويم</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -201,49 +192,44 @@ export const StudentCalendarSection: React.FC = () => {
               selected={selectedDate}
               onSelect={(date) => date && setSelectedDate(date)}
               locale={ar}
-              className="rounded-md border bg-white dark:bg-gray-900 shadow-sm mx-auto"
+              className="rounded-xl border-0 bg-background mx-auto"
               modifiers={{
                 hasEvent: (date) => hasEventOnDate(date)
               }}
               modifiersClassNames={{
-                hasEvent: 'font-bold text-purple-600 dark:text-purple-400'
+                hasEvent: 'font-bold text-primary relative after:content-[""] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:rounded-full after:bg-primary'
               }}
             />
 
             {/* Selected Date Events */}
             {selectedDateEvents.length > 0 && (
-              <div className="space-y-2">
-                <h4 className="font-semibold text-sm text-purple-700 dark:text-purple-300 flex items-center gap-2">
-                  <Info className="w-4 h-4" />
+              <div className="space-y-3 pt-4 border-t">
+                <h4 className="font-bold text-sm flex items-center gap-2">
+                  <Info className="w-4 h-4 text-primary" />
                   أحداث {format(selectedDate, 'dd MMMM', { locale: ar })}
                 </h4>
                 <div className="space-y-2">
                   {selectedDateEvents.map((event) => {
                     const EventIcon = getIconComponent(event.icon);
-                    const eventColor = event.color || '#3b82f6';
+                    const eventColor = event.color || '#6366f1';
                     return (
                       <div
                         key={event.id}
-                        className="flex items-center gap-3 p-3 rounded-lg border-2 transition-all hover:shadow-md"
-                        style={{ 
-                          borderColor: eventColor,
-                          background: `linear-gradient(135deg, ${eventColor}15 0%, ${eventColor}08 100%)`
-                        }}
+                        className="group flex items-center gap-3 p-3 rounded-xl bg-card border border-border/50 transition-all hover:shadow-md hover:-translate-y-0.5"
                       >
                         <div 
-                          className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center shadow-sm"
-                          style={{ 
-                            background: `linear-gradient(135deg, ${eventColor} 0%, ${eventColor}cc 100%)`
-                          }}
+                          className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110"
+                          style={{ backgroundColor: eventColor }}
                         >
-                          <EventIcon className="w-5 h-5 text-white" />
+                          <EventIcon className="w-5 h-5 text-white" strokeWidth={2} />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold text-sm text-foreground">
                             {event.title}
                           </p>
                           {event.time && (
-                            <p className="text-xs text-muted-foreground mt-0.5">
+                            <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
                               {event.time}
                             </p>
                           )}
