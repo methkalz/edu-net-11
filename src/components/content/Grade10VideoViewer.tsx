@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useStudentProgress } from '@/hooks/useStudentProgress';
 
 interface Grade10Video {
   id: string;
@@ -31,6 +32,7 @@ interface Grade10VideoViewerProps {
 }
 
 const Grade10VideoViewer: React.FC<Grade10VideoViewerProps> = ({ videos, loading }) => {
+  const { updateProgress, logActivity } = useStudentProgress();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedVideo, setSelectedVideo] = useState<Grade10Video | null>(null);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
@@ -83,9 +85,17 @@ const Grade10VideoViewer: React.FC<Grade10VideoViewerProps> = ({ videos, loading
     return match ? match[1] : null;
   };
 
-  const openVideo = (video: Grade10Video) => {
+  const openVideo = async (video: Grade10Video) => {
     setSelectedVideo(video);
     setIsVideoModalOpen(true);
+    
+    // تسجيل إكمال المحتوى فوراً عند فتح النافذة
+    try {
+      await updateProgress(video.id, 'video', 100, 0, 10);
+      await logActivity('video_watch', video.id, 0, 10);
+    } catch (error) {
+      console.error('Error tracking video view:', error);
+    }
   };
 
   const formatDate = (dateString: string): string => {

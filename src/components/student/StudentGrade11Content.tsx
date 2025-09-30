@@ -10,6 +10,7 @@ import { BookOpen, ChevronDown, ChevronRight, Search, FolderOpen, PlayCircle, Cl
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import Grade11LessonContentDisplay from '../content/Grade11LessonContentDisplay';
 import { Grade11VideoViewer } from '@/components/content/Grade11VideoViewer';
+import { useStudentProgress } from '@/hooks/useStudentProgress';
 export const StudentGrade11Content: React.FC = () => {
   const {
     sections,
@@ -18,6 +19,7 @@ export const StudentGrade11Content: React.FC = () => {
     error,
     getContentStats
   } = useStudentGrade11Content();
+  const { updateProgress, logActivity } = useStudentProgress();
   const [openSections, setOpenSections] = useState<string[]>([]);
   const [openTopics, setOpenTopics] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -246,7 +248,16 @@ export const StudentGrade11Content: React.FC = () => {
                               <CollapsibleContent>
                                 <CardContent className="pt-0 px-6 pb-6">
                                   <div className="space-y-3">
-                                    {topic.lessons.map(lesson => <div key={lesson.id} className="flex items-center justify-between p-5 bg-gradient-to-br from-purple-50/50 to-purple-100/30 rounded-2xl border border-purple-200/60 hover:bg-purple-50/80 transition-colors cursor-pointer group" onClick={() => setSelectedLesson(lesson)}>
+                                    {topic.lessons.map(lesson => <div key={lesson.id} className="flex items-center justify-between p-5 bg-gradient-to-br from-purple-50/50 to-purple-100/30 rounded-2xl border border-purple-200/60 hover:bg-purple-50/80 transition-colors cursor-pointer group" onClick={async () => {
+                                        setSelectedLesson(lesson);
+                                        // تسجيل إكمال الدرس فوراً
+                                        try {
+                                          await updateProgress(lesson.id, 'lesson', 100, 0, 10);
+                                          await logActivity('document_read', lesson.id, 0, 10);
+                                        } catch (error) {
+                                          console.error('Error tracking lesson view:', error);
+                                        }
+                                      }}>
                                         <div className="flex items-center gap-5">
                                           <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-sm">
                                             <BookOpen className="w-5 h-5 text-white" />
@@ -305,7 +316,16 @@ export const StudentGrade11Content: React.FC = () => {
               </div>
             </Card> : <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {filteredVideos.map(video => <Card key={video.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                  <div className="aspect-video bg-gradient-to-r from-red-500 to-pink-500 relative overflow-hidden cursor-pointer group" onClick={() => setSelectedVideo(video)}>
+                  <div className="aspect-video bg-gradient-to-r from-red-500 to-pink-500 relative overflow-hidden cursor-pointer group" onClick={async () => {
+                    setSelectedVideo(video);
+                    // تسجيل إكمال الفيديو فوراً
+                    try {
+                      await updateProgress(video.id, 'video', 100, 0, 10);
+                      await logActivity('video_watch', video.id, 0, 10);
+                    } catch (error) {
+                      console.error('Error tracking video view:', error);
+                    }
+                  }}>
                     {video.thumbnail_url ? <img src={video.thumbnail_url} alt={video.title} className="w-full h-full object-cover" onError={e => {
                 e.currentTarget.style.display = 'none';
               }} /> : null}
@@ -328,7 +348,16 @@ export const StudentGrade11Content: React.FC = () => {
                       <Badge variant="outline" className="text-xs">
                         {video.category}
                       </Badge>
-                      <Button size="sm" onClick={() => setSelectedVideo(video)} className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600">
+                      <Button size="sm" onClick={async () => {
+                        setSelectedVideo(video);
+                        // تسجيل إكمال الفيديو فوراً
+                        try {
+                          await updateProgress(video.id, 'video', 100, 0, 10);
+                          await logActivity('video_watch', video.id, 0, 10);
+                        } catch (error) {
+                          console.error('Error tracking video view:', error);
+                        }
+                      }} className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600">
                         <PlayCircle className="w-4 h-4 ml-1" />
                         مشاهدة
                       </Button>

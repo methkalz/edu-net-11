@@ -30,7 +30,7 @@ import { useGrade12Projects } from '@/hooks/useGrade12Projects';
 
 export const StudentGrade12Content: React.FC = () => {
   const { videos, documents, loading } = useGrade12Content();
-  const { updateProgress } = useStudentProgress();
+  const { updateProgress, logActivity } = useStudentProgress();
   const { projects, createProject } = useGrade12Projects();
   
   const [searchTerm, setSearchTerm] = useState('');
@@ -91,9 +91,17 @@ export const StudentGrade12Content: React.FC = () => {
     return url;
   };
 
-  const openVideo = (video: any) => {
+  const openVideo = async (video: any) => {
     setSelectedVideo(video);
     setIsVideoModalOpen(true);
+    
+    // تسجيل إكمال المحتوى فوراً عند فتح النافذة
+    try {
+      await updateProgress(video.id, 'video', 100, 0, 10);
+      await logActivity('video_watch', video.id, 0, 10);
+    } catch (error) {
+      console.error('Error tracking video view:', error);
+    }
   };
 
   const handleVideoProgress = async (videoId: string, progress: number, timeSpent: number) => {

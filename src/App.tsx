@@ -56,6 +56,7 @@ import {
 const Grade12ProjectEditorPage = React.lazy(() => import('@/pages/Grade12ProjectEditor'));
 const LandingPage = React.lazy(() => import('@/pages/LandingPage'));
 const KnowledgeAdventurePage = React.lazy(() => import('@/pages/KnowledgeAdventurePage'));
+const StudentTrackingPage = React.lazy(() => import('@/pages/teacher/StudentTracking'));
 import { PageLoading } from "@/components/ui/LoadingComponents";
 
 /**
@@ -143,6 +144,12 @@ const App = () => {
                    path="/grade12-project-editor/:projectId" 
                    element={<Suspense fallback={<PageLoading message="جاري تحميل محرر المشروع..." />}><Grade12ProjectEditorPage /></Suspense>} 
                  />
+               
+               {/* Teacher routes */}
+               <Route 
+                 path="/teacher/student-tracking" 
+                 element={<Suspense fallback={<PageLoading message="جاري تحميل تتبع الطلاب..." />}><StudentTrackingPage /></Suspense>} 
+               />
                
                  {/* Game routes */}
                <Route path="/pair-matching/:gameId?" element={<LazyPairMatchingPage />} />

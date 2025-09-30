@@ -24,9 +24,11 @@ import {
 } from 'lucide-react';
 import { useStudentGrade10Lessons, Grade10LessonWithMedia, Grade10LessonMedia } from '@/hooks/useStudentGrade10Lessons';
 import Grade10MediaPreview from '@/components/content/Grade10MediaPreview';
+import { useStudentProgress } from '@/hooks/useStudentProgress';
 
 export const StudentGrade10Lessons: React.FC = () => {
   const { sections, loading, error, getContentStats } = useStudentGrade10Lessons();
+  const { updateProgress, logActivity } = useStudentProgress();
   const [openSections, setOpenSections] = useState<string[]>([]);
   const [openTopics, setOpenTopics] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -368,7 +370,16 @@ export const StudentGrade10Lessons: React.FC = () => {
                                      <div
                                       key={lesson.id}
                                       className="flex items-center justify-between p-4 bg-muted/30 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer"
-                                      onClick={() => setSelectedLesson(lesson)}
+                                      onClick={async () => {
+                                        setSelectedLesson(lesson);
+                                        // تسجيل إكمال الدرس فوراً
+                                        try {
+                                          await updateProgress(lesson.id, 'lesson', 100, 0, 10);
+                                          await logActivity('document_read', lesson.id, 0, 10);
+                                        } catch (error) {
+                                          console.error('Error tracking lesson view:', error);
+                                        }
+                                      }}
                                     >
                                       <div className="flex items-center gap-4">
                                         <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
