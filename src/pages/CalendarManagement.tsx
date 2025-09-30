@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -44,6 +44,7 @@ import {
 import AppHeader from '@/components/shared/AppHeader';
 import AppFooter from '@/components/shared/AppFooter';
 import { PageLoading } from '@/components/ui/LoadingComponents';
+import { TimeInput } from '@/components/ui/time-input';
 
 // استخدام CalendarEvent من types/common.ts
 
@@ -62,12 +63,29 @@ const eventFormSchema = z.object({
   date: z.date({
     message: 'تاريخ الحدث مطلوب',
   }),
+  end_date: z.date().optional(),
+  time: z.string().optional(),
+  end_time: z.string().optional(),
+  all_day: z.boolean().default(true),
   color: z.string().min(1, 'لون الحدث مطلوب'),
   type: z.enum(['holiday', 'exam', 'meeting', 'event', 'important']),
   is_active: z.boolean().default(true),
   target_grade_levels: z.array(z.string()).optional(),
   target_class_ids: z.array(z.string()).optional(),
   is_for_all: z.boolean().default(true),
+}).refine((data) => {
+  // إذا لم يكن طوال اليوم وتم تحديد وقت النهاية، يجب أن يكون هناك وقت بداية
+  if (!data.all_day && data.end_time && !data.time) {
+    return false;
+  }
+  // إذا تم تحديد تاريخ نهاية، يجب أن يكون بعد أو يساوي تاريخ البداية
+  if (data.end_date && data.date && data.end_date < data.date) {
+    return false;
+  }
+  return true;
+}, {
+  message: "تحقق من صحة التواريخ والأوقات",
+  path: ["end_time"],
 });
 
 const settingsFormSchema = z.object({
@@ -101,6 +119,10 @@ const CalendarManagement = () => {
       target_grade_levels: [],
       target_class_ids: [],
       is_for_all: true,
+      all_day: true,
+      time: undefined,
+      end_time: undefined,
+      end_date: undefined,
     },
   });
 
@@ -300,6 +322,9 @@ const CalendarManagement = () => {
         title: values.title,
         description: values.description,
         date: format(values.date, 'yyyy-MM-dd'),
+        end_date: values.end_date ? format(values.end_date, 'yyyy-MM-dd') : null,
+        time: !values.all_day && values.time ? values.time : null,
+        end_time: !values.all_day && values.end_time ? values.end_time : null,
         color: values.color,
         type: values.type as 'exam' | 'holiday' | 'meeting' | 'deadline' | 'other' | 'event' | 'important',
         is_active: values.is_active,
@@ -897,9 +922,9 @@ const CalendarManagement = () => {
                                 <SelectValue placeholder="اختر نوع الحدث" />
                               </SelectTrigger>
                             </FormControl>
-                            <SelectContent className="z-50">
+                            <SelectContent className="z-50" align="start" dir="rtl">
                               {typeOptions.map((type) => (
-                                <SelectItem key={type.value} value={type.value}>
+                                <SelectItem key={type.value} value={type.value} className="text-right">
                                   <span className="flex items-center gap-2">
                                     <span>{type.icon}</span>
                                     <span>{type.label}</span>
@@ -933,22 +958,49 @@ const CalendarManagement = () => {
                   />
                 </div>
 
-                {/* التاريخ واللون */}
-                <div className="space-y-4 pt-4 border-t">
+                {/* التاريخ والوقت */}
+                <div className="space-y-6 pt-4 border-t">
                   <h3 className="text-lg font-semibold flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Palette className="h-4 w-4 text-primary" />
+                    <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center">
+                      <Clock className="h-4 w-4 text-primary" />
                     </div>
-                    التاريخ والمظهر
+                    التوقيت والمدة
                   </h3>
 
+                  {/* طوال اليوم */}
+                  <FormField
+                    control={eventForm.control}
+                    name="all_day"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-xl border-2 p-4 bg-gradient-to-r from-blue-500/5 to-transparent">
+                        <div className="space-y-1">
+                          <FormLabel className="text-base font-semibold flex items-center gap-2">
+                            <Clock className="h-4 w-4 text-blue-600" />
+                            حدث طوال اليوم
+                          </FormLabel>
+                          <FormDescription className="text-sm">
+                            إذا كان الحدث لا يتطلب وقتاً محدداً
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            className="data-[state=checked]:bg-blue-600"
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* تاريخ البداية */}
                     <FormField
                       control={eventForm.control}
                       name="date"
                       render={({ field }) => (
                         <FormItem className="flex flex-col">
-                          <FormLabel className="text-sm font-medium mb-2">تاريخ الحدث *</FormLabel>
+                          <FormLabel className="text-sm font-medium mb-2">تاريخ البداية *</FormLabel>
                           <Popover>
                             <PopoverTrigger asChild>
                               <FormControl>
@@ -985,35 +1037,137 @@ const CalendarManagement = () => {
                       )}
                     />
 
+                    {/* تاريخ النهاية */}
                     <FormField
                       control={eventForm.control}
-                      name="color"
+                      name="end_date"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm font-medium mb-2">لون الحدث *</FormLabel>
-                          <div className="grid grid-cols-4 gap-2">
-                            {colorOptions.map((color) => (
-                              <Button
-                                key={color.value}
-                                type="button"
-                                variant={field.value === color.value ? "default" : "outline"}
-                                size="sm"
-                                className={cn(
-                                  "h-12 flex flex-col items-center justify-center gap-1 transition-all",
-                                  field.value === color.value && "ring-2 ring-primary ring-offset-2 scale-105"
-                                )}
-                                onClick={() => field.onChange(color.value)}
-                              >
-                                <div className={cn("w-6 h-6 rounded-full shadow-sm", color.class)} />
-                                <span className="text-[10px]">{color.label}</span>
-                              </Button>
-                            ))}
-                          </div>
+                        <FormItem className="flex flex-col">
+                          <FormLabel className="text-sm font-medium mb-2">
+                            تاريخ النهاية (اختياري)
+                          </FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant={"outline"}
+                                  className={cn(
+                                    "w-full h-11 pl-3 text-right font-normal justify-between",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                >
+                                  <CalendarIcon className="ml-2 h-4 w-4 opacity-50" />
+                                  {field.value ? (
+                                    format(field.value, "dd MMMM yyyy", { locale: ar })
+                                  ) : (
+                                    <span>اختر تاريخ النهاية</span>
+                                  )}
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0 z-50" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                disabled={(date) => {
+                                  const startDate = eventForm.watch('date');
+                                  return date < new Date("1900-01-01") || (startDate && date < startDate);
+                                }}
+                                initialFocus
+                                className={cn("p-3 pointer-events-auto")}
+                                locale={ar}
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <FormDescription className="text-xs mt-1">
+                            للأحداث متعددة الأيام (مثل: إجازات، مؤتمرات)
+                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
                   </div>
+
+                  {/* الأوقات - تظهر فقط إذا لم يكن طوال اليوم */}
+                  {!eventForm.watch('all_day') && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-2">
+                      <FormField
+                        control={eventForm.control}
+                        name="time"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium">وقت البداية</FormLabel>
+                            <FormControl>
+                              <TimeInput
+                                value={field.value}
+                                onChange={field.onChange}
+                                placeholder="اختر وقت البداية"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={eventForm.control}
+                        name="end_time"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium">وقت النهاية (اختياري)</FormLabel>
+                            <FormControl>
+                              <TimeInput
+                                value={field.value}
+                                onChange={field.onChange}
+                                placeholder="اختر وقت النهاية"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* اللون */}
+                <div className="space-y-4 pt-4 border-t">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-pink-500/20 to-orange-500/20 flex items-center justify-center">
+                      <Palette className="h-4 w-4 text-primary" />
+                    </div>
+                    المظهر
+                  </h3>
+
+                  <FormField
+                    control={eventForm.control}
+                    name="color"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium mb-2">لون الحدث *</FormLabel>
+                        <div className="grid grid-cols-4 gap-2">
+                          {colorOptions.map((color) => (
+                            <Button
+                              key={color.value}
+                              type="button"
+                              variant={field.value === color.value ? "default" : "outline"}
+                              size="sm"
+                              className={cn(
+                                "h-12 flex flex-col items-center justify-center gap-1 transition-all",
+                                field.value === color.value && "ring-2 ring-primary ring-offset-2 scale-105"
+                              )}
+                              onClick={() => field.onChange(color.value)}
+                            >
+                              <div className={cn("w-6 h-6 rounded-full shadow-sm", color.class)} />
+                              <span className="text-[10px]">{color.label}</span>
+                            </Button>
+                          ))}
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
 
 

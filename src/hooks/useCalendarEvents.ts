@@ -76,12 +76,13 @@ export const useCalendarEvents = (limit = 3, schoolId?: string) => {
     mutationFn: async (event: Omit<CalendarEvent, 'id' | 'created_at' | 'updated_at'>) => {
       const eventData = {
         ...event,
-        date: new Date(event.date).toISOString().split('T')[0]
-      };
+        date: new Date(event.date).toISOString().split('T')[0],
+        end_date: event.end_date ? new Date(event.end_date).toISOString().split('T')[0] : null,
+      } as any;
 
       const { data, error } = await supabase
         .from('calendar_events')
-        .insert(eventData)
+        .insert([eventData])
         .select()
         .single();
 
@@ -123,12 +124,13 @@ export const useCalendarEvents = (limit = 3, schoolId?: string) => {
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<CalendarEvent> }) => {
       const updateData = {
         ...updates,
-        date: updates.date ? new Date(updates.date).toISOString().split('T')[0] : undefined
+        date: updates.date ? new Date(updates.date).toISOString().split('T')[0] : undefined,
+        end_date: updates.end_date ? new Date(updates.end_date).toISOString().split('T')[0] : undefined,
       };
 
       const { data, error } = await supabase
         .from('calendar_events')
-        .update(updateData)
+        .update(updateData as any)
         .eq('id', id)
         .select()
         .single();

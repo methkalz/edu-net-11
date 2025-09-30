@@ -149,12 +149,19 @@ export interface CalendarEvent {
   description?: string;
   date: string;
   time?: string;
+  end_date?: string;
+  end_time?: string;
   color?: string;
   type?: 'exam' | 'holiday' | 'meeting' | 'deadline' | 'other' | 'event' | 'important';
   is_active: boolean;
   event_type?: 'exam' | 'holiday' | 'meeting' | 'deadline' | 'other';
   created_at: string;
   updated_at: string;
+  school_id?: string;
+  created_by?: string;
+  target_grade_levels?: string[];
+  target_class_ids?: string[];
+  created_by_role?: string;
 }
 
 // أنواع للإحصائيات
