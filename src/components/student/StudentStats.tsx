@@ -2,6 +2,7 @@ import React from 'react';
 import { useStudentProgress } from '@/hooks/useStudentProgress';
 import { useStudentContent } from '@/hooks/useStudentContent';
 import { useStudentAssignedGrade } from '@/hooks/useStudentAssignedGrade';
+import { useStudentGameStats } from '@/hooks/useStudentGameStats';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -19,7 +20,7 @@ import {
   Brain,
   Award,
   Gift,
-  Flame,
+  Gamepad2,
   BookOpen
 } from 'lucide-react';
 
@@ -27,6 +28,7 @@ export const StudentStats: React.FC = () => {
   const { stats, achievements, loading } = useStudentProgress();
   const { getProgressPercentage, getTotalContentCount, getCompletedContentCount } = useStudentContent();
   const { assignedGrade } = useStudentAssignedGrade();
+  const { stats: gameStats } = useStudentGameStats();
 
   if (loading) {
     return (
@@ -95,12 +97,12 @@ export const StudentStats: React.FC = () => {
       animation: 'animate-pulse-slow'
     },
     {
-      title: 'الأيام المتتالية',
-      value: stats.current_streak.toString(),
-      icon: Flame,
+      title: 'المراحل المكتملة',
+      value: gameStats.completedGames.toString(),
+      icon: Gamepad2,
       gradient: 'from-red-400 to-pink-400',
       bgGradient: 'from-red-50 to-pink-50',
-      description: 'يوم نشاط متواصل',
+      description: 'مرحلة لعبة مكتملة',
       animation: 'animate-bounce'
     }
   ];
