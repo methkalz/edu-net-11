@@ -283,7 +283,7 @@ const StudentDashboard: React.FC = () => {
                   <CardContent className="space-y-3">
                     <div className="relative overflow-hidden rounded-xl p-4 bg-gradient-to-br from-indigo-100/50 via-purple-50/30 to-pink-100/50 dark:from-indigo-950/30 dark:via-purple-950/20 dark:to-pink-950/30 border border-indigo-200/50 dark:border-indigo-800/30">
                       <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-indigo-400/10 to-purple-400/10 rounded-full blur-2xl" />
-                      <h3 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent relative">الصف {assignedGrade}</h3>
+                      <h3 className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent relative">الصف {assignedGrade}</h3>
                     </div>
                     
                     {userProfile?.schools?.name && (
