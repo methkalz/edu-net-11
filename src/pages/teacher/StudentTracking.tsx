@@ -153,7 +153,23 @@ const StudentTracking: React.FC = () => {
 
       if (presenceError) throw presenceError;
 
-      // 7. جلب عناوين الدروس والفيديوهات بطريقة آمنة
+      // 7. جلب بيانات الألعاب
+      const { data: gamesProgressData, error: gamesError } = await supabase
+        .from('player_game_progress')
+        .select(`
+          player_id,
+          game_id,
+          is_completed,
+          best_score,
+          completion_count,
+          updated_at,
+          pair_matching_games(title, level_number, stage_number)
+        `)
+        .in('player_id', userIds);
+
+      if (gamesError) console.error('Error fetching games:', gamesError);
+
+      // 8. جلب عناوين الدروس والفيديوهات بطريقة آمنة
       const contentIds = (progressData || []).map((p: any) => p.content_id).filter(Boolean);
       const contentTitlesMap = new Map<string, string>();
       
@@ -190,7 +206,7 @@ const StudentTracking: React.FC = () => {
         }
       }
 
-      // 8. دمج البيانات
+      // 9. دمج البيانات
       const combinedData: StudentTrackingData[] = (studentsData || []).map((student: any) => {
         const studentProgress = (progressData || []).filter(
           (p: any) => p.student_id === student.user_id
@@ -204,6 +220,10 @@ const StudentTracking: React.FC = () => {
         );
         const studentPresence = (presenceData || []).find(
           (p: any) => p.user_id === student.user_id
+        );
+        
+        const studentGames = (gamesProgressData || []).filter(
+          (g: any) => g.player_id === student.user_id
         );
 
         // حساب الوقت الكلي من student_presence + الجلسة الحالية إن وجدت
@@ -221,6 +241,8 @@ const StudentTracking: React.FC = () => {
           (sum: number, p: any) => sum + (p.points_earned || 0), 0
         ) + studentActivity.reduce(
           (sum: number, a: any) => sum + (a.points_earned || 0), 0
+        ) + studentGames.reduce(
+          (sum: number, g: any) => sum + (g.best_score || 0), 0
         );
 
         const lastActivity = studentPresence?.last_seen_at || (
@@ -245,7 +267,7 @@ const StudentTracking: React.FC = () => {
             content_progress: studentProgress,
             grade10_projects: [],
             grade12_projects: [],
-            game_progress: []
+            game_progress: studentGames
           }
         };
       });
@@ -645,21 +667,25 @@ const StudentTracking: React.FC = () => {
 
                 <TabsContent value="games" className="space-y-4">
                   {selectedStudent.progress_details?.game_progress?.length > 0 ? (
-                    selectedStudent.progress_details.game_progress.map((game, index) => (
+                    selectedStudent.progress_details.game_progress.map((game: any, index: number) => (
                       <Card key={index}>
                         <CardContent className="p-4">
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="font-medium">{game.game_title}</p>
+                              <p className="font-medium">
+                                {game.pair_matching_games?.title || 'لعبة مطابقة'}
+                              </p>
                               <p className="text-sm text-muted-foreground">
-                                المستوى {game.level} • المرحلة {game.stage}
+                                المستوى {game.pair_matching_games?.level_number || 1} • 
+                                المرحلة {game.pair_matching_games?.stage_number || 1} • 
+                                لعبها {game.completion_count || 0} مرة
                               </p>
                             </div>
                             <div className="flex items-center gap-2">
                               <Badge variant={game.is_completed ? 'default' : 'secondary'}>
-                                {game.is_completed ? 'مكتمل' : 'قيد التقدم'}
+                                {game.is_completed ? 'مكتمل ✓' : 'قيد التقدم'}
                               </Badge>
-                              <Badge variant="outline">{game.best_score} نقطة</Badge>
+                              <Badge variant="outline">{game.best_score || 0} نقطة</Badge>
                             </div>
                           </div>
                         </CardContent>
