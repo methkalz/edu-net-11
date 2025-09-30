@@ -3,6 +3,7 @@ import { useStudentProgress } from '@/hooks/useStudentProgress';
 import { useStudentContent } from '@/hooks/useStudentContent';
 import { useStudentAssignedGrade } from '@/hooks/useStudentAssignedGrade';
 import { useStudentGameStats } from '@/hooks/useStudentGameStats';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -29,6 +30,20 @@ export const StudentStats: React.FC = () => {
   const { getProgressPercentage, getTotalContentCount, getCompletedContentCount } = useStudentContent();
   const { assignedGrade } = useStudentAssignedGrade();
   const { stats: gameStats } = useStudentGameStats();
+  
+  // حساب العدد الكلي لمراحل الألعاب
+  const [totalGameStages, setTotalGameStages] = React.useState(0);
+  
+  React.useEffect(() => {
+    const fetchTotalGameStages = async () => {
+      const { count } = await supabase
+        .from('pair_matching_games')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_active', true);
+      setTotalGameStages(count || 0);
+    };
+    fetchTotalGameStages();
+  }, []);
 
   if (loading) {
     return (
@@ -48,6 +63,10 @@ export const StudentStats: React.FC = () => {
   const progressPercentage = getProgressPercentage();
   const totalContent = getTotalContentCount();
   const completedContent = getCompletedContentCount();
+  
+  // حساب الإجمالي الكلي
+  const totalCompleted = completedContent + gameStats.completedGames;
+  const totalAll = totalContent + totalGameStages;
 
   const statCards = [
     {
@@ -64,7 +83,7 @@ export const StudentStats: React.FC = () => {
       icon: TrendingUp,
       gradient: 'from-green-400 to-emerald-400',
       bgGradient: 'from-green-50 to-emerald-50',
-      description: `${completedContent} من ${totalContent}`
+      description: `${totalCompleted} من ${totalAll}`
     },
     {
       title: 'الفيديوهات المكتملة',
