@@ -14,6 +14,7 @@ export const QUERY_KEYS = {
     CONTENT: (userId: string, grade: string) => ['student', 'content', userId, grade],
     NOTIFICATIONS: (userId: string) => ['student', 'notifications', userId],
     TEACHER: (userId: string) => ['student', 'teacher', userId],
+    GAME_STATS: (userId: string) => ['student', 'game-stats', userId],
   },
   
   // Grade content

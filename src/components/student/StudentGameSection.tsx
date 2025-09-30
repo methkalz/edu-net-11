@@ -14,9 +14,11 @@ import {
   Puzzle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useStudentGameStats } from '@/hooks/useStudentGameStats';
 
 export const StudentGameSection: React.FC = () => {
   const navigate = useNavigate();
+  const { stats, loading } = useStudentGameStats();
 
   const games = [
     {
@@ -88,15 +90,21 @@ export const StudentGameSection: React.FC = () => {
             <p className="text-xl opacity-90">تعلم واستمتع واجمع النقاط!</p>
             <div className="flex justify-center gap-4 mt-6">
               <div className="text-center">
-                <div className="text-2xl font-bold">890</div>
+                <div className="text-2xl font-bold">
+                  {loading ? '...' : stats.totalPoints.toLocaleString()}
+                </div>
                 <div className="text-sm opacity-80">نقاطك</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold">24</div>
+                <div className="text-2xl font-bold">
+                  {loading ? '...' : stats.completedGames}
+                </div>
                 <div className="text-sm opacity-80">ألعاب مكتملة</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold">4</div>
+                <div className="text-2xl font-bold">
+                  {loading ? '...' : stats.playerRank > 0 ? stats.playerRank : '-'}
+                </div>
                 <div className="text-sm opacity-80">ترتيبك</div>
               </div>
             </div>
