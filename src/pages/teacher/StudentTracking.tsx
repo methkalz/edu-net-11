@@ -144,7 +144,15 @@ const StudentTracking: React.FC = () => {
 
       if (activityError) throw activityError;
 
-      // 6. دمج البيانات
+      // 6. جلب بيانات الحضور والوقت من student_presence
+      const { data: presenceData, error: presenceError } = await supabase
+        .from('student_presence')
+        .select('user_id, is_online, last_seen_at, total_time_minutes, session_start_at')
+        .in('user_id', userIds);
+
+      if (presenceError) throw presenceError;
+
+      // 7. دمج البيانات
       const combinedData: StudentTrackingData[] = (studentsData || []).map((student: any) => {
         const studentProgress = (progressData || []).filter(
           (p: any) => p.student_id === student.user_id
@@ -152,13 +160,20 @@ const StudentTracking: React.FC = () => {
         const studentActivity = (activityData || []).filter(
           (a: any) => a.student_id === student.user_id
         );
+        const studentPresence = (presenceData || []).find(
+          (p: any) => p.user_id === student.user_id
+        );
 
-        const totalTimeFromProgress = studentProgress.reduce(
-          (sum: number, p: any) => sum + (p.time_spent_minutes || 0), 0
-        );
-        const totalTimeFromActivity = studentActivity.reduce(
-          (sum: number, a: any) => sum + (a.duration_seconds || 0) / 60, 0
-        );
+        // حساب الوقت الكلي من student_presence + الجلسة الحالية إن وجدت
+        let totalTimeMinutes = studentPresence?.total_time_minutes || 0;
+        
+        // إذا كان الطالب online حالياً، أضف وقت الجلسة الحالية
+        if (studentPresence?.is_online && studentPresence?.session_start_at) {
+          const sessionStartTime = new Date(studentPresence.session_start_at).getTime();
+          const currentTime = new Date().getTime();
+          const currentSessionMinutes = Math.floor((currentTime - sessionStartTime) / (1000 * 60));
+          totalTimeMinutes += currentSessionMinutes;
+        }
 
         const totalPoints = studentProgress.reduce(
           (sum: number, p: any) => sum + (p.points_earned || 0), 0
@@ -166,11 +181,13 @@ const StudentTracking: React.FC = () => {
           (sum: number, a: any) => sum + (a.points_earned || 0), 0
         );
 
-        const lastActivity = studentActivity.length > 0
-          ? studentActivity.sort((a: any, b: any) => 
-              new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-            )[0].created_at
-          : null;
+        const lastActivity = studentPresence?.last_seen_at || (
+          studentActivity.length > 0
+            ? studentActivity.sort((a: any, b: any) => 
+                new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+              )[0].created_at
+            : null
+        );
 
         const gradeLevel = student.class_students?.[0]?.classes?.grade_levels?.code || '11';
 
@@ -179,7 +196,7 @@ const StudentTracking: React.FC = () => {
           student_name: student.full_name,
           student_email: student.email,
           student_grade: gradeLevel,
-          total_time_minutes: Math.round(totalTimeFromProgress + totalTimeFromActivity),
+          total_time_minutes: Math.round(totalTimeMinutes),
           total_points: totalPoints,
           last_activity: lastActivity,
           progress_details: {
