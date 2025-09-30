@@ -86,12 +86,12 @@ export const StudentStats: React.FC = () => {
       animation: 'animate-glow'
     }] : []),
     {
-      title: 'الإنجازات',
-      value: stats.achievements_count.toString(),
-      icon: Award,
+      title: 'الدروس المكتملة',
+      value: completedContent.toString(),
+      icon: BookOpen,
       gradient: 'from-indigo-400 to-purple-400',
       bgGradient: 'from-indigo-50 to-purple-50',
-      description: 'شارة وإنجاز',
+      description: 'درس مكتمل',
       animation: 'animate-pulse-slow'
     },
     {
