@@ -480,6 +480,7 @@ const TeacherDashboard: React.FC = () => {
 
   const quickActions = [
     { name: 'إدارة الطلاب', icon: Users, path: '/students', color: 'blue' },
+    { name: 'تتبع تقدم الطلاب', icon: TrendingUp, path: '/student-tracking', color: 'green' },
     { name: 'التقويم والأحداث', icon: Calendar, path: '/calendar-management', color: 'purple' },
     { name: 'إدارة الصفوف', icon: School, path: '/school-classes', color: 'orange' }
   ];
@@ -529,6 +530,72 @@ const TeacherDashboard: React.FC = () => {
           onRefresh={() => fetchTeacherData(true)}
           onOnlineStudentsClick={() => setIsOnlineStatsOpen(true)}
         />
+
+        {/* كارت تتبع تقدم الطلاب الجديد */}
+        <Card className="glass-card border-0 shadow-xl animate-fade-in-up bg-gradient-to-br from-card to-card/80">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-3 text-xl">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-green-500 to-green-600 flex items-center justify-center">
+                <TrendingUp className="h-4 w-4 text-white" />
+              </div>
+              <span className="bg-gradient-to-r from-green-600 to-green-500 bg-clip-text text-transparent">
+                تتبع تقدم الطلاب
+              </span>
+            </CardTitle>
+            <CardDescription className="text-base">
+              راقب أداء طلابك وتقدمهم الدراسي بالتفصيل
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* معلومات سريعة */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 rounded-lg bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900">
+                  <div className="flex items-center gap-3">
+                    <Users className="h-6 w-6 text-blue-600" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">إجمالي الطلاب</p>
+                      <p className="text-2xl font-bold text-blue-600">{stats.totalStudents}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between p-4 rounded-lg bg-gradient-to-r from-green-50 to-green-100 dark:from-green-950 dark:to-green-900">
+                  <div className="flex items-center gap-3">
+                    <Activity className="h-6 w-6 text-green-600" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">الطلاب النشطون</p>
+                      <p className="text-2xl font-bold text-green-600">{stats.onlineStudents}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* الإجراءات */}
+              <div className="flex flex-col gap-3 justify-center">
+                <Button
+                  size="lg"
+                  className="w-full gap-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+                  onClick={() => navigate('/student-tracking')}
+                >
+                  <TrendingUp className="h-5 w-5" />
+                  عرض تقرير التتبع الشامل
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="w-full gap-2"
+                  onClick={() => navigate('/students')}
+                >
+                  <Users className="h-5 w-5" />
+                  إدارة الطلاب
+                </Button>
+                <div className="text-sm text-muted-foreground text-center mt-2">
+                  💡 تابع تقدم كل طالب في الفيديوهات، المستندات، الألعاب والمشاريع
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* الإجراءات السريعة المحسنة */}
         <Card className="glass-card border-0 shadow-xl animate-fade-in-up">
