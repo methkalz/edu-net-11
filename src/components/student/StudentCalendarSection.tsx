@@ -128,7 +128,7 @@ export const StudentCalendarSection: React.FC = () => {
                           <div className="flex items-center gap-2">
                             <CalendarIcon className="w-4 h-4" style={{ color: eventColor }} />
                             <span className="font-medium">
-                              {format(eventDate, 'dd MMMM yyyy', { locale: ar })}
+                              {format(eventDate, 'dd/MM/yyyy')}
                             </span>
                           </div>
                           {event.time && (
@@ -206,7 +206,7 @@ export const StudentCalendarSection: React.FC = () => {
               <div className="space-y-3 pt-4 border-t">
                 <h4 className="font-bold text-sm flex items-center gap-2">
                   <Info className="w-4 h-4 text-primary" />
-                  أحداث {format(selectedDate, 'dd MMMM', { locale: ar })}
+                  أحداث {format(selectedDate, 'dd/MM/yyyy')}
                 </h4>
                 <div className="space-y-2">
                   {selectedDateEvents.map((event) => {
