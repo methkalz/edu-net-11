@@ -230,7 +230,7 @@ const StudentProgressOverview: React.FC = () => {
                     <TableHead className="text-right">الحالة</TableHead>
                     <TableHead className="text-right">النقاط</TableHead>
                     <TableHead className="text-right">نسبة الإنجاز</TableHead>
-                    <TableHead className="text-right">الأنشطة</TableHead>
+                    <TableHead className="text-right">المحتوى</TableHead>
                     <TableHead className="text-right">آخر نشاط</TableHead>
                     <TableHead className="text-right">الإجراءات</TableHead>
                   </TableRow>

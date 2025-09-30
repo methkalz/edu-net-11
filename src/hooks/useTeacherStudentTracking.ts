@@ -133,60 +133,76 @@ const fetchTeacherStudents = async (
     return [];
   }
 
-  // استخراج معرفات الطلاب
+  // استخراج معرفات الطلاب - استخدام user_id للتتبع بدلاً من student_id
   const studentIds = studentsData.map(s => s.students.id);
+  const userIds = studentsData.map(s => s.students.user_id);
 
-  // جلب بيانات التتبع بالتوازي
+  console.log('🔍 Teacher Tracking Debug:', {
+    studentsCount: studentsData.length,
+    studentIds: studentIds,
+    userIds: userIds,
+    message: 'استخدام user_id للبحث في جداول التتبع'
+  });
+
+  // جلب بيانات التتبع بالتوازي - استخدام user_id بدلاً من student_id
   const [progressData, activitiesData, achievementsData, presenceData, statsData] = await Promise.all([
-    // Progress data
+    // Progress data - استخدام user_id
     supabase
       .from('student_progress')
       .select('*')
-      .in('student_id', studentIds)
+      .in('student_id', userIds)
       .order('updated_at', { ascending: false }),
     
-    // Activities data
+    // Activities data - استخدام user_id
     supabase
       .from('student_activity_log')
       .select('*')
-      .in('student_id', studentIds)
+      .in('student_id', userIds)
       .order('created_at', { ascending: false })
       .limit(100),
     
-    // Achievements data
+    // Achievements data - استخدام user_id
     supabase
       .from('student_achievements')
       .select('*')
-      .in('student_id', studentIds),
+      .in('student_id', userIds),
     
-    // Presence data
+    // Presence data - استخدام student_id للـ presence
     supabase
       .from('student_presence')
       .select('*')
       .in('student_id', studentIds),
     
-    // Dashboard stats for each student
+    // Dashboard stats for each student - استخدام user_id
     Promise.all(
-      studentIds.map(studentId =>
-        supabase.rpc('get_student_dashboard_stats', { student_uuid: studentId })
+      userIds.map(userId =>
+        supabase.rpc('get_student_dashboard_stats', { student_uuid: userId })
       )
     )
   ]);
+
+  console.log('📊 Tracking Data Fetched:', {
+    progressCount: progressData.data?.length || 0,
+    activitiesCount: activitiesData.data?.length || 0,
+    achievementsCount: achievementsData.data?.length || 0,
+    presenceCount: presenceData.data?.length || 0
+  });
 
   // تجميع البيانات لكل طالب
   const studentsWithTracking: StudentWithTracking[] = studentsData.map((enrollment, index) => {
     const student = enrollment.students;
     const studentId = student.id;
+    const userId = student.user_id; // استخدام user_id للتتبع
     const classInfo = enrollment.classes;
 
-    // Progress data for this student
-    const studentProgress = progressData.data?.filter(p => p.student_id === studentId) || [];
+    // Progress data for this student - استخدام user_id
+    const studentProgress = progressData.data?.filter(p => p.student_id === userId) || [];
     
-    // Activities for this student
-    const studentActivities = activitiesData.data?.filter(a => a.student_id === studentId) || [];
+    // Activities for this student - استخدام user_id
+    const studentActivities = activitiesData.data?.filter(a => a.student_id === userId) || [];
     
-    // Achievements for this student
-    const studentAchievements = achievementsData.data?.filter(a => a.student_id === studentId) || [];
+    // Achievements for this student - استخدام user_id
+    const studentAchievements = achievementsData.data?.filter(a => a.student_id === userId) || [];
     
     // Presence info
     const presenceInfo = presenceData.data?.find(p => p.student_id === studentId);
@@ -217,6 +233,17 @@ const fetchTeacherStudents = async (
 
     // آخر نشاط
     const lastActivity = studentActivities[0]?.created_at;
+
+    console.log(`📈 Student ${student.full_name} Tracking:`, {
+      studentId,
+      userId,
+      progressCount: studentProgress.length,
+      activitiesCount: studentActivities.length,
+      achievementsCount: studentAchievements.length,
+      totalPoints: studentStats.total_points || 0,
+      completionPercentage,
+      progressSummary
+    });
 
     return {
       id: studentId,
