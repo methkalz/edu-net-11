@@ -2944,6 +2944,45 @@ export type Database = {
           },
         ]
       }
+      grade11_points_config: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          games_percentage: number
+          id: string
+          initial_points: number
+          is_active: boolean | null
+          lessons_percentage: number
+          total_max_points: number
+          updated_at: string | null
+          videos_percentage: number
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          games_percentage?: number
+          id?: string
+          initial_points?: number
+          is_active?: boolean | null
+          lessons_percentage?: number
+          total_max_points?: number
+          updated_at?: string | null
+          videos_percentage?: number
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          games_percentage?: number
+          id?: string
+          initial_points?: number
+          is_active?: boolean | null
+          lessons_percentage?: number
+          total_max_points?: number
+          updated_at?: string | null
+          videos_percentage?: number
+        }
+        Relationships: []
+      }
       grade11_question_templates: {
         Row: {
           created_at: string | null
@@ -3103,6 +3142,45 @@ export type Database = {
           order_index?: number
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      grade11_student_points_breakdown: {
+        Row: {
+          created_at: string | null
+          games_points: number
+          id: string
+          initial_points: number
+          lessons_completed: number
+          lessons_points: number
+          student_id: string
+          updated_at: string | null
+          videos_completed: number
+          videos_points: number
+        }
+        Insert: {
+          created_at?: string | null
+          games_points?: number
+          id?: string
+          initial_points?: number
+          lessons_completed?: number
+          lessons_points?: number
+          student_id: string
+          updated_at?: string | null
+          videos_completed?: number
+          videos_points?: number
+        }
+        Update: {
+          created_at?: string | null
+          games_points?: number
+          id?: string
+          initial_points?: number
+          lessons_completed?: number
+          lessons_points?: number
+          student_id?: string
+          updated_at?: string | null
+          videos_completed?: number
+          videos_points?: number
         }
         Relationships: []
       }
@@ -5245,6 +5323,24 @@ export type Database = {
       }
     }
     Views: {
+      grade11_student_points_summary: {
+        Row: {
+          games_percentage: number | null
+          games_points: number | null
+          initial_points: number | null
+          lessons_completed: number | null
+          lessons_percentage: number | null
+          lessons_points: number | null
+          student_id: string | null
+          total_max_points: number | null
+          total_points: number | null
+          updated_at: string | null
+          videos_completed: number | null
+          videos_percentage: number | null
+          videos_points: number | null
+        }
+        Relationships: []
+      }
       teacher_assigned_grades: {
         Row: {
           grade_level_id: string | null
@@ -5335,6 +5431,10 @@ export type Database = {
       get_exam_question_for_student: {
         Args: { question_id: string }
         Returns: Json
+      }
+      get_grade11_student_total_points: {
+        Args: { p_student_id: string }
+        Returns: number
       }
       get_school_active_package: {
         Args: { school_uuid: string }

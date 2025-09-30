@@ -125,16 +125,27 @@ export const usePlayerProfile = () => {
         setPlayerProfile(existingProfile);
         logger.info('Existing player profile loaded', { userId: user.id });
       } else {
-        // إنشاء ملف شخصي جديد
+        // جلب إعدادات النقاط
+        const { data: pointsConfig } = await supabase
+          .from('grade11_points_config')
+          .select('initial_points')
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        const initialPoints = pointsConfig?.initial_points || 100;
+
+        // إنشاء ملف شخصي جديد مع النقطة الابتدائية في total_xp
         const newProfile = {
           user_id: user.id,
-          game_id: null, // سنربطه بلعبة معينة لاحقاً
+          game_id: null,
           player_name: userProfile.full_name || userProfile.email || 'لاعب جديد',
           level: 1,
           coins: 100,
           streak_days: 0,
           avatar_id: 'student1',
-          total_xp: 0,
+          total_xp: initialPoints, // النقطة الابتدائية
           last_played: new Date().toISOString()
         };
 
@@ -146,8 +157,24 @@ export const usePlayerProfile = () => {
 
         if (createError) throw createError;
 
+        // إنشاء سجل في grade11_student_points_breakdown
+        await supabase
+          .from('grade11_student_points_breakdown')
+          .insert({
+            student_id: user.id,
+            initial_points: initialPoints,
+            lessons_points: 0,
+            videos_points: 0,
+            games_points: 0,
+            lessons_completed: 0,
+            videos_completed: 0,
+          });
+
         setPlayerProfile(createdProfile);
-        logger.info('New player profile created', { userId: user.id });
+        logger.info('New player profile created with initial points', { 
+          userId: user.id,
+          initialPoints 
+        });
 
         toast({
           title: '🎮 مرحباً في اللعبة!',

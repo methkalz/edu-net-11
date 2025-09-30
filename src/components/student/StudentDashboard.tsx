@@ -33,10 +33,11 @@ import { StudentProfile } from './StudentProfile';
 import { StudentDailyChallenges } from './StudentDailyChallenges';
 import StudentNotifications from './StudentNotifications';
 import { SchoolCalendarWidget } from '@/components/calendar/SchoolCalendarWidget';
-// AppFooter is managed by the main Dashboard page
 import { UniversalAvatar } from '@/components/shared/UniversalAvatar';
 import { UserTitleBadge } from '@/components/shared/UserTitleBadge';
 import { useStudentTeacher } from '@/hooks/useStudentTeacher';
+import { PointsBreakdownCard } from './PointsBreakdownCard';
+import { useGrade11PointsManager } from '@/hooks/useGrade11PointsManager';
 
 const StudentDashboard: React.FC = () => {
   const { userProfile } = useAuth();
@@ -212,8 +213,13 @@ const StudentDashboard: React.FC = () => {
           <TabsContent value="overview" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Stats Section */}
-              <div className="lg:col-span-2">
+              <div className="lg:col-span-2 space-y-6">
                 <StudentStats />
+                
+                {/* Points Breakdown Card for Grade 11 students */}
+                {assignedGrade === "11" && (
+                  <PointsBreakdownCard />
+                )}
               </div>
 
               {/* Quick Actions */}

@@ -26,6 +26,7 @@ import useSiteSettings from "@/hooks/useSiteSettings";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import EnhancedGameDataManagement from "./components/games/EnhancedGameDataManagement";
+import { Grade11PointsManagement } from "./pages/Grade11PointsManagement";
 import { 
   LazyDashboard,
   LazyAuth,
@@ -101,6 +102,9 @@ const App = () => {
               
               {/* Game data management - superadmin only */}
               <Route path="/game-data-management" element={<EnhancedGameDataManagement />} />
+              
+              {/* Grade 11 Points Management - superadmin only */}
+              <Route path="/grade11-points-management" element={<Suspense fallback={<PageLoading message="جاري التحميل..." />}><Grade11PointsManagement /></Suspense>} />
               
               {/* System management routes */}
               <Route path="/plugin-management" element={<LazyPluginManagement />} />
