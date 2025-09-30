@@ -166,8 +166,8 @@ const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({
               ))}
             </div>
           ) : recentNotifications.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-muted flex items-center justify-center">
+            <div className="flex flex-col items-center justify-center text-center py-12">
+              <div className="w-16 h-16 mb-4 rounded-xl bg-muted flex items-center justify-center">
                 <Bell className="h-8 w-8 text-muted-foreground" />
               </div>
               <h3 className="font-medium text-foreground mb-2">لا توجد إشعارات</h3>
