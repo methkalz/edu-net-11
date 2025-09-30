@@ -36,11 +36,13 @@ import { SchoolCalendarWidget } from '@/components/calendar/SchoolCalendarWidget
 // AppFooter is managed by the main Dashboard page
 import { UniversalAvatar } from '@/components/shared/UniversalAvatar';
 import { UserTitleBadge } from '@/components/shared/UserTitleBadge';
+import { useStudentTeacher } from '@/hooks/useStudentTeacher';
 
 const StudentDashboard: React.FC = () => {
   const { userProfile } = useAuth();
   const { stats, achievements, loading } = useStudentProgress();
   const { assignedGrade, getProgressPercentage } = useStudentContent();
+  const { teacher, loading: teacherLoading } = useStudentTeacher();
   const [activeTab, setActiveTab] = useState('overview');
   
   // Check if student is in Grade 10 or 12 (no games available)
@@ -273,6 +275,28 @@ const StudentDashboard: React.FC = () => {
                       <h3 className="text-xl font-bold">الصف {assignedGrade}</h3>
                       <p className="text-sm opacity-90">صفك المخصص</p>
                     </div>
+                    {teacherLoading ? (
+                      <div className="text-center p-3 bg-muted/50 rounded-lg">
+                        <p className="text-sm text-muted-foreground">جاري تحميل معلومات المعلم...</p>
+                      </div>
+                    ) : teacher ? (
+                      <div className="flex items-center gap-3 p-3 bg-card border border-border rounded-lg">
+                        <UniversalAvatar
+                          avatarUrl={teacher.avatar_url}
+                          userName={teacher.full_name}
+                          size="md"
+                          className="border-2 border-primary/20"
+                        />
+                        <div className="flex-1">
+                          <p className="text-xs text-muted-foreground">معلم الموضوع</p>
+                          <p className="font-semibold text-foreground">{teacher.full_name}</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center p-3 bg-muted/50 rounded-lg">
+                        <p className="text-sm text-muted-foreground">لم يتم تعيين معلم بعد</p>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </div>
