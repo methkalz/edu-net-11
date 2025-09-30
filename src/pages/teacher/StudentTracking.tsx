@@ -432,7 +432,7 @@ const StudentTracking: React.FC = () => {
                 </div>
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground font-medium">إجمالي الطلاب</p>
-                  <p className="text-3xl font-bold bg-gradient-to-br from-primary to-primary/70 bg-clip-text text-transparent">
+                  <p className="text-3xl font-bold bg-gradient-to-br from-primary to-primary/70 bg-clip-text text-transparent text-center">
                     {students.length}
                   </p>
                 </div>
