@@ -437,11 +437,19 @@ export const OnlineStudentsStats: React.FC<OnlineStudentsStatsProps> = ({ isOpen
                           <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                               <Pie
-                                data={Object.entries(stats.classDistribution).map(([grade, count]) => ({
-                                  name: `الصف ${grade}`,
-                                  value: count,
-                                  fill: grade === '10' ? colors.success : grade === '11' ? colors.info : colors.secondary
-                                }))}
+                                data={Object.entries(stats.classDistribution).map(([grade, count]) => {
+                                  let fillColor;
+                                  if (grade === '10') fillColor = 'hsl(142, 76%, 36%)'; // أخضر للعاشر
+                                  else if (grade === '11') fillColor = 'hsl(221, 83%, 53%)'; // أزرق للحادي عشر
+                                  else if (grade === '12') fillColor = 'hsl(262, 83%, 58%)'; // بنفسجي للثاني عشر
+                                  else fillColor = colors.muted;
+                                  
+                                  return {
+                                    name: `الصف ${grade}`,
+                                    value: count,
+                                    fill: fillColor
+                                  };
+                                })}
                                 cx="50%"
                                 cy="50%"
                                 outerRadius={90}
