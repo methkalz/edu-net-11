@@ -371,10 +371,10 @@ const StudentTracking: React.FC = () => {
   const grade11Students = filteredStudents.filter(s => s.student_grade === '11');
 
   const formatTime = (minutes: number) => {
-    if (minutes < 60) return `${minutes} دقيقة`;
+    if (minutes < 60) return `${minutes} د`;
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
-    return `${hours} ساعة${mins > 0 ? ` و ${mins} دقيقة` : ''}`;
+    return `${hours}:${mins.toString().padStart(2, '0')} س`;
   };
 
   const getContentTypeLabel = (type: string) => {
