@@ -1,3 +1,4 @@
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
@@ -85,6 +86,43 @@ export const useStudentGameStats = () => {
     gcTime: CACHE_TIMES.LONG,
     refetchOnWindowFocus: false
   });
+
+  // Real-time updates for game progress
+  React.useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel('game-stats-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'player_game_progress',
+          filter: `player_id=eq.${user.id}`
+        },
+        () => {
+          refetch();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'grade11_player_profiles',
+          filter: `user_id=eq.${user.id}`
+        },
+        () => {
+          refetch();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, refetch]);
 
   return {
     stats: stats || {

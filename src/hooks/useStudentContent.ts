@@ -1,3 +1,4 @@
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
@@ -274,6 +275,31 @@ export const useStudentContent = () => {
   console.log(`[DEBUG] useStudentContent result - Content:`, gradeContent, 'Loading:', isLoading, 'Error:', error);
 
   const loading = isLoading || gradeLoading;
+
+  // Real-time updates for student content progress
+  React.useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel('student-content-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'student_progress',
+          filter: `student_id=eq.${user.id}`
+        },
+        () => {
+          refetch();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, refetch]);
 
   const getAllContentItems = (): StudentContentItem[] => {
     if (!gradeContent) return [];
