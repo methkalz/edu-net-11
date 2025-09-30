@@ -159,6 +159,14 @@ export const StudentCalendarSection: React.FC = () => {
                           </span>
                         </div>
 
+                        {/* Teacher Name */}
+                        {event.teacher_name && (
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <span className="font-semibold">المعلم:</span>
+                            <span>{event.teacher_name}</span>
+                          </div>
+                        )}
+
                         {/* Description with better typography */}
                         {event.description && (
                           <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
@@ -231,6 +239,11 @@ export const StudentCalendarSection: React.FC = () => {
                             <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
                               <Clock className="w-3 h-3" />
                               {event.time}
+                            </p>
+                          )}
+                          {event.teacher_name && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              المعلم: {event.teacher_name}
                             </p>
                           )}
                         </div>

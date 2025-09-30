@@ -6,10 +6,13 @@ import { QUERY_KEYS, CACHE_TIMES } from '@/lib/query-keys';
 
 // Fetch function
 const fetchUpcomingEvents = async (limit: number, schoolId?: string): Promise<CalendarEvent[]> => {
-  // جلب الأحداث من قاعدة البيانات
+  // جلب الأحداث مع معلومات المعلم من قاعدة البيانات
   let query = supabase
     .from('calendar_events')
-    .select('*')
+    .select(`
+      *,
+      profiles!created_by(full_name)
+    `)
     .eq('is_active', true)
     .gte('date', new Date().toISOString().split('T')[0])
     .order('date', { ascending: true });
@@ -37,9 +40,10 @@ const fetchUpcomingEvents = async (limit: number, schoolId?: string): Promise<Ca
   }
 
   // تحويل البيانات للنوع الصحيح
-  const eventsWithCorrectType = (dbEvents || []).map(event => ({
+  const eventsWithCorrectType = (dbEvents || []).map((event: any) => ({
     ...event,
-    type: event.type as 'exam' | 'holiday' | 'meeting' | 'deadline' | 'other' | 'event' | 'important'
+    type: event.type as 'exam' | 'holiday' | 'meeting' | 'deadline' | 'other' | 'event' | 'important',
+    teacher_name: event.profiles?.full_name || null
   }));
   
   // احفظ في localStorage كنسخة احتياطية
