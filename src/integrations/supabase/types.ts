@@ -187,12 +187,15 @@ export type Database = {
           color: string | null
           created_at: string
           created_by: string | null
+          created_by_role: Database["public"]["Enums"]["app_role"] | null
           date: string
           description: string | null
           end_date: string | null
           id: string
           is_active: boolean | null
           school_id: string | null
+          target_class_ids: string[] | null
+          target_grade_levels: string[] | null
           time: string | null
           title: string
           type: string | null
@@ -202,12 +205,15 @@ export type Database = {
           color?: string | null
           created_at?: string
           created_by?: string | null
+          created_by_role?: Database["public"]["Enums"]["app_role"] | null
           date: string
           description?: string | null
           end_date?: string | null
           id?: string
           is_active?: boolean | null
           school_id?: string | null
+          target_class_ids?: string[] | null
+          target_grade_levels?: string[] | null
           time?: string | null
           title: string
           type?: string | null
@@ -217,12 +223,15 @@ export type Database = {
           color?: string | null
           created_at?: string
           created_by?: string | null
+          created_by_role?: Database["public"]["Enums"]["app_role"] | null
           date?: string
           description?: string | null
           end_date?: string | null
           id?: string
           is_active?: boolean | null
           school_id?: string | null
+          target_class_ids?: string[] | null
+          target_grade_levels?: string[] | null
           time?: string | null
           title?: string
           type?: string | null
