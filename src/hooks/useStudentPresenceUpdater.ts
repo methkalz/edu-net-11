@@ -12,27 +12,50 @@ export const useStudentPresenceUpdater = () => {
 
   // تحديث حالة الحضور
   const updatePresence = async (isOnline: boolean = true, currentPage?: string) => {
-    if (!user || userProfile?.role !== 'student') return;
+    if (!user || userProfile?.role !== 'student') {
+      console.log('⏭️ Skipping presence update:', { hasUser: !!user, role: userProfile?.role });
+      return;
+    }
 
     try {
       // الحصول على معرف الطالب
-      const { data: studentData } = await supabase
+      const { data: studentData, error: studentError } = await supabase
         .from('students')
         .select('id')
         .eq('user_id', user.id)
         .single();
 
-      if (!studentData) return;
+      if (studentError) {
+        console.error('❌ Error fetching student:', studentError);
+        return;
+      }
+
+      if (!studentData) {
+        console.warn('⚠️ No student found for user:', user.id);
+        return;
+      }
+
+      console.log('✅ Updating presence:', { 
+        studentId: studentData.id, 
+        isOnline, 
+        currentPage: currentPage || window.location.pathname 
+      });
 
       // استدعاء دالة تحديث الحضور
-      await supabase.rpc('update_student_presence', {
+      const { error: rpcError } = await supabase.rpc('update_student_presence', {
         p_student_id: studentData.id,
         p_is_online: isOnline,
         p_current_page: currentPage || window.location.pathname
       });
 
+      if (rpcError) {
+        console.error('❌ RPC Error:', rpcError);
+      } else {
+        console.log('✅ Presence updated successfully');
+      }
+
     } catch (error) {
-      console.error('Error updating student presence:', error);
+      console.error('❌ Error updating student presence:', error);
     }
   };
 
@@ -104,6 +127,8 @@ export const useStudentPresenceUpdater = () => {
     window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
+      console.log('🧹 Cleaning up presence tracker...');
+      
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
@@ -119,6 +144,7 @@ export const useStudentPresenceUpdater = () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
 
       // تحديث أخير عند إلغاء التركيب
+      console.log('👋 Final presence update: setting offline');
       updatePresence(false);
     };
   }, [user, userProfile?.role]);
