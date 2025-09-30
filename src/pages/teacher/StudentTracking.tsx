@@ -35,6 +35,7 @@ interface StudentTrackingData {
     content_progress: Array<{
       content_id: string;
       content_type: string;
+      content_title?: string;
       progress_percentage: number;
       time_spent_minutes: number;
       points_earned: number;
@@ -152,11 +153,52 @@ const StudentTracking: React.FC = () => {
 
       if (presenceError) throw presenceError;
 
-      // 7. دمج البيانات
+      // 7. جلب عناوين الدروس والفيديوهات بطريقة آمنة
+      const contentIds = (progressData || []).map((p: any) => p.content_id).filter(Boolean);
+      const contentTitlesMap = new Map<string, string>();
+      
+      if (contentIds.length > 0) {
+        // محاولة جلب من جداول مختلفة
+        try {
+          const tables = [
+            { name: 'grade11_lessons', idCol: 'id', titleCol: 'title' },
+            { name: 'grade11_videos', idCol: 'id', titleCol: 'title' },
+            { name: 'grade12_lessons', idCol: 'id', titleCol: 'title' },
+            { name: 'grade12_videos', idCol: 'id', titleCol: 'title' },
+            { name: 'grade10_lessons', idCol: 'id', titleCol: 'title' }
+          ];
+
+          for (const table of tables) {
+            try {
+              const { data } = await supabase
+                .from(table.name as any)
+                .select(`${table.idCol}, ${table.titleCol}`)
+                .in(table.idCol, contentIds);
+              
+              if (data) {
+                data.forEach((item: any) => {
+                  contentTitlesMap.set(item[table.idCol], item[table.titleCol]);
+                });
+              }
+            } catch (e) {
+              // تجاهل الأخطاء للجداول غير الموجودة
+              console.log(`Table ${table.name} not accessible`);
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching content titles:', error);
+        }
+      }
+
+      // 8. دمج البيانات
       const combinedData: StudentTrackingData[] = (studentsData || []).map((student: any) => {
         const studentProgress = (progressData || []).filter(
           (p: any) => p.student_id === student.user_id
-        );
+        ).map((p: any) => ({
+          ...p,
+          content_title: contentTitlesMap.get(p.content_id) || 'بدون عنوان'
+        }));
+        
         const studentActivity = (activityData || []).filter(
           (a: any) => a.student_id === student.user_id
         );
@@ -539,9 +581,9 @@ const StudentTracking: React.FC = () => {
                                 <FileText className="h-5 w-5 text-purple-500" />
                               )}
                               <div>
-                                <p className="font-medium">{getContentTypeLabel(item.content_type)}</p>
+                                <p className="font-medium">{item.content_title || getContentTypeLabel(item.content_type)}</p>
                                 <p className="text-sm text-muted-foreground">
-                                  {item.time_spent_minutes} دقيقة • {item.points_earned} نقطة
+                                  {getContentTypeLabel(item.content_type)} • {item.time_spent_minutes} دقيقة • {item.points_earned} نقطة
                                 </p>
                               </div>
                             </div>
