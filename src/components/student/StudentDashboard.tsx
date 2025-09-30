@@ -274,6 +274,14 @@ const StudentDashboard: React.FC = () => {
                     <div className="text-center p-4 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg">
                       <h3 className="text-xl font-bold">الصف {assignedGrade}</h3>
                     </div>
+                    
+                    {userProfile?.schools?.name && (
+                      <div className="p-3 bg-muted/30 border border-border rounded-lg">
+                        <p className="text-xs text-muted-foreground mb-1">المدرسة</p>
+                        <p className="font-semibold text-foreground">{userProfile.schools.name}</p>
+                      </div>
+                    )}
+                    
                     {teacherLoading ? (
                       <div className="text-center p-3 bg-muted/50 rounded-lg">
                         <p className="text-sm text-muted-foreground">جاري تحميل معلومات المعلم...</p>
