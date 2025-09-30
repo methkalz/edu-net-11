@@ -127,7 +127,7 @@ const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({
               <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-muted flex items-center justify-center">
                 <Bell className="h-8 w-8 text-muted-foreground" />
               </div>
-              <h3 className="font-medium text-foreground mb-2">لا توجد إشعارات</h3>
+              <h3 className="font-medium text-foreground mb-2 text-center">لا توجد إشعارات</h3>
               <p className="text-sm text-muted-foreground">
                 ستظهر هنا الإشعارات الجديدة من الطلاب
               </p>
