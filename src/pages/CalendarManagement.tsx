@@ -45,6 +45,7 @@ import AppHeader from '@/components/shared/AppHeader';
 import AppFooter from '@/components/shared/AppFooter';
 import { PageLoading } from '@/components/ui/LoadingComponents';
 import { TimeInput } from '@/components/ui/time-input';
+import { IconSelector } from '@/components/ui/icon-selector';
 
 // استخدام CalendarEvent من types/common.ts
 
@@ -68,6 +69,7 @@ const eventFormSchema = z.object({
   end_time: z.string().optional(),
   all_day: z.boolean().default(true),
   color: z.string().min(1, 'لون الحدث مطلوب'),
+  icon: z.string().default('calendar'),
   type: z.enum(['holiday', 'exam', 'meeting', 'event', 'important']),
   is_active: z.boolean().default(true),
   target_grade_levels: z.array(z.string()).optional(),
@@ -114,6 +116,7 @@ const CalendarManagement = () => {
       title: '',
       description: '',
       color: '#3b82f6',
+      icon: 'calendar',
       type: 'event',
       is_active: true,
       target_grade_levels: [],
@@ -149,11 +152,11 @@ const CalendarManagement = () => {
   ];
 
   const typeOptions = [
-    { value: 'holiday', label: 'عطلة', icon: '🏖️' },
-    { value: 'exam', label: 'امتحان', icon: '📝' },
-    { value: 'meeting', label: 'اجتماع', icon: '👥' },
-    { value: 'event', label: 'فعالية', icon: '🎉' },
-    { value: 'important', label: 'مهم', icon: '⚠️' },
+    { value: 'holiday', label: 'عطلة' },
+    { value: 'exam', label: 'امتحان' },
+    { value: 'meeting', label: 'اجتماع' },
+    { value: 'event', label: 'فعالية' },
+    { value: 'important', label: 'مهم' },
   ];
 
   const gradeOptions = [
@@ -326,6 +329,7 @@ const CalendarManagement = () => {
         time: !values.all_day && values.time ? values.time : null,
         end_time: !values.all_day && values.end_time ? values.end_time : null,
         color: values.color,
+        icon: values.icon || 'calendar',
         type: values.type as 'exam' | 'holiday' | 'meeting' | 'deadline' | 'other' | 'event' | 'important',
         is_active: values.is_active,
         created_by: userProfile?.user_id,
@@ -588,9 +592,9 @@ const CalendarManagement = () => {
                             <p className="text-sm text-muted-foreground mt-1">{event.description}</p>
                           )}
                         </div>
-                        <div className="flex items-center gap-2">
+                         <div className="flex items-center gap-2">
                            <Badge variant={event.is_active ? "default" : "secondary"}>
-                            {typeOptions.find(t => t.value === event.type || t.value === event.event_type)?.icon} {typeOptions.find(t => t.value === event.type || t.value === event.event_type)?.label}
+                            {typeOptions.find(t => t.value === event.type || t.value === event.event_type)?.label}
                           </Badge>
                           {event.is_active ? (
                             <CheckCircle className="h-4 w-4 text-green-500" />
@@ -648,7 +652,7 @@ const CalendarManagement = () => {
                        const count = events.filter(e => e.type === type.value || e.event_type === type.value).length;
                       return (
                         <div key={type.value} className="flex justify-between">
-                          <span className="text-sm">{type.icon} {type.label}</span>
+                          <span className="text-sm">{type.label}</span>
                           <span className="text-sm font-medium">{count}</span>
                         </div>
                       );
@@ -925,14 +929,32 @@ const CalendarManagement = () => {
                             <SelectContent className="z-50" align="start" dir="rtl">
                               {typeOptions.map((type) => (
                                 <SelectItem key={type.value} value={type.value} className="text-right">
-                                  <span className="flex items-center gap-2">
-                                    <span>{type.icon}</span>
-                                    <span>{type.label}</span>
-                                  </span>
+                                  {type.label}
                                 </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={eventForm.control}
+                      name="icon"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium">أيقونة الحدث</FormLabel>
+                          <FormControl>
+                            <IconSelector
+                              value={field.value}
+                              onValueChange={field.onChange}
+                              placeholder="اختر أيقونة للحدث"
+                            />
+                          </FormControl>
+                          <FormDescription className="text-xs">
+                            اختر أيقونة تمثل نوع الحدث
+                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}

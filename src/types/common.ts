@@ -152,6 +152,7 @@ export interface CalendarEvent {
   end_date?: string;
   end_time?: string;
   color?: string;
+  icon?: string;
   type?: 'exam' | 'holiday' | 'meeting' | 'deadline' | 'other' | 'event' | 'important';
   is_active: boolean;
   event_type?: 'exam' | 'holiday' | 'meeting' | 'deadline' | 'other';

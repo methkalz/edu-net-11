@@ -17,6 +17,7 @@ import { Calendar as CalendarIcon, Plus, Edit, Trash2, Clock, X } from 'lucide-r
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { getIconComponent } from '@/components/ui/icon-selector';
 interface EventForm {
   title: string;
   description: string;
@@ -285,8 +286,10 @@ export const SchoolCalendarWidget: React.FC = () => {
                     className="flex items-start gap-3 p-3 rounded-lg border transition-all duration-200 hover:shadow-sm"
                     style={gradientStyle}
                   >
-                    <div className="text-lg">
-                      {getEventTypeIcon(event.type)}
+                    <div className="flex items-center justify-center w-8 h-8 rounded-lg" style={{ backgroundColor: `${hexColor}20`, color: hexColor }}>
+                      {React.createElement(getIconComponent((event as any).icon), { 
+                        className: "h-4 w-4"
+                      })}
                     </div>
                     
                     <div className="flex-1 min-w-0">

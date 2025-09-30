@@ -192,6 +192,7 @@ export type Database = {
           description: string | null
           end_date: string | null
           end_time: string | null
+          icon: string | null
           id: string
           is_active: boolean | null
           school_id: string | null
@@ -211,6 +212,7 @@ export type Database = {
           description?: string | null
           end_date?: string | null
           end_time?: string | null
+          icon?: string | null
           id?: string
           is_active?: boolean | null
           school_id?: string | null
@@ -230,6 +232,7 @@ export type Database = {
           description?: string | null
           end_date?: string | null
           end_time?: string | null
+          icon?: string | null
           id?: string
           is_active?: boolean | null
           school_id?: string | null
