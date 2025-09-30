@@ -104,8 +104,8 @@ const StudentNotifications: React.FC = () => {
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-amber-100/50 to-orange-100/50 dark:from-amber-950/30 dark:to-orange-950/30 flex items-center justify-center">
               <Bell className="w-8 h-8 text-amber-500/40 dark:text-amber-400/40" />
             </div>
-            <p className="text-sm font-medium text-muted-foreground">لا توجد إشعارات</p>
-            <p className="text-xs text-muted-foreground/70 mt-1">
+            <p className="text-sm font-medium text-muted-foreground text-center">لا توجد إشعارات</p>
+            <p className="text-xs text-muted-foreground/70 mt-1 text-center">
               ستظهر هنا تعليقات المعلمين
             </p>
           </div>
