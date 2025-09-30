@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
+import React from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { QUERY_KEYS, CACHE_TIMES } from '@/lib/query-keys';
@@ -71,6 +72,7 @@ const fetchStudentGameStats = async (userId: string, schoolId?: string): Promise
 
 export const useStudentGameStats = () => {
   const { user, userProfile } = useAuth();
+  const queryClient = useQueryClient();
 
   const {
     data: stats,
@@ -85,6 +87,43 @@ export const useStudentGameStats = () => {
     gcTime: CACHE_TIMES.LONG,
     refetchOnWindowFocus: false
   });
+
+  // Real-time subscription for game progress updates
+  React.useEffect(() => {
+    if (!user || userProfile?.role !== 'student') return;
+
+    const channel = supabase
+      .channel('game-stats-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'player_game_progress',
+          filter: `player_id=eq.${user.id}`
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.STUDENT.GAME_STATS(user.id) });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'grade11_player_profiles',
+          filter: `user_id=eq.${user.id}`
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.STUDENT.GAME_STATS(user.id) });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, userProfile, queryClient]);
 
   return {
     stats: stats || {

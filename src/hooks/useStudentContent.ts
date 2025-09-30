@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
+import React from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useStudentAssignedGrade } from './useStudentAssignedGrade';
@@ -248,6 +249,7 @@ const fetchContentForGrade = async (grade: string, userId?: string): Promise<Gra
 export const useStudentContent = () => {
   const { user, userProfile } = useAuth();
   const { assignedGrade, loading: gradeLoading } = useStudentAssignedGrade();
+  const queryClient = useQueryClient();
 
   console.log(`[DEBUG] useStudentContent - User ID: ${user?.id}, Grade: ${assignedGrade}, Role: ${userProfile?.role}`);
 
@@ -272,6 +274,33 @@ export const useStudentContent = () => {
   });
 
   console.log(`[DEBUG] useStudentContent result - Content:`, gradeContent, 'Loading:', isLoading, 'Error:', error);
+
+  // Real-time subscription for content progress updates
+  React.useEffect(() => {
+    if (!user || userProfile?.role !== 'student' || !assignedGrade) return;
+
+    const channel = supabase
+      .channel('student-content-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'student_progress',
+          filter: `student_id=eq.${user.id}`
+        },
+        () => {
+          queryClient.invalidateQueries({ 
+            queryKey: QUERY_KEYS.STUDENT.CONTENT(user.id, assignedGrade) 
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, userProfile, assignedGrade, queryClient]);
 
   const loading = isLoading || gradeLoading;
 
