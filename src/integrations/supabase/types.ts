@@ -5426,6 +5426,10 @@ export type Database = {
         Args: { p_player_id: string }
         Returns: undefined
       }
+      recalculate_grade11_student_points: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       unlock_next_games: {
         Args: { p_completed_game_id: string; p_player_id: string }
         Returns: undefined
