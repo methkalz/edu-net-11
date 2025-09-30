@@ -111,7 +111,7 @@ const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({
         </div>
       </CardHeader>
       
-      <CardContent className="pt-0">
+      <CardContent className="pt-0 text-center">
         <ScrollArea className="h-80">
           {loading ? <div className="space-y-4">
               {[...Array(3)].map((_, i) => <div key={i} className="animate-pulse p-4 rounded-lg border bg-muted/30">
