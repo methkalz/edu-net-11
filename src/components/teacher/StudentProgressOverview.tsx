@@ -46,18 +46,34 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
+import { toast } from 'sonner';
 
 const StudentProgressOverview: React.FC = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [gradeFilter, setGradeFilter] = useState<string>('all');
   const [onlineOnly, setOnlineOnly] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const { students, loading, quickStats, refetch } = useTeacherStudentTracking({
     searchQuery,
     gradeLevel: gradeFilter === 'all' ? undefined : gradeFilter,
     onlineOnly
   });
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refetch();
+      toast.success('تم تحديث البيانات بنجاح', {
+        description: 'تم تحديث معلومات تقدم الطلاب'
+      });
+    } catch (error) {
+      toast.error('حدث خطأ في تحديث البيانات');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const handleViewDetails = (studentId: string) => {
     navigate(`/student-detail/${studentId}`);
@@ -187,9 +203,14 @@ const StudentProgressOverview: React.FC = () => {
             </Button>
 
             {/* تحديث */}
-            <Button variant="outline" onClick={() => refetch()} className="gap-2">
-              <RefreshCw className="h-4 w-4" />
-              تحديث
+            <Button 
+              variant="outline" 
+              onClick={handleRefresh} 
+              disabled={isRefreshing}
+              className="gap-2"
+            >
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              {isRefreshing ? 'جاري التحديث...' : 'تحديث'}
             </Button>
           </div>
 
