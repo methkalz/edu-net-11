@@ -426,15 +426,15 @@ const StudentTracking: React.FC = () => {
           <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent backdrop-blur-sm hover:shadow-xl transition-all duration-300">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-50" />
             <CardContent className="p-6 relative">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col items-center text-center space-y-3">
+                <div className="p-3 rounded-xl bg-primary/10 backdrop-blur-sm">
+                  <Users className="h-7 w-7 text-primary" />
+                </div>
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground font-medium">إجمالي الطلاب</p>
                   <p className="text-3xl font-bold bg-gradient-to-br from-primary to-primary/70 bg-clip-text text-transparent">
                     {students.length}
                   </p>
-                </div>
-                <div className="p-3 rounded-xl bg-primary/10 backdrop-blur-sm">
-                  <Users className="h-7 w-7 text-primary" />
                 </div>
               </div>
             </CardContent>
@@ -443,15 +443,15 @@ const StudentTracking: React.FC = () => {
           <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-green-500/10 via-green-500/5 to-transparent backdrop-blur-sm hover:shadow-xl transition-all duration-300">
             <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent opacity-50" />
             <CardContent className="p-6 relative">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col items-center text-center space-y-3">
+                <div className="p-3 rounded-xl bg-green-500/10 backdrop-blur-sm">
+                  <Clock className="h-7 w-7 text-green-500" />
+                </div>
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground font-medium">إجمالي الوقت</p>
                   <p className="text-2xl font-bold bg-gradient-to-br from-green-500 to-green-400 bg-clip-text text-transparent">
                     {formatTime(students.reduce((sum, s) => sum + s.total_time_minutes, 0))}
                   </p>
-                </div>
-                <div className="p-3 rounded-xl bg-green-500/10 backdrop-blur-sm">
-                  <Clock className="h-7 w-7 text-green-500" />
                 </div>
               </div>
             </CardContent>
@@ -460,15 +460,15 @@ const StudentTracking: React.FC = () => {
           <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-yellow-500/10 via-yellow-500/5 to-transparent backdrop-blur-sm hover:shadow-xl transition-all duration-300">
             <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 to-transparent opacity-50" />
             <CardContent className="p-6 relative">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col items-center text-center space-y-3">
+                <div className="p-3 rounded-xl bg-yellow-500/10 backdrop-blur-sm">
+                  <Trophy className="h-7 w-7 text-yellow-500" />
+                </div>
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground font-medium">إجمالي النقاط</p>
                   <p className="text-3xl font-bold bg-gradient-to-br from-yellow-500 to-yellow-400 bg-clip-text text-transparent">
                     {students.reduce((sum, s) => sum + s.total_points, 0)}
                   </p>
-                </div>
-                <div className="p-3 rounded-xl bg-yellow-500/10 backdrop-blur-sm">
-                  <Trophy className="h-7 w-7 text-yellow-500" />
                 </div>
               </div>
             </CardContent>
@@ -477,7 +477,10 @@ const StudentTracking: React.FC = () => {
           <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-purple-500/10 via-purple-500/5 to-transparent backdrop-blur-sm hover:shadow-xl transition-all duration-300">
             <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent opacity-50" />
             <CardContent className="p-6 relative">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col items-center text-center space-y-3">
+                <div className="p-3 rounded-xl bg-purple-500/10 backdrop-blur-sm">
+                  <TrendingUp className="h-7 w-7 text-purple-500" />
+                </div>
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground font-medium">معدل المشاهدة</p>
                   <p className="text-3xl font-bold bg-gradient-to-br from-purple-500 to-purple-400 bg-clip-text text-transparent">
@@ -487,9 +490,6 @@ const StudentTracking: React.FC = () => {
                         ) / students.length)
                       : 0}
                   </p>
-                </div>
-                <div className="p-3 rounded-xl bg-purple-500/10 backdrop-blur-sm">
-                  <TrendingUp className="h-7 w-7 text-purple-500" />
                 </div>
               </div>
             </CardContent>
