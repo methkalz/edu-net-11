@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -67,6 +67,17 @@ const Grade11LessonMediaManager: React.FC<Grade11LessonMediaManagerProps> = ({
   const [editingCode, setEditingCode] = useState<Grade11LessonMedia | null>(null);
 
   const canEditLottie = userProfile?.role === 'superadmin';
+
+  // تحديث previewMedia عند تحديث media prop
+  useEffect(() => {
+    if (previewMedia && media) {
+      const updatedMedia = media.find(m => m.id === previewMedia.id);
+      if (updatedMedia && JSON.stringify(updatedMedia.metadata) !== JSON.stringify(previewMedia.metadata)) {
+        console.log('Updating preview media in LessonMediaManager:', updatedMedia);
+        setPreviewMedia(updatedMedia);
+      }
+    }
+  }, [media, previewMedia]);
 
   const getMediaIcon = (type: string, sourceType?: string) => {
     if (type === 'video') {
