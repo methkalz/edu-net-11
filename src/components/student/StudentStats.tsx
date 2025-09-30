@@ -228,59 +228,6 @@ export const StudentStats: React.FC = () => {
         </Card>
       )}
 
-      {/* Study Time & Activity */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-blue-700">
-              <Clock className="w-5 h-5" />
-              إحصائيات النشاط
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">إجمالي الأنشطة</span>
-                <span className="text-lg font-bold text-blue-600">
-                  {stats.total_activities}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">متوسط النشاط اليومي</span>
-                <span className="text-lg font-bold text-blue-600">
-                  {Math.round(stats.total_activities / Math.max(stats.current_streak, 1))}
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-green-700">
-              <Target className="w-5 h-5" />
-              معدل الإنجاز
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">معدل النجاح</span>
-                <span className="text-lg font-bold text-green-600">
-                  {totalContent > 0 ? Math.round((completedContent / totalContent) * 100) : 0}%
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">التقدم الأسبوعي</span>
-                <span className="text-lg font-bold text-green-600">
-                  +{Math.round(progressPercentage / 4)}%
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Calendar and Events Section */}
       <div className="mt-6">
         <StudentCalendarSection />
