@@ -445,7 +445,14 @@ const StudentTracking: React.FC = () => {
                       <p className="text-xs text-muted-foreground font-medium mb-1">آخر نشاط</p>
                       <p className="text-sm font-bold">
                         {student.last_activity 
-                          ? new Date(student.last_activity).toLocaleDateString('ar-SA')
+                          ? new Date(student.last_activity).toLocaleString('en-GB', {
+                              year: 'numeric',
+                              month: '2-digit',
+                              day: '2-digit',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              hour12: false
+                            }).replace(',', ' -')
                           : 'لا يوجد'}
                       </p>
                     </div>
