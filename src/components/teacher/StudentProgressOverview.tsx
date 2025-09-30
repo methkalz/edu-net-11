@@ -20,18 +20,6 @@ const StudentDetailsCard: React.FC<{ student: StudentTrackingData }> = ({ studen
     return `${mins} دقيقة`;
   };
 
-  const getActivityLabel = (type: string) => {
-    const labels: Record<string, string> = {
-      login: 'تسجيل دخول',
-      video_watch: 'مشاهدة فيديو',
-      document_read: 'قراءة مستند',
-      lesson_study: 'دراسة درس',
-      project_work: 'عمل مشروع',
-      game_play: 'لعب لعبة',
-    };
-    return labels[type] || type;
-  };
-
   return (
     <Card className="hover:shadow-lg transition-shadow">
       <CardHeader className="pb-3">
@@ -119,47 +107,9 @@ const StudentDetailsCard: React.FC<{ student: StudentTrackingData }> = ({ studen
         {/* التفاصيل الموسعة */}
         {isExpanded && (
           <div className="space-y-3 pt-3 border-t">
-            <div>
-              <p className="text-sm font-medium mb-2">آخر الأنشطة:</p>
-              <div className="space-y-1 max-h-40 overflow-y-auto">
-                {student.activities.length > 0 ? (
-                  student.activities.map((activity, idx) => (
-                    <div key={idx} className="text-xs p-2 bg-muted/30 rounded flex justify-between">
-                      <span>{getActivityLabel(activity.activity_type)}</span>
-                      <span className="text-muted-foreground">
-                        {formatDistanceToNow(new Date(activity.created_at), { 
-                          addSuffix: true, 
-                          locale: ar 
-                        })}
-                      </span>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-xs text-muted-foreground">لا توجد أنشطة مسجلة</p>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <p className="text-sm font-medium mb-2">التقدم التفصيلي:</p>
-              <div className="space-y-1 max-h-40 overflow-y-auto">
-                {student.progress.length > 0 ? (
-                  student.progress
-                    .filter(p => p.progress_percentage > 0)
-                    .slice(0, 5)
-                    .map((prog, idx) => (
-                      <div key={idx} className="text-xs p-2 bg-muted/30 rounded flex justify-between">
-                        <span>{prog.content_type}</span>
-                        <Badge variant={prog.progress_percentage === 100 ? 'default' : 'secondary'}>
-                          {prog.progress_percentage}%
-                        </Badge>
-                      </div>
-                    ))
-                ) : (
-                  <p className="text-xs text-muted-foreground">لا يوجد تقدم مسجل</p>
-                )}
-              </div>
-            </div>
+            <p className="text-sm text-muted-foreground">
+              عرض تفصيلي للأنشطة سيتم إضافته قريباً
+            </p>
           </div>
         )}
       </CardContent>

@@ -4150,6 +4150,7 @@ export type Database = {
           created_at: string | null
           display_title: string | null
           email: string | null
+          font_size: string | null
           full_name: string
           is_primary_admin: boolean | null
           level: number | null
@@ -4157,6 +4158,7 @@ export type Database = {
           points: number | null
           role: Database["public"]["Enums"]["app_role"]
           school_id: string | null
+          theme: string | null
           updated_at: string | null
           user_id: string
         }
@@ -4165,6 +4167,7 @@ export type Database = {
           created_at?: string | null
           display_title?: string | null
           email?: string | null
+          font_size?: string | null
           full_name: string
           is_primary_admin?: boolean | null
           level?: number | null
@@ -4172,6 +4175,7 @@ export type Database = {
           points?: number | null
           role: Database["public"]["Enums"]["app_role"]
           school_id?: string | null
+          theme?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -4180,6 +4184,7 @@ export type Database = {
           created_at?: string | null
           display_title?: string | null
           email?: string | null
+          font_size?: string | null
           full_name?: string
           is_primary_admin?: boolean | null
           level?: number | null
@@ -4187,6 +4192,7 @@ export type Database = {
           points?: number | null
           role?: Database["public"]["Enums"]["app_role"]
           school_id?: string | null
+          theme?: string | null
           updated_at?: string | null
           user_id?: string
         }
@@ -5183,6 +5189,39 @@ export type Database = {
           },
         ]
       }
+      whiteboards: {
+        Row: {
+          canvas_data: Json
+          created_at: string
+          id: string
+          school_id: string
+          thumbnail: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          canvas_data?: Json
+          created_at?: string
+          id?: string
+          school_id: string
+          thumbnail?: string | null
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          canvas_data?: Json
+          created_at?: string
+          id?: string
+          school_id?: string
+          thumbnail?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       teacher_assigned_grades: {
@@ -5333,6 +5372,22 @@ export type Database = {
           project_id: string
           student_grade: string
           student_id: string
+        }[]
+      }
+      get_teacher_student_tracking: {
+        Args: { teacher_school_id: string; teacher_user_id: string }
+        Returns: {
+          documents_read: number
+          games_played: number
+          last_activity: string
+          lessons_completed: number
+          projects_completed: number
+          student_email: string
+          student_id: string
+          student_name: string
+          total_points: number
+          total_time_minutes: number
+          videos_watched: number
         }[]
       }
       get_user_role: {

@@ -479,6 +479,7 @@ const TeacherDashboard: React.FC = () => {
   };
 
   const quickActions = [
+    { name: 'تتبع الطلاب', icon: Activity, path: '/teacher-tracking', color: 'green' },
     { name: 'إدارة الطلاب', icon: Users, path: '/students', color: 'blue' },
     { name: 'التقويم والأحداث', icon: Calendar, path: '/calendar-management', color: 'purple' },
     { name: 'إدارة الصفوف', icon: School, path: '/school-classes', color: 'orange' }
