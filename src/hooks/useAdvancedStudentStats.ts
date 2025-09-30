@@ -8,6 +8,17 @@ interface StudentPresenceData {
   is_online: boolean;
   last_seen_at: string;
   current_page: string | null;
+  student?: {
+    id: string;
+    class_students?: Array<{
+      class?: {
+        grade_level?: {
+          label?: string;
+          code?: string;
+        }
+      }
+    }>;
+  };
 }
 
 interface DailyStats {
@@ -91,16 +102,34 @@ export const useAdvancedStudentStats = (timePeriod: TimePeriod = 'today') => {
     }
   }, [timePeriod]);
 
-  // جلب بيانات student_presence
+  // جلب بيانات student_presence مع معلومات الصف
   const fetchPresenceData = async () => {
     try {
       const { data, error } = await supabase
         .from('student_presence')
-        .select('student_id, user_id, school_id, is_online, last_seen_at, current_page')
+        .select(`
+          student_id, 
+          user_id, 
+          school_id, 
+          is_online, 
+          last_seen_at, 
+          current_page,
+          student:students!inner(
+            id,
+            class_students!inner(
+              class:classes!inner(
+                grade_level:grade_levels!inner(
+                  label,
+                  code
+                )
+              )
+            )
+          )
+        `)
         .order('last_seen_at', { ascending: false });
 
       if (error) throw error;
-      return data as StudentPresenceData[];
+      return data as any[];
     } catch (err) {
       console.error('Error fetching presence data:', err);
       throw err;
@@ -177,11 +206,25 @@ export const useAdvancedStudentStats = (timePeriod: TimePeriod = 'today') => {
     
     const peakHourData = hourCounts.map((count, hour) => ({ hour, count }));
 
-    // توزيع الصفوف (محاكاة لحين ربط البيانات الحقيقية)
+    // توزيع الصفوف - حساب من البيانات الحقيقية
     const classDistribution: Record<string, number> = {};
-    ['10', '11', '12'].forEach(grade => {
-      classDistribution[grade] = Math.floor(todayActive / 3) + 
-        Math.floor(Math.random() * 10);
+    
+    todayPresence.forEach(p => {
+      if (p.student?.class_students && p.student.class_students.length > 0) {
+        const gradeLevel = p.student.class_students[0]?.class?.grade_level;
+        if (gradeLevel) {
+          // تحديد رقم الصف
+          let gradeCode = gradeLevel.code;
+          if (!gradeCode) {
+            if (gradeLevel.label?.includes('عاشر')) gradeCode = '10';
+            else if (gradeLevel.label?.includes('حادي عشر')) gradeCode = '11';
+            else if (gradeLevel.label?.includes('ثاني عشر')) gradeCode = '12';
+            else gradeCode = '11';
+          }
+          
+          classDistribution[gradeCode] = (classDistribution[gradeCode] || 0) + 1;
+        }
+      }
     });
 
     // أكثر الصفحات زيارة
