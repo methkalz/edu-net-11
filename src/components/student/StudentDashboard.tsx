@@ -35,8 +35,10 @@ import StudentNotifications from './StudentNotifications';
 import { SchoolCalendarWidget } from '@/components/calendar/SchoolCalendarWidget';
 import { UniversalAvatar } from '@/components/shared/UniversalAvatar';
 import { UserTitleBadge } from '@/components/shared/UserTitleBadge';
+import { BadgeDisplay } from '@/components/badges/BadgeDisplay';
 import { useStudentTeacher } from '@/hooks/useStudentTeacher';
 import { useStudentGameStats } from '@/hooks/useStudentGameStats';
+import { useUserTitle } from '@/hooks/useUserTitle';
 
 const StudentDashboard: React.FC = () => {
   const { userProfile } = useAuth();
@@ -45,6 +47,13 @@ const StudentDashboard: React.FC = () => {
   const { teacher, loading: teacherLoading } = useStudentTeacher();
   const { refetch: refetchGameStats } = useStudentGameStats();
   const [activeTab, setActiveTab] = useState('overview');
+  
+  const { badgeInfo } = useUserTitle({
+    role: userProfile?.role || 'student',
+    displayTitle: userProfile?.display_title,
+    points: userProfile?.points,
+    level: userProfile?.level
+  });
   
   // تحديث البيانات عند الضغط على تاب نظرة عامة
   const handleTabChange = (value: string) => {
@@ -140,11 +149,21 @@ const StudentDashboard: React.FC = () => {
 
               <Card className="bg-white/10 backdrop-blur border-white/20 text-white">
                 <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-                  <div className="w-12 h-12 mx-auto mb-2 bg-green-400/20 rounded-full flex items-center justify-center">
-                    <Trophy className="w-6 h-6 text-green-300" />
-                  </div>
-                  <div className="text-2xl font-bold text-center">{stats.achievements_count}</div>
-                  <div className="text-sm opacity-80 text-center">إنجاز</div>
+                  {badgeInfo.hasBadge ? (
+                    <BadgeDisplay 
+                      badge={badgeInfo.badge} 
+                      size="lg" 
+                      showName={true}
+                    />
+                  ) : (
+                    <>
+                      <div className="w-12 h-12 mx-auto mb-2 bg-green-400/20 rounded-full flex items-center justify-center">
+                        <Trophy className="w-6 h-6 text-green-300" />
+                      </div>
+                      <div className="text-sm opacity-80 text-center">لا يوجد وسام بعد</div>
+                      <div className="text-xs opacity-60 text-center mt-1">احصل على 100 نقطة</div>
+                    </>
+                  )}
                 </CardContent>
               </Card>
 
