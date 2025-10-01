@@ -8,6 +8,7 @@ import thinkerStudentBadge from '@/assets/badges/thinker-student-badge.png';
 import solidStudentBadge from '@/assets/badges/solid-student-badge.png';
 import legendStudentBadge from '@/assets/badges/legend-student-badge.png';
 import spaceStudentBadge from '@/assets/badges/space-student-badge.png';
+import prideStudentBadge from '@/assets/badges/pride-student-badge.png';
 
 // قائمة الأوسمة المتاحة مرتبة حسب النقاط
 export const AVAILABLE_BADGES: Badge[] = [
@@ -91,6 +92,15 @@ export const AVAILABLE_BADGES: Badge[] = [
     minPoints: 900,
     maxPoints: 999,
     description: 'وسام طالب الفضاء'
+  },
+  {
+    id: 'pride-student',
+    name: 'طالب الفخر',
+    title: 'طالب الفخر',
+    image: prideStudentBadge,
+    minPoints: 1000,
+    maxPoints: 1500,
+    description: 'وسام طالب الفخر'
   }
   // يمكن إضافة المزيد من الأوسمة هنا
 ];
