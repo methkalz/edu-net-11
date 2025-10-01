@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 
-const CELEBRATION_MUSIC_URL = 'https://edu-net.me/Cartoon%20Big%20Win.mp3';
+const CELEBRATION_MUSIC_URL = 'https://edu-net.me/medal.mp3';
 
 export const useCelebrationMusic = () => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
