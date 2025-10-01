@@ -107,8 +107,8 @@ const StudentDashboard: React.FC = () => {
                 {/* Badge Display - Centered and Prominent */}
                 <div className="flex justify-center mb-6">
                   <div className="relative">
-                    <div className="absolute inset-0 bg-white/20 rounded-full blur-2xl"></div>
-                    <div className="relative bg-white/10 backdrop-blur-md border-2 border-white/30 rounded-2xl px-8 py-6 shadow-2xl">
+                    <div className="absolute inset-0 bg-white/20 rounded-full blur-3xl scale-150"></div>
+                    <div className="relative">
                       <UserTitleBadge
                         role={userProfile?.role || 'student'}
                         displayTitle={userProfile?.display_title}
