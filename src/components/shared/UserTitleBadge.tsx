@@ -1,6 +1,8 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Book, Crown, Shield, Star, User } from 'lucide-react';
+import { Book, Crown, Shield, User } from 'lucide-react';
+import { BadgeDisplay } from '@/components/badges/BadgeDisplay';
+import { useUserTitle } from '@/hooks/useUserTitle';
 import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
@@ -19,7 +21,7 @@ const roleIcons = {
   teacher: Book,
   school_admin: Crown,
   superadmin: Shield,
-  student: Star,
+  student: User,
   parent: User
 };
 
@@ -54,6 +56,13 @@ export const UserTitleBadge: React.FC<UserTitleBadgeProps> = ({
 }) => {
   const IconComponent = roleIcons[role] || User;
   
+  const { badgeInfo } = useUserTitle({
+    role,
+    displayTitle,
+    points,
+    level
+  });
+  
   // Determine the display text
   const getDisplayText = () => {
     if (displayTitle) return displayTitle;
@@ -70,19 +79,17 @@ export const UserTitleBadge: React.FC<UserTitleBadgeProps> = ({
     return defaultTitles[role] || 'مستخدم';
   };
 
-  // For students, show level indicators
-  const renderStudentLevel = () => {
-    if (role !== 'student' || !level) return null;
+  // For students, show badge instead of stars
+  const renderStudentBadge = () => {
+    if (role !== 'student' || !badgeInfo.hasBadge) return null;
     
-    const stars = Math.min(level, 5); // Max 5 stars for display
     return (
-      <span className="inline-flex items-center gap-1 mr-1">
-        {Array.from({ length: stars }, (_, i) => (
-          <Star 
-            key={i} 
-            className={`${iconSizes[size]} fill-current text-yellow-500`} 
-          />
-        ))}
+      <span className="inline-flex items-center mr-1">
+        <BadgeDisplay 
+          badge={badgeInfo.badge} 
+          size="sm" 
+          showName={false}
+        />
       </span>
     );
   };
@@ -90,7 +97,7 @@ export const UserTitleBadge: React.FC<UserTitleBadgeProps> = ({
   const badgeContent = (
     <div className="flex items-center gap-1">
       {showIcon && <IconComponent className={iconSizes[size]} />}
-      {role === 'student' && renderStudentLevel()}
+      {role === 'student' && renderStudentBadge()}
       <span>{getDisplayText()}</span>
     </div>
   );
