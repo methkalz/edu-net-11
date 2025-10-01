@@ -79,25 +79,20 @@ export const UserTitleBadge: React.FC<UserTitleBadgeProps> = ({
     return defaultTitles[role] || 'مستخدم';
   };
 
-  // For students, show badge instead of stars
-  const renderStudentBadge = () => {
-    if (role !== 'student' || !badgeInfo.hasBadge) return null;
-    
+  // For students with badges, show badge display with name below
+  if (role === 'student' && badgeInfo.hasBadge) {
     return (
-      <span className="inline-flex items-center mr-1">
-        <BadgeDisplay 
-          badge={badgeInfo.badge} 
-          size="sm" 
-          showName={false}
-        />
-      </span>
+      <BadgeDisplay 
+        badge={badgeInfo.badge} 
+        size={size === 'sm' ? 'sm' : size === 'lg' ? 'lg' : 'md'} 
+        showName={true}
+      />
     );
-  };
+  }
 
   const badgeContent = (
     <div className="flex items-center gap-1">
       {showIcon && <IconComponent className={iconSizes[size]} />}
-      {role === 'student' && renderStudentBadge()}
       <span>{getDisplayText()}</span>
     </div>
   );
