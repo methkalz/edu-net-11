@@ -16,7 +16,7 @@ export const BadgeCelebration: React.FC<BadgeCelebrationProps> = ({
   studentName,
   onClose
 }) => {
-  const [timeLeft, setTimeLeft] = useState(5);
+  const [timeLeft, setTimeLeft] = useState(7);
   const [confettiParticles, setConfettiParticles] = useState<Array<{ id: number; left: number; delay: number; color: string }>>([]);
   const { stopMusic } = useCelebrationMusic();
 
