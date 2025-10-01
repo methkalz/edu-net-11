@@ -40,6 +40,17 @@ export const useBadgeProgress = (currentPoints: number | null | undefined) => {
           return;
         }
         
+        // تحقق خاص: هل عبر عتبة الـ 300 نقطة؟
+        if (previousPointsRef.current < 300 && currentPoints >= 300) {
+          setState({
+            currentBadge: newBadge,
+            showCelebration: true,
+            celebrationBadge: newBadge
+          });
+          previousPointsRef.current = currentPoints;
+          return;
+        }
+        
         // أي وسام جديد آخر
         setState({
           currentBadge: newBadge,
