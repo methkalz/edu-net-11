@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Badge } from '@/types/badge';
 import { getBadgeByPoints } from '@/utils/badgeSystem';
 
@@ -8,66 +8,63 @@ interface BadgeProgressState {
   celebrationBadge: Badge | null;
 }
 
+// مفتاح localStorage للأوسمة المحتفل بها
+const CELEBRATED_BADGES_KEY = 'celebrated_badges';
+
+// دالة مساعدة لجلب الأوسمة المحتفل بها من localStorage
+const getCelebratedBadges = (): string[] => {
+  try {
+    const stored = localStorage.getItem(CELEBRATED_BADGES_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch (error) {
+    console.error('Error reading celebrated badges:', error);
+    return [];
+  }
+};
+
+// دالة مساعدة لحفظ وسام محتفل به في localStorage
+const saveCelebratedBadge = (badgeId: string): void => {
+  try {
+    const current = getCelebratedBadges();
+    if (!current.includes(badgeId)) {
+      localStorage.setItem(CELEBRATED_BADGES_KEY, JSON.stringify([...current, badgeId]));
+    }
+  } catch (error) {
+    console.error('Error saving celebrated badge:', error);
+  }
+};
+
 export const useBadgeProgress = (currentPoints: number | null | undefined) => {
   const [state, setState] = useState<BadgeProgressState>({
     currentBadge: null,
     showCelebration: false,
     celebrationBadge: null
   });
-  
-  const previousPointsRef = useRef<number | null>(null);
 
   // تحديث الوسام الحالي والتحقق من الإنجاز الجديد
   useEffect(() => {
     if (currentPoints === null || currentPoints === undefined) return;
 
     const newBadge = getBadgeByPoints(currentPoints);
+    const celebratedBadges = getCelebratedBadges();
     
-    // التحقق من وجود نقاط سابقة مخزنة
-    if (previousPointsRef.current !== null && previousPointsRef.current !== currentPoints) {
-      const previousBadge = getBadgeByPoints(previousPointsRef.current);
-      
-      // التحقق من الحصول على وسام جديد
-      if (newBadge && (!previousBadge || previousBadge.id !== newBadge.id)) {
-        // تحقق خاص: هل عبر عتبة الـ 200 نقطة؟
-        if (previousPointsRef.current < 200 && currentPoints >= 200) {
-          setState({
-            currentBadge: newBadge,
-            showCelebration: true,
-            celebrationBadge: newBadge
-          });
-          previousPointsRef.current = currentPoints;
-          return;
-        }
-        
-        // تحقق خاص: هل عبر عتبة الـ 300 نقطة؟
-        if (previousPointsRef.current < 300 && currentPoints >= 300) {
-          setState({
-            currentBadge: newBadge,
-            showCelebration: true,
-            celebrationBadge: newBadge
-          });
-          previousPointsRef.current = currentPoints;
-          return;
-        }
-        
-        // أي وسام جديد آخر
-        setState({
-          currentBadge: newBadge,
-          showCelebration: true,
-          celebrationBadge: newBadge
-        });
-        previousPointsRef.current = currentPoints;
-        return;
-      }
-    }
-    
-    // تحديث عادي بدون احتفال
+    // تحديث الوسام الحالي
     setState(prev => ({
       ...prev,
       currentBadge: newBadge
     }));
-    previousPointsRef.current = currentPoints;
+
+    // التحقق من وجود وسام جديد لم يتم الاحتفال به
+    if (newBadge && !celebratedBadges.includes(newBadge.id)) {
+      setState(prev => ({
+        ...prev,
+        showCelebration: true,
+        celebrationBadge: newBadge
+      }));
+
+      // تسجيل الاحتفال في localStorage
+      saveCelebratedBadge(newBadge.id);
+    }
   }, [currentPoints]);
 
   // إغلاق الاحتفال
@@ -86,7 +83,11 @@ export const useBadgeProgress = (currentPoints: number | null | undefined) => {
       showCelebration: false,
       celebrationBadge: null
     });
-    previousPointsRef.current = null;
+    try {
+      localStorage.removeItem(CELEBRATED_BADGES_KEY);
+    } catch (error) {
+      console.error('Error clearing celebrated badges:', error);
+    }
   }, []);
 
   return {
