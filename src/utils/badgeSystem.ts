@@ -7,6 +7,7 @@ import knowledgeSeekerBadge from '@/assets/badges/knowledge-seeker-badge.png';
 import thinkerStudentBadge from '@/assets/badges/thinker-student-badge.png';
 import solidStudentBadge from '@/assets/badges/solid-student-badge.png';
 import legendStudentBadge from '@/assets/badges/legend-student-badge.png';
+import spaceStudentBadge from '@/assets/badges/space-student-badge.png';
 
 // قائمة الأوسمة المتاحة مرتبة حسب النقاط
 export const AVAILABLE_BADGES: Badge[] = [
@@ -81,6 +82,15 @@ export const AVAILABLE_BADGES: Badge[] = [
     minPoints: 800,
     maxPoints: 899,
     description: 'وسام الطالب الأسطورة'
+  },
+  {
+    id: 'space-student',
+    name: 'طالب الفضاء',
+    title: 'طالب الفضاء',
+    image: spaceStudentBadge,
+    minPoints: 900,
+    maxPoints: 999,
+    description: 'وسام طالب الفضاء'
   }
   // يمكن إضافة المزيد من الأوسمة هنا
 ];
