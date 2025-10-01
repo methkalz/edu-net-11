@@ -93,16 +93,9 @@ const StudentDashboard: React.FC = () => {
           <div className="absolute top-20 -left-20 w-60 h-60 bg-yellow-400/20 rounded-full animate-bounce-slow"></div>
           <div className="absolute bottom-10 right-1/3 w-32 h-32 bg-pink-400/20 rounded-full animate-wiggle"></div>
           
-          {/* Floating Badge */}
-          <div className="absolute top-10 left-20 opacity-20 animate-float scale-75">
-            <UserTitleBadge
-              role={userProfile?.role || 'student'}
-              displayTitle={userProfile?.display_title}
-              points={userProfile?.points}
-              level={userProfile?.level}
-              size="lg"
-              variant="secondary"
-            />
+          {/* Floating Badge Shape */}
+          <div className="absolute top-10 left-20 opacity-15 animate-float">
+            <div className="w-32 h-32 rounded-full bg-gradient-to-br from-yellow-300 via-amber-400 to-orange-500 shadow-xl"></div>
           </div>
         </div>
 
