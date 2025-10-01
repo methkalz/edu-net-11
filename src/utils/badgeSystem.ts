@@ -3,6 +3,7 @@ import newStudentBadge from '@/assets/badges/new-student-badge.png';
 import activeStudentBadge from '@/assets/badges/active-student-badge.png';
 import diligentStudentBadge from '@/assets/badges/diligent-student-badge.png';
 import ambitiousStudentBadge from '@/assets/badges/ambitious-student-badge.png';
+import knowledgeSeekerBadge from '@/assets/badges/knowledge-seeker-badge.png';
 
 // قائمة الأوسمة المتاحة مرتبة حسب النقاط
 export const AVAILABLE_BADGES: Badge[] = [
@@ -41,6 +42,15 @@ export const AVAILABLE_BADGES: Badge[] = [
     minPoints: 400,
     maxPoints: 499,
     description: 'وسام الطالب الطموح'
+  },
+  {
+    id: 'knowledge-seeker',
+    name: 'طالب العلم',
+    title: 'طالب العلم',
+    image: knowledgeSeekerBadge,
+    minPoints: 500,
+    maxPoints: 599,
+    description: 'وسام طالب العلم'
   }
   // يمكن إضافة المزيد من الأوسمة هنا
 ];
