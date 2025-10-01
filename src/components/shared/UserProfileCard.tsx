@@ -3,6 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { UniversalAvatar } from './UniversalAvatar';
 import { UserTitleBadge } from './UserTitleBadge';
+import { BadgeDisplay } from '@/components/badges/BadgeDisplay';
 import { useUserTitle } from '@/hooks/useUserTitle';
 import type { Database } from '@/integrations/supabase/types';
 
@@ -21,7 +22,7 @@ export const UserProfileCard: React.FC<UserProfileCardProps> = ({
   size = 'md',
   className
 }) => {
-  const { title, level, starCount, nextLevelPoints, progressToNextLevel, isStudent } = useUserTitle({
+  const { title, level, badgeInfo, nextLevelPoints, progressToNextLevel, isStudent } = useUserTitle({
     role: profile.role,
     displayTitle: profile.display_title,
     points: profile.points,
@@ -88,6 +89,16 @@ export const UserProfileCard: React.FC<UserProfileCardProps> = ({
                   <span>المستوى {level}</span>
                   <span>{profile.points} نقطة</span>
                 </div>
+                
+                {badgeInfo.hasBadge && (
+                  <div className="flex justify-center py-2">
+                    <BadgeDisplay 
+                      badge={badgeInfo.badge} 
+                      size={size === 'lg' ? 'md' : 'sm'} 
+                      showName={true} 
+                    />
+                  </div>
+                )}
                 
                 {nextLevelPoints && progressToNextLevel !== null && (
                   <div className="space-y-1">

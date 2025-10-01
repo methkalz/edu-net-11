@@ -8,7 +8,8 @@ import { UserTitleBadge } from './UserTitleBadge';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserTitle } from '@/hooks/useUserTitle';
 import { Progress } from '@/components/ui/progress';
-import { Star, Trophy, Target, Camera } from 'lucide-react';
+import { Trophy, Target, Camera } from 'lucide-react';
+import { BadgeDisplay } from '@/components/badges/BadgeDisplay';
 
 export const UserProfileSettings: React.FC = () => {
   const { userProfile, user } = useAuth();
@@ -21,7 +22,7 @@ export const UserProfileSettings: React.FC = () => {
   const { 
     title, 
     level, 
-    starCount, 
+    badgeInfo, 
     nextLevelPoints, 
     progressToNextLevel, 
     isStudent 
@@ -87,11 +88,11 @@ export const UserProfileSettings: React.FC = () => {
               
               <div className="space-y-4">
                 <h3 className="font-semibold flex items-center gap-2">
-                  <Star className="h-4 w-4 text-yellow-500" />
+                  <Trophy className="h-4 w-4 text-primary" />
                   التقدم والمستوى
                 </h3>
                 
-                <div className="grid grid-cols-3 gap-4 text-center">
+                <div className="grid grid-cols-2 gap-4 text-center">
                   <div className="space-y-1">
                     <div className="text-2xl font-bold text-primary">
                       {userProfile.points}
@@ -109,21 +110,14 @@ export const UserProfileSettings: React.FC = () => {
                       المستوى
                     </div>
                   </div>
-                  
-                  <div className="space-y-1">
-                    <div className="flex justify-center">
-                      {Array.from({ length: starCount }, (_, i) => (
-                        <Star 
-                          key={i} 
-                          className="h-5 w-5 fill-current text-yellow-500" 
-                        />
-                      ))}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      النجوم
-                    </div>
-                  </div>
                 </div>
+
+                {badgeInfo.hasBadge && (
+                  <div className="flex flex-col items-center gap-2 pt-2">
+                    <div className="text-sm text-muted-foreground">الوسام</div>
+                    <BadgeDisplay badge={badgeInfo.badge} size="lg" showName={true} />
+                  </div>
+                )}
 
                 {nextLevelPoints && progressToNextLevel !== null && (
                   <div className="space-y-2">

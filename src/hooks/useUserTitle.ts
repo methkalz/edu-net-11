@@ -1,5 +1,7 @@
 import { useMemo } from 'react';
 import type { Database } from '@/integrations/supabase/types';
+import { getBadgeByPoints } from '@/utils/badgeSystem';
+import type { BadgeInfo } from '@/types/badge';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
@@ -66,14 +68,22 @@ export const useUserTitle = ({ role, displayTitle, points, level }: UserTitleDat
     return Math.min(100, Math.max(0, progress));
   }, [role, points, nextLevelPoints, calculatedLevel]);
 
-  const starCount = useMemo(() => {
-    return Math.min(calculatedLevel, 5);
-  }, [calculatedLevel]);
+  const badgeInfo = useMemo((): BadgeInfo => {
+    if (role !== 'student' || !points) {
+      return { badge: null, hasBadge: false };
+    }
+    
+    const badge = getBadgeByPoints(points);
+    return {
+      badge,
+      hasBadge: badge !== null
+    };
+  }, [role, points]);
 
   return {
     title: calculatedTitle,
     level: calculatedLevel,
-    starCount,
+    badgeInfo,
     nextLevelPoints,
     progressToNextLevel,
     isStudent: role === 'student'
