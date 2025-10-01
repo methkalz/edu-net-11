@@ -37,6 +37,8 @@ import { UniversalAvatar } from '@/components/shared/UniversalAvatar';
 import { UserTitleBadge } from '@/components/shared/UserTitleBadge';
 import { useStudentTeacher } from '@/hooks/useStudentTeacher';
 import { useStudentGameStats } from '@/hooks/useStudentGameStats';
+import { BadgeDisplay } from '@/components/badges/BadgeDisplay';
+import { useUserTitle } from '@/hooks/useUserTitle';
 
 const StudentDashboard: React.FC = () => {
   const { userProfile } = useAuth();
@@ -45,6 +47,14 @@ const StudentDashboard: React.FC = () => {
   const { teacher, loading: teacherLoading } = useStudentTeacher();
   const { refetch: refetchGameStats } = useStudentGameStats();
   const [activeTab, setActiveTab] = useState('overview');
+  
+  // Get badge information
+  const { badgeInfo } = useUserTitle({
+    role: userProfile?.role || 'student',
+    displayTitle: userProfile?.display_title,
+    points: userProfile?.points,
+    level: userProfile?.level
+  });
   
   // تحديث البيانات عند الضغط على تاب نظرة عامة
   const handleTabChange = (value: string) => {
@@ -125,6 +135,33 @@ const StudentDashboard: React.FC = () => {
                 {todayMessage}
               </p>
             </div>
+
+            {/* Badge Display Section */}
+            {badgeInfo.hasBadge && badgeInfo.badge && (
+              <div className="relative mt-8 animate-fade-in-up animation-delay-150">
+                <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/30 via-amber-400/30 to-orange-400/30 rounded-3xl blur-2xl animate-pulse"></div>
+                <div className="relative bg-white/15 backdrop-blur-xl border border-white/30 rounded-3xl p-8 shadow-2xl hover:scale-105 transition-transform duration-500">
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                    <div className="bg-gradient-to-r from-yellow-400 to-amber-500 text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg flex items-center gap-2">
+                      <Sparkles className="w-4 h-4" />
+                      <span>وسام التميز</span>
+                      <Sparkles className="w-4 h-4" />
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <BadgeDisplay 
+                      badge={badgeInfo.badge}
+                      size="lg"
+                      showName={true}
+                      className="scale-110"
+                    />
+                    <p className="text-center mt-4 text-white/90 text-lg font-semibold">
+                      {badgeInfo.badge.description}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Quick Stats Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 animate-fade-in-up animation-delay-200">
