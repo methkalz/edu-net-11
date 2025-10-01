@@ -16,11 +16,13 @@ export const BadgeAndTitleCard: React.FC = () => {
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500/10 to-yellow-500/10 flex items-center justify-center">
             <Award className="w-4 h-4 text-amber-600 dark:text-amber-400" />
           </div>
-          <span className="bg-gradient-to-r from-amber-600 to-yellow-600 dark:from-amber-400 dark:to-yellow-400 bg-clip-text text-transparent">الوسام والمسمى</span>
+          <span className="bg-gradient-to-r from-amber-600 to-yellow-600 dark:from-amber-400 dark:to-yellow-400 bg-clip-text text-transparent">الوسام</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col items-center justify-center py-6 space-y-4">
-        <BadgeDisplay badge={userTitleData.badgeInfo?.badge || null} size="lg" showName={false} />
+        <div className="scale-150">
+          <BadgeDisplay badge={userTitleData.badgeInfo?.badge || null} size="lg" showName={false} />
+        </div>
         {userTitleData.title && (
           <div className="text-center">
             <p className="text-lg font-bold text-foreground">{userTitleData.title}</p>
