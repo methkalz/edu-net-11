@@ -7,6 +7,7 @@ export const AVAILABLE_BADGES: Badge[] = [
   {
     id: 'new-student',
     name: 'طالب جديد',
+    title: 'طالب جديد',
     image: newStudentBadge,
     minPoints: 100,
     maxPoints: 199,
@@ -15,6 +16,7 @@ export const AVAILABLE_BADGES: Badge[] = [
   {
     id: 'active-student',
     name: 'طالب نشيط',
+    title: 'الطالب النشيط',
     image: activeStudentBadge,
     minPoints: 200,
     maxPoints: 299,

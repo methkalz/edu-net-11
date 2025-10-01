@@ -2,6 +2,7 @@
 export interface Badge {
   id: string;
   name: string;
+  title: string;
   image: string;
   minPoints: number;
   maxPoints: number;
