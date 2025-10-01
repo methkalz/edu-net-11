@@ -92,30 +92,25 @@ const StudentDashboard: React.FC = () => {
           <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full animate-float"></div>
           <div className="absolute top-20 -left-20 w-60 h-60 bg-yellow-400/20 rounded-full animate-bounce-slow"></div>
           <div className="absolute bottom-10 right-1/3 w-32 h-32 bg-pink-400/20 rounded-full animate-wiggle"></div>
+          
+          {/* Floating Badge */}
+          <div className="absolute top-10 left-20 opacity-20 animate-float scale-75">
+            <UserTitleBadge
+              role={userProfile?.role || 'student'}
+              displayTitle={userProfile?.display_title}
+              points={userProfile?.points}
+              level={userProfile?.level}
+              size="lg"
+              variant="secondary"
+            />
+          </div>
         </div>
 
         <div className="relative container mx-auto px-6 py-16">
           <div className="max-w-5xl mx-auto">
             <div className="animate-fade-in-up">
-              {/* Main Welcome Section with Badge */}
+              {/* Main Welcome Section */}
               <div className="text-center mb-12">
-                {/* Badge Display - Centered and Prominent at Top */}
-                <div className="flex justify-center mb-8">
-                  <div className="relative">
-                    <div className="absolute inset-0 bg-white/20 rounded-full blur-3xl scale-150"></div>
-                    <div className="relative">
-                      <UserTitleBadge
-                        role={userProfile?.role || 'student'}
-                        displayTitle={userProfile?.display_title}
-                        points={userProfile?.points}
-                        level={userProfile?.level}
-                        size="lg"
-                        variant="secondary"
-                      />
-                    </div>
-                  </div>
-                </div>
-
                 <h1 className="text-4xl md:text-6xl font-bold mb-6">
                   أهلاً بك، {userProfile?.full_name}! 
                   <span className="inline-block ml-3 animate-wiggle">👋</span>
