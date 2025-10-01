@@ -30,18 +30,20 @@ export const BadgeDisplay: React.FC<BadgeDisplayProps> = ({
 
   return (
     <div className={`flex flex-col items-center gap-2 ${className}`}>
-      <div className={`${SIZE_CLASSES[size]} relative`}>
+      <div className={`${SIZE_CLASSES[size]} relative overflow-hidden`}>
         <img
           src={badge.image}
           alt={badge.name}
           className="w-full h-full object-contain animate-scale-in"
         />
+        {showName && (
+          <div className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground px-6 py-1 transform rotate-45 translate-x-4 -translate-y-2 shadow-lg">
+            <span className={`${TEXT_SIZE_CLASSES[size]} font-bold whitespace-nowrap`}>
+              {badge.name}
+            </span>
+          </div>
+        )}
       </div>
-      {showName && (
-        <p className={`${TEXT_SIZE_CLASSES[size]} font-semibold text-center text-foreground`}>
-          {badge.name}
-        </p>
-      )}
     </div>
   );
 };
