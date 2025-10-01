@@ -129,6 +129,13 @@ const StudentDashboard: React.FC = () => {
 
               <Card className="bg-white/10 backdrop-blur border-white/20 text-white">
                 <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+                  <UserTitleBadge 
+                    role={userProfile?.role || 'student'}
+                    displayTitle={userProfile?.display_title}
+                    points={stats.total_points}
+                    showIcon={false}
+                    size="lg"
+                  />
                 </CardContent>
               </Card>
 
