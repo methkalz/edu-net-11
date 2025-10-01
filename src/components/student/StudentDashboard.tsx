@@ -127,10 +127,7 @@ const StudentDashboard: React.FC = () => {
                 </CardContent>
               </Card>
 
-              <Card className="bg-white/10 backdrop-blur border-white/20 text-white relative overflow-hidden">
-                <div className="absolute top-0 right-0 bg-destructive text-destructive-foreground px-16 py-2.5 transform rotate-45 translate-x-7 -translate-y-1.5 shadow-lg z-10">
-                  <span className="text-xs font-bold whitespace-nowrap">طالب جديد</span>
-                </div>
+              <Card className="bg-white/10 backdrop-blur border-white/20 text-white relative overflow-hidden [&::before]:content-[''] [&::before]:absolute [&::before]:top-0 [&::before]:right-0 [&::before]:w-20 [&::before]:h-20 [&::before]:bg-destructive [&::before]:rotate-45 [&::before]:translate-x-10 [&::before]:-translate-y-10 [&::before]:shadow-lg [&::after]:content-['طالب_جديد'] [&::after]:absolute [&::after]:top-4 [&::after]:right-[-10px] [&::after]:bg-destructive [&::after]:text-destructive-foreground [&::after]:px-8 [&::after]:py-1 [&::after]:text-xs [&::after]:font-bold [&::after]:whitespace-nowrap [&::after]:rotate-45 [&::after]:shadow-lg [&::after]:z-10">
                 <CardContent className="p-4 flex flex-col items-center justify-center text-center">
                   <UserTitleBadge 
                     role={userProfile?.role || 'student'}
