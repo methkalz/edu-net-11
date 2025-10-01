@@ -1,37 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Badge } from '@/types/badge';
 import { getBadgeByPoints } from '@/utils/badgeSystem';
-import { supabase } from '@/integrations/supabase/client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface BadgeProgressState {
   currentBadge: Badge | null;
   showCelebration: boolean;
   celebrationBadge: Badge | null;
 }
-
-// Hook للتحقق من الاحتفالات السابقة
-const useCelebratedBadges = (userId: string | undefined) => {
-  return useQuery({
-    queryKey: ['celebrated-badges', userId],
-    queryFn: async () => {
-      if (!userId) return [];
-      
-      const { data, error } = await supabase
-        .from('student_badge_celebrations')
-        .select('badge_id')
-        .eq('student_id', userId);
-
-      if (error) {
-        console.error('Error fetching celebrated badges:', error);
-        return [];
-      }
-
-      return data?.map(item => item.badge_id) || [];
-    },
-    enabled: !!userId,
-  });
-};
 
 export const useBadgeProgress = (currentPoints: number | null | undefined) => {
   const [state, setState] = useState<BadgeProgressState>({
@@ -41,46 +16,10 @@ export const useBadgeProgress = (currentPoints: number | null | undefined) => {
   });
   
   const previousPointsRef = useRef<number | null>(null);
-  const queryClient = useQueryClient();
-
-  // الحصول على معرف المستخدم
-  const [userId, setUserId] = useState<string | undefined>();
-  
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUserId(user?.id);
-    });
-  }, []);
-
-  // جلب الأوسمة المحتفل بها مسبقاً
-  const { data: celebratedBadges = [] } = useCelebratedBadges(userId);
-
-  // Mutation لتسجيل احتفال جديد
-  const recordCelebrationMutation = useMutation({
-    mutationFn: async (badgeId: string) => {
-      if (!userId) return;
-      
-      const { error } = await supabase
-        .from('student_badge_celebrations')
-        .insert({
-          student_id: userId,
-          badge_id: badgeId
-        });
-
-      if (error && error.code !== '23505') { // تجاهل خطأ التكرار
-        console.error('Error recording badge celebration:', error);
-        throw error;
-      }
-    },
-    onSuccess: () => {
-      // تحديث الكاش
-      queryClient.invalidateQueries({ queryKey: ['celebrated-badges', userId] });
-    }
-  });
 
   // تحديث الوسام الحالي والتحقق من الإنجاز الجديد
   useEffect(() => {
-    if (currentPoints === null || currentPoints === undefined || !userId) return;
+    if (currentPoints === null || currentPoints === undefined) return;
 
     const newBadge = getBadgeByPoints(currentPoints);
     
@@ -90,24 +29,34 @@ export const useBadgeProgress = (currentPoints: number | null | undefined) => {
       
       // التحقق من الحصول على وسام جديد
       if (newBadge && (!previousBadge || previousBadge.id !== newBadge.id)) {
-        // التحقق من أن هذا الوسام لم يتم الاحتفال به من قبل
-        if (!celebratedBadges.includes(newBadge.id)) {
+        // تحقق خاص: هل عبر عتبة الـ 200 نقطة؟
+        if (previousPointsRef.current < 200 && currentPoints >= 200) {
           setState({
             currentBadge: newBadge,
             showCelebration: true,
             celebrationBadge: newBadge
           });
-          
-          // تسجيل الاحتفال في قاعدة البيانات
-          recordCelebrationMutation.mutate(newBadge.id);
-        } else {
-          // تحديث الوسام بدون احتفال
-          setState(prev => ({
-            ...prev,
-            currentBadge: newBadge
-          }));
+          previousPointsRef.current = currentPoints;
+          return;
         }
         
+        // تحقق خاص: هل عبر عتبة الـ 300 نقطة؟
+        if (previousPointsRef.current < 300 && currentPoints >= 300) {
+          setState({
+            currentBadge: newBadge,
+            showCelebration: true,
+            celebrationBadge: newBadge
+          });
+          previousPointsRef.current = currentPoints;
+          return;
+        }
+        
+        // أي وسام جديد آخر
+        setState({
+          currentBadge: newBadge,
+          showCelebration: true,
+          celebrationBadge: newBadge
+        });
         previousPointsRef.current = currentPoints;
         return;
       }
@@ -119,7 +68,7 @@ export const useBadgeProgress = (currentPoints: number | null | undefined) => {
       currentBadge: newBadge
     }));
     previousPointsRef.current = currentPoints;
-  }, [currentPoints, userId, celebratedBadges, recordCelebrationMutation]);
+  }, [currentPoints]);
 
   // إغلاق الاحتفال
   const closeCelebration = useCallback(() => {
