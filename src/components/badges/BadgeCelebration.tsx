@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Badge as BadgeType } from '@/types/badge';
-import { X, Sparkles } from 'lucide-react';
+import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import './BadgeCelebration.css';
 
@@ -88,13 +88,11 @@ export const BadgeCelebration: React.FC<BadgeCelebrationProps> = ({
         <div className="relative text-center space-y-6">
           {/* Header */}
           <div className="space-y-2">
-            <div className="flex items-center justify-center gap-2 text-yellow-600 dark:text-yellow-400">
-              <Sparkles className="w-6 h-6 animate-pulse" />
-              <h2 className="text-2xl font-bold">مبروك!</h2>
-              <Sparkles className="w-6 h-6 animate-pulse" />
+            <div className="flex items-center justify-center text-yellow-600 dark:text-yellow-400">
+              <h2 className="text-2xl font-bold">مبروك</h2>
             </div>
             {studentName && (
-              <p className="text-lg font-medium text-muted-foreground">
+              <p className="text-lg font-medium text-muted-foreground text-center">
                 {studentName}
               </p>
             )}
@@ -116,14 +114,9 @@ export const BadgeCelebration: React.FC<BadgeCelebrationProps> = ({
 
           {/* Badge info */}
           <div className="space-y-3">
-            <h3 className="text-3xl font-bold bg-gradient-to-r from-yellow-600 via-orange-600 to-amber-600 bg-clip-text text-transparent">
-              {badge.name}
+            <h3 className="text-3xl font-bold bg-gradient-to-r from-yellow-600 via-orange-600 to-amber-600 bg-clip-text text-transparent text-center">
+              وسام {badge.name}
             </h3>
-            {badge.description && (
-              <p className="text-base text-muted-foreground font-medium">
-                {badge.description}
-              </p>
-            )}
             <div className="flex items-center justify-center gap-2 text-sm font-semibold text-orange-600 dark:text-orange-400">
               <span>حصلت على هذا الوسام بتجاوز {badge.minPoints} نقطة!</span>
             </div>
