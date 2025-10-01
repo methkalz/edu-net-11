@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 
 const CELEBRATION_MUSIC_URL = 'https://edu-net.me/Cartoon%20Big%20Win.mp3';
 
@@ -32,12 +32,12 @@ export const useCelebrationMusic = () => {
     };
   }, []);
 
-  const stopMusic = useCallback(() => {
+  const stopMusic = () => {
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
     }
-  }, []);
+  };
 
   return { stopMusic };
 };
