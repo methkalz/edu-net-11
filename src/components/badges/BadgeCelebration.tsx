@@ -140,7 +140,7 @@ export const BadgeCelebration: React.FC<BadgeCelebrationProps> = ({
             size="lg"
             className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-bold shadow-lg"
           >
-            متابعة التعلم 🚀
+            متابعة
           </Button>
         </div>
       </div>
