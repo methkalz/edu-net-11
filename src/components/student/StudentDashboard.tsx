@@ -170,26 +170,28 @@ const StudentDashboard: React.FC = () => {
             </div>
 
             {/* Overall Progress */}
-            <div className="bg-white/10 backdrop-blur rounded-xl p-6 mt-8 animate-fade-in-up animation-delay-400">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full flex items-center justify-center">
-                    <TrendingUp className="w-5 h-5 text-white" />
+            <div className="flex justify-center mt-8">
+              <div className="bg-white/10 backdrop-blur rounded-xl p-6 w-full max-w-xs animate-fade-in-up animation-delay-400">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full flex items-center justify-center">
+                      <TrendingUp className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold">التقدم الإجمالي</h3>
+                      <p className="text-sm opacity-80">في جميع المواد</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-lg font-semibold">التقدم الإجمالي</h3>
-                    <p className="text-sm opacity-80">في جميع المواد</p>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold">{getProgressPercentage()}%</div>
+                    <div className="text-sm opacity-80">مكتمل</div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-2xl font-bold">{getProgressPercentage()}%</div>
-                  <div className="text-sm opacity-80">مكتمل</div>
-                </div>
+                <Progress 
+                  value={getProgressPercentage()} 
+                  className="h-3 bg-white/20"
+                />
               </div>
-              <Progress 
-                value={getProgressPercentage()} 
-                className="h-3 bg-white/20"
-              />
             </div>
           </div>
         </div>
