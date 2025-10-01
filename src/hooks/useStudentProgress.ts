@@ -38,9 +38,16 @@ export interface Achievement {
 
 // Fetch functions
 const fetchStudentStats = async (userId: string): Promise<StudentStats> => {
-  // Temporarily return default stats to avoid database function errors
-  logger.info('Returning default student stats (temporary fix)');
-  return {
+  const { data, error } = await supabase
+    .rpc('get_student_dashboard_stats', { student_uuid: userId });
+
+  if (error) {
+    logger.error('Error fetching student stats', error);
+    throw error;
+  }
+
+  logger.info('Student stats loaded successfully', { stats: data });
+  return data as unknown as StudentStats || {
     total_points: 0,
     completed_videos: 0,
     completed_projects: 0,
