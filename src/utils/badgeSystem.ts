@@ -1,5 +1,6 @@
 import { Badge } from '@/types/badge';
 import newStudentBadge from '@/assets/badges/new-student-badge.png';
+import activeStudentBadge from '@/assets/badges/active-student-badge.png';
 
 // قائمة الأوسمة المتاحة مرتبة حسب النقاط
 export const AVAILABLE_BADGES: Badge[] = [
@@ -10,6 +11,14 @@ export const AVAILABLE_BADGES: Badge[] = [
     minPoints: 100,
     maxPoints: 199,
     description: 'وسام الطالب الجديد'
+  },
+  {
+    id: 'active-student',
+    name: 'طالب نشيط',
+    image: activeStudentBadge,
+    minPoints: 200,
+    maxPoints: 299,
+    description: 'وسام الطالب النشيط'
   }
   // يمكن إضافة المزيد من الأوسمة هنا
 ];
