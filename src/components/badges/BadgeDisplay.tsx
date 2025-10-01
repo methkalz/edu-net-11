@@ -9,9 +9,9 @@ interface BadgeDisplayProps {
 }
 
 const SIZE_CLASSES = {
-  sm: 'w-12 h-12',
-  md: 'w-16 h-16',
-  lg: 'w-24 h-24'
+  sm: 'w-14 h-14',
+  md: 'w-20 h-20',
+  lg: 'w-28 h-28'
 };
 
 const TEXT_SIZE_CLASSES = {
