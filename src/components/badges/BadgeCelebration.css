@@ -99,6 +99,8 @@
     rgba(255, 215, 0, 0.3) 90deg,
     transparent 100deg
   );
+  mask: radial-gradient(circle at center, black 0%, black 30%, transparent 70%);
+  -webkit-mask: radial-gradient(circle at center, black 0%, black 30%, transparent 70%);
   transform: translate(-50%, -50%);
   animation: rotate-rays 8s linear infinite;
   pointer-events: none;
