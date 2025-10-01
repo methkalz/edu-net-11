@@ -92,28 +92,27 @@ const StudentDashboard: React.FC = () => {
           <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full animate-float"></div>
           <div className="absolute top-20 -left-20 w-60 h-60 bg-yellow-400/20 rounded-full animate-bounce-slow"></div>
           <div className="absolute bottom-10 right-1/3 w-32 h-32 bg-pink-400/20 rounded-full animate-wiggle"></div>
+          
+          {/* Floating Badge Shape */}
+          <div className="absolute top-10 left-20 opacity-15 animate-float">
+            <div className="w-32 h-32 rounded-full bg-gradient-to-br from-yellow-300 via-amber-400 to-orange-500 shadow-xl"></div>
+          </div>
         </div>
 
-        <div className="relative container mx-auto px-6 py-12">
-          <div className="max-w-4xl mx-auto text-center space-y-6">
-              <div className="animate-fade-in-up">
-              <div className="flex items-center justify-center gap-6 mb-6">
-                <UniversalAvatar
-                  avatarUrl={userProfile?.avatar_url}
-                  userName={userProfile?.full_name}
-                  size="xl"
-                  className="border-4 border-white/30 shadow-2xl"
-                />
-                <div className="text-center">
-                  <h1 className="text-4xl md:text-6xl font-bold mb-2">
-                    أهلاً بك، {userProfile?.full_name}! 
-                    <span className="inline-block ml-3 animate-wiggle">👋</span>
-                  </h1>
-                </div>
+        <div className="relative container mx-auto px-6 py-16">
+          <div className="max-w-5xl mx-auto">
+            <div className="animate-fade-in-up">
+              {/* Main Welcome Section */}
+              <div className="text-center mb-12">
+                <h1 className="text-4xl md:text-6xl font-bold mb-6">
+                  أهلاً بك، {userProfile?.full_name}! 
+                  <span className="inline-block ml-3 animate-wiggle">👋</span>
+                </h1>
+
+                <p className="text-xl md:text-2xl opacity-90 font-medium">
+                  {todayMessage}
+                </p>
               </div>
-              <p className="text-xl md:text-2xl opacity-90 font-medium text-center">
-                {todayMessage}
-              </p>
             </div>
 
             {/* Quick Stats Cards */}
@@ -128,16 +127,15 @@ const StudentDashboard: React.FC = () => {
                 </CardContent>
               </Card>
 
-              <div className="flex items-center justify-center">
-                <UserTitleBadge
-                  role={userProfile?.role || 'student'}
-                  displayTitle={userProfile?.display_title}
-                  points={userProfile?.points}
-                  level={userProfile?.level}
-                  size="lg"
-                  variant="secondary"
-                />
-              </div>
+              <Card className="bg-white/10 backdrop-blur border-white/20 text-white">
+                <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+                  <div className="w-12 h-12 mx-auto mb-2 bg-green-400/20 rounded-full flex items-center justify-center">
+                    <Trophy className="w-6 h-6 text-green-300" />
+                  </div>
+                  <div className="text-2xl font-bold text-center">{stats.achievements_count}</div>
+                  <div className="text-sm opacity-80 text-center">إنجاز</div>
+                </CardContent>
+              </Card>
 
               <Card className="bg-white/10 backdrop-blur border-white/20 text-white">
                 <CardContent className="p-4 flex flex-col items-center justify-center text-center">
