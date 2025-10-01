@@ -5,6 +5,7 @@ import diligentStudentBadge from '@/assets/badges/diligent-student-badge.png';
 import ambitiousStudentBadge from '@/assets/badges/ambitious-student-badge.png';
 import knowledgeSeekerBadge from '@/assets/badges/knowledge-seeker-badge.png';
 import thinkerStudentBadge from '@/assets/badges/thinker-student-badge.png';
+import solidStudentBadge from '@/assets/badges/solid-student-badge.png';
 
 // قائمة الأوسمة المتاحة مرتبة حسب النقاط
 export const AVAILABLE_BADGES: Badge[] = [
@@ -61,6 +62,15 @@ export const AVAILABLE_BADGES: Badge[] = [
     minPoints: 600,
     maxPoints: 699,
     description: 'وسام الطالب المُفكّر'
+  },
+  {
+    id: 'solid-student',
+    name: 'طالب جامد',
+    title: 'الطالب الجامد',
+    image: solidStudentBadge,
+    minPoints: 700,
+    maxPoints: 799,
+    description: 'وسام الطالب الجامد'
   }
   // يمكن إضافة المزيد من الأوسمة هنا
 ];
