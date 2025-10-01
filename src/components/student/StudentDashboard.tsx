@@ -129,11 +129,6 @@ const StudentDashboard: React.FC = () => {
 
               <Card className="bg-white/10 backdrop-blur border-white/20 text-white">
                 <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-                  <div className="w-12 h-12 mx-auto mb-2 bg-green-400/20 rounded-full flex items-center justify-center">
-                    <Trophy className="w-6 h-6 text-green-300" />
-                  </div>
-                  <div className="text-2xl font-bold text-center">{stats.achievements_count}</div>
-                  <div className="text-sm opacity-80 text-center">إنجاز</div>
                 </CardContent>
               </Card>
 
