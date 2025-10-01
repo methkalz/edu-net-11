@@ -37,7 +37,6 @@ import { UniversalAvatar } from '@/components/shared/UniversalAvatar';
 import { UserTitleBadge } from '@/components/shared/UserTitleBadge';
 import { useStudentTeacher } from '@/hooks/useStudentTeacher';
 import { useStudentGameStats } from '@/hooks/useStudentGameStats';
-import { BadgeAndTitleCard } from './BadgeAndTitleCard';
 
 const StudentDashboard: React.FC = () => {
   const { userProfile } = useAuth();
@@ -228,11 +227,8 @@ const StudentDashboard: React.FC = () => {
                 <StudentStats />
               </div>
 
-              {/* Badge and Title Display */}
+              {/* Quick Actions */}
               <div className="space-y-4">
-                <BadgeAndTitleCard />
-                
-                {/* Quick Actions */}
                 <Card className="border-border/40 bg-gradient-to-br from-violet-50/50 via-background to-purple-50/30 dark:from-violet-950/20 dark:via-background dark:to-purple-950/10 shadow-sm hover:shadow-md transition-all duration-300">
                   <CardHeader className="pb-3">
                     <CardTitle className="flex items-center gap-2 text-lg font-semibold">
