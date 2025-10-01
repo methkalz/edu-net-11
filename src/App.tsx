@@ -57,6 +57,7 @@ const Grade12ProjectEditorPage = React.lazy(() => import('@/pages/Grade12Project
 const LandingPage = React.lazy(() => import('@/pages/LandingPage'));
 const KnowledgeAdventurePage = React.lazy(() => import('@/pages/KnowledgeAdventurePage'));
 const StudentTrackingPage = React.lazy(() => import('@/pages/teacher/StudentTracking'));
+const BadgeTestPage = React.lazy(() => import('@/pages/BadgeTestPage'));
 import { PageLoading } from "@/components/ui/LoadingComponents";
 
 /**
@@ -165,6 +166,8 @@ const App = () => {
                {/* Reports dashboard route */}
                 <Route path="/reports" element={<Suspense fallback={<PageLoading message="جاري تحميل التقارير..." />}><LazyReports /></Suspense>} />
                
+               {/* Badge testing page - superadmin only */}
+                <Route path="/badge-test" element={<Suspense fallback={<PageLoading message="جاري تحميل صفحة الاختبار..." />}><BadgeTestPage /></Suspense>} />
                
                {/* Development and testing routes */}
                 <Route path="/test" element={<LazyTest />} />
