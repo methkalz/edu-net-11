@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Badge as BadgeType } from '@/types/badge';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useCelebrationMusic } from '@/hooks/useCelebrationMusic';
 import './BadgeCelebration.css';
 
 interface BadgeCelebrationProps {
@@ -17,6 +18,7 @@ export const BadgeCelebration: React.FC<BadgeCelebrationProps> = ({
 }) => {
   const [timeLeft, setTimeLeft] = useState(5);
   const [confettiParticles, setConfettiParticles] = useState<Array<{ id: number; left: number; delay: number; color: string }>>([]);
+  const { stopMusic } = useCelebrationMusic();
 
   useEffect(() => {
     // إنشاء جسيمات الاحتفال
@@ -33,6 +35,7 @@ export const BadgeCelebration: React.FC<BadgeCelebrationProps> = ({
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
+          stopMusic();
           onClose();
           return 0;
         }
@@ -40,8 +43,11 @@ export const BadgeCelebration: React.FC<BadgeCelebrationProps> = ({
       });
     }, 1000);
 
-    return () => clearInterval(timer);
-  }, [onClose]);
+    return () => {
+      clearInterval(timer);
+      stopMusic();
+    };
+  }, [onClose, stopMusic]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in">
@@ -68,7 +74,10 @@ export const BadgeCelebration: React.FC<BadgeCelebrationProps> = ({
           variant="ghost"
           size="icon"
           className="absolute top-4 left-4 z-10"
-          onClick={onClose}
+          onClick={() => {
+            stopMusic();
+            onClose();
+          }}
         >
           <X className="w-5 h-5" />
         </Button>
@@ -124,7 +133,10 @@ export const BadgeCelebration: React.FC<BadgeCelebrationProps> = ({
 
           {/* Action button */}
           <Button
-            onClick={onClose}
+            onClick={() => {
+              stopMusic();
+              onClose();
+            }}
             size="lg"
             className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-bold shadow-lg"
           >
