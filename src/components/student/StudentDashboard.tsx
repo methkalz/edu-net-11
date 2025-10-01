@@ -127,7 +127,17 @@ const StudentDashboard: React.FC = () => {
             </div>
 
             {/* Quick Stats Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 grid-rows-2 gap-4 mt-8 animate-fade-in-up animation-delay-200">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 animate-fade-in-up animation-delay-200">
+              <Card className="bg-white/10 backdrop-blur border-white/20 text-white">
+                <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+                  <div className="w-12 h-12 mx-auto mb-2 bg-yellow-400/20 rounded-full flex items-center justify-center">
+                    <Star className="w-6 h-6 text-yellow-300" />
+                  </div>
+                  <div className="text-2xl font-bold text-center">{stats.total_points}</div>
+                  <div className="text-sm opacity-80 text-center">نقطة إجمالية</div>
+                </CardContent>
+              </Card>
+
               <Card className="bg-white/10 backdrop-blur border-white/20 text-white">
                 <CardContent className="p-4 flex flex-col items-center justify-center text-center">
                   <div className="w-12 h-12 mx-auto mb-2 bg-green-400/20 rounded-full flex items-center justify-center">
@@ -135,16 +145,6 @@ const StudentDashboard: React.FC = () => {
                   </div>
                   <div className="text-2xl font-bold text-center">{stats.achievements_count}</div>
                   <div className="text-sm opacity-80 text-center">إنجاز</div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-white/10 backdrop-blur border-white/20 text-white row-span-2">
-                <CardContent className="p-4 h-full flex flex-col items-center justify-center text-center">
-                  <div className="w-12 h-12 mx-auto mb-2 bg-yellow-400/20 rounded-full flex items-center justify-center">
-                    <Star className="w-6 h-6 text-yellow-300" />
-                  </div>
-                  <div className="text-2xl font-bold text-center">{stats.total_points}</div>
-                  <div className="text-sm opacity-80 text-center">نقطة إجمالية</div>
                 </CardContent>
               </Card>
 
@@ -170,28 +170,26 @@ const StudentDashboard: React.FC = () => {
             </div>
 
             {/* Overall Progress */}
-            <div className="flex justify-center mt-8">
-              <div className="bg-white/10 backdrop-blur rounded-xl p-6 w-full max-w-xs animate-fade-in-up animation-delay-400">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full flex items-center justify-center">
-                      <TrendingUp className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold">التقدم الإجمالي</h3>
-                      <p className="text-sm opacity-80">في جميع المواد</p>
-                    </div>
+            <div className="bg-white/10 backdrop-blur rounded-xl p-6 mt-8 animate-fade-in-up animation-delay-400">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full flex items-center justify-center">
+                    <TrendingUp className="w-5 h-5 text-white" />
                   </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold">{getProgressPercentage()}%</div>
-                    <div className="text-sm opacity-80">مكتمل</div>
+                  <div>
+                    <h3 className="text-lg font-semibold">التقدم الإجمالي</h3>
+                    <p className="text-sm opacity-80">في جميع المواد</p>
                   </div>
                 </div>
-                <Progress 
-                  value={getProgressPercentage()} 
-                  className="h-3 bg-white/20"
-                />
+                <div className="text-right">
+                  <div className="text-2xl font-bold">{getProgressPercentage()}%</div>
+                  <div className="text-sm opacity-80">مكتمل</div>
+                </div>
               </div>
+              <Progress 
+                value={getProgressPercentage()} 
+                className="h-3 bg-white/20"
+              />
             </div>
           </div>
         </div>
