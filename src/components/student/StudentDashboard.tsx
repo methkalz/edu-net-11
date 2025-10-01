@@ -96,7 +96,7 @@ const StudentDashboard: React.FC = () => {
 
         <div className="relative container mx-auto px-6 py-12">
           <div className="max-w-4xl mx-auto text-center space-y-6">
-            <div className="animate-fade-in-up">
+              <div className="animate-fade-in-up">
               <div className="flex items-center justify-center gap-6 mb-6">
                 <UniversalAvatar
                   avatarUrl={userProfile?.avatar_url}
@@ -109,16 +109,6 @@ const StudentDashboard: React.FC = () => {
                     أهلاً بك، {userProfile?.full_name}! 
                     <span className="inline-block ml-3 animate-wiggle">👋</span>
                   </h1>
-                  <div className="bg-white/20 text-white border border-white/20 rounded-full px-4 py-2 mb-2">
-                    <UserTitleBadge
-                      role={userProfile?.role || 'student'}
-                      displayTitle={userProfile?.display_title}
-                      points={userProfile?.points}
-                      level={userProfile?.level}
-                      size="lg"
-                      variant="secondary"
-                    />
-                  </div>
                 </div>
               </div>
               <p className="text-xl md:text-2xl opacity-90 font-medium text-center">
@@ -140,11 +130,14 @@ const StudentDashboard: React.FC = () => {
 
               <Card className="bg-white/10 backdrop-blur border-white/20 text-white">
                 <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-                  <div className="w-12 h-12 mx-auto mb-2 bg-green-400/20 rounded-full flex items-center justify-center">
-                    <Trophy className="w-6 h-6 text-green-300" />
-                  </div>
-                  <div className="text-2xl font-bold text-center">{stats.achievements_count}</div>
-                  <div className="text-sm opacity-80 text-center">إنجاز</div>
+                  <UserTitleBadge
+                    role={userProfile?.role || 'student'}
+                    displayTitle={userProfile?.display_title}
+                    points={userProfile?.points}
+                    level={userProfile?.level}
+                    size="lg"
+                    variant="secondary"
+                  />
                 </CardContent>
               </Card>
 
