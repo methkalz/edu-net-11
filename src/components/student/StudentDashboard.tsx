@@ -95,9 +95,20 @@ const StudentDashboard: React.FC = () => {
         </div>
 
         <div className="relative container mx-auto px-6 py-12">
-          <div className="max-w-4xl mx-auto text-center space-y-6">
-            <div className="animate-fade-in-up">
-              <div className="flex items-center justify-center gap-6 mb-6">
+        <div className="max-w-4xl mx-auto text-center space-y-6">
+            <div className="animate-fade-in-up flex flex-col items-center gap-6">
+              <div className="bg-white/20 text-white border border-white/20 rounded-full px-8 py-4 scale-125">
+                <UserTitleBadge
+                  role={userProfile?.role || 'student'}
+                  displayTitle={userProfile?.display_title}
+                  points={userProfile?.points}
+                  level={userProfile?.level}
+                  size="lg"
+                  variant="secondary"
+                />
+              </div>
+              
+              <div className="flex items-center justify-center gap-6">
                 <UniversalAvatar
                   avatarUrl={userProfile?.avatar_url}
                   userName={userProfile?.full_name}
@@ -109,18 +120,9 @@ const StudentDashboard: React.FC = () => {
                     أهلاً بك، {userProfile?.full_name}! 
                     <span className="inline-block ml-3 animate-wiggle">👋</span>
                   </h1>
-                  <div className="bg-white/20 text-white border border-white/20 rounded-full px-4 py-2 mb-2">
-                    <UserTitleBadge
-                      role={userProfile?.role || 'student'}
-                      displayTitle={userProfile?.display_title}
-                      points={userProfile?.points}
-                      level={userProfile?.level}
-                      size="lg"
-                      variant="secondary"
-                    />
-                  </div>
                 </div>
               </div>
+              
               <p className="text-xl md:text-2xl opacity-90 font-medium text-center">
                 {todayMessage}
               </p>
