@@ -127,8 +127,8 @@ const StudentDashboard: React.FC = () => {
                 </CardContent>
               </Card>
 
-              <Card className="bg-white/10 backdrop-blur border-white/20 text-white relative overflow-hidden">
-                <div className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground px-6 py-1 transform rotate-45 translate-x-4 -translate-y-2 shadow-lg z-10">
+              <Card className="bg-white/10 backdrop-blur border-white/20 text-white relative">
+                <div className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground px-8 py-1.5 transform rotate-45 origin-center shadow-lg z-10" style={{ right: '-20px', top: '8px' }}>
                   <span className="text-xs font-bold whitespace-nowrap">طالب جديد</span>
                 </div>
                 <CardContent className="p-4 flex flex-col items-center justify-center text-center">
