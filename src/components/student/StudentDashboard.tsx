@@ -127,9 +127,9 @@ const StudentDashboard: React.FC = () => {
             </div>
 
             {/* Quick Stats Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 animate-fade-in-up animation-delay-200 md:grid-rows-2">
-              <Card className="bg-white/10 backdrop-blur border-white/20 text-white md:row-span-2">
-                <CardContent className="p-4 h-full flex flex-col items-center justify-center text-center">
+            <div className="grid grid-cols-2 md:grid-cols-4 grid-rows-2 gap-4 mt-8 animate-fade-in-up animation-delay-200">
+              <Card className="bg-white/10 backdrop-blur border-white/20 text-white">
+                <CardContent className="p-4 flex flex-col items-center justify-center text-center">
                   <div className="w-12 h-12 mx-auto mb-2 bg-green-400/20 rounded-full flex items-center justify-center">
                     <Trophy className="w-6 h-6 text-green-300" />
                   </div>
@@ -138,8 +138,8 @@ const StudentDashboard: React.FC = () => {
                 </CardContent>
               </Card>
 
-              <Card className="bg-white/10 backdrop-blur border-white/20 text-white">
-                <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+              <Card className="bg-white/10 backdrop-blur border-white/20 text-white row-span-2">
+                <CardContent className="p-4 h-full flex flex-col items-center justify-center text-center">
                   <div className="w-12 h-12 mx-auto mb-2 bg-yellow-400/20 rounded-full flex items-center justify-center">
                     <Star className="w-6 h-6 text-yellow-300" />
                   </div>
