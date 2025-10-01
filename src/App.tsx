@@ -49,7 +49,6 @@ import {
   LazyTest,
   LazyPairMatchingPage,
   LazyReports,
-  LazyBadgesGallery,
   withLazyLoading
 } from "@/components/LazyComponents";
 
@@ -166,8 +165,6 @@ const App = () => {
                {/* Reports dashboard route */}
                 <Route path="/reports" element={<Suspense fallback={<PageLoading message="جاري تحميل التقارير..." />}><LazyReports /></Suspense>} />
                
-               {/* Badges gallery route */}
-                <Route path="/badges" element={<Suspense fallback={<PageLoading message="جاري تحميل معرض الأوسمة..." />}><LazyBadgesGallery /></Suspense>} />
                
                {/* Development and testing routes */}
                 <Route path="/test" element={<LazyTest />} />
