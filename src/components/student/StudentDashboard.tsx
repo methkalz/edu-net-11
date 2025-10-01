@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useStudentProgress } from '@/hooks/useStudentProgress';
 import { useStudentContent } from '@/hooks/useStudentContent';
+import { useBadgeProgress } from '@/hooks/useBadgeProgress';
+import { BadgeCelebration } from '@/components/badges/BadgeCelebration';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -46,6 +48,9 @@ const StudentDashboard: React.FC = () => {
   const { refetch: refetchGameStats } = useStudentGameStats();
   const [activeTab, setActiveTab] = useState('overview');
   
+  // نظام تتبع الأوسمة والاحتفال
+  const { showCelebration, celebrationBadge, closeCelebration } = useBadgeProgress(stats.total_points);
+  
   // تحديث البيانات عند الضغط على تاب نظرة عامة
   const handleTabChange = (value: string) => {
     setActiveTab(value);
@@ -82,6 +87,14 @@ const StudentDashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50" dir="rtl">
+      {/* Badge Celebration Modal */}
+      {showCelebration && celebrationBadge && (
+        <BadgeCelebration
+          badge={celebrationBadge}
+          studentName={userProfile?.full_name}
+          onClose={closeCelebration}
+        />
+      )}
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white">
         <div className="absolute inset-0 bg-black/20"></div>
