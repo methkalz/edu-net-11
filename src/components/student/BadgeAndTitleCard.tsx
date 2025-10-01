@@ -11,8 +11,8 @@ export const BadgeAndTitleCard: React.FC = () => {
 
   return (
     <Card className="border-border/40 bg-gradient-to-br from-amber-50/50 via-background to-yellow-50/30 dark:from-amber-950/20 dark:via-background dark:to-yellow-950/10 shadow-sm hover:shadow-md transition-all duration-300">
-      <CardContent className="flex flex-col items-center justify-center py-6 space-y-4">
-        <div className="scale-[1.75]">
+      <CardContent className="flex flex-col items-center justify-center py-8 px-6 space-y-4">
+        <div className="scale-[1.4]">
           <BadgeDisplay badge={userTitleData.badgeInfo?.badge || null} size="lg" showName={false} />
         </div>
         {userTitleData.title && (
