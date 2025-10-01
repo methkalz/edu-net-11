@@ -99,13 +99,8 @@ const StudentDashboard: React.FC = () => {
             <div className="animate-fade-in-up">
               {/* Main Welcome Section with Badge */}
               <div className="text-center mb-12">
-                <h1 className="text-4xl md:text-6xl font-bold mb-6">
-                  أهلاً بك، {userProfile?.full_name}! 
-                  <span className="inline-block ml-3 animate-wiggle">👋</span>
-                </h1>
-                
-                {/* Badge Display - Centered and Prominent */}
-                <div className="flex justify-center mb-6">
+                {/* Badge Display - Centered and Prominent at Top */}
+                <div className="flex justify-center mb-8">
                   <div className="relative">
                     <div className="absolute inset-0 bg-white/20 rounded-full blur-3xl scale-150"></div>
                     <div className="relative">
@@ -120,6 +115,11 @@ const StudentDashboard: React.FC = () => {
                     </div>
                   </div>
                 </div>
+
+                <h1 className="text-4xl md:text-6xl font-bold mb-6">
+                  أهلاً بك، {userProfile?.full_name}! 
+                  <span className="inline-block ml-3 animate-wiggle">👋</span>
+                </h1>
 
                 <p className="text-xl md:text-2xl opacity-90 font-medium">
                   {todayMessage}
