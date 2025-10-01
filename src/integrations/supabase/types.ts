@@ -4673,30 +4673,6 @@ export type Database = {
         }
         Relationships: []
       }
-      student_badge_celebrations: {
-        Row: {
-          badge_id: string
-          celebrated_at: string
-          created_at: string
-          id: string
-          student_id: string
-        }
-        Insert: {
-          badge_id: string
-          celebrated_at?: string
-          created_at?: string
-          id?: string
-          student_id: string
-        }
-        Update: {
-          badge_id?: string
-          celebrated_at?: string
-          created_at?: string
-          id?: string
-          student_id?: string
-        }
-        Relationships: []
-      }
       student_daily_challenges: {
         Row: {
           challenge_date: string
@@ -5446,20 +5422,12 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
-      has_celebrated_badge: {
-        Args: { p_badge_id: string; p_student_id: string }
-        Returns: boolean
-      }
       initialize_player_progress: {
         Args: { p_player_id: string }
         Returns: undefined
       }
       recalculate_grade11_student_points: {
         Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      record_badge_celebration: {
-        Args: { p_badge_id: string; p_student_id: string }
         Returns: undefined
       }
       unlock_next_games: {
