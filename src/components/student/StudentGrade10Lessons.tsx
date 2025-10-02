@@ -372,10 +372,10 @@ export const StudentGrade10Lessons: React.FC = () => {
                                       className="flex items-center justify-between p-4 bg-muted/30 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer"
                                       onClick={async () => {
                                         setSelectedLesson(lesson);
-                                        // تسجيل إكمال الدرس فوراً
+                                        // تسجيل إكمال الدرس فوراً (20 نقطة لدروس أساسيات الاتصال)
                                         try {
-                                          await updateProgress(lesson.id, 'lesson', 100, 0, 10);
-                                          await logActivity('document_read', lesson.id, 0, 10);
+                                          await updateProgress(lesson.id, 'lesson', 100, 0, 20);
+                                          await logActivity('document_read', lesson.id, 0, 20);
                                         } catch (error) {
                                           console.error('Error tracking lesson view:', error);
                                         }

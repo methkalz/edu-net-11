@@ -89,10 +89,18 @@ const Grade10VideoViewer: React.FC<Grade10VideoViewerProps> = ({ videos, loading
     setSelectedVideo(video);
     setIsVideoModalOpen(true);
     
+    // تحديد النقاط حسب نوع الفيديو
+    let points = 10; // النقاط الافتراضية
+    if (video.video_category === 'windows_basics') {
+      points = 20; // فيديوهات أساسيات الويندوز
+    } else if (video.video_category === 'educational_explanations') {
+      points = 30; // فيديوهات مقدمة عن الشبكات
+    }
+    
     // تسجيل إكمال المحتوى فوراً عند فتح النافذة
     try {
-      await updateProgress(video.id, 'video', 100, 0, 10);
-      await logActivity('video_watch', video.id, 0, 10);
+      await updateProgress(video.id, 'video', 100, 0, points);
+      await logActivity('video_watch', video.id, 0, points);
     } catch (error) {
       console.error('Error tracking video view:', error);
     }

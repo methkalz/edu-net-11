@@ -24,10 +24,12 @@ import {
   BookOpen
 } from 'lucide-react';
 import { useStudentGrade10Lessons, Grade10LessonWithMedia, Grade10LessonMedia } from '@/hooks/useStudentGrade10Lessons';
+import { useStudentProgress } from '@/hooks/useStudentProgress';
 import Grade10MediaPreview from '@/components/content/Grade10MediaPreview';
 
 export const ComputerStructureLessons: React.FC = () => {
   const { sections, loading, error, getContentStats } = useStudentGrade10Lessons();
+  const { updateProgress, logActivity } = useStudentProgress();
   const [openSections, setOpenSections] = useState<string[]>([]);
   const [openTopics, setOpenTopics] = useState<string[]>([]);
   const [selectedLesson, setSelectedLesson] = useState<Grade10LessonWithMedia | null>(null);
@@ -332,7 +334,16 @@ export const ComputerStructureLessons: React.FC = () => {
                                      <div
                                       key={lesson.id}
                                       className="flex items-center justify-between p-2.5 bg-white/60 rounded-lg border-0 hover:bg-white/80 transition-colors cursor-pointer group"
-                                      onClick={() => setSelectedLesson(lesson)}
+                                      onClick={async () => {
+                                        setSelectedLesson(lesson);
+                                        // تسجيل إكمال الدرس عند فتحه (20 نقطة لدروس مبنى الحاسوب)
+                                        try {
+                                          await updateProgress(lesson.id, 'lesson', 100, 0, 20);
+                                          await logActivity('video_watch', lesson.id, 0, 20);
+                                        } catch (error) {
+                                          console.error('Error tracking lesson progress:', error);
+                                        }
+                                      }}
                                     >
                             <div className="flex items-center gap-2.5">
                                         <div className="w-5 h-5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-md flex items-center justify-center">
