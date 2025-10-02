@@ -140,8 +140,8 @@ const StudentDashboard: React.FC = () => {
                   <div className="w-12 h-12 mx-auto mb-2 bg-yellow-400/20 rounded-full flex items-center justify-center">
                     <Star className="w-6 h-6 text-yellow-300" />
                   </div>
-                  <div className="text-2xl font-bold text-center">{stats.total_points}</div>
-                  <div className="text-sm opacity-80 text-center">نقطة إجمالية</div>
+                  <div className="text-3xl font-bold text-center mb-1">{stats.total_points}</div>
+                  <div className="text-sm opacity-90 text-center font-medium">نقطة</div>
                 </CardContent>
               </Card>
 
