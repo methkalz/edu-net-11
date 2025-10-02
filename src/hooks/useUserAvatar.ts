@@ -219,14 +219,6 @@ export const useUserAvatar = () => {
         return { success: false, error: validation.error };
       }
 
-      // التحقق من وجود وإعداد bucket التخزين
-      const { data: buckets } = await supabase.storage.listBuckets();
-      const customAvatarsBucket = buckets?.find(b => b.id === 'custom-avatars');
-      
-      if (!customAvatarsBucket) {
-        throw new Error('Storage bucket not configured properly');
-      }
-
       // حذف الصورة القديمة إذا وجدت (لمنع تراكم الملفات)
       const { data: existingFiles } = await supabase.storage
         .from('custom-avatars')
