@@ -158,8 +158,41 @@ const fetchContentForGrade = async (grade: string, userId?: string): Promise<Gra
   }
 
   try {
-    // Fetch lessons for grade 11 with hierarchical structure
-    if (grade === '11') {
+    // Fetch lessons based on grade
+    if (grade === '10') {
+      // Fetch grade 10 lessons
+      const { data: lessonData, error: lessonError } = await (supabase as any)
+        .from('grade10_lessons')
+        .select(`
+          id, title, content, is_active, order_index, created_at,
+          topic:grade10_topics(
+            id, title,
+            section:grade10_sections(id, title)
+          ),
+          media:grade10_lesson_media(
+            id, media_type, file_path, file_name, order_index
+          )
+        `)
+        .eq('is_active', true)
+        .order('order_index', { ascending: true });
+
+      if (!lessonError && lessonData) {
+        lessons = lessonData.map((item: any) => {
+          const mappedItem = mapToContentItem(item, 'lesson', grade);
+          mappedItem.content = item.content || '';
+          mappedItem.topic = item.topic;
+          mappedItem.media = item.media || [];
+          return mappedItem;
+        });
+      }
+
+      if (lessonError) {
+        logger.error('Error fetching grade 10 lessons:', lessonError);
+      } else {
+        logger.info(`Found ${lessons.length} lessons for grade ${grade}`);
+      }
+    } else if (grade === '11') {
+      // Fetch grade 11 lessons with hierarchical structure
       const { data: lessonData, error: lessonError } = await (supabase as any)
         .from('grade11_lessons')
         .select(`
@@ -178,7 +211,6 @@ const fetchContentForGrade = async (grade: string, userId?: string): Promise<Gra
       if (!lessonError && lessonData) {
         lessons = lessonData.map((item: any) => {
           const mappedItem = mapToContentItem(item, 'lesson', grade);
-          // Add additional lesson-specific data
           mappedItem.content = item.content || '';
           mappedItem.topic = item.topic;
           mappedItem.media = item.media || [];
