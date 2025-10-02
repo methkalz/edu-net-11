@@ -471,9 +471,6 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
                         {getMediaIcon(media.media_type)}
                       </div>
                       <span className="text-xl font-bold flex-1 text-foreground">{media.file_name}</span>
-                      <Badge variant="outline" className={`text-base px-4 py-2 font-semibold ${getMediaTypeBadge(media.media_type)}`}>
-                        {media.media_type}
-                      </Badge>
                       <Button
                         variant="outline"
                         size="default"
