@@ -60,6 +60,7 @@ const StudentTracking: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStudent, setSelectedStudent] = useState<StudentTrackingData | null>(null);
   const [gradeFilter, setGradeFilter] = useState<GradeFilter>('all');
+  const [contentCounts, setContentCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (user) {
@@ -93,6 +94,33 @@ const StudentTracking: React.FC = () => {
       }
 
       const classIds = teacherClasses.map(tc => tc.class_id);
+
+      // جلب إجمالي المحتوى المتاح لكل صف
+      const contentCounts: Record<string, number> = {};
+      
+      // حساب محتوى الصف العاشر
+      const { count: grade10LessonsCount } = await supabase
+        .from('grade10_lessons')
+        .select('*', { count: 'exact', head: true });
+      const { count: grade10VideosCount } = await supabase
+        .from('grade10_videos')
+        .select('*', { count: 'exact', head: true });
+      contentCounts['10'] = (grade10LessonsCount || 0) + (grade10VideosCount || 0);
+
+      // حساب محتوى الصف الحادي عشر
+      const { count: grade11LessonsCount } = await supabase
+        .from('grade11_lessons')
+        .select('*', { count: 'exact', head: true });
+      const { count: grade11VideosCount } = await supabase
+        .from('grade11_videos')
+        .select('*', { count: 'exact', head: true });
+      contentCounts['11'] = (grade11LessonsCount || 0) + (grade11VideosCount || 0);
+
+      // حساب محتوى الصف الثاني عشر
+      const { count: grade12VideosCount } = await supabase
+        .from('grade12_videos')
+        .select('*', { count: 'exact', head: true });
+      contentCounts['12'] = grade12VideosCount || 0;
 
       // 2. جلب الطلاب المسجلين في هذه الصفوف
       const { data: classStudents, error: classStudentsError } = await supabase
@@ -351,6 +379,7 @@ const StudentTracking: React.FC = () => {
       });
 
       setStudents(combinedData);
+      setContentCounts(contentCounts);
     } catch (error) {
       console.error('Error fetching student tracking:', error);
       toast.error('حدث خطأ في تحميل بيانات الطلاب');
@@ -388,17 +417,18 @@ const StudentTracking: React.FC = () => {
     return labels[type] || type;
   };
 
-  const calculateContentProgress = (student: StudentTrackingData): number => {
+  const calculateContentProgress = (student: StudentTrackingData, totalContent: Record<string, number>): number => {
     const contentProgress = student.progress_details?.content_progress || [];
-    if (contentProgress.length === 0) return 0;
+    const studentGrade = student.student_grade;
+    const totalAvailable = totalContent[studentGrade] || 1;
     
     // حساب عدد العناصر المكتملة (100%)
     const completedItems = contentProgress.filter(
       item => item.progress_percentage === 100
     ).length;
     
-    // النسبة المئوية = (العناصر المكتملة / إجمالي العناصر) × 100
-    return Math.round((completedItems / contentProgress.length) * 100);
+    // النسبة المئوية = (العناصر المكتملة / إجمالي المحتوى المتاح للصف) × 100
+    return Math.round((completedItems / totalAvailable) * 100);
   };
 
   if (loading) {
@@ -603,9 +633,9 @@ const StudentTracking: React.FC = () => {
                             <div className="flex flex-col gap-1.5 min-w-[120px] px-3 py-2 rounded-lg bg-muted/40">
                               <div className="flex items-center justify-between">
                                 <span className="text-xs text-muted-foreground">التقدم</span>
-                                <span className="text-xs font-bold text-primary">{calculateContentProgress(student)}%</span>
+                                <span className="text-xs font-bold text-primary">{calculateContentProgress(student, contentCounts)}%</span>
                               </div>
-                              <Progress value={calculateContentProgress(student)} className="h-1.5" />
+                              <Progress value={calculateContentProgress(student, contentCounts)} className="h-1.5" />
                             </div>
                             <Button 
                               variant="outline" 
@@ -669,9 +699,9 @@ const StudentTracking: React.FC = () => {
                             <div className="flex flex-col gap-1.5 min-w-[120px] px-3 py-2 rounded-lg bg-muted/40">
                               <div className="flex items-center justify-between">
                                 <span className="text-xs text-muted-foreground">التقدم</span>
-                                <span className="text-xs font-bold text-secondary">{calculateContentProgress(student)}%</span>
+                                <span className="text-xs font-bold text-secondary">{calculateContentProgress(student, contentCounts)}%</span>
                               </div>
-                              <Progress value={calculateContentProgress(student)} className="h-1.5" />
+                              <Progress value={calculateContentProgress(student, contentCounts)} className="h-1.5" />
                             </div>
                             <Button 
                               variant="outline" 
