@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { useStudentAssignedGrade } from './useStudentAssignedGrade';
 import { QUERY_KEYS, CACHE_TIMES } from '@/lib/query-keys';
 
 interface GameStats {
@@ -10,35 +11,55 @@ interface GameStats {
   totalPlayers: number;
 }
 
-const fetchStudentGameStats = async (userId: string, schoolId?: string): Promise<GameStats> => {
+const fetchStudentGameStats = async (userId: string, schoolId?: string, assignedGrade?: string): Promise<GameStats> => {
   try {
-    // Get player profile to get total XP (points)
-    const { data: playerProfile, error: profileError } = await supabase
-      .from('grade11_player_profiles')
-      .select('total_xp, level')
-      .eq('user_id', userId)
-      .maybeSingle();
+    let totalPoints = 0;
+    let completedGames = 0;
 
-    if (profileError) {
-      console.error('Error fetching player profile:', profileError);
+    if (assignedGrade === '10') {
+      // للصف العاشر: حساب من grade10_game_progress
+      const { data: progressData } = await supabase
+        .from('grade10_game_progress')
+        .select('lesson_id')
+        .eq('player_id', userId)
+        .eq('is_completed', true);
+
+      // عدد الدروس الفريدة المكتملة
+      const uniqueCompletedLessons = new Set(progressData?.map(p => p.lesson_id) || []);
+      completedGames = uniqueCompletedLessons.size;
+
+      // للصف العاشر، النقاط تأتي من get_student_total_points
+      const { data: pointsData } = await supabase
+        .rpc('get_student_total_points', { student_uuid: userId });
+      totalPoints = pointsData || 0;
+    } else {
+      // للصف الحادي عشر: المنطق الأصلي
+      const { data: playerProfile, error: profileError } = await supabase
+        .from('grade11_player_profiles')
+        .select('total_xp, level')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (profileError) {
+        console.error('Error fetching player profile:', profileError);
+      }
+
+      totalPoints = playerProfile?.total_xp || 0;
+
+      const { data: progressData, error: progressError } = await supabase
+        .from('player_game_progress')
+        .select('game_id', { count: 'exact' })
+        .eq('player_id', userId)
+        .eq('is_completed', true);
+
+      completedGames = progressData?.length || 0;
     }
-
-    const totalPoints = playerProfile?.total_xp || 0;
-
-    // Get completed games count
-    const { data: progressData, error: progressError } = await supabase
-      .from('player_game_progress')
-      .select('game_id', { count: 'exact' })
-      .eq('player_id', userId)
-      .eq('is_completed', true);
-
-    const completedGames = progressData?.length || 0;
 
     // Calculate player rank within school
     let playerRank = 0;
     let totalPlayers = 0;
 
-    if (schoolId) {
+    if (schoolId && assignedGrade === '11') {
       const { data: rankings, error: rankError } = await supabase
         .from('grade11_player_profiles')
         .select('user_id, total_xp, profiles!inner(school_id)')
@@ -71,6 +92,7 @@ const fetchStudentGameStats = async (userId: string, schoolId?: string): Promise
 
 export const useStudentGameStats = () => {
   const { user, userProfile } = useAuth();
+  const { assignedGrade } = useStudentAssignedGrade();
 
   const {
     data: stats,
@@ -79,8 +101,8 @@ export const useStudentGameStats = () => {
     refetch
   } = useQuery({
     queryKey: QUERY_KEYS.STUDENT.GAME_STATS(user?.id || ''),
-    queryFn: () => fetchStudentGameStats(user?.id || '', userProfile?.school_id),
-    enabled: Boolean(user && userProfile?.role === 'student'),
+    queryFn: () => fetchStudentGameStats(user?.id || '', userProfile?.school_id, assignedGrade),
+    enabled: Boolean(user && userProfile?.role === 'student' && assignedGrade),
     staleTime: CACHE_TIMES.MEDIUM,
     gcTime: CACHE_TIMES.LONG,
     refetchOnWindowFocus: false

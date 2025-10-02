@@ -31,19 +31,35 @@ export const StudentStats: React.FC = () => {
   const { assignedGrade } = useStudentAssignedGrade();
   const { stats: gameStats } = useStudentGameStats();
   
-  // حساب العدد الكلي لمراحل الألعاب
+  // حساب العدد الكلي لمراحل الألعاب حسب الصف
   const [totalGameStages, setTotalGameStages] = React.useState(0);
   
   React.useEffect(() => {
     const fetchTotalGameStages = async () => {
-      const { count } = await supabase
-        .from('pair_matching_games')
-        .select('*', { count: 'exact', head: true })
-        .eq('is_active', true);
-      setTotalGameStages(count || 0);
+      if (assignedGrade === '10') {
+        // للصف العاشر: حساب عدد الدروس التي لها أسئلة في لعبة المعرفة
+        const { count } = await supabase
+          .from('grade10_game_questions')
+          .select('lesson_id', { count: 'exact', head: true });
+        
+        // عدد الدروس الفريدة
+        const { data } = await supabase
+          .from('grade10_game_questions')
+          .select('lesson_id');
+        
+        const uniqueLessons = new Set(data?.map(q => q.lesson_id) || []);
+        setTotalGameStages(uniqueLessons.size);
+      } else {
+        // للصف الحادي عشر: pair_matching_games
+        const { count } = await supabase
+          .from('pair_matching_games')
+          .select('*', { count: 'exact', head: true })
+          .eq('is_active', true);
+        setTotalGameStages(count || 0);
+      }
     };
     fetchTotalGameStages();
-  }, []);
+  }, [assignedGrade]);
 
   if (loading) {
     return (
