@@ -43,10 +43,18 @@ export const useBadgeProgress = (currentPoints: number | null | undefined) => {
 
   // تحديث الوسام الحالي والتحقق من الإنجاز الجديد
   useEffect(() => {
-    if (currentPoints === null || currentPoints === undefined) return;
+    if (currentPoints === null || currentPoints === undefined) {
+      console.log('🎖️ [Badge System] No points available');
+      return;
+    }
 
+    console.log('🎖️ [Badge System] Current points:', currentPoints);
+    
     const newBadge = getBadgeByPoints(currentPoints);
     const celebratedBadges = getCelebratedBadges();
+    
+    console.log('🎖️ [Badge System] Calculated badge:', newBadge?.name || 'None');
+    console.log('🎖️ [Badge System] Previously celebrated badges:', celebratedBadges);
     
     // تحديث الوسام الحالي
     setState(prev => ({
@@ -56,6 +64,7 @@ export const useBadgeProgress = (currentPoints: number | null | undefined) => {
 
     // التحقق من وجود وسام جديد لم يتم الاحتفال به
     if (newBadge && !celebratedBadges.includes(newBadge.id)) {
+      console.log('🎉 [Badge System] NEW BADGE! Showing celebration for:', newBadge.name);
       setState(prev => ({
         ...prev,
         showCelebration: true,
@@ -64,6 +73,10 @@ export const useBadgeProgress = (currentPoints: number | null | undefined) => {
 
       // تسجيل الاحتفال في localStorage
       saveCelebratedBadge(newBadge.id);
+    } else if (newBadge && celebratedBadges.includes(newBadge.id)) {
+      console.log('✅ [Badge System] Badge already celebrated:', newBadge.name);
+    } else {
+      console.log('⚠️ [Badge System] No badge for current points');
     }
   }, [currentPoints]);
 
@@ -78,6 +91,7 @@ export const useBadgeProgress = (currentPoints: number | null | undefined) => {
 
   // إعادة تعيين التتبع (مفيد عند تسجيل الخروج مثلاً)
   const resetTracking = useCallback(() => {
+    console.log('🔄 [Badge System] Resetting badge tracking');
     setState({
       currentBadge: null,
       showCelebration: false,
@@ -85,16 +99,43 @@ export const useBadgeProgress = (currentPoints: number | null | undefined) => {
     });
     try {
       localStorage.removeItem(CELEBRATED_BADGES_KEY);
+      console.log('✅ [Badge System] Cleared celebrated badges from localStorage');
     } catch (error) {
-      console.error('Error clearing celebrated badges:', error);
+      console.error('❌ [Badge System] Error clearing celebrated badges:', error);
     }
   }, []);
+
+  // إعادة تقييم الوسام الحالي (لاختبار النظام)
+  const reevaluateBadge = useCallback(() => {
+    if (currentPoints === null || currentPoints === undefined) {
+      console.log('⚠️ [Badge System] Cannot reevaluate - no points available');
+      return;
+    }
+
+    console.log('🔍 [Badge System] Reevaluating badge for points:', currentPoints);
+    const newBadge = getBadgeByPoints(currentPoints);
+    const celebratedBadges = getCelebratedBadges();
+    
+    console.log('🎖️ [Badge System] Current badge:', newBadge?.name || 'None');
+    console.log('📋 [Badge System] Celebrated badges:', celebratedBadges);
+    
+    if (newBadge && !celebratedBadges.includes(newBadge.id)) {
+      console.log('🎉 [Badge System] FORCING celebration for:', newBadge.name);
+      setState({
+        currentBadge: newBadge,
+        showCelebration: true,
+        celebrationBadge: newBadge
+      });
+      saveCelebratedBadge(newBadge.id);
+    }
+  }, [currentPoints]);
 
   return {
     currentBadge: state.currentBadge,
     showCelebration: state.showCelebration,
     celebrationBadge: state.celebrationBadge,
     closeCelebration,
-    resetTracking
+    resetTracking,
+    reevaluateBadge
   };
 };
