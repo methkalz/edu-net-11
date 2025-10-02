@@ -93,6 +93,14 @@ const Dashboard = () => {
   const [upcomingEvents, setUpcomingEvents] = useState<CalendarEvent[]>([]);
 
   const [pluginStatsIndex, setPluginStatsIndex] = useState(0);
+  
+  // Recent activities state - displays real activities from audit_log
+  const [recentActivities, setRecentActivities] = useState<Array<{
+    title: string;
+    time: string;
+    color: string;
+    icon: any;
+  }>>([]);
 
 
   useEffect(() => {
@@ -182,6 +190,7 @@ const Dashboard = () => {
 
     fetchStats();
     fetchUpcomingEvents();
+    fetchRecentActivities();
   }, [user, userProfile]);
 
   // جلب أحداث التقويم القادمة
@@ -201,6 +210,96 @@ const Dashboard = () => {
     } catch (error) {
       logError('Error fetching upcoming events', error as Error);
       setUpcomingEvents([]);
+    }
+  };
+
+  // جلب آخر النشاطات الحقيقية من audit_log
+  const fetchRecentActivities = async () => {
+    if (userProfile?.role !== 'superadmin') return;
+
+    try {
+      const { data, error } = await supabase
+        .from('audit_log')
+        .select('*')
+        .order('created_at_utc', { ascending: false })
+        .limit(4);
+
+      if (error) throw error;
+
+      const activities = (data || []).map((log: any) => {
+        const timeAgo = getTimeAgo(log.created_at_utc);
+        
+        // تحويل نوع النشاط إلى رسالة عربية مع أيقونة مناسبة
+        let title = '';
+        let icon = Activity;
+        let color = 'blue-electric';
+
+        switch (log.action) {
+          case 'USER_PROFILE_CREATED':
+            title = 'تم إضافة مستخدم جديد';
+            icon = Users;
+            color = 'green-neon';
+            break;
+          case 'CREATE_TEACHER':
+            title = 'تم إضافة معلم جديد';
+            icon = UserCog;
+            color = 'purple-mystic';
+            break;
+          case 'CREATE_STUDENT':
+            title = 'تم إضافة طالب جديد';
+            icon = Users;
+            color = 'blue-electric';
+            break;
+          case 'CREATE_CLASS':
+            title = 'تم إضافة صف جديد';
+            icon = BookOpen;
+            color = 'orange-fire';
+            break;
+          case 'BULK_STUDENT_IMPORT':
+            const studentCount = log.payload_json?.success_count || 0;
+            title = `تم إضافة ${studentCount} طالب`;
+            icon = Users;
+            color = 'green-neon';
+            break;
+          default:
+            title = log.action.replace(/_/g, ' ');
+            icon = Activity;
+            color = 'blue-electric';
+        }
+
+        return {
+          title,
+          time: timeAgo,
+          color,
+          icon
+        };
+      });
+
+      setRecentActivities(activities);
+    } catch (error) {
+      logError('Error fetching recent activities', error as Error);
+      // Fallback to empty array
+      setRecentActivities([]);
+    }
+  };
+
+  // دالة مساعدة لحساب الوقت النسبي
+  const getTimeAgo = (timestamp: string) => {
+    const now = new Date();
+    const past = new Date(timestamp);
+    const diffInSeconds = Math.floor((now.getTime() - past.getTime()) / 1000);
+
+    if (diffInSeconds < 60) {
+      return 'منذ لحظات';
+    } else if (diffInSeconds < 3600) {
+      const minutes = Math.floor(diffInSeconds / 60);
+      return `منذ ${minutes} ${minutes === 1 ? 'دقيقة' : minutes === 2 ? 'دقيقتين' : 'دقائق'}`;
+    } else if (diffInSeconds < 86400) {
+      const hours = Math.floor(diffInSeconds / 3600);
+      return `منذ ${hours} ${hours === 1 ? 'ساعة' : hours === 2 ? 'ساعتين' : 'ساعات'}`;
+    } else {
+      const days = Math.floor(diffInSeconds / 86400);
+      return `منذ ${days} ${days === 1 ? 'يوم' : days === 2 ? 'يومين' : 'أيام'}`;
     }
   };
 
@@ -380,13 +479,6 @@ const Dashboard = () => {
       { name: 'إدارة السنوات الدراسية', icon: Calendar, path: '/academic-years' },
       { name: 'إدارة التقويم والمناسبات', icon: CalendarIcon, path: '/calendar-management' }
     ] : [])
-  ];
-
-  const recentActivities = [
-    { title: 'تم إضافة طالب جديد', time: 'منذ دقيقتين', color: 'green-neon', icon: Users },
-    { title: 'اكتمال امتحان الشبكات', time: 'منذ 5 دقائق', color: 'blue-electric', icon: Award },
-    { title: 'تحديث المنهج', time: 'منذ 10 دقائق', color: 'orange-fire', icon: BookOpen },
-    { title: 'رسالة من ولي أمر', time: 'منذ 15 دقيقة', color: 'purple-mystic', icon: Bell }
   ];
 
   const performanceCards = [
