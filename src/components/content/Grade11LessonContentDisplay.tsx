@@ -419,14 +419,17 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
                       <Badge variant="outline" className={`text-base px-4 py-2 font-semibold ${getMediaTypeBadge(media.media_type)}`}>
                         {media.media_type}
                       </Badge>
-                      <Button
-                        variant="outline"
-                        size="default"
-                        onClick={() => setPreviewMedia(media)}
-                        className="h-10 w-10 p-0 rounded-xl"
-                      >
-                        <Maximize2 className="h-5 w-5" />
-                      </Button>
+                      {/* Hide maximize button for videos since they play directly */}
+                      {media.media_type !== 'video' && (
+                        <Button
+                          variant="outline"
+                          size="default"
+                          onClick={() => setPreviewMedia(media)}
+                          className="h-10 w-10 p-0 rounded-xl"
+                        >
+                          <Maximize2 className="h-5 w-5" />
+                        </Button>
+                      )}
                     </div>
                     <div className="rounded-2xl overflow-hidden border border-border/30">
                       {renderEmbeddedMedia(media)}
