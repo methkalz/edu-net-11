@@ -26,7 +26,6 @@ import useSiteSettings from "@/hooks/useSiteSettings";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import EnhancedGameDataManagement from "./components/games/EnhancedGameDataManagement";
-import { GlobalBadgeCelebration } from "./components/badges/GlobalBadgeCelebration";
 import { 
   LazyDashboard,
   LazyAuth,
@@ -79,9 +78,6 @@ const App = () => {
     <ErrorBoundary>
       {/* Tooltip provider for UI tooltips throughout the app */}
       <TooltipProvider>
-        {/* Global Badge Celebration - works across all pages */}
-        <GlobalBadgeCelebration />
-        
         {/* Toast notification systems - dual system for flexibility */}
         <Toaster />
         <Sonner />
