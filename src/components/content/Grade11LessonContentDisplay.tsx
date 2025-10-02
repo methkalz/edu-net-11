@@ -97,14 +97,23 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
 
   const renderEmbeddedMedia = (media: any) => {
     const metadata = media.metadata || {};
+    console.log('🎬 renderEmbeddedMedia called for:', media.file_name);
+    console.log('Media type:', media.media_type);
+    console.log('Metadata:', JSON.stringify(metadata, null, 2));
 
     switch (media.media_type) {
       case 'video':
+        console.log('✅ Video case - source_type:', metadata.source_type);
+        console.log('YouTube ID:', metadata.youtube_id);
+        
         if (metadata.source_type === 'youtube' && metadata.youtube_id) {
+          const embedUrl = `https://www.youtube.com/embed/${metadata.youtube_id}`;
+          console.log('🎥 Rendering YouTube iframe with URL:', embedUrl);
+          
           return (
-            <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-100">
+            <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-900" style={{ minHeight: '400px' }}>
               <iframe
-                src={`https://www.youtube.com/embed/${metadata.youtube_id}`}
+                src={embedUrl}
                 title={media.file_name}
                 className="w-full h-full"
                 frameBorder="0"
