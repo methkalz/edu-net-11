@@ -44,7 +44,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import GradeContentViewer from '@/components/content/GradeContentViewer';
@@ -626,87 +626,79 @@ const TeacherDashboard: React.FC = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-
-              {/* Grade 10 Content */}
-              {schoolPackageContents.includes('grade10') && canAccessGrade('10') && (
-                <Collapsible>
-                  <CollapsibleTrigger asChild>
-                    <Button variant="outline" className="w-full justify-between text-lg h-14 hover:bg-blue-50">
-                      <div className="flex items-center gap-3">
+              <Accordion type="multiple" className="space-y-4">
+                {/* Grade 10 Content */}
+                {schoolPackageContents.includes('grade10') && canAccessGrade('10') && (
+                  <AccordionItem value="grade-10" className="border rounded-lg overflow-hidden">
+                    <AccordionTrigger className="hover:no-underline hover:bg-blue-50 px-4">
+                      <div className="flex items-center gap-3 w-full">
                         <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
                           <Video className="h-5 w-5 text-blue-600" />
                         </div>
-                        <div className="text-right">
-                          <div className="font-bold">الصف العاشر</div>
+                        <div className="text-right flex-1">
+                          <div className="font-bold text-lg">الصف العاشر</div>
                           <div className="text-sm text-muted-foreground">
                             {grade10Videos.length} فيديو • {grade10Documents.length} مستند
                           </div>
                         </div>
                       </div>
-                      <ChevronDown className="h-4 w-4" />
-                    </Button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="mt-4">
-                    <div className="border rounded-lg p-4 bg-muted/20">
-                      <TeacherContentViewer grade="10" />
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              )}
+                    </AccordionTrigger>
+                    <AccordionContent className="px-4 pb-4">
+                      <div className="border rounded-lg p-4 bg-muted/20 mt-2">
+                        <TeacherContentViewer grade="10" />
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                )}
 
-              {/* Grade 11 Content */}
-              {schoolPackageContents.includes('grade11') && canAccessGrade('11') && (
-                <Collapsible>
-                  <CollapsibleTrigger asChild>
-                    <Button variant="outline" className="w-full justify-between text-lg h-14 hover:bg-green-50">
-                      <div className="flex items-center gap-3">
+                {/* Grade 11 Content */}
+                {schoolPackageContents.includes('grade11') && canAccessGrade('11') && (
+                  <AccordionItem value="grade-11" className="border rounded-lg overflow-hidden">
+                    <AccordionTrigger className="hover:no-underline hover:bg-green-50 px-4">
+                      <div className="flex items-center gap-3 w-full">
                         <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
                           <BookOpen className="h-5 w-5 text-green-600" />
                         </div>
-                        <div className="text-right">
-                          <div className="font-bold">الصف الحادي عشر</div>
+                        <div className="text-right flex-1">
+                          <div className="font-bold text-lg">الصف الحادي عشر</div>
                           <div className="text-sm text-muted-foreground">
                             {grade11Documents.length} مستند • {grade11Videos.length} فيديو
                           </div>
                         </div>
                       </div>
-                      <ChevronDown className="h-4 w-4" />
-                    </Button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="mt-4">
-                    <div className="border rounded-lg p-4 bg-muted/20">
-                      <TeacherContentViewer grade="11" />
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              )}
+                    </AccordionTrigger>
+                    <AccordionContent className="px-4 pb-4">
+                      <div className="border rounded-lg p-4 bg-muted/20 mt-2">
+                        <TeacherContentViewer grade="11" />
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                )}
 
-              {/* Grade 12 Content */}
-              {schoolPackageContents.includes('grade12') && canAccessGrade('12') && (
-                <Collapsible>
-                  <CollapsibleTrigger asChild>
-                    <Button variant="outline" className="w-full justify-between text-lg h-14 hover:bg-purple-50">
-                      <div className="flex items-center gap-3">
+                {/* Grade 12 Content */}
+                {schoolPackageContents.includes('grade12') && canAccessGrade('12') && (
+                  <AccordionItem value="grade-12" className="border rounded-lg overflow-hidden">
+                    <AccordionTrigger className="hover:no-underline hover:bg-purple-50 px-4">
+                      <div className="flex items-center gap-3 w-full">
                         <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
                           <Trophy className="h-5 w-5 text-purple-600" />
                         </div>
-                        <div className="text-right">
-                          <div className="font-bold">الصف الثاني عشر</div>
+                        <div className="text-right flex-1">
+                          <div className="font-bold text-lg">الصف الثاني عشر</div>
                           <div className="text-sm text-muted-foreground">
                             {projects.length} مشروع نهائي • {grade12Documents.length} مستند
                           </div>
                         </div>
                       </div>
-                      <ChevronDown className="h-4 w-4" />
-                    </Button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="mt-4">
-                    <div className="border rounded-lg p-4 bg-muted/20">
-                      <TeacherContentViewer grade="12" />
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              )}
+                    </AccordionTrigger>
+                    <AccordionContent className="px-4 pb-4">
+                      <div className="border rounded-lg p-4 bg-muted/20 mt-2">
+                        <TeacherContentViewer grade="12" />
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                )}
+              </Accordion>
 
               {/* رسالة عند عدم وجود صفوف مخصصة للمعلم */}
               {schoolPackageContents.length > 0 && allowedGrades.length === 0 && !accessLoading && (
