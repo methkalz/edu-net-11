@@ -4,12 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/types/badge';
 import { AVAILABLE_BADGES } from '@/utils/badgeSystem';
 import { BadgeCelebration } from '@/components/badges/BadgeCelebration';
-import { ArrowLeft, Trash2, Sparkles } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { ArrowLeft, Sparkles } from 'lucide-react';
 
 const BadgeTestPage = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [activeBadge, setActiveBadge] = useState<Badge | null>(null);
   const [celebratedCount, setCelebratedCount] = useState(() => {
     try {
@@ -26,23 +24,6 @@ const BadgeTestPage = () => {
 
   const handleCloseCelebration = () => {
     setActiveBadge(null);
-  };
-
-  const handleClearMemory = () => {
-    try {
-      localStorage.removeItem('celebrated_badges');
-      setCelebratedCount(0);
-      toast({
-        title: "تم مسح الذاكرة",
-        description: "تم حذف جميع الأوسمة المحتفل بها من الذاكرة",
-      });
-    } catch (error) {
-      toast({
-        title: "خطأ",
-        description: "حدث خطأ أثناء مسح الذاكرة",
-        variant: "destructive"
-      });
-    }
   };
 
   return (
@@ -69,25 +50,15 @@ const BadgeTestPage = () => {
 
         {/* Control Panel - Minimalist */}
         <div className="mb-12 pb-8 border-b">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-            <div className="flex items-center gap-8">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">الأوسمة المتاحة</p>
-                <p className="text-2xl font-semibold">{AVAILABLE_BADGES.length}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">المحتفل بها</p>
-                <p className="text-2xl font-semibold">{celebratedCount}</p>
-              </div>
+          <div className="flex items-center gap-8">
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">الأوسمة المتاحة</p>
+              <p className="text-2xl font-semibold">{AVAILABLE_BADGES.length}</p>
             </div>
-            <Button
-              variant="outline"
-              onClick={handleClearMemory}
-              className="gap-2 hover:bg-destructive hover:text-destructive-foreground transition-colors"
-            >
-              <Trash2 className="w-4 h-4" />
-              مسح الذاكرة
-            </Button>
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">المحتفل بها</p>
+              <p className="text-2xl font-semibold">{celebratedCount}</p>
+            </div>
           </div>
         </div>
 
