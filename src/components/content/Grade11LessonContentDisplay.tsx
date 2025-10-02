@@ -33,7 +33,12 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
 }) => {
   const { userProfile } = useAuth();
   const { updateLottieMedia } = useEditLottieMedia();
-  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+  
+  // Check if lesson contains video media - if yes, auto-expand
+  const hasVideo = lesson.media?.some(media => media.media_type === 'video') || false;
+  const shouldAutoExpand = defaultExpanded || hasVideo;
+  
+  const [isExpanded, setIsExpanded] = useState(shouldAutoExpand);
   const [previewMedia, setPreviewMedia] = useState<any>(null);
   const [editingLottie, setEditingLottie] = useState<any>(null);
   const { lottieSettings } = useSharedLottieSettings();
