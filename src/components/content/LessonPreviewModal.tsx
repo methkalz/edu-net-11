@@ -53,9 +53,10 @@ const LessonPreviewModal: React.FC<LessonPreviewModalProps> = ({
             
             {lesson.content && (
               <div className="bg-white/50 p-4 rounded-lg border border-blue-100">
-                <p className="text-foreground leading-relaxed text-base text-center">
-                  {lesson.content}
-                </p>
+                <div 
+                  className="text-foreground leading-relaxed text-base text-center prose prose-lg max-w-none"
+                  dangerouslySetInnerHTML={{ __html: lesson.content }}
+                />
               </div>
             )}
             

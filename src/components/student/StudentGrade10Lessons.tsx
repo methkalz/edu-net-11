@@ -427,9 +427,10 @@ export const StudentGrade10Lessons: React.FC = () => {
               {/* Lesson Content */}
               {selectedLesson.content && (
                 <div className="prose prose-sm max-w-none">
-                  <div className="text-xl text-foreground/90 leading-9 whitespace-pre-wrap break-words max-w-full p-8 bg-gradient-to-r from-muted/30 to-muted/20 rounded-3xl border-2 border-border/30 shadow-sm">
-                    {selectedLesson.content}
-                  </div>
+                  <div 
+                    className="text-xl text-foreground/90 leading-9 break-words max-w-full p-8 bg-gradient-to-r from-muted/30 to-muted/20 rounded-3xl border-2 border-border/30 shadow-sm prose prose-lg"
+                    dangerouslySetInnerHTML={{ __html: selectedLesson.content }}
+                  />
                 </div>
               )}
 
