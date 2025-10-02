@@ -86,8 +86,16 @@ export const StudentStats: React.FC = () => {
   ).length;
   
   // حساب الإجمالي الكلي
-  const totalCompleted = completedContent + gameStats.completedGames;
-  const totalAll = totalContent + totalGameStages;
+  // للصف الثاني عشر: معدل التقدم يعتمد على الفيديوهات فقط
+  const totalCompleted = assignedGrade === '12' 
+    ? stats.completed_videos 
+    : completedContent + gameStats.completedGames;
+  const totalAll = assignedGrade === '12' 
+    ? (gradeContent?.videos || []).length 
+    : totalContent + totalGameStages;
+  
+  // حساب نسبة التقدم للصف الثاني عشر
+  const grade12ProgressPercentage = totalAll > 0 ? Math.round((totalCompleted / totalAll) * 100) : 0;
 
   const statCards = [
     {
@@ -100,11 +108,13 @@ export const StudentStats: React.FC = () => {
     },
     {
       title: 'معدل التقدم',
-      value: `${progressPercentage}%`,
+      value: assignedGrade === '12' ? `${grade12ProgressPercentage}%` : `${progressPercentage}%`,
       icon: TrendingUp,
       gradient: 'from-green-400 to-emerald-400',
       bgGradient: 'from-green-50 to-emerald-50',
-      description: `${totalCompleted} من ${totalAll}`
+      description: assignedGrade === '12' 
+        ? `${totalCompleted} فيديو من ${totalAll}` 
+        : `${totalCompleted} من ${totalAll}`
     },
     {
       title: 'الفيديوهات المكتملة',
@@ -185,7 +195,7 @@ export const StudentStats: React.FC = () => {
                 {stat.title === 'معدل التقدم' && (
                   <div className="mt-4">
                     <Progress 
-                      value={progressPercentage} 
+                      value={assignedGrade === '12' ? grade12ProgressPercentage : progressPercentage} 
                       className="h-2 bg-white/50"
                     />
                   </div>
