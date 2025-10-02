@@ -392,12 +392,13 @@ const StudentTracking: React.FC = () => {
     const contentProgress = student.progress_details?.content_progress || [];
     if (contentProgress.length === 0) return 0;
     
-    const totalProgress = contentProgress.reduce(
-      (sum, item) => sum + (item.progress_percentage || 0), 
-      0
-    );
+    // حساب عدد العناصر المكتملة (100%)
+    const completedItems = contentProgress.filter(
+      item => item.progress_percentage === 100
+    ).length;
     
-    return Math.round(totalProgress / contentProgress.length);
+    // النسبة المئوية = (العناصر المكتملة / إجمالي العناصر) × 100
+    return Math.round((completedItems / contentProgress.length) * 100);
   };
 
   if (loading) {
