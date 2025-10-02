@@ -23,7 +23,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Routes, Route } from "react-router-dom";
 import { ErrorBoundary } from "@/lib/error-boundary";
 import useSiteSettings from "@/hooks/useSiteSettings";
-import { GlobalBadgeCelebration } from "@/components/badges/GlobalBadgeCelebration";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import EnhancedGameDataManagement from "./components/games/EnhancedGameDataManagement";
@@ -82,8 +81,6 @@ const App = () => {
         {/* Toast notification systems - dual system for flexibility */}
         <Toaster />
         <Sonner />
-        {/* Global Badge Celebration - monitors badge achievements across all pages */}
-        <GlobalBadgeCelebration />
         {/* Suspense boundary for lazy-loaded components */}
         <Suspense fallback={<PageLoading message="Loading..." />}>
           <Routes>
