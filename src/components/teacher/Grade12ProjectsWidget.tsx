@@ -110,7 +110,7 @@ const Grade12ProjectsWidget: React.FC = () => {
       
       <CardContent className="space-y-6">
         {/* إحصائيات سريعة */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="text-center p-5 bg-gradient-to-br from-blue-50/30 to-blue-50/10 rounded-2xl border-2 border-blue-100/40">
             <div className="flex items-center justify-center mb-3">
               <div className="w-8 h-8 rounded-xl bg-blue-100/40 flex items-center justify-center">
