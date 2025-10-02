@@ -390,25 +390,30 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
           <div className="text-lg font-bold text-primary mb-4">
             🎥 مقاطع الفيديو ({videoMedia.length})
           </div>
-          {videoMedia.map((media) => {
-            console.log('Rendering video card for:', media.file_name);
-            console.log('Video metadata:', media.metadata);
-            return (
-              <Card key={media.id} className="overflow-hidden border-2 shadow-lg hover:shadow-xl transition-all duration-300">
-                <CardContent className="p-8">
-                  <div className="flex items-center justify-start gap-4 mb-6">
-                    <div className="p-3 bg-primary/10 rounded-2xl">
-                      {getMediaIcon(media.media_type)}
-                    </div>
-                    <span className="text-xl font-bold flex-1 text-foreground">{media.file_name}</span>
+          {videoMedia.map((media) => (
+            <Card key={media.id} className="overflow-hidden border-2 shadow-lg hover:shadow-xl transition-all duration-300">
+              <CardContent className="p-8">
+                <div className="flex items-center justify-start gap-4 mb-6">
+                  <div className="p-3 bg-primary/10 rounded-2xl">
+                    {getMediaIcon(media.media_type)}
                   </div>
-                  <div className="rounded-2xl overflow-hidden border border-border/30 bg-gray-900">
-                    {renderEmbeddedMedia(media)}
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+                  <span className="text-xl font-bold flex-1 text-foreground">{media.file_name}</span>
+                  <Button
+                    variant="outline"
+                    size="default"
+                    onClick={() => setPreviewMedia(media)}
+                    className="h-10 w-10 p-0 rounded-xl"
+                    title="عرض بملء الشاشة"
+                  >
+                    <Maximize2 className="h-5 w-5" />
+                  </Button>
+                </div>
+                <div className="rounded-2xl overflow-hidden border border-border/30 bg-gray-900">
+                  {renderEmbeddedMedia(media)}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       )}
 
@@ -428,6 +433,7 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
                     size="default"
                     onClick={() => setPreviewMedia(media)}
                     className="h-10 w-10 p-0 rounded-xl"
+                    title="عرض بملء الشاشة"
                   >
                     <Maximize2 className="h-5 w-5" />
                   </Button>
