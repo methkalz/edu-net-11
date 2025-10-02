@@ -146,19 +146,24 @@ const StudentDashboard: React.FC = () => {
               </Card>
 
               <Card className="bg-white/10 backdrop-blur border-white/20 text-white relative overflow-hidden">
-                <div className="absolute top-0 left-0 bg-gradient-to-r from-red-700 via-red-800 to-red-900 text-white px-16 py-1.5 text-xs font-bold whitespace-nowrap transform -rotate-[55deg] -translate-x-[4.25rem] translate-y-7 shadow-lg z-10">
-                  <span className="inline-block -translate-x-2">
+                <CardContent className="p-4 flex flex-col items-center justify-center text-center min-h-[120px]">
+                  {/* Badge Display */}
+                  <div className="mb-2">
+                    <UserTitleBadge 
+                      role={userProfile?.role || 'student'}
+                      displayTitle={userProfile?.display_title}
+                      points={stats.total_points}
+                      showIcon={false}
+                      size="lg"
+                    />
+                  </div>
+                  {/* Badge Title Text */}
+                  <div className="text-sm font-bold mt-2 opacity-90">
                     {currentBadge?.title || userProfile?.display_title || 'طالب جديد'}
-                  </span>
-                </div>
-                <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-                  <UserTitleBadge 
-                    role={userProfile?.role || 'student'}
-                    displayTitle={userProfile?.display_title}
-                    points={stats.total_points}
-                    showIcon={false}
-                    size="lg"
-                  />
+                  </div>
+                  <div className="text-xs opacity-70 mt-1">
+                    الوسام الحالي
+                  </div>
                 </CardContent>
               </Card>
 
