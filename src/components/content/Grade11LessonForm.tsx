@@ -58,7 +58,7 @@ const Grade11LessonForm: React.FC<Grade11LessonFormProps> = ({
 
   return (
     <Dialog open={true} onOpenChange={onCancel}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {lesson ? 'تعديل الدرس' : 'إضافة درس جديد'}
@@ -91,7 +91,8 @@ const Grade11LessonForm: React.FC<Grade11LessonFormProps> = ({
                   value={formData.content}
                   onChange={(e) => handleContentChange(e.target.value)}
                   placeholder="أدخل محتوى الدرس"
-                  rows={8}
+                  rows={15}
+                  className="min-h-[400px]"
                 />
               </div>
 
