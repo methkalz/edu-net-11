@@ -388,6 +388,18 @@ const StudentTracking: React.FC = () => {
     return labels[type] || type;
   };
 
+  const calculateContentProgress = (student: StudentTrackingData): number => {
+    const contentProgress = student.progress_details?.content_progress || [];
+    if (contentProgress.length === 0) return 0;
+    
+    const totalProgress = contentProgress.reduce(
+      (sum, item) => sum + (item.progress_percentage || 0), 
+      0
+    );
+    
+    return Math.round(totalProgress / contentProgress.length);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
@@ -587,6 +599,13 @@ const StudentTracking: React.FC = () => {
                               <Activity className="h-4 w-4 text-purple-500" />
                               <span className="text-sm font-semibold">{student.progress_details?.content_progress?.length || 0}</span>
                             </div>
+                            <div className="flex flex-col gap-1.5 min-w-[120px] px-3 py-2 rounded-lg bg-muted/40">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs text-muted-foreground">التقدم</span>
+                                <span className="text-xs font-bold text-primary">{calculateContentProgress(student)}%</span>
+                              </div>
+                              <Progress value={calculateContentProgress(student)} className="h-1.5" />
+                            </div>
                             <Button 
                               variant="outline" 
                               size="sm"
@@ -645,6 +664,13 @@ const StudentTracking: React.FC = () => {
                             <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/40">
                               <Activity className="h-4 w-4 text-purple-500" />
                               <span className="text-sm font-semibold">{student.progress_details?.content_progress?.length || 0}</span>
+                            </div>
+                            <div className="flex flex-col gap-1.5 min-w-[120px] px-3 py-2 rounded-lg bg-muted/40">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs text-muted-foreground">التقدم</span>
+                                <span className="text-xs font-bold text-secondary">{calculateContentProgress(student)}%</span>
+                              </div>
+                              <Progress value={calculateContentProgress(student)} className="h-1.5" />
                             </div>
                             <Button 
                               variant="outline" 
