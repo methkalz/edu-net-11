@@ -51,6 +51,11 @@ export const UniversalAvatar = React.forwardRef<
   const getAvatarSrc = () => {
     if (!avatarUrl) return null;
     
+    // If it's a data URL (uploaded image preview), use it as is
+    if (avatarUrl.startsWith('data:')) {
+      return avatarUrl;
+    }
+    
     // If it's already a full path, use it as is
     if (avatarUrl.startsWith('/') || avatarUrl.startsWith('http')) {
       return avatarUrl;
