@@ -185,7 +185,7 @@ const Grade12ProjectsWidget: React.FC = () => {
                 <FileText className="h-8 w-8 text-secondary/40" />
               </div>
               <h3 className="font-medium text-foreground mb-2 text-center">لا توجد مشاريع بعد</h3>
-              <p className="text-sm text-text-soft">
+              <p className="text-sm text-text-soft text-center">
                 سيظهر هنا آخر المشاريع عند إنشائها من قبل الطلاب
               </p>
             </div>
