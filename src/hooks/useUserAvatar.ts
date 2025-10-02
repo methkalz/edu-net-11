@@ -208,7 +208,7 @@ export const useUserAvatar = () => {
         return { success: false, error: 'Unauthorized' };
       }
 
-      // فحص الصورة
+      // فحص الصورة مع الإجراءات الأمنية الشاملة
       const validation = await validateImage(file);
       if (!validation.valid) {
         toast({
@@ -219,63 +219,29 @@ export const useUserAvatar = () => {
         return { success: false, error: validation.error };
       }
 
-      // التحقق من وجود وإعداد bucket التخزين
-      const { data: buckets } = await supabase.storage.listBuckets();
-      const customAvatarsBucket = buckets?.find(b => b.id === 'custom-avatars');
-      
-      if (!customAvatarsBucket) {
-        throw new Error('Storage bucket not configured properly');
-      }
+      // تحويل الصورة إلى base64 لحفظها في قاعدة البيانات
+      const base64Image = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          resolve(result);
+        };
+        reader.onerror = () => reject(new Error('فشل قراءة الملف'));
+        reader.readAsDataURL(file);
+      });
 
-      // حذف الصورة القديمة إذا وجدت (لمنع تراكم الملفات)
-      const { data: existingFiles } = await supabase.storage
-        .from('custom-avatars')
-        .list(targetUserId);
-
-      if (existingFiles && existingFiles.length > 0) {
-        const filesToDelete = existingFiles.map(f => `${targetUserId}/${f.name}`);
-        await supabase.storage
-          .from('custom-avatars')
-          .remove(filesToDelete);
-      }
-
-      // إنشاء اسم ملف آمن وفريد
-      const secureFilename = generateSecureFilename(file);
-      const fileName = `${targetUserId}/${secureFilename}`;
-
-      // رفع الصورة مع خيارات أمنية
-      const { error: uploadError, data } = await supabase.storage
-        .from('custom-avatars')
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: false,
-          contentType: file.type // تحديد نوع المحتوى صراحة
-        });
-
-      if (uploadError) {
-        console.error('Upload error:', uploadError);
-        throw uploadError;
-      }
-
-      // الحصول على URL العام للصورة
-      const { data: { publicUrl } } = supabase.storage
-        .from('custom-avatars')
-        .getPublicUrl(fileName);
-
-      // تحديث الملف الشخصي
+      // حفظ الصورة كـ base64 في قاعدة البيانات (بدون استخدام Supabase Storage)
+      // هذا يحفظ الصورة "محلياً" في قاعدة البيانات
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ 
-          avatar_url: publicUrl,
+          avatar_url: base64Image, // حفظ الصورة كـ data URL
           updated_at: new Date().toISOString()
         })
         .eq('user_id', targetUserId);
 
       if (updateError) {
-        // في حالة فشل التحديث، حذف الصورة المرفوعة
-        await supabase.storage
-          .from('custom-avatars')
-          .remove([fileName]);
+        console.error('Update error:', updateError);
         throw updateError;
       }
 
@@ -284,7 +250,7 @@ export const useUserAvatar = () => {
         description: 'تم رفع صورة البروفايل بنجاح'
       });
 
-      return { success: true, avatarUrl: publicUrl };
+      return { success: true, avatarUrl: base64Image };
     } catch (error) {
       console.error('Error uploading custom avatar:', error);
       toast({
