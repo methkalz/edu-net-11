@@ -104,24 +104,42 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
     switch (media.media_type) {
       case 'video':
         console.log('✅ Video case - source_type:', metadata.source_type);
-        console.log('YouTube ID:', metadata.youtube_id);
         
-        if (metadata.source_type === 'youtube' && metadata.youtube_id) {
-          const embedUrl = `https://www.youtube.com/embed/${metadata.youtube_id}`;
-          console.log('🎥 Rendering YouTube iframe with URL:', embedUrl);
+        if (metadata.source_type === 'youtube') {
+          // Extract YouTube ID from various possible formats
+          let youtubeId = metadata.youtube_id;
           
-          return (
-            <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-900" style={{ minHeight: '400px' }}>
-              <iframe
-                src={embedUrl}
-                title={media.file_name}
-                className="w-full h-full"
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
-            </div>
-          );
+          if (!youtubeId && metadata.video_url) {
+            // Extract from video_url (e.g., "https://www.youtube.com/embed/vX_1Yit53Lc")
+            const urlMatch = metadata.video_url.match(/(?:embed\/|v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+            if (urlMatch) youtubeId = urlMatch[1];
+          }
+          
+          if (!youtubeId && metadata.file_path) {
+            // Extract from file_path
+            const pathMatch = metadata.file_path.match(/(?:embed\/|v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+            if (pathMatch) youtubeId = pathMatch[1];
+          }
+          
+          console.log('Extracted YouTube ID:', youtubeId);
+          
+          if (youtubeId) {
+            const embedUrl = `https://www.youtube.com/embed/${youtubeId}`;
+            console.log('🎥 Rendering YouTube iframe with URL:', embedUrl);
+            
+            return (
+              <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-900" style={{ minHeight: '400px' }}>
+                <iframe
+                  src={embedUrl}
+                  title={media.file_name}
+                  className="w-full h-full"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+            );
+          }
         } else if (metadata.source_type === 'google_drive' && metadata.drive_id) {
           return (
             <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-100">
