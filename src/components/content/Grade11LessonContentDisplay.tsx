@@ -9,7 +9,7 @@ import { useSharedLottieSettings } from '@/hooks/useSharedLottieSettings';
 import { useAuth } from '@/hooks/useAuth';
 import { useEditLottieMedia } from '@/hooks/useEditLottieMedia';
 import { LottieEditForm } from './LottieEditForm';
-import MediaPreview from './MediaPreview';
+import MediaFullscreenView from './MediaFullscreenView';
 import CodeBlock from './CodeBlock';
 import TypewriterCodeBlock from './TypewriterCodeBlock';
 import { logger } from '@/lib/logger';
@@ -447,12 +447,11 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
         </div>
       )}
 
-      {/* Media Preview Modal */}
+      {/* Media Fullscreen View */}
       {previewMedia && (
-        <MediaPreview
+        <MediaFullscreenView
           media={previewMedia}
           onClose={() => setPreviewMedia(null)}
-          onUpdateMedia={onUpdateMedia}
         />
       )}
 
