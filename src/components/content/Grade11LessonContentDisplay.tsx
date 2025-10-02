@@ -320,6 +320,13 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
   const sortedMedia = lesson.media?.sort((a, b) => a.order_index - b.order_index) || [];
   const videoMedia = sortedMedia.filter(m => m.media_type === 'video');
   const otherMedia = sortedMedia.filter(m => m.media_type !== 'video');
+  
+  console.log('=== VIDEO DEBUG ===');
+  console.log('Total media:', sortedMedia.length);
+  console.log('Video media:', videoMedia.length);
+  console.log('Other media:', otherMedia.length);
+  console.log('All media types:', sortedMedia.map(m => m.media_type));
+  console.log('Video media items:', videoMedia);
 
   // Lottie Display Component with speed control
   const LottieDisplay = ({ animationData, loop, speed }: { animationData: any, loop: boolean, speed: number }) => {
