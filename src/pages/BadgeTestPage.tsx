@@ -107,7 +107,7 @@ const BadgeTestPage = () => {
       {activeBadge && (
         <BadgeCelebration
           badge={activeBadge}
-          studentName="اختبار الوسام"
+          studentName="أنس عمارنة"
           onClose={handleCloseCelebration}
         />
       )}
