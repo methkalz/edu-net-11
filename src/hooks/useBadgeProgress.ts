@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Badge } from '@/types/badge';
 import { getBadgeByPoints } from '@/utils/badgeSystem';
+import { supabase } from '@/integrations/supabase/client';
 
 interface BadgeProgressState {
   currentBadge: Badge | null;
@@ -8,27 +9,28 @@ interface BadgeProgressState {
   celebrationBadge: Badge | null;
 }
 
-// مفتاح localStorage للأوسمة المحتفل بها
-const CELEBRATED_BADGES_KEY = 'celebrated_badges';
-
-// دالة مساعدة لجلب الأوسمة المحتفل بها من localStorage
-const getCelebratedBadges = (): string[] => {
+// دالة للتحقق من الاحتفال بالوسام من قاعدة البيانات
+const checkCelebratedBadge = async (userId: string, badgeId: string): Promise<boolean> => {
   try {
-    const stored = localStorage.getItem(CELEBRATED_BADGES_KEY);
-    return stored ? JSON.parse(stored) : [];
+    const { data } = await supabase
+      .rpc('has_celebrated_badge', {
+        p_student_id: userId,
+        p_badge_id: badgeId
+      });
+    return data === true;
   } catch (error) {
-    console.error('Error reading celebrated badges:', error);
-    return [];
+    console.error('Error checking celebrated badge:', error);
+    return false;
   }
 };
 
-// دالة مساعدة لحفظ وسام محتفل به في localStorage
-const saveCelebratedBadge = (badgeId: string): void => {
+// دالة لحفظ الاحتفال بالوسام في قاعدة البيانات
+const saveCelebratedBadge = async (userId: string, badgeId: string): Promise<void> => {
   try {
-    const current = getCelebratedBadges();
-    if (!current.includes(badgeId)) {
-      localStorage.setItem(CELEBRATED_BADGES_KEY, JSON.stringify([...current, badgeId]));
-    }
+    await supabase.rpc('record_badge_celebration', {
+      p_student_id: userId,
+      p_badge_id: badgeId
+    });
   } catch (error) {
     console.error('Error saving celebrated badge:', error);
   }
@@ -40,45 +42,63 @@ export const useBadgeProgress = (currentPoints: number | null | undefined) => {
     showCelebration: false,
     celebrationBadge: null
   });
+  const [userId, setUserId] = useState<string | null>(null);
+
+  // جلب معرف المستخدم
+  useEffect(() => {
+    const getUserId = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+      }
+    };
+    getUserId();
+  }, []);
 
   // تحديث الوسام الحالي والتحقق من الإنجاز الجديد
   useEffect(() => {
-    if (currentPoints === null || currentPoints === undefined) {
-      console.log('🎖️ [Badge System] No points available');
+    if (!userId || currentPoints === null || currentPoints === undefined) {
+      console.log('🎖️ [Badge System] Waiting for user or points');
       return;
     }
 
-    console.log('🎖️ [Badge System] Current points:', currentPoints);
-    
-    const newBadge = getBadgeByPoints(currentPoints);
-    const celebratedBadges = getCelebratedBadges();
-    
-    console.log('🎖️ [Badge System] Calculated badge:', newBadge?.name || 'None');
-    console.log('🎖️ [Badge System] Previously celebrated badges:', celebratedBadges);
-    
-    // تحديث الوسام الحالي
-    setState(prev => ({
-      ...prev,
-      currentBadge: newBadge
-    }));
-
-    // التحقق من وجود وسام جديد لم يتم الاحتفال به
-    if (newBadge && !celebratedBadges.includes(newBadge.id)) {
-      console.log('🎉 [Badge System] NEW BADGE! Showing celebration for:', newBadge.name);
+    const checkAndUpdateBadge = async () => {
+      console.log('🎖️ [Badge System] Current points:', currentPoints);
+      
+      const newBadge = getBadgeByPoints(currentPoints);
+      console.log('🎖️ [Badge System] Calculated badge:', newBadge?.name || 'None');
+      
+      // تحديث الوسام الحالي
       setState(prev => ({
         ...prev,
-        showCelebration: true,
-        celebrationBadge: newBadge
+        currentBadge: newBadge
       }));
 
-      // تسجيل الاحتفال في localStorage
-      saveCelebratedBadge(newBadge.id);
-    } else if (newBadge && celebratedBadges.includes(newBadge.id)) {
-      console.log('✅ [Badge System] Badge already celebrated:', newBadge.name);
-    } else {
-      console.log('⚠️ [Badge System] No badge for current points');
-    }
-  }, [currentPoints]);
+      // التحقق من وجود وسام جديد لم يتم الاحتفال به
+      if (newBadge) {
+        const hasCelebrated = await checkCelebratedBadge(userId, newBadge.id);
+        console.log('🎖️ [Badge System] Has celebrated:', hasCelebrated);
+        
+        if (!hasCelebrated) {
+          console.log('🎉 [Badge System] NEW BADGE! Showing celebration for:', newBadge.name);
+          setState(prev => ({
+            ...prev,
+            showCelebration: true,
+            celebrationBadge: newBadge
+          }));
+
+          // تسجيل الاحتفال في قاعدة البيانات
+          await saveCelebratedBadge(userId, newBadge.id);
+        } else {
+          console.log('✅ [Badge System] Badge already celebrated:', newBadge.name);
+        }
+      } else {
+        console.log('⚠️ [Badge System] No badge for current points');
+      }
+    };
+
+    checkAndUpdateBadge();
+  }, [currentPoints, userId]);
 
   // إغلاق الاحتفال
   const closeCelebration = useCallback(() => {
@@ -89,53 +109,10 @@ export const useBadgeProgress = (currentPoints: number | null | undefined) => {
     }));
   }, []);
 
-  // إعادة تعيين التتبع (مفيد عند تسجيل الخروج مثلاً)
-  const resetTracking = useCallback(() => {
-    console.log('🔄 [Badge System] Resetting badge tracking');
-    setState({
-      currentBadge: null,
-      showCelebration: false,
-      celebrationBadge: null
-    });
-    try {
-      localStorage.removeItem(CELEBRATED_BADGES_KEY);
-      console.log('✅ [Badge System] Cleared celebrated badges from localStorage');
-    } catch (error) {
-      console.error('❌ [Badge System] Error clearing celebrated badges:', error);
-    }
-  }, []);
-
-  // إعادة تقييم الوسام الحالي (لاختبار النظام)
-  const reevaluateBadge = useCallback(() => {
-    if (currentPoints === null || currentPoints === undefined) {
-      console.log('⚠️ [Badge System] Cannot reevaluate - no points available');
-      return;
-    }
-
-    console.log('🔍 [Badge System] Reevaluating badge for points:', currentPoints);
-    const newBadge = getBadgeByPoints(currentPoints);
-    const celebratedBadges = getCelebratedBadges();
-    
-    console.log('🎖️ [Badge System] Current badge:', newBadge?.name || 'None');
-    console.log('📋 [Badge System] Celebrated badges:', celebratedBadges);
-    
-    if (newBadge && !celebratedBadges.includes(newBadge.id)) {
-      console.log('🎉 [Badge System] FORCING celebration for:', newBadge.name);
-      setState({
-        currentBadge: newBadge,
-        showCelebration: true,
-        celebrationBadge: newBadge
-      });
-      saveCelebratedBadge(newBadge.id);
-    }
-  }, [currentPoints]);
-
   return {
     currentBadge: state.currentBadge,
     showCelebration: state.showCelebration,
     celebrationBadge: state.celebrationBadge,
-    closeCelebration,
-    resetTracking,
-    reevaluateBadge
+    closeCelebration
   };
 };
