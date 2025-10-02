@@ -85,11 +85,11 @@ const MediaFullscreenView: React.FC<MediaFullscreenViewProps> = ({ media, onClos
 
       case 'image':
         return (
-          <div className="w-full h-full flex items-center justify-center bg-black">
+          <div className="w-full h-full flex items-center justify-center bg-black p-4">
             <img
               src={media.file_path}
               alt={media.file_name}
-              className="max-w-full max-h-full object-contain"
+              className="max-w-full max-h-full w-auto h-auto object-contain"
             />
           </div>
         );
@@ -112,14 +112,14 @@ const MediaFullscreenView: React.FC<MediaFullscreenViewProps> = ({ media, onClos
             const loopSetting = typeof metadata.loop === 'boolean' ? metadata.loop : (lottieSettings?.loop !== undefined ? lottieSettings.loop : true);
             
             return (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800">
-                <div className="w-full h-full max-w-4xl max-h-4xl">
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800 p-8">
+                <div className="w-full h-full max-w-full max-h-full flex items-center justify-center">
                   <Lottie
                     lottieRef={lottieRef}
                     animationData={animationData}
                     loop={loopSetting}
                     autoplay={true}
-                    style={{ width: '100%', height: '100%' }}
+                    style={{ maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto' }}
                     rendererSettings={{
                       preserveAspectRatio: 'xMidYMid meet'
                     }}
