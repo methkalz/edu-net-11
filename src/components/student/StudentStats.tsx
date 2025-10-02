@@ -145,14 +145,15 @@ export const StudentStats: React.FC = () => {
       bgGradient: 'from-indigo-50 to-purple-50',
       description: 'درس مكتمل'
     }] : []),
-    {
+    // إخفاء المراحل المكتملة للصف الثاني عشر
+    ...(assignedGrade !== '12' ? [{
       title: 'المراحل المكتملة',
       value: gameStats.completedGames.toString(),
       icon: Gamepad2,
       gradient: 'from-red-400 to-pink-400',
       bgGradient: 'from-red-50 to-pink-50',
       description: 'مرحلة لعبة مكتملة'
-    }
+    }] : [])
   ];
 
   const recentAchievements = achievements.slice(0, 3);
