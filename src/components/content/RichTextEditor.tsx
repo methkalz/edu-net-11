@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { TextStyle } from '@tiptap/extension-text-style';
@@ -44,6 +44,13 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
       },
     },
   });
+
+  // تحديث المحرر عندما يتغير المحتوى من الخارج
+  useEffect(() => {
+    if (editor && content !== editor.getHTML()) {
+      editor.commands.setContent(content);
+    }
+  }, [content, editor]);
 
   if (!editor) {
     return null;
