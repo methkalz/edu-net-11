@@ -378,9 +378,10 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
           <h4 className="font-bold text-2xl mb-6 text-foreground leading-relaxed">{lesson.title}</h4>
         )}
         {lesson.content && (
-          <div className="text-xl text-foreground/90 leading-9 whitespace-pre-wrap break-words max-w-full p-8 bg-gradient-to-r from-muted/30 to-muted/20 rounded-3xl border-2 border-border/30 shadow-sm">
-            {lesson.content}
-          </div>
+          <div 
+            className="text-xl text-foreground/90 leading-9 break-words max-w-full p-8 bg-gradient-to-r from-muted/30 to-muted/20 rounded-3xl border-2 border-border/30 shadow-sm prose prose-lg max-w-none"
+            dangerouslySetInnerHTML={{ __html: lesson.content }}
+          />
         )}
       </div>
 
