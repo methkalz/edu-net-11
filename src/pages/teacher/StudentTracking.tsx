@@ -192,6 +192,17 @@ const StudentTracking: React.FC = () => {
 
       if (presenceError) throw presenceError;
 
+      // 6.5 جلب النقاط الإجمالية الصحيحة لكل طالب
+      const studentPointsMap = new Map<string, number>();
+      for (const userId of userIds) {
+        const { data: pointsData } = await supabase.rpc('get_student_total_points', {
+          student_uuid: userId
+        });
+        if (pointsData !== null) {
+          studentPointsMap.set(userId, pointsData);
+        }
+      }
+
       // 7. جلب بيانات ألعاب الصف الحادي عشر
       const { data: gamesProgressData, error: gamesError } = await supabase
         .from('player_game_progress')
@@ -343,13 +354,8 @@ const StudentTracking: React.FC = () => {
           totalTimeMinutes += currentSessionMinutes;
         }
 
-        const totalPoints = studentProgress.reduce(
-          (sum: number, p: any) => sum + (p.points_earned || 0), 0
-        ) + studentActivity.reduce(
-          (sum: number, a: any) => sum + (a.points_earned || 0), 0
-        ) + allGames.reduce(
-          (sum: number, g: any) => sum + (g.best_score || 0), 0
-        );
+        // استخدام النقاط المحسوبة من الدالة
+        const totalPoints = studentPointsMap.get(student.user_id) || 0;
 
         const lastActivity = studentPresence?.last_seen_at || (
           studentActivity.length > 0
