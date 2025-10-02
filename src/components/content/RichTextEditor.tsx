@@ -29,7 +29,13 @@ interface RichTextEditorProps {
 const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, placeholder }) => {
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        paragraph: {
+          HTMLAttributes: {
+            class: 'min-h-[1.5em]',
+          },
+        },
+      }),
       TextStyle,
       Color,
       Underline
