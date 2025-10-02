@@ -62,6 +62,7 @@ import TeacherContentViewer from './teacher/TeacherContentViewer';
 import { useGrade10Content } from '@/hooks/useGrade10Content';
 import { useGrade11Files } from '@/hooks/useGrade11Files';
 import { useGrade12Content } from '@/hooks/useGrade12Content';
+import { useGradeStats } from '@/hooks/useGradeStats';
 
 interface TeacherClass {
   id: string;
@@ -145,6 +146,7 @@ const TeacherDashboard: React.FC = () => {
   const { videos: grade10Videos, documents: grade10Documents } = useGrade10Content();
   const { documents: grade11Documents, videos: grade11Videos } = useGrade11Files();
   const { projects, documents: grade12Documents } = useGrade12Content();
+  const { stats: gradeStats } = useGradeStats();
 
   useEffect(() => {
     if (user && userProfile?.role === 'teacher') {
@@ -159,6 +161,33 @@ const TeacherDashboard: React.FC = () => {
       onlineStudents: actualOnlineCount
     }));
   }, [actualOnlineCount]);
+
+  // حساب عدد المضامين المتاحة من جميع الصفوف
+  useEffect(() => {
+    if (gradeStats) {
+      // حساب المجموع: الدروس + الفيديوهات + الألعاب من كل صف
+      const grade10Total = 
+        (gradeStats.grade10.videos || 0) + 
+        (gradeStats.grade10.documents || 0) + 
+        (gradeStats.grade10.projects || 0);
+      
+      const grade11Total = 
+        (gradeStats.grade11.lessons || 0) + 
+        (gradeStats.grade11.videos || 0) + 
+        (gradeStats.grade11.games || 0);
+      
+      const grade12Total = 
+        (gradeStats.grade12.videos || 0) + 
+        (gradeStats.grade12.documents || 0);
+      
+      const totalContents = grade10Total + grade11Total + grade12Total;
+      
+      setStats(prev => ({
+        ...prev,
+        availableContents: totalContents
+      }));
+    }
+  }, [gradeStats]);
 
   const fetchTeacherData = async (isRefresh = false) => {
     try {
