@@ -33,22 +33,10 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
 }) => {
   const { userProfile } = useAuth();
   const { updateLottieMedia } = useEditLottieMedia();
-  
-  // Check if lesson contains video media - if yes, auto-expand
-  const hasVideo = lesson.media?.some(media => media.media_type === 'video') || false;
-  const shouldAutoExpand = defaultExpanded || hasVideo;
-  
-  const [isExpanded, setIsExpanded] = useState(shouldAutoExpand);
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const [previewMedia, setPreviewMedia] = useState<any>(null);
   const [editingLottie, setEditingLottie] = useState<any>(null);
   const { lottieSettings } = useSharedLottieSettings();
-  
-  // Update isExpanded when lesson changes or when video is detected
-  useEffect(() => {
-    if (shouldAutoExpand) {
-      setIsExpanded(true);
-    }
-  }, [lesson.id, shouldAutoExpand]);
 
   // تحديث previewMedia عند تحديث lesson.media
   useEffect(() => {
@@ -328,10 +316,8 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
     );
   };
 
-  // Sort media by order_index and separate videos from other media
+  // Sort media by order_index
   const sortedMedia = lesson.media?.sort((a, b) => a.order_index - b.order_index) || [];
-  const videoMedia = sortedMedia.filter(media => media.media_type === 'video');
-  const otherMedia = sortedMedia.filter(media => media.media_type !== 'video');
 
   // Lottie Display Component with speed control
   const LottieDisplay = ({ animationData, loop, speed }: { animationData: any, loop: boolean, speed: number }) => {
@@ -384,32 +370,8 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
         )}
       </div>
 
-      {/* Videos - Always shown directly after content */}
-      {videoMedia.length > 0 && (
-        <div className="space-y-6">
-          {videoMedia.map((media) => (
-            <Card key={media.id} className="overflow-hidden border-2 shadow-lg hover:shadow-xl transition-all duration-300">
-              <CardContent className="p-8">
-                <div className="flex items-center justify-start gap-4 mb-6">
-                  <div className="p-3 bg-primary/10 rounded-2xl">
-                    {getMediaIcon(media.media_type)}
-                  </div>
-                  <span className="text-xl font-bold flex-1 text-foreground">{media.file_name}</span>
-                  <Badge variant="outline" className={`text-base px-4 py-2 font-semibold ${getMediaTypeBadge(media.media_type)}`}>
-                    {media.media_type}
-                  </Badge>
-                </div>
-                <div className="rounded-2xl overflow-hidden border border-border/30">
-                  {renderEmbeddedMedia(media)}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {/* Media Controls - Only for non-video media */}
-      {showControls && otherMedia.length > 0 && (
+      {/* Media Controls */}
+      {showControls && sortedMedia.length > 0 && (
         <div className="flex items-center gap-4 py-6 border-t border-b bg-gradient-to-r from-muted/20 to-muted/30 rounded-2xl px-6 border-border/30">
           <div className="flex items-center gap-4">
             <Switch
@@ -423,18 +385,18 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
             </Label>
           </div>
           <Badge variant="secondary" className="text-base px-4 py-2 bg-primary/10 text-primary font-semibold">
-            {otherMedia.length} ملف وسائط
+            {sortedMedia.length} ملف وسائط
           </Badge>
         </div>
       )}
 
-      {/* Other Media Display */}
-      {otherMedia.length > 0 && (
+      {/* Media Display */}
+      {sortedMedia.length > 0 && (
         <div className="space-y-6">
           {isExpanded ? (
             // Expanded view - embedded media
             <div className="space-y-8">
-              {otherMedia.map((media) => (
+              {sortedMedia.map((media) => (
                 <Card key={media.id} className="overflow-hidden border-2 shadow-lg hover:shadow-xl transition-all duration-300">
                   <CardContent className="p-8">
                     <div className="flex items-center justify-start gap-4 mb-6">
@@ -465,7 +427,7 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
             // Compact view - media list
             <div className="space-y-4">
               <div className="text-lg text-foreground font-bold">الوسائط المرفقة:</div>
-              {otherMedia.map((media) => (
+              {sortedMedia.map((media) => (
                 <div key={media.id}>
                   {renderCompactMedia(media)}
                 </div>
