@@ -310,9 +310,13 @@ export const useStudentContent = () => {
   const getAllContentItems = (): StudentContentItem[] => {
     if (!gradeContent) return [];
     
+    // للصف العاشر، لا نحسب documents في معدل التقدم
+    // لأن المحتوى المطلوب هو فقط: الفيديوهات + الدروس + الألعاب
+    const includeDocuments = assignedGrade !== '10';
+    
     return [
       ...gradeContent.videos,
-      ...gradeContent.documents,
+      ...(includeDocuments ? gradeContent.documents : []),
       ...gradeContent.projects,
       ...gradeContent.lessons
     ];
