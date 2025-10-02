@@ -136,14 +136,15 @@ export const StudentStats: React.FC = () => {
       bgGradient: 'from-purple-50 to-pink-50',
       description: assignedGrade === '10' ? 'مشروع مصغر مكتمل' : 'مشروع نهائي مكتمل'
     }] : []),
-    {
+    // إخفاء الدروس للصف الثاني عشر لأنه لا يحتوي على دروس
+    ...(assignedGrade !== '12' ? [{
       title: 'الدروس المكتملة',
       value: completedLessons.toString(),
       icon: BookOpen,
       gradient: 'from-indigo-400 to-purple-400',
       bgGradient: 'from-indigo-50 to-purple-50',
       description: 'درس مكتمل'
-    },
+    }] : []),
     {
       title: 'المراحل المكتملة',
       value: gameStats.completedGames.toString(),
