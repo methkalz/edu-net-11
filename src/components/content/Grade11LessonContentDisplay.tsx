@@ -42,6 +42,13 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
   const [previewMedia, setPreviewMedia] = useState<any>(null);
   const [editingLottie, setEditingLottie] = useState<any>(null);
   const { lottieSettings } = useSharedLottieSettings();
+  
+  // Update isExpanded when lesson changes or when video is detected
+  useEffect(() => {
+    if (shouldAutoExpand) {
+      setIsExpanded(true);
+    }
+  }, [lesson.id, shouldAutoExpand]);
 
   // تحديث previewMedia عند تحديث lesson.media
   useEffect(() => {
