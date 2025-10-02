@@ -28,7 +28,7 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
 
   // تهيئة الـ Canvas
   useEffect(() => {
-    if (!canvasRef.current) return;
+    if (!canvasRef.current || fabricCanvasRef.current) return;
 
     const canvas = new FabricCanvas(canvasRef.current, {
       width: window.innerWidth,
@@ -45,23 +45,41 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
 
     // معالجة تغيير الحجم
     const handleResize = () => {
-      canvas.setDimensions({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      });
-      canvas.renderAll();
+      if (canvas && !canvas.disposed) {
+        canvas.setDimensions({
+          width: window.innerWidth,
+          height: window.innerHeight,
+        });
+        canvas.renderAll();
+      }
     };
 
     window.addEventListener('resize', handleResize);
 
     // حفظ في التاريخ بعد كل تغيير
-    canvas.on('object:added', () => saveHistory(canvas));
-    canvas.on('object:modified', () => saveHistory(canvas));
-    canvas.on('object:removed', () => saveHistory(canvas));
+    const handleObjectAdded = () => {
+      if (canvas && !canvas.disposed) saveHistory(canvas);
+    };
+    const handleObjectModified = () => {
+      if (canvas && !canvas.disposed) saveHistory(canvas);
+    };
+    const handleObjectRemoved = () => {
+      if (canvas && !canvas.disposed) saveHistory(canvas);
+    };
+
+    canvas.on('object:added', handleObjectAdded);
+    canvas.on('object:modified', handleObjectModified);
+    canvas.on('object:removed', handleObjectRemoved);
 
     return () => {
       window.removeEventListener('resize', handleResize);
-      canvas.dispose();
+      if (canvas && !canvas.disposed) {
+        canvas.off('object:added', handleObjectAdded);
+        canvas.off('object:modified', handleObjectModified);
+        canvas.off('object:removed', handleObjectRemoved);
+        canvas.dispose();
+      }
+      fabricCanvasRef.current = null;
     };
   }, []);
 

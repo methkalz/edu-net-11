@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { X, Pen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Grade11LessonMedia } from '@/hooks/useGrade11Content';
@@ -7,6 +7,7 @@ import { useSharedLottieSettings } from '@/hooks/useSharedLottieSettings';
 import Lottie from 'lottie-react';
 import { DrawingToolbar, DrawingTool } from './DrawingToolbar';
 import { DrawingCanvas } from './DrawingCanvas';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
 interface MediaFullscreenViewProps {
   media: Grade11LessonMedia | null;
@@ -159,6 +160,13 @@ const MediaFullscreenView: React.FC<MediaFullscreenViewProps> = ({ media, onClos
   return (
     <Dialog open={!!media} onOpenChange={onClose}>
       <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0 bg-black border-none">
+        <VisuallyHidden>
+          <DialogTitle>عرض الوسائط</DialogTitle>
+          <DialogDescription>
+            عرض {media.media_type === 'video' ? 'الفيديو' : media.media_type === 'image' ? 'الصورة' : 'الرسم المتحرك'} بملء الشاشة
+          </DialogDescription>
+        </VisuallyHidden>
+
         {/* زر الإغلاق */}
         <Button
           variant="ghost"
