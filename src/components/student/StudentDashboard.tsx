@@ -49,6 +49,9 @@ const StudentDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
   
   // نظام تتبع الأوسمة والاحتفال
+  console.log('📊 [StudentDashboard] Stats:', stats);
+  console.log('🔢 [StudentDashboard] Total Points:', stats.total_points);
+  
   const { 
     currentBadge, 
     showCelebration, 
