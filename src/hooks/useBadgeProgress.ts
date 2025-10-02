@@ -43,27 +43,52 @@ export const useBadgeProgress = (currentPoints: number | null | undefined) => {
 
   // تحديث الوسام الحالي والتحقق من الإنجاز الجديد
   useEffect(() => {
-    if (currentPoints === null || currentPoints === undefined) return;
+    if (currentPoints === null || currentPoints === undefined) {
+      console.log('🎖️ [BadgeProgress] No points available');
+      return;
+    }
 
+    console.log('🎖️ [BadgeProgress] Points updated:', currentPoints);
+    
     const newBadge = getBadgeByPoints(currentPoints);
     const celebratedBadges = getCelebratedBadges();
     
+    console.log('🎖️ [BadgeProgress] Current badge:', newBadge?.name, 'Points:', currentPoints);
+    console.log('🎖️ [BadgeProgress] Already celebrated:', celebratedBadges);
+    
     // تحديث الوسام الحالي
-    setState(prev => ({
-      ...prev,
-      currentBadge: newBadge
-    }));
+    setState(prev => {
+      const prevBadgeId = prev.currentBadge?.id;
+      const hasNewBadge = newBadge && prevBadgeId !== newBadge.id;
+      
+      console.log('🎖️ [BadgeProgress] Badge changed:', { 
+        from: prevBadgeId, 
+        to: newBadge?.id,
+        hasNewBadge
+      });
+      
+      return {
+        ...prev,
+        currentBadge: newBadge
+      };
+    });
 
     // التحقق من وجود وسام جديد لم يتم الاحتفال به
+    // إضافة تأخير صغير للتأكد من تحديث البيانات
     if (newBadge && !celebratedBadges.includes(newBadge.id)) {
-      setState(prev => ({
-        ...prev,
-        showCelebration: true,
-        celebrationBadge: newBadge
-      }));
+      console.log('🎉 [BadgeProgress] NEW BADGE EARNED!', newBadge.name);
+      
+      setTimeout(() => {
+        setState(prev => ({
+          ...prev,
+          showCelebration: true,
+          celebrationBadge: newBadge
+        }));
 
-      // تسجيل الاحتفال في localStorage
-      saveCelebratedBadge(newBadge.id);
+        // تسجيل الاحتفال في localStorage
+        saveCelebratedBadge(newBadge.id);
+        console.log('🎉 [BadgeProgress] Celebration shown and saved');
+      }, 500);
     }
   }, [currentPoints]);
 
