@@ -109,8 +109,6 @@ const Grade11TopicModal: React.FC<Grade11TopicModalProps> = ({ topic, isOpen, on
                   <CardContent className="pt-0">
                     <Grade11LessonContentDisplay 
                       lesson={lesson}
-                      defaultExpanded={false}
-                      showControls={true}
                     />
                     
                     {/* Media preview */}

@@ -236,8 +236,6 @@ const Grade11CollapsibleTopic: React.FC<Grade11CollapsibleTopicProps> = ({
                     
                     <Grade11LessonContentDisplay 
                       lesson={lesson}
-                      defaultExpanded={false}
-                      showControls={true}
                       onUpdateMedia={onUpdateMedia}
                     />
                     

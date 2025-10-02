@@ -138,8 +138,6 @@ const Grade11ContentViewer: React.FC = () => {
                                         >
                                           <Grade11LessonContentDisplay 
                                             lesson={lesson}
-                                            defaultExpanded={false}
-                                            showControls={true}
                                           />
                                           
                                            <div className="text-xs text-muted-foreground mt-3 pt-2 border-t border-blue-100">

@@ -3,8 +3,6 @@ import { Play, Image, Video, FileText, Maximize2, Minimize2, ExternalLink, Code,
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 import Lottie from 'lottie-react';
 import { Grade11LessonWithMedia, Grade11LessonMedia } from '@/hooks/useGrade11Content';
 import { useSharedLottieSettings } from '@/hooks/useSharedLottieSettings';
@@ -18,22 +16,17 @@ import { logger } from '@/lib/logger';
 
 interface Grade11LessonContentDisplayProps {
   lesson: Grade11LessonWithMedia;
-  defaultExpanded?: boolean;
-  showControls?: boolean;
   hideTitle?: boolean; // New prop to hide lesson title only
   onUpdateMedia?: (mediaId: string, updates: Partial<Grade11LessonMedia>) => Promise<void>;
 }
 
 const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = ({
   lesson,
-  defaultExpanded = false,
-  showControls = true,
   hideTitle = false,
   onUpdateMedia
 }) => {
   const { userProfile } = useAuth();
   const { updateLottieMedia } = useEditLottieMedia();
-  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const [previewMedia, setPreviewMedia] = useState<any>(null);
   const [editingLottie, setEditingLottie] = useState<any>(null);
   const { lottieSettings } = useSharedLottieSettings();
@@ -97,14 +90,9 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
 
   const renderEmbeddedMedia = (media: any) => {
     const metadata = media.metadata || {};
-    console.log('🎬 renderEmbeddedMedia called for:', media.file_name);
-    console.log('Media type:', media.media_type);
-    console.log('Metadata:', JSON.stringify(metadata, null, 2));
 
     switch (media.media_type) {
       case 'video':
-        console.log('✅ Video case - source_type:', metadata.source_type);
-        
         if (metadata.source_type === 'youtube') {
           // Extract YouTube ID from various possible formats
           let youtubeId = metadata.youtube_id;
@@ -121,11 +109,8 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
             if (pathMatch) youtubeId = pathMatch[1];
           }
           
-          console.log('Extracted YouTube ID:', youtubeId);
-          
           if (youtubeId) {
             const embedUrl = `https://www.youtube.com/embed/${youtubeId}`;
-            console.log('🎥 Rendering YouTube iframe with URL:', embedUrl);
             
             return (
               <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-900" style={{ minHeight: '400px' }}>
@@ -347,13 +332,6 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
   const sortedMedia = lesson.media?.sort((a, b) => a.order_index - b.order_index) || [];
   const videoMedia = sortedMedia.filter(m => m.media_type === 'video');
   const otherMedia = sortedMedia.filter(m => m.media_type !== 'video');
-  
-  console.log('=== VIDEO DEBUG ===');
-  console.log('Total media:', sortedMedia.length);
-  console.log('Video media:', videoMedia.length);
-  console.log('Other media:', otherMedia.length);
-  console.log('All media types:', sortedMedia.map(m => m.media_type));
-  console.log('Video media items:', videoMedia);
 
   // Lottie Display Component with speed control
   const LottieDisplay = ({ animationData, loop, speed }: { animationData: any, loop: boolean, speed: number }) => {
@@ -423,9 +401,6 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
                       {getMediaIcon(media.media_type)}
                     </div>
                     <span className="text-xl font-bold flex-1 text-foreground">{media.file_name}</span>
-                    <Badge variant="outline" className={`text-base px-4 py-2 font-semibold ${getMediaTypeBadge(media.media_type)}`}>
-                      {media.media_type}
-                    </Badge>
                   </div>
                   <div className="rounded-2xl overflow-hidden border border-border/30 bg-gray-900">
                     {renderEmbeddedMedia(media)}
@@ -437,67 +412,32 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
         </div>
       )}
 
-      {/* Media Controls - Only for non-video media */}
-      {showControls && otherMedia.length > 0 && (
-        <div className="flex items-center gap-4 py-6 border-t border-b bg-gradient-to-r from-muted/20 to-muted/30 rounded-2xl px-6 border-border/30">
-          <div className="flex items-center gap-4">
-            <Switch
-              id={`expand-${lesson.id}`}
-              checked={isExpanded}
-              onCheckedChange={setIsExpanded}
-              className="scale-110"
-            />
-            <Label htmlFor={`expand-${lesson.id}`} className="text-lg font-semibold cursor-pointer text-foreground">
-              عرض الوسائط مدمجة
-            </Label>
-          </div>
-          <Badge variant="secondary" className="text-base px-4 py-2 bg-primary/10 text-primary font-semibold">
-            {otherMedia.length} ملف وسائط
-          </Badge>
-        </div>
-      )}
-
-      {/* Other Media Display (images, lottie, code) - Controlled by expand toggle */}
+      {/* Other Media Display (images, lottie, code) - Always displayed */}
       {otherMedia.length > 0 && (
-        <div className="space-y-6">
-          {isExpanded ? (
-            // Expanded view - embedded media
-            <div className="space-y-8">
-              {otherMedia.map((media) => (
-                <Card key={media.id} className="overflow-hidden border-2 shadow-lg hover:shadow-xl transition-all duration-300">
-                  <CardContent className="p-8">
-                    <div className="flex items-center justify-start gap-4 mb-6">
-                      <div className="p-3 bg-primary/10 rounded-2xl">
-                        {getMediaIcon(media.media_type)}
-                      </div>
-                      <span className="text-xl font-bold flex-1 text-foreground">{media.file_name}</span>
-                      <Button
-                        variant="outline"
-                        size="default"
-                        onClick={() => setPreviewMedia(media)}
-                        className="h-10 w-10 p-0 rounded-xl"
-                      >
-                        <Maximize2 className="h-5 w-5" />
-                      </Button>
-                    </div>
-                    <div className="rounded-2xl overflow-hidden border border-border/30">
-                      {renderEmbeddedMedia(media)}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            // Compact view - media list
-            <div className="space-y-4">
-              <div className="text-lg text-foreground font-bold">الوسائط المرفقة:</div>
-              {otherMedia.map((media) => (
-                <div key={media.id}>
-                  {renderCompactMedia(media)}
+        <div className="space-y-8">
+          {otherMedia.map((media) => (
+            <Card key={media.id} className="overflow-hidden border-2 shadow-lg hover:shadow-xl transition-all duration-300">
+              <CardContent className="p-8">
+                <div className="flex items-center justify-start gap-4 mb-6">
+                  <div className="p-3 bg-primary/10 rounded-2xl">
+                    {getMediaIcon(media.media_type)}
+                  </div>
+                  <span className="text-xl font-bold flex-1 text-foreground">{media.file_name}</span>
+                  <Button
+                    variant="outline"
+                    size="default"
+                    onClick={() => setPreviewMedia(media)}
+                    className="h-10 w-10 p-0 rounded-xl"
+                  >
+                    <Maximize2 className="h-5 w-5" />
+                  </Button>
                 </div>
-              ))}
-            </div>
-          )}
+                <div className="rounded-2xl overflow-hidden border border-border/30">
+                  {renderEmbeddedMedia(media)}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       )}
 

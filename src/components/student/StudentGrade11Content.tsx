@@ -386,7 +386,7 @@ export const StudentGrade11Content: React.FC = () => {
             </DialogHeader>
             
             <div id="lesson-content-description" className="mt-6 px-2">
-              <Grade11LessonContentDisplay lesson={selectedLesson} defaultExpanded={true} showControls={true} hideTitle={true} />
+              <Grade11LessonContentDisplay lesson={selectedLesson} hideTitle={true} />
             </div>
           </DialogContent>
         </Dialog>}

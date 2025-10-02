@@ -77,8 +77,6 @@ const LessonPreviewModal: React.FC<LessonPreviewModalProps> = ({
             <div className="bg-card rounded-lg border border-border p-4">
               <Grade11LessonContentDisplay 
                 lesson={lesson}
-                defaultExpanded={true}
-                showControls={false}
                 hideTitle={true}
               />
             </div>

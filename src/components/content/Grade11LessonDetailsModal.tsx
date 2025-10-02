@@ -108,8 +108,6 @@ const Grade11LessonDetailsModal: React.FC<Grade11LessonDetailsModalProps> = ({ l
                         <div className="text-sm leading-relaxed break-words max-w-full overflow-wrap-anywhere">
                           <Grade11LessonContentDisplay 
                             lesson={lesson}
-                          defaultExpanded={true}
-                            showControls={false}
                           />
                         </div>
                       </CardContent>
