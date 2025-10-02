@@ -97,13 +97,10 @@ export const StudentStats: React.FC = () => {
   // حساب نسبة التقدم للصف الثاني عشر
   const grade12ProgressPercentage = totalAll > 0 ? Math.round((totalCompleted / totalAll) * 100) : 0;
   
-  // حساب النقاط للصف الثاني عشر (10 نقاط لكل فيديو مكتمل)
-  const grade12TotalPoints = stats.completed_videos * 10;
-
   const statCards = [
     {
       title: 'النقاط الإجمالية',
-      value: (assignedGrade === '12' ? grade12TotalPoints : stats.total_points).toLocaleString(),
+      value: stats.total_points.toLocaleString(),
       icon: Star,
       gradient: 'from-yellow-400 to-orange-400',
       bgGradient: 'from-yellow-50 to-orange-50',
