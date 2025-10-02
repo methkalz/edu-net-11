@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Trophy, Star, Zap, Book, Target, Map, Users, Gift, Loader2 } from 'lucide-react';
-import { useBadgeProgress } from '@/hooks/useBadgeProgress';
-import { BadgeCelebration } from '@/components/badges/BadgeCelebration';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -24,9 +22,6 @@ const KnowledgeAdventureRealContent: React.FC = () => {
   const { playerStats, loading: profileLoading, addCoins, addExperience } = usePlayerProfile();
   const [activeTab, setActiveTab] = useState('map');
   const [selectedLesson, setSelectedLesson] = useState<string | null>(null);
-  
-  // نظام تتبع الأوسمة والاحتفال
-  const { showCelebration, celebrationBadge, closeCelebration } = useBadgeProgress(playerStats?.totalXP);
 
   const { 
     lessons, 
@@ -206,14 +201,6 @@ const KnowledgeAdventureRealContent: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/10">
-      {/* Badge Celebration Modal */}
-      {showCelebration && celebrationBadge && (
-        <BadgeCelebration
-          badge={celebrationBadge}
-          studentName={playerStats?.name || userProfile?.full_name}
-          onClose={closeCelebration}
-        />
-      )}
       {/* Header */}
       <div className="bg-card/80 backdrop-blur border-b sticky top-0 z-40">
         <div className="container mx-auto px-4 py-3">

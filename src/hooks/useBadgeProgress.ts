@@ -43,10 +43,17 @@ export const useBadgeProgress = (currentPoints: number | null | undefined) => {
 
   // تحديث الوسام الحالي والتحقق من الإنجاز الجديد
   useEffect(() => {
-    if (currentPoints === null || currentPoints === undefined) return;
+    if (currentPoints === null || currentPoints === undefined) {
+      console.log('[Badge] No points available yet');
+      return;
+    }
 
+    console.log('[Badge] Checking badge for points:', currentPoints);
     const newBadge = getBadgeByPoints(currentPoints);
     const celebratedBadges = getCelebratedBadges();
+    
+    console.log('[Badge] Current badge:', newBadge?.name, 'ID:', newBadge?.id);
+    console.log('[Badge] Already celebrated badges:', celebratedBadges);
     
     // تحديث الوسام الحالي
     setState(prev => ({
@@ -56,6 +63,7 @@ export const useBadgeProgress = (currentPoints: number | null | undefined) => {
 
     // التحقق من وجود وسام جديد لم يتم الاحتفال به
     if (newBadge && !celebratedBadges.includes(newBadge.id)) {
+      console.log('[Badge] 🎉 NEW BADGE! Showing celebration for:', newBadge.name);
       setState(prev => ({
         ...prev,
         showCelebration: true,
@@ -64,6 +72,9 @@ export const useBadgeProgress = (currentPoints: number | null | undefined) => {
 
       // تسجيل الاحتفال في localStorage
       saveCelebratedBadge(newBadge.id);
+      console.log('[Badge] Badge celebration saved to localStorage');
+    } else if (newBadge) {
+      console.log('[Badge] Badge already celebrated, skipping celebration');
     }
   }, [currentPoints]);
 
