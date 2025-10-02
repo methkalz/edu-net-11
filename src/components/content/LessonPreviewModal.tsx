@@ -51,15 +51,6 @@ const LessonPreviewModal: React.FC<LessonPreviewModalProps> = ({
               <h1 className="text-2xl font-bold text-foreground mb-3 text-center">{lesson.title}</h1>
             </div>
             
-            {lesson.content && (
-              <div className="bg-white/50 p-4 rounded-lg border border-blue-100">
-                <div 
-                  className="text-foreground leading-relaxed text-base text-center prose prose-lg max-w-none"
-                  dangerouslySetInnerHTML={{ __html: lesson.content }}
-                />
-              </div>
-            )}
-            
             <div className="flex justify-between items-center mt-4 pt-3 border-t border-blue-200/50 text-sm text-muted-foreground">
               <div className="flex items-center gap-3">
                 <span>تاريخ الإنشاء: {new Date(lesson.created_at).toLocaleDateString('en-GB')}</span>
@@ -73,15 +64,13 @@ const LessonPreviewModal: React.FC<LessonPreviewModalProps> = ({
             </div>
           </div>
 
-          {/* Lesson Media Content */}
-          {mediaCount > 0 && (
-            <div className="bg-card rounded-lg border border-border p-4">
-              <Grade11LessonContentDisplay 
-                lesson={lesson}
-                hideTitle={true}
-              />
-            </div>
-          )}
+          {/* Lesson Content */}
+          <div className="bg-card rounded-lg border border-border p-4">
+            <Grade11LessonContentDisplay 
+              lesson={lesson}
+              hideTitle={true}
+            />
+          </div>
 
           {/* Preview Note */}
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
