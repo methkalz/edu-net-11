@@ -3,10 +3,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Grade11Lesson, Grade11LessonMedia } from '@/hooks/useGrade11Content';
 import Grade11LessonMediaManager from './Grade11LessonMediaManager';
+import RichTextEditor from './RichTextEditor';
 
 interface Grade11LessonFormProps {
   lesson?: Grade11Lesson;
@@ -86,13 +86,10 @@ const Grade11LessonForm: React.FC<Grade11LessonFormProps> = ({
 
               <div>
                 <Label htmlFor="content">محتوى الدرس</Label>
-                <Textarea
-                  id="content"
-                  value={formData.content}
-                  onChange={(e) => handleContentChange(e.target.value)}
+                <RichTextEditor
+                  content={formData.content}
+                  onChange={handleContentChange}
                   placeholder="أدخل محتوى الدرس"
-                  rows={15}
-                  className="min-h-[400px]"
                 />
               </div>
 

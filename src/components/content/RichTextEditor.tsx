@@ -1,22 +1,24 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import { TextStyle } from '@tiptap/extension-text-style';
+import { Color } from '@tiptap/extension-color';
+import { Underline } from '@tiptap/extension-underline';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { 
   Bold, 
   Italic, 
-  Underline, 
-  List, 
-  ListOrdered, 
-  Quote,
+  Underline as UnderlineIcon, 
+  List,
+  ListOrdered,
   Heading1,
   Heading2,
   Heading3,
-  Image,
-  Link,
-  AlignLeft,
-  AlignCenter,
-  AlignRight
+  Undo,
+  Redo,
+  Palette
 } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 
 interface RichTextEditorProps {
   content: string;
@@ -24,237 +26,168 @@ interface RichTextEditorProps {
   placeholder?: string;
 }
 
-const RichTextEditor: React.FC<RichTextEditorProps> = ({ 
-  content, 
-  onChange, 
-  placeholder = "اكتب المحتوى هنا..." 
-}) => {
-  const [isPreview, setIsPreview] = useState(false);
+const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, placeholder }) => {
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      TextStyle,
+      Color,
+      Underline
+    ],
+    content,
+    onUpdate: ({ editor }) => {
+      onChange(editor.getHTML());
+    },
+    editorProps: {
+      attributes: {
+        class: 'prose prose-sm max-w-none min-h-[400px] focus:outline-none p-4 border rounded-md',
+      },
+    },
+  });
 
-  const formatText = (format: string) => {
-    // تطبيق التنسيق على النص المحدد
-    const textarea = document.getElementById('rich-editor') as HTMLTextAreaElement;
-    if (textarea) {
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const selectedText = content.substring(start, end);
-      
-      let formattedText = '';
-      
-      switch (format) {
-        case 'bold':
-          formattedText = `**${selectedText}**`;
-          break;
-        case 'italic':
-          formattedText = `*${selectedText}*`;
-          break;
-        case 'underline':
-          formattedText = `<u>${selectedText}</u>`;
-          break;
-        case 'h1':
-          formattedText = `# ${selectedText}`;
-          break;
-        case 'h2':
-          formattedText = `## ${selectedText}`;
-          break;
-        case 'h3':
-          formattedText = `### ${selectedText}`;
-          break;
-        case 'quote':
-          formattedText = `> ${selectedText}`;
-          break;
-        case 'list':
-          formattedText = `- ${selectedText}`;
-          break;
-        case 'numbered-list':
-          formattedText = `1. ${selectedText}`;
-          break;
-        case 'link':
-          formattedText = `[${selectedText}](رابط)`;
-          break;
-        default:
-          formattedText = selectedText;
-      }
-      
-      const newContent = content.substring(0, start) + formattedText + content.substring(end);
-      onChange(newContent);
-    }
-  };
+  if (!editor) {
+    return null;
+  }
 
-  const insertImage = () => {
-    const imageUrl = prompt('أدخل رابط الصورة:');
-    if (imageUrl) {
-      const imageMarkdown = `![وصف الصورة](${imageUrl})`;
-      onChange(content + '\n' + imageMarkdown);
-    }
-  };
+  const MenuButton = ({ 
+    onClick, 
+    isActive = false, 
+    disabled = false,
+    children 
+  }: { 
+    onClick: () => void; 
+    isActive?: boolean; 
+    disabled?: boolean;
+    children: React.ReactNode;
+  }) => (
+    <Button
+      type="button"
+      variant={isActive ? "default" : "ghost"}
+      size="sm"
+      onClick={onClick}
+      disabled={disabled}
+      className="h-8 w-8 p-0"
+    >
+      {children}
+    </Button>
+  );
 
-  const renderPreview = (text: string) => {
-    // تحويل مبسط من Markdown إلى HTML
-    return text
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      .replace(/<u>(.*?)<\/u>/g, '<u>$1</u>')
-      .replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold mb-2">$1</h1>')
-      .replace(/^## (.*$)/gim, '<h2 class="text-xl font-bold mb-2">$1</h2>')
-      .replace(/^### (.*$)/gim, '<h3 class="text-lg font-bold mb-2">$1</h3>')
-      .replace(/^> (.*$)/gim, '<blockquote class="border-l-4 border-gray-300 pl-4 italic text-gray-600">$1</blockquote>')
-      .replace(/^- (.*$)/gim, '<li class="list-disc list-inside">$1</li>')
-      .replace(/^1\. (.*$)/gim, '<li class="list-decimal list-inside">$1</li>')
-      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-blue-600 hover:underline">$1</a>')
-      .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="max-w-full h-auto rounded border my-2" />')
-      .replace(/\n/g, '<br />');
-  };
+  const colors = [
+    { name: 'أسود', value: '#000000' },
+    { name: 'أحمر', value: '#dc2626' },
+    { name: 'أزرق', value: '#2563eb' },
+    { name: 'أخضر', value: '#16a34a' },
+    { name: 'برتقالي', value: '#ea580c' },
+    { name: 'بنفسجي', value: '#9333ea' },
+  ];
 
   return (
-    <div className="space-y-4">
+    <div className="border rounded-md">
       {/* شريط الأدوات */}
-      <div className="flex flex-wrap gap-2 p-3 border rounded-lg bg-muted/30">
-        <div className="flex gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => formatText('bold')}
-            className="p-2"
-          >
-            <Bold className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => formatText('italic')}
-            className="p-2"
-          >
-            <Italic className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => formatText('underline')}
-            className="p-2"
-          >
-            <Underline className="h-4 w-4" />
-          </Button>
-        </div>
+      <div className="flex flex-wrap items-center gap-1 p-2 border-b bg-muted/30">
+        {/* التراجع والإعادة */}
+        <MenuButton
+          onClick={() => editor.chain().focus().undo().run()}
+          disabled={!editor.can().undo()}
+        >
+          <Undo className="h-4 w-4" />
+        </MenuButton>
+        <MenuButton
+          onClick={() => editor.chain().focus().redo().run()}
+          disabled={!editor.can().redo()}
+        >
+          <Redo className="h-4 w-4" />
+        </MenuButton>
 
-        <div className="h-6 w-px bg-border"></div>
+        <Separator orientation="vertical" className="h-6 mx-1" />
 
-        <div className="flex gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => formatText('h1')}
-            className="p-2"
-          >
-            <Heading1 className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => formatText('h2')}
-            className="p-2"
-          >
-            <Heading2 className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => formatText('h3')}
-            className="p-2"
-          >
-            <Heading3 className="h-4 w-4" />
-          </Button>
-        </div>
+        {/* العناوين */}
+        <MenuButton
+          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+          isActive={editor.isActive('heading', { level: 1 })}
+        >
+          <Heading1 className="h-4 w-4" />
+        </MenuButton>
+        <MenuButton
+          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+          isActive={editor.isActive('heading', { level: 2 })}
+        >
+          <Heading2 className="h-4 w-4" />
+        </MenuButton>
+        <MenuButton
+          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+          isActive={editor.isActive('heading', { level: 3 })}
+        >
+          <Heading3 className="h-4 w-4" />
+        </MenuButton>
 
-        <div className="h-6 w-px bg-border"></div>
+        <Separator orientation="vertical" className="h-6 mx-1" />
 
-        <div className="flex gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => formatText('list')}
-            className="p-2"
-          >
-            <List className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => formatText('numbered-list')}
-            className="p-2"
-          >
-            <ListOrdered className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => formatText('quote')}
-            className="p-2"
-          >
-            <Quote className="h-4 w-4" />
-          </Button>
-        </div>
+        {/* التنسيق الأساسي */}
+        <MenuButton
+          onClick={() => editor.chain().focus().toggleBold().run()}
+          isActive={editor.isActive('bold')}
+        >
+          <Bold className="h-4 w-4" />
+        </MenuButton>
+        <MenuButton
+          onClick={() => editor.chain().focus().toggleItalic().run()}
+          isActive={editor.isActive('italic')}
+        >
+          <Italic className="h-4 w-4" />
+        </MenuButton>
+        <MenuButton
+          onClick={() => editor.chain().focus().toggleUnderline().run()}
+          isActive={editor.isActive('underline')}
+        >
+          <UnderlineIcon className="h-4 w-4" />
+        </MenuButton>
 
-        <div className="h-6 w-px bg-border"></div>
+        <Separator orientation="vertical" className="h-6 mx-1" />
 
-        <div className="flex gap-1">
+        {/* القوائم */}
+        <MenuButton
+          onClick={() => editor.chain().focus().toggleBulletList().run()}
+          isActive={editor.isActive('bulletList')}
+        >
+          <List className="h-4 w-4" />
+        </MenuButton>
+        <MenuButton
+          onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          isActive={editor.isActive('orderedList')}
+        >
+          <ListOrdered className="h-4 w-4" />
+        </MenuButton>
+
+        <Separator orientation="vertical" className="h-6 mx-1" />
+
+        {/* الألوان */}
+        <div className="flex items-center gap-1">
+          <Palette className="h-4 w-4 text-muted-foreground mr-1" />
+          {colors.map((color) => (
+            <button
+              key={color.value}
+              type="button"
+              onClick={() => editor.chain().focus().setColor(color.value).run()}
+              className="w-6 h-6 rounded border-2 hover:scale-110 transition-transform"
+              style={{ backgroundColor: color.value }}
+              title={color.name}
+            />
+          ))}
           <Button
+            type="button"
             variant="ghost"
             size="sm"
-            onClick={insertImage}
-            className="p-2"
+            onClick={() => editor.chain().focus().unsetColor().run()}
+            className="h-6 text-xs px-2"
           >
-            <Image className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => formatText('link')}
-            className="p-2"
-          >
-            <Link className="h-4 w-4" />
-          </Button>
-        </div>
-
-        <div className="mr-auto">
-          <Button
-            variant={isPreview ? "default" : "outline"}
-            size="sm"
-            onClick={() => setIsPreview(!isPreview)}
-          >
-            {isPreview ? 'التحرير' : 'المعاينة'}
+            إزالة
           </Button>
         </div>
       </div>
 
-      {/* منطقة التحرير أو المعاينة */}
-      {isPreview ? (
-        <div 
-          className="min-h-[300px] p-4 border rounded-lg bg-background prose prose-sm max-w-none"
-          dangerouslySetInnerHTML={{ __html: renderPreview(content) }}
-          dir="rtl"
-        />
-      ) : (
-        <Textarea
-          id="rich-editor"
-          value={content}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          className="min-h-[300px] resize-none font-mono"
-          dir="rtl"
-        />
-      )}
-
-      {/* مساعدة التنسيق */}
-      <div className="text-xs text-muted-foreground bg-muted/30 p-3 rounded">
-        <strong>اختصارات التنسيق:</strong>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
-          <span>**نص غامق**</span>
-          <span>*نص مائل*</span>
-          <span># عنوان كبير</span>
-          <span>- قائمة نقطية</span>
-        </div>
-      </div>
+      {/* منطقة المحرر */}
+      <EditorContent editor={editor} />
     </div>
   );
 };
