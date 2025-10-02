@@ -199,6 +199,18 @@ export const useStudentGrade10Lessons = () => {
     };
   };
 
+  // Get lessons count for Communication Basics section only
+  const getCommunicationBasicsLessonsCount = () => {
+    const sectionsArray = sections as Grade10SectionWithTopics[];
+    const commSection = sectionsArray.find(section => 
+      section.title.includes('أساسيات الاتصال') || section.title.includes('יסודות התקשורת')
+    );
+    
+    if (!commSection) return 0;
+    
+    return commSection.topics.reduce((acc, topic) => acc + topic.lessons.length, 0);
+  };
+
   const refetch = () => {
     refetchSections();
   };
@@ -208,6 +220,7 @@ export const useStudentGrade10Lessons = () => {
     loading,
     error,
     getContentStats,
+    getCommunicationBasicsLessonsCount,
     refetch
   };
 };

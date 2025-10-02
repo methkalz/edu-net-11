@@ -75,7 +75,8 @@ export const StudentGradeContent: React.FC = () => {
     sections: [],
     loading: false,
     error: null,
-    getContentStats: () => ({ totalLessons: 0 })
+    getContentStats: () => ({ totalLessons: 0 }),
+    getCommunicationBasicsLessonsCount: () => 0
   };
   
   const grade12HooksResult = assignedGrade === '12' ? useGrade12Projects() : {
@@ -542,7 +543,7 @@ export const StudentGradeContent: React.FC = () => {
       id: 'communication_basics',
       label: 'أساسيات الاتصال',
       icon: Radio,
-      count: grade10LessonsResult.getContentStats().totalLessons,
+      count: grade10LessonsResult.getCommunicationBasicsLessonsCount(),
       items: [],
       color: 'from-orange-500 to-red-500'
     },
