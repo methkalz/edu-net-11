@@ -18,12 +18,43 @@ import {
   Users,
   Eye,
   X,
-  Activity
+  Activity,
+  ChevronDown,
+  CheckCircle2
 } from 'lucide-react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import ModernHeader from '@/components/shared/ModernHeader';
+
+interface ContentItem {
+  content_id: string;
+  content_type: string;
+  content_title?: string;
+  progress_percentage: number;
+  time_spent_minutes: number;
+  points_earned: number;
+  completed_at: string;
+  updated_at: string;
+  topic_id?: string;
+  topic_title?: string;
+  section_id?: string;
+  section_title?: string;
+}
+
+interface TopicProgress {
+  topic_id: string;
+  topic_title: string;
+  section_title: string;
+  items: ContentItem[];
+  completed_count: number;
+  total_count: number;
+  progress_percentage: number;
+  total_points: number;
+  total_time: number;
+}
 
 interface StudentTrackingData {
   student_id: string;
@@ -34,16 +65,8 @@ interface StudentTrackingData {
   total_points: number;
   last_activity: string;
   progress_details: {
-    content_progress: Array<{
-      content_id: string;
-      content_type: string;
-      content_title?: string;
-      progress_percentage: number;
-      time_spent_minutes: number;
-      points_earned: number;
-      completed_at: string;
-      updated_at: string;
-    }>;
+    content_progress: ContentItem[];
+    topics_progress: TopicProgress[];
     grade10_projects: any[];
     grade12_projects: any[];
     game_progress: any[];
@@ -261,41 +284,109 @@ const StudentTracking: React.FC = () => {
         }
       }
 
-      // 9. جلب عناوين الدروس والفيديوهات بطريقة آمنة
+      // 9. جلب عناوين الدروس والفيديوهات مع معلومات المواضيع والأقسام
       const contentIds = (progressData || []).map((p: any) => p.content_id).filter(Boolean);
-      const contentTitlesMap = new Map<string, string>();
+      const contentDetailsMap = new Map<string, any>();
       
       if (contentIds.length > 0) {
-        // محاولة جلب من جداول مختلفة
         try {
-          const tables = [
-            { name: 'grade10_lessons', idCol: 'id', titleCol: 'title' },
-            { name: 'grade10_videos', idCol: 'id', titleCol: 'title' },
-            { name: 'grade11_lessons', idCol: 'id', titleCol: 'title' },
-            { name: 'grade11_videos', idCol: 'id', titleCol: 'title' },
-            { name: 'grade12_lessons', idCol: 'id', titleCol: 'title' },
-            { name: 'grade12_videos', idCol: 'id', titleCol: 'title' }
-          ];
+          // جلب دروس الصف العاشر مع المواضيع والأقسام
+          const { data: grade10LessonsData } = await supabase
+            .from('grade10_lessons')
+            .select(`
+              id, title, topic_id,
+              grade10_topics(id, title, section_id,
+                grade10_sections(id, title)
+              )
+            `)
+            .in('id', contentIds);
+          
+          if (grade10LessonsData) {
+            grade10LessonsData.forEach((item: any) => {
+              contentDetailsMap.set(item.id, {
+                title: item.title,
+                type: 'lesson',
+                topic_id: item.topic_id,
+                topic_title: item.grade10_topics?.title,
+                section_id: item.grade10_topics?.section_id,
+                section_title: item.grade10_topics?.grade10_sections?.title
+              });
+            });
+          }
 
-          for (const table of tables) {
-            try {
-              const { data } = await supabase
-                .from(table.name as any)
-                .select(`${table.idCol}, ${table.titleCol}`)
-                .in(table.idCol, contentIds);
-              
-              if (data) {
-                data.forEach((item: any) => {
-                  contentTitlesMap.set(item[table.idCol], item[table.titleCol]);
-                });
-              }
-            } catch (e) {
-              // تجاهل الأخطاء للجداول غير الموجودة
-              console.log(`Table ${table.name} not accessible`);
-            }
+          // جلب فيديوهات الصف العاشر
+          const { data: grade10VideosData } = await supabase
+            .from('grade10_videos')
+            .select('id, title')
+            .in('id', contentIds);
+          
+          if (grade10VideosData) {
+            grade10VideosData.forEach((item: any) => {
+              contentDetailsMap.set(item.id, {
+                title: item.title,
+                type: 'video',
+                section_title: 'فيديوهات تعليمية - صف عاشر'
+              });
+            });
+          }
+
+          // جلب دروس الصف الحادي عشر مع المواضيع والأقسام
+          const { data: grade11LessonsData } = await supabase
+            .from('grade11_lessons')
+            .select(`
+              id, title, topic_id,
+              grade11_topics(id, title, section_id,
+                grade11_sections(id, title)
+              )
+            `)
+            .in('id', contentIds);
+          
+          if (grade11LessonsData) {
+            grade11LessonsData.forEach((item: any) => {
+              contentDetailsMap.set(item.id, {
+                title: item.title,
+                type: 'lesson',
+                topic_id: item.topic_id,
+                topic_title: item.grade11_topics?.title,
+                section_id: item.grade11_topics?.section_id,
+                section_title: item.grade11_topics?.grade11_sections?.title
+              });
+            });
+          }
+
+          // جلب فيديوهات الصف الحادي عشر
+          const { data: grade11VideosData } = await supabase
+            .from('grade11_videos')
+            .select('id, title')
+            .in('id', contentIds);
+          
+          if (grade11VideosData) {
+            grade11VideosData.forEach((item: any) => {
+              contentDetailsMap.set(item.id, {
+                title: item.title,
+                type: 'video',
+                section_title: 'فيديوهات تعليمية - صف حادي عشر'
+              });
+            });
+          }
+
+          // جلب فيديوهات الصف الثاني عشر
+          const { data: grade12VideosData } = await supabase
+            .from('grade12_videos')
+            .select('id, title')
+            .in('id', contentIds);
+          
+          if (grade12VideosData) {
+            grade12VideosData.forEach((item: any) => {
+              contentDetailsMap.set(item.id, {
+                title: item.title,
+                type: 'video',
+                section_title: 'فيديوهات تعليمية - صف ثاني عشر'
+              });
+            });
           }
         } catch (error) {
-          console.error('Error fetching content titles:', error);
+          console.error('Error fetching content details:', error);
         }
       }
 
@@ -303,10 +394,17 @@ const StudentTracking: React.FC = () => {
       const combinedData: StudentTrackingData[] = (studentsData || []).map((student: any) => {
         const studentProgress = (progressData || []).filter(
           (p: any) => p.student_id === student.user_id
-        ).map((p: any) => ({
-          ...p,
-          content_title: contentTitlesMap.get(p.content_id) || 'بدون عنوان'
-        }));
+        ).map((p: any) => {
+          const details = contentDetailsMap.get(p.content_id);
+          return {
+            ...p,
+            content_title: details?.title || 'بدون عنوان',
+            topic_id: details?.topic_id,
+            topic_title: details?.topic_title,
+            section_id: details?.section_id,
+            section_title: details?.section_title
+          };
+        });
         
         const studentActivity = (activityData || []).filter(
           (a: any) => a.student_id === student.user_id
@@ -367,6 +465,47 @@ const StudentTracking: React.FC = () => {
 
         const gradeLevel = student.class_students?.[0]?.classes?.grade_levels?.code || '11';
 
+        // تجميع المحتوى حسب المواضيع
+        const topicsMap = new Map<string, TopicProgress>();
+        
+        studentProgress.forEach((item: any) => {
+          const topicKey = item.topic_id || item.section_title || 'أخرى';
+          const topicTitle = item.topic_title || item.section_title || 'محتوى آخر';
+          const sectionTitle = item.section_title || 'قسم عام';
+          
+          if (!topicsMap.has(topicKey)) {
+            topicsMap.set(topicKey, {
+              topic_id: topicKey,
+              topic_title: topicTitle,
+              section_title: sectionTitle,
+              items: [],
+              completed_count: 0,
+              total_count: 0,
+              progress_percentage: 0,
+              total_points: 0,
+              total_time: 0
+            });
+          }
+          
+          const topic = topicsMap.get(topicKey)!;
+          topic.items.push(item);
+          topic.total_count += 1;
+          topic.total_time += item.time_spent_minutes || 0;
+          topic.total_points += item.points_earned || 0;
+          
+          if (item.progress_percentage === 100) {
+            topic.completed_count += 1;
+          }
+        });
+
+        // حساب النسبة المئوية لكل موضوع
+        const topicsProgress: TopicProgress[] = Array.from(topicsMap.values()).map(topic => ({
+          ...topic,
+          progress_percentage: topic.total_count > 0 
+            ? Math.round((topic.completed_count / topic.total_count) * 100)
+            : 0
+        }));
+
         return {
           student_id: student.id,
           student_name: student.full_name,
@@ -377,6 +516,7 @@ const StudentTracking: React.FC = () => {
           last_activity: lastActivity,
           progress_details: {
             content_progress: studentProgress,
+            topics_progress: topicsProgress,
             grade10_projects: [],
             grade12_projects: [],
             game_progress: allGames
@@ -744,118 +884,233 @@ const StudentTracking: React.FC = () => {
             </DialogHeader>
             
             <Tabs defaultValue="content" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className={`grid w-full ${selectedStudent.student_grade === '11' ? 'grid-cols-2' : 'grid-cols-3'}`}>
                 <TabsTrigger value="content">المحتوى</TabsTrigger>
-                <TabsTrigger value="projects">المشاريع</TabsTrigger>
+                {selectedStudent.student_grade !== '11' && (
+                  <TabsTrigger value="projects">المشاريع</TabsTrigger>
+                )}
                 <TabsTrigger value="games">الألعاب</TabsTrigger>
               </TabsList>
 
               <TabsContent value="content" className="space-y-4 mt-4">
-                {selectedStudent.progress_details?.content_progress?.length > 0 ? (
-                  selectedStudent.progress_details.content_progress.map((item, index) => (
-                    <Card key={index} className="border-0 bg-muted/30">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            {item.content_type === 'video' ? (
-                              <Video className="h-5 w-5 text-blue-500" />
-                            ) : item.content_type === 'lesson' ? (
-                              <BookOpen className="h-5 w-5 text-green-500" />
-                            ) : (
-                              <FileText className="h-5 w-5 text-purple-500" />
-                            )}
-                            <div>
-                              <p className="font-medium">{item.content_title || getContentTypeLabel(item.content_type)}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {getContentTypeLabel(item.content_type)} • {item.time_spent_minutes} دقيقة • {item.points_earned} نقطة
-                              </p>
+                {selectedStudent.progress_details?.topics_progress?.length > 0 ? (
+                  <Accordion type="multiple" className="w-full space-y-2">
+                    {selectedStudent.progress_details.topics_progress.map((topic, index) => (
+                      <AccordionItem 
+                        key={index} 
+                        value={`topic-${index}`}
+                        className="border rounded-lg bg-card/50 backdrop-blur-sm overflow-hidden"
+                      >
+                        <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50 transition-colors">
+                          <div className="flex items-center justify-between w-full pr-3">
+                            <div className="flex items-center gap-3 flex-1">
+                              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                                topic.progress_percentage === 100 
+                                  ? 'bg-green-500/20 text-green-600 dark:text-green-400' 
+                                  : 'bg-primary/20 text-primary'
+                              }`}>
+                                {topic.progress_percentage === 100 ? (
+                                  <CheckCircle2 className="h-5 w-5" />
+                                ) : (
+                                  <BookOpen className="h-5 w-5" />
+                                )}
+                              </div>
+                              <div className="flex-1 text-right">
+                                <div className="flex items-center gap-2 justify-end">
+                                  <p className="font-semibold text-base">{topic.topic_title}</p>
+                                  <Badge variant="outline" className="text-xs">
+                                    {topic.completed_count}/{topic.total_count}
+                                  </Badge>
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-0.5">{topic.section_title}</p>
+                                <div className="flex items-center gap-3 mt-2">
+                                  <div className="flex items-center gap-1.5">
+                                    <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                                    <span className="text-xs">{formatTime(topic.total_time)}</span>
+                                  </div>
+                                  <div className="flex items-center gap-1.5">
+                                    <Trophy className="h-3.5 w-3.5 text-yellow-500" />
+                                    <span className="text-xs">{topic.total_points} نقطة</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3 ml-4">
+                              <div className="text-center min-w-[60px]">
+                                <div className={`text-lg font-bold ${
+                                  topic.progress_percentage === 100 
+                                    ? 'text-green-600 dark:text-green-400' 
+                                    : 'text-primary'
+                                }`}>
+                                  {topic.progress_percentage}%
+                                </div>
+                                <Progress 
+                                  value={topic.progress_percentage} 
+                                  className="h-1.5 w-full mt-1"
+                                />
+                              </div>
                             </div>
                           </div>
-                          <Badge variant={item.progress_percentage === 100 ? 'default' : 'secondary'}>
-                            {item.progress_percentage}%
-                          </Badge>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))
+                        </AccordionTrigger>
+                        <AccordionContent className="px-4 pb-4 pt-2">
+                          <div className="space-y-2 border-t pt-3">
+                            {topic.items.map((item, itemIndex) => (
+                              <div 
+                                key={itemIndex}
+                                className={`flex items-center justify-between p-3 rounded-lg transition-colors ${
+                                  item.progress_percentage === 100 
+                                    ? 'bg-green-500/10 border border-green-500/20' 
+                                    : 'bg-muted/50 hover:bg-muted'
+                                }`}
+                              >
+                                <div className="flex items-center gap-3 flex-1">
+                                  {item.content_type === 'video' ? (
+                                    <Video className={`h-4 w-4 ${item.progress_percentage === 100 ? 'text-green-600' : 'text-blue-500'}`} />
+                                  ) : item.content_type === 'lesson' ? (
+                                    <BookOpen className={`h-4 w-4 ${item.progress_percentage === 100 ? 'text-green-600' : 'text-green-500'}`} />
+                                  ) : (
+                                    <FileText className={`h-4 w-4 ${item.progress_percentage === 100 ? 'text-green-600' : 'text-purple-500'}`} />
+                                  )}
+                                  <div className="flex-1">
+                                    <p className="font-medium text-sm">{item.content_title}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {item.time_spent_minutes} دقيقة • {item.points_earned} نقطة
+                                    </p>
+                                  </div>
+                                </div>
+                                <Badge 
+                                  variant={item.progress_percentage === 100 ? 'default' : 'secondary'}
+                                  className={item.progress_percentage === 100 ? 'bg-green-600 hover:bg-green-700' : ''}
+                                >
+                                  {item.progress_percentage === 100 ? '✓ مكتمل' : `${item.progress_percentage}%`}
+                                </Badge>
+                              </div>
+                            ))}
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
                 ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    لم يكمل الطالب أي محتوى بعد
+                  <div className="text-center py-12 text-muted-foreground bg-muted/20 rounded-lg border border-dashed">
+                    <BookOpen className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                    <p className="text-lg font-medium">لم يبدأ الطالب أي محتوى بعد</p>
+                    <p className="text-sm mt-1">سيظهر التقدم هنا عندما يبدأ الطالب بمشاهدة الفيديوهات أو قراءة الدروس</p>
                   </div>
                 )}
               </TabsContent>
 
-              <TabsContent value="projects" className="space-y-4 mt-4">
-                {(selectedStudent.progress_details?.grade10_projects?.length > 0 ||
-                  selectedStudent.progress_details?.grade12_projects?.length > 0) ? (
-                  <>
-                    {selectedStudent.progress_details.grade10_projects?.map((project, index) => (
-                      <Card key={index} className="border-0 bg-muted/30">
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="font-medium">{project.title}</p>
-                              <p className="text-sm text-muted-foreground">
-                                مشروع صف عاشر • {project.status}
-                              </p>
+              {selectedStudent.student_grade !== '11' && (
+                <TabsContent value="projects" className="space-y-4 mt-4">
+                  {(selectedStudent.progress_details?.grade10_projects?.length > 0 ||
+                    selectedStudent.progress_details?.grade12_projects?.length > 0) ? (
+                    <>
+                      {selectedStudent.progress_details.grade10_projects?.map((project, index) => (
+                        <Card key={index} className="border-0 bg-muted/30 hover:bg-muted/50 transition-colors">
+                          <CardContent className="p-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <FileText className="h-5 w-5 text-blue-500" />
+                                <div>
+                                  <p className="font-medium">{project.title}</p>
+                                  <p className="text-sm text-muted-foreground">
+                                    مشروع صف عاشر • {project.status}
+                                  </p>
+                                </div>
+                              </div>
+                              <Badge>{project.progress_percentage}%</Badge>
                             </div>
-                            <Badge>{project.progress_percentage}%</Badge>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                    {selectedStudent.progress_details.grade12_projects?.map((project, index) => (
-                      <Card key={index} className="border-0 bg-muted/30">
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="font-medium">{project.title}</p>
-                              <p className="text-sm text-muted-foreground">
-                                مشروع صف ثاني عشر • {project.status}
-                              </p>
+                          </CardContent>
+                        </Card>
+                      ))}
+                      {selectedStudent.progress_details.grade12_projects?.map((project, index) => (
+                        <Card key={index} className="border-0 bg-muted/30 hover:bg-muted/50 transition-colors">
+                          <CardContent className="p-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <FileText className="h-5 w-5 text-purple-500" />
+                                <div>
+                                  <p className="font-medium">{project.title}</p>
+                                  <p className="text-sm text-muted-foreground">
+                                    مشروع صف ثاني عشر • {project.status}
+                                  </p>
+                                </div>
+                              </div>
+                              <Badge>{project.grade || 'لم يُقيّم بعد'}</Badge>
                             </div>
-                            <Badge>{project.grade || 'لم يُقيّم بعد'}</Badge>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    لا توجد مشاريع للطالب
-                  </div>
-                )}
-              </TabsContent>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </>
+                  ) : (
+                    <div className="text-center py-12 text-muted-foreground bg-muted/20 rounded-lg border border-dashed">
+                      <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                      <p className="text-lg font-medium">لا توجد مشاريع للطالب</p>
+                      <p className="text-sm mt-1">سيتم عرض المشاريع هنا عندما يبدأ الطالب بالعمل عليها</p>
+                    </div>
+                  )}
+                </TabsContent>
+              )}
 
               <TabsContent value="games" className="space-y-4 mt-4">
                 {selectedStudent.progress_details?.game_progress?.length > 0 ? (
-                  selectedStudent.progress_details.game_progress.map((game: any, index: number) => (
-                    <Card key={index} className="border-0 bg-muted/30">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium">
-                              {game.pair_matching_games?.title || 'لعبة مطابقة'}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              المستوى {game.pair_matching_games?.level_number || 1} • 
-                              المرحلة {game.pair_matching_games?.stage_number || 1} • 
-                              لعبها {game.completion_count || 0} مرة
-                            </p>
+                  <div className="grid grid-cols-1 gap-3">
+                    {selectedStudent.progress_details.game_progress.map((game: any, index: number) => (
+                      <Card 
+                        key={index} 
+                        className={`border-0 transition-all hover:shadow-md ${
+                          game.is_completed 
+                            ? 'bg-green-500/10 border border-green-500/20' 
+                            : 'bg-muted/30 hover:bg-muted/50'
+                        }`}
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3 flex-1">
+                              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                                game.is_completed 
+                                  ? 'bg-green-500/20 text-green-600' 
+                                  : 'bg-primary/20 text-primary'
+                              }`}>
+                                <Trophy className="h-5 w-5" />
+                              </div>
+                              <div className="flex-1">
+                                <p className="font-medium">
+                                  {game.pair_matching_games?.title || 'لعبة مطابقة'}
+                                </p>
+                                <div className="flex items-center gap-3 mt-1">
+                                  <p className="text-xs text-muted-foreground">
+                                    المستوى {game.pair_matching_games?.level_number || 1} • 
+                                    المرحلة {game.pair_matching_games?.stage_number || 1}
+                                  </p>
+                                  <Badge variant="outline" className="text-xs">
+                                    {game.completion_count || 0} مرة
+                                  </Badge>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge 
+                                variant={game.is_completed ? 'default' : 'secondary'}
+                                className={game.is_completed ? 'bg-green-600 hover:bg-green-700' : ''}
+                              >
+                                {game.is_completed ? '✓ مكتمل' : 'قيد التقدم'}
+                              </Badge>
+                              <Badge variant="outline" className="gap-1">
+                                <Trophy className="h-3 w-3" />
+                                {game.best_score || 0}
+                              </Badge>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <Badge variant={game.is_completed ? 'default' : 'secondary'}>
-                              {game.is_completed ? 'مكتمل ✓' : 'قيد التقدم'}
-                            </Badge>
-                            <Badge variant="outline">{game.best_score || 0} نقطة</Badge>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
                 ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    لم يلعب الطالب أي ألعاب بعد
+                  <div className="text-center py-12 text-muted-foreground bg-muted/20 rounded-lg border border-dashed">
+                    <Trophy className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                    <p className="text-lg font-medium">لم يلعب الطالب أي ألعاب بعد</p>
+                    <p className="text-sm mt-1">سيتم عرض تقدم الألعاب هنا عندما يبدأ الطالب باللعب</p>
                   </div>
                 )}
               </TabsContent>
