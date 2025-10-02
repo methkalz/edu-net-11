@@ -108,10 +108,6 @@ const TeacherStatsCard: React.FC<TeacherStatsCardProps> = ({
           </div>
         </div>
         
-        <div className="absolute top-2 right-2">
-          <div className="w-2 h-2 rounded-full bg-primary/20 accent-dot"></div>
-        </div>
-        
         {isClickable && <div className="absolute bottom-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <div className="text-xs text-muted-foreground/70 flex items-center gap-1">
               <span>انقر للتفاصيل</span>
