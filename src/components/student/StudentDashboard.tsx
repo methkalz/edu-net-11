@@ -49,16 +49,11 @@ const StudentDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
   
   // نظام تتبع الأوسمة والاحتفال
-  console.log('📊 [StudentDashboard] Stats:', stats);
-  console.log('🔢 [StudentDashboard] Total Points:', stats.total_points);
-  
   const { 
     currentBadge, 
     showCelebration, 
     celebrationBadge, 
-    closeCelebration,
-    resetTracking,
-    reevaluateBadge 
+    closeCelebration
   } = useBadgeProgress(stats.total_points);
   
   // تحديث البيانات عند الضغط على تاب نظرة عامة
@@ -352,48 +347,6 @@ const StudentDashboard: React.FC = () => {
           </TabsContent>
         </Tabs>
       </section>
-
-      {/* Badge Testing Panel - Development Only */}
-      {import.meta.env.DEV && (
-        <div className="fixed bottom-4 left-4 z-50">
-          <Card className="w-80 shadow-lg border-2 border-primary/20">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Award className="w-4 h-4" />
-                اختبار نظام الأوسمة
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="text-xs space-y-1 mb-3 p-2 bg-muted/50 rounded">
-                <p>النقاط الحالية: <strong>{stats.total_points}</strong></p>
-                <p>الوسام الحالي: <strong>{currentBadge?.name || 'لا يوجد'}</strong></p>
-                <p>الاحتفال نشط: <strong>{showCelebration ? 'نعم' : 'لا'}</strong></p>
-              </div>
-              <Button 
-                onClick={reevaluateBadge}
-                variant="outline" 
-                size="sm" 
-                className="w-full text-xs"
-              >
-                <Trophy className="w-3 h-3 mr-1" />
-                إعادة تقييم الوسام
-              </Button>
-              <Button 
-                onClick={resetTracking}
-                variant="destructive" 
-                size="sm" 
-                className="w-full text-xs"
-              >
-                <Zap className="w-3 h-3 mr-1" />
-                مسح ذاكرة الأوسمة
-              </Button>
-              <p className="text-[10px] text-muted-foreground text-center pt-1">
-                هذه الأدوات للتطوير فقط
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      )}
     </div>
   );
 };
