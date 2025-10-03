@@ -32,26 +32,34 @@ export const useGoogleDocs = () => {
       
       if (error) {
         console.error('Error creating document:', error);
-        toast.error('فشل إنشاء المستند', {
-          description: error.message || 'حدث خطأ أثناء إنشاء المستند'
-        });
+        setTimeout(() => {
+          toast.error('فشل إنشاء المستند', {
+            description: error.message || 'حدث خطأ أثناء إنشاء المستند'
+          });
+        }, 0);
         return null;
       }
 
       if (!data?.success) {
-        toast.error('فشل إنشاء المستند', {
-          description: data?.error || 'حدث خطأ غير متوقع'
-        });
+        setTimeout(() => {
+          toast.error('فشل إنشاء المستند', {
+            description: data?.error || 'حدث خطأ غير متوقع'
+          });
+        }, 0);
         return null;
       }
 
-      toast.success('تم إنشاء المستند بنجاح!');
+      setTimeout(() => {
+        toast.success('تم إنشاء المستند بنجاح!');
+      }, 0);
       return { docUrl: data.docUrl, fileId: data.fileId };
     } catch (error) {
       console.error('Exception creating document:', error);
-      toast.error('فشل إنشاء المستند', {
-        description: 'حدث خطأ غير متوقع'
-      });
+      setTimeout(() => {
+        toast.error('فشل إنشاء المستند', {
+          description: 'حدث خطأ غير متوقع'
+        });
+      }, 0);
       return null;
     } finally {
       setIsLoading(false);
@@ -66,25 +74,31 @@ export const useGoogleDocs = () => {
       
       if (error) {
         console.error('Error fetching documents:', error);
-        toast.error('فشل جلب المستندات', {
-          description: error.message || 'حدث خطأ أثناء جلب المستندات'
-        });
+        setTimeout(() => {
+          toast.error('فشل جلب المستندات', {
+            description: error.message || 'حدث خطأ أثناء جلب المستندات'
+          });
+        }, 0);
         return [];
       }
 
       if (!data?.success) {
-        toast.error('فشل جلب المستندات', {
-          description: data?.error || 'حدث خطأ غير متوقع'
-        });
+        setTimeout(() => {
+          toast.error('فشل جلب المستندات', {
+            description: data?.error || 'حدث خطأ غير متوقع'
+          });
+        }, 0);
         return [];
       }
 
       return data.documents || [];
     } catch (error) {
       console.error('Exception fetching documents:', error);
-      toast.error('فشل جلب المستندات', {
-        description: 'حدث خطأ غير متوقع'
-      });
+      setTimeout(() => {
+        toast.error('فشل جلب المستندات', {
+          description: 'حدث خطأ غير متوقع'
+        });
+      }, 0);
       return [];
     } finally {
       setIsLoading(false);
@@ -97,7 +111,9 @@ export const useGoogleDocs = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        toast.error('يجب تسجيل الدخول أولاً');
+        setTimeout(() => {
+          toast.error('يجب تسجيل الدخول أولاً');
+        }, 0);
         return [];
       }
 
@@ -109,18 +125,22 @@ export const useGoogleDocs = () => {
 
       if (error) {
         console.error('Error fetching my documents:', error);
-        toast.error('فشل جلب مستنداتك', {
-          description: error.message
-        });
+        setTimeout(() => {
+          toast.error('فشل جلب مستنداتك', {
+            description: error.message
+          });
+        }, 0);
         return [];
       }
 
       return data || [];
     } catch (error) {
       console.error('Exception fetching my documents:', error);
-      toast.error('فشل جلب مستنداتك', {
-        description: 'حدث خطأ غير متوقع'
-      });
+      setTimeout(() => {
+        toast.error('فشل جلب مستنداتك', {
+          description: 'حدث خطأ غير متوقع'
+        });
+      }, 0);
       return [];
     } finally {
       setIsLoading(false);
