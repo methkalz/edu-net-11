@@ -113,6 +113,13 @@ serve(async (req) => {
     }
     console.log('✅ Template ID:', templateId);
 
+    // تسجيل تشخيصي للتحقق من جميع الـ Secrets
+    console.log("--- 🔍 DEBUGGING INFO ---");
+    console.log("Template ID from Secrets:", templateId ? "✅ Loaded" : "❌ NOT FOUND");
+    console.log("Folder ID from Secrets:", Deno.env.get('GOOGLE_DRIVE_FOLDER_ID') ? "✅ Loaded" : "⚠️ NOT SET (optional)");
+    console.log("Google Credentials:", credentials ? "✅ Loaded" : "❌ NOT FOUND");
+    console.log("------------------------");
+
     // 5. إنشاء JWT token للمصادقة مع Google
     console.log('🔐 Step 5: إنشاء JWT token');
     const now = Math.floor(Date.now() / 1000);
@@ -215,6 +222,12 @@ serve(async (req) => {
       } else {
         console.log('📁 لم يتم تحديد مجلد، سيتم الحفظ في الجذر');
       }
+
+      // تسجيل تفصيلي عن المجلد
+      console.log("--- 📋 FOLDER DEBUG ---");
+      console.log("Folder ID value:", folderId || "null");
+      console.log("Will save to folder:", folderId ? "YES ✅" : "NO (root) ⚠️");
+      console.log("----------------------");
 
       // 7. نسخ القالب
       console.log('📄 Step 7: نسخ القالب من Google Drive');
