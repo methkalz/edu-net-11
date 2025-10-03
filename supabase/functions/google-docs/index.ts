@@ -416,6 +416,54 @@ serve(async (req) => {
         break;
       }
 
+      case "storage": {
+        console.log("💾 [STORAGE] Checking storage quota...");
+        
+        try {
+          const storageResponse = await fetch(
+            "https://www.googleapis.com/drive/v3/about?fields=storageQuota",
+            {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+            }
+          );
+
+          console.log("💾 [STORAGE] Response status:", storageResponse.status);
+
+          if (!storageResponse.ok) {
+            const error = await storageResponse.text();
+            console.error("❌ [STORAGE] Failed to get storage info!");
+            console.error("❌ [STORAGE] Error:", error);
+            throw new Error(`Failed to get storage info: ${storageResponse.status}`);
+          }
+
+          const storageData = await storageResponse.json();
+          console.log("✅ [STORAGE] Storage info retrieved successfully");
+          
+          const quota = storageData.storageQuota;
+          const usageInGB = (parseInt(quota.usage || "0") / (1024 * 1024 * 1024)).toFixed(2);
+          const limitInGB = (parseInt(quota.limit || "0") / (1024 * 1024 * 1024)).toFixed(2);
+          const usagePercent = quota.limit ? ((parseInt(quota.usage) / parseInt(quota.limit)) * 100).toFixed(1) : 0;
+
+          result = {
+            usage: quota.usage,
+            limit: quota.limit,
+            usageInDrive: quota.usageInDrive,
+            usageInDriveTrash: quota.usageInDriveTrash,
+            usageInGB,
+            limitInGB,
+            usagePercent,
+          };
+          
+          console.log("💾 [STORAGE] Usage:", usageInGB, "GB /", limitInGB, "GB (", usagePercent, "%)");
+        } catch (storageError) {
+          console.error("❌ [STORAGE] Exception:", storageError);
+          throw storageError;
+        }
+        break;
+      }
+
       default:
         throw new Error(`Unknown action: ${action}`);
     }

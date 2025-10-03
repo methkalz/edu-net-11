@@ -48,6 +48,12 @@ export default function ProfessionalDocuments() {
   const [searchQuery, setSearchQuery] = useState('');
   const [newDocTitle, setNewDocTitle] = useState('');
   const [newDocType, setNewDocType] = useState('general');
+  const [storageInfo, setStorageInfo] = useState<{
+    usageInGB: string;
+    limitInGB: string;
+    usagePercent: string;
+  } | null>(null);
+  const [loadingStorage, setLoadingStorage] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isCreatingGoogleDoc, setIsCreatingGoogleDoc] = useState(false);
 
@@ -65,6 +71,33 @@ export default function ProfessionalDocuments() {
       setNewDocTitle('');
       setNewDocType('general');
       setIsCreateDialogOpen(false);
+    }
+  };
+
+  const fetchStorageInfo = async () => {
+    setLoadingStorage(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('google-docs', {
+        body: { action: 'storage' }
+      });
+
+      if (error) throw error;
+
+      if (data?.success && data?.data) {
+        setStorageInfo({
+          usageInGB: data.data.usageInGB,
+          limitInGB: data.data.limitInGB,
+          usagePercent: data.data.usagePercent,
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: 'فشل في جلب معلومات المساحة',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingStorage(false);
     }
   };
 
@@ -144,13 +177,55 @@ export default function ProfessionalDocuments() {
             </p>
           </div>
 
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="lg" className="gap-2">
-                <Plus className="h-5 w-5" />
-                مستند جديد
-              </Button>
-            </DialogTrigger>
+          <div className="flex gap-3">
+            {/* Storage Info Card */}
+            <Card className="min-w-[200px]">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm">مساحة Service Account</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loadingStorage ? (
+                  <p className="text-sm text-muted-foreground">جاري التحميل...</p>
+                ) : storageInfo ? (
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>المستخدم:</span>
+                      <span className="font-bold">{storageInfo.usageInGB} GB</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>الإجمالي:</span>
+                      <span>{storageInfo.limitInGB} GB</span>
+                    </div>
+                    <div className="w-full bg-secondary rounded-full h-2">
+                      <div 
+                        className="bg-primary h-2 rounded-full transition-all"
+                        style={{ width: `${storageInfo.usagePercent}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground text-center">
+                      {storageInfo.usagePercent}% مستخدم
+                    </p>
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={fetchStorageInfo}
+                    className="w-full"
+                  >
+                    عرض المساحة
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+
+            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size="lg" className="gap-2">
+                  <Plus className="h-5 w-5" />
+                  مستند جديد
+                </Button>
+              </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>إنشاء مستند جديد</DialogTitle>
@@ -203,6 +278,7 @@ export default function ProfessionalDocuments() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
         {/* Search */}
