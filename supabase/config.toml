@@ -1,1 +1,7 @@
 project_id = "swlwhjnwycvjdhgclwlx"
+
+[functions.create-google-document]
+verify_jwt = true
+
+[functions.get-student-documents]
+verify_jwt = true

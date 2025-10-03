@@ -1363,6 +1363,56 @@ export type Database = {
         }
         Relationships: []
       }
+      google_documents: {
+        Row: {
+          created_at: string
+          doc_google_id: string
+          doc_url: string
+          id: string
+          last_accessed_at: string | null
+          owner_email: string
+          owner_id: string
+          owner_name: string
+          school_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          doc_google_id: string
+          doc_url: string
+          id?: string
+          last_accessed_at?: string | null
+          owner_email: string
+          owner_id: string
+          owner_name: string
+          school_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          doc_google_id?: string
+          doc_url?: string
+          id?: string
+          last_accessed_at?: string | null
+          owner_email?: string
+          owner_id?: string
+          owner_name?: string
+          school_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "google_documents_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       grade_levels: {
         Row: {
           code: string
@@ -4102,68 +4152,60 @@ export type Database = {
       }
       professional_documents: {
         Row: {
-          allow_comments: boolean
-          allow_suggestions: boolean
-          content: Json
+          content: Json | null
           created_at: string
+          document_type: string
+          google_doc_id: string | null
           html_content: string | null
           id: string
-          last_saved_at: string
-          owner_id: string
+          last_saved_at: string | null
+          metadata: Json | null
           page_count: number | null
           plain_text: string | null
           school_id: string | null
+          status: string
           title: string
           updated_at: string
-          version_number: number
-          visibility: string
+          user_id: string
           word_count: number | null
         }
         Insert: {
-          allow_comments?: boolean
-          allow_suggestions?: boolean
-          content?: Json
+          content?: Json | null
           created_at?: string
+          document_type?: string
+          google_doc_id?: string | null
           html_content?: string | null
           id?: string
-          last_saved_at?: string
-          owner_id: string
+          last_saved_at?: string | null
+          metadata?: Json | null
           page_count?: number | null
           plain_text?: string | null
           school_id?: string | null
-          title: string
+          status?: string
+          title?: string
           updated_at?: string
-          version_number?: number
-          visibility?: string
+          user_id: string
           word_count?: number | null
         }
         Update: {
-          allow_comments?: boolean
-          allow_suggestions?: boolean
-          content?: Json
+          content?: Json | null
           created_at?: string
+          document_type?: string
+          google_doc_id?: string | null
           html_content?: string | null
           id?: string
-          last_saved_at?: string
-          owner_id?: string
+          last_saved_at?: string | null
+          metadata?: Json | null
           page_count?: number | null
           plain_text?: string | null
           school_id?: string | null
+          status?: string
           title?: string
           updated_at?: string
-          version_number?: number
-          visibility?: string
+          user_id?: string
           word_count?: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "fk_professional_documents_school"
-            columns: ["school_id"]
-            isOneToOne: false
-            referencedRelation: "schools"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -5423,6 +5465,19 @@ export type Database = {
           project_id: string
           student_grade: string
           student_id: string
+        }[]
+      }
+      get_teacher_student_documents: {
+        Args: { teacher_id_param: string }
+        Returns: {
+          created_at: string
+          doc_title: string
+          doc_url: string
+          document_id: string
+          last_accessed_at: string
+          student_email: string
+          student_id: string
+          student_name: string
         }[]
       }
       get_teacher_student_tracking: {
