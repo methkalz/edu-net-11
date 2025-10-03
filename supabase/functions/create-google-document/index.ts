@@ -208,6 +208,14 @@ serve(async (req) => {
       const accessToken = tokenData.access_token;
       console.log('✅ تم الحصول على access token');
 
+      // قراءة معرّف المجلد (اختياري)
+      const folderId = Deno.env.get('GOOGLE_DRIVE_FOLDER_ID');
+      if (folderId) {
+        console.log('📁 سيتم حفظ المستند في المجلد:', folderId);
+      } else {
+        console.log('📁 لم يتم تحديد مجلد، سيتم الحفظ في الجذر');
+      }
+
       // 7. نسخ القالب
       console.log('📄 Step 7: نسخ القالب من Google Drive');
       const copyResponse = await fetch(`https://www.googleapis.com/drive/v3/files/${templateId}/copy`, {
@@ -218,6 +226,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           name: profile.email || `document_${user.id}`,
+          ...(folderId && { parents: [folderId] }) // إضافة المجلد فقط إذا كان موجوداً
         }),
       });
 
