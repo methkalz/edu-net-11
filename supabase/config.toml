@@ -1,4 +1,1 @@
 project_id = "swlwhjnwycvjdhgclwlx"
-
-[functions.google-docs]
-verify_jwt = true

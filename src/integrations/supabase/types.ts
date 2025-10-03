@@ -4102,60 +4102,68 @@ export type Database = {
       }
       professional_documents: {
         Row: {
-          content: Json | null
+          allow_comments: boolean
+          allow_suggestions: boolean
+          content: Json
           created_at: string
-          document_type: string
-          google_doc_id: string | null
           html_content: string | null
           id: string
-          last_saved_at: string | null
-          metadata: Json | null
+          last_saved_at: string
+          owner_id: string
           page_count: number | null
           plain_text: string | null
           school_id: string | null
-          status: string
           title: string
           updated_at: string
-          user_id: string
+          version_number: number
+          visibility: string
           word_count: number | null
         }
         Insert: {
-          content?: Json | null
+          allow_comments?: boolean
+          allow_suggestions?: boolean
+          content?: Json
           created_at?: string
-          document_type?: string
-          google_doc_id?: string | null
           html_content?: string | null
           id?: string
-          last_saved_at?: string | null
-          metadata?: Json | null
+          last_saved_at?: string
+          owner_id: string
           page_count?: number | null
           plain_text?: string | null
           school_id?: string | null
-          status?: string
-          title?: string
+          title: string
           updated_at?: string
-          user_id: string
+          version_number?: number
+          visibility?: string
           word_count?: number | null
         }
         Update: {
-          content?: Json | null
+          allow_comments?: boolean
+          allow_suggestions?: boolean
+          content?: Json
           created_at?: string
-          document_type?: string
-          google_doc_id?: string | null
           html_content?: string | null
           id?: string
-          last_saved_at?: string | null
-          metadata?: Json | null
+          last_saved_at?: string
+          owner_id?: string
           page_count?: number | null
           plain_text?: string | null
           school_id?: string | null
-          status?: string
           title?: string
           updated_at?: string
-          user_id?: string
+          version_number?: number
+          visibility?: string
           word_count?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_professional_documents_school"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
