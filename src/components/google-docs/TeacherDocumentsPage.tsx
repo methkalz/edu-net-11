@@ -148,3 +148,5 @@ export const TeacherDocumentsPage = () => {
     </div>
   );
 };
+
+export default TeacherDocumentsPage;

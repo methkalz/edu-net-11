@@ -482,6 +482,7 @@ const TeacherDashboard: React.FC = () => {
     { name: 'إدارة الصفوف', icon: School, path: '/school-classes', color: 'orange' },
     { name: 'إدارة الطلاب', icon: Users, path: '/students', color: 'blue' },
     { name: 'تتبع تقدم الطلاب', icon: Activity, path: '/teacher/student-tracking', color: 'green' },
+    { name: 'مستندات الطلاب', icon: FileText, path: '/teacher-documents', color: 'amber' },
     { name: 'التقويم والأحداث', icon: Calendar, path: '/calendar-management', color: 'purple' }
   ];
 
