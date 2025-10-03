@@ -1,20 +1,27 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { encode as base64Encode } from 'https://deno.land/std@0.177.0/encoding/base64.ts';
+import { encode as base64Encode, decode as base64Decode } from 'https://deno.land/std@0.177.0/encoding/base64.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Helper function to convert base64 string to ArrayBuffer
-function base64ToArrayBuffer(base64: string): ArrayBuffer {
-  const binaryString = atob(base64);
-  const bytes = new Uint8Array(binaryString.length);
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-  return bytes.buffer;
+// Helper: base64url encoding (JWT standard)
+function base64UrlEncode(input: Uint8Array | string): string {
+  const bytes = typeof input === 'string' ? new TextEncoder().encode(input) : input;
+  return base64Encode(bytes)
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+}
+
+// Helper: base64url decoding
+function base64UrlDecode(input: string): Uint8Array {
+  // Add padding if needed
+  const padded = input + '==='.slice((input.length + 3) % 4);
+  const base64 = padded.replace(/-/g, '+').replace(/_/g, '/');
+  return base64Decode(base64);
 }
 
 serve(async (req) => {
@@ -108,20 +115,30 @@ serve(async (req) => {
 
     // 5. إنشاء JWT token للمصادقة مع Google
     console.log('🔐 Step 5: إنشاء JWT token');
-    const jwtHeader = btoa(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
     const now = Math.floor(Date.now() / 1000);
-    const jwtClaimSet = btoa(JSON.stringify({
+    
+    // JWT Header
+    const header = {
+      alg: 'RS256',
+      typ: 'JWT'
+    };
+    const encodedHeader = base64UrlEncode(JSON.stringify(header));
+    console.log('✅ JWT header تم إنشاؤه');
+
+    // JWT Claims
+    const claims = {
       iss: credentials.client_email,
       scope: 'https://www.googleapis.com/auth/drive',
       aud: 'https://oauth2.googleapis.com/token',
       exp: now + 3600,
       iat: now,
-    }));
+    };
+    const encodedClaims = base64UrlEncode(JSON.stringify(claims));
+    console.log('✅ JWT claims تم إنشاؤها');
 
-    const signatureInput = `${jwtHeader}.${jwtClaimSet}`;
-    console.log('✅ JWT header و claim set تم إنشاؤهم');
+    const signatureInput = `${encodedHeader}.${encodedClaims}`;
     
-    // استيراد المفتاح الخاص - تحويل صحيح من PEM إلى binary
+    // استيراد المفتاح الخاص
     console.log('🔑 Step 5.1: معالجة المفتاح الخاص');
     try {
       // إزالة headers و footers و whitespace من المفتاح
@@ -133,7 +150,7 @@ serve(async (req) => {
       console.log('✅ تم تنظيف المفتاح، طوله:', pemKey.length);
       
       // تحويل base64 إلى ArrayBuffer
-      const keyData = base64ToArrayBuffer(pemKey);
+      const keyData = base64UrlDecode(pemKey).buffer;
       console.log('✅ تم تحويل المفتاح إلى ArrayBuffer، حجمه:', keyData.byteLength);
       
       const privateKey = await crypto.subtle.importKey(
@@ -154,7 +171,9 @@ serve(async (req) => {
       );
       console.log('✅ تم التوقيع بنجاح');
 
-      const jwt = `${signatureInput}.${btoa(String.fromCharCode(...new Uint8Array(signature)))}`;
+      // تحويل التوقيع إلى base64url
+      const encodedSignature = base64UrlEncode(new Uint8Array(signature));
+      const jwt = `${signatureInput}.${encodedSignature}`;
       console.log('✅ تم إنشاء JWT بنجاح');
 
       // 6. الحصول على access token
@@ -168,13 +187,17 @@ serve(async (req) => {
       const tokenData = await tokenResponse.json();
       console.log('📥 استجابة Google OAuth:', { 
         has_access_token: !!tokenData.access_token,
-        error: tokenData.error 
+        error: tokenData.error,
+        error_description: tokenData.error_description?.substring(0, 100)
       });
       
       if (!tokenData.access_token) {
         console.error('❌ فشل الحصول على access token:', tokenData);
         return new Response(
-          JSON.stringify({ error: 'Failed to authenticate with Google', details: tokenData }),
+          JSON.stringify({ 
+            error: 'Failed to authenticate with Google', 
+            details: tokenData.error_description 
+          }),
           { 
             status: 500, 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
