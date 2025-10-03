@@ -118,12 +118,26 @@ serve(async (req) => {
     
     console.log("Google Docs request:", { action, documentId, title });
 
-    // Get credentials from environment
+    // Get credentials from environment with detailed validation
     const privateKey = Deno.env.get("Google_Api");
     const clientEmail = "doc-writer@edu-net-doc-writer.iam.gserviceaccount.com";
 
+    // Detailed secret validation
+    console.log("=== Secret Validation ===");
+    console.log("Private key exists:", privateKey !== undefined);
+    console.log("Private key type:", typeof privateKey);
+    console.log("Private key length:", privateKey?.length || 0);
+    console.log("Private key starts with:", privateKey?.substring(0, 30) || "N/A");
+    console.log("========================");
+
     if (!privateKey) {
-      throw new Error("Google API private key not configured in secrets");
+      console.error("ERROR: Google_Api secret is undefined or empty!");
+      throw new Error("Google API private key not configured in secrets. Please add Google_Api secret in Supabase.");
+    }
+
+    if (privateKey.length < 100) {
+      console.error("ERROR: Google_Api secret seems too short!");
+      throw new Error("Google API private key appears to be invalid (too short).");
     }
 
     // Create JWT and get access token
