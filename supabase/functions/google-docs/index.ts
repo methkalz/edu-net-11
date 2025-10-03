@@ -36,12 +36,26 @@ async function createJWT(
   const unsignedToken = `${encodedHeader}.${encodedPayload}`;
 
   // Clean and decode the private key
-  const keyData = privateKey
+  let keyData = privateKey
     .replace(/-----BEGIN PRIVATE KEY-----/g, "")
     .replace(/-----END PRIVATE KEY-----/g, "")
-    .replace(/\s/g, "");
+    .replace(/\\n/g, "") // Remove escaped newlines
+    .replace(/\n/g, "")  // Remove actual newlines
+    .replace(/\r/g, "")  // Remove carriage returns
+    .replace(/\s+/g, ""); // Remove all whitespace
 
-  const binaryKey = Uint8Array.from(atob(keyData), (c) => c.charCodeAt(0));
+  // Validate base64 before decoding
+  if (!keyData || keyData.length === 0) {
+    throw new Error("Private key is empty after cleaning");
+  }
+
+  let binaryKey: Uint8Array;
+  try {
+    binaryKey = Uint8Array.from(atob(keyData), (c) => c.charCodeAt(0));
+  } catch (error) {
+    console.error("Failed to decode private key:", error);
+    throw new Error("Invalid private key format. Please ensure the key is properly formatted base64.");
+  }
 
   // Import the private key for signing
   const cryptoKey = await crypto.subtle.importKey(
