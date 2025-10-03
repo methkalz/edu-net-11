@@ -208,13 +208,15 @@ serve(async (req) => {
 
     switch (action) {
       case "create": {
-        console.log("📝 [CREATE] Creating new Google Doc...");
+        console.log("📝 [CREATE] Creating new Google Doc in shared folder...");
         console.log("📝 [CREATE] Title:", title || "مستند جديد");
         
+        const folderId = "1ucJ6qpona96k8cPs1yJplP4GQ4fKdrHA";
+        
         try {
-          // First create the document
+          // Create document directly in the shared folder using Drive API
           const createResponse = await fetch(
-            "https://docs.googleapis.com/v1/documents",
+            "https://www.googleapis.com/drive/v3/files",
             {
               method: "POST",
               headers: {
@@ -222,7 +224,9 @@ serve(async (req) => {
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
-                title: title || "مستند جديد",
+                name: title || "مستند جديد",
+                mimeType: "application/vnd.google-apps.document",
+                parents: [folderId],
               }),
             }
           );
@@ -239,40 +243,14 @@ serve(async (req) => {
 
           const doc = await createResponse.json();
           console.log("✅ [CREATE] Document created successfully!");
-          console.log("✅ [CREATE] Document ID:", doc.documentId);
-          console.log("✅ [CREATE] Document title:", doc.title);
-
-          // Move document to the shared folder
-          const folderId = "1ucJ6qpona96k8cPs1yJplP4GQ4fKdrHA";
-          console.log("📝 [CREATE] Moving document to shared folder...");
-          
-          try {
-            const moveResponse = await fetch(
-              `https://www.googleapis.com/drive/v3/files/${doc.documentId}?addParents=${folderId}`,
-              {
-                method: "PATCH",
-                headers: {
-                  Authorization: `Bearer ${accessToken}`,
-                  "Content-Type": "application/json",
-                },
-              }
-            );
-
-            if (!moveResponse.ok) {
-              const moveError = await moveResponse.text();
-              console.error("⚠️ [CREATE] Failed to move document:", moveError);
-            } else {
-              console.log("✅ [CREATE] Document moved to folder successfully!");
-            }
-          } catch (moveError) {
-            console.error("❌ [CREATE] Error moving document:", moveError);
-          }
+          console.log("✅ [CREATE] Document ID:", doc.id);
+          console.log("✅ [CREATE] Document name:", doc.name);
 
           // Share the document publicly so anyone with the link can edit
           console.log("📝 [CREATE] Sharing document publicly...");
           try {
             const shareResponse = await fetch(
-              `https://www.googleapis.com/drive/v3/files/${doc.documentId}/permissions`,
+              `https://www.googleapis.com/drive/v3/files/${doc.id}/permissions`,
               {
                 method: "POST",
                 headers: {
@@ -280,8 +258,8 @@ serve(async (req) => {
                   "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                  role: "writer", // Editor permission
-                  type: "anyone", // Anyone with the link
+                  role: "writer",
+                  type: "anyone",
                 }),
               }
             );
@@ -296,12 +274,12 @@ serve(async (req) => {
             console.error("❌ [CREATE] Error sharing document:", shareError);
           }
 
-          // If content provided, add it to the document
+          // If content provided, add it to the document using Docs API
           if (content) {
             console.log("📝 [CREATE] Adding content to document...");
             try {
               const updateResponse = await fetch(
-                `https://docs.googleapis.com/v1/documents/${doc.documentId}:batchUpdate`,
+                `https://docs.googleapis.com/v1/documents/${doc.id}:batchUpdate`,
                 {
                   method: "POST",
                   headers: {
@@ -331,7 +309,11 @@ serve(async (req) => {
             }
           }
 
-          result = doc;
+          result = {
+            documentId: doc.id,
+            title: doc.name,
+            webViewLink: `https://docs.google.com/document/d/${doc.id}/edit`,
+          };
         } catch (createError) {
           console.error("❌ [CREATE] Exception during create:", createError);
           throw createError;
