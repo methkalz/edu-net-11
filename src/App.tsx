@@ -58,6 +58,7 @@ const LandingPage = React.lazy(() => import('@/pages/LandingPage'));
 const KnowledgeAdventurePage = React.lazy(() => import('@/pages/KnowledgeAdventurePage'));
 const StudentTrackingPage = React.lazy(() => import('@/pages/teacher/StudentTracking'));
 const BadgeTestPage = React.lazy(() => import('@/pages/BadgeTestPage'));
+const DocumentsTest = React.lazy(() => import('@/pages/DocumentsTest'));
 import { PageLoading } from "@/components/ui/LoadingComponents";
 
 /**
@@ -168,6 +169,9 @@ const App = () => {
                
                {/* Badge testing page - superadmin only */}
                 <Route path="/badge-test" element={<Suspense fallback={<PageLoading message="جاري تحميل صفحة الاختبار..." />}><BadgeTestPage /></Suspense>} />
+               
+               {/* Documents testing page */}
+                <Route path="/documents/test" element={<Suspense fallback={<PageLoading message="جاري تحميل صفحة المستندات..." />}><DocumentsTest /></Suspense>} />
                
                {/* Development and testing routes */}
                 <Route path="/test" element={<LazyTest />} />
