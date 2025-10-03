@@ -58,6 +58,7 @@ const LandingPage = React.lazy(() => import('@/pages/LandingPage'));
 const KnowledgeAdventurePage = React.lazy(() => import('@/pages/KnowledgeAdventurePage'));
 const StudentTrackingPage = React.lazy(() => import('@/pages/teacher/StudentTracking'));
 const BadgeTestPage = React.lazy(() => import('@/pages/BadgeTestPage'));
+const ProfessionalDocuments = React.lazy(() => import('@/pages/ProfessionalDocuments'));
 import { PageLoading } from "@/components/ui/LoadingComponents";
 
 /**
@@ -168,6 +169,9 @@ const App = () => {
                
                {/* Badge testing page - superadmin only */}
                 <Route path="/badge-test" element={<Suspense fallback={<PageLoading message="جاري تحميل صفحة الاختبار..." />}><BadgeTestPage /></Suspense>} />
+               
+               {/* Professional Documents - Google Docs integration */}
+                <Route path="/professional-documents" element={<Suspense fallback={<PageLoading message="جاري تحميل المستندات..." />}><ProfessionalDocuments /></Suspense>} />
                
                {/* Development and testing routes */}
                 <Route path="/test" element={<LazyTest />} />
