@@ -203,8 +203,6 @@ serve(async (req) => {
     const accessToken = await getAccessToken(jwt);
     console.log("✅ [STEP 4] Access token obtained successfully\n");
 
-    let result;
-
     console.log("📝 [STEP 5] Executing action:", action);
     let result;
 
