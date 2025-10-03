@@ -204,6 +204,7 @@ serve(async (req) => {
     console.log("✅ [STEP 4] Access token obtained successfully\n");
 
     console.log("📝 [STEP 5] Executing action:", action);
+    console.log("📝 [STEP 5] Action type:", typeof action);
     let result;
 
     switch (action) {
@@ -468,12 +469,6 @@ serve(async (req) => {
         throw new Error(`Unknown action: ${action}`);
     }
 
-    return new Response(
-      JSON.stringify({ success: true, data: result }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
-    );
     console.log("✅ ============================================");
     console.log("✅ REQUEST COMPLETED SUCCESSFULLY");
     console.log("✅ ============================================\n");
