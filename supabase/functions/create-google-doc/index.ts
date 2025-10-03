@@ -13,9 +13,9 @@ serve(async (req) => {
   }
 
   try {
-    const { title, content } = await req.json();
+    const { templateId, newTitle, studentName, studentId } = await req.json();
 
-    console.log('📝 Creating Google Doc:', { title });
+    console.log('📝 Copying template:', { templateId, newTitle, studentName });
 
     // الحصول على المفاتيح من البيئة
     const serviceAccountEmail = Deno.env.get('GOOGLE_SERVICE_ACCOUNT_EMAIL');
@@ -104,65 +104,93 @@ serve(async (req) => {
 
     console.log('✅ Access token obtained');
 
-    // إنشاء مستند جديد في Google Docs
-    const createDocResponse = await fetch('https://docs.googleapis.com/v1/documents', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        title: title || 'مستند جديد',
-      }),
-    });
+    // نسخ الملف من القالب
+    const copyResponse = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${templateId}/copy`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: newTitle || `نسخة - ${studentName || 'طالب'}`,
+        }),
+      }
+    );
 
-    if (!createDocResponse.ok) {
-      const errorText = await createDocResponse.text();
-      console.error('❌ Create doc error:', errorText);
-      throw new Error(`Failed to create document: ${errorText}`);
+    if (!copyResponse.ok) {
+      const errorText = await copyResponse.text();
+      console.error('❌ Copy error:', errorText);
+      throw new Error(`Failed to copy template: ${errorText}`);
     }
 
-    const docData = await createDocResponse.json();
-    console.log('📄 Document created:', docData.documentId);
+    const copyData = await copyResponse.json();
+    console.log('📄 Template copied:', copyData.id);
 
-    // إضافة محتوى إلى المستند إذا كان موجوداً
-    if (content) {
-      const updateDocResponse = await fetch(
-        `https://docs.googleapis.com/v1/documents/${docData.documentId}:batchUpdate`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            requests: [
-              {
-                insertText: {
-                  location: {
-                    index: 1,
-                  },
-                  text: content,
-                },
+    // إذا كان هناك بيانات طالب، استبدل النصوص في المستند
+    if (studentName || studentId) {
+      try {
+        const replaceRequests = [];
+        
+        if (studentName) {
+          replaceRequests.push({
+            replaceAllText: {
+              containsText: {
+                text: '{{student_name}}',
+                matchCase: false,
               },
-            ],
-          }),
+              replaceText: studentName,
+            },
+          });
         }
-      );
+        
+        if (studentId) {
+          replaceRequests.push({
+            replaceAllText: {
+              containsText: {
+                text: '{{student_id}}',
+                matchCase: false,
+              },
+              replaceText: studentId,
+            },
+          });
+        }
 
-      if (!updateDocResponse.ok) {
-        console.warn('⚠️ Failed to add content, but document was created');
-      } else {
-        console.log('✅ Content added to document');
+        if (replaceRequests.length > 0) {
+          const updateResponse = await fetch(
+            `https://docs.googleapis.com/v1/documents/${copyData.id}:batchUpdate`,
+            {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                requests: replaceRequests,
+              }),
+            }
+          );
+
+          if (updateResponse.ok) {
+            console.log('✅ Student data replaced in document');
+          } else {
+            console.warn('⚠️ Failed to replace student data');
+          }
+        }
+      } catch (replaceError) {
+        console.warn('⚠️ Error replacing text:', replaceError);
       }
     }
 
     return new Response(
       JSON.stringify({
         success: true,
-        documentId: docData.documentId,
-        documentUrl: `https://docs.google.com/document/d/${docData.documentId}/edit`,
-        title: docData.title,
+        documentId: copyData.id,
+        documentUrl: `https://docs.google.com/document/d/${copyData.id}/edit`,
+        title: copyData.name,
+        studentName: studentName || null,
+        studentId: studentId || null,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -2,32 +2,39 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './use-toast';
 
+interface CopyTemplateParams {
+  templateId: string;
+  newTitle: string;
+  studentName?: string;
+  studentId?: string;
+}
+
 export const useGoogleDocs = () => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  const createDocument = async (title: string, content?: string) => {
+  const copyTemplate = async (params: CopyTemplateParams) => {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('create-google-doc', {
-        body: { title, content },
+        body: params,
       });
 
       if (error) throw error;
 
       if (data.success) {
         toast({
-          title: "تم إنشاء المستند بنجاح! ✅",
+          title: "تم نسخ القالب بنجاح! ✅",
           description: `المستند: ${data.title}`,
         });
         return data;
       } else {
-        throw new Error(data.error || 'فشل إنشاء المستند');
+        throw new Error(data.error || 'فشل نسخ القالب');
       }
     } catch (err: any) {
-      console.error('Create document error:', err);
+      console.error('Copy template error:', err);
       toast({
-        title: "خطأ في إنشاء المستند",
+        title: "خطأ في نسخ القالب",
         description: err.message,
         variant: "destructive",
       });
@@ -38,7 +45,7 @@ export const useGoogleDocs = () => {
   };
 
   return {
-    createDocument,
+    copyTemplate,
     loading,
   };
 };
