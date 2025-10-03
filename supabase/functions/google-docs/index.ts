@@ -212,6 +212,7 @@ serve(async (req) => {
         console.log("📝 [CREATE] Title:", title || "مستند جديد");
         
         try {
+          // First create the document
           const createResponse = await fetch(
             "https://docs.googleapis.com/v1/documents",
             {
@@ -240,6 +241,32 @@ serve(async (req) => {
           console.log("✅ [CREATE] Document created successfully!");
           console.log("✅ [CREATE] Document ID:", doc.documentId);
           console.log("✅ [CREATE] Document title:", doc.title);
+
+          // Move document to the shared folder
+          const folderId = "1ucJ6qpona96k8cPs1yJplP4GQ4fKdrHA";
+          console.log("📝 [CREATE] Moving document to shared folder...");
+          
+          try {
+            const moveResponse = await fetch(
+              `https://www.googleapis.com/drive/v3/files/${doc.documentId}?addParents=${folderId}`,
+              {
+                method: "PATCH",
+                headers: {
+                  Authorization: `Bearer ${accessToken}`,
+                  "Content-Type": "application/json",
+                },
+              }
+            );
+
+            if (!moveResponse.ok) {
+              const moveError = await moveResponse.text();
+              console.error("⚠️ [CREATE] Failed to move document:", moveError);
+            } else {
+              console.log("✅ [CREATE] Document moved to folder successfully!");
+            }
+          } catch (moveError) {
+            console.error("❌ [CREATE] Error moving document:", moveError);
+          }
 
           // Share the document publicly so anyone with the link can edit
           console.log("📝 [CREATE] Sharing document publicly...");
