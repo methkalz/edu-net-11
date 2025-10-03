@@ -15,6 +15,10 @@ async function createJWT(
   clientEmail: string,
   scopes: string[]
 ): Promise<string> {
+  console.log("🔐 [JWT] Starting JWT creation process...");
+  console.log("🔐 [JWT] Client email:", clientEmail);
+  console.log("🔐 [JWT] Scopes:", scopes);
+  
   const header = {
     alg: "RS256",
     typ: "JWT",
@@ -31,11 +35,16 @@ async function createJWT(
     iat: now,
   };
 
+  console.log("🔐 [JWT] Creating header and payload...");
   const encodedHeader = base64urlEncode(JSON.stringify(header));
   const encodedPayload = base64urlEncode(JSON.stringify(payload));
   const unsignedToken = `${encodedHeader}.${encodedPayload}`;
+  console.log("🔐 [JWT] Unsigned token created, length:", unsignedToken.length);
 
   // Clean and decode the private key
+  console.log("🔐 [JWT] Cleaning private key...");
+  console.log("🔐 [JWT] Private key original length:", privateKey.length);
+  
   let keyData = privateKey
     .replace(/-----BEGIN PRIVATE KEY-----/g, "")
     .replace(/-----END PRIVATE KEY-----/g, "")
@@ -44,143 +53,169 @@ async function createJWT(
     .replace(/\r/g, "")  // Remove carriage returns
     .replace(/\s+/g, ""); // Remove all whitespace
 
+  console.log("🔐 [JWT] Cleaned key data length:", keyData.length);
+
   // Validate base64 before decoding
   if (!keyData || keyData.length === 0) {
+    console.error("❌ [JWT] Private key is empty after cleaning!");
     throw new Error("Private key is empty after cleaning");
   }
 
+  console.log("🔐 [JWT] Decoding base64 key...");
   let binaryKey: Uint8Array;
   try {
     binaryKey = Uint8Array.from(atob(keyData), (c) => c.charCodeAt(0));
+    console.log("✅ [JWT] Successfully decoded base64, binary key length:", binaryKey.length);
   } catch (error) {
-    console.error("Failed to decode private key:", error);
+    console.error("❌ [JWT] Failed to decode private key:", error);
     throw new Error("Invalid private key format. Please ensure the key is properly formatted base64.");
   }
 
   // Import the private key for signing
-  const cryptoKey = await crypto.subtle.importKey(
-    "pkcs8",
-    binaryKey,
-    {
-      name: "RSASSA-PKCS1-v1_5",
-      hash: "SHA-256",
-    },
-    false,
-    ["sign"]
-  );
+  console.log("🔐 [JWT] Importing crypto key...");
+  try {
+    const cryptoKey = await crypto.subtle.importKey(
+      "pkcs8",
+      binaryKey,
+      {
+        name: "RSASSA-PKCS1-v1_5",
+        hash: "SHA-256",
+      },
+      false,
+      ["sign"]
+    );
+    console.log("✅ [JWT] Crypto key imported successfully");
 
-  // Sign the token
-  const encoder = new TextEncoder();
-  const signature = await crypto.subtle.sign(
-    "RSASSA-PKCS1-v1_5",
-    cryptoKey,
-    encoder.encode(unsignedToken)
-  );
+    // Sign the token
+    console.log("🔐 [JWT] Signing token...");
+    const encoder = new TextEncoder();
+    const signature = await crypto.subtle.sign(
+      "RSASSA-PKCS1-v1_5",
+      cryptoKey,
+      encoder.encode(unsignedToken)
+    );
+    console.log("✅ [JWT] Token signed successfully");
 
-  const encodedSignature = base64urlEncode(
-    String.fromCharCode(...new Uint8Array(signature))
-  );
+    const encodedSignature = base64urlEncode(
+      String.fromCharCode(...new Uint8Array(signature))
+    );
 
-  return `${unsignedToken}.${encodedSignature}`;
+    const finalJWT = `${unsignedToken}.${encodedSignature}`;
+    console.log("✅ [JWT] JWT creation completed, total length:", finalJWT.length);
+    return finalJWT;
+  } catch (error) {
+    console.error("❌ [JWT] Error during key import or signing:", error);
+    throw error;
+  }
 }
 
 // Get OAuth2 access token from Google
 async function getAccessToken(jwt: string): Promise<string> {
-  const response = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: new URLSearchParams({
-      grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
-      assertion: jwt,
-    }),
-  });
+  console.log("🔑 [TOKEN] Requesting access token from Google OAuth2...");
+  console.log("🔑 [TOKEN] JWT length:", jwt.length);
+  
+  try {
+    const response = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+        assertion: jwt,
+      }),
+    });
 
-  if (!response.ok) {
-    const error = await response.text();
-    console.error("Failed to get access token:", error);
-    throw new Error(`Failed to get access token: ${response.status}`);
+    console.log("🔑 [TOKEN] Response status:", response.status);
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error("❌ [TOKEN] Failed to get access token:", error);
+      console.error("❌ [TOKEN] Response status:", response.status);
+      throw new Error(`Failed to get access token: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log("✅ [TOKEN] Access token received successfully");
+    console.log("✅ [TOKEN] Token type:", data.token_type);
+    console.log("✅ [TOKEN] Expires in:", data.expires_in, "seconds");
+    return data.access_token;
+  } catch (error) {
+    console.error("❌ [TOKEN] Exception during token request:", error);
+    throw error;
   }
-
-  const data = await response.json();
-  return data.access_token;
 }
 
 serve(async (req) => {
+  console.log("📥 ============================================");
+  console.log("📥 NEW REQUEST RECEIVED");
+  console.log("📥 ============================================");
+  
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
+    console.log("📥 CORS preflight request, returning headers");
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    console.log("📥 [STEP 1] Parsing request body...");
     const { action, documentId, title, content, requests } = await req.json();
     
-    console.log("Google Docs request:", { action, documentId, title });
+    console.log("📥 [STEP 1] Request details:");
+    console.log("  - Action:", action);
+    console.log("  - Document ID:", documentId || "N/A");
+    console.log("  - Title:", title || "N/A");
+    console.log("  - Has content:", !!content);
+    console.log("  - Has requests:", !!requests);
 
-    // Get credentials from environment with detailed validation
+    console.log("\n🔐 [STEP 2] Reading secrets from environment...");
     const privateKey = Deno.env.get("Google_Api");
     const clientEmail = "doc-writer@edu-net-doc-writer.iam.gserviceaccount.com";
 
-    // Detailed secret validation
-    console.log("=== Secret Validation ===");
-    console.log("Private key exists:", privateKey !== undefined);
-    console.log("Private key type:", typeof privateKey);
-    console.log("Private key length:", privateKey?.length || 0);
-    console.log("Private key starts with:", privateKey?.substring(0, 30) || "N/A");
-    console.log("========================");
+    console.log("🔐 [STEP 2] Secret validation:");
+    console.log("  - Private key exists:", privateKey !== undefined);
+    console.log("  - Private key is null:", privateKey === null);
+    console.log("  - Private key type:", typeof privateKey);
+    console.log("  - Private key length:", privateKey?.length || 0);
+    console.log("  - Private key starts with:", privateKey?.substring(0, 50) || "N/A");
+    console.log("  - Client email:", clientEmail);
 
     if (!privateKey) {
-      console.error("ERROR: Google_Api secret is undefined or empty!");
+      console.error("❌ [STEP 2] ERROR: Google_Api secret is undefined or empty!");
       throw new Error("Google API private key not configured in secrets. Please add Google_Api secret in Supabase.");
     }
 
     if (privateKey.length < 100) {
-      console.error("ERROR: Google_Api secret seems too short!");
+      console.error("❌ [STEP 2] ERROR: Google_Api secret seems too short! Length:", privateKey.length);
       throw new Error("Google API private key appears to be invalid (too short).");
     }
 
-    // Create JWT and get access token
+    console.log("✅ [STEP 2] Secrets validated successfully\n");
+
+    console.log("🔐 [STEP 3] Creating JWT token...");
     const jwt = await createJWT(privateKey, clientEmail, [
       "https://www.googleapis.com/auth/documents",
       "https://www.googleapis.com/auth/drive",
     ]);
+    console.log("✅ [STEP 3] JWT created successfully\n");
 
+    console.log("🔑 [STEP 4] Getting access token...");
     const accessToken = await getAccessToken(jwt);
-    console.log("Successfully obtained access token");
+    console.log("✅ [STEP 4] Access token obtained successfully\n");
 
+    let result;
+
+    console.log("📝 [STEP 5] Executing action:", action);
     let result;
 
     switch (action) {
       case "create": {
-        // Create new Google Doc
-        const createResponse = await fetch(
-          "https://docs.googleapis.com/v1/documents",
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              title: title || "مستند جديد",
-            }),
-          }
-        );
-
-        if (!createResponse.ok) {
-          const error = await createResponse.text();
-          console.error("Create document error:", error);
-          throw new Error(`Failed to create document: ${createResponse.status}`);
-        }
-
-        const doc = await createResponse.json();
-        console.log("Document created:", doc.documentId);
-
-        // If content provided, add it to the document
-        if (content) {
-          const updateResponse = await fetch(
-            `https://docs.googleapis.com/v1/documents/${doc.documentId}:batchUpdate`,
+        console.log("📝 [CREATE] Creating new Google Doc...");
+        console.log("📝 [CREATE] Title:", title || "مستند جديد");
+        
+        try {
+          const createResponse = await fetch(
+            "https://docs.googleapis.com/v1/documents",
             {
               method: "POST",
               headers: {
@@ -188,24 +223,66 @@ serve(async (req) => {
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
-                requests: [
-                  {
-                    insertText: {
-                      location: { index: 1 },
-                      text: content,
-                    },
-                  },
-                ],
+                title: title || "مستند جديد",
               }),
             }
           );
 
-          if (!updateResponse.ok) {
-            console.error("Failed to add content to document");
-          }
-        }
+          console.log("📝 [CREATE] Response status:", createResponse.status);
 
-        result = doc;
+          if (!createResponse.ok) {
+            const error = await createResponse.text();
+            console.error("❌ [CREATE] Failed to create document!");
+            console.error("❌ [CREATE] Status:", createResponse.status);
+            console.error("❌ [CREATE] Error details:", error);
+            throw new Error(`Failed to create document: ${createResponse.status}`);
+          }
+
+          const doc = await createResponse.json();
+          console.log("✅ [CREATE] Document created successfully!");
+          console.log("✅ [CREATE] Document ID:", doc.documentId);
+          console.log("✅ [CREATE] Document title:", doc.title);
+
+          // If content provided, add it to the document
+          if (content) {
+            console.log("📝 [CREATE] Adding content to document...");
+            try {
+              const updateResponse = await fetch(
+                `https://docs.googleapis.com/v1/documents/${doc.documentId}:batchUpdate`,
+                {
+                  method: "POST",
+                  headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    requests: [
+                      {
+                        insertText: {
+                          location: { index: 1 },
+                          text: content,
+                        },
+                      },
+                    ],
+                  }),
+                }
+              );
+
+              if (!updateResponse.ok) {
+                console.error("⚠️ [CREATE] Failed to add content to document");
+              } else {
+                console.log("✅ [CREATE] Content added successfully");
+              }
+            } catch (contentError) {
+              console.error("❌ [CREATE] Error adding content:", contentError);
+            }
+          }
+
+          result = doc;
+        } catch (createError) {
+          console.error("❌ [CREATE] Exception during create:", createError);
+          throw createError;
+        }
         break;
       }
 
@@ -314,13 +391,30 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
+    console.log("✅ ============================================");
+    console.log("✅ REQUEST COMPLETED SUCCESSFULLY");
+    console.log("✅ ============================================\n");
+
+    return new Response(
+      JSON.stringify({ success: true, data: result }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
   } catch (error) {
-    console.error("Error in google-docs function:", error);
+    console.error("❌ ============================================");
+    console.error("❌ ERROR IN GOOGLE-DOCS FUNCTION");
+    console.error("❌ ============================================");
+    console.error("❌ Error type:", error.constructor.name);
+    console.error("❌ Error message:", error.message);
+    console.error("❌ Error stack:", error.stack);
+    console.error("❌ ============================================\n");
     
     return new Response(
       JSON.stringify({
         success: false,
         error: error.message || "Internal server error",
+        errorType: error.constructor.name,
       }),
       {
         status: 500,
