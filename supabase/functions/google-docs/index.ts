@@ -243,6 +243,34 @@ serve(async (req) => {
           console.log("✅ [CREATE] Document ID:", doc.documentId);
           console.log("✅ [CREATE] Document title:", doc.title);
 
+          // Share the document publicly so anyone with the link can edit
+          console.log("📝 [CREATE] Sharing document publicly...");
+          try {
+            const shareResponse = await fetch(
+              `https://www.googleapis.com/drive/v3/files/${doc.documentId}/permissions`,
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${accessToken}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  role: "writer", // Editor permission
+                  type: "anyone", // Anyone with the link
+                }),
+              }
+            );
+
+            if (!shareResponse.ok) {
+              const shareError = await shareResponse.text();
+              console.error("⚠️ [CREATE] Failed to share document:", shareError);
+            } else {
+              console.log("✅ [CREATE] Document shared successfully!");
+            }
+          } catch (shareError) {
+            console.error("❌ [CREATE] Error sharing document:", shareError);
+          }
+
           // If content provided, add it to the document
           if (content) {
             console.log("📝 [CREATE] Adding content to document...");
