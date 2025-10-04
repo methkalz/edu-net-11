@@ -33,6 +33,12 @@ serve(async (req) => {
   try {
     console.log('🚀 بدء عملية إنشاء المستند...');
     
+    // قراءة البيانات المرسلة (إذا وجدت)
+    const requestBody = req.method === 'POST' ? await req.json().catch(() => ({})) : {};
+    const useTemplate = requestBody.useTemplate !== false; // افتراضياً true
+    
+    console.log('📋 نوع المستند:', useTemplate ? 'نسخة من القالب' : 'مستند فارغ جديد');
+    
     // 1. إعداد Supabase client
     console.log('📝 Step 1: إعداد Supabase client');
     const supabaseClient = createClient(
@@ -229,39 +235,90 @@ serve(async (req) => {
       console.log("Will save to folder:", folderId ? "YES ✅" : "NO (root) ⚠️");
       console.log("----------------------");
 
-      // 7. نسخ القالب
-      console.log('📄 Step 7: نسخ القالب من Google Drive');
-      const copyResponse = await fetch(`https://www.googleapis.com/drive/v3/files/${templateId}/copy`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: profile.email || `document_${user.id}`,
-          ...(folderId && { parents: [folderId] }) // إضافة المجلد فقط إذا كان موجوداً
-        }),
-      });
-
-      const copiedFile = await copyResponse.json();
-      console.log('📥 استجابة نسخ القالب:', { 
-        has_id: !!copiedFile.id,
-        error: copiedFile.error 
-      });
+      // 7. إنشاء أو نسخ المستند
+      let fileId: string;
       
-      if (!copiedFile.id) {
-        console.error('❌ فشل نسخ القالب:', copiedFile);
-        return new Response(
-          JSON.stringify({ error: 'Failed to create document', details: copiedFile }),
-          { 
-            status: 500, 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-          }
-        );
-      }
+      if (useTemplate) {
+        // نسخ القالب
+        console.log('📄 Step 7: نسخ القالب من Google Drive');
+        const copyResponse = await fetch(`https://www.googleapis.com/drive/v3/files/${templateId}/copy`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: profile.email || `document_${user.id}`,
+            ...(folderId && { parents: [folderId] })
+          }),
+        });
 
-      const fileId = copiedFile.id;
-      console.log('✅ تم نسخ القالب، File ID:', fileId);
+        const copiedFile = await copyResponse.json();
+        console.log('📥 استجابة نسخ القالب:', { 
+          has_id: !!copiedFile.id,
+          error: copiedFile.error 
+        });
+        
+        if (!copiedFile.id) {
+          console.error('❌ فشل نسخ القالب:', copiedFile);
+          return new Response(
+            JSON.stringify({ error: 'Failed to create document', details: copiedFile }),
+            { 
+              status: 500, 
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+            }
+          );
+        }
+
+        fileId = copiedFile.id;
+        console.log('✅ تم نسخ القالب، File ID:', fileId);
+      } else {
+        // إنشاء مستند جديد فارغ
+        console.log('📄 Step 7: إنشاء مستند جديد فارغ');
+        const createResponse = await fetch('https://docs.googleapis.com/v1/documents', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            title: profile.email || `document_${user.id}`,
+          }),
+        });
+
+        const newDoc = await createResponse.json();
+        console.log('📥 استجابة إنشاء المستند:', { 
+          has_id: !!newDoc.documentId,
+          error: newDoc.error 
+        });
+        
+        if (!newDoc.documentId) {
+          console.error('❌ فشل إنشاء المستند:', newDoc);
+          return new Response(
+            JSON.stringify({ error: 'Failed to create document', details: newDoc }),
+            { 
+              status: 500, 
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+            }
+          );
+        }
+
+        fileId = newDoc.documentId;
+        console.log('✅ تم إنشاء مستند فارغ، File ID:', fileId);
+        
+        // نقل المستند إلى المجلد المحدد إذا وجد
+        if (folderId) {
+          console.log('📁 نقل المستند إلى المجلد...');
+          await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?addParents=${folderId}`, {
+            method: 'PATCH',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
+          });
+          console.log('✅ تم نقل المستند إلى المجلد');
+        }
+      }
 
       // 8. منح صلاحيات التعديل لأي شخص لديه الرابط
       console.log('🔓 Step 8: منح الصلاحيات للمستند');

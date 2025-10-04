@@ -16,7 +16,7 @@ interface MyDocument {
 }
 
 export const StudentDocumentsPage = () => {
-  const { createDocument, getMyDocuments, isLoading } = useGoogleDocs();
+  const { createDocument, createBlankDocument, getMyDocuments, isLoading } = useGoogleDocs();
   const [documents, setDocuments] = useState<MyDocument[]>([]);
   const [previewDoc, setPreviewDoc] = useState<MyDocument | null>(null);
   const [showTemplatePreview, setShowTemplatePreview] = useState(false);
@@ -37,9 +37,15 @@ export const StudentDocumentsPage = () => {
   const handleCreateDocument = async () => {
     const result = await createDocument();
     if (result) {
-      // فتح المستند الجديد في نافذة جديدة
       window.open(result.docUrl, '_blank');
-      // تحديث القائمة
+      await loadDocuments();
+    }
+  };
+
+  const handleCreateBlankDocument = async () => {
+    const result = await createBlankDocument();
+    if (result) {
+      window.open(result.docUrl, '_blank');
       await loadDocuments();
     }
   };
@@ -63,12 +69,21 @@ export const StudentDocumentsPage = () => {
             استعراض القالب
           </Button>
           <Button 
+            variant="outline"
+            onClick={handleCreateBlankDocument}
+            disabled={isLoading}
+            size="lg"
+          >
+            <FileText className="ml-2 h-5 w-5" />
+            إنشاء مستند فارغ
+          </Button>
+          <Button 
             onClick={handleCreateDocument}
             disabled={isLoading}
             size="lg"
           >
             <Plus className="ml-2 h-5 w-5" />
-            إنشاء مستند جديد
+            نسخة من القالب
           </Button>
         </div>
       </div>

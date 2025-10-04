@@ -24,11 +24,13 @@ interface MyDocument {
 export const useGoogleDocs = () => {
   const [isLoading, setIsLoading] = useState(false);
 
-  // إنشاء مستند جديد للطالب
+  // إنشاء مستند جديد للطالب من القالب
   const createDocument = async (): Promise<{ docUrl: string; fileId: string } | null> => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('create-google-document');
+      const { data, error } = await supabase.functions.invoke('create-google-document', {
+        body: { useTemplate: true }
+      });
       
       if (error) {
         console.error('Error creating document:', error);
@@ -57,6 +59,50 @@ export const useGoogleDocs = () => {
       console.error('Exception creating document:', error);
       setTimeout(() => {
         toast.error('فشل إنشاء المستند', {
+          description: 'حدث خطأ غير متوقع'
+        });
+      }, 0);
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // إنشاء مستند جديد فارغ للطالب
+  const createBlankDocument = async (): Promise<{ docUrl: string; fileId: string } | null> => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-google-document', {
+        body: { useTemplate: false }
+      });
+      
+      if (error) {
+        console.error('Error creating blank document:', error);
+        setTimeout(() => {
+          toast.error('فشل إنشاء المستند الفارغ', {
+            description: error.message || 'حدث خطأ أثناء إنشاء المستند'
+          });
+        }, 0);
+        return null;
+      }
+
+      if (!data?.success) {
+        setTimeout(() => {
+          toast.error('فشل إنشاء المستند الفارغ', {
+            description: data?.error || 'حدث خطأ غير متوقع'
+          });
+        }, 0);
+        return null;
+      }
+
+      setTimeout(() => {
+        toast.success('تم إنشاء المستند الفارغ بنجاح!');
+      }, 0);
+      return { docUrl: data.docUrl, fileId: data.fileId };
+    } catch (error) {
+      console.error('Exception creating blank document:', error);
+      setTimeout(() => {
+        toast.error('فشل إنشاء المستند الفارغ', {
           description: 'حدث خطأ غير متوقع'
         });
       }, 0);
@@ -150,6 +196,7 @@ export const useGoogleDocs = () => {
   return {
     isLoading,
     createDocument,
+    createBlankDocument,
     getTeacherDocuments,
     getMyDocuments,
   };
