@@ -23,7 +23,7 @@ export const StudentDocumentsPage = () => {
   
   // معرف المستند القالب
   const TEMPLATE_DOC_ID = '19bvEzAJAdp_TUVv4EO7RFMPM9xe4bkBavOjPVUrOmGc';
-  const templatePreviewUrl = `https://docs.google.com/document/d/${TEMPLATE_DOC_ID}/preview`;
+  const templateEditUrl = `https://docs.google.com/document/d/${TEMPLATE_DOC_ID}/edit`;
 
   useEffect(() => {
     loadDocuments();
@@ -187,9 +187,10 @@ export const StudentDocumentsPage = () => {
           </DialogHeader>
           <div className="flex-1 w-full h-full rounded-lg overflow-hidden border">
             <iframe
-              src={templatePreviewUrl}
+              src={templateEditUrl}
               className="w-full h-full"
-              title="المستند القالب"
+              title="المستند القالب - التعديل"
+              allow="clipboard-read; clipboard-write"
             />
           </div>
         </DialogContent>
