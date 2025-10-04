@@ -168,6 +168,18 @@ export const StudentDocumentsPage = () => {
               <span>استعراض المستند القالب</span>
               <div className="flex gap-2">
                 <Button
+                  variant="default"
+                  size="sm"
+                  onClick={async () => {
+                    setShowTemplatePreview(false);
+                    await handleCreateDocument();
+                  }}
+                  disabled={isLoading}
+                >
+                  <Plus className="h-4 w-4 ml-2" />
+                  إنشاء نسخة جديدة
+                </Button>
+                <Button
                   variant="outline"
                   size="sm"
                   onClick={() => window.open(`https://docs.google.com/document/d/${TEMPLATE_DOC_ID}/preview`, '_blank')}
@@ -176,6 +188,7 @@ export const StudentDocumentsPage = () => {
                   استعراض فقط
                 </Button>
                 <Button
+                  variant="outline"
                   size="sm"
                   onClick={() => window.open(`https://docs.google.com/document/d/${TEMPLATE_DOC_ID}/edit`, '_blank')}
                 >
