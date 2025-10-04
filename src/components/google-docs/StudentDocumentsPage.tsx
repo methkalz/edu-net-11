@@ -19,6 +19,11 @@ export const StudentDocumentsPage = () => {
   const { createDocument, getMyDocuments, isLoading } = useGoogleDocs();
   const [documents, setDocuments] = useState<MyDocument[]>([]);
   const [previewDoc, setPreviewDoc] = useState<MyDocument | null>(null);
+  const [showTemplatePreview, setShowTemplatePreview] = useState(false);
+  
+  // معرف المستند القالب
+  const TEMPLATE_DOC_ID = '19bvEzAJAdp_TUVv4EO7RFMPM9xe4bkBavOjPVUrOmGc';
+  const templatePreviewUrl = `https://docs.google.com/document/d/${TEMPLATE_DOC_ID}/preview`;
 
   useEffect(() => {
     loadDocuments();
@@ -48,14 +53,24 @@ export const StudentDocumentsPage = () => {
             أنشئ وأدر مستندات Google Docs الخاصة بك
           </p>
         </div>
-        <Button 
-          onClick={handleCreateDocument}
-          disabled={isLoading}
-          size="lg"
-        >
-          <Plus className="ml-2 h-5 w-5" />
-          إنشاء مستند جديد
-        </Button>
+        <div className="flex gap-3">
+          <Button 
+            variant="outline"
+            onClick={() => setShowTemplatePreview(true)}
+            size="lg"
+          >
+            <Eye className="ml-2 h-5 w-5" />
+            استعراض القالب
+          </Button>
+          <Button 
+            onClick={handleCreateDocument}
+            disabled={isLoading}
+            size="lg"
+          >
+            <Plus className="ml-2 h-5 w-5" />
+            إنشاء مستند جديد
+          </Button>
+        </div>
       </div>
 
       {documents.length === 0 ? (
@@ -141,6 +156,32 @@ export const StudentDocumentsPage = () => {
                 title={previewDoc.title}
               />
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* نافذة استعراض القالب */}
+      <Dialog open={showTemplatePreview} onOpenChange={setShowTemplatePreview}>
+        <DialogContent className="max-w-6xl h-[90vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <span>استعراض المستند القالب</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => window.open(`https://docs.google.com/document/d/${TEMPLATE_DOC_ID}/edit`, '_blank')}
+              >
+                <ExternalLink className="h-4 w-4 ml-2" />
+                فتح في Google Docs
+              </Button>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 w-full h-full rounded-lg overflow-hidden border">
+            <iframe
+              src={templatePreviewUrl}
+              className="w-full h-full"
+              title="المستند القالب"
+            />
           </div>
         </DialogContent>
       </Dialog>
