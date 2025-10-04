@@ -164,16 +164,25 @@ export const StudentDocumentsPage = () => {
       <Dialog open={showTemplatePreview} onOpenChange={setShowTemplatePreview}>
         <DialogContent className="max-w-6xl h-[90vh]">
           <DialogHeader>
-            <DialogTitle className="flex items-center justify-between">
+            <DialogTitle className="flex items-center justify-between gap-3">
               <span>استعراض المستند القالب</span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => window.open(`https://docs.google.com/document/d/${TEMPLATE_DOC_ID}/edit`, '_blank')}
-              >
-                <ExternalLink className="h-4 w-4 ml-2" />
-                فتح في Google Docs
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open(`https://docs.google.com/document/d/${TEMPLATE_DOC_ID}/preview`, '_blank')}
+                >
+                  <Eye className="h-4 w-4 ml-2" />
+                  استعراض فقط
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => window.open(`https://docs.google.com/document/d/${TEMPLATE_DOC_ID}/edit`, '_blank')}
+                >
+                  <ExternalLink className="h-4 w-4 ml-2" />
+                  فتح للتعديل
+                </Button>
+              </div>
             </DialogTitle>
           </DialogHeader>
           <div className="flex-1 w-full h-full rounded-lg overflow-hidden border">
