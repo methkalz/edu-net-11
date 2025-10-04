@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { useGoogleDocs } from '@/hooks/useGoogleDocs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileText, Plus, ExternalLink, Calendar } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { FileText, Plus, ExternalLink, Calendar, Eye } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 
@@ -17,6 +18,7 @@ interface MyDocument {
 export const StudentDocumentsPage = () => {
   const { createDocument, getMyDocuments, isLoading } = useGoogleDocs();
   const [documents, setDocuments] = useState<MyDocument[]>([]);
+  const [previewDoc, setPreviewDoc] = useState<MyDocument | null>(null);
 
   useEffect(() => {
     loadDocuments();
@@ -92,18 +94,56 @@ export const StudentDocumentsPage = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button
-                  className="w-full"
-                  onClick={() => window.open(doc.doc_url, '_blank')}
-                >
-                  فتح المستند
-                  <ExternalLink className="mr-2 h-4 w-4" />
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => setPreviewDoc(doc)}
+                  >
+                    <Eye className="mr-2 h-4 w-4" />
+                    استعراض
+                  </Button>
+                  <Button
+                    className="flex-1"
+                    onClick={() => window.open(doc.doc_url, '_blank')}
+                  >
+                    فتح
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
+
+      {/* نافذة استعراض المستند */}
+      <Dialog open={!!previewDoc} onOpenChange={() => setPreviewDoc(null)}>
+        <DialogContent className="max-w-6xl h-[90vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <span>{previewDoc?.title}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => previewDoc && window.open(previewDoc.doc_url, '_blank')}
+              >
+                <ExternalLink className="h-4 w-4 ml-2" />
+                فتح في نافذة جديدة
+              </Button>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 w-full h-full rounded-lg overflow-hidden border">
+            {previewDoc && (
+              <iframe
+                src={previewDoc.doc_url}
+                className="w-full h-full"
+                title={previewDoc.title}
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
