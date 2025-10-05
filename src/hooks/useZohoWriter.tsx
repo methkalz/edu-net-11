@@ -18,16 +18,6 @@ export const useZohoWriter = () => {
   const [documents, setDocuments] = useState<ZohoDocument[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Check for pending auth on mount
-  useEffect(() => {
-    const pendingAuthUrl = localStorage.getItem('zoho_pending_auth_url');
-    if (pendingAuthUrl) {
-      localStorage.removeItem('zoho_pending_auth_url');
-      // Redirect to Zoho auth
-      window.location.href = pendingAuthUrl;
-    }
-  }, []);
-
   // Check connection status
   const checkConnection = useCallback(async () => {
     if (!user) return;
@@ -86,30 +76,16 @@ export const useZohoWriter = () => {
 
       console.log('Auth URL generated:', response.data.authUrl);
       
-      // Check if we're in an iframe
-      const isInIframe = window.self !== window.top;
+      // Open auth URL in a new tab
+      const authWindow = window.open(response.data.authUrl, '_blank');
       
-      if (isInIframe) {
-        // Save the auth URL to localStorage
-        localStorage.setItem('zoho_pending_auth_url', response.data.authUrl);
-        
-        // Show instructions to the user
-        const shouldContinue = window.confirm(
-          'للاتصال بـ Zoho Writer، يجب فتح هذا التطبيق في نافذة منفصلة.\n\n' +
-          'اضغط "موافق" لفتح التطبيق في نافذة جديدة (سيتم الاتصال تلقائياً).'
-        );
-        
-        if (shouldContinue) {
-          const newWindow = window.open(window.location.href, '_blank');
-          if (!newWindow) {
-            toast.error('تم حظر النافذة المنبثقة - يرجى السماح بها ثم المحاولة مرة أخرى');
-          }
-        }
-        setIsConnecting(false);
+      if (!authWindow) {
+        toast.error('تم حظر النافذة المنبثقة - يرجى السماح بالنوافذ المنبثقة ثم المحاولة مرة أخرى');
       } else {
-        // Not in iframe, redirect directly
-        window.location.href = response.data.authUrl;
+        toast.success('تم فتح صفحة التفويض في تبويب جديد');
       }
+      
+      setIsConnecting(false);
     } catch (error) {
       console.error('Error connecting to Zoho:', error);
       toast.error(`حدث خطأ أثناء الاتصال: ${error.message}`);
