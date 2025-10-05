@@ -49,6 +49,8 @@ export const useZohoWriter = () => {
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData?.session?.access_token;
 
+      console.log('Calling zoho-auth-url with userId:', user.id);
+
       const response = await supabase.functions.invoke('zoho-auth-url', {
         body: { userId: user.id },
         headers: {
@@ -56,18 +58,28 @@ export const useZohoWriter = () => {
         },
       });
 
+      console.log('Response from zoho-auth-url:', response);
+
       if (response.error) {
         console.error('Failed to get auth URL:', response.error);
-        toast.error('فشل في الحصول على رابط التفويض');
+        toast.error(`فشل في الحصول على رابط التفويض: ${response.error.message || 'خطأ غير معروف'}`);
         setIsConnecting(false);
         return;
       }
 
+      if (!response.data?.authUrl) {
+        console.error('No authUrl in response:', response.data);
+        toast.error('لم يتم إرجاع رابط التفويض');
+        setIsConnecting(false);
+        return;
+      }
+
+      console.log('Redirecting to:', response.data.authUrl);
       // Redirect to Zoho OAuth
       window.location.href = response.data.authUrl;
     } catch (error) {
       console.error('Error connecting to Zoho:', error);
-      toast.error('حدث خطأ أثناء الاتصال');
+      toast.error(`حدث خطأ أثناء الاتصال: ${error.message}`);
       setIsConnecting(false);
     }
   }, [user]);
