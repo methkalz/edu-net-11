@@ -6,6 +6,7 @@ import { Color } from '@tiptap/extension-color';
 import { Underline } from '@tiptap/extension-underline';
 import { FontFamily } from '@tiptap/extension-font-family';
 import { TableKit } from '@tiptap/extension-table';
+import TextAlign from '@tiptap/extension-text-align';
 import { Button } from '@/components/ui/button';
 import './table-styles.css';
 import { 
@@ -23,7 +24,11 @@ import {
   Minus,
   Trash2,
   Merge,
-  Split
+  Split,
+  AlignRight,
+  AlignCenter,
+  AlignLeft,
+  AlignJustify
 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -120,6 +125,11 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
             class: 'border border-border p-2 text-right',
           },
         },
+      }),
+      TextAlign.configure({
+        types: ['heading', 'paragraph'],
+        alignments: ['left', 'center', 'right', 'justify'],
+        defaultAlignment: 'right',
       }),
       FontSize,
       FontFamily,
@@ -294,6 +304,38 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
           title="قائمة مرقمة"
         >
           <ListOrdered className="h-4 w-4" />
+        </MenuButton>
+
+        <Separator orientation="vertical" className="h-6 mx-1" />
+
+        {/* محاذاة النص */}
+        <MenuButton
+          onClick={() => editor.chain().focus().setTextAlign('right').run()}
+          isActive={editor.isActive({ textAlign: 'right' })}
+          title="محاذاة لليمين"
+        >
+          <AlignRight className="h-4 w-4" />
+        </MenuButton>
+        <MenuButton
+          onClick={() => editor.chain().focus().setTextAlign('center').run()}
+          isActive={editor.isActive({ textAlign: 'center' })}
+          title="محاذاة للوسط"
+        >
+          <AlignCenter className="h-4 w-4" />
+        </MenuButton>
+        <MenuButton
+          onClick={() => editor.chain().focus().setTextAlign('left').run()}
+          isActive={editor.isActive({ textAlign: 'left' })}
+          title="محاذاة لليسار"
+        >
+          <AlignLeft className="h-4 w-4" />
+        </MenuButton>
+        <MenuButton
+          onClick={() => editor.chain().focus().setTextAlign('justify').run()}
+          isActive={editor.isActive({ textAlign: 'justify' })}
+          title="محاذاة متساوية"
+        >
+          <AlignJustify className="h-4 w-4" />
         </MenuButton>
 
         <Separator orientation="vertical" className="h-6 mx-1" />
