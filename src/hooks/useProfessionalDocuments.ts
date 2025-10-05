@@ -89,7 +89,7 @@ export const useProfessionalDocuments = () => {
 
       if (fetchError) throw fetchError;
       
-      setDocuments((data || []) as any);
+      setDocuments(data as ProfessionalDocument[] || []);
     } catch (err: any) {
       setError(err.message);
       toast({
@@ -118,7 +118,7 @@ export const useProfessionalDocuments = () => {
 
       if (fetchError) throw fetchError;
       
-      setCurrentDocument(data as any);
+      setCurrentDocument(data as ProfessionalDocument);
       
       // تسجيل نشاط المشاهدة
       await logActivity(documentId, 'view', {});
@@ -150,7 +150,7 @@ export const useProfessionalDocuments = () => {
         content: initialContent || { type: 'doc', content: [] },
         html_content: '',
         plain_text: '',
-        user_id: user.id,
+        owner_id: user.id,
         school_id: user.user_metadata?.school_id || null,
         status: 'draft' as const,
         visibility: 'private' as const,
@@ -179,7 +179,7 @@ export const useProfessionalDocuments = () => {
 
       if (createError) throw createError;
       
-      setCurrentDocument(data as any);
+      setCurrentDocument(data as ProfessionalDocument);
       await fetchDocuments(); // تحديث القائمة
       
       toast({
@@ -231,7 +231,7 @@ export const useProfessionalDocuments = () => {
 
       if (saveError) throw saveError;
       
-      setCurrentDocument(data as any);
+      setCurrentDocument(data as ProfessionalDocument);
       
       // تسجيل نشاط الحفظ
       await logActivity(documentId, 'save', { auto_save: true });

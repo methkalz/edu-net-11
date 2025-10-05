@@ -3,7 +3,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { useStudentProgress } from '@/hooks/useStudentProgress';
 import { useStudentContent } from '@/hooks/useStudentContent';
 import { useBadgeProgress } from '@/hooks/useBadgeProgress';
-import { useNavigate } from 'react-router-dom';
 import { BadgeCelebration } from '@/components/badges/BadgeCelebration';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -43,7 +42,6 @@ import { useStudentGameStats } from '@/hooks/useStudentGameStats';
 
 const StudentDashboard: React.FC = () => {
   const { user, userProfile } = useAuth();
-  const navigate = useNavigate();
   const { stats, achievements, loading, refetch: refetchProgress } = useStudentProgress();
   const { assignedGrade, getProgressPercentage, refetch: refetchContent } = useStudentContent();
   const { teacher, loading: teacherLoading } = useStudentTeacher();
@@ -277,16 +275,6 @@ const StudentDashboard: React.FC = () => {
                         <span className="font-medium">العب وتعلم</span>
                       </Button>
                     )}
-                    <Button 
-                      variant="ghost" 
-                      className="w-full justify-start h-11 hover:bg-gradient-to-r hover:from-orange-50/50 hover:to-amber-50/50 dark:hover:from-orange-950/30 dark:hover:to-amber-950/30 hover:text-orange-700 dark:hover:text-orange-400 transition-all group"
-                      onClick={() => navigate('/student-documents')}
-                    >
-                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500/10 to-amber-500/10 flex items-center justify-center mr-3 group-hover:from-orange-500/20 group-hover:to-amber-500/20 transition-all">
-                        <FileText className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-                      </div>
-                      <span className="font-medium">مستنداتي</span>
-                    </Button>
                   </CardContent>
                 </Card>
 

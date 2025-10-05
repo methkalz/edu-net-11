@@ -49,8 +49,6 @@ import {
   LazyTest,
   LazyPairMatchingPage,
   LazyReports,
-  LazyStudentDocuments,
-  LazyTeacherDocuments,
   withLazyLoading
 } from "@/components/LazyComponents";
 
@@ -167,10 +165,6 @@ const App = () => {
                
                {/* Reports dashboard route */}
                 <Route path="/reports" element={<Suspense fallback={<PageLoading message="جاري تحميل التقارير..." />}><LazyReports /></Suspense>} />
-               
-               {/* Google Docs routes */}
-               <Route path="/student-documents" element={<Suspense fallback={<PageLoading message="جاري تحميل مستنداتك..." />}><LazyStudentDocuments /></Suspense>} />
-               <Route path="/teacher-documents" element={<Suspense fallback={<PageLoading message="جاري تحميل مستندات الطلاب..." />}><LazyTeacherDocuments /></Suspense>} />
                
                {/* Badge testing page - superadmin only */}
                 <Route path="/badge-test" element={<Suspense fallback={<PageLoading message="جاري تحميل صفحة الاختبار..." />}><BadgeTestPage /></Suspense>} />
