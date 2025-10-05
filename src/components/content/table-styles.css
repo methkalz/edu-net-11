@@ -1,0 +1,109 @@
+/* Tiptap Table Styles with Column Resize Handles */
+
+/* Table wrapper to contain the table and handles */
+.ProseMirror .tableWrapper {
+  position: relative;
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+/* Base table styling */
+.ProseMirror table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+.ProseMirror td,
+.ProseMirror th {
+  min-width: 1em;
+  border: 1px solid hsl(var(--border));
+  padding: 0.5rem;
+  vertical-align: top;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.ProseMirror th {
+  font-weight: bold;
+  text-align: right;
+  background-color: hsl(var(--muted));
+}
+
+.ProseMirror td {
+  text-align: right;
+}
+
+/* Selected cell styling */
+.ProseMirror .selectedCell:after {
+  z-index: 2;
+  position: absolute;
+  content: "";
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: hsl(var(--primary) / 0.1);
+  pointer-events: none;
+}
+
+/* Column resize handle - THIS IS THE KEY PART */
+.ProseMirror .column-resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: -2px;
+  width: 4px;
+  background-color: hsl(var(--primary));
+  pointer-events: none;
+  z-index: 20;
+}
+
+/* Make the handle visible on hover */
+.ProseMirror td:hover .column-resize-handle,
+.ProseMirror th:hover .column-resize-handle {
+  background-color: hsl(var(--primary) / 0.5);
+}
+
+/* Cursor change when resizing */
+.ProseMirror.resize-cursor {
+  cursor: col-resize;
+  cursor: ew-resize;
+}
+
+/* Active resize handle styling */
+.ProseMirror .column-resize-handle.active {
+  background-color: hsl(var(--primary));
+  opacity: 1;
+}
+
+/* Prevent text selection during resize */
+.ProseMirror.resize-cursor * {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Table control widgets */
+.ProseMirror .table-controller-wrapper {
+  position: relative;
+}
+
+/* Ensure proper RTL support for tables */
+.ProseMirror[dir="rtl"] table {
+  direction: rtl;
+}
+
+.ProseMirror[dir="rtl"] td,
+.ProseMirror[dir="rtl"] th {
+  text-align: right;
+}
+
+/* Handle positioning for RTL */
+.ProseMirror[dir="rtl"] .column-resize-handle {
+  right: auto;
+  left: -2px;
+}

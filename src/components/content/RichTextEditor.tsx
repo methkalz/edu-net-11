@@ -7,6 +7,7 @@ import { Underline } from '@tiptap/extension-underline';
 import { FontFamily } from '@tiptap/extension-font-family';
 import { TableKit } from '@tiptap/extension-table';
 import { Button } from '@/components/ui/button';
+import './table-styles.css';
 import { 
   Bold, 
   Italic, 
