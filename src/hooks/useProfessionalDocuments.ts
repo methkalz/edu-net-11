@@ -9,29 +9,16 @@ export interface ProfessionalDocument {
   content: any;
   html_content?: string;
   plain_text?: string;
-  word_count: number;
-  page_count: number;
-  owner_id: string;
-  school_id?: string;
-  status: 'draft' | 'published' | 'archived' | 'submitted';
-  visibility: 'private' | 'school' | 'public';
-  allow_comments: boolean;
-  allow_suggestions: boolean;
-  version_number: number;
+  word_count: number | null;
+  page_count: number | null;
+  user_id: string; // Changed from owner_id to match database schema
+  school_id?: string | null;
+  status: string;
+  document_type: string;
+  google_doc_id?: string | null;
   created_at: string;
   updated_at: string;
-  last_saved_at: string;
-  settings: {
-    page_format: string;
-    margins: {
-      top: number;
-      bottom: number;
-      left: number;
-      right: number;
-    };
-    font_family: string;
-    font_size: number;
-  };
+  last_saved_at: string | null;
   metadata: any;
 }
 
@@ -150,24 +137,10 @@ export const useProfessionalDocuments = () => {
         content: initialContent || { type: 'doc', content: [] },
         html_content: '',
         plain_text: '',
-        owner_id: user.id,
+        user_id: user.id, // Changed from owner_id
         school_id: user.user_metadata?.school_id || null,
-        status: 'draft' as const,
-        visibility: 'private' as const,
-        allow_comments: true,
-        allow_suggestions: true,
-        version_number: 1,
-        settings: {
-          page_format: 'A4',
-          margins: {
-            top: 72,
-            bottom: 72,
-            left: 72,
-            right: 72
-          },
-          font_family: 'Cairo',
-          font_size: 12
-        },
+        status: 'draft',
+        document_type: 'professional',
         metadata: {}
       };
 
