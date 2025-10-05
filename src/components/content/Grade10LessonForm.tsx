@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Grade10Lesson } from '@/hooks/useGrade10AdminContent';
+import RichTextEditor from '@/components/content/RichTextEditor';
 
 interface Grade10LessonFormProps {
   lesson?: Grade10Lesson | null;
@@ -50,6 +50,10 @@ const Grade10LessonForm: React.FC<Grade10LessonFormProps> = ({
     }
   }, [lesson, topicId]);
 
+  const handleContentChange = (newContent: string) => {
+    setFormData(prev => ({ ...prev, content: newContent }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -63,7 +67,7 @@ const Grade10LessonForm: React.FC<Grade10LessonFormProps> = ({
 
   return (
     <Dialog open={true} onOpenChange={onCancel}>
-      <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {lesson ? 'تعديل الدرس' : 'إضافة درس جديد'}
@@ -84,17 +88,13 @@ const Grade10LessonForm: React.FC<Grade10LessonFormProps> = ({
 
           <div className="space-y-2">
             <Label htmlFor="content">محتوى الدرس</Label>
-            <Textarea
-              id="content"
-              value={formData.content}
-              onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
-              placeholder="اكتب محتوى الدرس هنا..."
-              rows={8}
-              className="min-h-[200px]"
-            />
-            <p className="text-sm text-muted-foreground">
-              يمكنك استخدام نص بسيط أو HTML أساسي لتنسيق المحتوى
-            </p>
+            <div className="border rounded-md">
+              <RichTextEditor
+                content={formData.content}
+                onChange={handleContentChange}
+                placeholder="اكتب محتوى الدرس هنا..."
+              />
+            </div>
           </div>
 
           <div className="space-y-2">
