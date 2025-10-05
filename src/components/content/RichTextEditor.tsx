@@ -8,6 +8,10 @@ import { FontFamily } from '@tiptap/extension-font-family';
 import { TableKit } from '@tiptap/extension-table';
 import TextAlign from '@tiptap/extension-text-align';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import './table-styles.css';
 import { 
   Bold, 
@@ -74,6 +78,10 @@ const FontSize = TextStyle.extend({
 const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, placeholder }) => {
   const [customColor, setCustomColor] = useState('#000000');
   const [fontSize, setFontSize] = useState('14px');
+  const [showTableDialog, setShowTableDialog] = useState(false);
+  const [tableRows, setTableRows] = useState(3);
+  const [tableCols, setTableCols] = useState(3);
+  const [withHeaderRow, setWithHeaderRow] = useState(true);
   
   const editor = useEditor({
     extensions: [
@@ -223,6 +231,13 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
     editor.chain().focus().setColor(color).run();
   };
 
+  const handleInsertTable = () => {
+    const rows = Math.max(1, Math.min(20, tableRows));
+    const cols = Math.max(1, Math.min(10, tableCols));
+    editor.chain().focus().insertTable({ rows, cols, withHeaderRow }).run();
+    setShowTableDialog(false);
+  };
+
   return (
     <div className="border rounded-md bg-background">
       {/* شريط الأدوات */}
@@ -364,7 +379,18 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
                 className="w-full justify-start"
               >
                 <TableIcon className="h-4 w-4 ml-2" />
-                إدراج جدول 3×3
+                جدول سريع 3×3
+              </Button>
+              
+              <Button
+                type="button"
+                variant="default"
+                size="sm"
+                onClick={() => setShowTableDialog(true)}
+                className="w-full justify-start"
+              >
+                <Plus className="h-4 w-4 ml-2" />
+                جدول مخصص
               </Button>
               
               <Separator />
@@ -547,6 +573,65 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
 
       {/* منطقة المحرر */}
       <EditorContent editor={editor} />
+
+      {/* Dialog لإدراج جدول مخصص */}
+      <Dialog open={showTableDialog} onOpenChange={setShowTableDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>إدراج جدول مخصص</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="rows">عدد الصفوف (1-20)</Label>
+              <Input
+                id="rows"
+                type="number"
+                min="1"
+                max="20"
+                value={tableRows}
+                onChange={(e) => setTableRows(parseInt(e.target.value) || 1)}
+                className="text-right"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="cols">عدد الأعمدة (1-10)</Label>
+              <Input
+                id="cols"
+                type="number"
+                min="1"
+                max="10"
+                value={tableCols}
+                onChange={(e) => setTableCols(parseInt(e.target.value) || 1)}
+                className="text-right"
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <Label htmlFor="header">إضافة صف رأسي</Label>
+              <Switch
+                id="header"
+                checked={withHeaderRow}
+                onCheckedChange={setWithHeaderRow}
+              />
+            </div>
+
+            <p className="text-sm text-muted-foreground">
+              سيتم إنشاء جدول بـ {Math.max(1, Math.min(20, tableRows))} صف و {Math.max(1, Math.min(10, tableCols))} عمود
+            </p>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowTableDialog(false)}>
+              إلغاء
+            </Button>
+            <Button onClick={handleInsertTable}>
+              إدراج الجدول
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
