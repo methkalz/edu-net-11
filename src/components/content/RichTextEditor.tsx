@@ -1,16 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
-import Document from '@tiptap/extension-document';
-import Paragraph from '@tiptap/extension-paragraph';
-import Text from '@tiptap/extension-text';
-import BoldExtension from '@tiptap/extension-bold';
-import ItalicExtension from '@tiptap/extension-italic';
-import { Underline } from '@tiptap/extension-underline';
-import BulletList from '@tiptap/extension-bullet-list';
-import OrderedList from '@tiptap/extension-ordered-list';
-import ListItem from '@tiptap/extension-list-item';
+import StarterKit from '@tiptap/starter-kit';
 import { TextStyle } from '@tiptap/extension-text-style';
 import { Color } from '@tiptap/extension-color';
+import { Underline } from '@tiptap/extension-underline';
 import { FontFamily } from '@tiptap/extension-font-family';
 import { Button } from '@/components/ui/button';
 import { 
@@ -71,34 +64,32 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
   
   const editor = useEditor({
     extensions: [
-      Document,
-      Paragraph.configure({
-        HTMLAttributes: {
-          class: 'min-h-[1.5em]',
+      StarterKit.configure({
+        paragraph: {
+          HTMLAttributes: {
+            class: 'min-h-[1.5em]',
+          },
         },
-      }),
-      Text,
-      BoldExtension,
-      ItalicExtension,
-      Underline,
-      BulletList.configure({
-        HTMLAttributes: {
-          class: 'list-disc pr-6 my-2',
+        bulletList: {
+          HTMLAttributes: {
+            class: 'list-disc pr-6 my-2',
+          },
         },
-      }),
-      OrderedList.configure({
-        HTMLAttributes: {
-          class: 'list-decimal pr-6 my-2',
+        orderedList: {
+          HTMLAttributes: {
+            class: 'list-decimal pr-6 my-2',
+          },
         },
-      }),
-      ListItem.configure({
-        HTMLAttributes: {
-          class: 'my-1',
+        listItem: {
+          HTMLAttributes: {
+            class: 'my-1',
+          },
         },
       }),
       FontSize,
       FontFamily,
       Color,
+      Underline,
     ],
     content,
     onUpdate: ({ editor }) => {
