@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -17,6 +17,16 @@ export const useZohoWriter = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [documents, setDocuments] = useState<ZohoDocument[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Check for pending auth on mount
+  useEffect(() => {
+    const pendingAuthUrl = localStorage.getItem('zoho_pending_auth_url');
+    if (pendingAuthUrl) {
+      localStorage.removeItem('zoho_pending_auth_url');
+      // Redirect to Zoho auth
+      window.location.href = pendingAuthUrl;
+    }
+  }, []);
 
   // Check connection status
   const checkConnection = useCallback(async () => {
@@ -74,9 +84,32 @@ export const useZohoWriter = () => {
         return;
       }
 
-      console.log('Redirecting to:', response.data.authUrl);
-      // Open Zoho OAuth in the top window to avoid iframe restrictions
-      window.open(response.data.authUrl, '_top');
+      console.log('Auth URL generated:', response.data.authUrl);
+      
+      // Check if we're in an iframe
+      const isInIframe = window.self !== window.top;
+      
+      if (isInIframe) {
+        // Save the auth URL to localStorage
+        localStorage.setItem('zoho_pending_auth_url', response.data.authUrl);
+        
+        // Show instructions to the user
+        const shouldContinue = window.confirm(
+          'للاتصال بـ Zoho Writer، يجب فتح هذا التطبيق في نافذة منفصلة.\n\n' +
+          'اضغط "موافق" لفتح التطبيق في نافذة جديدة (سيتم الاتصال تلقائياً).'
+        );
+        
+        if (shouldContinue) {
+          const newWindow = window.open(window.location.href, '_blank');
+          if (!newWindow) {
+            toast.error('تم حظر النافذة المنبثقة - يرجى السماح بها ثم المحاولة مرة أخرى');
+          }
+        }
+        setIsConnecting(false);
+      } else {
+        // Not in iframe, redirect directly
+        window.location.href = response.data.authUrl;
+      }
     } catch (error) {
       console.error('Error connecting to Zoho:', error);
       toast.error(`حدث خطأ أثناء الاتصال: ${error.message}`);
