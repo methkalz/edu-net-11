@@ -3,9 +3,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
-const ZOHO_CLIENT_ID = 'YOUR_ZOHO_CLIENT_ID'; // سيتم استبداله من البيئة
-const ZOHO_REDIRECT_URI = `${window.location.origin}/zoho-callback`;
-
 interface ZohoDocument {
   document_id: string;
   document_name: string;
@@ -39,7 +36,7 @@ export const useZohoWriter = () => {
   }, [user]);
 
   // Initiate OAuth connection
-  const connectToZoho = useCallback(() => {
+  const connectToZoho = useCallback(async () => {
     if (!user) {
       toast.error('يجب تسجيل الدخول أولاً');
       return;
@@ -47,17 +44,32 @@ export const useZohoWriter = () => {
 
     setIsConnecting(true);
 
-    // Zoho OAuth URL
-    const authUrl = new URL('https://accounts.zoho.com/oauth/v2/auth');
-    authUrl.searchParams.append('scope', 'ZohoWriter.documentEditor.ALL,ZohoWriter.documents.ALL');
-    authUrl.searchParams.append('client_id', ZOHO_CLIENT_ID);
-    authUrl.searchParams.append('response_type', 'code');
-    authUrl.searchParams.append('redirect_uri', ZOHO_REDIRECT_URI);
-    authUrl.searchParams.append('access_type', 'offline');
-    authUrl.searchParams.append('state', user.id);
+    try {
+      // Get auth URL from backend
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
 
-    // Open in new window
-    window.location.href = authUrl.toString();
+      const response = await supabase.functions.invoke('zoho-auth-url', {
+        body: { userId: user.id },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.error) {
+        console.error('Failed to get auth URL:', response.error);
+        toast.error('فشل في الحصول على رابط التفويض');
+        setIsConnecting(false);
+        return;
+      }
+
+      // Redirect to Zoho OAuth
+      window.location.href = response.data.authUrl;
+    } catch (error) {
+      console.error('Error connecting to Zoho:', error);
+      toast.error('حدث خطأ أثناء الاتصال');
+      setIsConnecting(false);
+    }
   }, [user]);
 
   // Disconnect from Zoho

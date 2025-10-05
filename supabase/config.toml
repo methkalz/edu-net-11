@@ -3,5 +3,8 @@ project_id = "swlwhjnwycvjdhgclwlx"
 [functions.zoho-oauth-callback]
 verify_jwt = false
 
+[functions.zoho-auth-url]
+verify_jwt = true
+
 [functions.zoho-writer]
 verify_jwt = true
