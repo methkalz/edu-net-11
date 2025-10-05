@@ -10,15 +10,30 @@ Deno.serve(async (req) => {
 
   try {
     if (!ZOHO_CLIENT_ID || !ZOHO_REDIRECT_URI) {
+      const missingVars = [];
+      if (!ZOHO_CLIENT_ID) missingVars.push('ZOHO_CLIENT_ID');
+      if (!ZOHO_REDIRECT_URI) missingVars.push('ZOHO_REDIRECT_URI');
+      
       console.error('Missing environment variables:', {
+        missing: missingVars,
         hasClientId: !!ZOHO_CLIENT_ID,
-        hasRedirectUri: !!ZOHO_REDIRECT_URI
+        hasRedirectUri: !!ZOHO_REDIRECT_URI,
+        redirectUriValue: ZOHO_REDIRECT_URI ? 'exists' : 'missing'
       });
+      
       return new Response(
-        JSON.stringify({ error: 'Server configuration error' }),
+        JSON.stringify({ 
+          error: `Missing required secrets: ${missingVars.join(', ')}. Please add them in Supabase Edge Functions settings.`
+        }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    
+    console.log('Environment check passed:', {
+      hasClientId: true,
+      hasRedirectUri: true,
+      redirectUri: ZOHO_REDIRECT_URI
+    });
 
     const { userId } = await req.json();
 
