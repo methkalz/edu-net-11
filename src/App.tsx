@@ -58,6 +58,7 @@ const LandingPage = React.lazy(() => import('@/pages/LandingPage'));
 const KnowledgeAdventurePage = React.lazy(() => import('@/pages/KnowledgeAdventurePage'));
 const StudentTrackingPage = React.lazy(() => import('@/pages/teacher/StudentTracking'));
 const BadgeTestPage = React.lazy(() => import('@/pages/BadgeTestPage'));
+const ZohoCallback = React.lazy(() => import('@/pages/ZohoCallback'));
 import { PageLoading } from "@/components/ui/LoadingComponents";
 
 /**
@@ -91,6 +92,9 @@ const App = () => {
               {/* Authentication routes */}
               <Route path="/auth" element={<LazyAuth />} />
               <Route path="/super-admin-auth" element={<LazySuperAdminAuth />} />
+              
+              {/* Zoho OAuth callback */}
+              <Route path="/zoho-callback" element={<Suspense fallback={<PageLoading message="جاري الاتصال بـ Zoho Writer..." />}><ZohoCallback /></Suspense>} />
               
               {/* Main dashboard */}
               <Route path="/dashboard" element={<LazyDashboard />} />
