@@ -75,12 +75,8 @@ export const useZohoWriter = () => {
       }
 
       console.log('Redirecting to:', response.data.authUrl);
-      // Redirect to Zoho OAuth in the top window (not in iframe)
-      if (window.top) {
-        window.top.location.href = response.data.authUrl;
-      } else {
-        window.location.href = response.data.authUrl;
-      }
+      // Open Zoho OAuth in the top window to avoid iframe restrictions
+      window.open(response.data.authUrl, '_top');
     } catch (error) {
       console.error('Error connecting to Zoho:', error);
       toast.error(`حدث خطأ أثناء الاتصال: ${error.message}`);
