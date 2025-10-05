@@ -5,10 +5,7 @@ import { TextStyle } from '@tiptap/extension-text-style';
 import { Color } from '@tiptap/extension-color';
 import { Underline } from '@tiptap/extension-underline';
 import { FontFamily } from '@tiptap/extension-font-family';
-import { Table } from '@tiptap/extension-table';
-import { TableRow } from '@tiptap/extension-table-row';
-import { TableHeader } from '@tiptap/extension-table-header';
-import { TableCell } from '@tiptap/extension-table-cell';
+import { TableKit } from '@tiptap/extension-table';
 import { Button } from '@/components/ui/button';
 import { 
   Bold, 
@@ -23,7 +20,9 @@ import {
   Table as TableIcon,
   Plus,
   Minus,
-  Trash2
+  Trash2,
+  Merge,
+  Split
 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -94,25 +93,31 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
           },
         },
       }),
-      Table.configure({
-        resizable: true,
-        HTMLAttributes: {
-          class: 'border-collapse table-auto w-full my-4',
+      TableKit.configure({
+        table: {
+          resizable: true,
+          handleWidth: 5,
+          cellMinWidth: 50,
+          lastColumnResizable: true,
+          allowTableNodeSelection: true,
+          HTMLAttributes: {
+            class: 'border-collapse table-auto w-full my-4',
+          },
         },
-      }),
-      TableRow.configure({
-        HTMLAttributes: {
-          class: 'border',
+        tableRow: {
+          HTMLAttributes: {
+            class: 'border',
+          },
         },
-      }),
-      TableHeader.configure({
-        HTMLAttributes: {
-          class: 'border border-border bg-muted font-bold p-2 text-right',
+        tableHeader: {
+          HTMLAttributes: {
+            class: 'border border-border bg-muted font-bold p-2 text-right',
+          },
         },
-      }),
-      TableCell.configure({
-        HTMLAttributes: {
-          class: 'border border-border p-2 text-right',
+        tableCell: {
+          HTMLAttributes: {
+            class: 'border border-border p-2 text-right',
+          },
         },
       }),
       FontSize,
@@ -383,6 +388,28 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
                     >
                       <Minus className="h-4 w-4" />
                       حذف عمود
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => editor.chain().focus().mergeCells().run()}
+                      disabled={!editor.can().mergeCells()}
+                      title="دمج الخلايا"
+                    >
+                      <Merge className="h-4 w-4" />
+                      دمج
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => editor.chain().focus().splitCell().run()}
+                      disabled={!editor.can().splitCell()}
+                      title="تقسيم الخلية"
+                    >
+                      <Split className="h-4 w-4" />
+                      تقسيم
                     </Button>
                   </div>
                   
