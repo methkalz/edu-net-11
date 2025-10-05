@@ -5,6 +5,10 @@ import { TextStyle } from '@tiptap/extension-text-style';
 import { Color } from '@tiptap/extension-color';
 import { Underline } from '@tiptap/extension-underline';
 import { FontFamily } from '@tiptap/extension-font-family';
+import { Table } from '@tiptap/extension-table';
+import { TableRow } from '@tiptap/extension-table-row';
+import { TableHeader } from '@tiptap/extension-table-header';
+import { TableCell } from '@tiptap/extension-table-cell';
 import { Button } from '@/components/ui/button';
 import { 
   Bold, 
@@ -15,7 +19,11 @@ import {
   Undo,
   Redo,
   Palette,
-  Type
+  Type,
+  Table as TableIcon,
+  Plus,
+  Minus,
+  Trash2
 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -84,6 +92,27 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
           HTMLAttributes: {
             class: 'my-1',
           },
+        },
+      }),
+      Table.configure({
+        resizable: true,
+        HTMLAttributes: {
+          class: 'border-collapse table-auto w-full my-4',
+        },
+      }),
+      TableRow.configure({
+        HTMLAttributes: {
+          class: 'border',
+        },
+      }),
+      TableHeader.configure({
+        HTMLAttributes: {
+          class: 'border border-border bg-muted font-bold p-2 text-right',
+        },
+      }),
+      TableCell.configure({
+        HTMLAttributes: {
+          class: 'border border-border p-2 text-right',
         },
       }),
       FontSize,
@@ -260,6 +289,120 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
         >
           <ListOrdered className="h-4 w-4" />
         </MenuButton>
+
+        <Separator orientation="vertical" className="h-6 mx-1" />
+
+        {/* الجداول */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-8 px-2"
+              title="إدراج جدول"
+            >
+              <TableIcon className="h-4 w-4 mr-1" />
+              <span className="text-xs">جدول</span>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto bg-popover z-50" align="start">
+            <div className="space-y-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
+                className="w-full justify-start"
+              >
+                <TableIcon className="h-4 w-4 ml-2" />
+                إدراج جدول 3×3
+              </Button>
+              
+              <Separator />
+              
+              {editor.isActive('table') && (
+                <>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => editor.chain().focus().addRowBefore().run()}
+                      title="إضافة صف قبل"
+                    >
+                      <Plus className="h-4 w-4" />
+                      صف قبل
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => editor.chain().focus().addRowAfter().run()}
+                      title="إضافة صف بعد"
+                    >
+                      <Plus className="h-4 w-4" />
+                      صف بعد
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => editor.chain().focus().addColumnBefore().run()}
+                      title="إضافة عمود قبل"
+                    >
+                      <Plus className="h-4 w-4" />
+                      عمود قبل
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => editor.chain().focus().addColumnAfter().run()}
+                      title="إضافة عمود بعد"
+                    >
+                      <Plus className="h-4 w-4" />
+                      عمود بعد
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => editor.chain().focus().deleteRow().run()}
+                      title="حذف صف"
+                    >
+                      <Minus className="h-4 w-4" />
+                      حذف صف
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => editor.chain().focus().deleteColumn().run()}
+                      title="حذف عمود"
+                    >
+                      <Minus className="h-4 w-4" />
+                      حذف عمود
+                    </Button>
+                  </div>
+                  
+                  <Separator />
+                  
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => editor.chain().focus().deleteTable().run()}
+                    className="w-full"
+                  >
+                    <Trash2 className="h-4 w-4 ml-2" />
+                    حذف الجدول
+                  </Button>
+                </>
+              )}
+            </div>
+          </PopoverContent>
+        </Popover>
 
         <Separator orientation="vertical" className="h-6 mx-1" />
 
