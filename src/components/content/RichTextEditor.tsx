@@ -122,12 +122,12 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
         },
         tableCell: {
           HTMLAttributes: {
-            class: 'border border-border p-2 text-right',
+            class: 'border border-border p-2',
           },
         },
       }),
       TextAlign.configure({
-        types: ['heading', 'paragraph'],
+        types: ['heading', 'paragraph', 'tableCell', 'tableHeader'],
         alignments: ['left', 'center', 'right', 'justify'],
         defaultAlignment: 'right',
       }),
