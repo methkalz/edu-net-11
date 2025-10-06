@@ -2,7 +2,6 @@ import React from 'react';
 import { UserProfileSettings } from '@/components/shared/UserProfileSettings';
 import AppHeader from '@/components/shared/AppHeader';
 import { useAuth } from '@/hooks/useAuth';
-import { ZohoWriterConnect } from '@/components/zoho/ZohoWriterConnect';
 
 const ProfileSettings: React.FC = () => {
   const { userProfile } = useAuth();
@@ -20,14 +19,8 @@ const ProfileSettings: React.FC = () => {
         showLogout={true} 
       />
       
-      <div className="container mx-auto px-6 py-8 space-y-6">
+      <div className="container mx-auto px-6 py-8">
         <UserProfileSettings />
-        
-        {/* Zoho Writer Integration */}
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl font-bold mb-4">التكامل مع Zoho Writer</h2>
-          <ZohoWriterConnect />
-        </div>
       </div>
     </div>
   );
