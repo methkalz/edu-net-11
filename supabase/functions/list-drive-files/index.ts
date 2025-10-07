@@ -182,15 +182,18 @@ serve(async (req) => {
     // Get access token
     const accessToken = await getAccessToken(serviceAccount);
 
-    // Build query
+    // Build query - Search for Google Docs only
     let query = "mimeType='application/vnd.google-apps.document'";
     if (folderId) {
       query += ` and '${folderId}' in parents`;
     }
+    
+    console.log('📋 Search query:', query);
+    console.log('🔗 Full URL:', `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}`);
 
     // List files from Google Drive
     const listResponse = await fetch(
-      `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,createdTime,modifiedTime,webViewLink)&orderBy=modifiedTime desc`,
+      `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,mimeType,createdTime,modifiedTime,webViewLink,permissions)&orderBy=modifiedTime desc`,
       {
         headers: {
           "Authorization": `Bearer ${accessToken}`,
@@ -201,11 +204,40 @@ serve(async (req) => {
 
     if (!listResponse.ok) {
       const error = await listResponse.text();
+      console.error('❌ Drive API error:', error);
       throw new Error(`Failed to list files: ${error}`);
     }
 
     const files = await listResponse.json();
-    console.log('Files retrieved:', files.files?.length || 0);
+    console.log('📁 Files retrieved:', files.files?.length || 0);
+    
+    // Log detailed info about folder access
+    if (folderId) {
+      console.log('🔍 Checking folder access...');
+      const folderCheckResponse = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${folderId}?fields=id,name,mimeType,permissions`,
+        {
+          headers: {
+            "Authorization": `Bearer ${accessToken}`,
+            "Content-Type": "application/json"
+          }
+        }
+      );
+      
+      if (folderCheckResponse.ok) {
+        const folderInfo = await folderCheckResponse.json();
+        console.log('✅ Folder found:', folderInfo.name);
+        console.log('📊 Folder type:', folderInfo.mimeType);
+        console.log('🔐 Permissions count:', folderInfo.permissions?.length || 0);
+      } else {
+        const folderError = await folderCheckResponse.text();
+        console.error('❌ Cannot access folder:', folderError);
+      }
+    }
+    
+    if (files.files && files.files.length > 0) {
+      console.log('📄 First file details:', JSON.stringify(files.files[0], null, 2));
+    }
 
     return new Response(
       JSON.stringify({
