@@ -65,8 +65,16 @@ const GoogleDocForm: React.FC = () => {
     setErrorDetails(null);
     
     try {
-      const fileList = await listFiles(folderId.trim() || undefined);
+      // List all file types by default
+      const fileList = await listFiles(folderId.trim() || undefined, true);
       setFiles(fileList);
+      
+      if (fileList.length === 0) {
+        setErrorDetails({
+          message: 'لم يتم العثور على ملفات في المجلد',
+          hint: 'تأكد من: 1) folder ID صحيح، 2) Service Account لديه صلاحية الوصول للمجلد (تمت مشاركة المجلد معه)'
+        });
+      }
     } catch (error: any) {
       setErrorDetails({
         message: error.message || 'فشل في جلب الملفات',

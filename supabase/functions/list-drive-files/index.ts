@@ -145,12 +145,13 @@ serve(async (req) => {
   }
 
   try {
-    const { folderId: requestFolderId } = await req.json().catch(() => ({}));
+    const { folderId: requestFolderId, includeAllFiles } = await req.json().catch(() => ({}));
     
     // Use the folder ID from the request, or fall back to the environment variable
     const folderId = requestFolderId || Deno.env.get('GOOGLE_FOLDER');
 
-    console.log('Listing Drive files, folderId:', folderId);
+    console.log('📂 Listing Drive files, folderId:', folderId);
+    console.log('📋 Include all file types:', includeAllFiles !== false);
 
     // Parse Google credentials from GOOGLE_SERVICE_ACCOUNT only
     const googleServiceAccountJson = Deno.env.get('GOOGLE_SERVICE_ACCOUNT');
@@ -182,8 +183,11 @@ serve(async (req) => {
     // Get access token
     const accessToken = await getAccessToken(serviceAccount);
 
-    // Build query - Search for Google Docs only
-    let query = "mimeType='application/vnd.google-apps.document'";
+    // Build query - By default show all files, or only Google Docs if specified
+    let query = includeAllFiles === false 
+      ? "mimeType='application/vnd.google-apps.document'"
+      : "trashed=false"; // Show all non-trashed files
+    
     if (folderId) {
       query += ` and '${folderId}' in parents`;
     }

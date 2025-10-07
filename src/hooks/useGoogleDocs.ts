@@ -91,12 +91,15 @@ export const useGoogleDocs = () => {
     }
   };
 
-  const listFiles = async (folderId?: string): Promise<DriveFile[]> => {
+  const listFiles = async (folderId?: string, includeAllFiles: boolean = true): Promise<DriveFile[]> => {
     setIsLoading(true);
     try {
-      // Only send folderId if it's provided, otherwise Edge Function will use GOOGLE_FOLDER
+      // Send folderId and file type filter
       const { data, error } = await supabase.functions.invoke('list-drive-files', {
-        body: folderId ? { folderId } : {}
+        body: { 
+          ...(folderId && { folderId }),
+          includeAllFiles 
+        }
       });
 
       if (error) {
