@@ -49,6 +49,20 @@ interface TestConnectionResponse {
   error?: string;
 }
 
+export interface CreateFolderParams {
+  folderName: string;
+  parentFolderId?: string;
+}
+
+export interface CreateFolderResponse {
+  success: boolean;
+  folderId?: string;
+  folderName?: string;
+  webViewLink?: string;
+  message?: string;
+  error?: string;
+}
+
 export const useGoogleDocs = () => {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -162,10 +176,39 @@ export const useGoogleDocs = () => {
     }
   };
 
+  const createFolder = async (params: CreateFolderParams): Promise<CreateFolderResponse | null> => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-drive-folder', {
+        body: params
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        toast.success('تم إنشاء المجلد بنجاح', {
+          description: `المجلد: ${data.folderName}`
+        });
+        return data;
+      } else {
+        throw new Error(data?.error || 'فشل إنشاء المجلد');
+      }
+    } catch (error: any) {
+      console.error('Error creating folder:', error);
+      toast.error('فشل إنشاء المجلد', {
+        description: error.message || 'حدث خطأ غير متوقع'
+      });
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return {
     createDocument,
     listFiles,
     testConnection,
+    createFolder,
     isLoading
   };
 };

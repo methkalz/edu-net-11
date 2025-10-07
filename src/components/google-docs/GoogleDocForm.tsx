@@ -43,8 +43,14 @@ const GoogleDocForm: React.FC = () => {
   const [showFiles, setShowFiles] = useState(false);
   const [isListingFiles, setIsListingFiles] = useState(false);
   const [errorDetails, setErrorDetails] = useState<{message: string; hint?: string} | null>(null);
+  const [newFolderName, setNewFolderName] = useState('');
+  const [createdFolder, setCreatedFolder] = useState<{
+    folderId: string;
+    folderName: string;
+    webViewLink: string;
+  } | null>(null);
 
-  const { createDocument, listFiles, testConnection, isLoading } = useGoogleDocs();
+  const { createDocument, listFiles, testConnection, createFolder, isLoading } = useGoogleDocs();
 
   const handleCreateDocument = async () => {
     if (!studentName.trim()) {
@@ -136,9 +142,38 @@ const GoogleDocForm: React.FC = () => {
     }
   };
 
-  const copyToClipboard = (text: string) => {
+  const handleCreateFolder = async () => {
+    if (!newFolderName.trim()) {
+      toast.error('يرجى إدخال اسم المجلد');
+      return;
+    }
+
+    setErrorDetails(null);
+    setCreatedFolder(null);
+
+    const response = await createFolder({
+      folderName: newFolderName,
+      parentFolderId: folderId.trim() || undefined
+    });
+
+    if (response?.success && response.folderId) {
+      setCreatedFolder({
+        folderId: response.folderId,
+        folderName: response.folderName || newFolderName,
+        webViewLink: response.webViewLink || ''
+      });
+      setNewFolderName('');
+      
+      // تحديث قائمة الملفات تلقائياً
+      setTimeout(() => {
+        handleListFiles();
+      }, 1000);
+    }
+  };
+
+  const copyToClipboard = (text: string, message: string = 'تم النسخ إلى الحافظة') => {
     navigator.clipboard.writeText(text);
-    toast.success('تم النسخ إلى الحافظة');
+    toast.success(message);
   };
 
   const formatDate = (dateString: string) => {
@@ -238,6 +273,18 @@ const GoogleDocForm: React.FC = () => {
             </p>
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="newFolderName">إنشاء مجلد جديد في المجلد الحالي</Label>
+            <Input
+              id="newFolderName"
+              value={newFolderName}
+              onChange={(e) => setNewFolderName(e.target.value)}
+              placeholder="اسم المجلد الجديد"
+              dir="rtl"
+              disabled={isLoading}
+            />
+          </div>
+
           <div className="flex gap-3 flex-wrap">
             <Button
               onClick={handleCreateDocument}
@@ -267,9 +314,68 @@ const GoogleDocForm: React.FC = () => {
               <FolderOpen className="h-4 w-4" />
               {isListingFiles ? 'جاري التحميل...' : 'عرض الملفات'}
             </Button>
+
+            <Button
+              onClick={handleCreateFolder}
+              disabled={isLoading || !newFolderName.trim()}
+              variant="secondary"
+              className="flex items-center gap-2"
+            >
+              <FolderOpen className="h-4 w-4" />
+              إنشاء مجلد جديد
+            </Button>
           </div>
         </CardContent>
       </Card>
+
+      {createdFolder && (
+        <Card className="border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20">
+          <CardHeader>
+            <CardTitle className="text-green-800 dark:text-green-200 flex items-center gap-2">
+              <CheckCircle className="h-5 w-5" />
+              تم إنشاء المجلد بنجاح
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="p-3 bg-background rounded border">
+              <p className="text-sm font-medium mb-2">📁 اسم المجلد:</p>
+              <p className="text-sm font-bold">{createdFolder.folderName}</p>
+            </div>
+            
+            <div className="p-3 bg-background rounded border">
+              <p className="text-sm font-medium mb-2">🆔 معرف المجلد (Folder ID):</p>
+              <div className="flex items-center gap-2">
+                <Input
+                  value={createdFolder.folderId}
+                  readOnly
+                  className="text-xs font-mono"
+                  dir="ltr"
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => copyToClipboard(createdFolder.folderId, 'تم نسخ معرف المجلد')}
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            
+            {createdFolder.webViewLink && (
+              <a
+                href={createdFolder.webViewLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                <ExternalLink className="h-4 w-4" />
+                فتح المجلد في Google Drive
+              </a>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {errorDetails && (
         <Card className="border-destructive bg-destructive/5">

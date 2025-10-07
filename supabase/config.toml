@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.test-google-connection]
 verify_jwt = false
+
+[functions.create-drive-folder]
+verify_jwt = false
