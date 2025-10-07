@@ -22,6 +22,7 @@ const GoogleDocForm: React.FC = () => {
   const [folderId, setFolderId] = useState('');
   const [files, setFiles] = useState<DriveFile[]>([]);
   const [showFiles, setShowFiles] = useState(false);
+  const [isListingFiles, setIsListingFiles] = useState(false);
 
   const { createDocument, listFiles, testConnection, isLoading } = useGoogleDocs();
 
@@ -51,9 +52,11 @@ const GoogleDocForm: React.FC = () => {
   };
 
   const handleListFiles = async () => {
+    setIsListingFiles(true);
+    setShowFiles(true);
     const fileList = await listFiles(folderId.trim() || undefined);
     setFiles(fileList);
-    setShowFiles(true);
+    setIsListingFiles(false);
   };
 
   const formatDate = (dateString: string) => {
@@ -130,48 +133,64 @@ const GoogleDocForm: React.FC = () => {
 
             <Button
               onClick={handleListFiles}
-              disabled={isLoading}
+              disabled={isLoading || isListingFiles}
               variant="secondary"
               className="flex items-center gap-2"
             >
               <FolderOpen className="h-4 w-4" />
-              عرض الملفات
+              {isListingFiles ? 'جاري التحميل...' : 'عرض الملفات'}
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      {showFiles && files.length > 0 && (
+      {showFiles && (
         <Card>
           <CardHeader>
-            <CardTitle>الملفات المتاحة ({files.length})</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <FolderOpen className="h-4 w-4" />
+              الملفات في المجلد ({files.length})
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {files.map((file) => (
-                <div
-                  key={file.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-                >
-                  <div className="flex-1">
-                    <h4 className="font-medium">{file.name}</h4>
-                    <div className="flex gap-4 text-sm text-muted-foreground mt-1">
-                      <span>تاريخ الإنشاء: {formatDate(file.createdTime)}</span>
-                      <span>آخر تعديل: {formatDate(file.modifiedTime)}</span>
-                    </div>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => window.open(file.webViewLink, '_blank')}
-                    className="flex items-center gap-2"
+            {isListingFiles ? (
+              <div className="text-center py-8">
+                <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
+                <p className="mt-3 text-muted-foreground">جاري تحميل الملفات...</p>
+              </div>
+            ) : files.length > 0 ? (
+              <div className="space-y-3">
+                {files.map((file) => (
+                  <div
+                    key={file.id}
+                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                   >
-                    <ExternalLink className="h-4 w-4" />
-                    فتح
-                  </Button>
-                </div>
-              ))}
-            </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium">{file.name}</h4>
+                      <div className="flex gap-4 text-sm text-muted-foreground mt-1">
+                        <span>تاريخ الإنشاء: {formatDate(file.createdTime)}</span>
+                        <span>آخر تعديل: {formatDate(file.modifiedTime)}</span>
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => window.open(file.webViewLink, '_blank')}
+                      className="flex items-center gap-2"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      فتح
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <FolderOpen className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                <p className="font-medium">لا توجد ملفات في هذا المجلد</p>
+                <p className="text-sm mt-1">قد يكون المجلد فارغاً أو قد لا تملك صلاحيات الوصول</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
