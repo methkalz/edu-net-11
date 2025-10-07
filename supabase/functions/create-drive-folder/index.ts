@@ -1,28 +1,9 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.2';
 import { corsHeaders } from '../_shared/cors.ts';
 
-// التحقق من صحة Private Key
-const validatePrivateKey = (key: string): string => {
-  if (!key) throw new Error('Private key is required');
-  
-  let cleanKey = key.trim();
-  if (!cleanKey.includes('BEGIN PRIVATE KEY')) {
-    cleanKey = `-----BEGIN PRIVATE KEY-----\n${cleanKey}\n-----END PRIVATE KEY-----`;
-  }
-  
-  cleanKey = cleanKey
-    .replace(/\\n/g, '\n')
-    .replace(/\s+-----BEGIN/g, '\n-----BEGIN')
-    .replace(/KEY-----\s+/g, 'KEY-----\n')
-    .trim();
-  
-  return cleanKey;
-};
-
 // إنشاء JWT للمصادقة مع Google
 const createGoogleJWT = async (
-  serviceAccountEmail: string,
-  privateKey: string,
+  serviceAccount: any,
   scopes: string[]
 ): Promise<string> => {
   const header = {
@@ -32,7 +13,7 @@ const createGoogleJWT = async (
 
   const now = Math.floor(Date.now() / 1000);
   const payload = {
-    iss: serviceAccountEmail,
+    iss: serviceAccount.client_email,
     scope: scopes.join(' '),
     aud: 'https://oauth2.googleapis.com/token',
     exp: now + 3600,
@@ -51,12 +32,10 @@ const createGoogleJWT = async (
 
   const signatureInput = `${encodedHeader}.${encodedPayload}`;
   
-  const pemContents = privateKey
+  const pemContents = serviceAccount.private_key
     .replace(/-----BEGIN PRIVATE KEY-----/, '')
     .replace(/-----END PRIVATE KEY-----/, '')
     .replace(/\s/g, '');
-  
-  console.log('PEM contents length after cleanup:', pemContents.length);
 
   const binaryKey = Uint8Array.from(atob(pemContents), c => c.charCodeAt(0));
 
@@ -86,16 +65,13 @@ const createGoogleJWT = async (
 };
 
 // الحصول على Access Token
-const getAccessToken = async (
-  serviceAccountEmail: string,
-  privateKey: string
-): Promise<string> => {
+const getAccessToken = async (serviceAccount: any): Promise<string> => {
   const scopes = [
     'https://www.googleapis.com/auth/drive',
     'https://www.googleapis.com/auth/drive.file'
   ];
 
-  const jwt = await createGoogleJWT(serviceAccountEmail, privateKey, scopes);
+  const jwt = await createGoogleJWT(serviceAccount, scopes);
 
   const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
@@ -107,7 +83,9 @@ const getAccessToken = async (
   });
 
   if (!tokenResponse.ok) {
-    throw new Error(`فشل الحصول على Access Token: ${await tokenResponse.text()}`);
+    const errorText = await tokenResponse.text();
+    console.error('Token response error:', errorText);
+    throw new Error(`Failed to get access token: ${errorText}`);
   }
 
   const tokenData = await tokenResponse.json();
@@ -144,15 +122,22 @@ Deno.serve(async (req) => {
     }
 
     // الحصول على بيانات Service Account
-    const serviceAccountEmail = Deno.env.get('GOOGLE_SERVICE_ACCOUNT_EMAIL');
-    const privateKeyEnv = Deno.env.get('GOOGLE_PRIVATE_KEY');
+    const googleServiceAccountJson = Deno.env.get('GOOGLE_SERVICE_ACCOUNT');
 
-    if (!serviceAccountEmail || !privateKeyEnv) {
-      throw new Error('بيانات Service Account غير متوفرة');
+    if (!googleServiceAccountJson) {
+      throw new Error('GOOGLE_SERVICE_ACCOUNT secret not found');
     }
 
-    const privateKey = validatePrivateKey(privateKeyEnv);
-    const accessToken = await getAccessToken(serviceAccountEmail, privateKey);
+    let serviceAccount: any;
+    try {
+      serviceAccount = JSON.parse(googleServiceAccountJson);
+    } catch (parseError) {
+      console.error('Failed to parse GOOGLE_SERVICE_ACCOUNT:', parseError);
+      throw new Error('GOOGLE_SERVICE_ACCOUNT must be valid JSON');
+    }
+
+    console.log('📧 Service account email:', serviceAccount.client_email);
+    const accessToken = await getAccessToken(serviceAccount);
     console.log('✅ Access token obtained');
 
     // التحقق من صلاحيات المجلد الأب إذا كان موجوداً
