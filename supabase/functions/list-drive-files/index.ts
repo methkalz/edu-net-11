@@ -87,7 +87,10 @@ serve(async (req) => {
   }
 
   try {
-    const { folderId } = await req.json();
+    const { folderId: requestFolderId } = await req.json().catch(() => ({}));
+    
+    // Use the folder ID from the request, or fall back to the environment variable
+    const folderId = requestFolderId || Deno.env.get('GOOGLE_FOLDER');
 
     console.log('Listing Drive files, folderId:', folderId);
 
