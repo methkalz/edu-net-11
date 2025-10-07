@@ -30,7 +30,7 @@ async function createGoogleJWT(serviceAccount: any, scope: string): Promise<stri
   console.log('Private key length:', privateKey.length);
   
   // Clean up the private key by removing headers, footers, and all whitespace/newlines
-  const pemContents = privateKey
+  let pemContents = privateKey
     .replace(/-----BEGIN PRIVATE KEY-----/g, '')
     .replace(/-----END PRIVATE KEY-----/g, '')
     .replace(/\\n/g, '')  // Remove escaped newlines (\n as text)
@@ -39,27 +39,36 @@ async function createGoogleJWT(serviceAccount: any, scope: string): Promise<stri
     .replace(/\s/g, '')   // Remove all whitespace
     .trim();
   
+  // Remove any non-base64 characters (only keep A-Z, a-z, 0-9, +, /, =)
+  pemContents = pemContents.replace(/[^A-Za-z0-9+/=]/g, '');
+  
   console.log('PEM contents length after cleanup:', pemContents.length);
-  const binaryDer = Uint8Array.from(atob(pemContents), c => c.charCodeAt(0));
+  
+  try {
+    const binaryDer = Uint8Array.from(atob(pemContents), c => c.charCodeAt(0));
 
-  const key = await crypto.subtle.importKey(
-    "pkcs8",
-    binaryDer,
-    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
+    const key = await crypto.subtle.importKey(
+      "pkcs8",
+      binaryDer,
+      { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+      false,
+      ["sign"]
+    );
 
-  const signature = await crypto.subtle.sign(
-    "RSASSA-PKCS1-v1_5",
-    key,
-    new TextEncoder().encode(signatureInput)
-  );
+    const signature = await crypto.subtle.sign(
+      "RSASSA-PKCS1-v1_5",
+      key,
+      new TextEncoder().encode(signatureInput)
+    );
 
-  const encodedSignature = btoa(String.fromCharCode(...new Uint8Array(signature)))
-    .replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+    const encodedSignature = btoa(String.fromCharCode(...new Uint8Array(signature)))
+      .replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
 
-  return `${signatureInput}.${encodedSignature}`;
+    return `${signatureInput}.${encodedSignature}`;
+  } catch (error) {
+    console.error('Failed to process private key:', error);
+    throw new Error(`Private key processing failed: ${error.message}. Please ensure PRIVATE_KEY is properly formatted.`);
+  }
 }
 
 // Get access token from Google
