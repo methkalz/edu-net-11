@@ -153,17 +153,36 @@ serve(async (req) => {
     console.log('Listing Drive files, folderId:', folderId);
 
     // Parse Google credentials from environment
-    const clientEmail = Deno.env.get('CLIENT_EMAIL');
-    const privateKey = Deno.env.get('PRIVATE_KEY');
+    // Support both methods: full JSON or separate keys
+    let serviceAccount: any;
+    const googleServiceAccountJson = Deno.env.get('GOOGLE_SERVICE_ACCOUNT');
     
-    if (!clientEmail || !privateKey) {
-      throw new Error('CLIENT_EMAIL or PRIVATE_KEY not found in environment');
-    }
+    if (googleServiceAccountJson) {
+      // Method 1: Full Service Account JSON in one secret
+      console.log('Using GOOGLE_SERVICE_ACCOUNT (full JSON)');
+      try {
+        serviceAccount = JSON.parse(googleServiceAccountJson);
+        console.log('✅ Parsed service account JSON successfully');
+      } catch (parseError) {
+        console.error('❌ Failed to parse GOOGLE_SERVICE_ACCOUNT JSON:', parseError);
+        throw new Error('GOOGLE_SERVICE_ACCOUNT must be valid JSON. Copy the entire content of your Service Account JSON file.');
+      }
+    } else {
+      // Method 2: Separate CLIENT_EMAIL and PRIVATE_KEY secrets
+      console.log('Using separate CLIENT_EMAIL and PRIVATE_KEY secrets');
+      const clientEmail = Deno.env.get('CLIENT_EMAIL');
+      const privateKey = Deno.env.get('PRIVATE_KEY');
+      
+      if (!clientEmail || !privateKey) {
+        throw new Error('Either GOOGLE_SERVICE_ACCOUNT or both CLIENT_EMAIL and PRIVATE_KEY must be set');
+      }
 
-    const serviceAccount = {
-      client_email: clientEmail,
-      private_key: privateKey
-    };
+      serviceAccount = {
+        client_email: clientEmail,
+        private_key: privateKey
+      };
+    }
+    
     console.log('Service account email:', serviceAccount.client_email);
 
     // Get access token
