@@ -19,9 +19,8 @@ function validatePrivateKey(privateKey: string): { valid: boolean; error?: strin
     return { valid: false, error: 'PRIVATE_KEY missing END footer' };
   }
   
-  // Check for common formatting issues
-  if (privateKey.includes('\\\\n')) {
-    return { valid: false, error: 'PRIVATE_KEY contains double-escaped newlines (\\\\n)' };
+  if (privateKey.includes('\\\\\\\\\\\\\\\\n')) {
+    return { valid: false, error: 'PRIVATE_KEY contains double-escaped newlines (\\\\\\\\\\\\\\\\n)' };
   }
   
   return { valid: true };
@@ -47,37 +46,24 @@ async function createGoogleJWT(serviceAccount: any, scope: string): Promise<stri
   const encodedClaim = btoa(JSON.stringify(claim)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
   const signatureInput = `${encodedHeader}.${encodedClaim}`;
 
-  // Import private key
   const privateKey = serviceAccount.private_key;
   
-  // Validate private key format first
-  const validation = validatePrivateKey(privateKey);
-  if (!validation.valid) {
-    console.error('❌ Private key validation failed:', validation.error);
-    console.error('Key length:', privateKey.length);
-    console.error('Key starts with:', privateKey.substring(0, 50));
-    console.error('Key ends with:', privateKey.substring(privateKey.length - 50));
-    throw new Error(`Invalid PRIVATE_KEY format: ${validation.error}`);
-  }
-  
-  console.log('✅ Private key validation passed');
-  console.log('Private key length:', privateKey.length);
-  
-  // Clean up the private key by removing headers, footers, and all whitespace/newlines
+  // Clean the private key - handle both literal \n and actual newlines
   let pemContents = privateKey
     .replace(/-----BEGIN PRIVATE KEY-----/g, '')
     .replace(/-----END PRIVATE KEY-----/g, '')
-    .replace(/\\n/g, '')  // Remove escaped newlines (\n as text)
+    .replace(/\\\\n/g, '')  // Remove literal \\n
+
+    .replace(/\\\\r/g, '')  // Remove literal \\r
+    .replace(/\r/g, '')   // Remove actual \r
     .replace(/\n/g, '')   // Remove actual newlines
-    .replace(/\r/g, '')   // Remove carriage returns
     .replace(/\s/g, '')   // Remove all whitespace
     .trim();
   
-  // Remove any non-base64 characters (only keep A-Z, a-z, 0-9, +, /, =)
+  // Remove any non-base64 characters
   pemContents = pemContents.replace(/[^A-Za-z0-9+/=]/g, '');
   
   console.log('PEM contents length after cleanup:', pemContents.length);
-  console.log('First 20 chars of cleaned PEM:', pemContents.substring(0, 20));
   
   try {
     const binaryDer = Uint8Array.from(atob(pemContents), c => c.charCodeAt(0));
@@ -102,21 +88,7 @@ async function createGoogleJWT(serviceAccount: any, scope: string): Promise<stri
     return `${signatureInput}.${encodedSignature}`;
   } catch (error) {
     console.error('❌ Failed to process private key:', error);
-    console.error('Error type:', error.name);
-    console.error('Error message:', error.message);
-    console.error('PEM length was:', pemContents.length);
-    console.error('Original key length:', privateKey.length);
-    
-    let errorMsg = 'Private key processing failed: ';
-    if (error.message.includes('decode base64')) {
-      errorMsg += 'Invalid base64 encoding. The PRIVATE_KEY must be copied exactly from the Service Account JSON file, including all \\n characters.';
-    } else if (error.message.includes('importKey')) {
-      errorMsg += 'Key format is invalid. Ensure you copied the entire private_key value including "-----BEGIN PRIVATE KEY-----" and "-----END PRIVATE KEY-----".';
-    } else {
-      errorMsg += error.message;
-    }
-    
-    throw new Error(errorMsg);
+    throw new Error('Private key processing failed: ' + error.message);
   }
 }
 
@@ -147,64 +119,57 @@ serve(async (req) => {
   try {
     const { folderId: requestFolderId, includeAllFiles } = await req.json().catch(() => ({}));
     
-    // Use the folder ID from the request, or fall back to the environment variable
     const folderId = requestFolderId || Deno.env.get('GOOGLE_FOLDER');
 
     console.log('📂 Listing Drive files, folderId:', folderId);
     console.log('📋 Include all file types:', includeAllFiles !== false);
 
-    // Parse Google credentials from GOOGLE_SERVICE_ACCOUNT only
+    // Parse Google credentials
     const googleServiceAccountJson = Deno.env.get('GOOGLE_SERVICE_ACCOUNT');
     
-    console.log('🔍 Checking for GOOGLE_SERVICE_ACCOUNT secret...');
-    console.log('GOOGLE_SERVICE_ACCOUNT exists:', !!googleServiceAccountJson);
-    
     if (!googleServiceAccountJson) {
-      console.error('❌ GOOGLE_SERVICE_ACCOUNT not found in environment variables');
-      throw new Error('GOOGLE_SERVICE_ACCOUNT secret not found. Please add it in Supabase Edge Function Secrets with the full Service Account JSON content.');
+      throw new Error('GOOGLE_SERVICE_ACCOUNT secret not found');
     }
-    
-    console.log('✅ GOOGLE_SERVICE_ACCOUNT found, length:', googleServiceAccountJson.length);
-    console.log('First 50 chars:', googleServiceAccountJson.substring(0, 50));
-    console.log('Last 50 chars:', googleServiceAccountJson.substring(googleServiceAccountJson.length - 50));
     
     let serviceAccount: any;
     try {
       serviceAccount = JSON.parse(googleServiceAccountJson);
-      console.log('✅ Parsed service account JSON successfully');
-      console.log('Service account email:', serviceAccount.client_email);
-      console.log('Has private_key:', !!serviceAccount.private_key);
-      console.log('Private key length:', serviceAccount.private_key?.length || 0);
     } catch (parseError) {
-      console.error('❌ Failed to parse GOOGLE_SERVICE_ACCOUNT JSON:', parseError);
-      throw new Error('GOOGLE_SERVICE_ACCOUNT must be valid JSON. Copy the entire content of your Service Account JSON file.');
+      throw new Error('GOOGLE_SERVICE_ACCOUNT must be valid JSON');
     }
 
     // Get access token
     const accessToken = await getAccessToken(serviceAccount);
 
-    // Build query - By default show all files, or only Google Docs if specified
+    // Build query with Workspace support
     let query = includeAllFiles === false 
       ? "mimeType='application/vnd.google-apps.document'"
-      : "trashed=false"; // Show all non-trashed files
+      : "trashed=false";
     
     if (folderId) {
       query += ` and '${folderId}' in parents`;
     }
     
     console.log('📋 Search query:', query);
-    console.log('🔗 Full URL:', `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}`);
+    
+    // Prepare API URL with Workspace support parameters
+    const apiUrl = new URL('https://www.googleapis.com/drive/v3/files');
+    apiUrl.searchParams.append('q', query);
+    apiUrl.searchParams.append('fields', 'files(id,name,mimeType,createdTime,modifiedTime,webViewLink),nextPageToken');
+    apiUrl.searchParams.append('orderBy', 'modifiedTime desc');
+    apiUrl.searchParams.append('pageSize', '100');
+    apiUrl.searchParams.append('supportsAllDrives', 'true');
+    apiUrl.searchParams.append('includeItemsFromAllDrives', 'true');
+    
+    console.log('🔗 Full URL:', apiUrl.toString());
 
     // List files from Google Drive
-    const listResponse = await fetch(
-      `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,mimeType,createdTime,modifiedTime,webViewLink,permissions)&orderBy=modifiedTime desc`,
-      {
-        headers: {
-          "Authorization": `Bearer ${accessToken}`,
-          "Content-Type": "application/json"
-        }
+    const listResponse = await fetch(apiUrl.toString(), {
+      headers: {
+        "Authorization": `Bearer ${accessToken}`,
+        "Content-Type": "application/json"
       }
-    );
+    });
 
     if (!listResponse.ok) {
       const error = await listResponse.text();
@@ -215,38 +180,34 @@ serve(async (req) => {
     const files = await listResponse.json();
     console.log('📁 Files retrieved:', files.files?.length || 0);
     
-    // Log detailed info about folder access
+    // Check folder info and permissions
+    let folderInfo = null;
     if (folderId) {
-      console.log('🔍 Checking folder access...');
-      const folderCheckResponse = await fetch(
-        `https://www.googleapis.com/drive/v3/files/${folderId}?fields=id,name,mimeType,permissions`,
-        {
-          headers: {
-            "Authorization": `Bearer ${accessToken}`,
-            "Content-Type": "application/json"
-          }
+      console.log('🔍 Checking folder permissions...');
+      const folderUrl = `https://www.googleapis.com/drive/v3/files/${folderId}?fields=id,name,permissions,owners,capabilities&supportsAllDrives=true`;
+      const folderCheckResponse = await fetch(folderUrl, {
+        headers: {
+          "Authorization": `Bearer ${accessToken}`,
+          "Content-Type": "application/json"
         }
-      );
+      });
       
       if (folderCheckResponse.ok) {
-        const folderInfo = await folderCheckResponse.json();
-        console.log('✅ Folder found:', folderInfo.name);
-        console.log('📊 Folder type:', folderInfo.mimeType);
-        console.log('🔐 Permissions count:', folderInfo.permissions?.length || 0);
+        folderInfo = await folderCheckResponse.json();
+        console.log('📁 Folder info:', JSON.stringify(folderInfo, null, 2));
+        console.log('✅ Can add children:', folderInfo.capabilities?.canAddChildren);
       } else {
-        const folderError = await folderCheckResponse.text();
-        console.error('❌ Cannot access folder:', folderError);
+        const folderError = await folderCheckResponse.json();
+        console.error('❌ Cannot access folder:', JSON.stringify(folderError, null, 2));
       }
     }
-    
-    if (files.files && files.files.length > 0) {
-      console.log('📄 First file details:', JSON.stringify(files.files[0], null, 2));
-    }
 
+    // Return response with folder info and service account
     return new Response(
       JSON.stringify({
-        success: true,
-        files: files.files || []
+        files: files.files || [],
+        folderInfo: folderInfo,
+        serviceAccount: serviceAccount.client_email
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
@@ -254,20 +215,12 @@ serve(async (req) => {
   } catch (error) {
     console.error('❌ Error in list-drive-files:', error);
     
-    // Provide detailed error information
-    const errorResponse = {
-      success: false,
-      error: error.message,
-      errorType: error.name,
-      hint: error.message.includes('PRIVATE_KEY') 
-        ? 'تأكد من نسخ قيمة private_key كاملة من ملف Service Account JSON، بما في ذلك جميع أحرف \\n'
-        : error.message.includes('CLIENT_EMAIL')
-        ? 'تأكد من إضافة CLIENT_EMAIL في Supabase Secrets'
-        : 'تحقق من صحة بيانات الاعتماد في Supabase Edge Function Secrets'
-    };
-    
     return new Response(
-      JSON.stringify(errorResponse),
+      JSON.stringify({
+        success: false,
+        error: error.message,
+        hint: 'تأكد من مشاركة المجلد مع Service Account بصلاحية "محرر"'
+      }),
       {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }

@@ -20,8 +20,8 @@ function validatePrivateKey(privateKey: string): { valid: boolean; error?: strin
     return { valid: false, error: 'PRIVATE_KEY missing END footer' };
   }
   
-  if (privateKey.includes('\\\\n')) {
-    return { valid: false, error: 'PRIVATE_KEY contains double-escaped newlines (\\\\n)' };
+  if (privateKey.includes('\\\\\\\\\\\\\\\\n')) {
+    return { valid: false, error: 'PRIVATE_KEY contains double-escaped newlines (\\\\\\\\\\\\\\\\n)' };
   }
   
   return { valid: true };
@@ -47,24 +47,21 @@ async function createGoogleJWT(serviceAccount: any, scope: string): Promise<stri
   const encodedClaim = btoa(JSON.stringify(claim)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
   const signatureInput = `${encodedHeader}.${encodedClaim}`;
 
-  // Import private key
   const privateKey = serviceAccount.private_key;
-  console.log('Private key length:', privateKey.length);
   
-  // Clean up the private key by removing headers, footers, and all whitespace/newlines
+  // Clean the private key - handle both literal \n and actual newlines
   let pemContents = privateKey
     .replace(/-----BEGIN PRIVATE KEY-----/g, '')
     .replace(/-----END PRIVATE KEY-----/g, '')
-    .replace(/\\n/g, '')  // Remove escaped newlines (\n as text)
+    .replace(/\\\\n/g, '')  // Remove literal \\n
+
+    .replace(/\\\\r/g, '')  // Remove literal \\r
+    .replace(/\r/g, '')   // Remove actual \r
     .replace(/\n/g, '')   // Remove actual newlines
-    .replace(/\r/g, '')   // Remove carriage returns
     .replace(/\s/g, '')   // Remove all whitespace
     .trim();
   
-  // Remove any non-base64 characters (only keep A-Z, a-z, 0-9, +, /, =)
   pemContents = pemContents.replace(/[^A-Za-z0-9+/=]/g, '');
-  
-  console.log('PEM contents length after cleanup:', pemContents.length);
   
   try {
     const binaryDer = Uint8Array.from(atob(pemContents), c => c.charCodeAt(0));
@@ -89,25 +86,11 @@ async function createGoogleJWT(serviceAccount: any, scope: string): Promise<stri
     return `${signatureInput}.${encodedSignature}`;
   } catch (error) {
     console.error('❌ Failed to process private key:', error);
-    console.error('Error type:', error.name);
-    console.error('Error message:', error.message);
-    console.error('PEM length was:', pemContents.length);
-    console.error('Original key length:', privateKey.length);
-    
-    let errorMsg = 'Private key processing failed: ';
-    if (error.message.includes('decode base64')) {
-      errorMsg += 'Invalid base64 encoding. The PRIVATE_KEY must be copied exactly from the Service Account JSON file, including all \\n characters.';
-    } else if (error.message.includes('importKey')) {
-      errorMsg += 'Key format is invalid. Ensure you copied the entire private_key value including "-----BEGIN PRIVATE KEY-----" and "-----END PRIVATE KEY-----".';
-    } else {
-      errorMsg += error.message;
-    }
-    
-    throw new Error(errorMsg);
+    throw new Error('Private key processing failed: ' + error.message);
   }
 }
 
-// Get access token from Google
+// Get access token from Google - Full Drive access for Workspace
 async function getAccessToken(serviceAccount: any): Promise<string> {
   const scope = "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/documents";
   const jwt = await createGoogleJWT(serviceAccount, scope);
@@ -134,41 +117,55 @@ serve(async (req) => {
   try {
     const { studentName, documentContent, folderId: requestFolderId } = await req.json();
     
-    // Use the folder ID from the request, or fall back to the environment variable
     const folderId = requestFolderId || Deno.env.get('GOOGLE_FOLDER');
 
     console.log('Creating Google Doc for student:', studentName);
     console.log('Target folder ID:', folderId);
 
-    // Parse Google credentials from GOOGLE_SERVICE_ACCOUNT only
+    // Parse Google credentials
     const googleServiceAccountJson = Deno.env.get('GOOGLE_SERVICE_ACCOUNT');
     
-    console.log('🔍 Checking for GOOGLE_SERVICE_ACCOUNT secret...');
-    console.log('GOOGLE_SERVICE_ACCOUNT exists:', !!googleServiceAccountJson);
-    
     if (!googleServiceAccountJson) {
-      console.error('❌ GOOGLE_SERVICE_ACCOUNT not found in environment variables');
-      throw new Error('GOOGLE_SERVICE_ACCOUNT secret not found. Please add it in Supabase Edge Function Secrets with the full Service Account JSON content.');
+      throw new Error('GOOGLE_SERVICE_ACCOUNT secret not found');
     }
-    
-    console.log('✅ GOOGLE_SERVICE_ACCOUNT found, length:', googleServiceAccountJson.length);
-    console.log('First 50 chars:', googleServiceAccountJson.substring(0, 50));
-    console.log('Last 50 chars:', googleServiceAccountJson.substring(googleServiceAccountJson.length - 50));
     
     let serviceAccount: any;
     try {
       serviceAccount = JSON.parse(googleServiceAccountJson);
-      console.log('✅ Parsed service account JSON successfully');
-      console.log('Service account email:', serviceAccount.client_email);
-      console.log('Has private_key:', !!serviceAccount.private_key);
-      console.log('Private key length:', serviceAccount.private_key?.length || 0);
     } catch (parseError) {
-      console.error('❌ Failed to parse GOOGLE_SERVICE_ACCOUNT JSON:', parseError);
-      throw new Error('GOOGLE_SERVICE_ACCOUNT must be valid JSON. Copy the entire content of your Service Account JSON file.');
+      throw new Error('GOOGLE_SERVICE_ACCOUNT must be valid JSON');
     }
 
     // Get access token
     const accessToken = await getAccessToken(serviceAccount);
+    console.log('✅ Access token obtained');
+
+    // Check folder permissions first
+    const targetFolderId = folderId;
+    if (targetFolderId) {
+      console.log('🔍 Checking folder permissions for:', targetFolderId);
+      const folderUrl = `https://www.googleapis.com/drive/v3/files/${targetFolderId}?fields=id,name,capabilities&supportsAllDrives=true`;
+      const folderCheckResponse = await fetch(folderUrl, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
+      });
+
+      if (!folderCheckResponse.ok) {
+        const error = await folderCheckResponse.text();
+        console.error('❌ Cannot access folder:', error);
+        throw new Error(`لا يمكن الوصول للمجلد. تأكد من مشاركته مع: ${serviceAccount.client_email} بصلاحية "محرر"`);
+      }
+
+      const folderData = await folderCheckResponse.json();
+      console.log('📁 Folder capabilities:', folderData.capabilities);
+      
+      if (!folderData.capabilities?.canAddChildren) {
+        throw new Error(`Service Account (${serviceAccount.client_email}) لا يملك صلاحية إضافة ملفات للمجلد. يجب مشاركة المجلد معه بصلاحية "محرر".`);
+      }
+      
+      console.log('✅ Folder permissions verified');
+    }
 
     // Create Google Doc
     const title = `مستند ${studentName} - ${new Date().toISOString().split('T')[0]}`;
@@ -187,27 +184,28 @@ serve(async (req) => {
     }
 
     const doc = await createDocResponse.json();
-    console.log('Document created:', doc.documentId);
+    console.log('✅ Document created:', doc.documentId);
 
-    // Move document to folder if folderId is provided
+    // Move document to folder with Workspace support
     if (folderId) {
-      console.log('Moving document to folder:', folderId);
-      const moveResponse = await fetch(
-        `https://www.googleapis.com/drive/v3/files/${doc.documentId}?addParents=${folderId}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Authorization": `Bearer ${accessToken}`,
-            "Content-Type": "application/json"
-          }
+      console.log('📁 Moving document to folder:', folderId);
+      const moveUrl = new URL(`https://www.googleapis.com/drive/v3/files/${doc.documentId}`);
+      moveUrl.searchParams.append('addParents', folderId);
+      moveUrl.searchParams.append('removeParents', 'root');
+      moveUrl.searchParams.append('supportsAllDrives', 'true');
+      
+      const moveResponse = await fetch(moveUrl.toString(), {
+        method: "PATCH",
+        headers: {
+          "Authorization": `Bearer ${accessToken}`,
         }
-      );
+      });
       
       if (!moveResponse.ok) {
         const error = await moveResponse.text();
-        console.error('Failed to move document to folder:', error);
+        console.error('⚠️ Failed to move document:', error);
       } else {
-        console.log('Document moved to folder successfully');
+        console.log('✅ Document moved successfully');
       }
     }
 
@@ -228,10 +226,15 @@ serve(async (req) => {
           }]
         })
       });
+      console.log('✅ Content added');
     }
 
-    // Set permissions to "Editor" for anyone with the link
-    await fetch(`https://www.googleapis.com/drive/v3/files/${doc.documentId}/permissions`, {
+    // Set permissions with Workspace support
+    console.log('🔓 Setting document permissions...');
+    const permUrl = new URL(`https://www.googleapis.com/drive/v3/files/${doc.documentId}/permissions`);
+    permUrl.searchParams.append('supportsAllDrives', 'true');
+    
+    await fetch(permUrl.toString(), {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${accessToken}`,
@@ -242,10 +245,9 @@ serve(async (req) => {
         role: "writer"
       })
     });
+    console.log('✅ Permissions set');
 
-    console.log('Permissions set successfully');
-
-    // Get authenticated user from Supabase
+    // Save to Supabase database
     const authHeader = req.headers.get('Authorization');
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
@@ -259,15 +261,13 @@ serve(async (req) => {
       throw new Error('User not authenticated');
     }
 
-    // Get user profile to get school_id
     const { data: profile } = await supabase
       .from('profiles')
       .select('school_id')
       .eq('user_id', user.id)
       .single();
 
-    // Save document info to database
-    const { error: dbError } = await supabase
+    await supabase
       .from('google_documents')
       .insert({
         doc_google_id: doc.documentId,
@@ -280,12 +280,7 @@ serve(async (req) => {
         last_accessed_at: new Date().toISOString()
       });
 
-    if (dbError) {
-      console.error('Database error:', dbError);
-      throw new Error(`Failed to save to database: ${dbError.message}`);
-    }
-
-    console.log('Document saved to database');
+    console.log('✅ Document saved to database');
 
     return new Response(
       JSON.stringify({
@@ -300,19 +295,12 @@ serve(async (req) => {
   } catch (error) {
     console.error('❌ Error in create-google-doc:', error);
     
-    const errorResponse = {
-      success: false,
-      error: error.message,
-      errorType: error.name,
-      hint: error.message.includes('PRIVATE_KEY') 
-        ? 'تأكد من نسخ قيمة private_key كاملة من ملف Service Account JSON، بما في ذلك جميع أحرف \\n'
-        : error.message.includes('CLIENT_EMAIL')
-        ? 'تأكد من إضافة CLIENT_EMAIL في Supabase Secrets'
-        : 'تحقق من صحة بيانات الاعتماد في Supabase Edge Function Secrets'
-    };
-    
     return new Response(
-      JSON.stringify(errorResponse),
+      JSON.stringify({
+        success: false,
+        error: error.message,
+        hint: 'تأكد من مشاركة المجلد مع Service Account بصلاحية "محرر"'
+      }),
       {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }

@@ -24,20 +24,28 @@ interface DriveFile {
   webViewLink: string;
 }
 
+interface FolderInfo {
+  id: string;
+  name: string;
+  capabilities?: {
+    canAddChildren: boolean;
+    canEdit: boolean;
+  };
+  permissions?: any[];
+}
+
 interface ListFilesResponse {
-  success: boolean;
-  files?: DriveFile[];
-  error?: string;
+  files: DriveFile[];
+  folderInfo?: FolderInfo;
+  serviceAccount?: string;
 }
 
 interface TestConnectionResponse {
   success: boolean;
   message?: string;
-  details?: {
-    serviceAccount: string;
-    projectId: string;
-    driveUser: string;
-  };
+  serviceAccount?: string;
+  workspaceSupport?: boolean;
+  scopes?: string[];
   error?: string;
 }
 
@@ -51,7 +59,6 @@ export const useGoogleDocs = () => {
   }: CreateDocumentParams): Promise<CreateDocumentResponse | null> => {
     setIsLoading(true);
     try {
-      // Only send folderId if it's provided, otherwise Edge Function will use GOOGLE_FOLDER
       const { data, error } = await supabase.functions.invoke('create-google-doc', {
         body: {
           studentName,
@@ -75,7 +82,7 @@ export const useGoogleDocs = () => {
         return null;
       }
 
-      toast.success('تم إنشاء المستند بنجاح', {
+      toast.success('تم إنشاء المستند بنجاح ✅', {
         description: `تم إنشاء مستند ${studentName}`
       });
 
@@ -91,10 +98,9 @@ export const useGoogleDocs = () => {
     }
   };
 
-  const listFiles = async (folderId?: string, includeAllFiles: boolean = true): Promise<DriveFile[]> => {
+  const listFiles = async (folderId?: string, includeAllFiles: boolean = true): Promise<DriveFile[] | ListFilesResponse> => {
     setIsLoading(true);
     try {
-      // Send folderId and file type filter
       const { data, error } = await supabase.functions.invoke('list-drive-files', {
         body: { 
           ...(folderId && { folderId }),
@@ -104,65 +110,53 @@ export const useGoogleDocs = () => {
 
       if (error) {
         console.error('Error listing files:', error);
-        const errorMsg = error.message || 'فشل في جلب الملفات';
-        toast.error(errorMsg);
-        throw new Error(errorMsg);
+        throw new Error(error.message || 'فشل في جلب الملفات من Google Drive');
       }
 
-      if (!data.success) {
-        const errorMsg = data.error || 'حدث خطأ أثناء جلب الملفات';
-        toast.error(errorMsg);
-        throw { message: errorMsg, hint: (data as any)?.hint };
+      if (!data) {
+        return [];
       }
 
-      return (data as ListFilesResponse).files || [];
-    } catch (error: any) {
+      // Return the full response object if it has folderInfo
+      if (typeof data === 'object' && 'files' in data) {
+        return data as ListFilesResponse;
+      }
+
+      // Otherwise return as array for backwards compatibility
+      return Array.isArray(data) ? data : [];
+    } catch (error) {
       console.error('Error in listFiles:', error);
-      if (!error.message) {
-        toast.error('حدث خطأ غير متوقع');
-        throw new Error('حدث خطأ غير متوقع');
-      }
       throw error;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const testConnection = async (): Promise<boolean> => {
+  const testConnection = async (): Promise<TestConnectionResponse | null> => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('test-google-connection');
 
       if (error) {
-        console.error('Error testing connection:', error);
-        const errorMsg = error.message || 'فشل في اختبار الاتصال';
-        toast.error(errorMsg);
-        return false;
+        console.error('Connection test error:', error);
+        throw new Error(error.message || 'فشل اختبار الاتصال');
       }
 
-      if (!data.success) {
-        const errorMsg = data.error || 'فشل الاتصال مع Google API';
-        toast.error(errorMsg);
-        if ((data as any)?.hint) {
-          toast.error((data as any).hint, { duration: 6000 });
-        }
-        return false;
+      if (!data) {
+        throw new Error('لم يتم استلام رد من الخادم');
       }
 
       const response = data as TestConnectionResponse;
-      toast.success(response.message || 'تم الاتصال بنجاح', {
-        description: response.details 
-          ? `Service Account: ${response.details.serviceAccount}`
-          : undefined
-      });
+      
+      if (!response.success) {
+        throw new Error(response.error || 'فشل اختبار الاتصال');
+      }
 
-      return true;
-    } catch (error: any) {
+      console.log('Connection test successful:', response);
+      return response;
+    } catch (error) {
       console.error('Error in testConnection:', error);
-      toast.error('فشل اختبار الاتصال', {
-        description: error.message || 'حدث خطأ غير متوقع'
-      });
-      return false;
+      throw error;
     } finally {
       setIsLoading(false);
     }

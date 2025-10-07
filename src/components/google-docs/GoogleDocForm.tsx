@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useGoogleDocs } from '@/hooks/useGoogleDocs';
-import { FileText, TestTube, FolderOpen, ExternalLink } from 'lucide-react';
+import { FileText, TestTube, FolderOpen, ExternalLink, Copy, CheckCircle, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -14,7 +14,23 @@ interface DriveFile {
   name: string;
   createdTime: string;
   modifiedTime: string;
-  webViewLink: string;
+  webViewLink?: string;
+}
+
+interface FolderInfo {
+  id: string;
+  name: string;
+  capabilities?: {
+    canAddChildren: boolean;
+    canEdit: boolean;
+  };
+  permissions?: any[];
+}
+
+interface ListFilesResponse {
+  files: DriveFile[];
+  folderInfo?: FolderInfo;
+  serviceAccount?: string;
 }
 
 const GoogleDocForm: React.FC = () => {
@@ -22,6 +38,8 @@ const GoogleDocForm: React.FC = () => {
   const [documentContent, setDocumentContent] = useState('');
   const [folderId, setFolderId] = useState('');
   const [files, setFiles] = useState<DriveFile[]>([]);
+  const [folderInfo, setFolderInfo] = useState<FolderInfo | null>(null);
+  const [serviceAccount, setServiceAccount] = useState<string>('');
   const [showFiles, setShowFiles] = useState(false);
   const [isListingFiles, setIsListingFiles] = useState(false);
   const [errorDetails, setErrorDetails] = useState<{message: string; hint?: string} | null>(null);
@@ -42,7 +60,6 @@ const GoogleDocForm: React.FC = () => {
     if (result?.success) {
       setStudentName('');
       setDocumentContent('');
-      // Open the document in a new tab
       if (result.documentUrl) {
         window.open(result.documentUrl, '_blank');
       }
@@ -51,11 +68,22 @@ const GoogleDocForm: React.FC = () => {
 
   const handleTestConnection = async () => {
     setErrorDetails(null);
-    const result = await testConnection();
-    if (result) {
-      toast.success('تم الاتصال بنجاح مع Google Drive API');
-    } else {
-      toast.error('فشل الاتصال - راجع تفاصيل الخطأ أدناه');
+    
+    try {
+      const result = await testConnection();
+      if (result) {
+        toast.success('الاتصال ناجح! ✅', {
+          description: `دعم Workspace: ${result.workspaceSupport ? 'مفعّل ✅' : 'غير مفعّل ⚠️'}`
+        });
+        if (result.serviceAccount) {
+          setServiceAccount(result.serviceAccount);
+        }
+      }
+    } catch (error: any) {
+      setErrorDetails({
+        message: error.message || 'فشل في اختبار الاتصال',
+        hint: 'تحقق من صلاحيات الـ Service Account'
+      });
     }
   };
 
@@ -65,24 +93,52 @@ const GoogleDocForm: React.FC = () => {
     setErrorDetails(null);
     
     try {
-      // List all file types by default
-      const fileList = await listFiles(folderId.trim() || undefined, true);
-      setFiles(fileList);
+      const response = await listFiles(folderId.trim() || undefined, true);
       
-      if (fileList.length === 0) {
-        setErrorDetails({
-          message: 'لم يتم العثور على ملفات في المجلد',
-          hint: 'تأكد من: 1) folder ID صحيح، 2) Service Account لديه صلاحية الوصول للمجلد (تمت مشاركة المجلد معه)'
-        });
+      // Handle response object structure
+      if (typeof response === 'object' && 'files' in response) {
+        const listResponse = response as ListFilesResponse;
+        setFiles(listResponse.files || []);
+        setFolderInfo(listResponse.folderInfo || null);
+        setServiceAccount(listResponse.serviceAccount || '');
+        
+        if (listResponse.folderInfo && !listResponse.folderInfo.capabilities?.canAddChildren) {
+          setErrorDetails({
+            message: '⚠️ تحذير: لا توجد صلاحية لإضافة ملفات للمجلد',
+            hint: `يجب مشاركة المجلد "${listResponse.folderInfo.name}" مع:\n${listResponse.serviceAccount}\nبصلاحية "محرر" (Editor)`
+          });
+        } else if ((listResponse.files || []).length === 0) {
+          setErrorDetails({
+            message: 'المجلد فارغ أو لا يمكن الوصول إليه',
+            hint: 'لم يتم العثور على ملفات في المجلد المحدد. تأكد من صحة Folder ID ومن مشاركة المجلد مع Service Account'
+          });
+        } else {
+          toast.success(`تم العثور على ${listResponse.files.length} ملف ✅`);
+        }
+      } else {
+        // Fallback for array response
+        const fileArray = response as DriveFile[];
+        setFiles(fileArray);
+        if (fileArray.length === 0) {
+          setErrorDetails({
+            message: 'لم يتم العثور على ملفات',
+            hint: 'تأكد من صحة folder ID ومن مشاركة المجلد مع Service Account'
+          });
+        }
       }
     } catch (error: any) {
       setErrorDetails({
         message: error.message || 'فشل في جلب الملفات',
-        hint: error.hint
+        hint: 'تأكد من صحة folder ID ومن مشاركة المجلد مع Service Account بصلاحية "محرر"'
       });
     } finally {
       setIsListingFiles(false);
     }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success('تم النسخ إلى الحافظة');
   };
 
   const formatDate = (dateString: string) => {
@@ -103,6 +159,48 @@ const GoogleDocForm: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {serviceAccount && (
+            <div className="bg-muted/50 p-4 rounded-lg border">
+              <p className="text-sm font-medium mb-2">📧 Service Account:</p>
+              <div className="flex items-center gap-2">
+                <code className="text-xs bg-background p-2 rounded flex-1 break-all">
+                  {serviceAccount}
+                </code>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => copyToClipboard(serviceAccount)}
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                ⚠️ تأكد من مشاركة المجلد مع هذا البريد بصلاحية "محرر" (Editor)
+              </p>
+            </div>
+          )}
+
+          {folderInfo && (
+            <div className="bg-muted/50 p-4 rounded-lg border">
+              <p className="text-sm font-medium mb-2">📁 معلومات المجلد:</p>
+              <div className="space-y-2 text-sm">
+                <p><strong>الاسم:</strong> {folderInfo.name}</p>
+                <p className="flex items-center gap-2">
+                  <strong>إضافة ملفات:</strong>
+                  {folderInfo.capabilities?.canAddChildren ? (
+                    <span className="text-green-600 flex items-center gap-1">
+                      <CheckCircle className="h-4 w-4" /> مسموح
+                    </span>
+                  ) : (
+                    <span className="text-red-600 flex items-center gap-1">
+                      <XCircle className="h-4 w-4" /> ممنوع - يجب تعديل الصلاحيات
+                    </span>
+                  )}
+                </p>
+              </div>
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="studentName">اسم الطالب *</Label>
             <Input
@@ -135,6 +233,9 @@ const GoogleDocForm: React.FC = () => {
               onChange={(e) => setFolderId(e.target.value)}
               disabled={isLoading}
             />
+            <p className="text-xs text-muted-foreground">
+              💡 يمكنك الحصول على Folder ID من رابط المجلد في Google Drive
+            </p>
           </div>
 
           <div className="flex gap-3 flex-wrap">
@@ -174,34 +275,21 @@ const GoogleDocForm: React.FC = () => {
         <Card className="border-destructive bg-destructive/5">
           <CardHeader>
             <CardTitle className="text-destructive flex items-center gap-2">
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-              تفاصيل الخطأ
+              <XCircle className="h-5 w-5" />
+              تفاصيل المشكلة
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="p-3 bg-background rounded border">
               <p className="text-sm font-medium mb-1">رسالة الخطأ:</p>
-              <p className="text-sm text-muted-foreground">{errorDetails.message}</p>
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{errorDetails.message}</p>
             </div>
             {errorDetails.hint && (
               <div className="p-3 bg-primary/5 rounded border border-primary/20">
                 <p className="text-sm font-medium text-primary mb-1">💡 نصيحة للحل:</p>
-                <p className="text-sm">{errorDetails.hint}</p>
+                <p className="text-sm whitespace-pre-wrap">{errorDetails.hint}</p>
               </div>
             )}
-            <div className="p-3 bg-muted/50 rounded border text-xs space-y-2">
-              <p className="font-medium">خطوات إصلاح مشكلة PRIVATE_KEY:</p>
-              <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
-                <li>افتح ملف Service Account JSON الخاص بك</li>
-                <li>ابحث عن حقل "private_key"</li>
-                <li>انسخ القيمة كاملة (من علامات التنصيص " إلى ")</li>
-                <li>يجب أن تحتوي على "-----BEGIN PRIVATE KEY-----" و "-----END PRIVATE KEY-----"</li>
-                <li>احذف PRIVATE_KEY القديم من Supabase Secrets</li>
-                <li>أضف PRIVATE_KEY جديد بالقيمة المنسوخة</li>
-              </ol>
-            </div>
           </CardContent>
         </Card>
       )}
@@ -234,15 +322,17 @@ const GoogleDocForm: React.FC = () => {
                         <span>آخر تعديل: {formatDate(file.modifiedTime)}</span>
                       </div>
                     </div>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => window.open(file.webViewLink, '_blank')}
-                      className="flex items-center gap-2"
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                      فتح
-                    </Button>
+                    {file.webViewLink && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => window.open(file.webViewLink, '_blank')}
+                        className="flex items-center gap-2"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        فتح
+                      </Button>
+                    )}
                   </div>
                 ))}
               </div>
