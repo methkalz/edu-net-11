@@ -97,12 +97,17 @@ serve(async (req) => {
     console.log('Target folder ID:', folderId);
 
     // Parse Google credentials from environment
-    const googlePrivateKey = Deno.env.get('GOOGLE_PRIVATE_KEY');
-    if (!googlePrivateKey) {
-      throw new Error('GOOGLE_PRIVATE_KEY not found in environment');
+    const clientEmail = Deno.env.get('CLIENT_EMAIL');
+    const privateKey = Deno.env.get('PRIVATE_KEY');
+    
+    if (!clientEmail || !privateKey) {
+      throw new Error('CLIENT_EMAIL or PRIVATE_KEY not found in environment');
     }
 
-    const serviceAccount = JSON.parse(googlePrivateKey);
+    const serviceAccount = {
+      client_email: clientEmail,
+      private_key: privateKey
+    };
     console.log('Service account email:', serviceAccount.client_email);
 
     // Get access token

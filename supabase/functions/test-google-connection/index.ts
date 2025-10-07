@@ -64,7 +64,7 @@ async function createGoogleJWT(serviceAccount: any, scope: string): Promise<stri
 
 // Get access token from Google
 async function getAccessToken(serviceAccount: any): Promise<string> {
-  const scope = "https://www.googleapis.com/auth/drive.readonly";
+  const scope = "https://www.googleapis.com/auth/drive";
   const jwt = await createGoogleJWT(serviceAccount, scope);
 
   const response = await fetch("https://oauth2.googleapis.com/token", {
@@ -90,14 +90,18 @@ serve(async (req) => {
     console.log('Testing Google API connection...');
 
     // Parse Google credentials from environment
-    const googlePrivateKey = Deno.env.get('GOOGLE_PRIVATE_KEY');
-    if (!googlePrivateKey) {
-      throw new Error('GOOGLE_PRIVATE_KEY not found in environment');
+    const clientEmail = Deno.env.get('CLIENT_EMAIL');
+    const privateKey = Deno.env.get('PRIVATE_KEY');
+    
+    if (!clientEmail || !privateKey) {
+      throw new Error('CLIENT_EMAIL or PRIVATE_KEY not found in environment');
     }
 
-    const serviceAccount = JSON.parse(googlePrivateKey);
+    const serviceAccount = {
+      client_email: clientEmail,
+      private_key: privateKey
+    };
     console.log('Service account email:', serviceAccount.client_email);
-    console.log('Project ID:', serviceAccount.project_id);
 
     // Get access token
     const accessToken = await getAccessToken(serviceAccount);
