@@ -101,26 +101,25 @@ export const useGoogleDocs = () => {
 
       if (error) {
         console.error('Error listing files:', error);
-        toast.error('فشل جلب الملفات', {
-          description: error.message || 'حدث خطأ أثناء جلب الملفات'
-        });
-        return [];
+        const errorMsg = error.message || 'فشل في جلب الملفات';
+        toast.error(errorMsg);
+        throw new Error(errorMsg);
       }
 
       if (!data.success) {
-        toast.error('فشل جلب الملفات', {
-          description: data.error || 'حدث خطأ غير متوقع'
-        });
-        return [];
+        const errorMsg = data.error || 'حدث خطأ أثناء جلب الملفات';
+        toast.error(errorMsg);
+        throw { message: errorMsg, hint: (data as any)?.hint };
       }
 
       return (data as ListFilesResponse).files || [];
     } catch (error: any) {
       console.error('Error in listFiles:', error);
-      toast.error('فشل جلب الملفات', {
-        description: error.message || 'حدث خطأ غير متوقع'
-      });
-      return [];
+      if (!error.message) {
+        toast.error('حدث خطأ غير متوقع');
+        throw new Error('حدث خطأ غير متوقع');
+      }
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -133,16 +132,17 @@ export const useGoogleDocs = () => {
 
       if (error) {
         console.error('Error testing connection:', error);
-        toast.error('فشل اختبار الاتصال', {
-          description: error.message || 'حدث خطأ أثناء اختبار الاتصال'
-        });
+        const errorMsg = error.message || 'فشل في اختبار الاتصال';
+        toast.error(errorMsg);
         return false;
       }
 
       if (!data.success) {
-        toast.error('فشل اختبار الاتصال', {
-          description: data.error || 'حدث خطأ غير متوقع'
-        });
+        const errorMsg = data.error || 'فشل الاتصال مع Google API';
+        toast.error(errorMsg);
+        if ((data as any)?.hint) {
+          toast.error((data as any).hint, { duration: 6000 });
+        }
         return false;
       }
 

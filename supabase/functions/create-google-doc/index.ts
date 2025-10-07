@@ -6,6 +6,27 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Validate private key format
+function validatePrivateKey(privateKey: string): { valid: boolean; error?: string } {
+  if (!privateKey) {
+    return { valid: false, error: 'PRIVATE_KEY is empty or undefined' };
+  }
+  
+  if (!privateKey.includes('BEGIN PRIVATE KEY')) {
+    return { valid: false, error: 'PRIVATE_KEY missing BEGIN header' };
+  }
+  
+  if (!privateKey.includes('END PRIVATE KEY')) {
+    return { valid: false, error: 'PRIVATE_KEY missing END footer' };
+  }
+  
+  if (privateKey.includes('\\\\n')) {
+    return { valid: false, error: 'PRIVATE_KEY contains double-escaped newlines (\\\\n)' };
+  }
+  
+  return { valid: true };
+}
+
 // Helper function to create JWT for Google API
 async function createGoogleJWT(serviceAccount: any, scope: string): Promise<string> {
   const header = {
@@ -67,8 +88,22 @@ async function createGoogleJWT(serviceAccount: any, scope: string): Promise<stri
 
     return `${signatureInput}.${encodedSignature}`;
   } catch (error) {
-    console.error('Failed to process private key:', error);
-    throw new Error(`Private key processing failed: ${error.message}. Please ensure PRIVATE_KEY is properly formatted.`);
+    console.error('❌ Failed to process private key:', error);
+    console.error('Error type:', error.name);
+    console.error('Error message:', error.message);
+    console.error('PEM length was:', pemContents.length);
+    console.error('Original key length:', privateKey.length);
+    
+    let errorMsg = 'Private key processing failed: ';
+    if (error.message.includes('decode base64')) {
+      errorMsg += 'Invalid base64 encoding. The PRIVATE_KEY must be copied exactly from the Service Account JSON file, including all \\n characters.';
+    } else if (error.message.includes('importKey')) {
+      errorMsg += 'Key format is invalid. Ensure you copied the entire private_key value including "-----BEGIN PRIVATE KEY-----" and "-----END PRIVATE KEY-----".';
+    } else {
+      errorMsg += error.message;
+    }
+    
+    throw new Error(errorMsg);
   }
 }
 
@@ -250,12 +285,21 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error in create-google-doc:', error);
+    console.error('❌ Error in create-google-doc:', error);
+    
+    const errorResponse = {
+      success: false,
+      error: error.message,
+      errorType: error.name,
+      hint: error.message.includes('PRIVATE_KEY') 
+        ? 'تأكد من نسخ قيمة private_key كاملة من ملف Service Account JSON، بما في ذلك جميع أحرف \\n'
+        : error.message.includes('CLIENT_EMAIL')
+        ? 'تأكد من إضافة CLIENT_EMAIL في Supabase Secrets'
+        : 'تحقق من صحة بيانات الاعتماد في Supabase Edge Function Secrets'
+    };
+    
     return new Response(
-      JSON.stringify({
-        success: false,
-        error: error.message
-      }),
+      JSON.stringify(errorResponse),
       {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }

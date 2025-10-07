@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useGoogleDocs } from '@/hooks/useGoogleDocs';
 import { FileText, TestTube, FolderOpen, ExternalLink } from 'lucide-react';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 
 interface DriveFile {
   id: string;
@@ -23,6 +24,7 @@ const GoogleDocForm: React.FC = () => {
   const [files, setFiles] = useState<DriveFile[]>([]);
   const [showFiles, setShowFiles] = useState(false);
   const [isListingFiles, setIsListingFiles] = useState(false);
+  const [errorDetails, setErrorDetails] = useState<{message: string; hint?: string} | null>(null);
 
   const { createDocument, listFiles, testConnection, isLoading } = useGoogleDocs();
 
@@ -48,15 +50,31 @@ const GoogleDocForm: React.FC = () => {
   };
 
   const handleTestConnection = async () => {
-    await testConnection();
+    setErrorDetails(null);
+    const result = await testConnection();
+    if (result) {
+      toast.success('تم الاتصال بنجاح مع Google Drive API');
+    } else {
+      toast.error('فشل الاتصال - راجع تفاصيل الخطأ أدناه');
+    }
   };
 
   const handleListFiles = async () => {
     setIsListingFiles(true);
     setShowFiles(true);
-    const fileList = await listFiles(folderId.trim() || undefined);
-    setFiles(fileList);
-    setIsListingFiles(false);
+    setErrorDetails(null);
+    
+    try {
+      const fileList = await listFiles(folderId.trim() || undefined);
+      setFiles(fileList);
+    } catch (error: any) {
+      setErrorDetails({
+        message: error.message || 'فشل في جلب الملفات',
+        hint: error.hint
+      });
+    } finally {
+      setIsListingFiles(false);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -143,6 +161,42 @@ const GoogleDocForm: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+
+      {errorDetails && (
+        <Card className="border-destructive bg-destructive/5">
+          <CardHeader>
+            <CardTitle className="text-destructive flex items-center gap-2">
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              تفاصيل الخطأ
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="p-3 bg-background rounded border">
+              <p className="text-sm font-medium mb-1">رسالة الخطأ:</p>
+              <p className="text-sm text-muted-foreground">{errorDetails.message}</p>
+            </div>
+            {errorDetails.hint && (
+              <div className="p-3 bg-primary/5 rounded border border-primary/20">
+                <p className="text-sm font-medium text-primary mb-1">💡 نصيحة للحل:</p>
+                <p className="text-sm">{errorDetails.hint}</p>
+              </div>
+            )}
+            <div className="p-3 bg-muted/50 rounded border text-xs space-y-2">
+              <p className="font-medium">خطوات إصلاح مشكلة PRIVATE_KEY:</p>
+              <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
+                <li>افتح ملف Service Account JSON الخاص بك</li>
+                <li>ابحث عن حقل "private_key"</li>
+                <li>انسخ القيمة كاملة (من علامات التنصيص " إلى ")</li>
+                <li>يجب أن تحتوي على "-----BEGIN PRIVATE KEY-----" و "-----END PRIVATE KEY-----"</li>
+                <li>احذف PRIVATE_KEY القديم من Supabase Secrets</li>
+                <li>أضف PRIVATE_KEY جديد بالقيمة المنسوخة</li>
+              </ol>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {showFiles && (
         <Card>

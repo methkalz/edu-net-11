@@ -5,6 +5,27 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Validate private key format
+function validatePrivateKey(privateKey: string): { valid: boolean; error?: string } {
+  if (!privateKey) {
+    return { valid: false, error: 'PRIVATE_KEY is empty or undefined' };
+  }
+  
+  if (!privateKey.includes('BEGIN PRIVATE KEY')) {
+    return { valid: false, error: 'PRIVATE_KEY missing BEGIN header' };
+  }
+  
+  if (!privateKey.includes('END PRIVATE KEY')) {
+    return { valid: false, error: 'PRIVATE_KEY missing END footer' };
+  }
+  
+  if (privateKey.includes('\\\\n')) {
+    return { valid: false, error: 'PRIVATE_KEY contains double-escaped newlines (\\\\n)' };
+  }
+  
+  return { valid: true };
+}
+
 // Helper function to create JWT for Google API
 async function createGoogleJWT(serviceAccount: any, scope: string): Promise<string> {
   const header = {
@@ -27,6 +48,18 @@ async function createGoogleJWT(serviceAccount: any, scope: string): Promise<stri
 
   // Import private key
   const privateKey = serviceAccount.private_key;
+  
+  // Validate private key format first
+  const validation = validatePrivateKey(privateKey);
+  if (!validation.valid) {
+    console.error('❌ Private key validation failed:', validation.error);
+    console.error('Key length:', privateKey.length);
+    console.error('Key starts with:', privateKey.substring(0, 50));
+    console.error('Key ends with:', privateKey.substring(privateKey.length - 50));
+    throw new Error(`Invalid PRIVATE_KEY format: ${validation.error}`);
+  }
+  
+  console.log('✅ Private key validation passed');
   console.log('Private key length:', privateKey.length);
   
   // Clean up the private key by removing headers, footers, and all whitespace/newlines
@@ -43,6 +76,7 @@ async function createGoogleJWT(serviceAccount: any, scope: string): Promise<stri
   pemContents = pemContents.replace(/[^A-Za-z0-9+/=]/g, '');
   
   console.log('PEM contents length after cleanup:', pemContents.length);
+  console.log('First 20 chars of cleaned PEM:', pemContents.substring(0, 20));
   
   try {
     const binaryDer = Uint8Array.from(atob(pemContents), c => c.charCodeAt(0));
@@ -66,8 +100,22 @@ async function createGoogleJWT(serviceAccount: any, scope: string): Promise<stri
 
     return `${signatureInput}.${encodedSignature}`;
   } catch (error) {
-    console.error('Failed to process private key:', error);
-    throw new Error(`Private key processing failed: ${error.message}. Please ensure PRIVATE_KEY is properly formatted.`);
+    console.error('❌ Failed to process private key:', error);
+    console.error('Error type:', error.name);
+    console.error('Error message:', error.message);
+    console.error('PEM length was:', pemContents.length);
+    console.error('Original key length:', privateKey.length);
+    
+    let errorMsg = 'Private key processing failed: ';
+    if (error.message.includes('decode base64')) {
+      errorMsg += 'Invalid base64 encoding. The PRIVATE_KEY must be copied exactly from the Service Account JSON file, including all \\n characters.';
+    } else if (error.message.includes('importKey')) {
+      errorMsg += 'Key format is invalid. Ensure you copied the entire private_key value including "-----BEGIN PRIVATE KEY-----" and "-----END PRIVATE KEY-----".';
+    } else {
+      errorMsg += error.message;
+    }
+    
+    throw new Error(errorMsg);
   }
 }
 
@@ -149,13 +197,22 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error in test-google-connection:', error);
+    console.error('❌ Error in test-google-connection:', error);
+    
+    const errorResponse = {
+      success: false,
+      message: 'فشل الاتصال بـ Google APIs',
+      error: error.message,
+      errorType: error.name,
+      hint: error.message.includes('PRIVATE_KEY') 
+        ? 'تأكد من نسخ قيمة private_key كاملة من ملف Service Account JSON، بما في ذلك جميع أحرف \\n'
+        : error.message.includes('CLIENT_EMAIL')
+        ? 'تأكد من إضافة CLIENT_EMAIL في Supabase Secrets'
+        : 'تحقق من صحة بيانات الاعتماد في Supabase Edge Function Secrets'
+    };
+    
     return new Response(
-      JSON.stringify({
-        success: false,
-        message: 'فشل الاتصال بـ Google APIs',
-        error: error.message
-      }),
+      JSON.stringify(errorResponse),
       {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
