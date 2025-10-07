@@ -88,9 +88,13 @@ serve(async (req) => {
   }
 
   try {
-    const { studentName, documentContent, folderId } = await req.json();
+    const { studentName, documentContent, folderId: requestFolderId } = await req.json();
+    
+    // Use the folder ID from the request, or fall back to the environment variable
+    const folderId = requestFolderId || Deno.env.get('GOOGLE_FOLDER');
 
     console.log('Creating Google Doc for student:', studentName);
+    console.log('Target folder ID:', folderId);
 
     // Parse Google credentials from environment
     const googlePrivateKey = Deno.env.get('GOOGLE_PRIVATE_KEY');
@@ -122,6 +126,28 @@ serve(async (req) => {
 
     const doc = await createDocResponse.json();
     console.log('Document created:', doc.documentId);
+
+    // Move document to folder if folderId is provided
+    if (folderId) {
+      console.log('Moving document to folder:', folderId);
+      const moveResponse = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${doc.documentId}?addParents=${folderId}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Authorization": `Bearer ${accessToken}`,
+            "Content-Type": "application/json"
+          }
+        }
+      );
+      
+      if (!moveResponse.ok) {
+        const error = await moveResponse.text();
+        console.error('Failed to move document to folder:', error);
+      } else {
+        console.log('Document moved to folder successfully');
+      }
+    }
 
     // Add content to the document
     if (documentContent) {
