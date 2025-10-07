@@ -117,7 +117,8 @@ const App = () => {
                <Route path="/student-management" element={<LazyStudentManagement />} />
               
                {/* Content management routes - hierarchical structure */}
-               <Route path="/content-management" element={<LazyContentManagement />} />
+            <Route path="/content-management" element={<LazyContentManagement />} />
+            <Route path="/google-docs" element={<LazyGoogleDocsManagement />} />
                <Route path="/educational-content" element={<LazyEducationalContent />} />
                 <Route path="/grade10-management" element={<LazyGrade10Management />} />
                 <Route path="/grade11-management" element={

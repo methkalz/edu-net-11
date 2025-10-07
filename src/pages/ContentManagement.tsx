@@ -1,12 +1,15 @@
 import React from 'react';
-import { Settings, Shield } from 'lucide-react';
+import { Settings, Shield, FileText } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import AppHeader from '@/components/shared/AppHeader';
 import AppFooter from '@/components/shared/AppFooter';
 import GradeCards from '@/components/content/GradeCards';
+import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 
 const ContentManagement: React.FC = () => {
   const { userProfile } = useAuth();
+  const navigate = useNavigate();
 
   // هذه الصفحة مخصصة للسوبر آدمن فقط
   if (userProfile?.role !== 'superadmin') {
@@ -56,7 +59,24 @@ const ContentManagement: React.FC = () => {
             </div>
           </div>
           
-          <div className="animate-fade-in">
+          <div className="animate-fade-in space-y-8">
+            {/* Google Docs Management Card */}
+            <Card 
+              className="hover:shadow-lg transition-all duration-300 cursor-pointer border-2 border-transparent hover:border-blue-200"
+              onClick={() => navigate('/google-docs')}
+            >
+              <CardContent className="p-8">
+                <div className="flex items-center gap-4 mb-4">
+                  <FileText className="h-10 w-10 text-blue-600" />
+                  <h3 className="text-2xl font-bold">إدارة مستندات Google Docs</h3>
+                </div>
+                <p className="text-muted-foreground text-lg">
+                  إنشاء وإدارة مستندات Google Docs للطلاب مع إمكانية المشاركة والتحرير المباشر
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Grade Cards */}
             <GradeCards />
           </div>
         </div>

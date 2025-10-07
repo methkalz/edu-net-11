@@ -1,1 +1,10 @@
 project_id = "swlwhjnwycvjdhgclwlx"
+
+[functions.create-google-doc]
+verify_jwt = false
+
+[functions.list-drive-files]
+verify_jwt = false
+
+[functions.test-google-connection]
+verify_jwt = false
