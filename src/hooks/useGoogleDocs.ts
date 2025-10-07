@@ -51,11 +51,12 @@ export const useGoogleDocs = () => {
   }: CreateDocumentParams): Promise<CreateDocumentResponse | null> => {
     setIsLoading(true);
     try {
+      // Only send folderId if it's provided, otherwise Edge Function will use GOOGLE_FOLDER
       const { data, error } = await supabase.functions.invoke('create-google-doc', {
         body: {
           studentName,
           documentContent,
-          folderId
+          ...(folderId && { folderId })
         }
       });
 
@@ -93,8 +94,9 @@ export const useGoogleDocs = () => {
   const listFiles = async (folderId?: string): Promise<DriveFile[]> => {
     setIsLoading(true);
     try {
+      // Only send folderId if it's provided, otherwise Edge Function will use GOOGLE_FOLDER
       const { data, error } = await supabase.functions.invoke('list-drive-files', {
-        body: { folderId }
+        body: folderId ? { folderId } : {}
       });
 
       if (error) {
