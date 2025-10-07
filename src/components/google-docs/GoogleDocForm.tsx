@@ -36,7 +36,7 @@ interface ListFilesResponse {
 const GoogleDocForm: React.FC = () => {
   const [studentName, setStudentName] = useState('');
   const [documentContent, setDocumentContent] = useState('');
-  const [folderId, setFolderId] = useState('');
+  const [folderId, setFolderId] = useState('1Awn0zq0D9_LYl33bnl8-qL951HprgdXl');
   const [files, setFiles] = useState<DriveFile[]>([]);
   const [folderInfo, setFolderInfo] = useState<FolderInfo | null>(null);
   const [serviceAccount, setServiceAccount] = useState<string>('');
