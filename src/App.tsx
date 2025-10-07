@@ -58,6 +58,7 @@ const LandingPage = React.lazy(() => import('@/pages/LandingPage'));
 const KnowledgeAdventurePage = React.lazy(() => import('@/pages/KnowledgeAdventurePage'));
 const StudentTrackingPage = React.lazy(() => import('@/pages/teacher/StudentTracking'));
 const BadgeTestPage = React.lazy(() => import('@/pages/BadgeTestPage'));
+const LazyGoogleDocsManagement = React.lazy(() => import('@/components/google-docs/GoogleDocsManagement'));
 import { PageLoading } from "@/components/ui/LoadingComponents";
 
 /**

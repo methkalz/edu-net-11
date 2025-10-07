@@ -77,8 +77,8 @@ const GoogleDocsManagement: React.FC = () => {
 
       if (error) throw error;
 
-      setDocuments(data || []);
-      setFilteredDocuments(data || []);
+      setDocuments((data as any) || []);
+      setFilteredDocuments((data as any) || []);
     } catch (error) {
       console.error('Error fetching documents:', error);
     } finally {
