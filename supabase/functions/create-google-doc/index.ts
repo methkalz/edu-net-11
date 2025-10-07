@@ -167,51 +167,38 @@ serve(async (req) => {
       console.log('✅ Folder permissions verified');
     }
 
-    // Create Google Doc
+    // Create Google Doc directly in folder using Drive API with Workspace support
     const title = `مستند ${studentName} - ${new Date().toISOString().split('T')[0]}`;
-    const createDocResponse = await fetch("https://docs.googleapis.com/v1/documents", {
+    console.log('📝 Creating Google Doc via Drive API...');
+    
+    const createDocUrl = new URL('https://www.googleapis.com/drive/v3/files');
+    createDocUrl.searchParams.append('supportsAllDrives', 'true');
+    
+    const createDocResponse = await fetch(createDocUrl.toString(), {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${accessToken}`,
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ title })
+      body: JSON.stringify({
+        name: title,
+        mimeType: 'application/vnd.google-apps.document',
+        parents: folderId ? [folderId] : undefined
+      })
     });
 
     if (!createDocResponse.ok) {
       const error = await createDocResponse.text();
-      throw new Error(`Failed to create document: ${error}`);
+      throw new Error(`فشل إنشاء المستند: ${error}`);
     }
 
     const doc = await createDocResponse.json();
-    console.log('✅ Document created:', doc.documentId);
-
-    // Move document to folder with Workspace support
-    if (folderId) {
-      console.log('📁 Moving document to folder:', folderId);
-      const moveUrl = new URL(`https://www.googleapis.com/drive/v3/files/${doc.documentId}`);
-      moveUrl.searchParams.append('addParents', folderId);
-      moveUrl.searchParams.append('removeParents', 'root');
-      moveUrl.searchParams.append('supportsAllDrives', 'true');
-      
-      const moveResponse = await fetch(moveUrl.toString(), {
-        method: "PATCH",
-        headers: {
-          "Authorization": `Bearer ${accessToken}`,
-        }
-      });
-      
-      if (!moveResponse.ok) {
-        const error = await moveResponse.text();
-        console.error('⚠️ Failed to move document:', error);
-      } else {
-        console.log('✅ Document moved successfully');
-      }
-    }
+    const documentId = doc.id;
+    console.log('✅ Document created:', documentId);
 
     // Add content to the document
     if (documentContent) {
-      await fetch(`https://docs.googleapis.com/v1/documents/${doc.documentId}:batchUpdate`, {
+      await fetch(`https://docs.googleapis.com/v1/documents/${documentId}:batchUpdate`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${accessToken}`,
@@ -231,7 +218,7 @@ serve(async (req) => {
 
     // Set permissions with Workspace support
     console.log('🔓 Setting document permissions...');
-    const permUrl = new URL(`https://www.googleapis.com/drive/v3/files/${doc.documentId}/permissions`);
+    const permUrl = new URL(`https://www.googleapis.com/drive/v3/files/${documentId}/permissions`);
     permUrl.searchParams.append('supportsAllDrives', 'true');
     
     await fetch(permUrl.toString(), {
@@ -270,9 +257,9 @@ serve(async (req) => {
     await supabase
       .from('google_documents')
       .insert({
-        doc_google_id: doc.documentId,
+        doc_google_id: documentId,
         title: title,
-        doc_url: `https://docs.google.com/document/d/${doc.documentId}/edit`,
+        doc_url: `https://docs.google.com/document/d/${documentId}/edit`,
         owner_id: user.id,
         owner_name: studentName,
         owner_email: user.email || '',
@@ -285,8 +272,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        documentId: doc.documentId,
-        documentUrl: `https://docs.google.com/document/d/${doc.documentId}/edit`,
+        documentId: documentId,
+        documentUrl: `https://docs.google.com/document/d/${documentId}/edit`,
         title: title
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
