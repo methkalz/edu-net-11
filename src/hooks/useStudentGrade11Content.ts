@@ -76,91 +76,54 @@ export interface Grade11Video {
   updated_at: string;
 }
 
-// Fetch functions
+// Fetch functions with optimized Nested Joins (single query instead of N+1)
 const fetchGrade11Sections = async (): Promise<Grade11SectionWithTopics[]> => {
   try {
-    // First, try to fetch sections only to check if basic access works
-    const { data: sectionsData, error: sectionsError } = await supabase
+    // ⚡ Optimized: Single query with nested joins instead of multiple queries
+    const { data, error } = await supabase
       .from('grade11_sections')
-      .select('*')
+      .select(`
+        *,
+        topics:grade11_topics(
+          *,
+          lessons:grade11_lessons(
+            *,
+            media:grade11_lesson_media(*)
+          )
+        )
+      `)
       .order('order_index');
 
-    if (sectionsError) {
-      console.error('Sections error:', sectionsError);
-      throw sectionsError;
+    if (error) {
+      console.error('Sections fetch error:', error);
+      logger.error('Error fetching Grade 11 content for student', error as Error);
+      throw error;
     }
 
-    if (!sectionsData || sectionsData.length === 0) {
+    if (!data || data.length === 0) {
       return [];
     }
 
-    // Fetch topics for each section
-    const sectionsWithContent = await Promise.all(
-      sectionsData.map(async (section) => {
-        const { data: topicsData, error: topicsError } = await supabase
-          .from('grade11_topics')
-          .select('*')
-          .eq('section_id', section.id)
-          .order('order_index');
-
-        if (topicsError) {
-          console.error('Topics error for section:', section.id, topicsError);
-          return { ...section, topics: [] };
-        }
-
-        // Fetch lessons for each topic
-        const topicsWithLessons = await Promise.all(
-          (topicsData || []).map(async (topic) => {
-            const { data: lessonsData, error: lessonsError } = await supabase
-              .from('grade11_lessons')
-              .select('*')
-              .eq('topic_id', topic.id)
-              .order('order_index');
-
-            if (lessonsError) {
-              console.error('Lessons error for topic:', topic.id, lessonsError);
-              return { ...topic, lessons: [] };
-            }
-
-            // Fetch media for each lesson
-            const lessonsWithMedia = await Promise.all(
-              (lessonsData || []).map(async (lesson) => {
-                const { data: mediaData, error: mediaError } = await supabase
-                  .from('grade11_lesson_media')
-                  .select('*')
-                  .eq('lesson_id', lesson.id)
-                  .order('order_index');
-
-                if (mediaError) {
-                  console.error('Media error for lesson:', lesson.id, mediaError);
-                  return { ...lesson, media: [] };
-                }
-
-                return {
-                  ...lesson,
-                  media: (mediaData || []).map(media => ({
-                    ...media,
-                    metadata: media.metadata as Record<string, any> | null
-                  }))
-                };
-              })
-            );
-
-            return {
-              ...topic,
-              lessons: lessonsWithMedia
-            };
-          })
-        );
-
-        return {
-          ...section,
-          topics: topicsWithLessons
-        };
-      })
-    );
-
-    return sectionsWithContent;
+    // Sort nested relations by order_index (Supabase doesn't support ORDER BY in nested selects yet)
+    return data.map(section => ({
+      ...section,
+      topics: (section.topics || [])
+        .sort((a, b) => a.order_index - b.order_index)
+        .map(topic => ({
+          ...topic,
+          lessons: (topic.lessons || [])
+            .sort((a, b) => a.order_index - b.order_index)
+            .map(lesson => ({
+              ...lesson,
+              media: (lesson.media || [])
+                .sort((a, b) => a.order_index - b.order_index)
+                .map(media => ({
+                  ...media,
+                  metadata: media.metadata as Record<string, any> | null
+                }))
+            }))
+        }))
+    }));
   } catch (error) {
     console.error('Complete error in fetchSections:', error);
     logger.error('Error fetching Grade 11 content for student', error as Error);
