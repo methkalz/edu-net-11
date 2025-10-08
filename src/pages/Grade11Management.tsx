@@ -13,15 +13,14 @@ import { EducationalTermsManager } from '@/components/content/EducationalTermsMa
 import { ContentGameLauncher } from '@/components/content/ContentGameLauncher';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Grade11ErrorBoundary } from '@/components/error-boundaries/Grade11ErrorBoundary';
-
 const Grade11Management: React.FC = () => {
   console.log('🎯 Grade11Management component rendering...');
-  
   const {
     userProfile
   } = useAuth();
-  const { contentBackPath } = useBackPath();
-
+  const {
+    contentBackPath
+  } = useBackPath();
   console.log('🔍 User profile in Grade11Management:', userProfile?.role);
 
   // Validate all imports are loaded correctly
@@ -38,11 +37,10 @@ const Grade11Management: React.FC = () => {
   // تحديد ما إذا كان المستخدم سوبر آدمن أو مدير مدرسة
   const canManageContent = userProfile?.role === 'superadmin';
   const isSchoolAdmin = userProfile?.role === 'school_admin';
-  
-  console.log('✅ Grade11Management permissions check:', { canManageContent });
-  
-  return (
-    <Grade11ErrorBoundary>
+  console.log('✅ Grade11Management permissions check:', {
+    canManageContent
+  });
+  return <Grade11ErrorBoundary>
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
       <AppHeader title="إدارة محتوى الصف الحادي عشر" showBackButton={true} backPath={contentBackPath} showLogout={true} />
       
@@ -51,14 +49,8 @@ const Grade11Management: React.FC = () => {
           {/* عنوان الصفحة */}
           <div className="text-center space-y-4">
             <div className="flex items-center justify-center gap-6 flex-wrap">
-              <div className="inline-flex items-center gap-3 bg-green-100 text-green-700 px-6 py-3 rounded-full">
-                <BookOpen className="h-6 w-6" />
-                <span className="font-semibold">الصف الحادي عشر</span>
-              </div>
-              <div className="inline-flex items-center gap-3 bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-700 px-6 py-3 rounded-full shadow-sm border border-purple-200">
-                <Gamepad2 className="h-5 w-5" />
-                <span className="font-semibold">الألعاب التفاعلية</span>
-              </div>
+              
+              
             </div>
           </div>
           
@@ -78,11 +70,7 @@ const Grade11Management: React.FC = () => {
             {/* محتوى التبويب الأول - المحتوى التعليمي */}
             <TabsContent value="content" className="mt-8">
               <div className="animate-fade-in">
-                {canManageContent ? (
-                  <Grade11Content />
-                ) : (
-                  <Grade11CourseViewer />
-                )}
+                {canManageContent ? <Grade11Content /> : <Grade11CourseViewer />}
               </div>
             </TabsContent>
             
@@ -98,7 +86,6 @@ const Grade11Management: React.FC = () => {
       
         <AppFooter />
       </div>
-    </Grade11ErrorBoundary>
-  );
+    </Grade11ErrorBoundary>;
 };
 export default Grade11Management;
