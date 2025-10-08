@@ -5143,6 +5143,68 @@ export type Database = {
         }
         Relationships: []
       }
+      teacher_exam_instances: {
+        Row: {
+          created_at: string | null
+          ends_at: string | null
+          id: string
+          is_active: boolean | null
+          max_attempts: number | null
+          pass_percentage: number | null
+          randomize_answers: boolean | null
+          randomize_questions: boolean | null
+          school_id: string
+          show_results_immediately: boolean | null
+          starts_at: string | null
+          target_class_ids: string[] | null
+          teacher_id: string
+          template_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_attempts?: number | null
+          pass_percentage?: number | null
+          randomize_answers?: boolean | null
+          randomize_questions?: boolean | null
+          school_id: string
+          show_results_immediately?: boolean | null
+          starts_at?: string | null
+          target_class_ids?: string[] | null
+          teacher_id: string
+          template_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_attempts?: number | null
+          pass_percentage?: number | null
+          randomize_answers?: boolean | null
+          randomize_questions?: boolean | null
+          school_id?: string
+          show_results_immediately?: boolean | null
+          starts_at?: string | null
+          target_class_ids?: string[] | null
+          teacher_id?: string
+          template_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teacher_exam_instances_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "exam_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       teacher_notifications: {
         Row: {
           comment_id: string | null
