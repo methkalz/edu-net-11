@@ -99,6 +99,22 @@ export const useExamSession = () => {
           .eq('attempt_id', existingAttempt.id)
           .order('display_order');
 
+        // ✅ التحقق من وجود أسئلة
+        if (!attemptQuestions || attemptQuestions.length === 0) {
+          console.error('No questions found for existing attempt, deleting...');
+          
+          // حذف المحاولة المعطوبة
+          await supabase
+            .from('exam_attempts')
+            .delete()
+            .eq('id', existingAttempt.id);
+          
+          // إعادة المحاولة بإنشاء جلسة جديدة
+          toast.info('إعادة تحميل الامتحان...');
+          setLoading(true);
+          return startExamAttempt(templateId, instanceId);
+        }
+
         setCurrentAttempt(existingAttempt as ExamAttempt);
         setQuestions((attemptQuestions?.map(aq => aq.exam_questions) || []) as any);
         setAttemptQuestions((attemptQuestions || []) as any);
@@ -261,7 +277,15 @@ export const useExamSession = () => {
 
       if (insertError) {
         console.error('Error creating attempt questions:', insertError);
+        
+        // ✅ حذف المحاولة الفاشلة
+        await supabase
+          .from('exam_attempts')
+          .delete()
+          .eq('id', newAttempt.id);
+        
         toast.error('فشل في إنشاء أسئلة الامتحان');
+        setLoading(false);
         return null;
       }
 

@@ -36,7 +36,15 @@ const StudentExamView = () => {
     if (templateId && instanceId && !currentAttempt) {
       startExamAttempt(templateId, instanceId);
     }
-  }, [templateId, instanceId, currentAttempt, startExamAttempt]);
+    
+    // ✅ معالجة حالة عدم وجود أسئلة
+    if (currentAttempt && questions.length === 0 && !loading) {
+      toast.error('لم يتم تحميل الأسئلة، يرجى المحاولة مرة أخرى');
+      setTimeout(() => {
+        navigate('/student/dashboard');
+      }, 2000);
+    }
+  }, [templateId, instanceId, currentAttempt, questions, loading, navigate, startExamAttempt]);
 
   // Timer
   useEffect(() => {
