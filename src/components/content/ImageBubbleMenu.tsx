@@ -7,23 +7,31 @@ import {
   AlignLeft,
   Trash2,
   Percent,
+  RotateCcw,
+  Ruler,
 } from 'lucide-react';
+import ImageSizePopover from './ImageSizePopover';
 
 interface ImageBubbleMenuProps {
   editor: Editor;
   onResize: (width: string) => void;
+  onCustomResize: (width: string, height: string, unit: '%' | 'px') => void;
   onAlign: (alignment: 'left' | 'center' | 'right') => void;
+  onResetSize: () => void;
   onDelete: () => void;
 }
 
 const ImageBubbleMenu: React.FC<ImageBubbleMenuProps> = ({
   editor,
   onResize,
+  onCustomResize,
   onAlign,
+  onResetSize,
   onDelete,
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [position, setPosition] = useState({ top: 0, left: 0 });
+  const [selectedImage, setSelectedImage] = useState<HTMLImageElement | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -38,15 +46,30 @@ const ImageBubbleMenu: React.FC<ImageBubbleMenuProps> = ({
         const { from } = selection;
         const start = editor.view.coordsAtPos(from);
         
-        // حساب الموقع
+        // الحصول على الصورة المحددة
+        const img = editor.view.dom.querySelector('.ProseMirror-selectednode') as HTMLImageElement;
+        setSelectedImage(img);
+        
+        // حساب الموقع مع حماية من القطع
         const editorElement = editor.view.dom;
         const editorRect = editorElement.getBoundingClientRect();
+        const menuWidth = menuRef.current?.offsetWidth || 500;
         
-        const menuWidth = menuRef.current?.offsetWidth || 400;
-        const left = start.left - editorRect.left - menuWidth / 2;
-        const top = start.top - editorRect.top - 60;
+        // حساب الموقع الأفقي مع إزاحة لليسار وحماية من الحدود
+        let left = start.left - editorRect.left - (menuWidth / 2) - 50;
+        
+        // التأكد من عدم الخروج عن حدود المحرر
+        if (left < 10) {
+          left = 10;
+        } else if (left + menuWidth > editorRect.width - 10) {
+          left = editorRect.width - menuWidth - 10;
+        }
+        
+        const top = start.top - editorRect.top - 70;
 
         setPosition({ top, left });
+      } else {
+        setSelectedImage(null);
       }
     };
 
@@ -97,21 +120,36 @@ const ImageBubbleMenu: React.FC<ImageBubbleMenuProps> = ({
     >
       {/* أحجام سريعة */}
       <div className="flex items-center gap-1 pr-2 border-r">
-        <MenuButton onClick={() => onResize('25%')} title="25%">
+        <MenuButton onClick={() => onResize('25%')} title="25% من العرض">
           <Percent className="h-3 w-3 ml-1" />
           <span className="text-xs">25</span>
         </MenuButton>
-        <MenuButton onClick={() => onResize('50%')} title="50%">
+        <MenuButton onClick={() => onResize('50%')} title="50% من العرض">
           <Percent className="h-3 w-3 ml-1" />
           <span className="text-xs">50</span>
         </MenuButton>
-        <MenuButton onClick={() => onResize('75%')} title="75%">
+        <MenuButton onClick={() => onResize('75%')} title="75% من العرض">
           <Percent className="h-3 w-3 ml-1" />
           <span className="text-xs">75</span>
         </MenuButton>
-        <MenuButton onClick={() => onResize('100%')} title="100%">
+        <MenuButton onClick={() => onResize('100%')} title="100% من العرض">
           <Percent className="h-3 w-3 ml-1" />
           <span className="text-xs">100</span>
+        </MenuButton>
+      </div>
+
+      {/* حجم مخصص وإعادة تعيين */}
+      <div className="flex items-center gap-1 px-2 border-r">
+        <ImageSizePopover 
+          imageElement={selectedImage}
+          onApply={onCustomResize}
+        >
+          <MenuButton onClick={() => {}} title="حجم مخصص">
+            <Ruler className="h-4 w-4" />
+          </MenuButton>
+        </ImageSizePopover>
+        <MenuButton onClick={onResetSize} title="الحجم الأصلي">
+          <RotateCcw className="h-4 w-4" />
         </MenuButton>
       </div>
 
@@ -129,11 +167,9 @@ const ImageBubbleMenu: React.FC<ImageBubbleMenuProps> = ({
       </div>
 
       {/* حذف */}
-      <div className="pr-2 border-r">
-        <MenuButton onClick={onDelete} title="حذف الصورة">
-          <Trash2 className="h-4 w-4 text-destructive" />
-        </MenuButton>
-      </div>
+      <MenuButton onClick={onDelete} title="حذف الصورة">
+        <Trash2 className="h-4 w-4 text-destructive" />
+      </MenuButton>
     </div>
   );
 };

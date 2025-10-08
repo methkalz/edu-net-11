@@ -310,6 +310,33 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
     }
   };
 
+  const handleCustomImageResize = (width: string, height: string, unit: '%' | 'px') => {
+    const img = editor.view.dom.querySelector('.ProseMirror-selectednode') as HTMLImageElement;
+    if (img) {
+      img.style.width = `${width}${unit}`;
+      if (height) {
+        img.style.height = `${height}px`;
+      } else {
+        img.style.height = 'auto';
+      }
+      toast.success('تم تغيير حجم الصورة');
+    }
+  };
+
+  const handleResetImageSize = () => {
+    const img = editor.view.dom.querySelector('.ProseMirror-selectednode') as HTMLImageElement;
+    if (img) {
+      // الحصول على الأبعاد الأصلية
+      const tempImg = new window.Image();
+      tempImg.src = img.src;
+      tempImg.onload = () => {
+        img.style.width = `${tempImg.naturalWidth}px`;
+        img.style.height = 'auto';
+        toast.success('تم إعادة الصورة للحجم الأصلي');
+      };
+    }
+  };
+
   const handleImageAlignment = (alignment: 'left' | 'center' | 'right') => {
     const img = editor.view.dom.querySelector('.ProseMirror-selectednode') as HTMLImageElement;
     if (img) {
@@ -689,12 +716,14 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
         <EditorContent editor={editor} />
         
         {/* Bubble Menu للصور */}
-        <ImageBubbleMenu
-          editor={editor}
-          onResize={handleImageResize}
-          onAlign={handleImageAlignment}
-          onDelete={handleDeleteImage}
-        />
+      <ImageBubbleMenu
+        editor={editor}
+        onResize={handleImageResize}
+        onCustomResize={handleCustomImageResize}
+        onAlign={handleImageAlignment}
+        onResetSize={handleResetImageSize}
+        onDelete={handleDeleteImage}
+      />
       </div>
 
       {/* Dialog لإدراج جدول مخصص */}
