@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Play, Clock, FileText, Users, Search, Filter, ChevronRight, CheckCircle2, PlayCircle } from 'lucide-react';
+import { Play, Clock, FileText, Users, Search, Filter, ChevronRight, CheckCircle2, PlayCircle, BookOpen, ClipboardList } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -7,15 +7,23 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format } from 'date-fns';
 import { useGrade11Content, Grade11TopicWithLessons, Grade11LessonWithMedia } from '@/hooks/useGrade11Content';
+import { useAuth } from '@/hooks/useAuth';
 import Grade11LessonDetailsModal from './Grade11LessonDetailsModal';
+import QuestionBankManager from './QuestionBankManager';
+import ExamTemplateManager from './ExamTemplateManager';
 
 const Grade11CourseViewer: React.FC = () => {
   const { sections, loading } = useGrade11Content();
+  const { userProfile } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLesson, setSelectedLesson] = useState<Grade11LessonWithMedia | null>(null);
   const [isLessonModalOpen, setIsLessonModalOpen] = useState(false);
+
+  // تحديد ما إذا كان المستخدم معلماً
+  const isTeacher = userProfile?.role === 'teacher' || userProfile?.role === 'school_admin';
 
   const allTopics = sections.flatMap(section => section.topics);
   const allLessons = allTopics.flatMap(topic => topic.lessons);
@@ -107,6 +115,101 @@ const Grade11CourseViewer: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto space-y-8">
+      {isTeacher ? (
+        // واجهة المعلم مع تبويبات
+        <Tabs defaultValue="content" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 max-w-2xl mx-auto mb-8">
+            <TabsTrigger value="content" className="flex items-center gap-2">
+              <BookOpen className="h-4 w-4" />
+              المحتوى التعليمي
+            </TabsTrigger>
+            <TabsTrigger value="questions" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              بنك الأسئلة
+            </TabsTrigger>
+            <TabsTrigger value="exams" className="flex items-center gap-2">
+              <ClipboardList className="h-4 w-4" />
+              قوالب الاختبارات
+            </TabsTrigger>
+          </TabsList>
+
+          {/* تبويب المحتوى التعليمي */}
+          <TabsContent value="content">
+            <ContentSection 
+              sections={sections}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              handleLessonClick={handleLessonClick}
+              getMediaIcon={getMediaIcon}
+              filteredSections={filteredSections}
+              allTopics={allTopics}
+              totalLessons={totalLessons}
+              totalDuration={totalDuration}
+            />
+          </TabsContent>
+
+          {/* تبويب بنك الأسئلة */}
+          <TabsContent value="questions">
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+              <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                <p className="text-sm text-blue-800">
+                  💡 <strong>ملاحظة:</strong> الأسئلة التي تضيفها هنا خاصة بك فقط ولن يراها معلمون آخرون. 
+                  يمكن لطلابك رؤية هذه الأسئلة فقط عندما تُضمّنها في اختبار متاح لهم.
+                </p>
+              </div>
+              <QuestionBankManager teacherMode={true} />
+            </div>
+          </TabsContent>
+
+          {/* تبويب قوالب الاختبارات */}
+          <TabsContent value="exams">
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+              <ExamTemplateManager teacherMode={true} />
+            </div>
+          </TabsContent>
+        </Tabs>
+      ) : (
+        // واجهة الطالب (المحتوى فقط)
+        <ContentSection 
+          sections={sections}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          handleLessonClick={handleLessonClick}
+          getMediaIcon={getMediaIcon}
+          filteredSections={filteredSections}
+          allTopics={allTopics}
+          totalLessons={totalLessons}
+          totalDuration={totalDuration}
+        />
+      )}
+
+      {/* Lesson Details Modal */}
+      <Grade11LessonDetailsModal
+        lesson={selectedLesson}
+        isOpen={isLessonModalOpen}
+        onClose={() => {
+          setIsLessonModalOpen(false);
+          setSelectedLesson(null);
+        }}
+      />
+    </div>
+  );
+};
+
+// مكون منفصل لعرض المحتوى التعليمي
+const ContentSection: React.FC<{
+  sections: any[];
+  searchTerm: string;
+  setSearchTerm: (term: string) => void;
+  handleLessonClick: (lesson: any) => void;
+  getMediaIcon: (type: string) => React.ReactNode;
+  filteredSections: any[];
+  allTopics: any[];
+  totalLessons: number;
+  totalDuration: number;
+}> = ({ sections, searchTerm, setSearchTerm, handleLessonClick, getMediaIcon, filteredSections, allTopics, totalLessons, totalDuration }) => {
+  return (
+    <>
       {/* Elegant Hero Section with Grade 10 Colors */}
       <div className="bg-gradient-to-br from-blue-50 to-cyan-50/50 border border-blue-200/60 rounded-3xl p-10 shadow-sm">
         <div className="text-center space-y-6">
@@ -349,17 +452,7 @@ const Grade11CourseViewer: React.FC = () => {
           </Card>
         </div>
       </div>
-
-      {/* Lesson Details Modal */}
-      <Grade11LessonDetailsModal
-        lesson={selectedLesson}
-        isOpen={isLessonModalOpen}
-        onClose={() => {
-          setIsLessonModalOpen(false);
-          setSelectedLesson(null);
-        }}
-      />
-    </div>
+    </>
   );
 };
 

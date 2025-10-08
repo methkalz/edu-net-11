@@ -10,7 +10,11 @@ import ExamSettings from './ExamSettings';
 import ExamPreview from './ExamPreview';
 import { logger } from '@/lib/logger';
 
-const ExamTemplateManager: React.FC = () => {
+interface ExamTemplateManagerProps {
+  teacherMode?: boolean;
+}
+
+const ExamTemplateManager: React.FC<ExamTemplateManagerProps> = ({ teacherMode = false }) => {
   const { loading, templates, fetchTemplates, generateTemplatePreview } = useExamSystem();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState(null);

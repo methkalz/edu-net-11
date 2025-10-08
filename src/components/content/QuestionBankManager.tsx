@@ -12,7 +12,11 @@ import { supabase } from '@/integrations/supabase/client';
 import QuestionForm from './QuestionForm';
 import { logger } from '@/lib/logger';
 
-const QuestionBankManager: React.FC = () => {
+interface QuestionBankManagerProps {
+  teacherMode?: boolean;
+}
+
+const QuestionBankManager: React.FC<QuestionBankManagerProps> = ({ teacherMode = false }) => {
   const {
     loading,
     questions,
