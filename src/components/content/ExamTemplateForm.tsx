@@ -102,14 +102,13 @@ const ExamTemplateForm: React.FC<ExamTemplateFormProps> = ({
         .from('teacher_classes')
         .select(`
           class_id,
-          classes!inner(
+          classes(
             id,
-            grade_levels!inner(id, label, code),
-            class_names!inner(id, name)
+            grade_levels(id, label, code),
+            class_names(id, name)
           )
         `)
-        .eq('teacher_id', userProfile.user_id)
-        .eq('classes.grade_levels.code', '11');
+        .eq('teacher_id', userProfile.user_id);
       
       if (error) {
         console.error('Error fetching teacher classes:', error);
@@ -121,7 +120,12 @@ const ExamTemplateForm: React.FC<ExamTemplateFormProps> = ({
         return;
       }
       
-      setTeacherClasses(data || []);
+      // Filter for grade 11 classes only
+      const grade11Classes = (data || []).filter((tc: any) => 
+        tc.classes?.grade_levels?.code === '11'
+      );
+      
+      setTeacherClasses(grade11Classes);
     };
     
     fetchTeacherClasses();

@@ -5118,7 +5118,15 @@ export type Database = {
           id?: string
           teacher_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "teacher_classes_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       teacher_content_settings: {
         Row: {
