@@ -7,11 +7,13 @@ import { Underline } from '@tiptap/extension-underline';
 import { FontFamily } from '@tiptap/extension-font-family';
 import { TableKit } from '@tiptap/extension-table';
 import TextAlign from '@tiptap/extension-text-align';
+import Image from '@tiptap/extension-image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { toast } from 'sonner';
 import './table-styles.css';
 import { 
   Bold, 
@@ -32,7 +34,9 @@ import {
   AlignRight,
   AlignCenter,
   AlignLeft,
-  AlignJustify
+  AlignJustify,
+  ImagePlus,
+  Maximize2
 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -82,6 +86,8 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
   const [tableRows, setTableRows] = useState(3);
   const [tableCols, setTableCols] = useState(3);
   const [withHeaderRow, setWithHeaderRow] = useState(true);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   
   const editor = useEditor({
     extensions: [
@@ -139,6 +145,13 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
         alignments: ['left', 'center', 'right', 'justify'],
         defaultAlignment: 'right',
       }),
+      Image.configure({
+        inline: true,
+        allowBase64: true,
+        HTMLAttributes: {
+          class: 'rounded-md max-w-full h-auto cursor-pointer hover:shadow-lg transition-shadow my-2',
+        },
+      }),
       FontSize,
       FontFamily,
       Color,
@@ -150,7 +163,21 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-sm max-w-none min-h-[400px] focus:outline-none p-4 border rounded-md [&_ul]:list-disc [&_ul]:pr-6 [&_ol]:list-decimal [&_ol]:pr-6 [&_li]:my-1',
+        class: 'prose prose-sm max-w-none min-h-[400px] focus:outline-none p-4 border rounded-md [&_ul]:list-disc [&_ul]:pr-6 [&_ol]:list-decimal [&_ol]:pr-6 [&_li]:my-1 [&_img]:rounded-md [&_img]:max-w-full [&_img]:h-auto [&_img]:my-2',
+      },
+      handlePaste: (view, event) => {
+        const items = Array.from(event.clipboardData?.items || []);
+        const imageItem = items.find((item) => item.type.indexOf('image') === 0);
+
+        if (imageItem) {
+          event.preventDefault();
+          const file = imageItem.getAsFile();
+          if (file) {
+            handleImageUpload({ target: { files: [file] } } as any);
+          }
+          return true;
+        }
+        return false;
       },
     },
   });
@@ -236,6 +263,52 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
     const cols = Math.max(1, Math.min(10, tableCols));
     editor.chain().focus().insertTable({ rows, cols, withHeaderRow }).run();
     setShowTableDialog(false);
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // التحقق من نوع الملف
+    if (!file.type.startsWith('image/')) {
+      toast.error('يرجى اختيار ملف صورة');
+      return;
+    }
+
+    // التحقق من حجم الملف (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('حجم الصورة يجب أن يكون أقل من 5 ميجابايت');
+      return;
+    }
+
+    setUploadingImage(true);
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64 = event.target?.result as string;
+      if (base64) {
+        editor.chain().focus().setImage({ src: base64 }).run();
+        toast.success('تم إضافة الصورة بنجاح');
+      }
+      setUploadingImage(false);
+    };
+
+    reader.onerror = () => {
+      toast.error('حدث خطأ في رفع الصورة');
+      setUploadingImage(false);
+    };
+
+    reader.readAsDataURL(file);
+  };
+
+  const handleImageResize = (width: string) => {
+    if (!selectedImage) return;
+    
+    const img = editor.view.dom.querySelector(`img[src="${selectedImage}"]`) as HTMLImageElement;
+    if (img) {
+      img.style.width = width;
+      toast.success('تم تغيير حجم الصورة');
+    }
   };
 
   return (
@@ -499,6 +572,96 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
             </div>
           </PopoverContent>
         </Popover>
+
+        <Separator orientation="vertical" className="h-6 mx-1" />
+
+        {/* الصور */}
+        <div className="flex items-center gap-1">
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleImageUpload}
+            className="hidden"
+            id="image-upload"
+            disabled={uploadingImage}
+          />
+          <label htmlFor="image-upload">
+            <MenuButton
+              onClick={() => document.getElementById('image-upload')?.click()}
+              disabled={uploadingImage}
+              title="إضافة صورة"
+            >
+              <ImagePlus className="h-4 w-4" />
+            </MenuButton>
+          </label>
+
+          {editor.isActive('image') && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-2"
+                  title="تغيير حجم الصورة"
+                >
+                  <Maximize2 className="h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto bg-popover z-50" align="start">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium mb-2">حجم الصورة</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const img = editor.view.dom.querySelector('.ProseMirror-selectednode') as HTMLImageElement;
+                        if (img) img.style.width = '25%';
+                      }}
+                    >
+                      25%
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const img = editor.view.dom.querySelector('.ProseMirror-selectednode') as HTMLImageElement;
+                        if (img) img.style.width = '50%';
+                      }}
+                    >
+                      50%
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const img = editor.view.dom.querySelector('.ProseMirror-selectednode') as HTMLImageElement;
+                        if (img) img.style.width = '75%';
+                      }}
+                    >
+                      75%
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const img = editor.view.dom.querySelector('.ProseMirror-selectednode') as HTMLImageElement;
+                        if (img) img.style.width = '100%';
+                      }}
+                    >
+                      100%
+                    </Button>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+          )}
+        </div>
 
         <Separator orientation="vertical" className="h-6 mx-1" />
 
