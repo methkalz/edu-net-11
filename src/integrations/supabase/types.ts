@@ -818,6 +818,7 @@ export type Database = {
           started_at: string | null
           status: string | null
           student_id: string
+          template_id: string | null
           total_score: number | null
         }
         Insert: {
@@ -828,6 +829,7 @@ export type Database = {
           started_at?: string | null
           status?: string | null
           student_id: string
+          template_id?: string | null
           total_score?: number | null
         }
         Update: {
@@ -838,6 +840,7 @@ export type Database = {
           started_at?: string | null
           status?: string | null
           student_id?: string
+          template_id?: string | null
           total_score?: number | null
         }
         Relationships: [
@@ -846,6 +849,13 @@ export type Database = {
             columns: ["exam_id"]
             isOneToOne: false
             referencedRelation: "exams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_attempts_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "exam_templates"
             referencedColumns: ["id"]
           },
         ]

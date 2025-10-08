@@ -162,6 +162,18 @@ const App = () => {
                  </Suspense>
                } />
               
+               {/* Exam routes */}
+               <Route path="/exam/start/:templateId" element={
+                 <Suspense fallback={<PageLoading message="جاري تحميل الامتحان..." />}>
+                   {React.createElement(React.lazy(() => import('@/pages/StudentExamView')))}
+                 </Suspense>
+               } />
+               <Route path="/exam/results/:attemptId" element={
+                 <Suspense fallback={<PageLoading message="جاري تحميل النتائج..." />}>
+                   {React.createElement(React.lazy(() => import('@/pages/StudentExamResults')))}
+                 </Suspense>
+               } />
+               
                {/* Question management for interactive games */}
                 <Route path="/question-management" element={<LazyTest />} />
                

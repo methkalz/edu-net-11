@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useStudentExams } from '@/hooks/useStudentExams';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,14 +16,16 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
+import { toast } from 'sonner';
 
 interface ExamCardProps {
   exam: any;
   type: 'active' | 'upcoming' | 'expired';
   timeRemaining?: number;
+  onStartExam?: (templateId: string, instanceId: string) => void;
 }
 
-const ExamCard: React.FC<ExamCardProps> = ({ exam, type, timeRemaining }) => {
+const ExamCard: React.FC<ExamCardProps> = ({ exam, type, timeRemaining, onStartExam }) => {
   const [countdown, setCountdown] = useState(timeRemaining || 0);
 
   useEffect(() => {
@@ -93,6 +96,13 @@ const ExamCard: React.FC<ExamCardProps> = ({ exam, type, timeRemaining }) => {
           <Button 
             className="w-full bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white font-semibold"
             size="sm"
+            onClick={() => {
+              if (exam.max_attempts === 0) {
+                toast.error('لقد استنفذت جميع المحاولات المتاحة لهذا الامتحان');
+                return;
+              }
+              onStartExam?.(exam.exam_templates.id, exam.id);
+            }}
           >
             <Play className="w-4 h-4 ml-2" />
             ابدأ الامتحان الآن
@@ -170,6 +180,7 @@ const EmptyState: React.FC<{ message: string; icon: React.ReactNode }> = ({ mess
 );
 
 export const StudentExamsWidget: React.FC = () => {
+  const navigate = useNavigate();
   const { exams, loading, categorizeExams, getTimeRemaining } = useStudentExams();
   const [categorized, setCategorized] = useState({ active: [], upcoming: [], expired: [] });
 
@@ -189,6 +200,10 @@ export const StudentExamsWidget: React.FC = () => {
 
     return () => clearInterval(interval);
   }, [exams]);
+
+  const handleStartExam = (templateId: string, instanceId: string) => {
+    navigate(`/exam/start/${templateId}?instance=${instanceId}`);
+  };
 
   if (loading) {
     return (
@@ -243,6 +258,7 @@ export const StudentExamsWidget: React.FC = () => {
                 exam={exam} 
                 type="active"
                 timeRemaining={exam.last_attempt_start_time ? getTimeRemaining(exam.last_attempt_start_time) : undefined}
+                onStartExam={handleStartExam}
               />
             ))}
 
