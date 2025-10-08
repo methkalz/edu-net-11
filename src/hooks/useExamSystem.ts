@@ -276,7 +276,19 @@ export const useExamSystem = () => {
       const { data, error } = await supabase
         .from('exam_templates')
         .insert([{
-          ...templateData,
+          title: templateData.title,
+          description: templateData.description,
+          target_class_id: templateData.target_class_id,
+          total_questions: templateData.total_questions,
+          duration_minutes: templateData.duration_minutes,
+          pass_percentage: templateData.pass_percentage,
+          max_attempts: templateData.max_attempts,
+          difficulty_distribution: templateData.difficulty_distribution,
+          question_sources: templateData.question_sources,
+          randomize_questions: templateData.randomize_questions,
+          randomize_answers: templateData.randomize_answers,
+          show_results_immediately: templateData.show_results_immediately,
+          is_active: templateData.is_active !== false,
           created_by: userProfile?.user_id,
           school_id: userProfile?.school_id
         }])

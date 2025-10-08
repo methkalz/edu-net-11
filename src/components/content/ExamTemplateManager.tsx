@@ -41,9 +41,36 @@ const ExamTemplateManager: React.FC<ExamTemplateManagerProps> = ({ teacherMode =
   } | null>(null);
 
   useEffect(() => {
-    fetchTemplates();
-    loadInstances();
-  }, [fetchTemplates]);
+    if (userProfile?.user_id) {
+      fetchTemplatesWithClasses();
+      loadInstances();
+    }
+  }, [userProfile?.user_id]);
+  
+  const fetchTemplatesWithClasses = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('exam_templates')
+        .select(`
+          *,
+          classes!exam_templates_target_class_id_fkey(
+            id,
+            grade_levels!inner(label),
+            class_names!inner(name)
+          )
+        `)
+        .eq('created_by', userProfile?.user_id)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      // Update the templates via useExamSystem
+      fetchTemplates();
+    } catch (error) {
+      console.error('Error fetching templates with classes:', error);
+    }
+  };
 
   const loadInstances = async () => {
     if (!userProfile?.user_id) return;
@@ -167,7 +194,8 @@ const ExamTemplateManager: React.FC<ExamTemplateManagerProps> = ({ teacherMode =
                       
                       <div className="flex flex-wrap items-center gap-2 mb-2">
                         <Badge variant="outline">
-                          الصف {template.grade_level}
+                          {(template as any).classes?.grade_levels?.label || 'صف غير محدد'}
+                          {(template as any).classes?.class_names?.name ? ` - ${(template as any).classes.class_names.name}` : ''}
                         </Badge>
                         {template.is_active ? (
                           <Badge className="bg-green-100 text-green-800">نشط</Badge>

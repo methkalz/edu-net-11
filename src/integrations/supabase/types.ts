@@ -1011,6 +1011,7 @@ export type Database = {
           randomize_questions: boolean | null
           school_id: string | null
           show_results_immediately: boolean | null
+          target_class_id: string | null
           title: string
           total_questions: number
           updated_at: string
@@ -1031,6 +1032,7 @@ export type Database = {
           randomize_questions?: boolean | null
           school_id?: string | null
           show_results_immediately?: boolean | null
+          target_class_id?: string | null
           title: string
           total_questions?: number
           updated_at?: string
@@ -1051,6 +1053,7 @@ export type Database = {
           randomize_questions?: boolean | null
           school_id?: string | null
           show_results_immediately?: boolean | null
+          target_class_id?: string | null
           title?: string
           total_questions?: number
           updated_at?: string
@@ -1061,6 +1064,13 @@ export type Database = {
             columns: ["school_id"]
             isOneToOne: false
             referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_templates_target_class_id_fkey"
+            columns: ["target_class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
             referencedColumns: ["id"]
           },
         ]
