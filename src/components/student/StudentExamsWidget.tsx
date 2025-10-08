@@ -101,7 +101,7 @@ const ExamCard: React.FC<ExamCardProps> = ({ exam, type, timeRemaining, onStartE
                 toast.error('لقد استنفذت جميع المحاولات المتاحة لهذا الامتحان');
                 return;
               }
-              onStartExam?.(exam.exam_templates.id, exam.id);
+              onStartExam?.(exam.template_id, exam.id);
             }}
           >
             <Play className="w-4 h-4 ml-2" />
