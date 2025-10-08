@@ -60,6 +60,7 @@ export interface TeacherExamInstance {
   target_class_ids: string[];
   starts_at?: string;
   ends_at?: string;
+  last_attempt_start_time?: string;
 }
 
 export const useExamSystem = () => {
@@ -582,13 +583,13 @@ export const useExamSystem = () => {
     templateId: string,
     classIds: string[],
     startsAt?: Date,
-    endsAt?: Date
+    lastAttemptStartTime?: Date
   ) => {
     return createOrUpdateExamInstance(templateId, {
       is_active: true,
       target_class_ids: classIds,
       starts_at: startsAt?.toISOString(),
-      ends_at: endsAt?.toISOString(),
+      last_attempt_start_time: lastAttemptStartTime?.toISOString(),
     });
   };
 

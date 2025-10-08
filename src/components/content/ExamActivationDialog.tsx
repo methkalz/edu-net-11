@@ -1,16 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { DateTimePicker } from '@/components/ui/date-time-picker';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { useExamSystem } from '@/hooks/useExamSystem';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { PlayCircle, Clock, Calendar } from 'lucide-react';
+import { PlayCircle, CalendarIcon } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { format } from 'date-fns';
+import { ar } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 interface ExamActivationDialogProps {
   template: any;
@@ -29,13 +34,15 @@ const ExamActivationDialog: React.FC<ExamActivationDialogProps> = ({
   const { activateExamForClasses, loading } = useExamSystem();
   const [teacherClasses, setTeacherClasses] = useState([]);
   const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
-  const [startsAt, setStartsAt] = useState<Date | undefined>(new Date());
-  const [endsAt, setEndsAt] = useState<Date | undefined>();
-  const [quickOption, setQuickOption] = useState<string>('now');
+  const [activationType, setActivationType] = useState<'immediate' | 'scheduled'>('immediate');
+  const [startsAt, setStartsAt] = useState<Date | undefined>();
+  const [lastAttemptTime, setLastAttemptTime] = useState<Date | undefined>();
 
   useEffect(() => {
     if (open) {
       fetchTeacherClasses();
+      // تعيين قيم افتراضية
+      handleActivationTypeChange('immediate');
     }
   }, [open]);
 
@@ -70,32 +77,19 @@ const ExamActivationDialog: React.FC<ExamActivationDialogProps> = ({
     setTeacherClasses(grade11Classes);
   };
 
-  const handleQuickOption = (option: string) => {
-    setQuickOption(option);
+  const handleActivationTypeChange = (type: 'immediate' | 'scheduled') => {
+    setActivationType(type);
     const now = new Date();
     
-    switch(option) {
-      case 'now':
-        setStartsAt(now);
-        setEndsAt(undefined);
-        break;
-      case 'tomorrow':
-        const tomorrow = new Date(now);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        tomorrow.setHours(8, 0, 0, 0);
-        setStartsAt(tomorrow);
-        setEndsAt(undefined);
-        break;
-      case 'next_week':
-        const nextWeek = new Date(now);
-        nextWeek.setDate(nextWeek.getDate() + 7);
-        nextWeek.setHours(8, 0, 0, 0);
-        setStartsAt(nextWeek);
-        setEndsAt(undefined);
-        break;
-      case 'custom':
-        // يبقى كما هو
-        break;
+    if (type === 'immediate') {
+      setStartsAt(now);
+      // تعيين وقت افتراضي لآخر موعد للبدء (نهاية اليوم الدراسي - 3 مساءً)
+      const endOfDay = new Date(now);
+      endOfDay.setHours(15, 0, 0, 0);
+      setLastAttemptTime(endOfDay);
+    } else {
+      setStartsAt(undefined);
+      setLastAttemptTime(undefined);
     }
   };
 
@@ -109,17 +103,46 @@ const ExamActivationDialog: React.FC<ExamActivationDialogProps> = ({
       return;
     }
 
+    if (!lastAttemptTime) {
+      toast({
+        title: "تنبيه",
+        description: "يرجى تحديد آخر موعد للبدء بالاختبار",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // التحقق من أن وقت البدء قبل آخر موعد للبدء
+    if (startsAt && lastAttemptTime && lastAttemptTime <= startsAt) {
+      toast({
+        title: "تنبيه",
+        description: "آخر موعد للبدء يجب أن يكون بعد وقت البدء",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       await activateExamForClasses(
         template.id,
         selectedClasses,
         startsAt,
-        endsAt
+        lastAttemptTime
       );
-      onSuccess();
+
+      toast({
+        title: "تم التفعيل",
+        description: "تم تفعيل الاختبار للصفوف المحددة بنجاح",
+      });
+
+      onSuccess?.();
       onOpenChange(false);
     } catch (error) {
-      // error handled in hook
+      toast({
+        title: "خطأ",
+        description: "فشل في تفعيل الاختبار",
+        variant: "destructive",
+      });
     }
   };
 
@@ -127,56 +150,116 @@ const ExamActivationDialog: React.FC<ExamActivationDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <PlayCircle className="h-5 w-5 text-primary" />
-            تفعيل الاختبار: {template?.title}
-          </DialogTitle>
+          <DialogTitle className="text-right">تفعيل الاختبار: {template.title}</DialogTitle>
+          <DialogDescription className="text-right">
+            اختر الصفوف ونوع التفعيل
+          </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
-          {/* Quick Options */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">خيارات سريعة</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  variant={quickOption === 'now' ? 'default' : 'outline'}
-                  onClick={() => handleQuickOption('now')}
-                  className="justify-start"
-                >
-                  <PlayCircle className="h-4 w-4 ml-2" />
-                  بدء فوري
-                </Button>
-                <Button
-                  variant={quickOption === 'tomorrow' ? 'default' : 'outline'}
-                  onClick={() => handleQuickOption('tomorrow')}
-                  className="justify-start"
-                >
-                  <Calendar className="h-4 w-4 ml-2" />
-                  غداً الساعة 8 صباحاً
-                </Button>
-                <Button
-                  variant={quickOption === 'next_week' ? 'default' : 'outline'}
-                  onClick={() => handleQuickOption('next_week')}
-                  className="justify-start"
-                >
-                  <Clock className="h-4 w-4 ml-2" />
-                  الأسبوع القادم
-                </Button>
-                <Button
-                  variant={quickOption === 'custom' ? 'default' : 'outline'}
-                  onClick={() => handleQuickOption('custom')}
-                  className="justify-start"
-                >
-                  تخصيص الوقت
-                </Button>
+        <div className="space-y-6">
+          {/* نوع التفعيل */}
+          <div className="space-y-2">
+            <Label className="text-right block">نوع التفعيل</Label>
+            <RadioGroup value={activationType} onValueChange={(v) => handleActivationTypeChange(v as 'immediate' | 'scheduled')}>
+              <div className="flex items-center space-x-2 space-x-reverse">
+                <RadioGroupItem value="immediate" id="immediate" />
+                <Label htmlFor="immediate" className="cursor-pointer">بدء فوري</Label>
               </div>
-            </CardContent>
-          </Card>
+              <div className="flex items-center space-x-2 space-x-reverse">
+                <RadioGroupItem value="scheduled" id="scheduled" />
+                <Label htmlFor="scheduled" className="cursor-pointer">مجدول</Label>
+              </div>
+            </RadioGroup>
+            
+            {activationType === 'immediate' && (
+              <p className="text-sm text-muted-foreground text-right mt-2">
+                سيظهر الاختبار للطلاب فوراً ويمكنهم البدء حتى الوقت المحدد
+              </p>
+            )}
+            {activationType === 'scheduled' && (
+              <p className="text-sm text-muted-foreground text-right mt-2">
+                سيظهر الاختبار للطلاب كـ "قادم" حتى موعد البدء المحدد
+              </p>
+            )}
+          </div>
 
-          {/* Class Selection */}
+          {/* تخصيص الأوقات */}
+          <div className="space-y-4 border rounded-lg p-4">
+            {activationType === 'scheduled' && (
+              <div className="space-y-2">
+                <Label className="text-right block">وقت البدء</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-right font-normal",
+                        !startsAt && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="ml-2 h-4 w-4" />
+                      {startsAt ? format(startsAt, "PPP 'الساعة' p", { locale: ar }) : "اختر التاريخ والوقت"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={startsAt}
+                      onSelect={(date) => {
+                        if (date) {
+                          const newDate = new Date(date);
+                          newDate.setHours(8, 0, 0, 0);
+                          setStartsAt(newDate);
+                        }
+                      }}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label className="text-right block">آخر موعد للبدء بمحاولة جديدة</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-right font-normal",
+                      !lastAttemptTime && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="ml-2 h-4 w-4" />
+                    {lastAttemptTime ? format(lastAttemptTime, "PPP 'الساعة' p", { locale: ar }) : "اختر التاريخ والوقت"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={lastAttemptTime}
+                    onSelect={(date) => {
+                      if (date) {
+                        const newDate = new Date(date);
+                        if (activationType === 'immediate') {
+                          newDate.setHours(15, 0, 0, 0);
+                        }
+                        setLastAttemptTime(newDate);
+                      }
+                    }}
+                    initialFocus
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+              <p className="text-xs text-muted-foreground text-right">
+                بعد هذا الوقت، لا يمكن للطلاب بدء محاولات جديدة، لكن يمكنهم إكمال محاولاتهم الجارية
+              </p>
+            </div>
+          </div>
+
+          {/* اختيار الصفوف */}
           <Card>
             <CardHeader>
               <CardTitle className="text-base">اختيار الصفوف</CardTitle>
@@ -186,7 +269,7 @@ const ExamActivationDialog: React.FC<ExamActivationDialogProps> = ({
                 {teacherClasses.map((tc: any) => (
                   <div key={tc.class_id} className="flex items-center gap-2">
                     <Checkbox
-                      id={`quick-class-${tc.class_id}`}
+                      id={`class-${tc.class_id}`}
                       checked={selectedClasses.includes(tc.class_id)}
                       onCheckedChange={(checked) => {
                         if (checked) {
@@ -196,7 +279,7 @@ const ExamActivationDialog: React.FC<ExamActivationDialogProps> = ({
                         }
                       }}
                     />
-                    <Label htmlFor={`quick-class-${tc.class_id}`} className="cursor-pointer">
+                    <Label htmlFor={`class-${tc.class_id}`} className="cursor-pointer">
                       {tc.classes.grade_levels.label} - {tc.classes.class_names.name}
                     </Label>
                   </div>
@@ -212,32 +295,7 @@ const ExamActivationDialog: React.FC<ExamActivationDialogProps> = ({
             </CardContent>
           </Card>
 
-          {/* Custom Schedule */}
-          {quickOption === 'custom' && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">جدولة مخصصة</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>تاريخ ووقت البدء</Label>
-                  <DateTimePicker
-                    value={startsAt}
-                    onChange={setStartsAt}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>تاريخ ووقت الانتهاء (اختياري)</Label>
-                  <DateTimePicker
-                    value={endsAt}
-                    onChange={setEndsAt}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Action Buttons */}
+          {/* أزرار الإجراء */}
           <div className="flex gap-2 justify-end pt-4 border-t">
             <Button
               variant="outline"

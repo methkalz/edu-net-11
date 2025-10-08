@@ -5167,6 +5167,7 @@ export type Database = {
           ends_at: string | null
           id: string
           is_active: boolean | null
+          last_attempt_start_time: string | null
           max_attempts: number | null
           pass_percentage: number | null
           randomize_answers: boolean | null
@@ -5184,6 +5185,7 @@ export type Database = {
           ends_at?: string | null
           id?: string
           is_active?: boolean | null
+          last_attempt_start_time?: string | null
           max_attempts?: number | null
           pass_percentage?: number | null
           randomize_answers?: boolean | null
@@ -5201,6 +5203,7 @@ export type Database = {
           ends_at?: string | null
           id?: string
           is_active?: boolean | null
+          last_attempt_start_time?: string | null
           max_attempts?: number | null
           pass_percentage?: number | null
           randomize_answers?: boolean | null
