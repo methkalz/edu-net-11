@@ -42,70 +42,66 @@ export function useTeacherExamStats() {
       setLoading(true);
       setError(null);
 
-      // جلب الأسئلة مع التفاصيل
-      const { data: questionsData, error: questionsError } = await supabase
+      // جلب عدد الأسئلة التي أنشأها المعلم
+      const { count: questionsCount, error: questionsError } = await supabase
         .from('question_bank')
-        .select('id, difficulty_level, is_active')
+        .select('*', { count: 'exact', head: true })
         .eq('created_by', user?.id)
         .eq('is_active', true);
 
       if (questionsError) throw questionsError;
 
-      // جلب القوالب مع التفاصيل
-      const { data: templatesData, error: templatesError } = await supabase
+      // جلب عدد القوالب التي أنشأها المعلم
+      const { count: templatesCount, error: templatesError } = await supabase
         .from('exam_templates')
-        .select('id, is_active, grade_level')
+        .select('*', { count: 'exact', head: true })
         .eq('created_by', user?.id)
         .eq('is_active', true);
 
       if (templatesError) throw templatesError;
 
-      // جلب الامتحانات المنشأة
-      const { data: examsData, error: examsError } = await supabase
+      // جلب عدد الامتحانات المنشأة
+      const { count: examsCount, error: examsError } = await supabase
         .from('exams')
-        .select('id, is_active')
+        .select('*', { count: 'exact', head: true })
         .eq('created_by', user?.id)
         .eq('is_active', true);
 
       if (examsError) throw examsError;
 
-      const examIds = (examsData || []).map(e => e.id);
+      // جلب قائمة معرفات الامتحانات للمعلم أولاً
+      const { data: teacherExams } = await supabase
+        .from('exams')
+        .select('id')
+        .eq('created_by', user?.id);
 
-      // جلب إحصائيات المحاولات بشكل دقيق
-      let attemptsData: Array<{
-        total_score: number;
-        max_score: number;
-        student_id: string;
-        status: string;
-      }> = [];
-      
+      const examIds = (teacherExams || []).map(e => e.id);
+
+      // جلب إحصائيات المحاولات
+      let attemptsData = [];
       if (examIds.length > 0) {
         const { data, error: attemptsError } = await supabase
           .from('exam_attempts')
-          .select('total_score, max_score, student_id, status')
-          .in('exam_id', examIds)
-          .eq('status', 'completed');
+          .select('total_score, max_score, student_id')
+          .in('exam_id', examIds);
 
         if (attemptsError) throw attemptsError;
         attemptsData = data || [];
       }
 
-      // حساب الإحصائيات بدقة
+      // حساب المتوسط وعدد الطلاب
       const uniqueStudents = new Set(attemptsData.map(a => a.student_id));
-      
-      // حساب المتوسط فقط من المحاولات المكتملة
-      const completedAttempts = attemptsData.filter(a => a.max_score > 0);
-      const totalScore = completedAttempts.reduce((sum, a) => sum + (a.total_score || 0), 0);
-      const totalMaxScore = completedAttempts.reduce((sum, a) => sum + a.max_score, 0);
+      const totalScore = attemptsData.reduce((sum, a) => sum + (a.total_score || 0), 0);
+      const totalMaxScore = attemptsData.reduce((sum, a) => sum + (a.max_score || 0), 0);
       const averageScore = totalMaxScore > 0 ? Math.round((totalScore / totalMaxScore) * 100) : 0;
 
       // جلب آخر الأنشطة
       const recentActivity = await fetchRecentActivity();
 
       setStats({
-        totalQuestions: (questionsData || []).length,
-        totalTemplates: (templatesData || []).length,
-        totalExams: (examsData || []).length,
+        totalQuestions: questionsCount || 0,
+        totalTemplates: templatesCount || 0,
+        totalExams: examsCount || 0,
         studentsAttempted: uniqueStudents.size,
         averageScore,
         recentActivity

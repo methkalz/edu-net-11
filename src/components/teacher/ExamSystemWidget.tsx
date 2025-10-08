@@ -42,7 +42,6 @@ const ExamSystemWidget: React.FC = () => {
     {
       title: 'بنك الأسئلة',
       value: stats.totalQuestions,
-      subtitle: 'سؤال نشط',
       icon: BookOpen,
       color: 'blue',
       bgClass: 'bg-blue-50 dark:bg-blue-950/20',
@@ -51,25 +50,22 @@ const ExamSystemWidget: React.FC = () => {
     {
       title: 'قوالب الاختبارات',
       value: stats.totalTemplates,
-      subtitle: 'قالب جاهز',
       icon: ClipboardList,
       color: 'purple',
       bgClass: 'bg-purple-50 dark:bg-purple-950/20',
       iconClass: 'text-purple-600 dark:text-purple-400'
     },
     {
-      title: 'اختبارات منشأة',
-      value: stats.totalExams,
-      subtitle: 'اختبار نشط',
-      icon: FileText,
+      title: 'الطلاب المشاركون',
+      value: stats.studentsAttempted,
+      icon: Users,
       color: 'green',
       bgClass: 'bg-green-50 dark:bg-green-950/20',
       iconClass: 'text-green-600 dark:text-green-400'
     },
     {
-      title: 'معدل النجاح',
-      value: stats.studentsAttempted > 0 ? `${stats.averageScore}%` : '-',
-      subtitle: `${stats.studentsAttempted} طالب`,
+      title: 'متوسط الدرجات',
+      value: `${stats.averageScore}%`,
       icon: TrendingUp,
       color: 'orange',
       bgClass: 'bg-orange-50 dark:bg-orange-950/20',
@@ -131,16 +127,11 @@ const ExamSystemWidget: React.FC = () => {
                 >
                   <div className="flex items-center justify-between mb-2">
                     <stat.icon className={`h-5 w-5 ${stat.iconClass}`} />
-                  </div>
-                  <div className="space-y-1">
-                    <div className="text-2xl font-bold">
+                    <Badge variant="secondary" className="text-xs">
                       {typeof stat.value === 'number' ? stat.value : stat.value}
-                    </div>
-                    <p className="text-xs text-muted-foreground font-medium">{stat.title}</p>
-                    {stat.subtitle && (
-                      <p className="text-xs text-muted-foreground opacity-70">{stat.subtitle}</p>
-                    )}
+                    </Badge>
                   </div>
+                  <p className="text-xs text-muted-foreground font-medium">{stat.title}</p>
                 </div>
               ))}
             </div>
