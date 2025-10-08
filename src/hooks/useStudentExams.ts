@@ -10,6 +10,7 @@ interface StudentExam {
   max_attempts: number;
   starts_at: string;
   ends_at?: string;
+  last_attempt_start_time?: string;
   exam_templates: {
     title: string;
     description?: string;
@@ -18,6 +19,12 @@ interface StudentExam {
     pass_percentage: number;
     grade_level: string;
   };
+}
+
+interface CategorizedExams {
+  active: StudentExam[];
+  upcoming: StudentExam[];
+  expired: StudentExam[];
 }
 
 export const useStudentExams = () => {
@@ -49,7 +56,7 @@ export const useStudentExams = () => {
 
       if (classIds.length === 0) return;
 
-      // جلب الاختبارات النشطة
+      // جلب الاختبارات النشطة والقادمة
       const { data: examsData, error } = await supabase
         .from('teacher_exam_instances')
         .select(`
@@ -64,9 +71,7 @@ export const useStudentExams = () => {
           )
         `)
         .eq('is_active', true)
-        .overlaps('target_class_ids', classIds)
-        .lte('starts_at', new Date().toISOString())
-        .or(`ends_at.is.null,ends_at.gte.${new Date().toISOString()}`);
+        .overlaps('target_class_ids', classIds);
 
       if (error) throw error;
 
@@ -82,9 +87,49 @@ export const useStudentExams = () => {
     fetchStudentExams();
   }, [fetchStudentExams]);
 
+  // تصنيف الامتحانات حسب الحالة
+  const categorizeExams = (): CategorizedExams => {
+    const now = new Date();
+    
+    return exams.reduce(
+      (acc, exam) => {
+        const startsAt = new Date(exam.starts_at);
+        const lastAttemptTime = exam.last_attempt_start_time 
+          ? new Date(exam.last_attempt_start_time) 
+          : null;
+        
+        // منتهي - إذا كان آخر وقت للبدء قد انتهى
+        if (lastAttemptTime && lastAttemptTime < now) {
+          acc.expired.push(exam);
+        }
+        // قادم - إذا كان موعد البدء لم يأت بعد
+        else if (startsAt > now) {
+          acc.upcoming.push(exam);
+        }
+        // جاري - بدأ ولم ينتهي
+        else {
+          acc.active.push(exam);
+        }
+        
+        return acc;
+      },
+      { active: [], upcoming: [], expired: [] } as CategorizedExams
+    );
+  };
+
+  // حساب الوقت المتبقي بالدقائق
+  const getTimeRemaining = (targetDate: string): number => {
+    const now = new Date();
+    const target = new Date(targetDate);
+    const diffMs = target.getTime() - now.getTime();
+    return Math.max(0, Math.floor(diffMs / (1000 * 60)));
+  };
+
   return {
     exams,
     loading,
     refetch: fetchStudentExams,
+    categorizeExams,
+    getTimeRemaining,
   };
 };

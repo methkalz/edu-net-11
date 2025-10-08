@@ -34,6 +34,7 @@ import { StudentGameSection } from './StudentGameSection';
 import { StudentProfile } from './StudentProfile';
 import { StudentDailyChallenges } from './StudentDailyChallenges';
 import StudentNotifications from './StudentNotifications';
+import { StudentExamsWidget } from './StudentExamsWidget';
 import { SchoolCalendarWidget } from '@/components/calendar/SchoolCalendarWidget';
 import { UniversalAvatar } from '@/components/shared/UniversalAvatar';
 import { UserTitleBadge } from '@/components/shared/UserTitleBadge';
@@ -277,6 +278,9 @@ const StudentDashboard: React.FC = () => {
                     )}
                   </CardContent>
                 </Card>
+
+                {/* Electronic Exams Widget */}
+                <StudentExamsWidget />
 
                 {/* Student Notifications */}
                 <StudentNotifications />
