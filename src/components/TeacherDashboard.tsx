@@ -57,6 +57,7 @@ import ProjectNotifications from '@/components/teacher/ProjectNotifications';
 import Grade10ProjectsWidget from '@/components/teacher/Grade10ProjectsWidget';
 import ModernHeader from '@/components/shared/ModernHeader';
 import { StudentPresenceWidget } from '@/components/teacher/StudentPresenceWidget';
+import ExamSystemWidget from '@/components/teacher/ExamSystemWidget';
 import { OnlineStudentsStats } from '@/components/dashboard/OnlineStudentsStats';
 import TeacherContentViewer from './teacher/TeacherContentViewer';
 import { useGrade10Content } from '@/hooks/useGrade10Content';
@@ -608,6 +609,11 @@ const TeacherDashboard: React.FC = () => {
             </div>
           </div>
         ) : null}
+
+        {/* ويدجت الاختبارات الإلكترونية - للصف الحادي عشر فقط */}
+        {canAccessGrade('11') && (
+          <ExamSystemWidget />
+        )}
 
         {/* المضامين التعليمية المتاحة - عرض كامل كما يراها الطلاب */}
         {schoolPackageContents.length > 0 && (
