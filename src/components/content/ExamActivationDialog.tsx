@@ -6,16 +6,13 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
+import { DateTimePicker } from '@/components/ui/date-time-picker';
 import { useExamSystem } from '@/hooks/useExamSystem';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { PlayCircle, CalendarIcon } from 'lucide-react';
+import { PlayCircle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
-import { ar } from 'date-fns/locale';
-import { cn } from '@/lib/utils';
 
 interface ExamActivationDialogProps {
   template: any;
@@ -83,10 +80,7 @@ const ExamActivationDialog: React.FC<ExamActivationDialogProps> = ({
     
     if (type === 'immediate') {
       setStartsAt(now);
-      // تعيين وقت افتراضي لآخر موعد للبدء (نهاية اليوم الدراسي - 3 مساءً)
-      const endOfDay = new Date(now);
-      endOfDay.setHours(15, 0, 0, 0);
-      setLastAttemptTime(endOfDay);
+      setLastAttemptTime(undefined);
     } else {
       setStartsAt(undefined);
       setLastAttemptTime(undefined);
@@ -188,71 +182,31 @@ const ExamActivationDialog: React.FC<ExamActivationDialogProps> = ({
             {activationType === 'scheduled' && (
               <div className="space-y-2">
                 <Label className="text-right block">وقت البدء</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-right font-normal",
-                        !startsAt && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="ml-2 h-4 w-4" />
-                      {startsAt ? format(startsAt, "PPP 'الساعة' p", { locale: ar }) : "اختر التاريخ والوقت"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={startsAt}
-                      onSelect={(date) => {
-                        if (date) {
-                          const newDate = new Date(date);
-                          newDate.setHours(8, 0, 0, 0);
-                          setStartsAt(newDate);
-                        }
-                      }}
-                      initialFocus
-                      className="pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
+                <DateTimePicker
+                  value={startsAt}
+                  onChange={setStartsAt}
+                  placeholder="اختر التاريخ والوقت"
+                />
+                {startsAt && (
+                  <p className="text-sm text-muted-foreground text-right">
+                    {format(startsAt, "d.M.yyyy 'الساعة' HH:mm")}
+                  </p>
+                )}
               </div>
             )}
 
             <div className="space-y-2">
               <Label className="text-right block">آخر موعد للبدء بمحاولة جديدة</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-right font-normal",
-                      !lastAttemptTime && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="ml-2 h-4 w-4" />
-                    {lastAttemptTime ? format(lastAttemptTime, "PPP 'الساعة' p", { locale: ar }) : "اختر التاريخ والوقت"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={lastAttemptTime}
-                    onSelect={(date) => {
-                      if (date) {
-                        const newDate = new Date(date);
-                        if (activationType === 'immediate') {
-                          newDate.setHours(15, 0, 0, 0);
-                        }
-                        setLastAttemptTime(newDate);
-                      }
-                    }}
-                    initialFocus
-                    className="pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
+              <DateTimePicker
+                value={lastAttemptTime}
+                onChange={setLastAttemptTime}
+                placeholder="اختر التاريخ والوقت"
+              />
+              {lastAttemptTime && (
+                <p className="text-sm text-muted-foreground text-right">
+                  {format(lastAttemptTime, "d.M.yyyy 'الساعة' HH:mm")}
+                </p>
+              )}
               <p className="text-xs text-muted-foreground text-right">
                 بعد هذا الوقت، لا يمكن للطلاب بدء محاولات جديدة، لكن يمكنهم إكمال محاولاتهم الجارية
               </p>
