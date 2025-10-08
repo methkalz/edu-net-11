@@ -40,19 +40,34 @@ const ExamActivationDialog: React.FC<ExamActivationDialogProps> = ({
   }, [open]);
 
   const fetchTeacherClasses = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('teacher_classes')
       .select(`
         class_id,
         classes(
           id,
-          grade_levels(label),
-          class_names(name)
+          grade_levels(id, label, code),
+          class_names(id, name)
         )
       `)
       .eq('teacher_id', userProfile?.user_id);
 
-    setTeacherClasses(data || []);
+    if (error) {
+      console.error('Error fetching teacher classes:', error);
+      toast({
+        title: "خطأ",
+        description: "فشل تحميل الصفوف",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // تصفية صفوف الحادي عشر فقط
+    const grade11Classes = (data || []).filter((tc: any) => 
+      tc.classes?.grade_levels?.code === '11'
+    );
+    
+    setTeacherClasses(grade11Classes);
   };
 
   const handleQuickOption = (option: string) => {
