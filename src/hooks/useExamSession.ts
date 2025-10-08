@@ -74,13 +74,48 @@ export const useExamSession = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
 
-      const { count: previousAttempts } = await supabase
+      // التحقق من وجود محاولة قيد التنفيذ
+      const { data: existingAttempt } = await supabase
+        .from('exam_attempts')
+        .select('*')
+        .eq('template_id', templateId)
+        .eq('instance_id', instanceId)
+        .eq('student_id', user.id)
+        .eq('status', 'in_progress')
+        .order('started_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      // إذا وجدنا محاولة قيد التنفيذ، نستأنفها
+      if (existingAttempt) {
+        console.log('Found existing in-progress attempt, resuming...');
+        // جلب الأسئلة المرتبطة بهذه المحاولة
+        const { data: attemptQuestions } = await supabase
+          .from('exam_attempt_questions')
+          .select(`
+            *,
+            exam_questions (*)
+          `)
+          .eq('attempt_id', existingAttempt.id)
+          .order('display_order');
+
+        setCurrentAttempt(existingAttempt as ExamAttempt);
+        setQuestions((attemptQuestions?.map(aq => aq.exam_questions) || []) as any);
+        setAttemptQuestions((attemptQuestions || []) as any);
+        setLoading(false);
+        return existingAttempt as ExamAttempt;
+      }
+
+      // حساب المحاولات المكتملة فقط
+      const { count: completedAttempts } = await supabase
         .from('exam_attempts')
         .select('*', { count: 'exact', head: true })
         .eq('template_id', templateId)
-        .eq('student_id', user.id);
+        .eq('instance_id', instanceId)
+        .eq('student_id', user.id)
+        .eq('status', 'finished');
 
-      if (previousAttempts && previousAttempts >= instance.max_attempts) {
+      if (completedAttempts && completedAttempts >= instance.max_attempts) {
         toast.error(`لقد استنفذت جميع المحاولات المتاحة (${instance.max_attempts})`);
         return null;
       }
