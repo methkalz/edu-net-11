@@ -196,7 +196,8 @@ export const useExamSession = () => {
         .from('exam_attempts')
         .insert({
           template_id: templateId,
-          exam_id: null as any, // نستخدم template مباشرة
+          instance_id: instanceId, // ✅ ربط مع teacher_exam_instances
+          exam_id: null as any, // أصبح اختياري بعد التعديل
           student_id: user.id,
           max_score: maxScore,
           status: 'in_progress' as const
