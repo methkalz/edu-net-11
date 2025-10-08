@@ -97,31 +97,97 @@ export const useExamSession = () => {
         return null;
       }
 
-      // جلب الأسئلة
-      const questionsResponse = await (supabase as any)
-        .from('question_bank')
-        .select('id, question_text, choices, question_type, points, correct_answer, difficulty_level')
-        .eq('is_active', true)
-        .eq('grade_level', template.grade_level);
+      // جلب الأسئلة باستخدام نفس منطق المعلم (generateTemplatePreview)
+      const questionSources = (template.question_sources || { type: "random", sections: [] }) as {
+        type: string;
+        sections?: string[];
+      };
+      const difficultyDist = (template.difficulty_distribution || { easy: 30, medium: 50, hard: 20 }) as {
+        easy: number;
+        medium: number;
+        hard: number;
+      };
       
-      const allQuestions = questionsResponse.data;
-      const questionsError = questionsResponse.error;
+      // حساب عدد الأسئلة لكل مستوى صعوبة
+      const totalQuestions = template.total_questions;
+      const easyCount = Math.round((totalQuestions * difficultyDist.easy) / 100);
+      const mediumCount = Math.round((totalQuestions * difficultyDist.medium) / 100);
+      const hardCount = totalQuestions - easyCount - mediumCount;
 
-      if (questionsError) {
-        console.error('Error fetching questions:', questionsError);
-        toast.error('فشل تحميل الأسئلة');
-        return null;
+      const selectedQuestions: any[] = [];
+
+      // جلب أسئلة لكل مستوى صعوبة
+      for (const [difficulty, count] of [
+        ['easy', easyCount],
+        ['medium', mediumCount], 
+        ['hard', hardCount]
+      ] as Array<[string, number]>) {
+        if (count <= 0) continue;
+
+        // بناء query الأساسي
+        const baseQuery = (supabase as any)
+          .from('question_bank')
+          .select('id, question_text, choices, question_type, points, correct_answer, difficulty_level, section_id')
+          .eq('is_active', true)
+          .eq('grade_level', template.grade_level)
+          .eq('difficulty_level', difficulty as 'easy' | 'medium' | 'hard');
+
+        let questions: any[] | null = null;
+        let error: any = null;
+
+        // تطبيق فلتر الأقسام إذا كان محدداً
+        if (questionSources.type === 'sections' && questionSources.sections?.length > 0) {
+          const validSections = questionSources.sections.filter((s: string) => s !== 'general');
+          if (validSections.length > 0) {
+            const result = await baseQuery.in('section_id', validSections);
+            questions = result.data;
+            error = result.error;
+          } else {
+            const result = await baseQuery.is('section_id', null);
+            questions = result.data;
+            error = result.error;
+          }
+        } else {
+          const result = await baseQuery;
+          questions = result.data;
+          error = result.error;
+        }
+        
+        if (error) {
+          console.error(`Error fetching ${difficulty} questions:`, error);
+          toast.error(`فشل تحميل الأسئلة (${difficulty})`);
+          return null;
+        }
+
+        if (!questions || questions.length < count) {
+          toast.error(`لا توجد أسئلة ${difficulty} كافية (مطلوب ${count}، متوفر ${questions?.length || 0})`);
+          return null;
+        }
+
+        // اختيار عشوائي للأسئلة
+        const shuffled = questions.sort(() => 0.5 - Math.random());
+        const selected = shuffled.slice(0, count);
+        selectedQuestions.push(...selected);
       }
 
-      if (!allQuestions || allQuestions.length === 0) {
+      if (selectedQuestions.length === 0) {
         toast.error('لا توجد أسئلة متاحة لهذا الامتحان');
         return null;
       }
 
-      // اختيار الأسئلة بشكل عشوائي
-      const selectedQuestions = allQuestions
-        .sort(() => Math.random() - 0.5)
-        .slice(0, template.total_questions);
+      // خلط الأسئلة إذا كان مفعلاً
+      if (template.randomize_questions) {
+        selectedQuestions.sort(() => 0.5 - Math.random());
+      }
+
+      // خلط الإجابات إذا كان مفعلاً
+      const finalQuestions = selectedQuestions.map(q => {
+        if (template.randomize_answers && q.choices && Array.isArray(q.choices)) {
+          const shuffledChoices = [...q.choices].sort(() => 0.5 - Math.random());
+          return { ...q, choices: shuffledChoices };
+        }
+        return q;
+      });
 
       // حساب max_score
       const maxScore = selectedQuestions.reduce((sum, q) => sum + (q.points || 1), 0);
