@@ -36,10 +36,8 @@ import {
   AlignLeft,
   AlignJustify,
   ImagePlus,
-  Settings,
   Percent
 } from 'lucide-react';
-import ImagePropertiesDialog, { ImageProperties } from './ImagePropertiesDialog';
 import ImageBubbleMenu from './ImageBubbleMenu';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -90,8 +88,6 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
   const [tableCols, setTableCols] = useState(3);
   const [withHeaderRow, setWithHeaderRow] = useState(true);
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [showImageDialog, setShowImageDialog] = useState(false);
-  const [selectedImageElement, setSelectedImageElement] = useState<HTMLImageElement | null>(null);
   
   const editor = useEditor({
     extensions: [
@@ -329,72 +325,6 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
   const handleDeleteImage = () => {
     editor.chain().focus().deleteSelection().run();
     toast.success('تم حذف الصورة');
-  };
-
-  const handleOpenImageDialog = () => {
-    const img = editor.view.dom.querySelector('.ProseMirror-selectednode') as HTMLImageElement;
-    if (img) {
-      setSelectedImageElement(img);
-      setShowImageDialog(true);
-    }
-  };
-
-  const handleApplyImageProperties = (properties: ImageProperties) => {
-    if (!selectedImageElement) return;
-
-    const img = selectedImageElement;
-    const container = img.parentElement;
-
-    // تطبيق الحجم
-    img.style.width = properties.unit === '%' ? `${properties.width}%` : `${properties.width}px`;
-    img.style.height = 'auto';
-
-    // تطبيق الدوران
-    img.style.transform = `rotate(${properties.rotation}deg)`;
-    img.setAttribute('data-rotation', properties.rotation.toString());
-
-    // تطبيق الحدود
-    if (properties.borderWidth > 0) {
-      img.style.border = `${properties.borderWidth}px ${properties.borderStyle} ${properties.borderColor}`;
-      img.setAttribute('data-border-width', properties.borderWidth.toString());
-      img.setAttribute('data-border-color', properties.borderColor);
-      img.setAttribute('data-border-style', properties.borderStyle);
-    } else {
-      img.style.border = 'none';
-    }
-
-    // تطبيق استدارة الزوايا
-    img.style.borderRadius = `${properties.borderRadius}px`;
-    img.setAttribute('data-border-radius', properties.borderRadius.toString());
-
-    // تطبيق الظل
-    if (properties.shadowIntensity > 0) {
-      img.style.boxShadow = `0 ${properties.shadowIntensity}px ${properties.shadowIntensity * 2}px ${properties.shadowColor}40`;
-      img.setAttribute('data-shadow-intensity', properties.shadowIntensity.toString());
-      img.setAttribute('data-shadow-color', properties.shadowColor);
-    } else {
-      img.style.boxShadow = 'none';
-    }
-
-    // تطبيق المحاذاة
-    if (container) {
-      container.style.textAlign = properties.alignment;
-      img.setAttribute('data-alignment', properties.alignment);
-    }
-
-    // تطبيق التعليق
-    img.setAttribute('data-caption', properties.caption);
-    if (properties.caption && container) {
-      let caption = container.querySelector('.image-caption');
-      if (!caption) {
-        caption = document.createElement('p');
-        caption.className = 'image-caption text-sm text-muted-foreground mt-2';
-        container.appendChild(caption);
-      }
-      caption.textContent = properties.caption;
-    }
-
-    toast.success('تم تطبيق الخصائص بنجاح');
   };
 
   return (
@@ -764,17 +694,8 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
           onResize={handleImageResize}
           onAlign={handleImageAlignment}
           onDelete={handleDeleteImage}
-          onOpenSettings={handleOpenImageDialog}
         />
       </div>
-
-      {/* Dialog للخصائص المتقدمة */}
-      <ImagePropertiesDialog
-        open={showImageDialog}
-        onOpenChange={setShowImageDialog}
-        imageElement={selectedImageElement}
-        onApply={handleApplyImageProperties}
-      />
 
       {/* Dialog لإدراج جدول مخصص */}
       <Dialog open={showTableDialog} onOpenChange={setShowTableDialog}>

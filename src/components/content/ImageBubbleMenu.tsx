@@ -6,7 +6,6 @@ import {
   AlignCenter,
   AlignLeft,
   Trash2,
-  Settings,
   Percent,
 } from 'lucide-react';
 
@@ -15,7 +14,6 @@ interface ImageBubbleMenuProps {
   onResize: (width: string) => void;
   onAlign: (alignment: 'left' | 'center' | 'right') => void;
   onDelete: () => void;
-  onOpenSettings: () => void;
 }
 
 const ImageBubbleMenu: React.FC<ImageBubbleMenuProps> = ({
@@ -23,7 +21,6 @@ const ImageBubbleMenu: React.FC<ImageBubbleMenuProps> = ({
   onResize,
   onAlign,
   onDelete,
-  onOpenSettings,
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [position, setPosition] = useState({ top: 0, left: 0 });
@@ -130,12 +127,6 @@ const ImageBubbleMenu: React.FC<ImageBubbleMenuProps> = ({
           <AlignLeft className="h-4 w-4" />
         </MenuButton>
       </div>
-
-      {/* خيارات متقدمة */}
-      <MenuButton onClick={onOpenSettings} title="خيارات متقدمة">
-        <Settings className="h-4 w-4 ml-1" />
-        <span className="text-xs">متقدم</span>
-      </MenuButton>
 
       {/* حذف */}
       <div className="pr-2 border-r">
