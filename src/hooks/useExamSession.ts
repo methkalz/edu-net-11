@@ -129,7 +129,6 @@ export const useExamSession = () => {
           .from('question_bank')
           .select('id, question_text, choices, question_type, points, correct_answer, difficulty_level, section_id')
           .eq('is_active', true)
-          .eq('grade_level', template.grade_level)
           .eq('difficulty_level', difficulty as 'easy' | 'medium' | 'hard');
 
         let questions: any[] | null = null;
