@@ -340,12 +340,27 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
   const handleImageAlignment = (alignment: 'left' | 'center' | 'right') => {
     const img = editor.view.dom.querySelector('.ProseMirror-selectednode') as HTMLImageElement;
     if (img) {
-      const container = img.parentElement;
-      if (container) {
-        container.style.textAlign = alignment;
-        img.setAttribute('data-alignment', alignment);
-        toast.success('تم تغيير محاذاة الصورة');
+      // تطبيق display block لجعل المحاذاة تعمل
+      img.style.display = 'block';
+      
+      // تطبيق المحاذاة باستخدام margin
+      switch (alignment) {
+        case 'right':
+          img.style.marginLeft = '0';
+          img.style.marginRight = 'auto';
+          break;
+        case 'center':
+          img.style.marginLeft = 'auto';
+          img.style.marginRight = 'auto';
+          break;
+        case 'left':
+          img.style.marginLeft = 'auto';
+          img.style.marginRight = '0';
+          break;
       }
+      
+      img.setAttribute('data-alignment', alignment);
+      toast.success('تم تغيير محاذاة الصورة');
     }
   };
 
