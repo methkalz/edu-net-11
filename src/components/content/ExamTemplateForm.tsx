@@ -454,7 +454,9 @@ const ExamTemplateForm: React.FC<ExamTemplateFormProps> = ({
                   </SelectTrigger>
                   <SelectContent>
                     {teacherClasses.length === 0 ? (
-                      <SelectItem value="" disabled>لا توجد صفوف متاحة</SelectItem>
+                      <div className="py-6 text-center text-sm text-muted-foreground">
+                        لا توجد صفوف متاحة للحادي عشر
+                      </div>
                     ) : (
                       teacherClasses.map((tc: any) => (
                         <SelectItem key={tc.class_id} value={tc.class_id}>
