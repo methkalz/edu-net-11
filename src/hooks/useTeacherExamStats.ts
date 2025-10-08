@@ -42,40 +42,32 @@ export function useTeacherExamStats() {
       setLoading(true);
       setError(null);
 
-      // جلب عدد الأسئلة التي أنشأها المعلم
-      const { count: questionsCount, error: questionsError } = await supabase
+      // جلب جميع الأسئلة المتاحة (الخاصة بالمعلم + العامة)
+      const { data: questionsData, error: questionsError } = await supabase
         .from('question_bank')
-        .select('*', { count: 'exact', head: true })
-        .eq('created_by', user?.id)
+        .select('id')
         .eq('is_active', true);
 
       if (questionsError) throw questionsError;
 
-      // جلب عدد القوالب التي أنشأها المعلم
-      const { count: templatesCount, error: templatesError } = await supabase
+      // جلب جميع القوالب المتاحة (الخاصة بالمعلم + العامة)
+      const { data: templatesData, error: templatesError } = await supabase
         .from('exam_templates')
-        .select('*', { count: 'exact', head: true })
-        .eq('created_by', user?.id)
+        .select('id')
         .eq('is_active', true);
 
       if (templatesError) throw templatesError;
 
-      // جلب عدد الامتحانات المنشأة
-      const { count: examsCount, error: examsError } = await supabase
+      // جلب الامتحانات التي أنشأها المعلم
+      const { data: examsData, error: examsError } = await supabase
         .from('exams')
-        .select('*', { count: 'exact', head: true })
+        .select('id')
         .eq('created_by', user?.id)
         .eq('is_active', true);
 
       if (examsError) throw examsError;
 
-      // جلب قائمة معرفات الامتحانات للمعلم أولاً
-      const { data: teacherExams } = await supabase
-        .from('exams')
-        .select('id')
-        .eq('created_by', user?.id);
-
-      const examIds = (teacherExams || []).map(e => e.id);
+      const examIds = (examsData || []).map(e => e.id);
 
       // جلب إحصائيات المحاولات
       let attemptsData = [];
@@ -99,9 +91,9 @@ export function useTeacherExamStats() {
       const recentActivity = await fetchRecentActivity();
 
       setStats({
-        totalQuestions: questionsCount || 0,
-        totalTemplates: templatesCount || 0,
-        totalExams: examsCount || 0,
+        totalQuestions: questionsData?.length || 0,
+        totalTemplates: templatesData?.length || 0,
+        totalExams: examsData?.length || 0,
         studentsAttempted: uniqueStudents.size,
         averageScore,
         recentActivity
@@ -119,11 +111,11 @@ export function useTeacherExamStats() {
     const activities: TeacherExamStats['recentActivity'] = [];
 
     try {
-      // آخر الأسئلة
+      // آخر الأسئلة المتاحة
       const { data: recentQuestions } = await supabase
         .from('question_bank')
         .select('id, question_text, created_at')
-        .eq('created_by', user?.id)
+        .eq('is_active', true)
         .order('created_at', { ascending: false })
         .limit(3);
 
@@ -137,11 +129,11 @@ export function useTeacherExamStats() {
         });
       });
 
-      // آخر القوالب
+      // آخر القوالب المتاحة
       const { data: recentTemplates } = await supabase
         .from('exam_templates')
         .select('id, title, created_at')
-        .eq('created_by', user?.id)
+        .eq('is_active', true)
         .order('created_at', { ascending: false })
         .limit(2);
 
