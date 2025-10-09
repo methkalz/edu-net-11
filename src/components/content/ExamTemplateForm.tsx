@@ -13,8 +13,6 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useExamSystem } from '@/hooks/useExamSystem';
-import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
 import { logger } from '@/lib/logger';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -30,14 +28,12 @@ const ExamTemplateForm: React.FC<ExamTemplateFormProps> = ({
   onClose,
   onSave
 }) => {
-  const { userProfile } = useAuth();
   const { createTemplate, sections, fetchSections } = useExamSystem();
-  const [teacherClasses, setTeacherClasses] = useState<any[]>([]);
   
   const [formData, setFormData] = useState({
     title: 'اختبار أساسيات الاتصال',
     description: '',
-    target_class_id: '',
+    grade_level: '11',
     total_questions: 10,
     duration_minutes: 60,
     difficulty_distribution: {
@@ -64,7 +60,7 @@ const ExamTemplateForm: React.FC<ExamTemplateFormProps> = ({
       setFormData({
         title: template.title || 'اختبار أساسيات الاتصال',
         description: template.description || '',
-        target_class_id: template.target_class_id || '',
+        grade_level: template.grade_level || '11',
         total_questions: template.total_questions || 10,
         duration_minutes: template.duration_minutes || 60,
         difficulty_distribution: template.difficulty_distribution || {
@@ -92,44 +88,6 @@ const ExamTemplateForm: React.FC<ExamTemplateFormProps> = ({
   useEffect(() => {
     fetchSections();
   }, [fetchSections]);
-
-  // Fetch teacher's grade 11 classes
-  useEffect(() => {
-    const fetchTeacherClasses = async () => {
-      if (!userProfile?.user_id) return;
-      
-      const { data, error } = await supabase
-        .from('teacher_classes')
-        .select(`
-          class_id,
-          classes(
-            id,
-            grade_levels(id, label, code),
-            class_names(id, name)
-          )
-        `)
-        .eq('teacher_id', userProfile.user_id);
-      
-      if (error) {
-        console.error('Error fetching teacher classes:', error);
-        toast({
-          title: 'خطأ',
-          description: 'خطأ في جلب الصفوف',
-          variant: 'destructive'
-        });
-        return;
-      }
-      
-      // Filter for grade 11 classes only
-      const grade11Classes = (data || []).filter((tc: any) => 
-        tc.classes?.grade_levels?.code === '11'
-      );
-      
-      setTeacherClasses(grade11Classes);
-    };
-    
-    fetchTeacherClasses();
-  }, [userProfile?.user_id]);
 
   const handleDifficultyChange = (level: 'easy' | 'medium' | 'hard', value: number[]) => {
     const newValue = value[0];
@@ -267,15 +225,6 @@ const ExamTemplateForm: React.FC<ExamTemplateFormProps> = ({
       toast({
         title: "خطأ في التحقق",
         description: "يرجى إدخال عنوان القالب",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (!formData.target_class_id) {
-      toast({
-        title: "خطأ في التحقق",
-        description: "يرجى اختيار الصف",
         variant: "destructive"
       });
       return;
@@ -451,23 +400,15 @@ const ExamTemplateForm: React.FC<ExamTemplateFormProps> = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="target_class_id" className="text-sm font-medium">الصف</Label>
-                <Select value={formData.target_class_id} onValueChange={(value) => setFormData(prev => ({ ...prev, target_class_id: value }))}>
+                <Label htmlFor="grade_level" className="text-sm font-medium">مستوى الصف</Label>
+                <Select value={formData.grade_level} onValueChange={(value) => setFormData(prev => ({ ...prev, grade_level: value }))}>
                   <SelectTrigger className="h-11">
-                    <SelectValue placeholder="اختر الصف" />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {teacherClasses.length === 0 ? (
-                      <div className="py-6 text-center text-sm text-muted-foreground">
-                        لا توجد صفوف متاحة للحادي عشر
-                      </div>
-                    ) : (
-                      teacherClasses.map((tc: any) => (
-                        <SelectItem key={tc.class_id} value={tc.class_id}>
-                          {tc.classes.grade_levels.label} - {tc.classes.class_names.name}
-                        </SelectItem>
-                      ))
-                    )}
+                    <SelectItem value="10">الصف العاشر</SelectItem>
+                    <SelectItem value="11">الصف الحادي عشر</SelectItem>
+                    <SelectItem value="12">الصف الثاني عشر</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

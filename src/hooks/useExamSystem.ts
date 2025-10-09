@@ -46,30 +46,12 @@ export interface ExamTemplate {
   is_active: boolean;
 }
 
-export interface TeacherExamInstance {
-  id: string;
-  template_id: string;
-  teacher_id: string;
-  school_id: string;
-  is_active: boolean;
-  max_attempts: number;
-  show_results_immediately: boolean;
-  randomize_questions: boolean;
-  randomize_answers: boolean;
-  pass_percentage: number;
-  target_class_ids: string[];
-  starts_at?: string;
-  ends_at?: string;
-  last_attempt_start_time?: string;
-}
-
 export const useExamSystem = () => {
   const { userProfile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [questions, setQuestions] = useState<QuestionBank[]>([]);
   const [templates, setTemplates] = useState<ExamTemplate[]>([]);
   const [sections, setSections] = useState<any[]>([]);
-  const [examInstances, setExamInstances] = useState<TeacherExamInstance[]>([]);
 
   // Fetch Question Bank
   const fetchQuestions = useCallback(async (filters?: {
@@ -277,19 +259,7 @@ export const useExamSystem = () => {
       const { data, error } = await supabase
         .from('exam_templates')
         .insert([{
-          title: templateData.title,
-          description: templateData.description,
-          target_class_id: templateData.target_class_id,
-          total_questions: templateData.total_questions,
-          duration_minutes: templateData.duration_minutes,
-          pass_percentage: templateData.pass_percentage,
-          max_attempts: templateData.max_attempts,
-          difficulty_distribution: templateData.difficulty_distribution,
-          question_sources: templateData.question_sources,
-          randomize_questions: templateData.randomize_questions,
-          randomize_answers: templateData.randomize_answers,
-          show_results_immediately: templateData.show_results_immediately,
-          is_active: templateData.is_active !== false,
+          ...templateData,
           created_by: userProfile?.user_id,
           school_id: userProfile?.school_id
         }])
@@ -484,121 +454,11 @@ export const useExamSystem = () => {
     }
   }, []);
 
-  // دالة لجلب نسخ المعلم من الاختبارات
-  const fetchTeacherExamInstances = useCallback(async () => {
-    try {
-      const { data, error } = await supabase
-        .from('teacher_exam_instances')
-        .select(`
-          *,
-          exam_templates(
-            title,
-            description,
-            total_questions,
-            duration_minutes,
-            grade_level
-          )
-        `)
-        .eq('teacher_id', userProfile?.user_id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setExamInstances(data || []);
-    } catch (error) {
-      logger.error('Error fetching teacher exam instances', error as Error);
-      toast({
-        title: "خطأ",
-        description: "فشل في جلب نسخ الاختبارات",
-        variant: "destructive",
-      });
-    }
-  }, [userProfile?.user_id]);
-
-  // دالة لجلب نسخة معينة من القالب
-  const fetchTeacherExamInstance = async (templateId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('teacher_exam_instances')
-        .select('*')
-        .eq('template_id', templateId)
-        .eq('teacher_id', userProfile?.user_id)
-        .maybeSingle();
-
-      if (error && error.code !== 'PGRST116') throw error;
-      return data;
-    } catch (error) {
-      logger.error('Error fetching teacher exam instance', error as Error);
-      return null;
-    }
-  };
-
-  // دالة لإنشاء أو تحديث نسخة المعلم
-  const createOrUpdateExamInstance = async (
-    templateId: string,
-    settings: Partial<TeacherExamInstance>
-  ) => {
-    try {
-      setLoading(true);
-
-      const instanceData = {
-        template_id: templateId,
-        teacher_id: userProfile?.user_id,
-        school_id: userProfile?.school_id,
-        ...settings,
-        updated_at: new Date().toISOString(),
-      };
-
-      const { data, error } = await supabase
-        .from('teacher_exam_instances')
-        .upsert(instanceData, {
-          onConflict: 'template_id,teacher_id',
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      toast({
-        title: "تم بنجاح",
-        description: "تم تحديث نسختك من الاختبار",
-      });
-
-      await fetchTeacherExamInstances();
-      return data;
-    } catch (error) {
-      logger.error('Error creating/updating exam instance', error as Error);
-      toast({
-        title: "خطأ",
-        description: "فشل في تحديث الاختبار",
-        variant: "destructive",
-      });
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // دالة لتفعيل الاختبار لصفوف معينة
-  const activateExamForClasses = async (
-    templateId: string,
-    classIds: string[],
-    startsAt?: Date,
-    lastAttemptStartTime?: Date
-  ) => {
-    return createOrUpdateExamInstance(templateId, {
-      is_active: true,
-      target_class_ids: classIds,
-      starts_at: startsAt?.toISOString(),
-      last_attempt_start_time: lastAttemptStartTime?.toISOString(),
-    });
-  };
-
   return {
     loading,
     questions,
     templates,
     sections,
-    examInstances,
     fetchQuestions,
     addQuestion,
     updateQuestion,
@@ -607,10 +467,6 @@ export const useExamSystem = () => {
     createTemplate,
     fetchSections,
     updateTemplateSettings,
-    generateTemplatePreview,
-    fetchTeacherExamInstances,
-    fetchTeacherExamInstance,
-    createOrUpdateExamInstance,
-    activateExamForClasses,
+    generateTemplatePreview
   };
 };

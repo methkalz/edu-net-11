@@ -1,33 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Settings, Users, Clock, FileText, Edit, Eye, PlayCircle } from 'lucide-react';
+import { Plus, Settings, Users, Clock, FileText, Edit, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useExamSystem } from '@/hooks/useExamSystem';
-import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
 import ExamTemplateForm from './ExamTemplateForm';
 import ExamSettings from './ExamSettings';
 import ExamPreview from './ExamPreview';
-import ExamActivationDialog from './ExamActivationDialog';
 import { logger } from '@/lib/logger';
 
-interface ExamTemplateManagerProps {
-  teacherMode?: boolean;
-}
-
-const ExamTemplateManager: React.FC<ExamTemplateManagerProps> = ({ teacherMode = false }) => {
-  const { userProfile } = useAuth();
+const ExamTemplateManager: React.FC = () => {
   const { loading, templates, fetchTemplates, generateTemplatePreview } = useExamSystem();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const [isActivationOpen, setIsActivationOpen] = useState(false);
-  const [activatingTemplate, setActivatingTemplate] = useState(null);
-  const [instancesMap, setInstancesMap] = useState<Record<string, any>>({});
   const [previewData, setPreviewData] = useState<{
     exam?: {
       title: string;
@@ -41,53 +30,8 @@ const ExamTemplateManager: React.FC<ExamTemplateManagerProps> = ({ teacherMode =
   } | null>(null);
 
   useEffect(() => {
-    if (userProfile?.user_id) {
-      fetchTemplatesWithClasses();
-      loadInstances();
-    }
-  }, [userProfile?.user_id]);
-  
-  const fetchTemplatesWithClasses = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('exam_templates')
-        .select(`
-          *,
-          classes!exam_templates_target_class_id_fkey(
-            id,
-            grade_levels!inner(label),
-            class_names!inner(name)
-          )
-        `)
-        .eq('created_by', userProfile?.user_id)
-        .eq('is_active', true)
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      
-      // Update the templates via useExamSystem
-      fetchTemplates();
-    } catch (error) {
-      console.error('Error fetching templates with classes:', error);
-    }
-  };
-
-  const loadInstances = async () => {
-    if (!userProfile?.user_id) return;
-    
-    const { data } = await supabase
-      .from('teacher_exam_instances')
-      .select('*')
-      .eq('teacher_id', userProfile.user_id);
-    
-    if (data) {
-      const map: Record<string, any> = {};
-      data.forEach(instance => {
-        map[instance.template_id] = instance;
-      });
-      setInstancesMap(map);
-    }
-  };
+    fetchTemplates();
+  }, [fetchTemplates]);
 
   const handleEdit = (template: any) => {
     setEditingTemplate(template);
@@ -123,18 +67,6 @@ const ExamTemplateManager: React.FC<ExamTemplateManagerProps> = ({ teacherMode =
     } catch (error) {
       logger.error('Error generating template preview', error as Error);
     }
-  };
-
-  const handleActivateExam = (template: any) => {
-    setActivatingTemplate(template);
-    setIsActivationOpen(true);
-  };
-
-  const handleActivationSuccess = () => {
-    setIsActivationOpen(false);
-    setActivatingTemplate(null);
-    fetchTemplates();
-    loadInstances();
   };
 
   return (
@@ -192,21 +124,14 @@ const ExamTemplateManager: React.FC<ExamTemplateManagerProps> = ({ teacherMode =
                         </p>
                       )}
                       
-                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                      <div className="flex items-center gap-2 mb-2">
                         <Badge variant="outline">
-                          {(template as any).classes?.grade_levels?.label || 'صف غير محدد'}
-                          {(template as any).classes?.class_names?.name ? ` - ${(template as any).classes.class_names.name}` : ''}
+                          الصف {template.grade_level}
                         </Badge>
                         {template.is_active ? (
                           <Badge className="bg-green-100 text-green-800">نشط</Badge>
                         ) : (
                           <Badge variant="secondary">غير نشط</Badge>
-                        )}
-                        {instancesMap[template.id]?.is_active && (
-                          <Badge className="bg-blue-100 text-blue-800 flex items-center gap-1">
-                            <Users className="h-3 w-3" />
-                            نشط لـ {instancesMap[template.id].target_class_ids?.length || 0} صف
-                          </Badge>
                         )}
                       </div>
                     </div>
@@ -291,15 +216,14 @@ const ExamTemplateManager: React.FC<ExamTemplateManagerProps> = ({ teacherMode =
                       variant="outline"
                     >
                       <Eye className="h-4 w-4 mr-2" />
-                      معاينة
+                      معاينة الاختبار
                     </Button>
                     <Button 
                       className="flex-1" 
-                      onClick={() => handleActivateExam(template)}
-                      variant={instancesMap[template.id]?.is_active ? "default" : "outline"}
+                      onClick={() => handleExamSettings(template)}
                     >
-                      <PlayCircle className="h-4 w-4 mr-2" />
-                      {instancesMap[template.id]?.is_active ? 'إدارة' : 'تفعيل'}
+                      <Settings className="h-4 w-4 mr-2" />
+                      إعدادات الاختبار
                     </Button>
                   </div>
                 </CardContent>
@@ -334,16 +258,6 @@ const ExamTemplateManager: React.FC<ExamTemplateManagerProps> = ({ teacherMode =
           }}
           open={isPreviewOpen}
           onOpenChange={setIsPreviewOpen}
-        />
-      )}
-
-      {/* Exam Activation Dialog */}
-      {activatingTemplate && (
-        <ExamActivationDialog
-          template={activatingTemplate}
-          open={isActivationOpen}
-          onOpenChange={setIsActivationOpen}
-          onSuccess={handleActivationSuccess}
         />
       )}
     </div>
