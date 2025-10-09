@@ -78,8 +78,7 @@ export const useExamSession = () => {
       const { data: existingAttempt } = await supabase
         .from('exam_attempts')
         .select('*')
-        .eq('template_id', templateId)
-        .eq('instance_id', instanceId)
+        .eq('exam_id', templateId)
         .eq('student_id', user.id)
         .eq('status', 'in_progress')
         .order('started_at', { ascending: false })
@@ -96,24 +95,8 @@ export const useExamSession = () => {
             *,
             exam_questions (*)
           `)
-          .eq('attempt_id', existingAttempt.id)
-          .order('display_order');
-
-        // ✅ التحقق من وجود أسئلة
-        if (!attemptQuestions || attemptQuestions.length === 0) {
-          console.error('No questions found for existing attempt, deleting...');
-          
-          // حذف المحاولة المعطوبة
-          await supabase
-            .from('exam_attempts')
-            .delete()
-            .eq('id', existingAttempt.id);
-          
-          // إعادة المحاولة بإنشاء جلسة جديدة
-          toast.info('إعادة تحميل الامتحان...');
-          setLoading(true);
-          return startExamAttempt(templateId, instanceId);
-        }
+        .eq('attempt_id', existingAttempt.id)
+        .order('display_order');
 
         setCurrentAttempt(existingAttempt as ExamAttempt);
         setQuestions((attemptQuestions?.map(aq => aq.exam_questions) || []) as any);
@@ -126,8 +109,7 @@ export const useExamSession = () => {
       const { count: completedAttempts } = await supabase
         .from('exam_attempts')
         .select('*', { count: 'exact', head: true })
-        .eq('template_id', templateId)
-        .eq('instance_id', instanceId)
+        .eq('exam_id', templateId)
         .eq('student_id', user.id)
         .eq('status', 'finished');
 
@@ -246,9 +228,7 @@ export const useExamSession = () => {
       const { data: newAttempt, error: attemptError } = await supabase
         .from('exam_attempts')
         .insert({
-          template_id: templateId,
-          instance_id: instanceId, // ✅ ربط مع teacher_exam_instances
-          exam_id: null as any, // أصبح اختياري بعد التعديل
+          exam_id: templateId,
           student_id: user.id,
           max_score: maxScore,
           status: 'in_progress' as const
@@ -277,23 +257,9 @@ export const useExamSession = () => {
 
       if (insertError) {
         console.error('Error creating attempt questions:', insertError);
-        
-        // ✅ حذف المحاولة الفاشلة
-        await supabase
-          .from('exam_attempts')
-          .delete()
-          .eq('id', newAttempt.id);
-        
         toast.error('فشل في إنشاء أسئلة الامتحان');
-        setLoading(false);
         return null;
       }
-
-      // تحديث last_attempt_start_time في instance
-      await supabase
-        .from('teacher_exam_instances')
-        .update({ last_attempt_start_time: new Date().toISOString() })
-        .eq('id', instanceId);
 
       setCurrentAttempt(newAttempt);
       setQuestions(selectedQuestions as any);

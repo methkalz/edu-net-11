@@ -811,10 +811,9 @@ export type Database = {
       }
       exam_attempts: {
         Row: {
-          exam_id: string | null
+          exam_id: string
           finished_at: string | null
           id: string
-          instance_id: string | null
           max_score: number
           started_at: string | null
           status: string | null
@@ -823,10 +822,9 @@ export type Database = {
           total_score: number | null
         }
         Insert: {
-          exam_id?: string | null
+          exam_id: string
           finished_at?: string | null
           id?: string
-          instance_id?: string | null
           max_score: number
           started_at?: string | null
           status?: string | null
@@ -835,10 +833,9 @@ export type Database = {
           total_score?: number | null
         }
         Update: {
-          exam_id?: string | null
+          exam_id?: string
           finished_at?: string | null
           id?: string
-          instance_id?: string | null
           max_score?: number
           started_at?: string | null
           status?: string | null
@@ -852,13 +849,6 @@ export type Database = {
             columns: ["exam_id"]
             isOneToOne: false
             referencedRelation: "exams"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "exam_attempts_instance_id_fkey"
-            columns: ["instance_id"]
-            isOneToOne: false
-            referencedRelation: "teacher_exam_instances"
             referencedColumns: ["id"]
           },
           {
