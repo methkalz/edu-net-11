@@ -128,25 +128,15 @@ const SchoolClasses = () => {
 
       const assignedClassIds = assignedClassesData?.map(tc => tc.class_id) || [];
 
-      // Load classes: assigned to teacher OR created by teacher
-      let classesQuery = supabase
+      // Load classes - RLS will automatically filter based on teacher permissions
+      const { data: classesData, error: classesError } = await supabase
         .from('classes')
         .select(`
           *,
           grade_level:grade_levels(id, label),
           class_name:class_names(id, name),
           academic_year:academic_years(id, name)
-        `);
-
-      // If teacher has assigned classes, get those OR classes they created
-      if (assignedClassIds.length > 0) {
-        classesQuery = classesQuery.or(`id.in.(${assignedClassIds.join(',')}),created_by.eq.${user.id}`);
-      } else {
-        // If no assigned classes, only get classes created by this teacher
-        classesQuery = classesQuery.eq('created_by', user.id);
-      }
-
-      const { data: classesData, error: classesError } = await classesQuery
+        `)
         .order('created_at_utc', { ascending: false });
 
       if (classesError) throw classesError;

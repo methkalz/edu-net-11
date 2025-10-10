@@ -101,22 +101,33 @@ const StudentTracking: React.FC = () => {
     try {
       setLoading(true);
       
-      // 1. جلب الصفوف التي يدرسها المعلم
-      const { data: teacherClasses, error: teacherClassesError } = await supabase
+      // 1. جلب الصفوف المعينة للمعلم
+      const { data: assignedClasses, error: assignedClassesError } = await supabase
         .from('teacher_classes')
         .select('class_id')
         .eq('teacher_id', user?.id);
 
-      if (teacherClassesError) throw teacherClassesError;
+      if (assignedClassesError) throw assignedClassesError;
 
-      if (!teacherClasses || teacherClasses.length === 0) {
+      // 2. جلب الصفوف التي أنشأها المعلم
+      const { data: createdClasses, error: createdClassesError } = await supabase
+        .from('classes')
+        .select('id')
+        .eq('created_by', user?.id);
+
+      if (createdClassesError) throw createdClassesError;
+
+      // 3. دمج القوائم وإزالة المكرر
+      const assignedClassIds = assignedClasses?.map(tc => tc.class_id) || [];
+      const createdClassIds = createdClasses?.map(c => c.id) || [];
+      const classIds = [...new Set([...assignedClassIds, ...createdClassIds])];
+
+      if (classIds.length === 0) {
         setStudents([]);
         setLoading(false);
-        toast.info('لا توجد صفوف مسندة إليك بعد');
+        toast.info('لا توجد صفوف مسندة إليك أو أنشأتها');
         return;
       }
-
-      const classIds = teacherClasses.map(tc => tc.class_id);
 
       // جلب إجمالي المحتوى المتاح لكل صف
       const contentCounts: Record<string, number> = {};

@@ -251,7 +251,35 @@ export default function StudentManagement() {
         })
       );
 
-      setStudents(studentsWithClasses);
+      // If user is a teacher, filter students by their assigned/created classes only
+      let finalStudentsList = studentsWithClasses;
+      
+      if (userProfile.role === 'teacher') {
+        // Get classes assigned to teacher
+        const { data: teacherAssignedClasses } = await supabase
+          .from('teacher_classes')
+          .select('class_id')
+          .eq('teacher_id', userProfile.user_id);
+        
+        // Get classes created by teacher
+        const { data: teacherCreatedClasses } = await supabase
+          .from('classes')
+          .select('id')
+          .eq('created_by', userProfile.user_id);
+        
+        // Combine all teacher class IDs
+        const allTeacherClassIds = [
+          ...(teacherAssignedClasses?.map(tc => tc.class_id) || []),
+          ...(teacherCreatedClasses?.map(c => c.id) || [])
+        ];
+        
+        // Filter students to only those in teacher's classes
+        finalStudentsList = studentsWithClasses.filter(student => 
+          student.classes?.some(c => allTeacherClassIds.includes(c.id))
+        );
+      }
+
+      setStudents(finalStudentsList);
       
     } catch (error) {
       logger.error('Error in loadStudents:', error);
