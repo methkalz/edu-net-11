@@ -165,6 +165,10 @@ const App = () => {
                {/* Question management for interactive games */}
                 <Route path="/question-management" element={<LazyTest />} />
                
+               {/* Exam routes */}
+               <Route path="/exam/:attemptId" element={<Suspense fallback={<PageLoading message="جاري تحميل الاختبار..." />}>{React.createElement(React.lazy(() => import('@/pages/ExamTaking')))}</Suspense>} />
+               <Route path="/exam-results/:attemptId" element={<Suspense fallback={<PageLoading message="جاري تحميل النتائج..." />}>{React.createElement(React.lazy(() => import('@/pages/ExamResults')))}</Suspense>} />
+               
                {/* Reports dashboard route */}
                 <Route path="/reports" element={<Suspense fallback={<PageLoading message="جاري تحميل التقارير..." />}><LazyReports /></Suspense>} />
                

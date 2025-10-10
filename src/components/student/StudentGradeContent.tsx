@@ -10,6 +10,7 @@ import { StudentGrade10Lessons } from './StudentGrade10Lessons';
 import { ComputerStructureLessons } from './ComputerStructureLessons';
 import StudentGrade12Content from './StudentGrade12Content';
 import KnowledgeAdventureRealContent from '../games/KnowledgeAdventureRealContent';
+import { StudentExamsWidget } from './StudentExamsWidget';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
