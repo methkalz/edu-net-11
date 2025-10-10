@@ -61,6 +61,7 @@ import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import AppFooter from '@/components/shared/AppFooter';
 import { PageLoading } from '@/components/ui/LoadingComponents';
+import { AdminAccessBanner } from '@/components/admin/AdminAccessBanner';
 import { ImpersonationBanner } from '@/components/admin/ImpersonationBanner';
 import ModernHeader from '@/components/shared/ModernHeader';
 
@@ -492,6 +493,7 @@ const Dashboard = () => {
     <div className="min-h-screen bg-background pattern-dots flex flex-col" dir="rtl">
       {/* Impersonation Banner */}
       <ImpersonationBanner />
+      <AdminAccessBanner />
       
       {/* Modern Header - فقط للسوبر آدمن والمدراء، ليس للمدرسين */}
       {userProfile?.role !== 'teacher' && (

@@ -78,7 +78,7 @@ import AppHeader from '@/components/shared/AppHeader';
 import AppFooter from '@/components/shared/AppFooter';
 import { PageLoading, DataLoading } from '@/components/ui/LoadingComponents';
 import { logger } from '@/lib/logger';
-import { DirectImpersonationButton } from '@/components/admin/DirectImpersonationButton';
+import { SimpleImpersonationButton } from '@/components/admin/SimpleImpersonationButton';
 import { OrphanedUsersCleanup } from '@/components/admin/OrphanedUsersCleanup';
 
 interface User {
@@ -845,10 +845,11 @@ const UserManagement: React.FC = () => {
                              >
                                <Eye className="h-4 w-4" />
                              </Button>
-                              <DirectImpersonationButton
+                              <SimpleImpersonationButton
                                 targetUserId={user.user_id}
                                 targetUserName={user.full_name || user.email}
                                 targetUserEmail={user.email}
+                                targetUserRole={user.role}
                               />
                              <Button
                                variant="ghost"
