@@ -610,6 +610,32 @@ const TeacherDashboard: React.FC = () => {
           </div>
         ) : null}
 
+        {/* الاختبارات الإلكترونية - للصف العاشر والحادي عشر فقط */}
+        {(canAccessGrade('10') || canAccessGrade('11')) && (
+          <div className="space-y-6 animate-fade-in-up">
+            {/* عنوان القسم */}
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-purple-500 to-purple-600 flex items-center justify-center">
+                <FileText className="h-4 w-4 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-500 bg-clip-text text-transparent">
+                الاختبارات الإلكترونية
+              </h2>
+            </div>
+
+            {/* ويدجتات الاختبارات */}
+            <div className="grid grid-cols-1 gap-6">
+              {canAccessGrade('10') && (
+                <TeacherExamsWidget gradeLevel="10" />
+              )}
+              
+              {canAccessGrade('11') && (
+                <TeacherExamsWidget gradeLevel="11" />
+              )}
+            </div>
+          </div>
+        )}
+
         {/* المضامين التعليمية المتاحة - عرض كامل كما يراها الطلاب */}
         {schoolPackageContents.length > 0 && (
           <Card className="glass-card border-0 shadow-xl animate-fade-in-up">
