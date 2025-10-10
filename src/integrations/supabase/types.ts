@@ -818,6 +818,7 @@ export type Database = {
           started_at: string | null
           status: string | null
           student_id: string
+          template_id: string | null
           total_score: number | null
         }
         Insert: {
@@ -828,6 +829,7 @@ export type Database = {
           started_at?: string | null
           status?: string | null
           student_id: string
+          template_id?: string | null
           total_score?: number | null
         }
         Update: {
@@ -838,6 +840,7 @@ export type Database = {
           started_at?: string | null
           status?: string | null
           student_id?: string
+          template_id?: string | null
           total_score?: number | null
         }
         Relationships: [
@@ -846,6 +849,13 @@ export type Database = {
             columns: ["exam_id"]
             isOneToOne: false
             referencedRelation: "exams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_attempts_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "exam_templates"
             referencedColumns: ["id"]
           },
         ]
@@ -1011,6 +1021,7 @@ export type Database = {
           randomize_questions: boolean | null
           school_id: string | null
           show_results_immediately: boolean | null
+          target_class_id: string | null
           title: string
           total_questions: number
           updated_at: string
@@ -1031,6 +1042,7 @@ export type Database = {
           randomize_questions?: boolean | null
           school_id?: string | null
           show_results_immediately?: boolean | null
+          target_class_id?: string | null
           title: string
           total_questions?: number
           updated_at?: string
@@ -1051,6 +1063,7 @@ export type Database = {
           randomize_questions?: boolean | null
           school_id?: string | null
           show_results_immediately?: boolean | null
+          target_class_id?: string | null
           title?: string
           total_questions?: number
           updated_at?: string
@@ -1061,6 +1074,13 @@ export type Database = {
             columns: ["school_id"]
             isOneToOne: false
             referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_templates_target_class_id_fkey"
+            columns: ["target_class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
             referencedColumns: ["id"]
           },
         ]
@@ -5108,7 +5128,15 @@ export type Database = {
           id?: string
           teacher_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "teacher_classes_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       teacher_content_settings: {
         Row: {
@@ -5142,6 +5170,71 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      teacher_exam_instances: {
+        Row: {
+          created_at: string | null
+          ends_at: string | null
+          id: string
+          is_active: boolean | null
+          last_attempt_start_time: string | null
+          max_attempts: number | null
+          pass_percentage: number | null
+          randomize_answers: boolean | null
+          randomize_questions: boolean | null
+          school_id: string
+          show_results_immediately: boolean | null
+          starts_at: string | null
+          target_class_ids: string[] | null
+          teacher_id: string
+          template_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_attempt_start_time?: string | null
+          max_attempts?: number | null
+          pass_percentage?: number | null
+          randomize_answers?: boolean | null
+          randomize_questions?: boolean | null
+          school_id: string
+          show_results_immediately?: boolean | null
+          starts_at?: string | null
+          target_class_ids?: string[] | null
+          teacher_id: string
+          template_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_attempt_start_time?: string | null
+          max_attempts?: number | null
+          pass_percentage?: number | null
+          randomize_answers?: boolean | null
+          randomize_questions?: boolean | null
+          school_id?: string
+          show_results_immediately?: boolean | null
+          starts_at?: string | null
+          target_class_ids?: string[] | null
+          teacher_id?: string
+          template_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teacher_exam_instances_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "exam_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       teacher_notifications: {
         Row: {
