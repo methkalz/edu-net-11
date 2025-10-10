@@ -17,7 +17,6 @@ import Grade11VideoLibrary from './Grade11VideoLibrary';
 import Grade11CollapsibleSection from './Grade11CollapsibleSection';
 import Grade11ContentControls from './Grade11ContentControls';
 import QuestionBankManager from './QuestionBankManager';
-import ExamTemplateManager from './ExamTemplateManager';
 import GameLauncher from './GameLauncher';
 import KnowledgeAdventureRealContent from '../games/KnowledgeAdventureRealContent';
 import { logger } from '@/lib/logger';
@@ -512,20 +511,7 @@ const Grade11Content = () => {
 
         <TabsContent value="exams" className="space-y-6">
           <div className="space-y-6">
-            <Tabs defaultValue="questions" className="w-full">
-              <TabsList>
-                <TabsTrigger value="questions">بنك الأسئلة</TabsTrigger>
-                <TabsTrigger value="templates">قوالب الاختبارات</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="questions">
-                <QuestionBankManager />
-              </TabsContent>
-              
-              <TabsContent value="templates">
-                <ExamTemplateManager />
-              </TabsContent>
-            </Tabs>
+            <QuestionBankManager />
           </div>
         </TabsContent>
 

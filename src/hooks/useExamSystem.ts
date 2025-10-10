@@ -228,65 +228,22 @@ export const useExamSystem = () => {
     }
   }, [fetchQuestions]);
 
-  // Fetch Exam Templates
+  // Fetch Exam Templates - DEPRECATED
   const fetchTemplates = useCallback(async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('exam_templates')
-        .select('*')
-        .eq('is_active', true)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setTemplates(data as any || []);
-    } catch (error) {
-      logger.error('Error fetching templates', error as Error);
-      toast({
-        title: "خطأ",
-        description: "فشل في تحميل قوالب الاختبارات",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
+    // This function is deprecated - use useTeacherExams instead
+    setTemplates([]);
   }, []);
 
-  // Create Exam Template
+  // Create Exam Template - DEPRECATED
   const createTemplate = useCallback(async (templateData: any) => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('exam_templates')
-        .insert([{
-          ...templateData,
-          created_by: userProfile?.user_id,
-          school_id: userProfile?.school_id
-        }])
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      toast({
-        title: "تم بنجاح",
-        description: "تم إنشاء قالب الاختبار",
-      });
-
-      await fetchTemplates();
-      return data;
-    } catch (error) {
-      logger.error('Error creating template', error as Error);
-      toast({
-        title: "خطأ",
-        description: "فشل في إنشاء قالب الاختبار",
-        variant: "destructive"
-      });
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  }, [userProfile, fetchTemplates]);
+    // This function is deprecated - use useTeacherExams instead
+    toast({
+      title: "خطأ",
+      description: "هذه الميزة لم تعد متاحة. استخدم نظام الاختبارات الجديد.",
+      variant: "destructive"
+    });
+    return null;
+  }, []);
 
   // Fetch Sections with Question Counts
   const fetchSections = useCallback(async () => {
@@ -348,35 +305,16 @@ export const useExamSystem = () => {
     }
   }, []);
 
-  // Update Template Settings
+  // Update Template Settings - DEPRECATED
   const updateTemplateSettings = useCallback(async (templateId: string, settings: any) => {
-    try {
-      setLoading(true);
-      const { error } = await supabase
-        .from('exam_templates')
-        .update(settings)
-        .eq('id', templateId);
-
-      if (error) throw error;
-
-      toast({
-        title: "تم بنجاح",
-        description: "تم تحديث إعدادات الاختبار",
-      });
-
-      await fetchTemplates();
-    } catch (error) {
-      logger.error('Error updating template settings', error as Error);
-      toast({
-        title: "خطأ",
-        description: "فشل في تحديث إعدادات الاختبار",
-        variant: "destructive"
-      });
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  }, [fetchTemplates]);
+    // This function is deprecated - use useTeacherExams instead
+    toast({
+      title: "خطأ",
+      description: "هذه الميزة لم تعد متاحة. استخدم نظام الاختبارات الجديد.",
+      variant: "destructive"
+    });
+    throw new Error('Deprecated function');
+  }, []);
 
   // Generate Questions for Template Preview
   const generateTemplatePreview = useCallback(async (template: any) => {

@@ -39,16 +39,14 @@ const fetchGradeStats = async (): Promise<GradeStats> => {
     grade11LessonsResult,
     grade11DocsResult,
     grade11VideosResult,
-    grade11GamesResult,
-    grade11ExamsResult
+    grade11GamesResult
   ] = await Promise.all([
     supabase.from('grade11_sections').select('*', { count: 'exact', head: true }),
     supabase.from('grade11_topics').select('*', { count: 'exact', head: true }),
     supabase.from('grade11_lessons').select('*', { count: 'exact', head: true }),
     supabase.from('grade11_documents').select('*', { count: 'exact', head: true }),
     supabase.from('grade11_videos').select('*', { count: 'exact', head: true }),
-    supabase.from('games').select('*', { count: 'exact', head: true }).eq('grade_level', '11').eq('is_active', true),
-    supabase.from('exam_templates').select('*', { count: 'exact', head: true }).eq('grade_level', '11')
+    supabase.from('games').select('*', { count: 'exact', head: true }).eq('grade_level', '11').eq('is_active', true)
   ]);
 
   // جلب إحصائيات الصف الثاني عشر
@@ -70,7 +68,7 @@ const fetchGradeStats = async (): Promise<GradeStats> => {
       documents: grade11DocsResult.count || 0,
       videos: grade11VideosResult.count || 0,
       games: grade11GamesResult.count || 0,
-      exams: grade11ExamsResult.count || 0
+      exams: 0
     },
     grade12: {
       documents: grade12DocsResult.count || 0,

@@ -62,6 +62,7 @@ import TeacherContentViewer from './teacher/TeacherContentViewer';
 import { useGrade10Content } from '@/hooks/useGrade10Content';
 import { useGrade11Files } from '@/hooks/useGrade11Files';
 import { useGrade12Content } from '@/hooks/useGrade12Content';
+import { TeacherExamsWidget } from '@/components/teacher/TeacherExamsWidget';
 
 interface TeacherClass {
   id: string;
@@ -885,6 +886,18 @@ const TeacherDashboard: React.FC = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* الاختبارات الإلكترونية */}
+        {(canAccessGrade('10') || canAccessGrade('11')) && (
+          <div className="space-y-6">
+            {canAccessGrade('10') && (
+              <TeacherExamsWidget gradeLevel="10" />
+            )}
+            {canAccessGrade('11') && (
+              <TeacherExamsWidget gradeLevel="11" />
+            )}
+          </div>
+        )}
 
         {/* إزالة القسم المكرر للمضامين التعليمية من الأسفل */}
       </div>
