@@ -610,7 +610,7 @@ const TeacherDashboard: React.FC = () => {
           </div>
         ) : null}
 
-        {/* الاختبارات الإلكترونية - للصف العاشر والحادي عشر فقط */}
+        {/* الاختبارات الإلكترونية - ويدجت واحد ذكي */}
         {(canAccessGrade('10') || canAccessGrade('11')) && (
           <div className="space-y-6 animate-fade-in-up">
             {/* عنوان القسم */}
@@ -623,16 +623,8 @@ const TeacherDashboard: React.FC = () => {
               </h2>
             </div>
 
-            {/* ويدجتات الاختبارات */}
-            <div className="grid grid-cols-1 gap-6">
-              {canAccessGrade('10') && (
-                <TeacherExamsWidget gradeLevel="10" />
-              )}
-              
-              {canAccessGrade('11') && (
-                <TeacherExamsWidget gradeLevel="11" />
-              )}
-            </div>
+            {/* ويدجت واحد فقط */}
+            <TeacherExamsWidget />
           </div>
         )}
 
@@ -916,12 +908,7 @@ const TeacherDashboard: React.FC = () => {
         {/* الاختبارات الإلكترونية */}
         {(canAccessGrade('10') || canAccessGrade('11')) && (
           <div className="space-y-6">
-            {canAccessGrade('10') && (
-              <TeacherExamsWidget gradeLevel="10" />
-            )}
-            {canAccessGrade('11') && (
-              <TeacherExamsWidget gradeLevel="11" />
-            )}
+            <TeacherExamsWidget />
           </div>
         )}
 

@@ -8,7 +8,8 @@ export interface TeacherExam {
   id: string;
   title: string;
   description?: string;
-  grade_level: string;
+  grade_level: string; // Legacy field
+  grade_levels: string[]; // New field for multiple grades
   target_class_ids: string[];
   total_questions: number;
   duration_minutes: number;
@@ -46,9 +47,8 @@ export const useTeacherExams = () => {
         .eq('is_active', true)
         .order('created_at', { ascending: false });
 
-      if (gradeLevel) {
-        query = query.eq('grade_level', gradeLevel);
-      }
+      // لا نحتاج فلترة بالـ gradeLevel بعد الآن - نعرض كل الاختبارات
+      // لأن كل اختبار الآن يمكن أن يستهدف صفوف متعددة
 
       const { data, error } = await query;
       if (error) throw error;
@@ -72,7 +72,8 @@ export const useTeacherExams = () => {
       const insertData: any = {
         title: examData.title,
         description: examData.description,
-        grade_level: examData.grade_level || '11',
+        grade_level: examData.grade_levels?.[0] || examData.grade_level || '11', // للتوافق مع الإصدارات القديمة
+        grade_levels: examData.grade_levels || [examData.grade_level || '11'], // الحقل الجديد
         target_class_ids: examData.target_class_ids || [],
         total_questions: examData.total_questions || 10,
         duration_minutes: examData.duration_minutes || 60,
@@ -100,7 +101,7 @@ export const useTeacherExams = () => {
       if (error) throw error;
 
       toast.success('تم إنشاء الاختبار بنجاح');
-      await fetchExams(examData.grade_level);
+      await fetchExams(); // لم نعد بحاجة لتمرير gradeLevel
       return data;
     } catch (error: any) {
       logger.error('فشل في إنشاء الاختبار', error);

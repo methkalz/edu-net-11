@@ -5110,6 +5110,7 @@ export type Database = {
           duration_minutes: number
           ends_at: string | null
           grade_level: string
+          grade_levels: string[] | null
           id: string
           is_active: boolean | null
           max_attempts: number
@@ -5135,6 +5136,7 @@ export type Database = {
           duration_minutes?: number
           ends_at?: string | null
           grade_level: string
+          grade_levels?: string[] | null
           id?: string
           is_active?: boolean | null
           max_attempts?: number
@@ -5160,6 +5162,7 @@ export type Database = {
           duration_minutes?: number
           ends_at?: string | null
           grade_level?: string
+          grade_levels?: string[] | null
           id?: string
           is_active?: boolean | null
           max_attempts?: number

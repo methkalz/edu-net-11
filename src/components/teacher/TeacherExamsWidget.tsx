@@ -8,11 +8,8 @@ import { useTeacherExams } from '@/hooks/useTeacherExams';
 import { useAuth } from '@/hooks/useAuth';
 import { TeacherExamForm } from './TeacherExamForm';
 
-interface TeacherExamsWidgetProps {
-  gradeLevel: '10' | '11';
-}
-
-export const TeacherExamsWidget: React.FC<TeacherExamsWidgetProps> = ({ gradeLevel }) => {
+// إزالة gradeLevel prop - الويدجت الآن يعرض كل الاختبارات
+export const TeacherExamsWidget: React.FC = () => {
   const { userProfile } = useAuth();
   const { exams, loading, fetchExams, deleteExam, publishExam } = useTeacherExams();
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -20,9 +17,9 @@ export const TeacherExamsWidget: React.FC<TeacherExamsWidgetProps> = ({ gradeLev
 
   useEffect(() => {
     if (userProfile?.role === 'teacher') {
-      fetchExams(gradeLevel);
+      fetchExams(); // بدون تحديد gradeLevel
     }
-  }, [userProfile, gradeLevel, fetchExams]);
+  }, [userProfile, fetchExams]);
 
   const handleCreateExam = () => {
     setEditingExam(null);
@@ -53,12 +50,21 @@ export const TeacherExamsWidget: React.FC<TeacherExamsWidgetProps> = ({ gradeLev
     }
   };
 
+  const getGradeLabel = (grade: string) => {
+    switch (grade) {
+      case '10': return 'العاشر';
+      case '11': return 'الحادي عشر';
+      case '12': return 'الثاني عشر';
+      default: return grade;
+    }
+  };
+
   return (
     <Card className="w-full">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2">
           <FileText className="h-5 w-5" />
-          الاختبارات الإلكترونية - الصف {gradeLevel === '10' ? 'العاشر' : 'الحادي عشر'}
+          الاختبارات الإلكترونية
         </CardTitle>
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
           <DialogTrigger asChild>
@@ -75,11 +81,10 @@ export const TeacherExamsWidget: React.FC<TeacherExamsWidgetProps> = ({ gradeLev
             </DialogHeader>
             <TeacherExamForm
               exam={editingExam}
-              gradeLevel={gradeLevel}
               onClose={() => setIsFormOpen(false)}
               onSuccess={() => {
                 setIsFormOpen(false);
-                fetchExams(gradeLevel);
+                fetchExams();
               }}
             />
           </DialogContent>
@@ -105,11 +110,23 @@ export const TeacherExamsWidget: React.FC<TeacherExamsWidgetProps> = ({ gradeLev
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
                       <h3 className="font-semibold">{exam.title}</h3>
                       <Badge className={getStatusColor(exam.status)}>
                         {getStatusLabel(exam.status)}
                       </Badge>
+                      {/* عرض الصفوف المستهدفة */}
+                      {exam.grade_levels && exam.grade_levels.length > 0 ? (
+                        exam.grade_levels.map((grade: string) => (
+                          <Badge key={grade} variant="outline">
+                            الصف {getGradeLabel(grade)}
+                          </Badge>
+                        ))
+                      ) : (
+                        <Badge variant="outline">
+                          الصف {getGradeLabel(exam.grade_level)}
+                        </Badge>
+                      )}
                     </div>
                     {exam.description && (
                       <p className="text-sm text-muted-foreground mb-3">
