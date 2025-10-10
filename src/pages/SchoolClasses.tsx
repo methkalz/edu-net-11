@@ -84,6 +84,17 @@ const SchoolClasses = () => {
 
   const loadData = async () => {
     try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          variant: "destructive",
+          title: "خطأ",
+          description: "يجب تسجيل الدخول أولاً"
+        });
+        return;
+      }
+
       // Load available grade levels based on school package
       let availableGrades: string[] = [];
       
@@ -109,15 +120,33 @@ const SchoolClasses = () => {
       if (academicYearsError) throw academicYearsError;
       setAcademicYears(academicYearsData || []);
 
-      // Load classes with related data
-      const { data: classesData, error: classesError } = await supabase
+      // Get assigned classes for this teacher
+      const { data: assignedClassesData } = await supabase
+        .from('teacher_classes')
+        .select('class_id')
+        .eq('teacher_id', user.id);
+
+      const assignedClassIds = assignedClassesData?.map(tc => tc.class_id) || [];
+
+      // Load classes: assigned to teacher OR created by teacher
+      let classesQuery = supabase
         .from('classes')
         .select(`
           *,
           grade_level:grade_levels(id, label),
           class_name:class_names(id, name),
           academic_year:academic_years(id, name)
-        `)
+        `);
+
+      // If teacher has assigned classes, get those OR classes they created
+      if (assignedClassIds.length > 0) {
+        classesQuery = classesQuery.or(`id.in.(${assignedClassIds.join(',')}),created_by.eq.${user.id}`);
+      } else {
+        // If no assigned classes, only get classes created by this teacher
+        classesQuery = classesQuery.eq('created_by', user.id);
+      }
+
+      const { data: classesData, error: classesError } = await classesQuery
         .order('created_at_utc', { ascending: false });
 
       if (classesError) throw classesError;
@@ -367,7 +396,7 @@ const SchoolClasses = () => {
               <p className="text-sm text-muted-foreground mb-4">
                 {searchTerm || selectedGradeLevel !== 'all' || selectedAcademicYear !== 'all' || selectedStatus !== 'active' 
                   ? "لا توجد صفوف تطابق المرشحات المحددة" 
-                  : "لم يتم إنشاء أي صفوف بعد"}
+                  : "لم يتم تعيين أي صفوف لك بعد. يمكنك إنشاء صف جديد."}
               </p>
               {!searchTerm && selectedGradeLevel === 'all' && selectedAcademicYear === 'all' && selectedStatus === 'active' && (
                 <Button onClick={() => setShowForm(true)}>
