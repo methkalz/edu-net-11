@@ -9,6 +9,7 @@ const supabase = createClient(
 interface ImpersonateRequest {
   targetUserId: string
   adminUserId: string
+  returnToAdmin?: boolean
 }
 
 Deno.serve(async (req) => {
@@ -17,26 +18,12 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { targetUserId, adminUserId }: ImpersonateRequest = await req.json()
+    const { targetUserId, adminUserId, returnToAdmin }: ImpersonateRequest = await req.json()
 
     if (!targetUserId || !adminUserId) {
       return new Response(
         JSON.stringify({ error: 'Missing required parameters' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
-    // Verify admin permissions
-    const { data: adminProfile, error: adminError } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('user_id', adminUserId)
-      .single()
-
-    if (adminError || !adminProfile || adminProfile.role !== 'superadmin') {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
@@ -54,12 +41,34 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Generate magic link for the existing user
+    // If not returning to admin, verify admin permissions
+    if (!returnToAdmin) {
+      const { data: adminProfile, error: adminError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('user_id', adminUserId)
+        .single()
+
+      if (adminError || !adminProfile || adminProfile.role !== 'superadmin') {
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+    }
+
+    // Generate redirect URL based on returnToAdmin flag
+    const origin = req.headers.get('origin') || 'http://localhost:5173'
+    const redirectUrl = returnToAdmin 
+      ? `${origin}/dashboard`
+      : `${origin}/dashboard?admin_access=true&admin_id=${adminUserId}&user_id=${targetUserId}`
+
+    // Generate magic link for the target user
     const { data: magicLink, error: linkError } = await supabase.auth.admin.generateLink({
       type: 'magiclink',
       email: targetUser.email,
       options: {
-        redirectTo: `${req.headers.get('origin') || 'http://localhost:5173'}/dashboard?admin_access=true&impersonated=true&target_user_id=${targetUserId}&admin_user_id=${adminUserId}`
+        redirectTo: redirectUrl
       }
     })
 
@@ -72,19 +81,21 @@ Deno.serve(async (req) => {
     }
 
 
-    // Log impersonation
+    // Log impersonation action
+    const auditAction = returnToAdmin ? 'USER_IMPERSONATION_ENDED' : 'USER_IMPERSONATION_STARTED'
     await supabase
       .from('audit_log')
       .insert({
         actor_user_id: adminUserId,
-        action: 'USER_IMPERSONATION_STARTED',
+        action: auditAction,
         entity: 'profiles',
         entity_id: targetUserId,
         payload_json: {
           target_user: targetUser.full_name,
           target_email: targetUser.email,
           target_role: targetUser.role,
-          impersonation_started: new Date().toISOString()
+          return_to_admin: returnToAdmin || false,
+          timestamp: new Date().toISOString()
         }
       })
 
