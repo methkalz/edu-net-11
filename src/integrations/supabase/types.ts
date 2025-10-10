@@ -5638,6 +5638,10 @@ export type Database = {
         Args: { p_player_id: string }
         Returns: undefined
       }
+      is_teacher_assigned_to_class: {
+        Args: { p_class_id: string; p_teacher_id: string }
+        Returns: boolean
+      }
       recalculate_grade11_student_points: {
         Args: Record<PropertyKey, never>
         Returns: undefined
