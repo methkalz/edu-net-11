@@ -5,10 +5,23 @@ import { Progress } from '@/components/ui/progress';
 import { Upload, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import { useQuestionBank } from '@/hooks/useQuestionBank';
 import { communicationBasicsQuestions } from '@/data/communication-basics-questions';
+import { networkAddressesQuestions } from '@/data/network-addresses-questions';
 import { useToast } from '@/hooks/use-toast';
 import { logger } from '@/lib/logging';
 
+type QuestionSet = 'communication' | 'network';
+
+interface QuestionSetInfo {
+  title: string;
+  description: string;
+  questions: any[];
+  easy: number;
+  medium: number;
+  hard: number;
+}
+
 export const BulkQuestionImporter = () => {
+  const [selectedSet, setSelectedSet] = useState<QuestionSet | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -27,7 +40,28 @@ export const BulkQuestionImporter = () => {
   const { addQuestion, questions: existingQuestions } = useQuestionBank();
   const { toast } = useToast();
 
+  const questionSets: Record<QuestionSet, QuestionSetInfo> = {
+    communication: {
+      title: 'أسئلة أساسيات الاتصال',
+      description: 'مركبات الاتصال الأساسية والمفاهيم الأولية',
+      questions: communicationBasicsQuestions,
+      easy: 8,
+      medium: 12,
+      hard: 10
+    },
+    network: {
+      title: 'أسئلة عناوين الشبكة',
+      description: 'عناوين الشبكة وطرق تمثيل الأرقام في الشبكة',
+      questions: networkAddressesQuestions,
+      easy: 11,
+      medium: 11,
+      hard: 8
+    }
+  };
+
   const handleImport = async () => {
+    if (!selectedSet) return;
+    
     setIsImporting(true);
     setProgress(0);
     
@@ -38,10 +72,11 @@ export const BulkQuestionImporter = () => {
       errors: [] as string[]
     };
 
-    const totalQuestions = communicationBasicsQuestions.length;
+    const currentSet = questionSets[selectedSet];
+    const totalQuestions = currentSet.questions.length;
 
     for (let i = 0; i < totalQuestions; i++) {
-      const question = communicationBasicsQuestions[i];
+      const question = currentSet.questions[i];
       
       try {
         // التحقق من التكرار
@@ -99,32 +134,51 @@ export const BulkQuestionImporter = () => {
 
   const handleClose = () => {
     setIsOpen(false);
+    setSelectedSet(null);
     setProgress(0);
     setImportResults({ success: 0, failed: 0, skipped: 0, errors: [] });
   };
 
+  const handleSelectSet = (set: QuestionSet) => {
+    setSelectedSet(set);
+    setIsOpen(true);
+  };
+
+  const currentSetInfo = selectedSet ? questionSets[selectedSet] : null;
+
   return (
     <>
-      <Button
-        onClick={() => setIsOpen(true)}
-        variant="outline"
-        className="gap-2"
-      >
-        <Upload className="h-4 w-4" />
-        استيراد أسئلة أساسيات الاتصال (30 سؤال)
-      </Button>
+      <div className="flex gap-2 flex-wrap">
+        <Button
+          onClick={() => handleSelectSet('communication')}
+          variant="outline"
+          className="gap-2"
+        >
+          <Upload className="h-4 w-4" />
+          استيراد أسئلة أساسيات الاتصال (30 سؤال)
+        </Button>
+        
+        <Button
+          onClick={() => handleSelectSet('network')}
+          variant="outline"
+          className="gap-2"
+        >
+          <Upload className="h-4 w-4" />
+          استيراد أسئلة عناوين الشبكة (30 سؤال)
+        </Button>
+      </div>
 
       <Dialog open={isOpen} onOpenChange={handleClose}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>استيراد أسئلة أساسيات الاتصال</DialogTitle>
+            <DialogTitle>{currentSetInfo?.title}</DialogTitle>
             <DialogDescription>
-              سيتم إضافة 30 سؤال (20 اختيار متعدد + 10 صح/خطأ) إلى بنك الأسئلة
+              {currentSetInfo?.description} - سيتم إضافة 30 سؤال إلى بنك الأسئلة
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            {!isImporting && progress === 0 && (
+            {!isImporting && progress === 0 && currentSetInfo && (
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-sm">
                   <AlertCircle className="h-4 w-4 text-primary" />
@@ -132,15 +186,15 @@ export const BulkQuestionImporter = () => {
                 </div>
                 <div className="grid grid-cols-3 gap-4 text-center text-sm">
                   <div className="rounded-lg border p-3">
-                    <div className="text-2xl font-bold text-green-600">10</div>
+                    <div className="text-2xl font-bold text-green-600">{currentSetInfo.easy}</div>
                     <div className="text-muted-foreground">سهلة</div>
                   </div>
                   <div className="rounded-lg border p-3">
-                    <div className="text-2xl font-bold text-yellow-600">10</div>
+                    <div className="text-2xl font-bold text-yellow-600">{currentSetInfo.medium}</div>
                     <div className="text-muted-foreground">متوسطة</div>
                   </div>
                   <div className="rounded-lg border p-3">
-                    <div className="text-2xl font-bold text-red-600">10</div>
+                    <div className="text-2xl font-bold text-red-600">{currentSetInfo.hard}</div>
                     <div className="text-muted-foreground">صعبة</div>
                   </div>
                 </div>
