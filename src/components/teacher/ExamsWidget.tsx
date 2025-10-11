@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ClipboardList, FileQuestion, TrendingUp, Users, ArrowRight, Plus, ArrowLeft, Trash2 } from 'lucide-react';
+import { ClipboardList, FileQuestion, TrendingUp, Users, ArrowRight, Plus, ArrowLeft, Trash2, Edit } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTeacherExams } from '@/hooks/useTeacherExams';
 import { useAuth } from '@/hooks/useAuth';
@@ -77,6 +77,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingExamId, setEditingExamId] = useState<string | null>(null);
 
   // جلب الصفوف المتاحة للمعلم
   const { data: availableClasses } = useQuery({
@@ -159,7 +160,45 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
   const handleOpenCreateDialog = () => {
     form.reset();
     setCurrentStep(1);
+    setEditingExamId(null);
     setIsCreateDialogOpen(true);
+  };
+
+  const handleEditExam = async (examId: string) => {
+    try {
+      const { data: exam, error } = await supabase
+        .from('exams')
+        .select('*')
+        .eq('id', examId)
+        .single();
+
+      if (error) throw error;
+
+      // ملء البيانات في النموذج
+      form.reset({
+        title: exam.title,
+        description: exam.description || '',
+        selection_type: exam.grade_levels?.length > 0 ? 'all_grade' : 'specific_classes',
+        grade_levels: exam.grade_levels || [],
+        target_classes: exam.target_classes || [],
+        start_datetime: exam.start_datetime,
+        end_datetime: exam.end_datetime,
+        duration_minutes: exam.duration_minutes,
+        max_attempts: exam.max_attempts,
+        passing_percentage: exam.passing_percentage,
+        shuffle_questions: exam.shuffle_questions,
+        shuffle_choices: exam.shuffle_choices,
+        show_results_immediately: exam.show_results_immediately,
+        allow_review: exam.allow_review,
+      });
+
+      setEditingExamId(examId);
+      setCurrentStep(1);
+      setIsCreateDialogOpen(true);
+    } catch (error) {
+      console.error('Error loading exam:', error);
+      toast.error('حدث خطأ أثناء تحميل بيانات الامتحان');
+    }
   };
 
   const handleDeleteExam = async (examId: string) => {
@@ -292,33 +331,58 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         return;
       }
 
-      // إنشاء الامتحان
-      const { data: examData, error: examError } = await supabase
-        .from('exams')
-        .insert({
-          title: data.title,
-          description: data.description || null,
-          duration_minutes: data.duration_minutes,
-          passing_percentage: data.passing_percentage,
-          grade_levels: data.selection_type === 'all_grade' ? data.grade_levels : [],
-          target_classes: data.selection_type === 'specific_classes' ? data.target_classes : [],
-          start_datetime: data.start_datetime,
-          end_datetime: data.end_datetime,
-          max_attempts: data.max_attempts,
-          shuffle_questions: data.shuffle_questions,
-          shuffle_choices: data.shuffle_choices,
-          show_results_immediately: data.show_results_immediately,
-          allow_review: data.allow_review,
-          status: 'draft',
-          created_by: user.id,
-          school_id: profile.school_id,
-        })
-        .select()
-        .single();
+      // تحديث أو إنشاء الامتحان
+      if (editingExamId) {
+        // تحديث الامتحان
+        const { error: examError } = await supabase
+          .from('exams')
+          .update({
+            title: data.title,
+            description: data.description || null,
+            duration_minutes: data.duration_minutes,
+            passing_percentage: data.passing_percentage,
+            grade_levels: data.selection_type === 'all_grade' ? data.grade_levels : [],
+            target_classes: data.selection_type === 'specific_classes' ? data.target_classes : [],
+            start_datetime: data.start_datetime,
+            end_datetime: data.end_datetime,
+            max_attempts: data.max_attempts,
+            shuffle_questions: data.shuffle_questions,
+            shuffle_choices: data.shuffle_choices,
+            show_results_immediately: data.show_results_immediately,
+            allow_review: data.allow_review,
+          })
+          .eq('id', editingExamId);
 
-      if (examError) throw examError;
+        if (examError) throw examError;
 
-      toast.success('تم إنشاء الامتحان بنجاح!');
+        toast.success('تم تحديث الامتحان بنجاح!');
+      } else {
+        // إنشاء امتحان جديد
+        const { error: examError } = await supabase
+          .from('exams')
+          .insert({
+            title: data.title,
+            description: data.description || null,
+            duration_minutes: data.duration_minutes,
+            passing_percentage: data.passing_percentage,
+            grade_levels: data.selection_type === 'all_grade' ? data.grade_levels : [],
+            target_classes: data.selection_type === 'specific_classes' ? data.target_classes : [],
+            start_datetime: data.start_datetime,
+            end_datetime: data.end_datetime,
+            max_attempts: data.max_attempts,
+            shuffle_questions: data.shuffle_questions,
+            shuffle_choices: data.shuffle_choices,
+            show_results_immediately: data.show_results_immediately,
+            allow_review: data.allow_review,
+            status: 'draft',
+            created_by: user.id,
+            school_id: profile.school_id,
+          });
+
+        if (examError) throw examError;
+
+        toast.success('تم إنشاء الامتحان بنجاح!');
+      }
       
       // إعادة تحميل بيانات الامتحانات
       await queryClient.invalidateQueries({ queryKey: ['teacher-exams', user.id] });
@@ -436,14 +500,24 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                       )}
                     </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDeleteExam(exam.id)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleEditExam(exam.id)}
+                      className="text-primary hover:text-primary hover:bg-primary/10"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDeleteExam(exam.id)}
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -504,7 +578,9 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-xl">إنشاء امتحان جديد</DialogTitle>
+            <DialogTitle className="text-xl">
+              {editingExamId ? 'تعديل الامتحان' : 'إنشاء امتحان جديد'}
+            </DialogTitle>
             <DialogDescription>
               خطوة {currentStep} من 4
             </DialogDescription>
@@ -1001,7 +1077,10 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                     disabled={isSubmitting}
                     className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white"
                   >
-                    {isSubmitting ? 'جاري الإنشاء...' : 'إنشاء الامتحان'}
+                    {isSubmitting 
+                      ? (editingExamId ? 'جاري التحديث...' : 'جاري الإنشاء...') 
+                      : (editingExamId ? 'تحديث الامتحان' : 'إنشاء الامتحان')
+                    }
                     <Plus className="w-4 h-4 mr-2" />
                   </Button>
                 )}
