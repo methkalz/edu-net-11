@@ -103,7 +103,6 @@ export const QuestionForm: React.FC<QuestionFormProps> = ({
   };
 
   const showChoices = questionType === 'multiple_choice' || questionType === 'true_false';
-  const isEssay = questionType === 'essay';
 
   return (
     <Form {...form}>
@@ -124,7 +123,6 @@ export const QuestionForm: React.FC<QuestionFormProps> = ({
                   <SelectItem value="multiple_choice">اختيار متعدد</SelectItem>
                   <SelectItem value="true_false">صح/خطأ</SelectItem>
                   <SelectItem value="short_answer">إجابة قصيرة</SelectItem>
-                  <SelectItem value="essay">مقالي</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -210,8 +208,6 @@ export const QuestionForm: React.FC<QuestionFormProps> = ({
                       ))}
                     </SelectContent>
                   </Select>
-                ) : isEssay ? (
-                  <Textarea {...field} rows={3} placeholder="نموذج الإجابة..." />
                 ) : (
                   <Input {...field} placeholder="الإجابة الصحيحة" />
                 )}
