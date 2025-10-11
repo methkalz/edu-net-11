@@ -175,14 +175,16 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
           </>
         ) : (
           <div className="text-center py-8">
-            <ClipboardList className="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" />
-            <p className="text-muted-foreground mb-4">لم تقم بإنشاء أي امتحان بعد</p>
-            <div className="flex gap-2 justify-center flex-wrap">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-orange-500/10 to-purple-500/10 flex items-center justify-center mx-auto mb-4">
+              <ClipboardList className="w-8 h-8 text-orange-600" />
+            </div>
+            <p className="text-muted-foreground mb-6 text-lg">لم تقم بإنشاء أي امتحان بعد</p>
+            <div className="flex gap-3 justify-center flex-wrap">
               {canAccessGrade10 && (
                 <Button
                   onClick={() => handleManageExams('10')}
-                  variant="default"
-                  size="sm"
+                  className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg hover:shadow-xl transition-all"
+                  size="default"
                 >
                   إنشاء امتحان للصف العاشر
                 </Button>
@@ -190,8 +192,8 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
               {canAccessGrade11 && (
                 <Button
                   onClick={() => handleManageExams('11')}
-                  variant="default"
-                  size="sm"
+                  className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all"
+                  size="default"
                 >
                   إنشاء امتحان للصف الحادي عشر
                 </Button>
