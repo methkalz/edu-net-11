@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useQuestionBank } from '@/hooks/useQuestionBank';
-import { Plus, Search, Edit, Trash2, FileText, Hash } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, FileText, Hash, Filter } from 'lucide-react';
 import { Question } from '@/types/exam';
 import { QuestionForm } from './QuestionForm';
 import { BulkQuestionImporter } from './BulkQuestionImporter';
@@ -13,12 +14,30 @@ import { BulkQuestionImporter } from './BulkQuestionImporter';
 export const QuestionBankManager: React.FC = () => {
   const { questions, isLoading, addQuestion, updateQuestion, deleteQuestion, isAdding, isUpdating } = useQuestionBank();
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedSection, setSelectedSection] = useState<string>('all');
+  const [selectedType, setSelectedType] = useState<string>('all');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState<Question | undefined>();
 
-  const filteredQuestions = questions.filter(q => 
-    q.question_text.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // استخراج الأقسام الفريدة من الأسئلة
+  const uniqueSections = useMemo(() => {
+    const sections = questions
+      .map(q => q.section_name)
+      .filter(Boolean)
+      .filter((value, index, self) => self.indexOf(value) === index);
+    return sections.sort();
+  }, [questions]);
+
+  // فلترة الأسئلة حسب البحث والقسم ونوع السؤال
+  const filteredQuestions = useMemo(() => {
+    return questions.filter(q => {
+      const matchesSearch = q.question_text.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSection = selectedSection === 'all' || q.section_name === selectedSection;
+      const matchesType = selectedType === 'all' || q.question_type === selectedType;
+      
+      return matchesSearch && matchesSection && matchesType;
+    });
+  }, [questions, searchTerm, selectedSection, selectedType]);
 
   const difficultyColors = {
     easy: 'bg-green-100 text-green-800',
@@ -75,15 +94,18 @@ export const QuestionBankManager: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* شريط البحث والأزرار */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-          <Input
-            placeholder="ابحث في بنك الأسئلة..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pr-10"
-          />
+        <div className="flex items-center gap-2 flex-1">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+            <Input
+              placeholder="ابحث في بنك الأسئلة..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pr-10"
+            />
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <BulkQuestionImporter />
@@ -92,6 +114,59 @@ export const QuestionBankManager: React.FC = () => {
             إضافة سؤال جديد
           </Button>
         </div>
+      </div>
+
+      {/* الفلاتر */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          <Filter className="w-4 h-4 text-muted-foreground" />
+          <span className="text-sm font-medium">تصفية حسب:</span>
+        </div>
+        
+        <Select value={selectedSection} onValueChange={setSelectedSection}>
+          <SelectTrigger className="w-[200px] bg-background">
+            <SelectValue placeholder="اختر القسم" />
+          </SelectTrigger>
+          <SelectContent className="bg-background z-50">
+            <SelectItem value="all">جميع الأقسام</SelectItem>
+            {uniqueSections.map((section) => (
+              <SelectItem key={section} value={section}>
+                {section}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={selectedType} onValueChange={setSelectedType}>
+          <SelectTrigger className="w-[180px] bg-background">
+            <SelectValue placeholder="نوع السؤال" />
+          </SelectTrigger>
+          <SelectContent className="bg-background z-50">
+            <SelectItem value="all">جميع الأنواع</SelectItem>
+            <SelectItem value="multiple_choice">اختيار متعدد</SelectItem>
+            <SelectItem value="true_false">صح/خطأ</SelectItem>
+            <SelectItem value="essay">مقالي</SelectItem>
+            <SelectItem value="short_answer">إجابة قصيرة</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {(selectedSection !== 'all' || selectedType !== 'all') && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setSelectedSection('all');
+              setSelectedType('all');
+            }}
+            className="text-sm"
+          >
+            إعادة تعيين الفلاتر
+          </Button>
+        )}
+        
+        <Badge variant="secondary" className="mr-auto">
+          {filteredQuestions.length} سؤال
+        </Badge>
       </div>
 
       <div className="grid gap-4">
