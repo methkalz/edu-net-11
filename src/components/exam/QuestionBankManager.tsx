@@ -3,13 +3,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useQuestionBank } from '@/hooks/useQuestionBank';
 import { Plus, Search, Edit, Trash2, FileText } from 'lucide-react';
 import { Question } from '@/types/exam';
+import { QuestionForm } from './QuestionForm';
 
 export const QuestionBankManager: React.FC = () => {
-  const { questions, isLoading, deleteQuestion } = useQuestionBank();
+  const { questions, isLoading, addQuestion, updateQuestion, deleteQuestion, isAdding, isUpdating } = useQuestionBank();
   const [searchTerm, setSearchTerm] = useState('');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedQuestion, setSelectedQuestion] = useState<Question | undefined>();
 
   const filteredQuestions = questions.filter(q => 
     q.question_text.toLowerCase().includes(searchTerm.toLowerCase())
@@ -28,6 +32,25 @@ export const QuestionBankManager: React.FC = () => {
     short_answer: 'إجابة قصيرة',
   };
 
+  const handleAddQuestion = () => {
+    setSelectedQuestion(undefined);
+    setIsDialogOpen(true);
+  };
+
+  const handleEditQuestion = (question: Question) => {
+    setSelectedQuestion(question);
+    setIsDialogOpen(true);
+  };
+
+  const handleSubmit = (data: Omit<Question, 'id' | 'created_at' | 'updated_at'>) => {
+    if (selectedQuestion) {
+      updateQuestion({ id: selectedQuestion.id, ...data });
+    } else {
+      addQuestion(data);
+    }
+    setIsDialogOpen(false);
+  };
+
   if (isLoading) {
     return <div className="text-center p-6">جاري التحميل...</div>;
   }
@@ -44,7 +67,7 @@ export const QuestionBankManager: React.FC = () => {
             className="pr-10"
           />
         </div>
-        <Button className="gap-2">
+        <Button className="gap-2" onClick={handleAddQuestion}>
           <Plus className="w-4 h-4" />
           إضافة سؤال جديد
         </Button>
@@ -93,7 +116,11 @@ export const QuestionBankManager: React.FC = () => {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon">
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => handleEditQuestion(question)}
+                    >
                       <Edit className="w-4 h-4" />
                     </Button>
                     <Button 
@@ -110,6 +137,22 @@ export const QuestionBankManager: React.FC = () => {
           ))
         )}
       </div>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedQuestion ? 'تعديل السؤال' : 'إضافة سؤال جديد'}
+            </DialogTitle>
+          </DialogHeader>
+          <QuestionForm
+            question={selectedQuestion}
+            onSubmit={handleSubmit}
+            onCancel={() => setIsDialogOpen(false)}
+            isSubmitting={isAdding || isUpdating}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
