@@ -14,13 +14,12 @@ import { Plus, X } from 'lucide-react';
 
 const questionSchema = z.object({
   question_text: z.string().min(5, 'يجب أن يكون السؤال 5 أحرف على الأقل'),
-  question_type: z.enum(['multiple_choice', 'true_false', 'essay', 'short_answer']),
+  question_type: z.enum(['multiple_choice', 'true_false']),
   choices: z.array(z.object({
     id: z.string(),
     text: z.string().min(1, 'يجب إدخال نص الخيار')
   })).optional(),
   correct_answer: z.string().min(1, 'يجب إدخال الإجابة الصحيحة'),
-  points: z.number().min(1, 'يجب أن تكون النقاط 1 على الأقل'),
   difficulty: z.enum(['easy', 'medium', 'hard']),
   grade_level: z.string().min(1, 'يجب اختيار المستوى الدراسي'),
   section_name: z.string().optional(),
@@ -59,10 +58,11 @@ export const QuestionForm: React.FC<QuestionFormProps> = ({
     resolver: zodResolver(questionSchema),
     defaultValues: {
       question_text: question?.question_text || '',
-      question_type: question?.question_type || 'multiple_choice',
+      question_type: (question?.question_type === 'multiple_choice' || question?.question_type === 'true_false') 
+        ? question.question_type 
+        : 'multiple_choice',
       choices: question?.choices || [{ id: '1', text: '' }, { id: '2', text: '' }],
       correct_answer: question?.correct_answer || '',
-      points: question?.points || 1,
       difficulty: question?.difficulty || 'medium',
       grade_level: question?.grade_level || '11',
       section_name: question?.section_name || '',
@@ -96,10 +96,19 @@ export const QuestionForm: React.FC<QuestionFormProps> = ({
   };
 
   const handleSubmit = (data: QuestionFormData) => {
-    onSubmit({
-      ...data,
+    // تحويل البيانات من نموذج النموذج إلى نوع السؤال الكامل
+    const questionData: Omit<Question, 'id' | 'created_at' | 'updated_at'> = {
+      question_text: data.question_text,
+      question_type: data.question_type as QuestionType,
+      choices: data.choices,
+      correct_answer: data.correct_answer,
+      points: 1, // قيمة افتراضية، سيتم حساب النقاط الفعلية عند إضافة السؤال للامتحان
+      difficulty: data.difficulty as QuestionDifficulty,
+      grade_level: data.grade_level,
+      section_name: data.section_name,
       is_active: true,
-    } as any);
+    };
+    onSubmit(questionData);
   };
 
   const showChoices = questionType === 'multiple_choice' || questionType === 'true_false';
@@ -122,7 +131,6 @@ export const QuestionForm: React.FC<QuestionFormProps> = ({
                 <SelectContent>
                   <SelectItem value="multiple_choice">اختيار متعدد</SelectItem>
                   <SelectItem value="true_false">صح/خطأ</SelectItem>
-                  <SelectItem value="short_answer">إجابة قصيرة</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -217,49 +225,28 @@ export const QuestionForm: React.FC<QuestionFormProps> = ({
           )}
         />
 
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="points"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>النقاط</FormLabel>
+        <FormField
+          control={form.control}
+          name="difficulty"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>مستوى الصعوبة</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
-                  <Input
-                    type="number"
-                    min={1}
-                    {...field}
-                    onChange={(e) => field.onChange(parseInt(e.target.value))}
-                  />
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                 </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="difficulty"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>مستوى الصعوبة</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="easy">سهل</SelectItem>
-                    <SelectItem value="medium">متوسط</SelectItem>
-                    <SelectItem value="hard">صعب</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+                <SelectContent>
+                  <SelectItem value="easy">سهل</SelectItem>
+                  <SelectItem value="medium">متوسط</SelectItem>
+                  <SelectItem value="hard">صعب</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <FormField
           control={form.control}
