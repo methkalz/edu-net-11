@@ -159,7 +159,7 @@ export const useStudentExams = () => {
             .eq('status', 'completed')
             .order('total_score', { ascending: false })
             .limit(1)
-            .single();
+            .maybeSingle();
 
           return {
             ...exam,
@@ -216,13 +216,15 @@ export const useStudentExams = () => {
   // بدء محاولة جديدة
   const startExam = async (examId: string): Promise<string | null> => {
     try {
+      setLoading(true);
+      
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) {
         toast.error('يجب تسجيل الدخول');
         return null;
       }
 
-      // التحقق من عدد المحاولات
+      // التحقق من عدد المحاولات من البيانات المحلية
       const exam = exams.find(e => e.id === examId);
       if (!exam) {
         toast.error('الاختبار غير موجود');
@@ -234,109 +236,34 @@ export const useStudentExams = () => {
         return null;
       }
 
-      // توليد الأسئلة بناءً على question_sources
-      const questionSources = exam.question_sources as any;
-      let bankQuestions: any[] = [];
-
-      if (questionSources?.type === 'sections' && questionSources.sections?.length > 0) {
-        // جلب أسئلة من الأقسام المحددة
-        const { data: sectionQuestions, error: questionsError } = await supabase
-          .from('question_bank')
-          .select('*')
-          .in('section_id', questionSources.sections)
-          .limit(exam.total_questions || 10);
-
-        if (questionsError) throw questionsError;
-        bankQuestions = sectionQuestions || [];
-      } else if (questionSources?.type === 'random') {
-        // جلب أسئلة عشوائية من بنك الأسئلة
-        const { data: randomQuestions, error: questionsError } = await supabase
-          .from('question_bank')
-          .select('*')
-          .limit(exam.total_questions || 10);
-
-        if (questionsError) throw questionsError;
-        bankQuestions = randomQuestions || [];
-      }
-
-      if (!bankQuestions || bankQuestions.length === 0) {
-        toast.error('الاختبار لا يحتوي على أسئلة');
-        return null;
-      }
-
-      // نسخ الأسئلة إلى exam_questions للربط مع exam_attempt_questions
-      const examQuestionsToInsert = bankQuestions.map(q => ({
-        exam_id: examId,
-        question_bank_id: q.id,
-        question_text: q.question_text,
-        question_type: q.question_type,
-        choices: q.choices,
-        correct_answer: q.correct_answer,
-        points: q.points || 1,
-        difficulty_level: q.difficulty_level,
-        bank_category: q.category
-      }));
-
-      const { data: insertedQuestions, error: insertError } = await supabase
-        .from('exam_questions')
-        .insert(examQuestionsToInsert)
-        .select();
-
-      if (insertError) throw insertError;
-      if (!insertedQuestions || insertedQuestions.length === 0) {
-        toast.error('فشل في إنشاء أسئلة الاختبار');
-        return null;
-      }
-
-      const questions = insertedQuestions;
-
-      // إنشاء محاولة جديدة
-      const { data: attempt, error: attemptError } = await supabase
-        .from('exam_attempts')
-        .insert({
-          teacher_exam_id: examId,
-          student_id: user.user.id,
-          status: 'in_progress',
-          max_score: questions.reduce((sum, q) => sum + (q.points || 0), 0),
-          started_at: new Date().toISOString()
-        })
-        .select()
-        .single();
-
-      if (attemptError) throw attemptError;
-
-      // إنشاء سجلات للأسئلة
-      const attemptQuestions = questions.map((q, index) => ({
-        attempt_id: attempt.id,
-        question_id: q.id,
-        display_order: index + 1
-      }));
-
-      const { error: questionsInsertError } = await supabase
-        .from('exam_attempt_questions')
-        .insert(attemptQuestions);
-
-      if (questionsInsertError) throw questionsInsertError;
-
-      setCurrentAttempt({
-        id: attempt.id,
-        teacher_exam_id: attempt.teacher_exam_id,
-        student_id: attempt.student_id,
-        started_at: attempt.started_at,
-        finished_at: attempt.finished_at,
-        status: attempt.status as 'in_progress' | 'completed' | 'expired',
-        total_score: attempt.total_score,
-        max_score: attempt.max_score
+      // استدعاء Edge Function لبدء الاختبار
+      const { data, error } = await supabase.functions.invoke('start-exam', {
+        body: { examId }
       });
-      setExamQuestions(questions as any);
-      setCurrentExam(exam);
 
+      if (error) {
+        console.error('Error from start-exam function:', error);
+        throw new Error(error.message || 'فشل في بدء الاختبار');
+      }
+
+      if (!data || !data.attemptId) {
+        throw new Error('فشل في الحصول على معرف المحاولة');
+      }
+
+      console.log('Exam started successfully, attempt:', data.attemptId);
       toast.success('تم بدء الاختبار بنجاح');
-      return attempt.id;
+      
+      // تحديث البيانات المحلية
+      await fetchMyAttempts();
+      
+      return data.attemptId;
+
     } catch (error: any) {
       console.error('Error starting exam:', error);
-      toast.error('فشل بدء الاختبار');
+      toast.error(error.message || 'فشل في بدء الاختبار');
       return null;
+    } finally {
+      setLoading(false);
     }
   };
 

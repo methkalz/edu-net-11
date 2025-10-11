@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.create-drive-folder]
 verify_jwt = false
+
+[functions.start-exam]
+verify_jwt = true
