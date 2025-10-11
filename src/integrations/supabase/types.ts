@@ -5353,6 +5353,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      generate_exam_questions: {
+        Args: { p_exam_id: string; p_student_id: string }
+        Returns: Json
+      }
       get_available_exams: {
         Args: { p_student_id: string }
         Returns: {

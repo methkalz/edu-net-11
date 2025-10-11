@@ -28,8 +28,9 @@ export default function StudentExamAttempt() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('غير مصرح');
 
+      // استخدام دالة توليد الأسئلة التلقائية
       const { data, error } = await supabase
-        .rpc('get_exam_with_questions', {
+        .rpc('generate_exam_questions', {
           p_exam_id: examId,
           p_student_id: user.id
         });
