@@ -15,7 +15,7 @@ export const networkAddressesQuestions: Omit<Question, 'id' | 'created_at' | 'up
     points: 1,
     difficulty: "easy",
     grade_level: "11",
-    section_name: "כתובות רשת - عناوين الشبكة وطرق تمثيل الأرقام",
+    section_name: "عناوين الشبكة وطرق تمثيل الأرقام في الشبكة",
     topic_name: "IPv4",
     is_active: true
   },
@@ -32,7 +32,7 @@ export const networkAddressesQuestions: Omit<Question, 'id' | 'created_at' | 'up
     points: 1,
     difficulty: "easy",
     grade_level: "11",
-    section_name: "כתובות רשת - عناوين الشبكة وطرق تمثيل الأرقام",
+    section_name: "عناوين الشبكة وطرق تمثيل الأرقام في الشبكة",
     topic_name: "أنظمة العد",
     is_active: true
   },
@@ -49,7 +49,7 @@ export const networkAddressesQuestions: Omit<Question, 'id' | 'created_at' | 'up
     points: 1,
     difficulty: "easy",
     grade_level: "11",
-    section_name: "כתובות רשת - عناوين الشبكة وطرق تمثيل الأرقام",
+    section_name: "عناوين الشبكة وطرق تمثيل الأرقام في الشبكة",
     topic_name: "MAC Address",
     is_active: true
   },
@@ -66,7 +66,7 @@ export const networkAddressesQuestions: Omit<Question, 'id' | 'created_at' | 'up
     points: 1,
     difficulty: "easy",
     grade_level: "11",
-    section_name: "כתובות רשת - عناוين الشبكة وطرق تمثيل الأرقام",
+    section_name: "عناوين الشبكة وطرق تمثيل الأرقام في الشبكة",
     topic_name: "IPv4",
     is_active: true
   },
@@ -83,7 +83,7 @@ export const networkAddressesQuestions: Omit<Question, 'id' | 'created_at' | 'up
     points: 1,
     difficulty: "easy",
     grade_level: "11",
-    section_name: "כתובות רשת - عناوين الشبكة وطرق تمثيل الأرقام",
+    section_name: "عناوين الشبكة وطرق تمثيل الأرقام في الشبكة",
     topic_name: "IPv6",
     is_active: true
   },
@@ -100,7 +100,7 @@ export const networkAddressesQuestions: Omit<Question, 'id' | 'created_at' | 'up
     points: 1,
     difficulty: "easy",
     grade_level: "11",
-    section_name: "כתובות רשת - عناوين الشبكة وطرق تمثيل الأرقام",
+    section_name: "عناوين الشبكة وطرق تمثيل الأرقام في الشبكة",
     topic_name: "أنظمة العد",
     is_active: true
   },
@@ -117,7 +117,7 @@ export const networkAddressesQuestions: Omit<Question, 'id' | 'created_at' | 'up
     points: 1,
     difficulty: "easy",
     grade_level: "11",
-    section_name: "כתובות רשת - عناوين الشبكة وطرق تمثيل الأرقام",
+    section_name: "عناوين الشبكة وطرق تمثيل الأرقام في الشبكة",
     topic_name: "MAC Address",
     is_active: true
   },
@@ -134,7 +134,7 @@ export const networkAddressesQuestions: Omit<Question, 'id' | 'created_at' | 'up
     points: 1,
     difficulty: "easy",
     grade_level: "11",
-    section_name: "כתובות רשת - عناوين الشبكة وطرق تمثيل الأرقام",
+    section_name: "عناوين الشبكة وطرق تمثيل الأرقام في الشبكة",
     topic_name: "IPv4",
     is_active: true
   },
@@ -153,7 +153,7 @@ export const networkAddressesQuestions: Omit<Question, 'id' | 'created_at' | 'up
     points: 2,
     difficulty: "medium",
     grade_level: "11",
-    section_name: "כתובות רשת - عناوين الشبكة وطرق تمثيل الأرقام",
+    section_name: "عناوين الشبكة وطرق تمثيل الأرقام في الشبكة",
     topic_name: "Subnet Mask",
     is_active: true
   },
@@ -170,7 +170,7 @@ export const networkAddressesQuestions: Omit<Question, 'id' | 'created_at' | 'up
     points: 2,
     difficulty: "medium",
     grade_level: "11",
-    section_name: "כתובות רשת - عناوين الشبكة وطرق تمثيل الأرقام",
+    section_name: "عناوين الشبكة وطرق تمثيل الأرقام في الشبكة",
     topic_name: "Public vs Private IPs",
     is_active: true
   },
@@ -187,7 +187,7 @@ export const networkAddressesQuestions: Omit<Question, 'id' | 'created_at' | 'up
     points: 2,
     difficulty: "medium",
     grade_level: "11",
-    section_name: "כתובות רשת - عناوين الشبكة وطرق تمثيل الأرقام",
+    section_name: "عناوين الشبكة وطرق تمثيل الأرقام في الشبكة",
     topic_name: "أنظمة العد",
     is_active: true
   },
@@ -204,7 +204,7 @@ export const networkAddressesQuestions: Omit<Question, 'id' | 'created_at' | 'up
     points: 2,
     difficulty: "medium",
     grade_level: "11",
-    section_name: "כתובות רשת - عناوين الشبكة وطرق تمثيل الأرقام",
+    section_name: "عناوين الشبكة وطرق تمثيل الأرقام في الشبكة",
     topic_name: "IPv4",
     is_active: true
   },
@@ -221,7 +221,7 @@ export const networkAddressesQuestions: Omit<Question, 'id' | 'created_at' | 'up
     points: 2,
     difficulty: "medium",
     grade_level: "11",
-    section_name: "כתובות רשת - عناوين الشبكة وطرق تمثيل الأرقام",
+    section_name: "عناوين الشبكة وطرق تمثيل الأرقام في الشبكة",
     topic_name: "MAC Address",
     is_active: true
   },
@@ -238,7 +238,7 @@ export const networkAddressesQuestions: Omit<Question, 'id' | 'created_at' | 'up
     points: 2,
     difficulty: "medium",
     grade_level: "11",
-    section_name: "כתובות רשת - عناوين الشبكة وطرق تمثيل الأرقام",
+    section_name: "عناوين الشبكة وطرق تمثيل الأرقام في الشبكة",
     topic_name: "أنظمة العد",
     is_active: true
   },
@@ -255,7 +255,7 @@ export const networkAddressesQuestions: Omit<Question, 'id' | 'created_at' | 'up
     points: 2,
     difficulty: "medium",
     grade_level: "11",
-    section_name: "כתובות רשת - عناوين الشبكة وطرق تمثيل الأرقام",
+    section_name: "عناوين الشبكة وطرق تمثيل الأرقام في الشبكة",
     topic_name: "Public vs Private IPs",
     is_active: true
   },
@@ -274,7 +274,7 @@ export const networkAddressesQuestions: Omit<Question, 'id' | 'created_at' | 'up
     points: 3,
     difficulty: "hard",
     grade_level: "11",
-    section_name: "כתובות רשת - عناوين الشبكة وطرق تمثيل الأرقام",
+    section_name: "عناوين الشبكة وطرق تمثيل الأرقام في الشبكة",
     topic_name: "CIDR Notation",
     is_active: true
   },
@@ -291,7 +291,7 @@ export const networkAddressesQuestions: Omit<Question, 'id' | 'created_at' | 'up
     points: 3,
     difficulty: "hard",
     grade_level: "11",
-    section_name: "כתובות רשת - عناוين الشبكة وطرق تمثيل الأرقام",
+    section_name: "عناوين الشبكة وطرق تمثيل الأرقام في الشبكة",
     topic_name: "CIDR Notation",
     is_active: true
   },
@@ -308,7 +308,7 @@ export const networkAddressesQuestions: Omit<Question, 'id' | 'created_at' | 'up
     points: 3,
     difficulty: "hard",
     grade_level: "11",
-    section_name: "כתובות רשת - عناوين الشبكة وطرق تمثيل الأرقام",
+    section_name: "عناوين الشبكة وطرق تمثيل الأرقام في الشبكة",
     topic_name: "IPv6",
     is_active: true
   },
@@ -325,7 +325,7 @@ export const networkAddressesQuestions: Omit<Question, 'id' | 'created_at' | 'up
     points: 3,
     difficulty: "hard",
     grade_level: "11",
-    section_name: "כתובות רשת - عناوين الشبكة وطرق تمثيل الأرقام",
+    section_name: "عناوين الشبكة وطرق تمثيل الأرقام في الشبكة",
     topic_name: "أنظمة العد",
     is_active: true
   },
@@ -342,7 +342,7 @@ export const networkAddressesQuestions: Omit<Question, 'id' | 'created_at' | 'up
     points: 4,
     difficulty: "hard",
     grade_level: "11",
-    section_name: "כתובות רשת - عناوين الشبكة وطرق تمثيل الأرقام",
+    section_name: "عناوين الشبكة وطرق تمثيل الأرقام في الشبكة",
     topic_name: "Subnetting",
     is_active: true
   },
@@ -355,7 +355,7 @@ export const networkAddressesQuestions: Omit<Question, 'id' | 'created_at' | 'up
     points: 1,
     difficulty: "easy",
     grade_level: "11",
-    section_name: "כתובות רשת - عناوين الشبكة وطرق تمثيل الأرقام",
+    section_name: "عناوين الشبكة وطرق تمثيل الأرقام في الشبكة",
     topic_name: "MAC Address",
     is_active: true
   },
@@ -366,7 +366,7 @@ export const networkAddressesQuestions: Omit<Question, 'id' | 'created_at' | 'up
     points: 1,
     difficulty: "easy",
     grade_level: "11",
-    section_name: "כתובות רשת - عناوين الشبكة وطرق تمثيل الأرقام",
+    section_name: "عناوين الشبكة وطرق تمثيل الأرقام في الشبكة",
     topic_name: "IPv6",
     is_active: true
   },
@@ -377,7 +377,7 @@ export const networkAddressesQuestions: Omit<Question, 'id' | 'created_at' | 'up
     points: 1,
     difficulty: "easy",
     grade_level: "11",
-    section_name: "כתובות רשת - عناوين الشبكة وطرق تمثيل الأرقام",
+    section_name: "عناوين الشبكة وطرق تمثيل الأرقام في الشبكة",
     topic_name: "أنظمة العد",
     is_active: true
   },
@@ -390,7 +390,7 @@ export const networkAddressesQuestions: Omit<Question, 'id' | 'created_at' | 'up
     points: 2,
     difficulty: "medium",
     grade_level: "11",
-    section_name: "כתובות רשת - عناوين الشبكة وطرق تمثيل الأرقام",
+    section_name: "عناوين الشبكة وطرق تمثيل الأرقام في الشبكة",
     topic_name: "Public vs Private IPs",
     is_active: true
   },
@@ -401,7 +401,7 @@ export const networkAddressesQuestions: Omit<Question, 'id' | 'created_at' | 'up
     points: 2,
     difficulty: "medium",
     grade_level: "11",
-    section_name: "כתובות רשת - عناوين الشبكة وطرق تمثيل الأرقام",
+    section_name: "عناوين الشبكة وطرق تمثيل الأرقام في الشبكة",
     topic_name: "Subnet Mask",
     is_active: true
   },
@@ -412,7 +412,7 @@ export const networkAddressesQuestions: Omit<Question, 'id' | 'created_at' | 'up
     points: 2,
     difficulty: "medium",
     grade_level: "11",
-    section_name: "כתובות רשת - عناوين الشبكة وطرق تمثيل الأرقام",
+    section_name: "عناوين الشبكة وطرق تمثيل الأرقام في الشبكة",
     topic_name: "MAC Address",
     is_active: true
   },
@@ -423,7 +423,7 @@ export const networkAddressesQuestions: Omit<Question, 'id' | 'created_at' | 'up
     points: 2,
     difficulty: "medium",
     grade_level: "11",
-    section_name: "כתובות רשת - عناوين الشبكة وطرق تمثيل الأرقام",
+    section_name: "عناوين الشبكة وطرق تمثيل الأرقام في الشبكة",
     topic_name: "أنظمة العد",
     is_active: true
   },
@@ -436,7 +436,7 @@ export const networkAddressesQuestions: Omit<Question, 'id' | 'created_at' | 'up
     points: 3,
     difficulty: "hard",
     grade_level: "11",
-    section_name: "כתובות רשת - عناوين الشبكة وطرق تمثيل الأرقام",
+    section_name: "عناوين الشبكة وطرق تمثيل الأرقام في الشبكة",
     topic_name: "CIDR Notation",
     is_active: true
   },
@@ -447,7 +447,7 @@ export const networkAddressesQuestions: Omit<Question, 'id' | 'created_at' | 'up
     points: 3,
     difficulty: "hard",
     grade_level: "11",
-    section_name: "כתובות רשת - عناوين الشبكة وطرق تمثيل الأرقام",
+    section_name: "عناوين الشبكة وطرق تمثيل الأرقام في الشبكة",
     topic_name: "IPv6",
     is_active: true
   },
@@ -458,7 +458,7 @@ export const networkAddressesQuestions: Omit<Question, 'id' | 'created_at' | 'up
     points: 3,
     difficulty: "hard",
     grade_level: "11",
-    section_name: "כתובות רשת - عناوين الشبكة وطرق تمثيل الأرقام",
+    section_name: "عناوين الشبكة وطرق تمثيل الأرقام في الشبكة",
     topic_name: "أنظمة العد",
     is_active: true
   }
