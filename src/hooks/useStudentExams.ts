@@ -59,67 +59,20 @@ export const useStudentExams = () => {
   const fetchAvailableExams = async () => {
     setLoading(true);
     try {
-      // 1. جلب معلومات الطالب
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) throw new Error('المستخدم غير مسجل');
-
-      // 2. جلب صف الطالب وclass_id
-      const { data: studentData, error: studentError } = await supabase
-        .from('students')
-        .select(`
-          id,
-          class_students!inner(
-            class_id,
-            classes!inner(
-              grade_levels!inner(code)
-            )
-          )
-        `)
-        .eq('user_id', user.user.id)
-        .single();
-
-      if (studentError) throw studentError;
-
-      const studentClassId = studentData.class_students[0]?.class_id;
-      const studentGrade = studentData.class_students[0]?.classes?.grade_levels?.code;
-
-      if (!studentClassId || !studentGrade) {
-        toast.error('لم يتم العثور على بيانات الطالب');
-        setLoading(false);
-        return;
-      }
-
-      console.log('Student Info:', { studentClassId, studentGrade });
-
-      // 3. جلب الاختبارات مع فلترة صريحة
       const { data: examsData, error } = await supabase
         .from('teacher_exams')
         .select('*')
         .eq('status', 'published')
-        .eq('is_active', true)
-        .contains('grade_levels', [studentGrade])
-        .contains('target_class_ids', [studentClassId])
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      console.log('Fetched Exams:', examsData);
+      // جلب عدد محاولات الطالب لكل اختبار
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) throw new Error('المستخدم غير مسجل');
 
-      // 4. فلترة إضافية من جانب العميل لضمان عدم وجود NULL
-      const filteredExams = (examsData || []).filter(exam => 
-        exam.grade_levels && 
-        exam.grade_levels.length > 0 &&
-        !exam.grade_levels.includes(null) &&
-        exam.grade_levels.includes(studentGrade) &&
-        exam.target_class_ids &&
-        exam.target_class_ids.includes(studentClassId)
-      );
-
-      console.log('Filtered Exams:', filteredExams);
-
-      // 5. جلب عدد المحاولات وأفضل نتيجة
       const examsWithAttempts = await Promise.all(
-        filteredExams.map(async (exam) => {
+        (examsData || []).map(async (exam) => {
           const { count } = await supabase
             .from('exam_attempts')
             .select('*', { count: 'exact', head: true })

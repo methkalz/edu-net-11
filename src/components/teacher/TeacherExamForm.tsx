@@ -147,11 +147,9 @@ export const TeacherExamForm: React.FC<TeacherExamFormProps> = ({
     setLoading(true);
 
     try {
-      const cleanedGradeLevels = selectedGrades.filter(g => g !== null && g !== undefined && g !== '');
-      
       const examData = {
         ...formData,
-        grade_levels: cleanedGradeLevels.length > 0 ? cleanedGradeLevels : ['11'],
+        grade_levels: selectedGrades,
         difficulty_distribution: difficultyDistribution,
         question_sources: {
           type: questionSourceType,
