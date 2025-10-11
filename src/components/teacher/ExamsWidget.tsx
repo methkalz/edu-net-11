@@ -41,6 +41,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useQuery } from '@tanstack/react-query';
 
 interface ExamsWidgetProps {
   canAccessGrade10: boolean;
@@ -52,7 +53,9 @@ const createExamSchema = z.object({
   title: z.string().min(1, 'العنوان مطلوب').max(200, 'العنوان طويل جداً'),
   description: z.string().optional(),
   exam_type: z.enum(['quiz', 'midterm', 'final', 'practice']),
+  selection_type: z.enum(['all_grade', 'specific_classes']).default('all_grade'),
   grade_levels: z.array(z.string()).optional(),
+  target_classes: z.array(z.string()).optional(),
   start_datetime: z.string().optional(),
   end_datetime: z.string().optional(),
   duration_minutes: z.number().min(1, 'مدة الامتحان مطلوبة'),
@@ -74,13 +77,48 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // جلب الصفوف المتاحة للمعلم
+  const { data: availableClasses } = useQuery({
+    queryKey: ['teacher-classes', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('school_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!profile?.school_id) return [];
+
+      const { data, error } = await supabase
+        .from('classes')
+        .select(`
+          id,
+          grade_level_id,
+          class_name_id,
+          grade_levels:grade_level_id (code, label),
+          class_names:class_name_id (name)
+        `)
+        .eq('school_id', profile.school_id)
+        .eq('status', 'active')
+        .order('grade_level_id');
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user?.id && isCreateDialogOpen,
+  });
+
   const form = useForm<CreateExamFormData>({
     resolver: zodResolver(createExamSchema),
     defaultValues: {
       title: '',
       description: '',
       exam_type: 'quiz',
+      selection_type: 'all_grade',
       grade_levels: [],
+      target_classes: [],
       start_datetime: '',
       end_datetime: '',
       duration_minutes: 60,
@@ -130,10 +168,20 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         setCurrentStep(prev => prev + 1);
       }
     } else if (currentStep === 2) {
+      const selectionType = form.getValues('selection_type');
       const gradeLevels = form.getValues('grade_levels');
-      if (!gradeLevels || gradeLevels.length === 0) {
-        form.setError('grade_levels', { message: 'يجب اختيار صف واحد على الأقل' });
-        return;
+      const targetClasses = form.getValues('target_classes');
+      
+      if (selectionType === 'all_grade') {
+        if (!gradeLevels || gradeLevels.length === 0) {
+          toast.error('يجب اختيار صف واحد على الأقل');
+          return;
+        }
+      } else {
+        if (!targetClasses || targetClasses.length === 0) {
+          toast.error('يجب اختيار صف محدد واحد على الأقل');
+          return;
+        }
       }
       setCurrentStep(prev => prev + 1);
     } else if (currentStep === 3) {
@@ -165,11 +213,20 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
       setIsSubmitting(true);
 
       // التحقق النهائي من جميع الحقول المطلوبة
-      if (!data.grade_levels || data.grade_levels.length === 0) {
-        toast.error('يجب اختيار صف واحد على الأقل');
-        setIsSubmitting(false);
-        return;
+      if (data.selection_type === 'all_grade') {
+        if (!data.grade_levels || data.grade_levels.length === 0) {
+          toast.error('يجب اختيار صف واحد على الأقل');
+          setIsSubmitting(false);
+          return;
+        }
+      } else {
+        if (!data.target_classes || data.target_classes.length === 0) {
+          toast.error('يجب اختيار صف محدد واحد على الأقل');
+          setIsSubmitting(false);
+          return;
+        }
       }
+      
       if (!data.start_datetime) {
         toast.error('تاريخ البدء مطلوب');
         setIsSubmitting(false);
@@ -206,7 +263,8 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
           description: data.description || null,
           duration_minutes: data.duration_minutes,
           passing_percentage: data.passing_percentage,
-          grade_levels: data.grade_levels,
+          grade_levels: data.selection_type === 'all_grade' ? data.grade_levels : [],
+          target_classes: data.selection_type === 'specific_classes' ? data.target_classes : [],
           start_datetime: data.start_datetime,
           end_datetime: data.end_datetime,
           max_attempts: data.max_attempts,
@@ -227,7 +285,9 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
       setIsCreateDialogOpen(false);
       
       // التوجيه إلى صفحة الامتحان لإضافة الأسئلة
-      const primaryGrade = data.grade_levels.includes('11') ? '11' : '10';
+      const primaryGrade = data.selection_type === 'all_grade' 
+        ? (data.grade_levels?.includes('11') ? '11' : '10')
+        : '10'; // default to 10 for specific classes
       navigate(`/grade${primaryGrade}-management?tab=exams&examId=${examData.id}`);
       
     } catch (error) {
@@ -471,76 +531,171 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
               {currentStep === 2 && (
                 <div className="space-y-4">
                   <div className="bg-muted/50 p-4 rounded-lg mb-4">
-                    <h3 className="font-semibold mb-2">الصفوف المستهدفة</h3>
+                    <h3 className="font-semibold mb-2">صفوف الامتحان</h3>
                     <p className="text-sm text-muted-foreground">
-                      اختر الصف أو الصفوف التي سيكون الامتحان متاحاً لها
+                      اختر كل الصف أو صفوف محددة للامتحان
                     </p>
                   </div>
 
                   <FormField
                     control={form.control}
-                    name="grade_levels"
-                    render={() => (
-                      <FormItem>
-                        <div className="space-y-3">
-                          {canAccessGrade10 && (
-                            <FormField
-                              control={form.control}
-                              name="grade_levels"
-                              render={({ field }) => (
-                                <FormItem className="flex items-center space-x-3 space-x-reverse space-y-0">
-                                  <FormControl>
-                                    <Checkbox
-                                      checked={field.value?.includes('10')}
-                                      onCheckedChange={(checked) => {
-                                        return checked
-                                          ? field.onChange([...field.value, '10'])
-                                          : field.onChange(field.value?.filter((value) => value !== '10'));
-                                      }}
-                                    />
-                                  </FormControl>
-                                  <FormLabel className="font-medium cursor-pointer flex items-center gap-2">
-                                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500/20 to-orange-600/10 flex items-center justify-center">
-                                      <span className="text-orange-600 font-bold">10</span>
-                                    </div>
-                                    الصف العاشر
-                                  </FormLabel>
-                                </FormItem>
-                              )}
-                            />
-                          )}
-
-                          {canAccessGrade11 && (
-                            <FormField
-                              control={form.control}
-                              name="grade_levels"
-                              render={({ field }) => (
-                                <FormItem className="flex items-center space-x-3 space-x-reverse space-y-0">
-                                  <FormControl>
-                                    <Checkbox
-                                      checked={field.value?.includes('11')}
-                                      onCheckedChange={(checked) => {
-                                        return checked
-                                          ? field.onChange([...field.value, '11'])
-                                          : field.onChange(field.value?.filter((value) => value !== '11'));
-                                      }}
-                                    />
-                                  </FormControl>
-                                  <FormLabel className="font-medium cursor-pointer flex items-center gap-2">
-                                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500/20 to-purple-600/10 flex items-center justify-center">
-                                      <span className="text-purple-600 font-bold">11</span>
-                                    </div>
-                                    الصف الحادي عشر
-                                  </FormLabel>
-                                </FormItem>
-                              )}
-                            />
-                          )}
-                        </div>
-                        <FormMessage />
+                    name="selection_type"
+                    render={({ field }) => (
+                      <FormItem className="space-y-3">
+                        <FormLabel>نوع الاختيار</FormLabel>
+                        <FormControl>
+                          <div className="flex gap-4">
+                            <label className="flex items-center space-x-2 space-x-reverse cursor-pointer">
+                              <input
+                                type="radio"
+                                value="all_grade"
+                                checked={field.value === 'all_grade'}
+                                onChange={() => {
+                                  field.onChange('all_grade');
+                                  form.setValue('target_classes', []);
+                                }}
+                                className="w-4 h-4"
+                              />
+                              <span className="text-sm font-medium">كل الصف</span>
+                            </label>
+                            <label className="flex items-center space-x-2 space-x-reverse cursor-pointer">
+                              <input
+                                type="radio"
+                                value="specific_classes"
+                                checked={field.value === 'specific_classes'}
+                                onChange={() => {
+                                  field.onChange('specific_classes');
+                                  form.setValue('grade_levels', []);
+                                }}
+                                className="w-4 h-4"
+                              />
+                              <span className="text-sm font-medium">صفوف محددة</span>
+                            </label>
+                          </div>
+                        </FormControl>
                       </FormItem>
                     )}
                   />
+
+                  {form.watch('selection_type') === 'all_grade' && (
+                    <FormField
+                      control={form.control}
+                      name="grade_levels"
+                      render={() => (
+                        <FormItem>
+                          <FormLabel>اختر الصف</FormLabel>
+                          <div className="space-y-3">
+                            {canAccessGrade10 && (
+                              <FormField
+                                control={form.control}
+                                name="grade_levels"
+                                render={({ field }) => (
+                                  <FormItem className="flex items-center space-x-3 space-x-reverse space-y-0">
+                                    <FormControl>
+                                      <Checkbox
+                                        checked={field.value?.includes('10')}
+                                        onCheckedChange={(checked) => {
+                                          return checked
+                                            ? field.onChange([...field.value, '10'])
+                                            : field.onChange(field.value?.filter((value) => value !== '10'));
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <FormLabel className="font-medium cursor-pointer flex items-center gap-2">
+                                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500/20 to-orange-600/10 flex items-center justify-center">
+                                        <span className="text-orange-600 font-bold">10</span>
+                                      </div>
+                                      كل الصف العاشر
+                                    </FormLabel>
+                                  </FormItem>
+                                )}
+                              />
+                            )}
+
+                            {canAccessGrade11 && (
+                              <FormField
+                                control={form.control}
+                                name="grade_levels"
+                                render={({ field }) => (
+                                  <FormItem className="flex items-center space-x-3 space-x-reverse space-y-0">
+                                    <FormControl>
+                                      <Checkbox
+                                        checked={field.value?.includes('11')}
+                                        onCheckedChange={(checked) => {
+                                          return checked
+                                            ? field.onChange([...field.value, '11'])
+                                            : field.onChange(field.value?.filter((value) => value !== '11'));
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <FormLabel className="font-medium cursor-pointer flex items-center gap-2">
+                                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500/20 to-purple-600/10 flex items-center justify-center">
+                                        <span className="text-purple-600 font-bold">11</span>
+                                      </div>
+                                      كل الصف الحادي عشر
+                                    </FormLabel>
+                                  </FormItem>
+                                )}
+                              />
+                            )}
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+
+                  {form.watch('selection_type') === 'specific_classes' && (
+                    <FormField
+                      control={form.control}
+                      name="target_classes"
+                      render={() => (
+                        <FormItem>
+                          <FormLabel>اختر الصفوف المحددة</FormLabel>
+                          <div className="space-y-2 max-h-64 overflow-y-auto border rounded-lg p-3">
+                            {availableClasses && availableClasses.length > 0 ? (
+                              availableClasses
+                                .filter((cls: any) => {
+                                  const gradeCode = cls.grade_levels?.code;
+                                  if (gradeCode === '10') return canAccessGrade10;
+                                  if (gradeCode === '11') return canAccessGrade11;
+                                  return false;
+                                })
+                                .map((cls: any) => (
+                                  <FormField
+                                    key={cls.id}
+                                    control={form.control}
+                                    name="target_classes"
+                                    render={({ field }) => (
+                                      <FormItem className="flex items-center space-x-3 space-x-reverse space-y-0">
+                                        <FormControl>
+                                          <Checkbox
+                                            checked={field.value?.includes(cls.id)}
+                                            onCheckedChange={(checked) => {
+                                              return checked
+                                                ? field.onChange([...field.value, cls.id])
+                                                : field.onChange(field.value?.filter((value) => value !== cls.id));
+                                            }}
+                                          />
+                                        </FormControl>
+                                        <FormLabel className="font-medium cursor-pointer">
+                                          {cls.grade_levels?.label} - {cls.class_names?.name}
+                                        </FormLabel>
+                                      </FormItem>
+                                    )}
+                                  />
+                                ))
+                            ) : (
+                              <p className="text-sm text-muted-foreground text-center py-4">
+                                لا توجد صفوف متاحة
+                              </p>
+                            )}
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
                 </div>
               )}
 
