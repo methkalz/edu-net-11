@@ -383,7 +383,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                       <FormItem>
                         <FormLabel>عنوان الامتحان *</FormLabel>
                         <FormControl>
-                          <Input placeholder="مثال: امتحان الوحدة الأولى" {...field} />
+                          <Input placeholder="مثال: امتحان أساسيات الاتصال" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
