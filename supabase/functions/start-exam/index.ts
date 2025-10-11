@@ -53,6 +53,13 @@ Deno.serve(async (req) => {
       throw new Error('الاختبار غير متاح');
     }
 
+    console.log('📊 Exam details:', {
+      examId,
+      schoolId: exam.school_id,
+      totalQuestions: exam.total_questions,
+      sections: exam.question_sources
+    });
+
     // 2. Check attempts count
     const { count: attemptsCount, error: countError } = await supabaseAdmin
       .from('exam_attempts')
@@ -78,8 +85,12 @@ Deno.serve(async (req) => {
     let questionsQuery = supabaseAdmin
       .from('question_bank')
       .select('*')
-      .eq('school_id', exam.school_id)
       .eq('is_active', true);
+
+    // Allow questions from exam's school or general questions (school_id = null)
+    if (exam.school_id) {
+      questionsQuery = questionsQuery.or(`school_id.eq.${exam.school_id},school_id.is.null`);
+    }
 
     // Filter by sections if specified
     if (questionSources && questionSources.type === 'sections' && questionSources.sections?.length > 0) {
@@ -88,9 +99,23 @@ Deno.serve(async (req) => {
 
     const { data: questions, error: questionsError } = await questionsQuery;
 
-    if (questionsError || !questions || questions.length === 0) {
-      console.error('No questions found:', questionsError);
-      throw new Error('لا توجد أسئلة متاحة في بنك الأسئلة');
+    console.log('✅ Questions found:', questions?.length || 0);
+    if (questions && questions.length > 0) {
+      console.log('📝 Sample question:', questions[0]?.question_text?.substring(0, 50) + '...');
+    }
+
+    if (questionsError) {
+      console.error('Error fetching questions:', questionsError);
+      throw new Error('خطأ في جلب الأسئلة من بنك الأسئلة');
+    }
+
+    if (!questions || questions.length === 0) {
+      console.error('No questions found for:', {
+        schoolId: exam.school_id,
+        sections: questionSources?.sections,
+        type: questionSources?.type
+      });
+      throw new Error('لا توجد أسئلة متاحة في بنك الأسئلة للأقسام المحددة');
     }
 
     // 4. Select random questions based on exam configuration
