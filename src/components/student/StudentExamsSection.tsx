@@ -38,16 +38,22 @@ export const StudentExamsSection = () => {
   }
 
   // تصنيف الامتحانات
+  const now = new Date();
+  
   const availableExams = exams.filter(
-    exam => exam.can_start && !isPast(new Date(exam.end_datetime))
+    exam => exam.can_start && 
+            !isPast(new Date(exam.end_datetime)) && 
+            !isFuture(new Date(exam.start_datetime))
   );
   
   const upcomingExams = exams.filter(
-    exam => isFuture(new Date(exam.start_datetime))
+    exam => isFuture(new Date(exam.start_datetime)) && 
+            exam.attempts_remaining > 0
   );
   
   const completedExams = exams.filter(
-    exam => exam.attempts_used >= exam.max_attempts || isPast(new Date(exam.end_datetime))
+    exam => exam.attempts_used >= exam.max_attempts || 
+            isPast(new Date(exam.end_datetime))
   );
 
   return (
