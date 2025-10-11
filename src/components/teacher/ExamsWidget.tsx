@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ClipboardList, FileQuestion, TrendingUp, Users, ArrowRight, Plus, ArrowLeft } from 'lucide-react';
+import { ClipboardList, FileQuestion, TrendingUp, Users, ArrowRight, Plus, ArrowLeft, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTeacherExams } from '@/hooks/useTeacherExams';
 import { useAuth } from '@/hooks/useAuth';
@@ -160,6 +160,29 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
     form.reset();
     setCurrentStep(1);
     setIsCreateDialogOpen(true);
+  };
+
+  const handleDeleteExam = async (examId: string) => {
+    if (!confirm('هل أنت متأكد من حذف هذا الامتحان؟ لا يمكن التراجع عن هذا الإجراء.')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('exams')
+        .delete()
+        .eq('id', examId);
+
+      if (error) throw error;
+
+      toast.success('تم حذف الامتحان بنجاح');
+      
+      // إعادة تحميل بيانات الامتحانات
+      await queryClient.invalidateQueries({ queryKey: ['teacher-exams', user?.id] });
+    } catch (error) {
+      console.error('Error deleting exam:', error);
+      toast.error('حدث خطأ أثناء حذف الامتحان');
+    }
   };
 
   const handleNextStep = async () => {
@@ -387,7 +410,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
               {recentExams.map((exam) => (
                 <div
                   key={exam.id}
-                  className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
+                  className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors group"
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
@@ -413,6 +436,14 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                       )}
                     </div>
                   </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleDeleteExam(exam.id)}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </div>
               ))}
             </div>
@@ -441,6 +472,14 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                   <ArrowRight className="w-3 h-3" />
                 </Button>
               )}
+              <Button
+                onClick={handleOpenCreateDialog}
+                size="sm"
+                className="bg-gradient-to-r from-orange-500 to-purple-600 hover:from-orange-600 hover:to-purple-700 text-white"
+              >
+                <Plus className="w-4 h-4 ml-2" />
+                إنشاء امتحان جديد
+              </Button>
             </div>
           </>
         ) : (
