@@ -1,12 +1,23 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ClipboardList, FileQuestion, TrendingUp, Users, ArrowRight } from 'lucide-react';
+import { ClipboardList, FileQuestion, TrendingUp, Users, ArrowRight, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTeacherExams } from '@/hooks/useTeacherExams';
 import { useAuth } from '@/hooks/useAuth';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { toast } from '@/hooks/use-toast';
 
 interface ExamsWidgetProps {
   canAccessGrade10: boolean;
@@ -17,6 +28,8 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data, isLoading } = useTeacherExams(user?.id);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [selectedGrades, setSelectedGrades] = useState<string[]>([]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -40,6 +53,36 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
 
   const handleManageExams = (grade: string) => {
     navigate(`/grade${grade}-management?tab=exams`);
+  };
+
+  const handleOpenCreateDialog = () => {
+    setSelectedGrades([]);
+    setIsCreateDialogOpen(true);
+  };
+
+  const handleGradeToggle = (grade: string) => {
+    setSelectedGrades(prev => 
+      prev.includes(grade) 
+        ? prev.filter(g => g !== grade)
+        : [...prev, grade]
+    );
+  };
+
+  const handleCreateExam = () => {
+    if (selectedGrades.length === 0) {
+      toast({
+        title: "تنبيه",
+        description: "يرجى اختيار صف واحد على الأقل",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // التوجيه إلى صفحة إدارة الامتحانات مع تمرير الصفوف المختارة
+    const primaryGrade = selectedGrades.includes('11') ? '11' : '10';
+    const gradesParam = selectedGrades.join(',');
+    navigate(`/grade${primaryGrade}-management?tab=exams&grades=${gradesParam}&action=create`);
+    setIsCreateDialogOpen(false);
   };
 
   if (isLoading) {
@@ -179,29 +222,94 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
               <ClipboardList className="w-8 h-8 text-orange-600" />
             </div>
             <p className="text-muted-foreground mb-6 text-lg">لم تقم بإنشاء أي امتحان بعد</p>
-            <div className="flex gap-3 justify-center flex-wrap">
-              {canAccessGrade10 && (
-                <Button
-                  onClick={() => handleManageExams('10')}
-                  className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg hover:shadow-xl transition-all"
-                  size="default"
-                >
-                  إنشاء امتحان للصف العاشر
-                </Button>
-              )}
-              {canAccessGrade11 && (
-                <Button
-                  onClick={() => handleManageExams('11')}
-                  className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all"
-                  size="default"
-                >
-                  إنشاء امتحان للصف الحادي عشر
-                </Button>
-              )}
-            </div>
+            <Button
+              onClick={handleOpenCreateDialog}
+              className="bg-gradient-to-r from-orange-500 to-purple-600 hover:from-orange-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all"
+              size="lg"
+            >
+              <Plus className="w-4 h-4 ml-2" />
+              إنشاء امتحان جديد
+            </Button>
           </div>
         )}
       </CardContent>
+
+      {/* Dialog لاختيار الصفوف */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl">إنشاء امتحان جديد</DialogTitle>
+            <DialogDescription>
+              اختر الصف أو الصفوف التي سيكون الامتحان متاحاً لها
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {canAccessGrade10 && (
+              <div className="flex items-center space-x-3 space-x-reverse">
+                <Checkbox
+                  id="grade10"
+                  checked={selectedGrades.includes('10')}
+                  onCheckedChange={() => handleGradeToggle('10')}
+                />
+                <Label
+                  htmlFor="grade10"
+                  className="text-base font-medium cursor-pointer flex items-center gap-2"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500/20 to-orange-600/10 flex items-center justify-center">
+                    <span className="text-orange-600 font-bold text-sm">10</span>
+                  </div>
+                  الصف العاشر
+                </Label>
+              </div>
+            )}
+
+            {canAccessGrade11 && (
+              <div className="flex items-center space-x-3 space-x-reverse">
+                <Checkbox
+                  id="grade11"
+                  checked={selectedGrades.includes('11')}
+                  onCheckedChange={() => handleGradeToggle('11')}
+                />
+                <Label
+                  htmlFor="grade11"
+                  className="text-base font-medium cursor-pointer flex items-center gap-2"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500/20 to-purple-600/10 flex items-center justify-center">
+                    <span className="text-purple-600 font-bold text-sm">11</span>
+                  </div>
+                  الصف الحادي عشر
+                </Label>
+              </div>
+            )}
+
+            {selectedGrades.length > 0 && (
+              <div className="mt-4 p-3 bg-muted rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  الصفوف المختارة: {selectedGrades.map(g => `الصف ${g === '10' ? 'العاشر' : 'الحادي عشر'}`).join(' و ')}
+                </p>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsCreateDialogOpen(false)}
+            >
+              إلغاء
+            </Button>
+            <Button
+              onClick={handleCreateExam}
+              className="bg-gradient-to-r from-orange-500 to-purple-600 hover:from-orange-600 hover:to-purple-700 text-white"
+              disabled={selectedGrades.length === 0}
+            >
+              <Plus className="w-4 h-4 ml-2" />
+              متابعة
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };
