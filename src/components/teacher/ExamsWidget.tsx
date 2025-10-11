@@ -416,7 +416,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                         <FormLabel>نوع الامتحان *</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
-                            <SelectTrigger>
+                            <SelectTrigger className="text-right">
                               <SelectValue placeholder="اختر نوع الامتحان" />
                             </SelectTrigger>
                           </FormControl>
