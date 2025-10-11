@@ -34,6 +34,8 @@ import { StudentGameSection } from './StudentGameSection';
 import { StudentProfile } from './StudentProfile';
 import { StudentDailyChallenges } from './StudentDailyChallenges';
 import StudentNotifications from './StudentNotifications';
+import { StudentExamsWidget } from './StudentExamsWidget';
+import { StudentExamsSection } from './StudentExamsSection';
 import { SchoolCalendarWidget } from '@/components/calendar/SchoolCalendarWidget';
 import { UniversalAvatar } from '@/components/shared/UniversalAvatar';
 import { UserTitleBadge } from '@/components/shared/UserTitleBadge';
@@ -46,7 +48,7 @@ const StudentDashboard: React.FC = () => {
   const { assignedGrade, getProgressPercentage, refetch: refetchContent } = useStudentContent();
   const { teacher, loading: teacherLoading } = useStudentTeacher();
   const { refetch: refetchGameStats } = useStudentGameStats();
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState<string>('overview');
   
   // نظام تتبع الأوسمة والاحتفال
   const { 
@@ -213,13 +215,17 @@ const StudentDashboard: React.FC = () => {
       <section className="container mx-auto px-6 py-8">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
           <div className="flex justify-center px-4">
-            <TabsList className={`grid w-full max-w-4xl ${hasGamesTab ? 'grid-cols-4' : 'grid-cols-3'} bg-white/95 backdrop-blur-sm shadow-xl border border-white/20 rounded-2xl p-2 h-16`}>
+            <TabsList className={`grid w-full max-w-4xl ${hasGamesTab ? 'grid-cols-5' : 'grid-cols-4'} bg-white/95 backdrop-blur-sm shadow-xl border border-white/20 rounded-2xl p-2 h-16`}>
               <TabsTrigger value="overview" className="flex items-center justify-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105">
                 <span className="text-center">نظرة عامة</span>
               </TabsTrigger>
               <TabsTrigger value="content" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105">
                 <Video className="w-6 h-6" />
                 <span className="hidden sm:inline">المحتوى</span>
+              </TabsTrigger>
+              <TabsTrigger value="exams" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105">
+                <FileText className="w-6 h-6" />
+                <span className="hidden sm:inline">الامتحانات</span>
               </TabsTrigger>
               {hasGamesTab && (
                 <TabsTrigger value="games" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105">
@@ -281,6 +287,9 @@ const StudentDashboard: React.FC = () => {
                 {/* Student Notifications */}
                 <StudentNotifications />
 
+                {/* Exams Widget */}
+                <StudentExamsWidget />
+
                 {/* Assigned Grade Info */}
                 <Card className="border-border/40 bg-gradient-to-br from-sky-50/50 via-background to-indigo-50/30 dark:from-sky-950/20 dark:via-background dark:to-indigo-950/10 shadow-sm hover:shadow-md transition-all duration-300">
                   <CardHeader className="pb-3">
@@ -332,9 +341,13 @@ const StudentDashboard: React.FC = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="content">
-            <StudentGradeContent />
-          </TabsContent>
+            <TabsContent value="content">
+              <StudentGradeContent />
+            </TabsContent>
+
+            <TabsContent value="exams">
+              <StudentExamsSection />
+            </TabsContent>
 
           {hasGamesTab && (
             <TabsContent value="games">
