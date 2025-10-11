@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
     // 1. Verify exam is published and active
     const { data: exam, error: examError } = await supabaseAdmin
       .from('teacher_exams')
-      .select('*, question_bank_id')
+      .select('*')
       .eq('id', examId)
       .eq('status', 'published')
       .eq('is_active', true)
@@ -69,22 +69,28 @@ Deno.serve(async (req) => {
       throw new Error('لقد استنفدت جميع المحاولات المتاحة');
     }
 
-    // 3. Get questions from question bank
-    const { data: bankQuestions, error: questionsError } = await supabaseAdmin
+    // 3. Get questions from question bank based on question_sources
+    const questionSources = exam.question_sources as {
+      type: 'random' | 'sections';
+      sections: string[];
+    };
+
+    let questionsQuery = supabaseAdmin
       .from('question_bank')
       .select('*')
-      .eq('id', exam.question_bank_id);
+      .eq('school_id', exam.school_id)
+      .eq('is_active', true);
 
-    if (questionsError || !bankQuestions || bankQuestions.length === 0) {
-      console.error('No questions found:', questionsError);
-      throw new Error('لا توجد أسئلة في بنك الأسئلة');
+    // Filter by sections if specified
+    if (questionSources && questionSources.type === 'sections' && questionSources.sections?.length > 0) {
+      questionsQuery = questionsQuery.in('section_id', questionSources.sections);
     }
 
-    const questionBank = bankQuestions[0];
-    const questions = questionBank.questions || [];
+    const { data: questions, error: questionsError } = await questionsQuery;
 
-    if (!Array.isArray(questions) || questions.length === 0) {
-      throw new Error('بنك الأسئلة فارغ');
+    if (questionsError || !questions || questions.length === 0) {
+      console.error('No questions found:', questionsError);
+      throw new Error('لا توجد أسئلة متاحة في بنك الأسئلة');
     }
 
     // 4. Select random questions based on exam configuration
@@ -113,16 +119,17 @@ Deno.serve(async (req) => {
     console.log('Created attempt:', attempt.id);
 
     // 6. Insert questions into exam_questions and exam_attempt_questions
-    const examQuestions = selectedQuestions.map((q: any, index: number) => ({
+    const examQuestions = selectedQuestions.map((q: any) => ({
       exam_id: examId,
-      question_bank_id: exam.question_bank_id,
-      question_text: q.question_text || q.text,
-      question_type: q.question_type || q.type,
+      question_text: q.question_text,
+      question_type: q.question_type,
       choices: q.choices || [],
-      correct_answer: q.correct_answer || q.answer,
+      correct_answer: q.correct_answer,
       points: q.points || 1,
-      difficulty_level: q.difficulty_level || q.difficulty || 'medium',
-      bank_category: q.category || null
+      difficulty_level: q.difficulty_level || 'medium',
+      section_id: q.section_id,
+      topic_id: q.topic_id,
+      lesson_id: q.lesson_id
     }));
 
     const { data: insertedQuestions, error: insertQuestionsError } = await supabaseAdmin
@@ -181,41 +188,43 @@ Deno.serve(async (req) => {
 
 // Helper function to select questions based on exam configuration
 function selectQuestions(questions: any[], exam: any): any[] {
-  const questionsPerDifficulty = exam.questions_per_difficulty || {
-    easy: 5,
-    medium: 10,
-    hard: 5
+  const distribution = exam.difficulty_distribution || {
+    easy: 30,    // 30%
+    medium: 50,  // 50%
+    hard: 20     // 20%
   };
-
-  const selected: any[] = [];
+  
+  const totalQuestions = exam.total_questions || 20;
+  
+  // Calculate number of questions needed from each level
+  const questionsNeeded = {
+    easy: Math.round(totalQuestions * (distribution.easy / 100)),
+    medium: Math.round(totalQuestions * (distribution.medium / 100)),
+    hard: Math.round(totalQuestions * (distribution.hard / 100))
+  };
   
   // Group questions by difficulty
-  const byDifficulty: Record<string, any[]> = {
-    easy: [],
-    medium: [],
-    hard: []
+  const byDifficulty = {
+    easy: questions.filter(q => q.difficulty_level === 'easy'),
+    medium: questions.filter(q => q.difficulty_level === 'medium'),
+    hard: questions.filter(q => q.difficulty_level === 'hard')
   };
-
-  questions.forEach(q => {
-    const difficulty = (q.difficulty_level || q.difficulty || 'medium').toLowerCase();
-    if (byDifficulty[difficulty]) {
-      byDifficulty[difficulty].push(q);
-    }
-  });
-
-  // Select random questions from each difficulty
-  for (const [difficulty, count] of Object.entries(questionsPerDifficulty)) {
-    const available = byDifficulty[difficulty] || [];
+  
+  const selected: any[] = [];
+  
+  // Select random questions from each level
+  for (const [level, count] of Object.entries(questionsNeeded)) {
+    const available = byDifficulty[level as keyof typeof byDifficulty] || [];
     const shuffled = available.sort(() => Math.random() - 0.5);
-    selected.push(...shuffled.slice(0, count as number));
+    selected.push(...shuffled.slice(0, count));
   }
-
-  // If we don't have enough questions, add more from available pool
-  if (selected.length < (exam.total_questions || 20)) {
+  
+  // If we don't have enough questions, complete from remaining
+  if (selected.length < totalQuestions) {
     const remaining = questions.filter(q => !selected.includes(q));
     const shuffled = remaining.sort(() => Math.random() - 0.5);
-    selected.push(...shuffled.slice(0, (exam.total_questions || 20) - selected.length));
+    selected.push(...shuffled.slice(0, totalQuestions - selected.length));
   }
-
-  return selected;
+  
+  return selected.slice(0, totalQuestions);
 }
