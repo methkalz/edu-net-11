@@ -41,7 +41,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 interface ExamsWidgetProps {
   canAccessGrade10: boolean;
@@ -73,6 +73,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data, isLoading } = useTeacherExams(user?.id);
+  const queryClient = useQueryClient();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -282,13 +283,13 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
       if (examError) throw examError;
 
       toast.success('تم إنشاء الامتحان بنجاح!');
-      setIsCreateDialogOpen(false);
       
-      // التوجيه إلى صفحة الامتحان لإضافة الأسئلة
-      const primaryGrade = data.selection_type === 'all_grade' 
-        ? (data.grade_levels?.includes('11') ? '11' : '10')
-        : '10'; // default to 10 for specific classes
-      navigate(`/grade${primaryGrade}-management?tab=exams&examId=${examData.id}`);
+      // إعادة تحميل بيانات الامتحانات
+      await queryClient.invalidateQueries({ queryKey: ['teacher-exams', user.id] });
+      
+      setIsCreateDialogOpen(false);
+      form.reset();
+      setCurrentStep(1);
       
     } catch (error) {
       console.error('Error creating exam:', error);
