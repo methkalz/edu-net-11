@@ -145,8 +145,6 @@ export const QuestionBankManager: React.FC = () => {
             <SelectItem value="all">جميع الأنواع</SelectItem>
             <SelectItem value="multiple_choice">اختيار متعدد</SelectItem>
             <SelectItem value="true_false">صح/خطأ</SelectItem>
-            <SelectItem value="essay">مقالي</SelectItem>
-            <SelectItem value="short_answer">إجابة قصيرة</SelectItem>
           </SelectContent>
         </Select>
 
