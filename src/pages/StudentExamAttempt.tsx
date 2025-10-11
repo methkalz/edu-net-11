@@ -167,18 +167,31 @@ export default function StudentExamAttempt() {
     );
   }
 
-  if (!examData) {
+  if (!examData || !examData.questions || examData.questions.length === 0) {
     return (
       <div className="container mx-auto p-6">
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>فشل في تحميل الامتحان</AlertDescription>
+          <AlertDescription>
+            {!examData ? 'فشل في تحميل الامتحان' : 'لا توجد أسئلة في هذا الامتحان'}
+          </AlertDescription>
         </Alert>
       </div>
     );
   }
 
   const currentQuestion = examData.questions[currentQuestionIndex];
+
+  if (!currentQuestion) {
+    return (
+      <div className="container mx-auto p-6">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>خطأ في تحميل السؤال الحالي</AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto p-6 max-w-6xl">
