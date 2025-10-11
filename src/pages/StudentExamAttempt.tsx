@@ -174,9 +174,16 @@ export default function StudentExamAttempt() {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            {!examData ? 'فشل في تحميل الامتحان' : 'لا توجد أسئلة في هذا الامتحان'}
+            {!examData ? 'فشل في تحميل الامتحان' : 'الأقسام المحددة في هذا الامتحان لا تحتوي على أسئلة. يرجى الاتصال بالمعلم لإعادة إنشاء الامتحان مع اختيار أقسام تحتوي على أسئلة.'}
           </AlertDescription>
         </Alert>
+        <Button 
+          variant="outline" 
+          className="mt-4"
+          onClick={() => navigate('/student/dashboard')}
+        >
+          العودة إلى لوحة التحكم
+        </Button>
       </div>
     );
   }
