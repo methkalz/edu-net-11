@@ -3,6 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ClipboardList, FileQuestion, TrendingUp, Users, ArrowRight, Plus, ArrowLeft, Trash2, Edit, AlertCircle } from 'lucide-react';
+
+// معالج أخطاء عام للتطوير
+if (import.meta.env.DEV) {
+  window.addEventListener('unhandledrejection', (event) => {
+    console.error('🚨 Unhandled Promise Rejection:', event.reason);
+  });
+}
 import { useNavigate } from 'react-router-dom';
 import { useTeacherExams } from '@/hooks/useTeacherExams';
 import { useAuth } from '@/hooks/useAuth';
@@ -171,28 +178,32 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
       
       const { data, error } = await supabase
         .from('question_bank')
-        .select('section_name, grade_level, difficulty')
+        .select('id, section_name, grade_level, difficulty')
         .eq('grade_level', selectedGradeLevel)
         .eq('is_active', true);
 
       if (error) throw error;
 
-      // تجميع البيانات حسب القسم
+      // تجميع البيانات حسب القسم مع حفظ أول ID
       const sectionsMap = new Map();
       data?.forEach(q => {
         if (!sectionsMap.has(q.section_name)) {
-          sectionsMap.set(q.section_name, { easy: 0, medium: 0, hard: 0 });
+          sectionsMap.set(q.section_name, { 
+            id: q.id,  // حفظ أول ID للقسم كمعرف فريد
+            counts: { easy: 0, medium: 0, hard: 0 }
+          });
         }
         const section = sectionsMap.get(q.section_name);
-        section[q.difficulty]++;
+        section.counts[q.difficulty]++;
       });
 
-      return Array.from(sectionsMap.entries()).map(([name, counts]) => ({
+      return Array.from(sectionsMap.entries()).map(([name, data]) => ({
+        id: data.id,  // معرف فريد للقسم
         name,
-        easy: counts.easy,
-        medium: counts.medium,
-        hard: counts.hard,
-        total: counts.easy + counts.medium + counts.hard,
+        easy: data.counts.easy,
+        medium: data.counts.medium,
+        hard: data.counts.hard,
+        total: data.counts.easy + data.counts.medium + data.counts.hard,
       }));
     },
     enabled: !!selectedGradeLevel && isCreateDialogOpen,
@@ -220,7 +231,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
       });
     } else {
       availableSections
-        .filter(section => selectedSections?.includes(section.name))
+        .filter(section => selectedSections?.includes(section.id))  // البحث بـ ID
         .forEach(section => {
           counts.easy += section.easy;
           counts.medium += section.medium;
@@ -395,6 +406,19 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
             toast.error('يجب اختيار قسم واحد على الأقل');
             return;
           }
+          
+          // تحقق إضافي: هل الـ IDs صحيحة؟
+          const invalidSections = selectedSections.filter(id => 
+            !availableSections?.some(s => s.id === id)
+          );
+          
+          if (invalidSections.length > 0) {
+            console.error('⚠️ Invalid section IDs detected:', invalidSections);
+            form.setError('selected_sections', {
+              message: 'بعض الأقسام المحددة غير صالحة'
+            });
+            return;
+          }
         }
         const questionsCount = form.getValues('questions_count');
         if (!questionsCount || questionsCount < 1) {
@@ -424,8 +448,14 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
   };
 
   const onSubmit = async (data: CreateExamFormData) => {
+    console.group('🔍 Exam Submission Debug');
+    console.log('📝 Form Data:', data);
+    console.log('📊 Selected Sections (IDs):', data.selected_sections);
+    console.log('📚 Available Sections:', availableSections);
+    
     if (currentStep !== 6) {
       console.warn('Submit called from non-final step:', currentStep);
+      console.groupEnd();
       return;
     }
     
@@ -434,6 +464,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
 
       if (!user?.id) {
         toast.error('خطأ في المصادقة');
+        console.groupEnd();
         return;
       }
 
@@ -445,6 +476,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
 
       if (!profile?.school_id) {
         toast.error('لا يمكن تحديد المدرسة');
+        console.groupEnd();
         return;
       }
 
@@ -481,6 +513,14 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         total_points: data.questions_count * 10, // افتراض 10 نقاط لكل سؤال
       };
 
+      console.log('💾 Exam Data to Save:', examData);
+      console.log('🔑 Selected Sections Type Check:', {
+        isArray: Array.isArray(examData.selected_sections),
+        values: examData.selected_sections,
+        types: examData.selected_sections?.map(s => typeof s),
+        sampleIds: examData.selected_sections?.slice(0, 3)
+      });
+
       if (editingExamId) {
         const { error: examError } = await supabase
           .from('exams')
@@ -504,8 +544,17 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
 
       setIsCreateDialogOpen(false);
       await queryClient.invalidateQueries({ queryKey: ['teacher-exams', user?.id] });
+      console.log('✅ Exam saved successfully');
+      console.groupEnd();
     } catch (error) {
-      console.error('Error submitting exam:', error);
+      console.error('❌ Error submitting exam:', error);
+      console.error('📋 Error Details:', {
+        message: error?.message,
+        code: error?.code,
+        details: error?.details,
+        hint: error?.hint
+      });
+      console.groupEnd();
       toast.error('حدث خطأ أثناء حفظ الامتحان');
     } finally {
       setIsSubmitting(false);
@@ -1114,18 +1163,18 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                                 <div className="space-y-3 mt-3">
                                   {availableSections.map((section) => (
                                     <FormField
-                                      key={section.name}
+                                      key={section.id}
                                       control={form.control}
                                       name="selected_sections"
                                       render={({ field }) => (
                                         <FormItem className="flex items-start space-x-3 space-x-reverse space-y-0 border rounded-lg p-4 hover:bg-muted/50">
                                           <FormControl>
                                             <Checkbox
-                                              checked={field.value?.includes(section.name)}
+                                              checked={field.value?.includes(section.id)}
                                               onCheckedChange={(checked) => {
                                                 return checked
-                                                  ? field.onChange([...(field.value || []), section.name])
-                                                  : field.onChange(field.value?.filter((value) => value !== section.name));
+                                                  ? field.onChange([...(field.value || []), section.id])
+                                                  : field.onChange(field.value?.filter((value) => value !== section.id));
                                               }}
                                             />
                                           </FormControl>
@@ -1160,6 +1209,17 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                               </FormItem>
                             )}
                           />
+                        )}
+
+                        {/* عرض الأقسام المحددة */}
+                        {selectedSections && selectedSections.length > 0 && (
+                          <div className="text-sm text-muted-foreground mt-3 p-3 bg-muted/30 rounded-lg">
+                            <span className="font-medium">الأقسام المحددة: </span>
+                            {selectedSections
+                              .map(id => availableSections?.find(s => s.id === id)?.name)
+                              .filter(Boolean)
+                              .join('، ')}
+                          </div>
                         )}
 
                         {/* إحصائيات الأسئلة المتاحة */}
