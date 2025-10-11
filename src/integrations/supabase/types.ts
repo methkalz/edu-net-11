@@ -5338,6 +5338,26 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      get_available_exams: {
+        Args: { p_student_id: string }
+        Returns: {
+          attempts_remaining: number
+          attempts_used: number
+          can_start: boolean
+          description: string
+          duration_minutes: number
+          end_datetime: string
+          exam_id: string
+          grade_level: string
+          max_attempts: number
+          passing_percentage: number
+          start_datetime: string
+          status: Database["public"]["Enums"]["exam_status"]
+          title: string
+          total_points: number
+          total_questions: number
+        }[]
+      }
       get_available_grade_levels: {
         Args: { school_uuid: string }
         Returns: string[]
@@ -5356,6 +5376,14 @@ export type Database = {
       }
       get_exam_question_for_student: {
         Args: { question_id: string }
+        Returns: Json
+      }
+      get_exam_results: {
+        Args: { p_attempt_id: string }
+        Returns: Json
+      }
+      get_exam_with_questions: {
+        Args: { p_exam_id: string; p_student_id: string }
         Returns: Json
       }
       get_school_active_package: {
@@ -5478,6 +5506,10 @@ export type Database = {
       record_badge_celebration: {
         Args: { p_badge_id: string; p_student_id: string }
         Returns: undefined
+      }
+      submit_exam_attempt: {
+        Args: { p_attempt_id: string }
+        Returns: Json
       }
       unlock_next_games: {
         Args: { p_completed_game_id: string; p_player_id: string }
