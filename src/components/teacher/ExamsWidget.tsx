@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ClipboardList, FileQuestion, TrendingUp, Users, ArrowRight, Plus, ArrowLeft, Trash2, Edit, AlertCircle, CheckCircle, Archive, Clock } from 'lucide-react';
+import { format } from 'date-fns';
+import { ar } from 'date-fns/locale';
 
 // معالج أخطاء عام للتطوير
 if (import.meta.env.DEV) {
@@ -788,6 +790,22 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                         </span>
                       )}
                     </div>
+                    {(exam.status === 'scheduled' || exam.status === 'active') && exam.start_datetime && (
+                      <div className="mt-2 pt-2 border-t border-border/50">
+                        <div className="flex items-center gap-4 text-xs">
+                          <span className="flex items-center gap-1 text-green-600">
+                            <Clock className="w-3 h-3" />
+                            البداية: {format(new Date(exam.start_datetime), 'dd/MM/yyyy - hh:mm a', { locale: ar })}
+                          </span>
+                          {exam.end_datetime && (
+                            <span className="flex items-center gap-1 text-orange-600">
+                              <Clock className="w-3 h-3" />
+                              النهاية: {format(new Date(exam.end_datetime), 'dd/MM/yyyy - hh:mm a', { locale: ar })}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     {exam.status === 'draft' && (
