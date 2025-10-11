@@ -62,7 +62,6 @@ import TeacherContentViewer from './teacher/TeacherContentViewer';
 import { useGrade10Content } from '@/hooks/useGrade10Content';
 import { useGrade11Files } from '@/hooks/useGrade11Files';
 import { useGrade12Content } from '@/hooks/useGrade12Content';
-import { TeacherExamsWidget } from '@/components/teacher/TeacherExamsWidget';
 
 interface TeacherClass {
   id: string;
@@ -408,11 +407,8 @@ const TeacherDashboard: React.FC = () => {
       }
 
       if (availableGrades.includes('grade11')) {
-        // جلب مضامين الصف الحادي عشر (الدروس والامتحانات)
-        const [lessonsResult, examsResult] = await Promise.all([
-          supabase.from('lessons').select('*').order('created_at', { ascending: false }).limit(3),
-          supabase.from('exams').select('*').order('created_at', { ascending: false }).limit(3)
-        ]);
+        // جلب مضامين الصف الحادي عشر (الدروس فقط)
+        const lessonsResult = await supabase.from('lessons').select('*').order('created_at', { ascending: false }).limit(3);
 
         const lessons = (lessonsResult.data || []).map(l => ({
           id: l.id,
@@ -422,16 +418,8 @@ const TeacherDashboard: React.FC = () => {
           created_at: l.created_at
         }));
 
-        const exams = (examsResult.data || []).map(e => ({
-          id: e.id,
-          title: e.title,
-          description: e.description,
-          type: 'document' as const,
-          created_at: e.created_at
-        }));
-
-        contentsData.grade11 = [...lessons, ...exams];
-        totalContents += lessons.length + exams.length;
+        contentsData.grade11 = lessons;
+        totalContents += lessons.length;
       }
 
       if (availableGrades.includes('grade12')) {
@@ -609,24 +597,6 @@ const TeacherDashboard: React.FC = () => {
             </div>
           </div>
         ) : null}
-
-        {/* الاختبارات الإلكترونية - ويدجت واحد ذكي */}
-        {(canAccessGrade('10') || canAccessGrade('11')) && (
-          <div className="space-y-6 animate-fade-in-up">
-            {/* عنوان القسم */}
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-purple-500 to-purple-600 flex items-center justify-center">
-                <FileText className="h-4 w-4 text-white" />
-              </div>
-              <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-500 bg-clip-text text-transparent">
-                الاختبارات الإلكترونية
-              </h2>
-            </div>
-
-            {/* ويدجت واحد فقط */}
-            <TeacherExamsWidget />
-          </div>
-        )}
 
         {/* المضامين التعليمية المتاحة - عرض كامل كما يراها الطلاب */}
         {schoolPackageContents.length > 0 && (
@@ -904,13 +874,6 @@ const TeacherDashboard: React.FC = () => {
             )}
           </CardContent>
         </Card>
-
-        {/* الاختبارات الإلكترونية */}
-        {(canAccessGrade('10') || canAccessGrade('11')) && (
-          <div className="space-y-6">
-            <TeacherExamsWidget />
-          </div>
-        )}
 
         {/* إزالة القسم المكرر للمضامين التعليمية من الأسفل */}
       </div>

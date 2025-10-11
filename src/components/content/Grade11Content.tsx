@@ -16,7 +16,6 @@ import Grade11FileLibrary from './Grade11FileLibrary';
 import Grade11VideoLibrary from './Grade11VideoLibrary';
 import Grade11CollapsibleSection from './Grade11CollapsibleSection';
 import Grade11ContentControls from './Grade11ContentControls';
-import QuestionBankManager from './QuestionBankManager';
 import GameLauncher from './GameLauncher';
 import KnowledgeAdventureRealContent from '../games/KnowledgeAdventureRealContent';
 import { logger } from '@/lib/logger';
@@ -388,10 +387,6 @@ const Grade11Content = () => {
             <Video className="h-4 w-4" />
             الفيديوهات التعليمية
           </TabsTrigger>
-          <TabsTrigger value="exams" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            الاختبارات الإلكترونية
-          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="textual" className="space-y-6">
@@ -506,12 +501,6 @@ const Grade11Content = () => {
               onEditVideo={canManageContent ? handleEditVideo : () => {}}
               onDeleteVideo={canManageContent ? deleteVideo : () => {}}
             />
-          </div>
-        </TabsContent>
-
-        <TabsContent value="exams" className="space-y-6">
-          <div className="space-y-6">
-            <QuestionBankManager />
           </div>
         </TabsContent>
 

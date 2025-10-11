@@ -12,7 +12,6 @@ export const useGradeContent = () => {
   const [videos, setVideos] = useState([]);
   const [documents, setDocuments] = useState([]);
   const [projects, setProjects] = useState([]);
-  const [exams, setExams] = useState([]);
   const [courses, setCourses] = useState([]);
 
   // جلب الكورسات
@@ -80,31 +79,6 @@ export const useGradeContent = () => {
       toast({
         title: "خطأ في جلب البيانات",
         description: "فشل في جلب المشاريع",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // جلب الامتحانات
-  const fetchExams = async (courseId?: string) => {
-    try {
-      let query = supabase
-        .from('exams')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (courseId) {
-        query = query.eq('course_id', courseId);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      setExams(data || []);
-    } catch (error) {
-      logger.error('Error fetching exams', error as Error);
-      toast({
-        title: "خطأ في جلب البيانات",
-        description: "فشل في جلب الامتحانات",
         variant: "destructive",
       });
     }
@@ -197,35 +171,6 @@ export const useGradeContent = () => {
       toast({
         title: "خطأ",
         description: "فشل في إضافة المشروع",
-        variant: "destructive",
-      });
-      throw error;
-    }
-  };
-
-  // إضافة امتحان جديد
-  const addExam = async (examData: any) => {
-    try {
-      const { data, error } = await supabase
-        .from('exams')
-        .insert([examData])
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      setExams(prev => [data, ...prev]);
-      toast({
-        title: "تم بنجاح",
-        description: "تم إضافة الامتحان بنجاح",
-      });
-
-      return data;
-    } catch (error) {
-      logger.error('Error adding exam', error as Error);
-      toast({
-        title: "خطأ",
-        description: "فشل في إضافة الامتحان",
         variant: "destructive",
       });
       throw error;
@@ -372,32 +317,6 @@ export const useGradeContent = () => {
     }
   };
 
-  // حذف امتحان
-  const deleteExam = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('exams')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-
-      setExams(prev => prev.filter(item => item.id !== id));
-      toast({
-        title: "تم بنجاح",
-        description: "تم حذف الامتحان بنجاح",
-      });
-    } catch (error) {
-      logger.error('Error deleting exam', error as Error);
-      toast({
-        title: "خطأ",
-        description: "فشل في حذف الامتحان",
-        variant: "destructive",
-      });
-      throw error;
-    }
-  };
-
   // حذف ملف
   const deleteFile = async (id: string, kind: 'video' | 'document') => {
     try {
@@ -438,7 +357,6 @@ export const useGradeContent = () => {
           fetchCourses(),
           fetchLessons(),
           fetchProjects(),
-          fetchExams(),
           fetchFiles('video'),
           fetchFiles('document')
         ]);
@@ -456,24 +374,20 @@ export const useGradeContent = () => {
     videos,
     documents,
     projects,
-    exams,
     courses,
     loading,
 
     // الدوال
     fetchLessons,
     fetchProjects,
-    fetchExams,
     fetchFiles,
     fetchCourses,
     addLesson,
     addProject,
-    addExam,
     addFile,
     updateLesson,
     deleteLesson,
     deleteProject,
-    deleteExam,
     deleteFile,
   };
 };
