@@ -90,6 +90,14 @@ const fetchStudentTeacher = async (userId: string): Promise<TeacherInfo | null> 
 export const useStudentTeacher = () => {
   const { user, userProfile } = useAuth();
 
+  console.log('🎯 useStudentTeacher Hook:', {
+    hasUser: !!user,
+    userId: user?.id,
+    hasUserProfile: !!userProfile,
+    userRole: userProfile?.role,
+    enabled: Boolean(user && userProfile?.role === 'student')
+  });
+
   const {
     data: teacher,
     isLoading,
@@ -103,6 +111,8 @@ export const useStudentTeacher = () => {
     gcTime: CACHE_TIMES.LONG,
     refetchOnWindowFocus: false
   });
+
+  console.log('📊 Query Result:', { teacher, isLoading, error });
 
   return {
     teacher,
