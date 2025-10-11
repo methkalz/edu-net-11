@@ -145,7 +145,8 @@ Deno.serve(async (req) => {
 
     // 6. Insert questions into exam_questions and exam_attempt_questions
     const examQuestions = selectedQuestions.map((q: any) => ({
-      exam_id: examId,
+      teacher_exam_id: examId,  // Use teacher_exam_id instead of exam_id
+      exam_id: null,
       question_text: q.question_text,
       question_type: q.question_type,
       choices: q.choices || [],

@@ -873,7 +873,7 @@ export type Database = {
           difficulty_level:
             | Database["public"]["Enums"]["question_difficulty"]
             | null
-          exam_id: string
+          exam_id: string | null
           explanation: string | null
           id: string
           lesson_id: string | null
@@ -883,6 +883,7 @@ export type Database = {
           question_type: Database["public"]["Enums"]["question_type"]
           section_id: string | null
           tags: string[] | null
+          teacher_exam_id: string | null
           topic_id: string | null
         }
         Insert: {
@@ -894,7 +895,7 @@ export type Database = {
           difficulty_level?:
             | Database["public"]["Enums"]["question_difficulty"]
             | null
-          exam_id: string
+          exam_id?: string | null
           explanation?: string | null
           id?: string
           lesson_id?: string | null
@@ -904,6 +905,7 @@ export type Database = {
           question_type: Database["public"]["Enums"]["question_type"]
           section_id?: string | null
           tags?: string[] | null
+          teacher_exam_id?: string | null
           topic_id?: string | null
         }
         Update: {
@@ -915,7 +917,7 @@ export type Database = {
           difficulty_level?:
             | Database["public"]["Enums"]["question_difficulty"]
             | null
-          exam_id?: string
+          exam_id?: string | null
           explanation?: string | null
           id?: string
           lesson_id?: string | null
@@ -925,6 +927,7 @@ export type Database = {
           question_type?: Database["public"]["Enums"]["question_type"]
           section_id?: string | null
           tags?: string[] | null
+          teacher_exam_id?: string | null
           topic_id?: string | null
         }
         Relationships: [
@@ -954,6 +957,13 @@ export type Database = {
             columns: ["section_id"]
             isOneToOne: false
             referencedRelation: "grade11_sections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_questions_teacher_exam_id_fkey"
+            columns: ["teacher_exam_id"]
+            isOneToOne: false
+            referencedRelation: "teacher_exams"
             referencedColumns: ["id"]
           },
           {
