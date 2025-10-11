@@ -55,6 +55,7 @@ import { ContentFilterBadge } from '@/components/teacher/ContentFilterBadge';
 import Grade12ProjectsWidget from '@/components/teacher/Grade12ProjectsWidget';
 import ProjectNotifications from '@/components/teacher/ProjectNotifications';
 import Grade10ProjectsWidget from '@/components/teacher/Grade10ProjectsWidget';
+import { ExamsWidget } from '@/components/teacher/ExamsWidget';
 import ModernHeader from '@/components/shared/ModernHeader';
 import { StudentPresenceWidget } from '@/components/teacher/StudentPresenceWidget';
 import { OnlineStudentsStats } from '@/components/dashboard/OnlineStudentsStats';
@@ -597,6 +598,14 @@ const TeacherDashboard: React.FC = () => {
             </div>
           </div>
         ) : null}
+
+        {/* Exams Widget - للمعلمين المسؤولين عن الصف العاشر أو الحادي عشر */}
+        {(canAccessGrade('10') || canAccessGrade('11')) && (
+          <ExamsWidget 
+            canAccessGrade10={canAccessGrade('10')}
+            canAccessGrade11={canAccessGrade('11')}
+          />
+        )}
 
         {/* المضامين التعليمية المتاحة - عرض كامل كما يراها الطلاب */}
         {schoolPackageContents.length > 0 && (
