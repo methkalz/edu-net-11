@@ -36,35 +36,37 @@ const fetchStudentTeacher = async (userId: string): Promise<TeacherInfo | null> 
       return null;
     }
 
-    // Get teacher ID through teacher_classes
-    const { data: teacherClassData, error: teacherClassError } = await supabase
+    // Get all teachers assigned to the class
+    const { data: teacherClassesList, error: teacherClassError } = await supabase
       .from('teacher_classes')
       .select('teacher_id')
-      .eq('class_id', classStudentData.class_id)
-      .limit(1)
-      .single();
+      .eq('class_id', classStudentData.class_id);
 
-    if (teacherClassError || !teacherClassData) {
-      console.error('Error fetching teacher class:', teacherClassError);
+    if (teacherClassError || !teacherClassesList || teacherClassesList.length === 0) {
+      console.error('Error fetching teachers:', teacherClassError);
       return null;
     }
 
-    // Get teacher info from profiles
-    const { data: teacherProfile, error: teacherProfileError } = await supabase
+    // Get profiles for all teachers
+    const teacherIds = teacherClassesList.map(tc => tc.teacher_id);
+    const { data: teacherProfiles, error: profileError } = await supabase
       .from('profiles')
-      .select('user_id, full_name, avatar_url')
-      .eq('user_id', teacherClassData.teacher_id)
-      .single();
+      .select('user_id, full_name, avatar_url, role')
+      .in('user_id', teacherIds);
 
-    if (teacherProfileError || !teacherProfile) {
-      console.error('Error fetching teacher profile:', teacherProfileError);
+    if (profileError || !teacherProfiles || teacherProfiles.length === 0) {
+      console.error('Error fetching teacher profiles:', profileError);
       return null;
     }
+
+    // Prioritize teacher role over school_admin
+    const primaryTeacher = teacherProfiles.find(p => p.role === 'teacher') 
+                           || teacherProfiles[0];
 
     return {
-      id: teacherProfile.user_id,
-      full_name: teacherProfile.full_name,
-      avatar_url: teacherProfile.avatar_url || undefined
+      id: primaryTeacher.user_id,
+      full_name: primaryTeacher.full_name,
+      avatar_url: primaryTeacher.avatar_url || undefined
     };
   } catch (error) {
     console.error('Error in fetchStudentTeacher:', error);
