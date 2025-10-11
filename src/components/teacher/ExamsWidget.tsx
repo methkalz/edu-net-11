@@ -47,14 +47,14 @@ interface ExamsWidgetProps {
   canAccessGrade11: boolean;
 }
 
-// Schema للنموذج
+// Schema للنموذج - الحقول optional للسماح بالتحقق التدريجي حسب الخطوات
 const createExamSchema = z.object({
   title: z.string().min(1, 'العنوان مطلوب').max(200, 'العنوان طويل جداً'),
   description: z.string().optional(),
   exam_type: z.enum(['quiz', 'midterm', 'final', 'practice']),
-  grade_levels: z.array(z.string()).min(1, 'يجب اختيار صف واحد على الأقل'),
-  start_datetime: z.string().min(1, 'تاريخ البدء مطلوب'),
-  end_datetime: z.string().min(1, 'تاريخ الانتهاء مطلوب'),
+  grade_levels: z.array(z.string()).optional(),
+  start_datetime: z.string().optional(),
+  end_datetime: z.string().optional(),
   duration_minutes: z.number().min(1, 'مدة الامتحان مطلوبة'),
   max_attempts: z.number().min(1, 'عدد المحاولات مطلوب'),
   passing_percentage: z.number().min(0).max(100).default(50),
@@ -124,19 +124,35 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
   };
 
   const handleNextStep = async () => {
-    let fieldsToValidate: (keyof CreateExamFormData)[] = [];
-    
     if (currentStep === 1) {
-      fieldsToValidate = ['title', 'description', 'exam_type'];
+      const isValid = await form.trigger(['title', 'exam_type']);
+      if (isValid) {
+        setCurrentStep(prev => prev + 1);
+      }
     } else if (currentStep === 2) {
-      fieldsToValidate = ['grade_levels'];
-    } else if (currentStep === 3) {
-      fieldsToValidate = ['start_datetime', 'end_datetime', 'duration_minutes', 'max_attempts'];
-    }
-
-    const isValid = await form.trigger(fieldsToValidate);
-    if (isValid) {
+      const gradeLevels = form.getValues('grade_levels');
+      if (!gradeLevels || gradeLevels.length === 0) {
+        form.setError('grade_levels', { message: 'يجب اختيار صف واحد على الأقل' });
+        return;
+      }
       setCurrentStep(prev => prev + 1);
+    } else if (currentStep === 3) {
+      const startDate = form.getValues('start_datetime');
+      const endDate = form.getValues('end_datetime');
+      
+      if (!startDate) {
+        form.setError('start_datetime', { message: 'تاريخ البدء مطلوب' });
+        return;
+      }
+      if (!endDate) {
+        form.setError('end_datetime', { message: 'تاريخ الانتهاء مطلوب' });
+        return;
+      }
+      
+      const isValid = await form.trigger(['duration_minutes', 'max_attempts']);
+      if (isValid) {
+        setCurrentStep(prev => prev + 1);
+      }
     }
   };
 
@@ -147,6 +163,23 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
   const onSubmit = async (data: CreateExamFormData) => {
     try {
       setIsSubmitting(true);
+
+      // التحقق النهائي من جميع الحقول المطلوبة
+      if (!data.grade_levels || data.grade_levels.length === 0) {
+        toast.error('يجب اختيار صف واحد على الأقل');
+        setIsSubmitting(false);
+        return;
+      }
+      if (!data.start_datetime) {
+        toast.error('تاريخ البدء مطلوب');
+        setIsSubmitting(false);
+        return;
+      }
+      if (!data.end_datetime) {
+        toast.error('تاريخ الانتهاء مطلوب');
+        setIsSubmitting(false);
+        return;
+      }
 
       if (!user?.id) {
         toast.error('خطأ في المصادقة');
