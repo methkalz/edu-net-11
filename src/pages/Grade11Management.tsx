@@ -59,7 +59,7 @@ const Grade11Management: React.FC = () => {
           <Tabs defaultValue={canManageContent ? 'manage' : isSchoolAdmin ? 'school-view' : 'view'} className="w-full">
             <TabsList className={canManageContent ? 'grid w-full grid-cols-5' : isSchoolAdmin ? 'grid w-full grid-cols-3' : 'grid w-full grid-cols-2'}>
               {canManageContent && <TabsTrigger value="manage">إدارة المحتوى</TabsTrigger>}
-              {canManageContent && <TabsTrigger value="terms">المصطلحات التعليمية</TabsTrigger>}
+              {canManageContent && <TabsTrigger value="terms">المصطلحات التعليمية (Beta)</TabsTrigger>}
               {canManageContent && <TabsTrigger value="exams">الامتحانات</TabsTrigger>}
               {isSchoolAdmin && <TabsTrigger value="school-view">عرض مدير المدرسة</TabsTrigger>}
               <TabsTrigger value="view">عرض المحتوى</TabsTrigger>
