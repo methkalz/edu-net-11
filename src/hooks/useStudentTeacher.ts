@@ -11,6 +11,8 @@ interface TeacherInfo {
 
 const fetchStudentTeacher = async (userId: string): Promise<TeacherInfo | null> => {
   try {
+    console.log('🔍 Fetching teacher for user:', userId);
+    
     // Get student ID
     const { data: studentData, error: studentError } = await supabase
       .from('students')
@@ -18,8 +20,10 @@ const fetchStudentTeacher = async (userId: string): Promise<TeacherInfo | null> 
       .eq('user_id', userId)
       .single();
 
+    console.log('📝 Student data:', studentData, 'Error:', studentError);
+
     if (studentError || !studentData) {
-      console.error('Error fetching student:', studentError);
+      console.error('❌ Error fetching student:', studentError);
       return null;
     }
 
@@ -28,11 +32,12 @@ const fetchStudentTeacher = async (userId: string): Promise<TeacherInfo | null> 
       .from('class_students')
       .select('class_id')
       .eq('student_id', studentData.id)
-      .limit(1)
-      .single();
+      .maybeSingle();
+
+    console.log('📚 Class student data:', classStudentData, 'Error:', classStudentError);
 
     if (classStudentError || !classStudentData) {
-      console.error('Error fetching class student:', classStudentError);
+      console.error('❌ Error fetching class student:', classStudentError);
       return null;
     }
 
@@ -42,20 +47,26 @@ const fetchStudentTeacher = async (userId: string): Promise<TeacherInfo | null> 
       .select('teacher_id')
       .eq('class_id', classStudentData.class_id);
 
+    console.log('👨‍🏫 Teacher classes list:', teacherClassesList, 'Error:', teacherClassError);
+
     if (teacherClassError || !teacherClassesList || teacherClassesList.length === 0) {
-      console.error('Error fetching teachers:', teacherClassError);
+      console.error('❌ Error fetching teachers:', teacherClassError);
       return null;
     }
 
     // Get profiles for all teachers
     const teacherIds = teacherClassesList.map(tc => tc.teacher_id);
+    console.log('🔑 Teacher IDs:', teacherIds);
+    
     const { data: teacherProfiles, error: profileError } = await supabase
       .from('profiles')
       .select('user_id, full_name, avatar_url, role')
       .in('user_id', teacherIds);
 
+    console.log('👤 Teacher profiles:', teacherProfiles, 'Error:', profileError);
+
     if (profileError || !teacherProfiles || teacherProfiles.length === 0) {
-      console.error('Error fetching teacher profiles:', profileError);
+      console.error('❌ Error fetching teacher profiles:', profileError);
       return null;
     }
 
@@ -63,13 +74,15 @@ const fetchStudentTeacher = async (userId: string): Promise<TeacherInfo | null> 
     const primaryTeacher = teacherProfiles.find(p => p.role === 'teacher') 
                            || teacherProfiles[0];
 
+    console.log('✅ Primary teacher selected:', primaryTeacher);
+
     return {
       id: primaryTeacher.user_id,
       full_name: primaryTeacher.full_name,
       avatar_url: primaryTeacher.avatar_url || undefined
     };
   } catch (error) {
-    console.error('Error in fetchStudentTeacher:', error);
+    console.error('💥 Error in fetchStudentTeacher:', error);
     return null;
   }
 };
