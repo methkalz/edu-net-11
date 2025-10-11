@@ -189,7 +189,7 @@ export const QuestionForm: React.FC<QuestionFormProps> = ({
                       <SelectValue placeholder="اختر الإجابة الصحيحة" />
                     </SelectTrigger>
                     <SelectContent>
-                      {choices?.map((choice) => (
+                      {choices?.filter(c => c.text.trim()).map((choice) => (
                         <SelectItem key={choice.id} value={choice.text}>
                           {choice.text}
                         </SelectItem>
