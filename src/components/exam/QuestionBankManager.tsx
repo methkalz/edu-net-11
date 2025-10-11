@@ -55,7 +55,7 @@ export const QuestionBankManager: React.FC = () => {
   const getCorrectAnswerDisplay = (question: Question) => {
     switch (question.question_type) {
       case 'true_false':
-        return question.correct_answer === 'true' ? 'صح ✓' : 'خطأ ✗';
+        return question.correct_answer === 'صح' ? 'صح ✓' : 'خطأ ✗';
       
       case 'multiple_choice':
         return question.correct_answer;
