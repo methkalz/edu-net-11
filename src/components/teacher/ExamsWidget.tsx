@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ClipboardList, FileQuestion, TrendingUp, Users, ArrowRight, Plus, ArrowLeft, Trash2, Edit, AlertCircle } from 'lucide-react';
+import { ClipboardList, FileQuestion, TrendingUp, Users, ArrowRight, Plus, ArrowLeft, Trash2, Edit, AlertCircle, CheckCircle, Archive, Clock } from 'lucide-react';
 
 // معالج أخطاء عام للتطوير
 if (import.meta.env.DEV) {
@@ -84,6 +84,8 @@ const createExamSchema = z.object({
   custom_easy: z.number().min(0).max(100).default(40),
   custom_medium: z.number().min(0).max(100).default(40),
   custom_hard: z.number().min(0).max(100).default(20),
+  // إعدادات النشر
+  publish_status: z.enum(['draft', 'scheduled', 'active']).default('draft'),
 });
 
 type CreateExamFormData = z.infer<typeof createExamSchema>;
@@ -107,6 +109,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingExamId, setEditingExamId] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
 
   // جلب الصفوف المتاحة للمعلم
   const { data: availableClasses } = useQuery({
@@ -166,6 +169,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
       custom_easy: 40,
       custom_medium: 40,
       custom_hard: 20,
+      publish_status: 'draft',
     },
   });
 
@@ -263,7 +267,8 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
     switch (status) {
       case 'active': return 'bg-green-500/10 text-green-600 dark:text-green-400';
       case 'scheduled': return 'bg-blue-500/10 text-blue-600 dark:text-blue-400';
-      case 'completed': return 'bg-gray-500/10 text-gray-600 dark:text-gray-400';
+      case 'ended': return 'bg-gray-500/10 text-gray-600 dark:text-gray-400';
+      case 'archived': return 'bg-gray-500/10 text-gray-600 dark:text-gray-400';
       case 'draft': return 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400';
       default: return 'bg-gray-500/10 text-gray-600 dark:text-gray-400';
     }
@@ -273,7 +278,8 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
     switch (status) {
       case 'active': return 'نشط';
       case 'scheduled': return 'مجدول';
-      case 'completed': return 'منتهي';
+      case 'ended': return 'منتهي';
+      case 'archived': return 'مؤرشف';
       case 'draft': return 'مسودة';
       default: return status;
     }
@@ -327,6 +333,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         custom_easy: diffDist.distribution?.easy || 40,
         custom_medium: diffDist.distribution?.medium || 40,
         custom_hard: diffDist.distribution?.hard || 20,
+        publish_status: (exam.status || 'draft') as 'draft' | 'scheduled' | 'active',
       });
 
       setEditingExamId(examId);
@@ -356,6 +363,71 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
     } catch (error) {
       console.error('Error deleting exam:', error);
       toast.error('حدث خطأ أثناء حذف الامتحان');
+    }
+  };
+
+  const handlePublishExam = async (examId: string) => {
+    try {
+      // جلب الامتحان أولاً للتحقق
+      const { data: exam, error: fetchError } = await supabase
+        .from('exams')
+        .select('*, exam_questions(count)')
+        .eq('id', examId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // التحقق من وجود أسئلة
+      if (!exam.exam_questions || exam.exam_questions.length === 0) {
+        toast.error('لا يمكن نشر الامتحان: لم يتم إضافة أسئلة بعد');
+        return;
+      }
+
+      // التحقق من تواريخ البدء والانتهاء
+      if (!exam.start_datetime || !exam.end_datetime) {
+        toast.error('لا يمكن النشر: يجب تحديد تاريخ البدء والانتهاء');
+        return;
+      }
+
+      const startDate = new Date(exam.start_datetime);
+      const now = new Date();
+
+      // تحديد الحالة المناسبة
+      const newStatus = startDate > now ? 'scheduled' : 'active';
+
+      const { error } = await supabase
+        .from('exams')
+        .update({ status: newStatus })
+        .eq('id', examId);
+
+      if (error) throw error;
+
+      toast.success(newStatus === 'active' ? 'تم نشر الامتحان بنجاح!' : 'تم جدولة الامتحان بنجاح!');
+      await queryClient.invalidateQueries({ queryKey: ['teacher-exams', user?.id] });
+    } catch (error) {
+      console.error('Error publishing exam:', error);
+      toast.error('حدث خطأ أثناء نشر الامتحان');
+    }
+  };
+
+  const handleArchiveExam = async (examId: string) => {
+    if (!confirm('هل تريد أرشفة هذا الامتحان؟ يمكنك إعادة نشره لاحقاً.')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('exams')
+        .update({ status: 'archived' })
+        .eq('id', examId);
+
+      if (error) throw error;
+
+      toast.success('تم أرشفة الامتحان بنجاح');
+      await queryClient.invalidateQueries({ queryKey: ['teacher-exams', user?.id] });
+    } catch (error) {
+      console.error('Error archiving exam:', error);
+      toast.error('حدث خطأ أثناء أرشفة الامتحان');
     }
   };
 
@@ -436,6 +508,18 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
           }
         }
         setCurrentStep(prev => prev + 1);
+      } else if (currentStep === 6) {
+        // التحقق من إعدادات النشر
+        const publishStatus = form.getValues('publish_status');
+        if (publishStatus === 'scheduled' || publishStatus === 'active') {
+          const startDate = form.getValues('start_datetime');
+          const endDate = form.getValues('end_datetime');
+          if (!startDate || !endDate) {
+            toast.error('يجب تحديد تاريخ البدء والانتهاء عند النشر');
+            return;
+          }
+        }
+        setCurrentStep(prev => prev + 1);
       }
     } catch (error) {
       console.error('Error in handleNextStep:', error);
@@ -453,7 +537,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
     console.log('📊 Selected Sections (IDs):', data.selected_sections);
     console.log('📚 Available Sections:', availableSections);
     
-    if (currentStep !== 6) {
+    if (currentStep !== 7) {
       console.warn('Submit called from non-final step:', currentStep);
       console.groupEnd();
       return;
@@ -508,7 +592,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         selected_sections: data.selected_sections || [],
         questions_count: data.questions_count,
         difficulty_distribution: diffDistribution,
-        status: 'draft' as const,
+        status: data.publish_status as 'draft' | 'scheduled' | 'active',
         total_questions: data.questions_count,
         total_points: data.questions_count * 10, // افتراض 10 نقاط لكل سؤال
       };
@@ -630,8 +714,53 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         {/* قائمة الامتحانات */}
         {data?.exams && data.exams.length > 0 ? (
           <>
+            {/* Tabs للفلترة حسب الحالة */}
+            <div className="flex gap-2 mb-4 flex-wrap">
+              <Button
+                variant={statusFilter === 'all' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setStatusFilter('all')}
+              >
+                الكل ({data.exams.length})
+              </Button>
+              <Button
+                variant={statusFilter === 'draft' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setStatusFilter('draft')}
+                className={statusFilter === 'draft' ? '' : 'border-yellow-500/20 text-yellow-600'}
+              >
+                المسودات ({data.exams.filter((e: any) => e.status === 'draft').length})
+              </Button>
+              <Button
+                variant={statusFilter === 'scheduled' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setStatusFilter('scheduled')}
+                className={statusFilter === 'scheduled' ? '' : 'border-blue-500/20 text-blue-600'}
+              >
+                المجدولة ({data.exams.filter((e: any) => e.status === 'scheduled').length})
+              </Button>
+              <Button
+                variant={statusFilter === 'active' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setStatusFilter('active')}
+                className={statusFilter === 'active' ? '' : 'border-green-500/20 text-green-600'}
+              >
+                النشطة ({data.exams.filter((e: any) => e.status === 'active').length})
+              </Button>
+              <Button
+                variant={statusFilter === 'archived' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setStatusFilter('archived')}
+                className={statusFilter === 'archived' ? '' : 'border-gray-500/20'}
+              >
+                المؤرشفة ({data.exams.filter((e: any) => e.status === 'archived' || e.status === 'ended').length})
+              </Button>
+            </div>
+
             <div className="space-y-3 mb-4">
-              {data.exams.slice(0, 4).map((exam: any) => (
+              {data.exams
+                .filter((exam: any) => statusFilter === 'all' || exam.status === statusFilter || (statusFilter === 'archived' && (exam.status === 'archived' || exam.status === 'ended')))
+                .slice(0, 4).map((exam: any) => (
                 <div
                   key={exam.id}
                   className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors group"
@@ -661,22 +790,81 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                     </div>
                   </div>
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleEditExam(exam.id)}
-                      className="text-primary hover:text-primary hover:bg-primary/10"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDeleteExam(exam.id)}
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    {exam.status === 'draft' && (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEditExam(exam.id)}
+                          className="text-primary hover:text-primary hover:bg-primary/10"
+                          title="تعديل"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handlePublishExam(exam.id)}
+                          className="text-green-600 hover:text-green-600 hover:bg-green-600/10"
+                          title="نشر الامتحان"
+                        >
+                          <CheckCircle className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteExam(exam.id)}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          title="حذف"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </>
+                    )}
+                    {(exam.status === 'scheduled' || exam.status === 'active') && (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEditExam(exam.id)}
+                          className="text-primary hover:text-primary hover:bg-primary/10"
+                          title="تعديل"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleArchiveExam(exam.id)}
+                          className="text-orange-600 hover:text-orange-600 hover:bg-orange-600/10"
+                          title="أرشفة"
+                        >
+                          <Archive className="w-4 h-4" />
+                        </Button>
+                      </>
+                    )}
+                    {(exam.status === 'archived' || exam.status === 'ended') && (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handlePublishExam(exam.id)}
+                          className="text-green-600 hover:text-green-600 hover:bg-green-600/10"
+                          title="إعادة نشر"
+                        >
+                          <CheckCircle className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteExam(exam.id)}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          title="حذف"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
               ))}
@@ -741,7 +929,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                 {editingExamId ? 'تعديل الامتحان' : 'إنشاء امتحان جديد'}
               </DialogTitle>
               <DialogDescription>
-                خطوة {currentStep} من 6
+                خطوة {currentStep} من 7
               </DialogDescription>
             </DialogHeader>
 
@@ -1550,6 +1738,84 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                   </div>
                 )}
 
+                {/* خطوة 7: إعدادات النشر */}
+                {currentStep === 7 && (
+                  <div className="space-y-4">
+                    <div className="bg-muted/50 p-4 rounded-lg mb-4">
+                      <h3 className="font-semibold mb-2">إعدادات النشر</h3>
+                      <p className="text-sm text-muted-foreground">
+                        اختر حالة الامتحان عند الحفظ
+                      </p>
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="publish_status"
+                      render={({ field }) => (
+                        <FormItem className="space-y-3">
+                          <FormLabel>حالة الامتحان</FormLabel>
+                          <FormControl>
+                            <RadioGroup
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                              className="space-y-3"
+                            >
+                              <div className="flex items-start space-x-3 space-x-reverse border rounded-lg p-4 hover:bg-muted/50 transition-colors">
+                                <RadioGroupItem value="draft" id="draft" className="mt-1" />
+                                <div className="flex-1">
+                                  <Label htmlFor="draft" className="font-semibold cursor-pointer">
+                                    مسودة
+                                  </Label>
+                                  <p className="text-sm text-muted-foreground mt-1">
+                                    حفظ كمسودة - لن يظهر للطلاب، يمكنك التعديل عليه لاحقاً
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="flex items-start space-x-3 space-x-reverse border rounded-lg p-4 hover:bg-muted/50 transition-colors">
+                                <RadioGroupItem value="scheduled" id="scheduled" className="mt-1" />
+                                <div className="flex-1">
+                                  <Label htmlFor="scheduled" className="font-semibold cursor-pointer">
+                                    مجدول
+                                  </Label>
+                                  <p className="text-sm text-muted-foreground mt-1">
+                                    سيظهر للطلاب في الوقت المحدد تلقائياً
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="flex items-start space-x-3 space-x-reverse border rounded-lg p-4 hover:bg-muted/50 transition-colors">
+                                <RadioGroupItem value="active" id="active" className="mt-1" />
+                                <div className="flex-1">
+                                  <Label htmlFor="active" className="font-semibold cursor-pointer">
+                                    نشط الآن
+                                  </Label>
+                                  <p className="text-sm text-muted-foreground mt-1">
+                                    نشر فوراً - سيظهر للطلاب مباشرة بعد الحفظ
+                                  </p>
+                                </div>
+                              </div>
+                            </RadioGroup>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {(form.watch('publish_status') === 'scheduled' || form.watch('publish_status') === 'active') && (
+                      <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 flex gap-3">
+                        <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                        <div className="text-sm">
+                          <p className="font-semibold text-blue-600 mb-1">تنبيه</p>
+                          <p className="text-muted-foreground">
+                            تأكد من تحديد تاريخ البدء والانتهاء في الخطوة 3 قبل النشر
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Navigation buttons */}
                 <DialogFooter className="flex items-center justify-between">
                   <div className="flex gap-2">
@@ -1561,7 +1827,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                     )}
                   </div>
                   <div className="flex gap-2">
-                    {currentStep < 6 ? (
+                    {currentStep < 7 ? (
                       <Button type="button" onClick={handleNextStep}>
                         التالي
                         <ArrowLeft className="w-4 h-4 mr-2" />
