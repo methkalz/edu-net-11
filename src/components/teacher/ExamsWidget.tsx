@@ -178,6 +178,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
       form.reset({
         title: exam.title,
         description: exam.description || '',
+        exam_type: 'quiz', // قيمة افتراضية
         selection_type: exam.grade_levels?.length > 0 ? 'all_grade' : 'specific_classes',
         grade_levels: exam.grade_levels || [],
         target_classes: exam.target_classes || [],
