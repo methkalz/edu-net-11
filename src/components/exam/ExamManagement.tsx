@@ -21,7 +21,7 @@ export const ExamManagement: React.FC = () => {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="exams" className="gap-2">
                 <ClipboardList className="w-4 h-4" />
                 الامتحانات
@@ -29,10 +29,6 @@ export const ExamManagement: React.FC = () => {
               <TabsTrigger value="questions" className="gap-2">
                 <FileQuestion className="w-4 h-4" />
                 بنك الأسئلة
-              </TabsTrigger>
-              <TabsTrigger value="create" className="gap-2">
-                <Plus className="w-4 h-4" />
-                إنشاء امتحان
               </TabsTrigger>
             </TabsList>
 
@@ -42,10 +38,6 @@ export const ExamManagement: React.FC = () => {
 
             <TabsContent value="questions" className="mt-6">
               <QuestionBankManager />
-            </TabsContent>
-
-            <TabsContent value="create" className="mt-6">
-              <ExamCreator />
             </TabsContent>
           </Tabs>
         </CardContent>
