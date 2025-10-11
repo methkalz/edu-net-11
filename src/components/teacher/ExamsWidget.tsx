@@ -3,9 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ClipboardList, FileQuestion, TrendingUp, Users, ArrowRight, Plus, ArrowLeft, Trash2, Edit, AlertCircle, CheckCircle, Archive, Clock } from 'lucide-react';
-import { format } from 'date-fns';
-import { ar } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { formatDateTime12H } from '@/utils/dateFormatting';
+import { DateTimePicker } from '@/components/ui/datetime-picker';
 
 // معالج أخطاء عام للتطوير
 if (import.meta.env.DEV) {
@@ -593,11 +593,24 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
       if (data.publish_status === 'scheduled') {
         if (!data.start_datetime || !data.end_datetime) {
           toast.error('يجب تحديد تاريخ البدء والانتهاء للامتحان المجدول');
+          setCurrentStep(7);
           console.groupEnd();
           return;
         }
-        if (new Date(data.start_datetime) >= new Date(data.end_datetime)) {
+        const startDate = new Date(data.start_datetime);
+        const endDate = new Date(data.end_datetime);
+        const now = new Date();
+        
+        if (startDate < now) {
+          toast.error('تاريخ البدء يجب أن يكون في المستقبل');
+          setCurrentStep(7);
+          console.groupEnd();
+          return;
+        }
+        
+        if (startDate >= endDate) {
           toast.error('تاريخ البدء يجب أن يكون قبل تاريخ الانتهاء');
+          setCurrentStep(7);
           console.groupEnd();
           return;
         }
@@ -606,11 +619,13 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
       if (data.publish_status === 'active') {
         if (!data.end_datetime) {
           toast.error('يجب تحديد تاريخ الانتهاء للامتحان النشط');
+          setCurrentStep(7);
           console.groupEnd();
           return;
         }
         if (new Date(data.end_datetime) <= new Date()) {
           toast.error('تاريخ الانتهاء يجب أن يكون في المستقبل');
+          setCurrentStep(7);
           console.groupEnd();
           return;
         }
@@ -851,14 +866,14 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                     {(exam.status === 'scheduled' || exam.status === 'active') && exam.start_datetime && (
                       <div className="mt-2 pt-2 border-t border-border/50">
                         <div className="flex items-center gap-4 text-xs">
-                          <span className="flex items-center gap-1 text-green-600">
+                          <span className="flex items-center gap-1 text-green-600 font-mono" dir="ltr">
                             <Clock className="w-3 h-3" />
-                            البداية: {format(new Date(exam.start_datetime), 'dd/MM/yyyy - hh:mm a', { locale: ar })}
+                            البداية: {formatDateTime12H(exam.start_datetime)}
                           </span>
                           {exam.end_datetime && (
-                            <span className="flex items-center gap-1 text-orange-600">
+                            <span className="flex items-center gap-1 text-orange-600 font-mono" dir="ltr">
                               <Clock className="w-3 h-3" />
-                              النهاية: {format(new Date(exam.end_datetime), 'dd/MM/yyyy - hh:mm a', { locale: ar })}
+                              النهاية: {formatDateTime12H(exam.end_datetime)}
                             </span>
                           )}
                         </div>
@@ -1902,7 +1917,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                           📅 مواعيد الامتحان المجدول
                         </h4>
                         
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-4">
                           <FormField
                             control={form.control}
                             name="start_datetime"
@@ -1910,7 +1925,12 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                               <FormItem>
                                 <FormLabel>تاريخ ووقت البدء *</FormLabel>
                                 <FormControl>
-                                  <Input type="datetime-local" {...field} />
+                                  <DateTimePicker
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                    placeholder="اختر تاريخ ووقت البدء"
+                                    minDate={new Date()}
+                                  />
                                 </FormControl>
                                 <FormDescription>متى سيصبح الامتحان متاحاً للطلاب</FormDescription>
                                 <FormMessage />
@@ -1925,7 +1945,15 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                               <FormItem>
                                 <FormLabel>تاريخ ووقت الانتهاء *</FormLabel>
                                 <FormControl>
-                                  <Input type="datetime-local" {...field} />
+                                  <DateTimePicker
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                    placeholder="اختر تاريخ ووقت الانتهاء"
+                                    minDate={form.watch('start_datetime') 
+                                      ? new Date(form.watch('start_datetime')!) 
+                                      : new Date()
+                                    }
+                                  />
                                 </FormControl>
                                 <FormDescription>آخر موعد لتقديم الامتحان</FormDescription>
                                 <FormMessage />
@@ -1933,6 +1961,36 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                             )}
                           />
                         </div>
+
+                        {form.watch('start_datetime') && form.watch('end_datetime') && (
+                          <div className="bg-white dark:bg-gray-900 p-4 rounded-md border">
+                            <p className="font-medium mb-3 text-sm">📋 ملخص المواعيد:</p>
+                            <div className="space-y-2 text-sm">
+                              <div className="flex items-center justify-between">
+                                <span className="text-muted-foreground">🟢 البدء:</span>
+                                <span className="font-mono font-semibold" dir="ltr">
+                                  {formatDateTime12H(form.watch('start_datetime')!)}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-muted-foreground">🔴 الانتهاء:</span>
+                                <span className="font-mono font-semibold" dir="ltr">
+                                  {formatDateTime12H(form.watch('end_datetime')!)}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between pt-2 border-t">
+                                <span className="text-muted-foreground">⏱️ المدة:</span>
+                                <span className="font-semibold">
+                                  {Math.ceil(
+                                    (new Date(form.watch('end_datetime')!).getTime() - 
+                                     new Date(form.watch('start_datetime')!).getTime()) 
+                                    / (1000 * 60 * 60 * 24)
+                                  )} يوم
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
 
@@ -1949,7 +2007,12 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                             <FormItem>
                               <FormLabel>تاريخ ووقت الانتهاء *</FormLabel>
                               <FormControl>
-                                <Input type="datetime-local" {...field} />
+                                <DateTimePicker
+                                  value={field.value}
+                                  onChange={field.onChange}
+                                  placeholder="اختر تاريخ ووقت الانتهاء"
+                                  minDate={new Date()}
+                                />
                               </FormControl>
                               <FormDescription>
                                 الامتحان سيبدأ فوراً وينتهي في التاريخ المحدد
