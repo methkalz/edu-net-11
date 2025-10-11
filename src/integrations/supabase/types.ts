@@ -948,13 +948,16 @@ export type Database = {
           created_at: string
           created_by: string
           description: string | null
+          difficulty_levels: string[] | null
           duration_minutes: number
           end_datetime: string
           grade_levels: string[]
           id: string
           max_attempts: number
           passing_percentage: number
+          question_source_type: string | null
           school_id: string
+          selected_sections: string[] | null
           show_results_immediately: boolean
           shuffle_choices: boolean
           shuffle_questions: boolean
@@ -971,13 +974,16 @@ export type Database = {
           created_at?: string
           created_by: string
           description?: string | null
+          difficulty_levels?: string[] | null
           duration_minutes: number
           end_datetime: string
           grade_levels?: string[]
           id?: string
           max_attempts?: number
           passing_percentage?: number
+          question_source_type?: string | null
           school_id: string
+          selected_sections?: string[] | null
           show_results_immediately?: boolean
           shuffle_choices?: boolean
           shuffle_questions?: boolean
@@ -994,13 +1000,16 @@ export type Database = {
           created_at?: string
           created_by?: string
           description?: string | null
+          difficulty_levels?: string[] | null
           duration_minutes?: number
           end_datetime?: string
           grade_levels?: string[]
           id?: string
           max_attempts?: number
           passing_percentage?: number
+          question_source_type?: string | null
           school_id?: string
+          selected_sections?: string[] | null
           show_results_immediately?: boolean
           shuffle_choices?: boolean
           shuffle_questions?: boolean

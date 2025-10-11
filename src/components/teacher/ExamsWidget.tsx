@@ -65,6 +65,9 @@ const createExamSchema = z.object({
   shuffle_choices: z.boolean().default(false),
   show_results_immediately: z.boolean().default(true),
   allow_review: z.boolean().default(true),
+  question_source_type: z.enum(['random', 'specific_sections']).default('random'),
+  selected_sections: z.array(z.string()).optional(),
+  difficulty_levels: z.array(z.enum(['easy', 'medium', 'hard'])).optional(),
 });
 
 type CreateExamFormData = z.infer<typeof createExamSchema>;
@@ -130,6 +133,9 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
       shuffle_choices: false,
       show_results_immediately: true,
       allow_review: true,
+      question_source_type: 'random',
+      selected_sections: [],
+      difficulty_levels: [],
     },
   });
 
@@ -191,6 +197,9 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         shuffle_choices: exam.shuffle_choices,
         show_results_immediately: exam.show_results_immediately,
         allow_review: exam.allow_review,
+        question_source_type: (exam.question_source_type || 'random') as 'random' | 'specific_sections',
+        selected_sections: exam.selected_sections || [],
+        difficulty_levels: (exam.difficulty_levels || []) as ('easy' | 'medium' | 'hard')[],
       });
 
       setEditingExamId(examId);
@@ -268,6 +277,17 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
           return;
         }
         setCurrentStep(prev => prev + 1);
+      } else if (currentStep === 4) {
+        // التحقق من إعدادات مصدر الأسئلة
+        const questionSourceType = form.getValues('question_source_type');
+        if (questionSourceType === 'specific_sections') {
+          const selectedSections = form.getValues('selected_sections');
+          if (!selectedSections || selectedSections.length === 0) {
+            toast.error('يجب اختيار قسم واحد على الأقل');
+            return;
+          }
+        }
+        setCurrentStep(prev => prev + 1);
       }
     } catch (error) {
       console.error('Error in handleNextStep:', error);
@@ -281,7 +301,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
 
   const onSubmit = async (data: CreateExamFormData) => {
     // حماية: التأكد من أننا في الخطوة الأخيرة
-    if (currentStep !== 4) {
+    if (currentStep !== 5) {
       console.warn('Submit called from non-final step:', currentStep);
       return;
     }
@@ -351,6 +371,9 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
             shuffle_choices: data.shuffle_choices,
             show_results_immediately: data.show_results_immediately,
             allow_review: data.allow_review,
+            question_source_type: data.question_source_type,
+            selected_sections: data.selected_sections || [],
+            difficulty_levels: data.difficulty_levels || [],
           })
           .eq('id', editingExamId);
 
@@ -375,6 +398,9 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
             shuffle_choices: data.shuffle_choices,
             show_results_immediately: data.show_results_immediately,
             allow_review: data.allow_review,
+            question_source_type: data.question_source_type,
+            selected_sections: data.selected_sections || [],
+            difficulty_levels: data.difficulty_levels || [],
             status: 'draft',
             created_by: user.id,
             school_id: profile.school_id,
@@ -583,7 +609,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
               {editingExamId ? 'تعديل الامتحان' : 'إنشاء امتحان جديد'}
             </DialogTitle>
             <DialogDescription>
-              خطوة {currentStep} من 4
+              خطوة {currentStep} من 5
             </DialogDescription>
           </DialogHeader>
 
@@ -591,7 +617,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
             <form 
               onSubmit={form.handleSubmit(onSubmit)} 
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && currentStep < 4) {
+                if (e.key === 'Enter' && currentStep < 5) {
                   e.preventDefault();
                 }
               }}
@@ -919,8 +945,162 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                 </div>
               )}
 
-              {/* الخطوة 4: خيارات متقدمة */}
+              {/* الخطوة 4: مصدر الأسئلة ودرجة الصعوبة */}
               {currentStep === 4 && (
+                <div className="space-y-4">
+                  <div className="bg-muted/50 p-4 rounded-lg mb-4">
+                    <h3 className="font-semibold mb-2">مصدر الأسئلة والصعوبة</h3>
+                    <p className="text-sm text-muted-foreground">
+                      حدد كيف سيتم اختيار الأسئلة ومستوى صعوبتها
+                    </p>
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="question_source_type"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>مصدر الأسئلة</FormLabel>
+                        <FormControl>
+                          <div className="space-y-3">
+                            <label className="flex items-center gap-2 p-3 border rounded-lg cursor-pointer hover:bg-muted/50">
+                              <input
+                                type="radio"
+                                value="random"
+                                checked={field.value === 'random'}
+                                onChange={() => field.onChange('random')}
+                                className="w-4 h-4"
+                              />
+                              <div>
+                                <span className="text-sm font-medium block">أسئلة عشوائية</span>
+                                <span className="text-xs text-muted-foreground">سيتم اختيار الأسئلة بشكل عشوائي من بنك الأسئلة</span>
+                              </div>
+                            </label>
+                            <label className="flex items-center gap-2 p-3 border rounded-lg cursor-pointer hover:bg-muted/50">
+                              <input
+                                type="radio"
+                                value="specific_sections"
+                                checked={field.value === 'specific_sections'}
+                                onChange={() => field.onChange('specific_sections')}
+                                className="w-4 h-4"
+                              />
+                              <div>
+                                <span className="text-sm font-medium block">أقسام محددة</span>
+                                <span className="text-xs text-muted-foreground">اختر أقسام معينة من المنهج</span>
+                              </div>
+                            </label>
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {form.watch('question_source_type') === 'specific_sections' && (
+                    <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                      <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                        ملاحظة: يمكنك تحديد الأقسام المحددة عند إضافة الأسئلة للامتحان في صفحة إدارة الامتحانات
+                      </p>
+                    </div>
+                  )}
+
+                  <FormField
+                    control={form.control}
+                    name="difficulty_levels"
+                    render={() => (
+                      <FormItem>
+                        <FormLabel>مستويات الصعوبة</FormLabel>
+                        <FormDescription>
+                          اختر مستويات الصعوبة المطلوبة للأسئلة (اختياري)
+                        </FormDescription>
+                        <div className="space-y-3">
+                          <FormField
+                            control={form.control}
+                            name="difficulty_levels"
+                            render={({ field }) => (
+                              <FormItem className="flex items-center space-x-3 space-x-reverse space-y-0">
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value?.includes('easy')}
+                                    onCheckedChange={(checked) => {
+                                      return checked
+                                        ? field.onChange([...(field.value || []), 'easy'])
+                                        : field.onChange(field.value?.filter((value) => value !== 'easy'));
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormLabel className="font-medium cursor-pointer flex items-center gap-2">
+                                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500/20 to-green-600/10 flex items-center justify-center">
+                                    <span className="text-green-600 font-bold text-xs">سهل</span>
+                                  </div>
+                                  أسئلة سهلة
+                                </FormLabel>
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="difficulty_levels"
+                            render={({ field }) => (
+                              <FormItem className="flex items-center space-x-3 space-x-reverse space-y-0">
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value?.includes('medium')}
+                                    onCheckedChange={(checked) => {
+                                      return checked
+                                        ? field.onChange([...(field.value || []), 'medium'])
+                                        : field.onChange(field.value?.filter((value) => value !== 'medium'));
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormLabel className="font-medium cursor-pointer flex items-center gap-2">
+                                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-500/20 to-yellow-600/10 flex items-center justify-center">
+                                    <span className="text-yellow-600 font-bold text-xs">متوسط</span>
+                                  </div>
+                                  أسئلة متوسطة
+                                </FormLabel>
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="difficulty_levels"
+                            render={({ field }) => (
+                              <FormItem className="flex items-center space-x-3 space-x-reverse space-y-0">
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value?.includes('hard')}
+                                    onCheckedChange={(checked) => {
+                                      return checked
+                                        ? field.onChange([...(field.value || []), 'hard'])
+                                        : field.onChange(field.value?.filter((value) => value !== 'hard'));
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormLabel className="font-medium cursor-pointer flex items-center gap-2">
+                                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-500/20 to-red-600/10 flex items-center justify-center">
+                                    <span className="text-red-600 font-bold text-xs">صعب</span>
+                                  </div>
+                                  أسئلة صعبة
+                                </FormLabel>
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        <FormDescription className="text-xs mt-2">
+                          إذا لم تختر أي مستوى، سيتم تضمين جميع المستويات
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
+
+              {/* الخطوة 5: خيارات متقدمة */}
+              {currentStep === 5 && (
                 <div className="space-y-4">
                   <div className="bg-muted/50 p-4 rounded-lg mb-4">
                     <h3 className="font-semibold mb-2">خيارات متقدمة</h3>
@@ -1059,7 +1239,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                   إلغاء
                 </Button>
 
-                {currentStep < 4 ? (
+                {currentStep < 5 ? (
                   <Button
                     type="button"
                     onClick={(e) => {
