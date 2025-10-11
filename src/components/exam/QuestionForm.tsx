@@ -2,6 +2,8 @@ import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -22,7 +24,6 @@ const questionSchema = z.object({
   difficulty: z.enum(['easy', 'medium', 'hard']),
   grade_level: z.string().min(1, 'يجب اختيار المستوى الدراسي'),
   section_name: z.string().optional(),
-  topic_name: z.string().optional(),
 });
 
 type QuestionFormData = z.infer<typeof questionSchema>;
@@ -40,6 +41,20 @@ export const QuestionForm: React.FC<QuestionFormProps> = ({
   onCancel,
   isSubmitting = false,
 }) => {
+  // جلب أقسام الصف الحادي عشر
+  const { data: sections = [] } = useQuery({
+    queryKey: ['grade11-sections'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('grade11_sections')
+        .select('id, title')
+        .order('order_index', { ascending: true });
+      
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
   const form = useForm<QuestionFormData>({
     resolver: zodResolver(questionSchema),
     defaultValues: {
@@ -51,7 +66,6 @@ export const QuestionForm: React.FC<QuestionFormProps> = ({
       difficulty: question?.difficulty || 'medium',
       grade_level: question?.grade_level || '11',
       section_name: question?.section_name || '',
-      topic_name: question?.topic_name || '',
     },
   });
 
@@ -274,35 +288,31 @@ export const QuestionForm: React.FC<QuestionFormProps> = ({
           )}
         />
 
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="section_name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>القسم (اختياري)</FormLabel>
+        <FormField
+          control={form.control}
+          name="section_name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>القسم (اختياري)</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value || ''}>
                 <FormControl>
-                  <Input {...field} placeholder="مثال: الشبكات" />
+                  <SelectTrigger>
+                    <SelectValue placeholder="اختر القسم" />
+                  </SelectTrigger>
                 </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="topic_name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>الموضوع (اختياري)</FormLabel>
-                <FormControl>
-                  <Input {...field} placeholder="مثال: البروتوكولات" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+                <SelectContent>
+                  <SelectItem value="">بدون قسم</SelectItem>
+                  {sections.map((section) => (
+                    <SelectItem key={section.id} value={section.title}>
+                      {section.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <div className="flex gap-3 justify-end">
           <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
