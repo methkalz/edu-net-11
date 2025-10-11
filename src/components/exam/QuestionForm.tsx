@@ -294,14 +294,17 @@ export const QuestionForm: React.FC<QuestionFormProps> = ({
           render={({ field }) => (
             <FormItem>
               <FormLabel>القسم (اختياري)</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value || ''}>
+              <Select 
+                onValueChange={(value) => field.onChange(value === 'none' ? '' : value)} 
+                value={field.value || 'none'}
+              >
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="اختر القسم" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="">بدون قسم</SelectItem>
+                  <SelectItem value="none">بدون قسم</SelectItem>
                   {sections.map((section) => (
                     <SelectItem key={section.id} value={section.title}>
                       {section.title}
