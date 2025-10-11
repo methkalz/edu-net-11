@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { ClipboardList, FileQuestion, TrendingUp, Users, ArrowRight, Plus, ArrowLeft, Trash2, Edit, AlertCircle, CheckCircle, Archive, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 // معالج أخطاء عام للتطوير
 if (import.meta.env.DEV) {
@@ -91,6 +92,17 @@ const createExamSchema = z.object({
 });
 
 type CreateExamFormData = z.infer<typeof createExamSchema>;
+
+// خطوات إنشاء الامتحان
+const EXAM_STEPS = [
+  { number: 1, title: 'المعلومات الأساسية', icon: '📝' },
+  { number: 2, title: 'الفئة المستهدفة', icon: '🎯' },
+  { number: 3, title: 'التوقيت والإعدادات', icon: '⏰' },
+  { number: 4, title: 'مصدر الأسئلة', icon: '❓' },
+  { number: 5, title: 'توزيع الصعوبة', icon: '📊' },
+  { number: 6, title: 'إعدادات الامتحان', icon: '⚙️' },
+  { number: 7, title: 'النشر والجدولة', icon: '🚀' }
+];
 
 // Presets for difficulty
 const difficultyPresets = {
@@ -433,12 +445,16 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
     }
   };
 
-  const handleNextStep = async () => {
+  const handleNextStep = async (): Promise<boolean> => {
     try {
       if (currentStep === 1) {
         const isValid = await form.trigger(['title', 'exam_type']);
-        if (!isValid) return;
+        if (!isValid) {
+          toast.error('يرجى ملء جميع الحقول المطلوبة');
+          return false;
+        }
         setCurrentStep(prev => prev + 1);
+        return true;
       } else if (currentStep === 2) {
         const selectionType = form.getValues('selection_type');
         const gradeLevels = form.getValues('grade_levels');
@@ -447,38 +463,43 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         if (selectionType === 'all_grade') {
           if (!gradeLevels || gradeLevels.length === 0) {
             toast.error('يجب اختيار صف واحد على الأقل');
-            return;
+            return false;
           }
         } else {
           if (!targetClasses || targetClasses.length === 0) {
             toast.error('يجب اختيار صف محدد واحد على الأقل');
-            return;
+            return false;
           }
         }
         setCurrentStep(prev => prev + 1);
+        return true;
       } else if (currentStep === 3) {
         const startDate = form.getValues('start_datetime');
         const endDate = form.getValues('end_datetime');
         
         if (!startDate) {
           form.setError('start_datetime', { message: 'تاريخ البدء مطلوب' });
-          return;
+          return false;
         }
         if (!endDate) {
           form.setError('end_datetime', { message: 'تاريخ الانتهاء مطلوب' });
-          return;
+          return false;
         }
         
         const isValid = await form.trigger(['duration_minutes', 'max_attempts']);
-        if (!isValid) return;
+        if (!isValid) {
+          toast.error('يرجى ملء جميع الحقول المطلوبة');
+          return false;
+        }
         setCurrentStep(prev => prev + 1);
+        return true;
       } else if (currentStep === 4) {
         const questionSourceType = form.getValues('question_source_type');
         if (questionSourceType === 'specific_sections') {
           const selectedSections = form.getValues('selected_sections');
           if (!selectedSections || selectedSections.length === 0) {
             toast.error('يجب اختيار قسم واحد على الأقل');
-            return;
+            return false;
           }
           
           // تحقق إضافي: هل الـ IDs صحيحة؟
@@ -491,25 +512,27 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
             form.setError('selected_sections', {
               message: 'بعض الأقسام المحددة غير صالحة'
             });
-            return;
+            return false;
           }
         }
         const questionsCount = form.getValues('questions_count');
         if (!questionsCount || questionsCount < 1) {
           toast.error('يجب تحديد عدد الأسئلة');
-          return;
+          return false;
         }
         setCurrentStep(prev => prev + 1);
+        return true;
       } else if (currentStep === 5) {
         // التحقق من توزيع الصعوبة
         if (difficultyMode === 'custom') {
           const total = customEasy + customMedium + customHard;
           if (total !== 100) {
             toast.error('يجب أن يكون مجموع النسب 100%');
-            return;
+            return false;
           }
         }
         setCurrentStep(prev => prev + 1);
+        return true;
       } else if (currentStep === 6) {
         // التحقق من إعدادات النشر
         const publishStatus = form.getValues('publish_status');
@@ -518,14 +541,36 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
           const endDate = form.getValues('end_datetime');
           if (!startDate || !endDate) {
             toast.error('يجب تحديد تاريخ البدء والانتهاء عند النشر');
-            return;
+            return false;
           }
         }
         setCurrentStep(prev => prev + 1);
+        return true;
+      } else {
+        setCurrentStep(prev => prev + 1);
+        return true;
       }
     } catch (error) {
       console.error('Error in handleNextStep:', error);
-      toast.error('حدث خطأ في التحقق من البيانات');
+      toast.error('حدث خطأ أثناء التحقق من البيانات');
+      return false;
+    }
+  };
+
+  const handleStepClick = async (targetStep: number) => {
+    // السماح بالانتقال للخطوات السابقة دائماً
+    if (targetStep < currentStep) {
+      setCurrentStep(targetStep);
+      return;
+    }
+    
+    // السماح بالانتقال للخطوات التالية إذا كانت البيانات الحالية صحيحة
+    if (targetStep > currentStep) {
+      const isValid = await handleNextStep();
+      if (isValid && targetStep > currentStep + 1) {
+        // إذا كان الهدف أكثر من خطوة واحدة، انتقل مباشرة
+        setCurrentStep(targetStep);
+      }
     }
   };
 
@@ -947,9 +992,56 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                 {editingExamId ? 'تعديل الامتحان' : 'إنشاء امتحان جديد'}
               </DialogTitle>
               <DialogDescription>
-                خطوة {currentStep} من 7
+                {EXAM_STEPS[currentStep - 1].icon} {EXAM_STEPS[currentStep - 1].title}
               </DialogDescription>
             </DialogHeader>
+
+            {/* Step Navigator */}
+            <div className="sticky top-0 bg-background z-10 border-b pb-4 mb-6">
+              {/* Progress Bar */}
+              <div className="w-full h-2 bg-muted rounded-full overflow-hidden mb-4">
+                <div 
+                  className="h-full bg-gradient-to-r from-orange-500 to-purple-600 transition-all duration-300"
+                  style={{ width: `${(currentStep / 7) * 100}%` }}
+                />
+              </div>
+
+              {/* Steps */}
+              <div className="flex items-center justify-between gap-2 overflow-x-auto pb-2">
+                {EXAM_STEPS.map((step) => (
+                  <button
+                    key={step.number}
+                    type="button"
+                    onClick={() => handleStepClick(step.number)}
+                    className={cn(
+                      "flex flex-col items-center gap-1 px-2 py-2 rounded-lg transition-all min-w-[80px] flex-1",
+                      currentStep === step.number 
+                        ? "bg-gradient-to-br from-orange-500 to-purple-600 text-white shadow-lg scale-105" 
+                        : currentStep > step.number
+                        ? "bg-green-500/10 text-green-600 hover:bg-green-500/20"
+                        : "hover:bg-muted text-muted-foreground"
+                    )}
+                  >
+                    <div className={cn(
+                      "w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-all",
+                      currentStep === step.number 
+                        ? "bg-white text-orange-600 shadow-md" 
+                        : currentStep > step.number 
+                        ? "bg-green-100 text-green-600 dark:bg-green-900/30"
+                        : "bg-muted text-muted-foreground"
+                    )}>
+                      {currentStep > step.number ? '✓' : step.number}
+                    </div>
+                    <span className="text-[10px] text-center leading-tight hidden md:block">
+                      {step.title}
+                    </span>
+                    <span className="text-lg md:hidden">
+                      {step.icon}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
 
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
