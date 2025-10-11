@@ -17,6 +17,11 @@ export interface StudentExam {
   teacher_name?: string;
   my_attempts_count?: number;
   best_score?: number;
+  question_sources?: {
+    type: 'sections' | 'random';
+    sections?: string[];
+  };
+  pass_percentage?: number;
 }
 
 export interface ExamAttempt {
@@ -160,8 +165,9 @@ export const useStudentExams = () => {
             ...exam,
             teacher_name: 'المعلم',
             my_attempts_count: count || 0,
-            best_score: bestAttempt?.total_score || 0
-          };
+            best_score: bestAttempt?.total_score || 0,
+            question_sources: exam.question_sources as any
+          } as StudentExam;
         })
       );
 
@@ -228,14 +234,31 @@ export const useStudentExams = () => {
         return null;
       }
 
-      // جلب الأسئلة
-      const { data: questions, error: questionsError } = await supabase
-        .from('exam_questions')
-        .select('*')
-        .eq('exam_id', examId)
-        .order('created_at');
+      // توليد الأسئلة بناءً على question_sources
+      const questionSources = exam.question_sources as any;
+      let questions: any[] = [];
 
-      if (questionsError) throw questionsError;
+      if (questionSources?.type === 'sections' && questionSources.sections?.length > 0) {
+        // جلب أسئلة من الأقسام المحددة
+        const { data: sectionQuestions, error: questionsError } = await supabase
+          .from('question_bank')
+          .select('*')
+          .in('section_id', questionSources.sections)
+          .limit(exam.total_questions || 10);
+
+        if (questionsError) throw questionsError;
+        questions = sectionQuestions || [];
+      } else if (questionSources?.type === 'random') {
+        // جلب أسئلة عشوائية من بنك الأسئلة
+        const { data: randomQuestions, error: questionsError } = await supabase
+          .from('question_bank')
+          .select('*')
+          .limit(exam.total_questions || 10);
+
+        if (questionsError) throw questionsError;
+        questions = randomQuestions || [];
+      }
+
       if (!questions || questions.length === 0) {
         toast.error('الاختبار لا يحتوي على أسئلة');
         return null;
