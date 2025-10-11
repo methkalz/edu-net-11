@@ -5592,6 +5592,14 @@ export type Database = {
         Args: { p_player_id: string }
         Returns: undefined
       }
+      is_student_class_enrollment: {
+        Args: { p_student_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      is_student_enrolled_in_class: {
+        Args: { p_class_id: string; p_user_id: string }
+        Returns: boolean
+      }
       is_teacher_assigned_to_class: {
         Args: { p_class_id: string; p_teacher_id: string }
         Returns: boolean
