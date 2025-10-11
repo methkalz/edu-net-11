@@ -948,6 +948,7 @@ export type Database = {
           created_at: string
           created_by: string
           description: string | null
+          difficulty_distribution: Json | null
           difficulty_levels: string[] | null
           duration_minutes: number
           end_datetime: string
@@ -956,6 +957,7 @@ export type Database = {
           max_attempts: number
           passing_percentage: number
           question_source_type: string | null
+          questions_count: number | null
           school_id: string
           selected_sections: string[] | null
           show_results_immediately: boolean
@@ -974,6 +976,7 @@ export type Database = {
           created_at?: string
           created_by: string
           description?: string | null
+          difficulty_distribution?: Json | null
           difficulty_levels?: string[] | null
           duration_minutes: number
           end_datetime: string
@@ -982,6 +985,7 @@ export type Database = {
           max_attempts?: number
           passing_percentage?: number
           question_source_type?: string | null
+          questions_count?: number | null
           school_id: string
           selected_sections?: string[] | null
           show_results_immediately?: boolean
@@ -1000,6 +1004,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           description?: string | null
+          difficulty_distribution?: Json | null
           difficulty_levels?: string[] | null
           duration_minutes?: number
           end_datetime?: string
@@ -1008,6 +1013,7 @@ export type Database = {
           max_attempts?: number
           passing_percentage?: number
           question_source_type?: string | null
+          questions_count?: number | null
           school_id?: string
           selected_sections?: string[] | null
           show_results_immediately?: boolean
