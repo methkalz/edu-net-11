@@ -6,11 +6,13 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { BookOpen, ChevronDown, ChevronRight, Search, FolderOpen, PlayCircle, Clock, Star, FileText, BookMarked, Target, Trophy, Video, Calendar } from 'lucide-react';
+import { BookOpen, ChevronDown, ChevronRight, Search, FolderOpen, PlayCircle, Clock, Star, FileText, BookMarked, Target, Trophy, Video, Calendar, FileCheck } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import Grade11LessonContentDisplay from '../content/Grade11LessonContentDisplay';
 import { Grade11VideoViewer } from '@/components/content/Grade11VideoViewer';
 import { useStudentProgress } from '@/hooks/useStudentProgress';
+import { StudentExamsWidget } from './StudentExamsWidget';
+
 export const StudentGrade11Content: React.FC = () => {
   const {
     sections,
@@ -170,7 +172,7 @@ export const StudentGrade11Content: React.FC = () => {
 
       {/* Clean Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 h-14 bg-surface-light border border-divider">
+        <TabsList className="grid w-full max-w-md mx-auto grid-cols-3 h-14 bg-surface-light border border-divider">
           <TabsTrigger value="lessons" className="flex items-center gap-3 text-base font-light py-3">
             <BookOpen className="w-5 h-5" />
             الدروس ({(sections || []).length})
@@ -178,6 +180,10 @@ export const StudentGrade11Content: React.FC = () => {
           <TabsTrigger value="videos" className="flex items-center gap-3 text-base font-light py-3">
             <Video className="w-5 h-5" />
             الفيديوهات ({(videos || []).length})
+          </TabsTrigger>
+          <TabsTrigger value="exams" className="flex items-center gap-3 text-base font-light py-3">
+            <FileCheck className="w-5 h-5" />
+            الاختبارات
           </TabsTrigger>
         </TabsList>
 
@@ -365,6 +371,10 @@ export const StudentGrade11Content: React.FC = () => {
                   </CardContent>
                 </Card>)}
             </div>}
+        </TabsContent>
+
+        <TabsContent value="exams" className="space-y-6">
+          <StudentExamsWidget />
         </TabsContent>
       </Tabs>
 
