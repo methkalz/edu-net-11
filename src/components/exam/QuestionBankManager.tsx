@@ -8,6 +8,7 @@ import { useQuestionBank } from '@/hooks/useQuestionBank';
 import { Plus, Search, Edit, Trash2, FileText } from 'lucide-react';
 import { Question } from '@/types/exam';
 import { QuestionForm } from './QuestionForm';
+import { BulkQuestionImporter } from './BulkQuestionImporter';
 
 export const QuestionBankManager: React.FC = () => {
   const { questions, isLoading, addQuestion, updateQuestion, deleteQuestion, isAdding, isUpdating } = useQuestionBank();
@@ -67,10 +68,13 @@ export const QuestionBankManager: React.FC = () => {
             className="pr-10"
           />
         </div>
-        <Button className="gap-2" onClick={handleAddQuestion}>
-          <Plus className="w-4 h-4" />
-          إضافة سؤال جديد
-        </Button>
+        <div className="flex items-center gap-2">
+          <BulkQuestionImporter />
+          <Button className="gap-2" onClick={handleAddQuestion}>
+            <Plus className="w-4 h-4" />
+            إضافة سؤال جديد
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4">
