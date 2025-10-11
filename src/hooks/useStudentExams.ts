@@ -236,7 +236,7 @@ export const useStudentExams = () => {
 
       // توليد الأسئلة بناءً على question_sources
       const questionSources = exam.question_sources as any;
-      let questions: any[] = [];
+      let bankQuestions: any[] = [];
 
       if (questionSources?.type === 'sections' && questionSources.sections?.length > 0) {
         // جلب أسئلة من الأقسام المحددة
@@ -247,7 +247,7 @@ export const useStudentExams = () => {
           .limit(exam.total_questions || 10);
 
         if (questionsError) throw questionsError;
-        questions = sectionQuestions || [];
+        bankQuestions = sectionQuestions || [];
       } else if (questionSources?.type === 'random') {
         // جلب أسئلة عشوائية من بنك الأسئلة
         const { data: randomQuestions, error: questionsError } = await supabase
@@ -256,13 +256,39 @@ export const useStudentExams = () => {
           .limit(exam.total_questions || 10);
 
         if (questionsError) throw questionsError;
-        questions = randomQuestions || [];
+        bankQuestions = randomQuestions || [];
       }
 
-      if (!questions || questions.length === 0) {
+      if (!bankQuestions || bankQuestions.length === 0) {
         toast.error('الاختبار لا يحتوي على أسئلة');
         return null;
       }
+
+      // نسخ الأسئلة إلى exam_questions للربط مع exam_attempt_questions
+      const examQuestionsToInsert = bankQuestions.map(q => ({
+        exam_id: examId,
+        question_bank_id: q.id,
+        question_text: q.question_text,
+        question_type: q.question_type,
+        choices: q.choices,
+        correct_answer: q.correct_answer,
+        points: q.points || 1,
+        difficulty_level: q.difficulty_level,
+        bank_category: q.category
+      }));
+
+      const { data: insertedQuestions, error: insertError } = await supabase
+        .from('exam_questions')
+        .insert(examQuestionsToInsert)
+        .select();
+
+      if (insertError) throw insertError;
+      if (!insertedQuestions || insertedQuestions.length === 0) {
+        toast.error('فشل في إنشاء أسئلة الاختبار');
+        return null;
+      }
+
+      const questions = insertedQuestions;
 
       // إنشاء محاولة جديدة
       const { data: attempt, error: attemptError } = await supabase
