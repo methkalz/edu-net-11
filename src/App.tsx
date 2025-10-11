@@ -59,6 +59,8 @@ const KnowledgeAdventurePage = React.lazy(() => import('@/pages/KnowledgeAdventu
 const StudentTrackingPage = React.lazy(() => import('@/pages/teacher/StudentTracking'));
 const BadgeTestPage = React.lazy(() => import('@/pages/BadgeTestPage'));
 const LazyGoogleDocsManagement = React.lazy(() => import('@/components/google-docs/GoogleDocsManagement'));
+const StudentExamAttemptPage = React.lazy(() => import('@/pages/StudentExamAttempt'));
+const StudentExamResultPage = React.lazy(() => import('@/pages/StudentExamResult'));
 import { PageLoading } from "@/components/ui/LoadingComponents";
 
 /**
@@ -152,6 +154,16 @@ const App = () => {
                <Route 
                  path="/teacher/student-tracking" 
                  element={<Suspense fallback={<PageLoading message="جاري تحميل تتبع الطلاب..." />}><StudentTrackingPage /></Suspense>} 
+               />
+               
+               {/* Student Exam routes */}
+               <Route 
+                 path="/student/exam/:examId" 
+                 element={<Suspense fallback={<PageLoading message="جاري تحميل الامتحان..." />}><StudentExamAttemptPage /></Suspense>} 
+               />
+               <Route 
+                 path="/student/exam-result/:attemptId" 
+                 element={<Suspense fallback={<PageLoading message="جاري تحميل النتيجة..." />}><StudentExamResultPage /></Suspense>} 
                />
                
                  {/* Game routes */}
