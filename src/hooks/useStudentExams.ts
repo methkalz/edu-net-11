@@ -89,9 +89,20 @@ export const useStudentExams = () => {
         return;
       }
 
-      console.log('Student Info:', { studentClassId, studentGrade });
+      console.log('🔍 Student Info:', { 
+        studentClassId, 
+        studentGrade,
+        userId: user.user.id 
+      });
 
       // 3. جلب الاختبارات مع فلترة صريحة
+      console.log('📝 Fetching exams with filters:', {
+        status: 'published',
+        is_active: true,
+        grade: studentGrade,
+        classId: studentClassId
+      });
+
       const { data: examsData, error } = await supabase
         .from('teacher_exams')
         .select('*')
@@ -101,9 +112,18 @@ export const useStudentExams = () => {
         .contains('target_class_ids', [studentClassId])
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      console.log('📊 Query Result:', { 
+        error: error?.message, 
+        count: examsData?.length,
+        exams: examsData 
+      });
 
-      console.log('Fetched Exams:', examsData);
+      if (error) {
+        console.error('❌ Error fetching exams:', error);
+        throw error;
+      }
+
+      console.log('✅ Fetched Exams:', examsData);
 
       // 4. فلترة إضافية من جانب العميل لضمان عدم وجود NULL
       const filteredExams = (examsData || []).filter(exam => 
