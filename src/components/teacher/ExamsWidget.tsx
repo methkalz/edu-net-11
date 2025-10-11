@@ -163,45 +163,52 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
   };
 
   const handleNextStep = async () => {
-    if (currentStep === 1) {
-      const isValid = await form.trigger(['title', 'exam_type']);
-      if (isValid) {
-        setCurrentStep(prev => prev + 1);
-      }
-    } else if (currentStep === 2) {
-      const selectionType = form.getValues('selection_type');
-      const gradeLevels = form.getValues('grade_levels');
-      const targetClasses = form.getValues('target_classes');
-      
-      if (selectionType === 'all_grade') {
-        if (!gradeLevels || gradeLevels.length === 0) {
-          toast.error('يجب اختيار صف واحد على الأقل');
+    try {
+      if (currentStep === 1) {
+        const isValid = await form.trigger(['title', 'exam_type']);
+        if (!isValid) {
           return;
         }
-      } else {
-        if (!targetClasses || targetClasses.length === 0) {
-          toast.error('يجب اختيار صف محدد واحد على الأقل');
+        setCurrentStep(prev => prev + 1);
+      } else if (currentStep === 2) {
+        const selectionType = form.getValues('selection_type');
+        const gradeLevels = form.getValues('grade_levels');
+        const targetClasses = form.getValues('target_classes');
+        
+        if (selectionType === 'all_grade') {
+          if (!gradeLevels || gradeLevels.length === 0) {
+            toast.error('يجب اختيار صف واحد على الأقل');
+            return;
+          }
+        } else {
+          if (!targetClasses || targetClasses.length === 0) {
+            toast.error('يجب اختيار صف محدد واحد على الأقل');
+            return;
+          }
+        }
+        setCurrentStep(prev => prev + 1);
+      } else if (currentStep === 3) {
+        const startDate = form.getValues('start_datetime');
+        const endDate = form.getValues('end_datetime');
+        
+        if (!startDate) {
+          form.setError('start_datetime', { message: 'تاريخ البدء مطلوب' });
           return;
         }
-      }
-      setCurrentStep(prev => prev + 1);
-    } else if (currentStep === 3) {
-      const startDate = form.getValues('start_datetime');
-      const endDate = form.getValues('end_datetime');
-      
-      if (!startDate) {
-        form.setError('start_datetime', { message: 'تاريخ البدء مطلوب' });
-        return;
-      }
-      if (!endDate) {
-        form.setError('end_datetime', { message: 'تاريخ الانتهاء مطلوب' });
-        return;
-      }
-      
-      const isValid = await form.trigger(['duration_minutes', 'max_attempts']);
-      if (isValid) {
+        if (!endDate) {
+          form.setError('end_datetime', { message: 'تاريخ الانتهاء مطلوب' });
+          return;
+        }
+        
+        const isValid = await form.trigger(['duration_minutes', 'max_attempts']);
+        if (!isValid) {
+          return;
+        }
         setCurrentStep(prev => prev + 1);
       }
+    } catch (error) {
+      console.error('Error in handleNextStep:', error);
+      toast.error('حدث خطأ في التحقق من البيانات');
     }
   };
 
@@ -210,6 +217,12 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
   };
 
   const onSubmit = async (data: CreateExamFormData) => {
+    // حماية: التأكد من أننا في الخطوة الأخيرة
+    if (currentStep !== 4) {
+      console.warn('Submit called from non-final step:', currentStep);
+      return;
+    }
+    
     try {
       setIsSubmitting(true);
 
@@ -459,7 +472,15 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
           </DialogHeader>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form 
+              onSubmit={form.handleSubmit(onSubmit)} 
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && currentStep < 4) {
+                  e.preventDefault();
+                }
+              }}
+              className="space-y-6"
+            >
               {/* الخطوة 1: معلومات أساسية */}
               {currentStep === 1 && (
                 <div className="space-y-4">
@@ -925,7 +946,11 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                 {currentStep < 4 ? (
                   <Button
                     type="button"
-                    onClick={handleNextStep}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleNextStep();
+                    }}
                     className="bg-gradient-to-r from-orange-500 to-purple-600 hover:from-orange-600 hover:to-purple-700 text-white"
                   >
                     التالي
