@@ -13,6 +13,7 @@ import { EducationalTermsManager } from '@/components/content/EducationalTermsMa
 import { ContentGameLauncher } from '@/components/content/ContentGameLauncher';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Grade11ErrorBoundary } from '@/components/error-boundaries/Grade11ErrorBoundary';
+import { ExamManagement } from '@/components/exam/ExamManagement';
 const Grade11Management: React.FC = () => {
   console.log('🎯 Grade11Management component rendering...');
   const {
@@ -55,30 +56,46 @@ const Grade11Management: React.FC = () => {
           </div>
           
           {/* التبويبات الرئيسية */}
-          <Tabs defaultValue="content" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto">
-              <TabsTrigger value="content" className="flex items-center gap-2">
-                <GraduationCap className="h-4 w-4" />
-                المحتوى التعليمي
-              </TabsTrigger>
-              <TabsTrigger value="games" className="flex items-center gap-2">
-                <Gamepad2 className="h-4 w-4" />
-                الألعاب التفاعلية
-              </TabsTrigger>
+          <Tabs defaultValue={canManageContent ? 'manage' : isSchoolAdmin ? 'school-view' : 'view'} className="w-full">
+            <TabsList className={canManageContent ? 'grid w-full grid-cols-5' : isSchoolAdmin ? 'grid w-full grid-cols-3' : 'grid w-full grid-cols-2'}>
+              {canManageContent && <TabsTrigger value="manage">إدارة المحتوى</TabsTrigger>}
+              {canManageContent && <TabsTrigger value="terms">المصطلحات التعليمية</TabsTrigger>}
+              {canManageContent && <TabsTrigger value="exams">الامتحانات</TabsTrigger>}
+              {isSchoolAdmin && <TabsTrigger value="school-view">عرض مدير المدرسة</TabsTrigger>}
+              <TabsTrigger value="view">عرض المحتوى</TabsTrigger>
+              <TabsTrigger value="games">الألعاب التعليمية</TabsTrigger>
             </TabsList>
-            
-            {/* محتوى التبويب الأول - المحتوى التعليمي */}
-            <TabsContent value="content" className="mt-8">
-              <div className="animate-fade-in">
-                {canManageContent ? <Grade11Content /> : <Grade11CourseViewer />}
-              </div>
+
+            {canManageContent && (
+              <TabsContent value="manage">
+                <Grade11Content />
+              </TabsContent>
+            )}
+
+            {canManageContent && (
+              <TabsContent value="terms">
+                <EducationalTermsManager />
+              </TabsContent>
+            )}
+
+            {canManageContent && (
+              <TabsContent value="exams" className="space-y-6">
+                <ExamManagement />
+              </TabsContent>
+            )}
+
+            {isSchoolAdmin && (
+              <TabsContent value="school-view">
+                <Grade11SchoolAdminViewer />
+              </TabsContent>
+            )}
+
+            <TabsContent value="view">
+              <Grade11ContentViewer />
             </TabsContent>
-            
-            {/* محتوى التبويب الثاني - الألعاب التفاعلية */}
-            <TabsContent value="games" className="mt-8">
-              <div className="animate-fade-in">
-                <GamesSection canManageContent={canManageContent} />
-              </div>
+
+            <TabsContent value="games" className="space-y-6">
+              <GamesSection canManageContent={canManageContent} />
             </TabsContent>
           </Tabs>
         </div>
