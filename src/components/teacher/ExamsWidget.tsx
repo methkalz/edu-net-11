@@ -97,7 +97,7 @@ type CreateExamFormData = z.infer<typeof createExamSchema>;
 const EXAM_STEPS = [
   { number: 1, title: 'المعلومات الأساسية', icon: '📝' },
   { number: 2, title: 'الفئة المستهدفة', icon: '🎯' },
-  { number: 3, title: 'التوقيت والإعدادات', icon: '⏰' },
+  { number: 3, title: 'المدة والمحاولات', icon: '⏱️' },
   { number: 4, title: 'مصدر الأسئلة', icon: '❓' },
   { number: 5, title: 'توزيع الصعوبة', icon: '📊' },
   { number: 6, title: 'إعدادات الامتحان', icon: '⚙️' },
@@ -474,18 +474,6 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         setCurrentStep(prev => prev + 1);
         return true;
       } else if (currentStep === 3) {
-        const startDate = form.getValues('start_datetime');
-        const endDate = form.getValues('end_datetime');
-        
-        if (!startDate) {
-          form.setError('start_datetime', { message: 'تاريخ البدء مطلوب' });
-          return false;
-        }
-        if (!endDate) {
-          form.setError('end_datetime', { message: 'تاريخ الانتهاء مطلوب' });
-          return false;
-        }
-        
         const isValid = await form.trigger(['duration_minutes', 'max_attempts']);
         if (!isValid) {
           toast.error('يرجى ملء جميع الحقول المطلوبة');
@@ -534,16 +522,6 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         setCurrentStep(prev => prev + 1);
         return true;
       } else if (currentStep === 6) {
-        // التحقق من إعدادات النشر
-        const publishStatus = form.getValues('publish_status');
-        if (publishStatus === 'scheduled' || publishStatus === 'active') {
-          const startDate = form.getValues('start_datetime');
-          const endDate = form.getValues('end_datetime');
-          if (!startDate || !endDate) {
-            toast.error('يجب تحديد تاريخ البدء والانتهاء عند النشر');
-            return false;
-          }
-        }
         setCurrentStep(prev => prev + 1);
         return true;
       } else {
@@ -609,6 +587,41 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         toast.error('لا يمكن تحديد المدرسة');
         console.groupEnd();
         return;
+      }
+
+      // التحقق من التواريخ حسب publish_status
+      if (data.publish_status === 'scheduled') {
+        if (!data.start_datetime || !data.end_datetime) {
+          toast.error('يجب تحديد تاريخ البدء والانتهاء للامتحان المجدول');
+          console.groupEnd();
+          return;
+        }
+        if (new Date(data.start_datetime) >= new Date(data.end_datetime)) {
+          toast.error('تاريخ البدء يجب أن يكون قبل تاريخ الانتهاء');
+          console.groupEnd();
+          return;
+        }
+      }
+      
+      if (data.publish_status === 'active') {
+        if (!data.end_datetime) {
+          toast.error('يجب تحديد تاريخ الانتهاء للامتحان النشط');
+          console.groupEnd();
+          return;
+        }
+        if (new Date(data.end_datetime) <= new Date()) {
+          toast.error('تاريخ الانتهاء يجب أن يكون في المستقبل');
+          console.groupEnd();
+          return;
+        }
+        // تعيين start_datetime للآن تلقائياً
+        data.start_datetime = new Date().toISOString();
+      }
+      
+      if (data.publish_status === 'draft') {
+        // مسح التواريخ للمسودات
+        data.start_datetime = '';
+        data.end_datetime = '';
       }
 
       // إعداد بيانات توزيع الصعوبة
@@ -1285,44 +1298,14 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                   </div>
                 )}
 
-                {/* خطوة 3: الوقت والمدة */}
+                {/* خطوة 3: المدة والمحاولات */}
                 {currentStep === 3 && (
                   <div className="space-y-4">
                     <div className="bg-muted/50 p-4 rounded-lg mb-4">
-                      <h3 className="font-semibold mb-2">إعدادات الوقت</h3>
+                      <h3 className="font-semibold mb-2">المدة والمحاولات</h3>
                       <p className="text-sm text-muted-foreground">
-                        حدد مدة الامتحان وتواريخ البدء والانتهاء
+                        حدد مدة الامتحان وعدد المحاولات المسموحة
                       </p>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="start_datetime"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>تاريخ ووقت البدء *</FormLabel>
-                            <FormControl>
-                              <Input type="datetime-local" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="end_datetime"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>تاريخ ووقت الانتهاء *</FormLabel>
-                            <FormControl>
-                              <Input type="datetime-local" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -1848,13 +1831,13 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                   </div>
                 )}
 
-                {/* خطوة 7: إعدادات النشر */}
+                {/* خطوة 7: إعدادات النشر والجدولة */}
                 {currentStep === 7 && (
                   <div className="space-y-4">
                     <div className="bg-muted/50 p-4 rounded-lg mb-4">
-                      <h3 className="font-semibold mb-2">إعدادات النشر</h3>
+                      <h3 className="font-semibold mb-2">إعدادات النشر والجدولة</h3>
                       <p className="text-sm text-muted-foreground">
-                        اختر حالة الامتحان عند الحفظ
+                        اختر حالة الامتحان وحدد مواعيد البدء والانتهاء
                       </p>
                     </div>
 
@@ -1867,7 +1850,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                           <FormControl>
                             <RadioGroup
                               onValueChange={field.onChange}
-                              defaultValue={field.value}
+                              value={field.value}
                               className="space-y-3"
                             >
                               <div className="flex items-start space-x-3 space-x-reverse border rounded-lg p-4 hover:bg-muted/50 transition-colors">
@@ -1912,13 +1895,73 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                       )}
                     />
 
-                    {(form.watch('publish_status') === 'scheduled' || form.watch('publish_status') === 'active') && (
-                      <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 flex gap-3">
-                        <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                        <div className="text-sm">
-                          <p className="font-semibold text-blue-600 mb-1">تنبيه</p>
+                    {/* حقول التواريخ الديناميكية */}
+                    {form.watch('publish_status') === 'scheduled' && (
+                      <div className="space-y-4 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                        <h4 className="font-semibold text-blue-900 dark:text-blue-100">
+                          📅 مواعيد الامتحان المجدول
+                        </h4>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="start_datetime"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>تاريخ ووقت البدء *</FormLabel>
+                                <FormControl>
+                                  <Input type="datetime-local" {...field} />
+                                </FormControl>
+                                <FormDescription>متى سيصبح الامتحان متاحاً للطلاب</FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="end_datetime"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>تاريخ ووقت الانتهاء *</FormLabel>
+                                <FormControl>
+                                  <Input type="datetime-local" {...field} />
+                                </FormControl>
+                                <FormDescription>آخر موعد لتقديم الامتحان</FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {form.watch('publish_status') === 'active' && (
+                      <div className="space-y-4 bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
+                        <h4 className="font-semibold text-green-900 dark:text-green-100">
+                          ⚡ نشر فوري
+                        </h4>
+                        
+                        <FormField
+                          control={form.control}
+                          name="end_datetime"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>تاريخ ووقت الانتهاء *</FormLabel>
+                              <FormControl>
+                                <Input type="datetime-local" {...field} />
+                              </FormControl>
+                              <FormDescription>
+                                الامتحان سيبدأ فوراً وينتهي في التاريخ المحدد
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <div className="bg-white dark:bg-gray-900 p-3 rounded-md text-sm">
                           <p className="text-muted-foreground">
-                            تأكد من تحديد تاريخ البدء والانتهاء في الخطوة 3 قبل النشر
+                            📌 سيبدأ الامتحان فوراً عند حفظه، وستحتاج فقط لتحديد موعد الانتهاء
                           </p>
                         </div>
                       </div>
