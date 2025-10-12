@@ -27,7 +27,7 @@ export const useExamPreview = (examId: string | null) => {
           question_order,
           points_override,
           question_source,
-          question_bank:question_bank_id (
+          question_bank_id (
             id,
             question_text,
             question_type,
@@ -36,7 +36,7 @@ export const useExamPreview = (examId: string | null) => {
             points,
             difficulty
           ),
-          custom_question:custom_question_id (
+          custom_question_id (
             id,
             question_text,
             question_type,
@@ -58,8 +58,8 @@ export const useExamPreview = (examId: string | null) => {
       // تحويل البيانات لصيغة ExamPreview
       const questions = examQuestions?.map((eq: any) => {
         const question = eq.question_source === 'bank' 
-          ? eq.question_bank 
-          : eq.custom_question;
+          ? eq.question_bank_id 
+          : eq.custom_question_id;
 
         return {
           id: question.id,
