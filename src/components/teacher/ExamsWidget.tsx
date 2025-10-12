@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ClipboardList, FileQuestion, TrendingUp, Users, ArrowRight, Plus, ArrowLeft, Trash2, Edit, AlertCircle, CheckCircle, Archive, Clock } from 'lucide-react';
+import { ClipboardList, FileQuestion, TrendingUp, Users, ArrowRight, Plus, ArrowLeft, Trash2, Edit, AlertCircle, CheckCircle, Archive, Clock, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import ExamPreview from '@/components/content/ExamPreview';
+import { useExamPreview } from '@/hooks/useExamPreview';
 import { formatDateTime12H } from '@/utils/dateFormatting';
 import { DateTimePicker } from '@/components/ui/datetime-picker';
 
@@ -124,6 +126,10 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingExamId, setEditingExamId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [previewExamId, setPreviewExamId] = useState<string | null>(null);
+
+  // استخدام hook للمعاينة
+  const { data: previewData, isLoading: previewLoading } = useExamPreview(previewExamId);
 
   // جلب الصفوف المتاحة للمعلم
   const { data: availableClasses } = useQuery({
@@ -881,6 +887,17 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                     )}
                   </div>
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {/* زر المعاينة - متاح لجميع الحالات */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setPreviewExamId(exam.id)}
+                      className="text-blue-600 hover:text-blue-600 hover:bg-blue-600/10"
+                      title="معاينة الامتحان"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+
                     {exam.status === 'draft' && (
                       <>
                         <Button
@@ -2059,6 +2076,31 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
             </Form>
           </DialogContent>
         </Dialog>
+
+        {/* Dialog معاينة الامتحان */}
+        {previewExamId && previewData && (
+          <ExamPreview
+            examData={previewData}
+            open={!!previewExamId}
+            onOpenChange={(open) => {
+              if (!open) setPreviewExamId(null);
+            }}
+          />
+        )}
+
+        {/* Loading state للمعاينة */}
+        {previewExamId && previewLoading && (
+          <Dialog open={true} onOpenChange={() => setPreviewExamId(null)}>
+            <DialogContent className="max-w-4xl">
+              <DialogHeader>
+                <DialogTitle>جاري تحميل الامتحان...</DialogTitle>
+              </DialogHeader>
+              <div className="flex items-center justify-center p-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
       </CardContent>
     </Card>
   );
