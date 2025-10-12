@@ -97,10 +97,9 @@ export const useExamResults = (examId: string | null) => {
           
           if (attempt.detailed_results && typeof attempt.detailed_results === 'object') {
             const results = attempt.detailed_results as any;
-            if (Array.isArray(results.questions)) {
-              correctAnswers = results.questions.filter((q: any) => q.is_correct).length;
-              totalQuestions = results.questions.length;
-            }
+            // التركيبة الصحيحة: { correct_count, incorrect_count, total_questions }
+            correctAnswers = results.correct_count || 0;
+            totalQuestions = results.total_questions || examData.total_questions || 0;
           }
           
           return {
