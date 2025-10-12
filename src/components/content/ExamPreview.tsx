@@ -310,7 +310,7 @@ const ExamPreview: React.FC<ExamPreviewProps> = ({
                     </CardHeader>
                     <CardContent className="pt-2 pb-3">
                       {/* Question Text */}
-                      <div className="text-base font-bold leading-relaxed p-3 bg-background rounded-lg border">
+                      <div className="text-lg font-bold leading-relaxed p-3 bg-background rounded-lg border">
                         {currentQuestion.question_text}
                       </div>
                     </CardContent>
@@ -319,7 +319,7 @@ const ExamPreview: React.FC<ExamPreviewProps> = ({
                   {/* Answer Options */}
                   <Card className="border-2 shadow-sm flex-1 overflow-hidden flex flex-col">
                     <CardHeader className="pb-2 pt-3">
-                      <h4 className="font-bold text-sm flex items-center gap-2">
+                      <h4 className="font-bold text-base flex items-center gap-2">
                         <CheckCircle className="h-4 w-4 text-green-600" />
                         اختر الإجابة الصحيحة
                       </h4>
@@ -348,7 +348,7 @@ const ExamPreview: React.FC<ExamPreviewProps> = ({
                             >
                               <div className="flex items-center gap-2.5 flex-1">
                                 <span className={`
-                                  w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors shrink-0
+                                  w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold transition-colors shrink-0
                                   ${answers[currentQuestionIndex] === (typeof choice === 'string' ? choice : choice.text)
                                     ? 'bg-primary text-primary-foreground' 
                                     : 'bg-muted text-muted-foreground'
@@ -356,7 +356,7 @@ const ExamPreview: React.FC<ExamPreviewProps> = ({
                                 `}>
                                   {String.fromCharCode(65 + index)}
                                 </span>
-                                <span className="text-sm font-medium flex-1">{typeof choice === 'string' ? choice : choice.text}</span>
+                                <span className="text-base font-medium flex-1">{typeof choice === 'string' ? choice : choice.text}</span>
                               </div>
                               <RadioGroupItem 
                                 value={typeof choice === 'string' ? choice : choice.text}
@@ -394,7 +394,7 @@ const ExamPreview: React.FC<ExamPreviewProps> = ({
                                   : 'bg-green-100 text-green-700'
                                 }
                               `}>✓</span>
-                              <span className="text-sm font-bold">صحيح</span>
+                              <span className="text-base font-bold">صحيح</span>
                             </div>
                             <RadioGroupItem value="true" id="true" className="shrink-0" />
                           </label>
@@ -417,7 +417,7 @@ const ExamPreview: React.FC<ExamPreviewProps> = ({
                                   : 'bg-red-100 text-red-700'
                                 }
                               `}>✗</span>
-                              <span className="text-sm font-bold">خطأ</span>
+                              <span className="text-base font-bold">خطأ</span>
                             </div>
                             <RadioGroupItem value="false" id="false" className="shrink-0" />
                           </label>
@@ -430,7 +430,7 @@ const ExamPreview: React.FC<ExamPreviewProps> = ({
                           value={answers[currentQuestionIndex] || ''}
                           onChange={(e) => handleAnswerChange(currentQuestionIndex, e.target.value)}
                           placeholder="اكتب إجابتك هنا..."
-                          className="min-h-[100px] text-sm border-2 focus:border-primary rounded-lg p-3 resize-none"
+                          className="min-h-[100px] text-base border-2 focus:border-primary rounded-lg p-3 resize-none"
                         />
                       )}
                     </CardContent>
