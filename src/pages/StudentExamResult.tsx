@@ -93,7 +93,7 @@ export default function StudentExamResult() {
             <div className="relative overflow-hidden rounded-3xl border border-border/50 backdrop-blur-md bg-gradient-to-br from-card/80 via-card/60 to-card/40 shadow-2xl mb-8">
               <div className="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(white,transparent_85%)]" />
               
-              <div className="relative p-12 text-center">
+              <div className="relative p-16 text-center">
                 {/* Trophy Icon with Glow */}
                 <div className="flex justify-center mb-6">
                   <div className={cn(
@@ -115,7 +115,7 @@ export default function StudentExamResult() {
                 </div>
 
                 {/* Title */}
-                <h1 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
+                <h1 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent text-center">
                   {result.exam_title}
                 </h1>
 
