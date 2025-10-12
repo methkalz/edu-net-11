@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ModernHeader from '@/components/shared/ModernHeader';
 import AppFooter from '@/components/shared/AppFooter';
 import { 
@@ -45,6 +46,10 @@ import {
   Legend,
   ResponsiveContainer
 } from 'recharts';
+import { ExamResultsTable } from '@/components/exams/ExamResultsTable';
+import { StudentPerformanceTable } from '@/components/exams/StudentPerformanceTable';
+import { StudentComparisonView } from '@/components/exams/StudentComparisonView';
+import { logger } from '@/lib/logging';
 
 const GradeExamsAnalytics: React.FC = () => {
   const { grade } = useParams<{ grade: string }>();
@@ -377,7 +382,7 @@ const GradeExamsAnalytics: React.FC = () => {
                     <Star className="h-5 w-5 text-amber-500" />
                   </div>
                   <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground font-medium">أعلى نتيجة</p>
+                    <p className="text-xs text-muted-foreground font-medium">أعلى متوسط نتائج</p>
                     <p className="text-2xl font-bold bg-gradient-to-br from-amber-500 to-amber-400 bg-clip-text text-transparent" dir="ltr">
                       {stats.highestScore > 0 ? `${stats.highestScore.toFixed(1)}%` : '-'}
                     </p>
@@ -725,6 +730,42 @@ const GradeExamsAnalytics: React.FC = () => {
                   ))}
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          {/* قسم تفاصيل النتائج الفردية */}
+          <Card className="border-0 shadow-lg bg-card/50 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BookOpen className="h-5 w-5 text-primary" />
+                تفاصيل نتائج الامتحانات الفردية
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <Tabs defaultValue="single-exam" className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="single-exam">نتائج امتحان واحد</TabsTrigger>
+                  <TabsTrigger value="single-student">نتائج طالب واحد</TabsTrigger>
+                  <TabsTrigger value="comparison">مقارنة طلاب</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="single-exam" className="mt-6">
+                  <ExamResultsTable 
+                    exams={filteredExams.map(e => ({ id: e.id, title: e.title }))}
+                  />
+                </TabsContent>
+                
+                <TabsContent value="single-student" className="mt-6">
+                  <StudentPerformanceTable 
+                    students={[]}
+                    gradeLevel={gradeLevel || ''}
+                  />
+                </TabsContent>
+                
+                <TabsContent value="comparison" className="mt-6">
+                  <StudentComparisonView />
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
         </div>
