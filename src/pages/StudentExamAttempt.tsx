@@ -303,10 +303,13 @@ export default function StudentExamAttempt() {
         createMutationStatus: createAttemptMutation.status
       });
 
-      logger.info('🚀 submitExamMutation.mutationFn بدأ التنفيذ', {
+      logger.info('🚀 submitExamMutation بدأ التنفيذ', {
         attemptId,
         answersCount: Object.keys(answers).length,
-        answers
+        answers: answers,
+        isTimeUp: timer.isTimeUp,
+        remainingSeconds,
+        submitType: timer.isTimeUp ? 'auto' : 'manual'
       });
 
       if (!attemptId) {
@@ -419,13 +422,16 @@ export default function StudentExamAttempt() {
   const timer = useExamTimer({
     durationMinutes: examData?.exam.duration_minutes || 60,
     startedAt: attemptStartedAt, // تمرير وقت البدء الفعلي من قاعدة البيانات
-    onTimeUp: () => {
+    onTimeUp: async () => {
       ExamDebugger.log({
         type: 'TIMER_EXPIRED',
-        data: { attemptId }
+        data: { attemptId, answersCount: Object.keys(answers).length }
       });
       
-      logger.info('⏰ Time expired - auto-submitting exam', { attemptId });
+      logger.info('⏰ انتهى الوقت - بدء التقديم التلقائي', { 
+        attemptId, 
+        answersCount: Object.keys(answers).length 
+      });
       
       toast({
         title: '⏰ انتهى وقت الامتحان',
@@ -433,9 +439,26 @@ export default function StudentExamAttempt() {
         variant: 'destructive',
       });
       
-      // تقديم الامتحان تلقائياً
+      // ✅ حفظ الإجابات قبل التقديم
       if (attemptId && !submitExamMutation.isPending) {
-        submitExamMutation.mutate();
+        try {
+          // حفظ الإجابات الحالية أولاً
+          if (Object.keys(answers).length > 0) {
+            logger.info('💾 حفظ الإجابات قبل التقديم التلقائي', { answers });
+            await updateAttemptMutation.mutateAsync(answers);
+            logger.info('✅ تم حفظ الإجابات بنجاح');
+          } else {
+            logger.warn('⚠️ لا توجد إجابات لحفظها');
+          }
+          
+          // ثم تقديم الامتحان
+          logger.info('🚀 بدء تقديم الامتحان تلقائياً');
+          submitExamMutation.mutate();
+        } catch (error) {
+          logger.error('❌ فشل حفظ الإجابات قبل التقديم التلقائي', error instanceof Error ? error : new Error(String(error)));
+          // حتى لو فشل الحفظ، نقدم الامتحان بالإجابات الموجودة
+          submitExamMutation.mutate();
+        }
       }
     },
     startImmediately: false, // سيتم بدء العداد يدوياً عند إنشاء attemptId
