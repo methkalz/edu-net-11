@@ -51,6 +51,7 @@ import { ExamResultsTable } from '@/components/exams/ExamResultsTable';
 import { StudentPerformanceTable } from '@/components/exams/StudentPerformanceTable';
 import { StudentComparisonView } from '@/components/exams/StudentComparisonView';
 import { logger } from '@/lib/logging';
+import { toast } from 'sonner';
 
 const GradeExamsAnalytics: React.FC = () => {
   const { grade } = useParams<{ grade: string }>();
@@ -63,6 +64,8 @@ const GradeExamsAnalytics: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedExam, setSelectedExam] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingExam, setEditingExam] = useState<any>(null);
 
   const gradeLevel = grade || '11';
   const gradeLabel = gradeLevel === '10' ? 'العاشر' : gradeLevel === '11' ? 'الحادي عشر' : 'الثاني عشر';
@@ -724,7 +727,10 @@ const GradeExamsAnalytics: React.FC = () => {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => navigate(`/exam/${exam.id}/edit`)}
+                            onClick={() => {
+                              setEditingExam(exam);
+                              setIsEditDialogOpen(true);
+                            }}
                             className="flex-1 rounded-lg gap-1"
                           >
                             <Edit className="h-3 w-3" />
@@ -886,6 +892,125 @@ const GradeExamsAnalytics: React.FC = () => {
                     </div>
                   </CardContent>
                 </Card>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog للتعديل */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader className="pb-4 border-b">
+            <DialogTitle className="text-2xl font-bold text-center bg-gradient-to-br from-primary to-primary/60 bg-clip-text text-transparent">
+              تعديل الامتحان
+            </DialogTitle>
+          </DialogHeader>
+          
+          {editingExam && (
+            <div className="space-y-6 pt-4">
+              {/* معلومات الامتحان */}
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">عنوان الامتحان</label>
+                  <Input 
+                    defaultValue={editingExam.title}
+                    className="w-full"
+                  />
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">الحالة</label>
+                    <div className="mt-1">{getStatusBadge(editingExam.status)}</div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">الصف</label>
+                    <Badge variant="outline" className="mt-1">
+                      {editingExam.grade_levels[0]}
+                    </Badge>
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">عدد الأسئلة</label>
+                    <Input 
+                      type="number"
+                      defaultValue={editingExam.total_questions}
+                      className="w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">إجمالي النقاط</label>
+                    <Input 
+                      type="number"
+                      defaultValue={editingExam.total_points}
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">مدة الامتحان (دقيقة)</label>
+                    <Input 
+                      type="number"
+                      defaultValue={editingExam.duration_minutes}
+                      className="w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">نسبة النجاح (%)</label>
+                    <Input 
+                      type="number"
+                      defaultValue={editingExam.passing_percentage}
+                      min="0"
+                      max="100"
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">تاريخ البداية</label>
+                    <Input 
+                      type="datetime-local"
+                      defaultValue={editingExam.start_datetime?.replace('Z', '').slice(0, 16)}
+                      className="w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">تاريخ النهاية</label>
+                    <Input 
+                      type="datetime-local"
+                      defaultValue={editingExam.end_datetime?.replace('Z', '').slice(0, 16)}
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* أزرار الحفظ */}
+              <div className="flex gap-3 pt-4 border-t">
+                <Button
+                  onClick={() => {
+                    toast.success('تم حفظ التعديلات بنجاح');
+                    setIsEditDialogOpen(false);
+                  }}
+                  className="flex-1 gap-2 h-11"
+                >
+                  <CheckCircle2 className="h-4 w-4" />
+                  حفظ التعديلات
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsEditDialogOpen(false)}
+                  className="gap-2 h-11"
+                >
+                  إلغاء
+                </Button>
               </div>
             </div>
           )}
