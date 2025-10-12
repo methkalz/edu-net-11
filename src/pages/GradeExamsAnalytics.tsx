@@ -211,7 +211,7 @@ const GradeExamsAnalytics: React.FC = () => {
 
   const formatDateTime = (dateString: string) => {
     const date = new Date(dateString);
-    return format(date, 'dd MMM yyyy - HH:mm', { locale: ar });
+    return format(date, 'dd/MM/yyyy - HH:mm');
   };
 
   const handleRefresh = async () => {
