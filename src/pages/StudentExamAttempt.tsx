@@ -102,24 +102,68 @@ export default function StudentExamAttempt() {
   // تقديم الامتحان
   const submitExamMutation = useMutation({
     mutationFn: async () => {
-      if (!attemptId) throw new Error('لا يوجد محاولة نشطة');
+      logger.info('🚀 submitExamMutation.mutationFn بدأ التنفيذ', {
+        attemptId,
+        answersCount: Object.keys(answers).length,
+        answers
+      });
 
-      // تحديث الإجابات أولاً
-      await updateAttemptMutation.mutateAsync(answers);
+      if (!attemptId) {
+        logger.error('❌ لا يوجد attemptId', undefined, { attemptId });
+        throw new Error('لا يوجد محاولة نشطة');
+      }
 
-      // تقديم الامتحان
-      const { data, error } = await supabase
-        .rpc('submit_exam_attempt', { p_attempt_id: attemptId });
+      logger.info('✅ attemptId موجود، سيتم تحديث الإجابات', { attemptId });
 
-      if (error) throw error;
-      return data;
+      try {
+        // تحديث الإجابات أولاً
+        logger.info('🔄 بدء تحديث الإجابات...', { answers });
+        await updateAttemptMutation.mutateAsync(answers);
+        logger.info('✅ تم تحديث الإجابات بنجاح');
+      } catch (error) {
+        logger.error('❌ فشل تحديث الإجابات', error instanceof Error ? error : new Error(String(error)), { originalError: error });
+        throw error;
+      }
+
+      try {
+        // تقديم الامتحان
+        logger.info('🔄 بدء استدعاء submit_exam_attempt...', { attemptId });
+        const { data, error } = await supabase
+          .rpc('submit_exam_attempt', { p_attempt_id: attemptId });
+
+        if (error) {
+          logger.error('❌ خطأ من submit_exam_attempt', error instanceof Error ? error : new Error(String(error)), { originalError: error });
+          throw error;
+        }
+        
+        logger.info('✅ تم تقديم الامتحان بنجاح', { data });
+        return data;
+      } catch (error) {
+        logger.error('❌ فشل تقديم الامتحان', error instanceof Error ? error : new Error(String(error)), { originalError: error });
+        throw error;
+      }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      logger.info('🎉 submitExamMutation.onSuccess', { data });
       toast({
         title: 'تم تقديم الامتحان',
         description: 'تم تقديم إجاباتك بنجاح',
       });
       navigate(`/student/exam-result/${attemptId}`);
+    },
+    onError: (error: any) => {
+      logger.error('💥 submitExamMutation.onError', error instanceof Error ? error : new Error(String(error)), { 
+        originalError: error,
+        errorMessage: error?.message,
+        errorCode: error?.code,
+        errorDetails: error?.details,
+        fullError: JSON.stringify(error, null, 2)
+      });
+      toast({
+        title: 'فشل تقديم الامتحان',
+        description: error?.message || 'حدث خطأ أثناء تقديم الامتحان',
+        variant: 'destructive',
+      });
     },
   });
 
