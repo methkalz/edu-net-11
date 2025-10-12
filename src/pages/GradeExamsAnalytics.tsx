@@ -887,33 +887,6 @@ const GradeExamsAnalytics: React.FC = () => {
                   </CardContent>
                 </Card>
               </div>
-
-              {/* أزرار الإجراءات */}
-              <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                <Button
-                  size="lg"
-                  onClick={() => {
-                    navigate(`/exam/${selectedExam.id}/results`);
-                    setIsDialogOpen(false);
-                  }}
-                  className="flex-1 gap-2 h-12 text-base"
-                >
-                  <Eye className="h-5 w-5" />
-                  عرض النتائج التفصيلية
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  onClick={() => {
-                    navigate(`/exam/${selectedExam.id}/edit`);
-                    setIsDialogOpen(false);
-                  }}
-                  className="flex-1 gap-2 h-12 text-base"
-                >
-                  <Edit className="h-5 w-5" />
-                  تعديل الامتحان
-                </Button>
-              </div>
             </div>
           )}
         </DialogContent>
