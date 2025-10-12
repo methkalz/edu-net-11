@@ -32,6 +32,7 @@ export default function StudentExamAttempt() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, { answer: string; time_spent?: number }>>({});
   const [attemptId, setAttemptId] = useState<string | null>(null);
+  const [attemptStartedAt, setAttemptStartedAt] = useState<string | null>(null);
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
   const [recoveryMode, setRecoveryMode] = useState(false);
 
@@ -54,6 +55,7 @@ export default function StudentExamAttempt() {
   useEffect(() => {
     logger.info('🔄 Component mounted - resetting ALL state including mutation');
     setAttemptId(null);
+    setAttemptStartedAt(null); // إعادة تعيين وقت البدء
     setAnswers({});
     setCurrentQuestionIndex(0);
     setShowSubmitDialog(false);
@@ -237,15 +239,17 @@ export default function StudentExamAttempt() {
     retryDelay: 1000, // تأخير ثانية واحدة بين المحاولات
     onSuccess: (data) => {
       setAttemptId(data.id);
+      setAttemptStartedAt(data.started_at); // حفظ وقت بدء المحاولة
       ExamDebugger.log({
         type: 'ATTEMPT_CREATED',
         data: {
           attemptId: data.id,
           attemptNumber: data.attempt_number,
-          status: data.status
+          status: data.status,
+          startedAt: data.started_at
         }
       });
-      logger.info('✅ تم تعيين attemptId', { attemptId: data.id });
+      logger.info('✅ تم تعيين attemptId', { attemptId: data.id, startedAt: data.started_at });
       
       // تحميل الإجابات السابقة إذا كانت موجودة
       if (data.answers && typeof data.answers === 'object' && Object.keys(data.answers).length > 0) {
@@ -414,6 +418,7 @@ export default function StudentExamAttempt() {
 
   const timer = useExamTimer({
     durationMinutes: examData?.exam.duration_minutes || 60,
+    startedAt: attemptStartedAt, // تمرير وقت البدء الفعلي من قاعدة البيانات
     onTimeUp: () => {
       ExamDebugger.log({
         type: 'TIMER_EXPIRED',
@@ -440,23 +445,26 @@ export default function StudentExamAttempt() {
 
   // بدء العداد عند إنشاء أو استئناف المحاولة
   useEffect(() => {
-    if (attemptId && !timer.isRunning && !timer.isTimeUp && remainingSeconds > 0) {
+    if (attemptId && !timer.isRunning && !timer.isTimeUp && remainingSeconds > 0 && attemptStartedAt) {
       logger.info('⏰ بدء العداد التنازلي', { 
         attemptId, 
         durationMinutes: examData?.exam.duration_minutes,
-        remainingSeconds 
+        remainingSeconds,
+        startedAt: attemptStartedAt,
+        calculatedRemaining: remainingSeconds
       });
       ExamDebugger.log({
         type: 'TIMER_STARTED',
         data: { 
           attemptId, 
           durationMinutes: examData?.exam.duration_minutes,
-          remainingSeconds 
+          remainingSeconds,
+          startedAt: attemptStartedAt
         }
       });
       timer.start();
     }
-  }, [attemptId, timer, examData, remainingSeconds]);
+  }, [attemptId, attemptStartedAt, timer, examData, remainingSeconds]);
 
   // تحذير عند اقتراب نهاية الوقت
   useEffect(() => {

@@ -1,4 +1,4 @@
-// Hook لإدارة العد التنازلي للامتحان
+// Hook لإدارة العد التنازلي للامتحان بناءً على وقت البدء الفعلي
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { logger } from '@/lib/logging';
 
@@ -6,10 +6,26 @@ interface UseExamTimerOptions {
   durationMinutes: number;
   onTimeUp?: () => void;
   startImmediately?: boolean;
+  startedAt?: string | null; // وقت بدء المحاولة من قاعدة البيانات
 }
 
-export const useExamTimer = ({ durationMinutes, onTimeUp, startImmediately = true }: UseExamTimerOptions) => {
-  const [remainingSeconds, setRemainingSeconds] = useState(durationMinutes * 60);
+export const useExamTimer = ({ durationMinutes, onTimeUp, startImmediately = true, startedAt }: UseExamTimerOptions) => {
+  // حساب الوقت المتبقي بناءً على وقت البدء الفعلي
+  const calculateRemainingSeconds = useCallback(() => {
+    if (!startedAt) {
+      return durationMinutes * 60;
+    }
+
+    const startTime = new Date(startedAt).getTime();
+    const currentTime = Date.now();
+    const elapsedSeconds = Math.floor((currentTime - startTime) / 1000);
+    const totalSeconds = durationMinutes * 60;
+    const remaining = Math.max(0, totalSeconds - elapsedSeconds);
+
+    return remaining;
+  }, [startedAt, durationMinutes]);
+
+  const [remainingSeconds, setRemainingSeconds] = useState(calculateRemainingSeconds);
   const [isRunning, setIsRunning] = useState(startImmediately);
   const [isTimeUp, setIsTimeUp] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -35,29 +51,28 @@ export const useExamTimer = ({ durationMinutes, onTimeUp, startImmediately = tru
   // إعادة تعيين المؤقت
   const reset = useCallback(() => {
     stop();
-    setRemainingSeconds(durationMinutes * 60);
+    setRemainingSeconds(calculateRemainingSeconds());
     setIsTimeUp(false);
     logger.debug('تم إعادة تعيين مؤقت الامتحان');
-  }, [durationMinutes, stop]);
+  }, [calculateRemainingSeconds, stop]);
 
-  // العد التنازلي
+  // العد التنازلي - يعتمد على الوقت الفعلي من قاعدة البيانات
   useEffect(() => {
     if (isRunning && !isTimeUp) {
       intervalRef.current = setInterval(() => {
-        setRemainingSeconds((prev) => {
-          if (prev <= 1) {
-            setIsTimeUp(true);
-            setIsRunning(false);
-            if (intervalRef.current) {
-              clearInterval(intervalRef.current);
-              intervalRef.current = null;
-            }
-            logger.warn('انتهى وقت الامتحان');
-            onTimeUp?.();
-            return 0;
+        const remaining = calculateRemainingSeconds();
+        setRemainingSeconds(remaining);
+
+        if (remaining <= 0) {
+          setIsTimeUp(true);
+          setIsRunning(false);
+          if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
           }
-          return prev - 1;
-        });
+          logger.warn('انتهى وقت الامتحان');
+          onTimeUp?.();
+        }
       }, 1000);
     }
 
@@ -66,13 +81,20 @@ export const useExamTimer = ({ durationMinutes, onTimeUp, startImmediately = tru
         clearInterval(intervalRef.current);
       }
     };
-  }, [isRunning, isTimeUp, onTimeUp]);
+  }, [isRunning, isTimeUp, onTimeUp, calculateRemainingSeconds]);
 
-  // إعادة تعيين الوقت المتبقي عند تغيير المدة
+  // إعادة حساب الوقت المتبقي عند تغيير startedAt أو durationMinutes
   useEffect(() => {
-    setRemainingSeconds(durationMinutes * 60);
-    logger.debug('تم تحديث مدة الامتحان', { durationMinutes });
-  }, [durationMinutes]);
+    const remaining = calculateRemainingSeconds();
+    setRemainingSeconds(remaining);
+    
+    // التحقق إذا كان الوقت قد انتهى بالفعل
+    if (remaining <= 0 && !isTimeUp) {
+      setIsTimeUp(true);
+      setIsRunning(false);
+      onTimeUp?.();
+    }
+  }, [startedAt, durationMinutes, calculateRemainingSeconds, isTimeUp, onTimeUp]);
 
   // تنظيف عند إلغاء التثبيت
   useEffect(() => {
