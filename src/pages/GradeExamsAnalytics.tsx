@@ -1,68 +1,204 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useTeacherExams } from '@/hooks/useTeacherExams';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { StatsCard } from '@/components/ui/StatsCard';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import AppHeader from '@/components/shared/AppHeader';
+import { Input } from '@/components/ui/input';
+import ModernHeader from '@/components/shared/ModernHeader';
 import AppFooter from '@/components/shared/AppFooter';
 import { 
+  ArrowLeft, 
   FileText, 
   Users, 
   TrendingUp, 
-  Calendar,
-  Clock,
+  Eye, 
+  Edit, 
+  Clock, 
+  Calendar, 
+  Award,
+  Search,
+  CheckCircle2,
+  XCircle,
+  CalendarClock,
+  FileQuestion,
   Target,
-  Eye,
-  Edit,
-  ArrowRight
+  TrendingDown,
+  Star,
+  AlertCircle,
+  Filter,
+  BookOpen
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
+import {
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
+} from 'recharts';
 
 const GradeExamsAnalytics: React.FC = () => {
   const { grade } = useParams<{ grade: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { data, isLoading } = useTeacherExams(user?.id);
+  const { data, isLoading, refetch } = useTeacherExams(user?.id);
+  
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [refreshing, setRefreshing] = useState(false);
 
   const gradeLevel = grade || '11';
   const gradeLabel = gradeLevel === '10' ? 'العاشر' : gradeLevel === '11' ? 'الحادي عشر' : 'الثاني عشر';
 
   // فلترة الامتحانات حسب الصف
-  const filteredExams = React.useMemo(() => {
+  const filteredExams = useMemo(() => {
     if (!data?.exams) return [];
     
-    return data.exams.filter(exam => 
+    let exams = data.exams.filter(exam => 
       exam.grade_levels.includes(gradeLevel) || 
       exam.grade_levels.includes(`الصف ${gradeLabel}`)
     );
-  }, [data?.exams, gradeLevel, gradeLabel]);
 
-  // حساب الإحصائيات
-  const stats = React.useMemo(() => {
+    // تطبيق البحث
+    if (searchQuery) {
+      exams = exams.filter(exam => 
+        exam.title.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // تطبيق فلتر الحالة
+    if (statusFilter !== 'all') {
+      exams = exams.filter(exam => exam.status === statusFilter);
+    }
+
+    return exams;
+  }, [data?.exams, gradeLevel, gradeLabel, searchQuery, statusFilter]);
+
+  // حساب الإحصائيات الموسعة
+  const stats = useMemo(() => {
+    const totalExams = filteredExams.length;
     const activeExams = filteredExams.filter(e => e.status === 'active').length;
+    const scheduledExams = filteredExams.filter(e => e.status === 'scheduled').length;
+    const completedExams = filteredExams.filter(e => e.status === 'completed').length;
+    const draftExams = filteredExams.filter(e => e.status === 'draft').length;
+    
     const totalAttempts = filteredExams.reduce((sum, e) => sum + e.attempts_count, 0);
-    const examsWithScores = filteredExams.filter(e => e.avg_percentage !== null);
+    const totalQuestions = filteredExams.reduce((sum, e) => sum + e.total_questions, 0);
+    const totalPoints = filteredExams.reduce((sum, e) => sum + e.total_points, 0);
+    
+    const examsWithScores = filteredExams.filter(e => e.avg_percentage !== null && e.attempts_count > 0);
     const avgScore = examsWithScores.length > 0
       ? examsWithScores.reduce((sum, e) => sum + (e.avg_percentage || 0), 0) / examsWithScores.length
-      : null;
+      : 0;
+    
+    const highestScore = examsWithScores.length > 0
+      ? Math.max(...examsWithScores.map(e => e.avg_percentage || 0))
+      : 0;
+    
+    const lowestScore = examsWithScores.length > 0
+      ? Math.min(...examsWithScores.map(e => e.avg_percentage || 0))
+      : 0;
 
-    return { activeExams, totalAttempts, avgScore };
+    // حساب معدل النجاح (افتراضياً 50% هو حد النجاح)
+    const passRate = examsWithScores.length > 0
+      ? (examsWithScores.filter(e => (e.avg_percentage || 0) >= 50).length / examsWithScores.length) * 100
+      : 0;
+
+    return { 
+      totalExams,
+      activeExams, 
+      scheduledExams,
+      completedExams,
+      draftExams,
+      totalAttempts, 
+      totalQuestions,
+      totalPoints,
+      avgScore,
+      highestScore,
+      lowestScore,
+      passRate,
+      examsWithScores: examsWithScores.length
+    };
+  }, [filteredExams]);
+
+  // بيانات الرسم البياني للأداء
+  const performanceChartData = useMemo(() => {
+    return filteredExams
+      .filter(e => e.avg_percentage !== null && e.attempts_count > 0)
+      .slice(0, 10)
+      .map(exam => ({
+        name: exam.title.length > 20 ? exam.title.substring(0, 20) + '...' : exam.title,
+        'متوسط النتيجة': Number((exam.avg_percentage || 0).toFixed(1)),
+        'عدد المحاولات': exam.attempts_count
+      }));
+  }, [filteredExams]);
+
+  // بيانات الرسم البياني لتوزيع الحالات
+  const statusChartData = useMemo(() => {
+    return [
+      { name: 'نشط', value: stats.activeExams, color: '#10b981' },
+      { name: 'مجدول', value: stats.scheduledExams, color: '#f59e0b' },
+      { name: 'منتهي', value: stats.completedExams, color: '#6b7280' },
+      { name: 'مسودة', value: stats.draftExams, color: '#8b5cf6' }
+    ].filter(item => item.value > 0);
+  }, [stats]);
+
+  // أفضل 3 امتحانات
+  const topPerformers = useMemo(() => {
+    return filteredExams
+      .filter(e => e.avg_percentage !== null && e.attempts_count > 0)
+      .sort((a, b) => (b.avg_percentage || 0) - (a.avg_percentage || 0))
+      .slice(0, 3);
+  }, [filteredExams]);
+
+  // أسوأ 3 امتحانات
+  const bottomPerformers = useMemo(() => {
+    return filteredExams
+      .filter(e => e.avg_percentage !== null && e.attempts_count > 0)
+      .sort((a, b) => (a.avg_percentage || 0) - (b.avg_percentage || 0))
+      .slice(0, 3);
   }, [filteredExams]);
 
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, { variant: "default" | "secondary" | "destructive" | "outline", label: string }> = {
-      active: { variant: 'default', label: 'نشط' },
-      scheduled: { variant: 'secondary', label: 'مجدول' },
-      draft: { variant: 'outline', label: 'مسودة' },
-      completed: { variant: 'destructive', label: 'منتهي' }
+    const variants: Record<string, { className: string, label: string, icon: React.ReactNode }> = {
+      active: { 
+        className: 'bg-green-500/10 text-green-700 border-green-500/20', 
+        label: 'نشط',
+        icon: <CheckCircle2 className="h-3 w-3" />
+      },
+      scheduled: { 
+        className: 'bg-yellow-500/10 text-yellow-700 border-yellow-500/20', 
+        label: 'مجدول',
+        icon: <CalendarClock className="h-3 w-3" />
+      },
+      draft: { 
+        className: 'bg-purple-500/10 text-purple-700 border-purple-500/20', 
+        label: 'مسودة',
+        icon: <FileText className="h-3 w-3" />
+      },
+      completed: { 
+        className: 'bg-gray-500/10 text-gray-700 border-gray-500/20', 
+        label: 'منتهي',
+        icon: <XCircle className="h-3 w-3" />
+      }
     };
     
     const config = variants[status] || variants.draft;
-    return <Badge variant={config.variant}>{config.label}</Badge>;
+    return (
+      <Badge variant="outline" className={`gap-1 ${config.className}`}>
+        {config.icon}
+        {config.label}
+      </Badge>
+    );
   };
 
   const formatDateTime = (dateString: string) => {
@@ -70,26 +206,29 @@ const GradeExamsAnalytics: React.FC = () => {
     return format(date, 'dd MMM yyyy - HH:mm', { locale: ar });
   };
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await refetch();
+    setTimeout(() => setRefreshing(false), 500);
+  };
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
-        <AppHeader 
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
+        <ModernHeader 
           title={`إحصائيات امتحانات الصف ${gradeLabel}`}
           showBackButton={true}
           backPath="/dashboard"
-          showLogout={true}
         />
         <main className="container mx-auto px-6 py-8">
           <div className="max-w-7xl mx-auto space-y-6">
-            <div className="grid gap-4 md:grid-cols-3">
-              {[1, 2, 3].map(i => (
-                <StatsCard
-                  key={i}
-                  title="جاري التحميل..."
-                  value="..."
-                  icon={FileText}
-                  loading={true}
-                />
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+                <Card key={i} className="relative overflow-hidden border-0 bg-card/50 backdrop-blur-sm animate-pulse">
+                  <CardContent className="p-6">
+                    <div className="h-20 bg-muted/20 rounded" />
+                  </CardContent>
+                </Card>
               ))}
             </div>
           </div>
@@ -100,140 +239,472 @@ const GradeExamsAnalytics: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
-      <AppHeader 
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
+      <ModernHeader 
         title={`إحصائيات امتحانات الصف ${gradeLabel}`}
         showBackButton={true}
         backPath="/dashboard"
-        showLogout={true}
+        onRefresh={handleRefresh}
+        refreshing={refreshing}
       />
       
       <main className="container mx-auto px-6 py-8">
         <div className="max-w-7xl mx-auto space-y-8 animate-fade-in">
           {/* العنوان */}
           <div className="text-center space-y-3">
-            <h1 className="text-3xl font-bold">إحصائيات امتحانات الصف {gradeLabel}</h1>
-            <p className="text-muted-foreground">عرض شامل لجميع الامتحانات والنتائج</p>
+            <h1 className="text-4xl font-bold bg-gradient-to-br from-primary to-primary/60 bg-clip-text text-transparent">
+              إحصائيات امتحانات الصف {gradeLabel}
+            </h1>
+            <p className="text-muted-foreground text-lg">نظرة شاملة لجميع الامتحانات والنتائج والإحصائيات</p>
           </div>
 
-          {/* بطاقات الإحصائيات */}
-          <div className="grid gap-4 md:grid-cols-3">
-            <StatsCard
-              title="الامتحانات النشطة"
-              value={stats.activeExams.toString()}
-              icon={FileText}
-              gradient="bg-gradient-to-br from-blue-500 to-blue-600"
-              change={`من إجمالي ${filteredExams.length} امتحان`}
-            />
-            
-            <StatsCard
-              title="إجمالي المحاولات"
-              value={stats.totalAttempts.toString()}
-              icon={Users}
-              gradient="bg-gradient-to-br from-purple-500 to-purple-600"
-              change="من جميع الطلاب"
-            />
-            
-            <StatsCard
-              title="متوسط النتائج"
-              value={stats.avgScore !== null ? `${stats.avgScore.toFixed(1)}%` : 'لا توجد بيانات'}
-              icon={TrendingUp}
-              gradient="bg-gradient-to-br from-green-500 to-green-600"
-              change="للامتحانات المكتملة"
-            />
+          {/* بطاقات الإحصائيات - 8 بطاقات */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* إجمالي الامتحانات */}
+            <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-transparent backdrop-blur-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-50" />
+              <CardContent className="p-6 relative">
+                <div className="flex flex-col items-center text-center space-y-3">
+                  <div className="p-3 rounded-xl bg-blue-500/10 backdrop-blur-sm">
+                    <FileText className="h-7 w-7 text-blue-500" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground font-medium">إجمالي الامتحانات</p>
+                    <p className="text-3xl font-bold bg-gradient-to-br from-blue-500 to-blue-400 bg-clip-text text-transparent" dir="ltr">
+                      {stats.totalExams}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* الامتحانات النشطة */}
+            <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-green-500/10 via-green-500/5 to-transparent backdrop-blur-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
+              <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent opacity-50" />
+              <CardContent className="p-6 relative">
+                <div className="flex flex-col items-center text-center space-y-3">
+                  <div className="p-3 rounded-xl bg-green-500/10 backdrop-blur-sm">
+                    <CheckCircle2 className="h-7 w-7 text-green-500" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground font-medium">الامتحانات النشطة</p>
+                    <p className="text-3xl font-bold bg-gradient-to-br from-green-500 to-green-400 bg-clip-text text-transparent" dir="ltr">
+                      {stats.activeExams}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* الامتحانات المجدولة */}
+            <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-yellow-500/10 via-yellow-500/5 to-transparent backdrop-blur-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
+              <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 to-transparent opacity-50" />
+              <CardContent className="p-6 relative">
+                <div className="flex flex-col items-center text-center space-y-3">
+                  <div className="p-3 rounded-xl bg-yellow-500/10 backdrop-blur-sm">
+                    <CalendarClock className="h-7 w-7 text-yellow-500" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground font-medium">الامتحانات المجدولة</p>
+                    <p className="text-3xl font-bold bg-gradient-to-br from-yellow-500 to-yellow-400 bg-clip-text text-transparent" dir="ltr">
+                      {stats.scheduledExams}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* الامتحانات المنتهية */}
+            <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-gray-500/10 via-gray-500/5 to-transparent backdrop-blur-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
+              <div className="absolute inset-0 bg-gradient-to-br from-gray-500/5 to-transparent opacity-50" />
+              <CardContent className="p-6 relative">
+                <div className="flex flex-col items-center text-center space-y-3">
+                  <div className="p-3 rounded-xl bg-gray-500/10 backdrop-blur-sm">
+                    <XCircle className="h-7 w-7 text-gray-500" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground font-medium">الامتحانات المنتهية</p>
+                    <p className="text-3xl font-bold bg-gradient-to-br from-gray-500 to-gray-400 bg-clip-text text-transparent" dir="ltr">
+                      {stats.completedExams}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* إجمالي المحاولات */}
+            <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-purple-500/10 via-purple-500/5 to-transparent backdrop-blur-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent opacity-50" />
+              <CardContent className="p-6 relative">
+                <div className="flex flex-col items-center text-center space-y-3">
+                  <div className="p-3 rounded-xl bg-purple-500/10 backdrop-blur-sm">
+                    <Users className="h-7 w-7 text-purple-500" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground font-medium">إجمالي المحاولات</p>
+                    <p className="text-3xl font-bold bg-gradient-to-br from-purple-500 to-purple-400 bg-clip-text text-transparent" dir="ltr">
+                      {stats.totalAttempts}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* متوسط النتائج */}
+            <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent backdrop-blur-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-50" />
+              <CardContent className="p-6 relative">
+                <div className="flex flex-col items-center text-center space-y-3">
+                  <div className="p-3 rounded-xl bg-emerald-500/10 backdrop-blur-sm">
+                    <TrendingUp className="h-7 w-7 text-emerald-500" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground font-medium">متوسط النتائج</p>
+                    <p className="text-3xl font-bold bg-gradient-to-br from-emerald-500 to-emerald-400 bg-clip-text text-transparent" dir="ltr">
+                      {stats.avgScore > 0 ? `${stats.avgScore.toFixed(1)}%` : '-'}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* أعلى نتيجة */}
+            <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent backdrop-blur-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent opacity-50" />
+              <CardContent className="p-6 relative">
+                <div className="flex flex-col items-center text-center space-y-3">
+                  <div className="p-3 rounded-xl bg-amber-500/10 backdrop-blur-sm">
+                    <Star className="h-7 w-7 text-amber-500" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground font-medium">أعلى نتيجة</p>
+                    <p className="text-3xl font-bold bg-gradient-to-br from-amber-500 to-amber-400 bg-clip-text text-transparent" dir="ltr">
+                      {stats.highestScore > 0 ? `${stats.highestScore.toFixed(1)}%` : '-'}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* أدنى نتيجة */}
+            <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-red-400/10 via-red-400/5 to-transparent backdrop-blur-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
+              <div className="absolute inset-0 bg-gradient-to-br from-red-400/5 to-transparent opacity-50" />
+              <CardContent className="p-6 relative">
+                <div className="flex flex-col items-center text-center space-y-3">
+                  <div className="p-3 rounded-xl bg-red-400/10 backdrop-blur-sm">
+                    <TrendingDown className="h-7 w-7 text-red-400" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground font-medium">أدنى نتيجة</p>
+                    <p className="text-3xl font-bold bg-gradient-to-br from-red-400 to-red-300 bg-clip-text text-transparent" dir="ltr">
+                      {stats.lowestScore > 0 ? `${stats.lowestScore.toFixed(1)}%` : '-'}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
-          {/* جدول الامتحانات */}
-          <Card>
+          {/* المخططات البيانية */}
+          {(performanceChartData.length > 0 || statusChartData.length > 0) && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* مخطط أداء الامتحانات */}
+              {performanceChartData.length > 0 && (
+                <Card className="border-0 bg-card/50 backdrop-blur-sm">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <TrendingUp className="h-5 w-5 text-primary" />
+                      أداء الامتحانات
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={performanceChartData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis 
+                          dataKey="name" 
+                          tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                          angle={-45}
+                          textAnchor="end"
+                          height={80}
+                        />
+                        <YAxis tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--card))', 
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px'
+                          }}
+                        />
+                        <Legend />
+                        <Bar dataKey="متوسط النتيجة" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* مخطط توزيع الحالات */}
+              {statusChartData.length > 0 && (
+                <Card className="border-0 bg-card/50 backdrop-blur-sm">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Target className="h-5 w-5 text-primary" />
+                      توزيع حالة الامتحانات
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie
+                          data={statusChartData}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={(entry) => `${entry.name}: ${entry.value}`}
+                          outerRadius={100}
+                          fill="#8884d8"
+                          dataKey="value"
+                        >
+                          {statusChartData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--card))', 
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px'
+                          }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
+
+          {/* البحث والفلترة */}
+          <Card className="border-0 bg-card/50 backdrop-blur-sm p-6">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1 relative">
+                <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
+                <Input 
+                  placeholder="ابحث عن امتحان..." 
+                  className="pr-12 h-12 rounded-xl bg-background/50 border-border/50"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                <Button
+                  variant={statusFilter === 'all' ? 'default' : 'outline'}
+                  onClick={() => setStatusFilter('all')}
+                  className="rounded-xl"
+                >
+                  الكل
+                </Button>
+                <Button
+                  variant={statusFilter === 'active' ? 'default' : 'outline'}
+                  onClick={() => setStatusFilter('active')}
+                  className="rounded-xl"
+                >
+                  نشط
+                </Button>
+                <Button
+                  variant={statusFilter === 'scheduled' ? 'default' : 'outline'}
+                  onClick={() => setStatusFilter('scheduled')}
+                  className="rounded-xl"
+                >
+                  مجدول
+                </Button>
+                <Button
+                  variant={statusFilter === 'completed' ? 'default' : 'outline'}
+                  onClick={() => setStatusFilter('completed')}
+                  className="rounded-xl"
+                >
+                  منتهي
+                </Button>
+              </div>
+            </div>
+          </Card>
+
+          {/* أفضل وأسوأ أداء */}
+          {(topPerformers.length > 0 || bottomPerformers.length > 0) && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* أفضل 3 امتحانات */}
+              {topPerformers.length > 0 && (
+                <Card className="border-0 bg-gradient-to-br from-green-500/5 to-transparent backdrop-blur-sm">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Award className="h-5 w-5 text-green-500" />
+                      أفضل أداء (أعلى نتائج)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {topPerformers.map((exam, index) => (
+                      <div key={exam.id} className="flex items-center gap-3 p-3 rounded-lg bg-background/50 backdrop-blur-sm hover:bg-background/80 transition-all">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center text-white font-bold">
+                          {index + 1}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{exam.title}</p>
+                          <p className="text-xs text-muted-foreground" dir="ltr">
+                            {exam.attempts_count} محاولة
+                          </p>
+                        </div>
+                        <div className="text-lg font-bold text-green-600" dir="ltr">
+                          {exam.avg_percentage?.toFixed(1)}%
+                        </div>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* أسوأ 3 امتحانات */}
+              {bottomPerformers.length > 0 && (
+                <Card className="border-0 bg-gradient-to-br from-red-500/5 to-transparent backdrop-blur-sm">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <AlertCircle className="h-5 w-5 text-red-500" />
+                      يحتاج تحسين (أقل نتائج)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {bottomPerformers.map((exam, index) => (
+                      <div key={exam.id} className="flex items-center gap-3 p-3 rounded-lg bg-background/50 backdrop-blur-sm hover:bg-background/80 transition-all">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-red-400 to-red-500 flex items-center justify-center text-white font-bold">
+                          {index + 1}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{exam.title}</p>
+                          <p className="text-xs text-muted-foreground" dir="ltr">
+                            {exam.attempts_count} محاولة
+                          </p>
+                        </div>
+                        <div className="text-lg font-bold text-red-500" dir="ltr">
+                          {exam.avg_percentage?.toFixed(1)}%
+                        </div>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
+
+          {/* جميع الامتحانات - Grid Layout */}
+          <Card className="border-0 bg-card/50 backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                قائمة الامتحانات التفصيلية
+                <BookOpen className="h-5 w-5 text-primary" />
+                جميع الامتحانات ({filteredExams.length})
               </CardTitle>
             </CardHeader>
             <CardContent>
               {filteredExams.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <FileText className="h-16 w-16 mx-auto mb-4 opacity-30" />
-                  <p className="text-lg font-medium mb-2">لا توجد امتحانات</p>
-                  <p className="text-sm">لم يتم إنشاء أي امتحانات لهذا الصف بعد</p>
+                <div className="text-center py-16 text-muted-foreground">
+                  <FileText className="h-20 w-20 mx-auto mb-4 opacity-20" />
+                  <p className="text-xl font-medium mb-2">لا توجد امتحانات</p>
+                  <p className="text-sm">
+                    {searchQuery || statusFilter !== 'all' 
+                      ? 'لم يتم العثور على امتحانات تطابق البحث أو الفلتر'
+                      : 'لم يتم إنشاء أي امتحانات لهذا الصف بعد'
+                    }
+                  </p>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {filteredExams.map((exam) => (
-                    <Card key={exam.id} className="overflow-hidden hover:shadow-lg transition-all duration-300">
-                      <CardContent className="p-6">
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <h3 className="text-lg font-semibold">{exam.title}</h3>
-                              {getStatusBadge(exam.status)}
-                            </div>
-                            <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
-                              <Badge variant="outline" className="gap-1">
-                                <Target className="h-3 w-3" />
-                                {exam.grade_levels.join(', ')}
-                              </Badge>
-                            </div>
+                    <Card 
+                      key={exam.id} 
+                      className="relative overflow-hidden border-0 bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 group"
+                    >
+                      {/* Status indicator bar */}
+                      <div className={`absolute top-0 left-0 right-0 h-1 ${
+                        exam.status === 'active' ? 'bg-gradient-to-r from-green-500 to-emerald-500' :
+                        exam.status === 'scheduled' ? 'bg-gradient-to-r from-yellow-500 to-amber-500' :
+                        exam.status === 'completed' ? 'bg-gradient-to-r from-gray-500 to-slate-500' :
+                        'bg-gradient-to-r from-purple-500 to-violet-500'
+                      }`} />
+                      
+                      <CardContent className="p-5 space-y-4">
+                        {/* Header */}
+                        <div className="space-y-2">
+                          <div className="flex items-start justify-between gap-2">
+                            <h3 className="font-semibold text-base line-clamp-2 flex-1">{exam.title}</h3>
+                            {getStatusBadge(exam.status)}
                           </div>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => navigate(`/exam/${exam.id}/results`)}
-                            >
-                              <Eye className="h-4 w-4 ml-2" />
-                              النتائج
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => navigate(`/exam/${exam.id}/edit`)}
-                            >
-                              <Edit className="h-4 w-4 ml-2" />
-                              تعديل
-                            </Button>
+                          <div className="flex flex-wrap gap-1">
+                            <Badge variant="outline" className="text-xs gap-1">
+                              <Target className="h-3 w-3" />
+                              {exam.grade_levels[0]}
+                            </Badge>
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                          <div className="space-y-1">
-                            <p className="text-xs text-muted-foreground">عدد الأسئلة</p>
-                            <p className="text-sm font-semibold">{exam.total_questions} سؤال</p>
+                        {/* Mini Stats Grid */}
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1 p-2 rounded-lg bg-background/50">
+                            <p className="text-xs text-muted-foreground">الأسئلة</p>
+                            <p className="text-sm font-bold" dir="ltr">{exam.total_questions}</p>
                           </div>
-                          <div className="space-y-1">
-                            <p className="text-xs text-muted-foreground">مجموع النقاط</p>
-                            <p className="text-sm font-semibold">{exam.total_points} نقطة</p>
+                          <div className="space-y-1 p-2 rounded-lg bg-background/50">
+                            <p className="text-xs text-muted-foreground">النقاط</p>
+                            <p className="text-sm font-bold" dir="ltr">{exam.total_points}</p>
                           </div>
-                          <div className="space-y-1">
-                            <p className="text-xs text-muted-foreground">عدد المحاولات</p>
-                            <p className="text-sm font-semibold">{exam.attempts_count} محاولة</p>
+                          <div className="space-y-1 p-2 rounded-lg bg-background/50">
+                            <p className="text-xs text-muted-foreground">المحاولات</p>
+                            <p className="text-sm font-bold" dir="ltr">{exam.attempts_count}</p>
                           </div>
-                          <div className="space-y-1">
-                            <p className="text-xs text-muted-foreground">متوسط النتيجة</p>
-                            <p className="text-sm font-semibold">
-                              {exam.avg_percentage !== null 
-                                ? `${exam.avg_percentage.toFixed(1)}%` 
-                                : 'لا توجد بيانات'}
+                          <div className="space-y-1 p-2 rounded-lg bg-background/50">
+                            <p className="text-xs text-muted-foreground">المتوسط</p>
+                            <p className="text-sm font-bold" dir="ltr">
+                              {exam.avg_percentage !== null ? `${exam.avg_percentage.toFixed(1)}%` : '-'}
                             </p>
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-4 border-t">
-                          <div className="flex items-center gap-2 text-sm">
-                            <Calendar className="h-4 w-4 text-green-600" />
+                        {/* Dates */}
+                        <div className="space-y-2 pt-2 border-t border-border/50">
+                          <div className="flex items-center gap-2 text-xs">
+                            <Calendar className="h-3 w-3 text-green-600 flex-shrink-0" />
                             <span className="text-muted-foreground">بداية:</span>
-                            <span className="font-mono text-xs" dir="ltr">
+                            <span className="font-mono truncate" dir="ltr">
                               {formatDateTime(exam.start_datetime)}
                             </span>
                           </div>
-                          <div className="flex items-center gap-2 text-sm">
-                            <Clock className="h-4 w-4 text-red-600" />
+                          <div className="flex items-center gap-2 text-xs">
+                            <Clock className="h-3 w-3 text-red-600 flex-shrink-0" />
                             <span className="text-muted-foreground">نهاية:</span>
-                            <span className="font-mono text-xs" dir="ltr">
+                            <span className="font-mono truncate" dir="ltr">
                               {formatDateTime(exam.end_datetime)}
                             </span>
                           </div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-2 pt-2">
+                          <Button
+                            size="sm"
+                            variant="default"
+                            onClick={() => navigate(`/exam/${exam.id}/results`)}
+                            className="flex-1 rounded-lg gap-1"
+                          >
+                            <Eye className="h-3 w-3" />
+                            النتائج
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => navigate(`/exam/${exam.id}/edit`)}
+                            className="flex-1 rounded-lg gap-1"
+                          >
+                            <Edit className="h-3 w-3" />
+                            تعديل
+                          </Button>
                         </div>
                       </CardContent>
                     </Card>
@@ -242,19 +713,6 @@ const GradeExamsAnalytics: React.FC = () => {
               )}
             </CardContent>
           </Card>
-
-          {/* زر العودة */}
-          <div className="text-center pt-4">
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => navigate('/dashboard')}
-              className="gap-2"
-            >
-              العودة إلى لوحة التحكم
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </div>
         </div>
       </main>
       
