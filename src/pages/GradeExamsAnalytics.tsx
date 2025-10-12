@@ -257,7 +257,7 @@ const GradeExamsAnalytics: React.FC = () => {
         <div className="max-w-7xl mx-auto space-y-8 animate-fade-in">
           {/* العنوان */}
           <div className="text-center space-y-2">
-            <h1 className="text-2xl font-bold bg-gradient-to-br from-primary to-primary/60 bg-clip-text text-transparent">
+            <h1 className="text-2xl font-bold text-center bg-gradient-to-br from-primary to-primary/60 bg-clip-text text-transparent">
               إحصائيات امتحانات الصف {gradeLabel}
             </h1>
             <p className="text-muted-foreground text-sm text-center">نظرة شاملة لجميع الامتحانات والنتائج والإحصائيات</p>
