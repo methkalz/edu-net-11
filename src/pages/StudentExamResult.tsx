@@ -270,7 +270,7 @@ export default function StudentExamResult() {
                     تم التقديم بنجاح
                   </Badge>
                   <p className="text-lg text-muted-foreground">
-                    سيتم نشر النتائج من قبل المعلم قريباً
+                    سيتم نشر النتائج من قبل الأستاذ {result.teacher_name || 'المعلم'} قريباً
                   </p>
                   <p className="text-sm text-muted-foreground/80">
                     ستتمكن من مشاهدة درجتك والتفاصيل بعد مراجعة المعلم
