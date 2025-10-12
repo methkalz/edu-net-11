@@ -283,12 +283,15 @@ export default function StudentExamAttempt() {
           />
 
           {/* Navigation Buttons */}
-          <div className="flex items-center justify-between gap-2 sm:gap-4">
+          <div className="flex items-center justify-between gap-2 sm:gap-4 relative z-10">
             <Button
               variant="outline"
-              onClick={() => setCurrentQuestionIndex((prev) => Math.max(0, prev - 1))}
+              onClick={() => {
+                logger.info('زر السابق تم النقر عليه');
+                setCurrentQuestionIndex((prev) => Math.max(0, prev - 1));
+              }}
               disabled={currentQuestionIndex === 0}
-              className="flex-1 sm:flex-initial h-11 sm:h-10"
+              className="flex-1 sm:flex-initial h-12 sm:h-10 touch-manipulation"
             >
               <ChevronRight className="w-4 h-4 ml-2" />
               السابق
@@ -296,19 +299,26 @@ export default function StudentExamAttempt() {
 
             {currentQuestionIndex === examData.questions.length - 1 ? (
               <Button
-                onClick={handleSubmitClick}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleSubmitClick();
+                }}
                 disabled={submitExamMutation.isPending}
-                className="gap-2 flex-1 sm:flex-initial h-11 sm:h-10"
+                className="gap-2 flex-1 sm:flex-initial h-12 sm:h-10 touch-manipulation bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 <Send className="w-4 h-4" />
                 تقديم الامتحان
               </Button>
             ) : (
               <Button
-                onClick={() => setCurrentQuestionIndex((prev) => 
-                  Math.min(examData.questions.length - 1, prev + 1)
-                )}
-                className="flex-1 sm:flex-initial h-11 sm:h-10"
+                onClick={() => {
+                  logger.info('زر التالي تم النقر عليه');
+                  setCurrentQuestionIndex((prev) => 
+                    Math.min(examData.questions.length - 1, prev + 1)
+                  );
+                }}
+                className="flex-1 sm:flex-initial h-12 sm:h-10 touch-manipulation"
               >
                 التالي
                 <ChevronLeft className="w-4 h-4 mr-2" />
