@@ -14,7 +14,6 @@ import { EducationalTermsManager } from '@/components/content/EducationalTermsMa
 import { ContentGameLauncher } from '@/components/content/ContentGameLauncher';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Grade11ErrorBoundary } from '@/components/error-boundaries/Grade11ErrorBoundary';
-import ExamsAnalytics from '@/pages/ExamsAnalytics';
 const Grade11Management: React.FC = () => {
   console.log('🎯 Grade11Management component rendering...');
   const {
@@ -74,9 +73,8 @@ const Grade11Management: React.FC = () => {
           
           {/* التبويبات الرئيسية */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className={canManageContent ? 'grid w-full grid-cols-4' : isSchoolAdmin ? 'grid w-full grid-cols-3' : 'grid w-full grid-cols-2'}>
+            <TabsList className={canManageContent ? 'grid w-full grid-cols-3' : isSchoolAdmin ? 'grid w-full grid-cols-3' : 'grid w-full grid-cols-2'}>
               {canManageContent && <TabsTrigger value="manage">إدارة المحتوى</TabsTrigger>}
-              {canManageContent && <TabsTrigger value="exams">الامتحانات</TabsTrigger>}
               {isSchoolAdmin && <TabsTrigger value="school-view">عرض مدير المدرسة</TabsTrigger>}
               <TabsTrigger value="view">عرض المحتوى</TabsTrigger>
               <TabsTrigger value="games">الألعاب التعليمية</TabsTrigger>
@@ -85,12 +83,6 @@ const Grade11Management: React.FC = () => {
             {canManageContent && (
               <TabsContent value="manage">
                 <Grade11Content />
-              </TabsContent>
-            )}
-
-            {canManageContent && (
-              <TabsContent value="exams" className="space-y-6">
-                <ExamsAnalytics gradeLevel="11" />
               </TabsContent>
             )}
 

@@ -1,23 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Video } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useBackPath } from '@/hooks/useBackPath';
-import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AppHeader from '@/components/shared/AppHeader';
 import AppFooter from '@/components/shared/AppFooter';
 import Grade10Content from '@/components/content/Grade10Content';
 import Grade10ContentViewer from '@/components/content/Grade10ContentViewer';
-import ExamsAnalytics from '@/pages/ExamsAnalytics';
 const Grade10Management: React.FC = () => {
   const { userProfile, loading } = useAuth();
   const { contentBackPath } = useBackPath();
-  const [searchParams] = useSearchParams();
-  
-  // قراءة التبويب من URL
-  const tabFromUrl = searchParams.get('tab');
-  const [activeTab, setActiveTab] = useState<string>('');
   
   // التأكد من أن المستخدم مسجل دخول ولديه profile
   if (loading) {
@@ -47,16 +39,6 @@ const Grade10Management: React.FC = () => {
   
   // تحديد ما إذا كان المستخدم سوبر آدمن فقط
   const canManageContent = userProfile?.role === 'superadmin';
-  const isTeacher = userProfile?.role === 'teacher';
-  
-  // تحديد التبويب الافتراضي
-  useEffect(() => {
-    if (tabFromUrl) {
-      setActiveTab(tabFromUrl);
-    } else {
-      setActiveTab('view');
-    }
-  }, [tabFromUrl]);
   
   return <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
       <AppHeader title="إدارة محتوى الصف العاشر" showBackButton={true} backPath={contentBackPath} showLogout={true} />
@@ -68,25 +50,13 @@ const Grade10Management: React.FC = () => {
               <Video className="h-6 w-6" />
               <span className="font-semibold">الصف العاشر</span>
             </div>
+            
+            
           </div>
           
-          {/* التبويبات */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className={isTeacher ? 'grid w-full grid-cols-2' : 'grid w-full grid-cols-1'}>
-              <TabsTrigger value="view">عرض المحتوى</TabsTrigger>
-              {isTeacher && <TabsTrigger value="exams">الامتحانات</TabsTrigger>}
-            </TabsList>
-            
-            <TabsContent value="view" className="animate-fade-in mt-6">
-              {canManageContent ? <Grade10Content /> : <Grade10ContentViewer />}
-            </TabsContent>
-            
-            {isTeacher && (
-              <TabsContent value="exams" className="animate-fade-in mt-6">
-                <ExamsAnalytics gradeLevel="10" />
-              </TabsContent>
-            )}
-          </Tabs>
+          <div className="animate-fade-in">
+            {canManageContent ? <Grade10Content /> : <Grade10ContentViewer />}
+          </div>
         </div>
       </main>
       

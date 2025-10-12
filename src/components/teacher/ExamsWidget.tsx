@@ -306,8 +306,8 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
   };
 
   const handleManageExams = (grade: string) => {
-    // جميع الصفوف الآن لديها تبويب امتحانات
-    navigate(`/grade${grade}-management?tab=exams`);
+    // التوجيه إلى صفحة الإحصائيات المنفصلة
+    navigate(`/exams-analytics/${grade}`);
   };
 
   const handleOpenCreateDialog = () => {
