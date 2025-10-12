@@ -746,14 +746,18 @@ const GradeExamsAnalytics: React.FC = () => {
           </Card>
 
           {/* قسم تفاصيل النتائج الفردية */}
-          <Card className="border-0 shadow-lg bg-card/50 backdrop-blur-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BookOpen className="h-5 w-5 text-primary" />
-                تفاصيل نتائج الامتحانات الفردية
+          <Card className="border-0 shadow-xl bg-gradient-to-br from-card via-card/95 to-primary/5 backdrop-blur-sm hover:shadow-2xl transition-all duration-300">
+            <CardHeader className="border-b bg-gradient-to-r from-primary/5 to-transparent pb-4">
+              <CardTitle className="flex items-center gap-3 text-xl">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <BookOpen className="h-6 w-6 text-primary" />
+                </div>
+                <span className="bg-gradient-to-br from-primary to-primary/70 bg-clip-text text-transparent">
+                  تفاصيل نتائج الامتحانات الفردية
+                </span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 pt-6">
               <Tabs defaultValue="single-exam" className="w-full">
                 <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="single-exam">نتائج امتحان واحد</TabsTrigger>
