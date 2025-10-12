@@ -145,4 +145,5 @@ export interface ExamResult {
   can_review: boolean;
   show_correct_answers: boolean;
   show_results_immediately: boolean;
+  teacher_name?: string;
 }
