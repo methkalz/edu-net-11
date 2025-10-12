@@ -805,42 +805,42 @@ const GradeExamsAnalytics: React.FC = () => {
               {/* الإحصائيات الأساسية - 4 بطاقات */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <Card className="border-0 bg-gradient-to-br from-blue-500/10 to-transparent backdrop-blur-sm hover:shadow-lg transition-all">
-                  <CardContent className="p-6 text-center space-y-2">
+                  <CardContent className="p-6 flex flex-col items-center justify-center text-center space-y-2">
                     <div className="p-3 rounded-full bg-blue-500/10 w-fit mx-auto">
                       <FileQuestion className="h-6 w-6 text-blue-500 mx-auto" />
                     </div>
-                    <p className="text-xs text-muted-foreground font-medium">عدد الأسئلة</p>
-                    <p className="text-3xl font-bold text-center" dir="ltr">{selectedExam.total_questions}</p>
+                    <p className="text-xs text-muted-foreground font-medium text-center w-full">عدد الأسئلة</p>
+                    <p className="text-3xl font-bold text-center w-full mx-auto" dir="ltr">{selectedExam.total_questions}</p>
                   </CardContent>
                 </Card>
 
                 <Card className="border-0 bg-gradient-to-br from-purple-500/10 to-transparent backdrop-blur-sm hover:shadow-lg transition-all">
-                  <CardContent className="p-6 text-center space-y-2">
+                  <CardContent className="p-6 flex flex-col items-center justify-center text-center space-y-2">
                     <div className="p-3 rounded-full bg-purple-500/10 w-fit mx-auto">
                       <Target className="h-6 w-6 text-purple-500 mx-auto" />
                     </div>
-                    <p className="text-xs text-muted-foreground font-medium">إجمالي النقاط</p>
-                    <p className="text-3xl font-bold text-center" dir="ltr">{selectedExam.total_points}</p>
+                    <p className="text-xs text-muted-foreground font-medium text-center w-full">إجمالي النقاط</p>
+                    <p className="text-3xl font-bold text-center w-full mx-auto" dir="ltr">{selectedExam.total_points}</p>
                   </CardContent>
                 </Card>
 
                 <Card className="border-0 bg-gradient-to-br from-indigo-500/10 to-transparent backdrop-blur-sm hover:shadow-lg transition-all">
-                  <CardContent className="p-6 text-center space-y-2">
+                  <CardContent className="p-6 flex flex-col items-center justify-center text-center space-y-2">
                     <div className="p-3 rounded-full bg-indigo-500/10 w-fit mx-auto">
                       <Users className="h-6 w-6 text-indigo-500 mx-auto" />
                     </div>
-                    <p className="text-xs text-muted-foreground font-medium">عدد المحاولات</p>
-                    <p className="text-3xl font-bold text-center" dir="ltr">{selectedExam.attempts_count}</p>
+                    <p className="text-xs text-muted-foreground font-medium text-center w-full">عدد المحاولات</p>
+                    <p className="text-3xl font-bold text-center w-full mx-auto" dir="ltr">{selectedExam.attempts_count}</p>
                   </CardContent>
                 </Card>
 
                 <Card className="border-0 bg-gradient-to-br from-emerald-500/10 to-transparent backdrop-blur-sm hover:shadow-lg transition-all">
-                  <CardContent className="p-6 text-center space-y-2">
+                  <CardContent className="p-6 flex flex-col items-center justify-center text-center space-y-2">
                     <div className="p-3 rounded-full bg-emerald-500/10 w-fit mx-auto">
                       <Award className="h-6 w-6 text-emerald-500 mx-auto" />
                     </div>
-                    <p className="text-xs text-muted-foreground font-medium">متوسط النتائج</p>
-                    <p className="text-3xl font-bold text-center text-emerald-600" dir="ltr">
+                    <p className="text-xs text-muted-foreground font-medium text-center w-full">متوسط النتائج</p>
+                    <p className="text-3xl font-bold text-center w-full mx-auto text-emerald-600" dir="ltr">
                       {selectedExam.avg_percentage !== null ? `${selectedExam.avg_percentage.toFixed(1)}%` : '-'}
                     </p>
                   </CardContent>
