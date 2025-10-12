@@ -207,7 +207,7 @@ const ExamPreview: React.FC<ExamPreviewProps> = ({
             {/* Timer Card */}
             <Card className="bg-gradient-to-br from-blue-500/10 via-indigo-500/5 to-purple-500/10 border-2 border-blue-200/50 shadow-sm">
               <CardHeader className="pb-2 pt-2">
-                <CardTitle className="text-xs flex items-center gap-2 font-bold">
+                <CardTitle className="text-sm flex items-center gap-2 font-bold">
                   <div className="p-1 bg-blue-500/20 rounded-lg">
                     <Timer className="h-3 w-3 text-blue-600" />
                   </div>
@@ -215,10 +215,10 @@ const ExamPreview: React.FC<ExamPreviewProps> = ({
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-0 pb-2">
-                <div className={`text-xl font-bold text-center ${getTimeColor()}`}>
+                <div className={`text-2xl font-bold text-center ${getTimeColor()}`}>
                   {formatTime(timeRemaining)}
                 </div>
-                <div className="text-xs text-center text-muted-foreground">
+                <div className="text-sm text-center text-muted-foreground">
                   من {examData.exam.duration_minutes}د
                 </div>
               </CardContent>
@@ -227,7 +227,7 @@ const ExamPreview: React.FC<ExamPreviewProps> = ({
             {/* Question Map */}
             <Card className="border shadow-sm">
               <CardHeader className="pb-2 pt-2">
-                <CardTitle className="text-xs flex items-center justify-between font-bold">
+                <CardTitle className="text-sm flex items-center justify-between font-bold">
                   <span>خريطة الأسئلة</span>
                   <Badge variant="secondary" className="text-xs px-2 py-0.5">
                     {Object.keys(answers).length}/{examData.questions.length}
@@ -240,7 +240,7 @@ const ExamPreview: React.FC<ExamPreviewProps> = ({
                     <button
                       key={index}
                       onClick={() => setCurrentQuestionIndex(index)}
-                      className={`w-7 h-7 text-xs font-bold rounded-md border transition-all ${getQuestionStatusColor(index)}`}
+                      className={`w-7 h-7 text-sm font-bold rounded-md border transition-all ${getQuestionStatusColor(index)}`}
                     >
                       {index + 1}
                     </button>
@@ -252,9 +252,9 @@ const ExamPreview: React.FC<ExamPreviewProps> = ({
             {/* Exam Info */}
             <Card className="bg-gradient-to-br from-slate-500/5 via-gray-500/5 to-zinc-500/5 border shadow-sm">
               <CardHeader className="pb-2 pt-2">
-                <CardTitle className="text-xs font-bold">تفاصيل الاختبار</CardTitle>
+                <CardTitle className="text-sm font-bold">تفاصيل الاختبار</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-1.5 text-xs pt-0 pb-2">
+              <CardContent className="space-y-1.5 text-sm pt-0 pb-2">
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">الأسئلة:</span>
                   <span className="font-bold">{examData.questions.length}</span>
@@ -448,19 +448,19 @@ const ExamPreview: React.FC<ExamPreviewProps> = ({
                 onClick={handlePreviousQuestion}
                 disabled={currentQuestionIndex === 0}
                 variant="outline"
-                className="w-full text-xs h-9 font-semibold border hover:scale-105 transition-transform"
+                className="w-full text-sm h-10 font-semibold border hover:scale-105 transition-transform"
               >
-                <ArrowRight className="h-3 w-3 ml-1.5" />
+                <ArrowRight className="h-4 w-4 ml-1.5" />
                 السابق
               </Button>
               
               <Button
                 onClick={handleNextQuestion}
                 disabled={isLastQuestion}
-                className="w-full text-xs h-9 font-semibold hover:scale-105 transition-transform shadow-sm"
+                className="w-full text-sm h-10 font-semibold hover:scale-105 transition-transform shadow-sm"
               >
                 التالي
-                <ArrowLeft className="h-3 w-3 mr-1.5" />
+                <ArrowLeft className="h-4 w-4 mr-1.5" />
               </Button>
 
               {/* Finish Exam Dialog */}
@@ -468,10 +468,10 @@ const ExamPreview: React.FC<ExamPreviewProps> = ({
                 <AlertDialogTrigger asChild>
                   <Button 
                     variant="default"
-                    className="w-full bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-xs h-10 font-bold shadow-md hover:scale-105 transition-all mt-2"
+                    className="w-full bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-sm h-11 font-bold shadow-md hover:scale-105 transition-all mt-2"
                   >
                     <CheckCircle className="h-4 w-4 ml-1.5" />
-                    إنهاء
+                    إنهاء الاختبار
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent className="max-w-md">
@@ -521,15 +521,15 @@ const ExamPreview: React.FC<ExamPreviewProps> = ({
             <Card className="mt-2 bg-gradient-to-br from-primary/5 to-background border">
               <CardContent className="pt-2 pb-2 space-y-2">
                 <div className="text-center">
-                  <div className="text-xs text-muted-foreground mb-0.5">السؤال</div>
-                  <div className="text-xl font-bold bg-gradient-to-l from-primary to-primary/70 bg-clip-text text-transparent">
+                  <div className="text-sm text-muted-foreground mb-0.5">السؤال</div>
+                  <div className="text-2xl font-bold bg-gradient-to-l from-primary to-primary/70 bg-clip-text text-transparent">
                     {currentQuestionIndex + 1} / {examData.questions.length}
                   </div>
                 </div>
                 
                 {answers[currentQuestionIndex] && (
-                  <Badge className="w-full justify-center bg-green-500/10 text-green-700 border-green-200 hover:bg-green-500/20 py-1 text-xs">
-                    <CheckCircle className="h-3 w-3 ml-1" />
+                  <Badge className="w-full justify-center bg-green-500/10 text-green-700 border-green-200 hover:bg-green-500/20 py-1 text-sm">
+                    <CheckCircle className="h-3.5 w-3.5 ml-1" />
                     تم الإجابة
                   </Badge>
                 )}
