@@ -34,20 +34,40 @@ export const ExamQuestion: React.FC<ExamQuestionProps> = ({
     if (question.question_type === 'true_false') {
       return (
         <RadioGroup value={currentAnswer || ''} onValueChange={onAnswerChange}>
-          <div className="flex items-center space-x-2 space-x-reverse p-3 rounded-lg hover:bg-muted/50 transition-colors">
-            <RadioGroupItem value="true" id="true" disabled={showCorrectAnswer} />
-            <Label htmlFor="true" className="flex-1 cursor-pointer">صح</Label>
+          <label 
+            htmlFor="true"
+            className={`
+              flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer
+              transition-all duration-200 hover:shadow-md
+              ${currentAnswer === 'true' 
+                ? 'border-primary bg-primary/5 shadow-sm' 
+                : 'border-border hover:border-primary/40'
+              }
+            `}
+          >
+            <RadioGroupItem value="true" id="true" disabled={showCorrectAnswer} className="shrink-0" />
+            <span className="flex-1 font-medium">صح</span>
             {showCorrectAnswer && correctAnswer === 'true' && (
               <Badge className="bg-green-500">الإجابة الصحيحة</Badge>
             )}
-          </div>
-          <div className="flex items-center space-x-2 space-x-reverse p-3 rounded-lg hover:bg-muted/50 transition-colors">
-            <RadioGroupItem value="false" id="false" disabled={showCorrectAnswer} />
-            <Label htmlFor="false" className="flex-1 cursor-pointer">خطأ</Label>
+          </label>
+          <label 
+            htmlFor="false"
+            className={`
+              flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer
+              transition-all duration-200 hover:shadow-md
+              ${currentAnswer === 'false' 
+                ? 'border-primary bg-primary/5 shadow-sm' 
+                : 'border-border hover:border-primary/40'
+              }
+            `}
+          >
+            <RadioGroupItem value="false" id="false" disabled={showCorrectAnswer} className="shrink-0" />
+            <span className="flex-1 font-medium">خطأ</span>
             {showCorrectAnswer && correctAnswer === 'false' && (
               <Badge className="bg-green-500">الإجابة الصحيحة</Badge>
             )}
-          </div>
+          </label>
         </RadioGroup>
       );
     }
@@ -56,25 +76,34 @@ export const ExamQuestion: React.FC<ExamQuestionProps> = ({
       return (
         <RadioGroup value={currentAnswer || ''} onValueChange={onAnswerChange}>
           {question.choices.map((choice, index) => (
-            <div 
-              key={choice.value} 
-              className="flex items-center space-x-2 space-x-reverse p-3 rounded-lg hover:bg-muted/50 transition-colors"
+            <label 
+              key={choice.value}
+              htmlFor={`choice-${index}`}
+              className={`
+                flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer
+                transition-all duration-200 hover:shadow-md
+                ${currentAnswer === choice.value 
+                  ? 'border-primary bg-primary/5 shadow-sm' 
+                  : 'border-border hover:border-primary/40'
+                }
+              `}
             >
               <RadioGroupItem 
                 value={choice.value} 
                 id={`choice-${index}`} 
                 disabled={showCorrectAnswer}
+                className="shrink-0"
               />
-              <Label htmlFor={`choice-${index}`} className="flex-1 cursor-pointer">
+              <span className="flex-1 font-medium">
                 {choice.text}
-              </Label>
+              </span>
               {showCorrectAnswer && correctAnswer === choice.value && (
                 <Badge className="bg-green-500">الإجابة الصحيحة</Badge>
               )}
               {showCorrectAnswer && currentAnswer === choice.value && correctAnswer !== choice.value && (
                 <Badge variant="destructive">إجابتك</Badge>
               )}
-            </div>
+            </label>
           ))}
         </RadioGroup>
       );
@@ -86,7 +115,7 @@ export const ExamQuestion: React.FC<ExamQuestionProps> = ({
           value={currentAnswer || ''}
           onChange={(e) => onAnswerChange(e.target.value)}
           placeholder="اكتب إجابتك هنا..."
-          className="min-h-[150px] resize-none"
+          className="min-h-[150px] resize-none border-2 focus:border-primary rounded-xl"
           disabled={showCorrectAnswer}
         />
       );
@@ -96,23 +125,23 @@ export const ExamQuestion: React.FC<ExamQuestionProps> = ({
   };
 
   return (
-    <Card className="border-2">
-      <CardHeader className="bg-muted/30 p-4 sm:p-6">
-        <div className="flex items-center justify-between gap-2">
-          <CardTitle className="text-base sm:text-lg">
+    <Card className="border-2 shadow-sm hover:shadow-md transition-shadow duration-200">
+      <CardHeader className="bg-gradient-to-br from-primary/5 to-transparent p-6 border-b">
+        <div className="flex items-center justify-between gap-3">
+          <CardTitle className="text-lg font-bold">
             السؤال {questionNumber} من {totalQuestions}
           </CardTitle>
-          <Badge variant="outline" className="text-xs sm:text-sm shrink-0">
+          <Badge variant="secondary" className="text-sm font-semibold px-3 py-1">
             {question.points} نقطة
           </Badge>
         </div>
       </CardHeader>
-      <CardContent className="pt-4 sm:pt-6 p-4 sm:p-6 space-y-4 sm:space-y-6">
-        <div className="text-base sm:text-lg font-medium leading-relaxed">
+      <CardContent className="p-6 space-y-6">
+        <div className="text-lg font-medium leading-relaxed text-foreground">
           {question.question_text}
         </div>
         
-        <div className="space-y-2 sm:space-y-3">
+        <div className="space-y-3">
           {renderChoices()}
         </div>
       </CardContent>

@@ -696,42 +696,50 @@ export default function StudentExamAttempt() {
       />
 
       {/* Header with Timer */}
-      <Card className="mb-4 sm:mb-6">
-        <CardHeader className="p-4 sm:p-6">
-          <div className="flex items-center justify-between flex-wrap gap-3 sm:gap-4">
-            <div className="flex-1">
-              <CardTitle className="text-lg sm:text-2xl">{examData.exam.title}</CardTitle>
-              {examData.exam.description && (
-                <p className="text-sm text-muted-foreground mt-1">{examData.exam.description}</p>
-              )}
-            </div>
-            <div className={`flex flex-col items-end gap-1 ${isLastFiveMinutes ? 'animate-pulse' : ''}`}>
-              <div className="text-xs text-muted-foreground">الوقت المتبقي</div>
-              <div className={`flex items-center gap-2 text-xl sm:text-3xl font-bold px-4 py-2 rounded-lg border-2 ${
-                isLastFiveMinutes 
-                  ? 'text-destructive border-destructive bg-destructive/10' 
-                  : 'text-primary border-primary/20 bg-primary/5'
-              }`}>
-                <Clock className="w-5 h-5 sm:w-6 sm:h-6" />
-                <span className="tabular-nums">{formattedTime}</span>
+      <div className="bg-background/95 backdrop-blur-sm sticky top-0 z-10 pb-4 mb-6">
+        <Card className="border-2 shadow-lg">
+          <CardHeader className="p-6">
+            <div className="flex items-start justify-between gap-6">
+              <div className="flex-1 space-y-2">
+                <CardTitle className="text-2xl font-bold">{examData.exam.title}</CardTitle>
+                {examData.exam.description && (
+                  <p className="text-sm text-muted-foreground">{examData.exam.description}</p>
+                )}
               </div>
-              {isLastFiveMinutes && (
-                <div className="text-xs text-destructive font-medium">
-                  ⚠️ سيتم التقديم تلقائياً عند انتهاء الوقت
+              <div className={`flex flex-col items-end gap-2 shrink-0 ${isLastFiveMinutes ? 'animate-pulse' : ''}`}>
+                <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  الوقت المتبقي
                 </div>
-              )}
+                <div className={`
+                  flex items-center gap-3 px-5 py-3 rounded-2xl border-2 shadow-md
+                  transition-all duration-300
+                  ${isLastFiveMinutes 
+                    ? 'text-destructive border-destructive bg-destructive/10' 
+                    : 'text-primary border-primary/30 bg-primary/5'
+                  }
+                `}>
+                  <Clock className="w-6 h-6" />
+                  <span className="text-3xl font-bold tabular-nums">{formattedTime}</span>
+                </div>
+                {isLastFiveMinutes && (
+                  <div className="text-xs text-destructive font-semibold flex items-center gap-1">
+                    <span>⚠️</span>
+                    <span>سيتم التقديم تلقائياً عند انتهاء الوقت</span>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        </CardHeader>
-      </Card>
-
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
-        {/* Navigation Grid */}
-        <Card className="lg:col-span-1 order-2 lg:order-1">
-          <CardHeader className="p-4">
-            <CardTitle className="text-base sm:text-lg">الأسئلة</CardTitle>
           </CardHeader>
-          <CardContent className="p-4">
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Navigation Grid */}
+        <Card className="lg:col-span-1 order-2 lg:order-1 border-2 shadow-sm h-fit lg:sticky lg:top-24">
+          <CardHeader className="p-5 border-b bg-gradient-to-br from-muted/50 to-transparent">
+            <CardTitle className="text-lg font-bold">الأسئلة</CardTitle>
+          </CardHeader>
+          <CardContent className="p-5">
             <ExamNavigationGrid
               totalQuestions={examData.questions.length}
               answeredQuestions={answeredQuestions}
@@ -742,24 +750,26 @@ export default function StudentExamAttempt() {
         </Card>
 
         {/* Question Area */}
-        <div className="lg:col-span-3 space-y-4 sm:space-y-6 order-1 lg:order-2">
-          <ExamQuestion
-            question={{
-              id: currentQuestion.id,
-              question_text: currentQuestion.question_text,
-              question_type: currentQuestion.question_type as 'multiple_choice' | 'true_false' | 'essay',
-              choices: currentQuestion.choices?.map(c => ({ text: c.text, value: c.id })),
-              points: currentQuestion.points,
-            }}
-            questionNumber={currentQuestionIndex + 1}
-            totalQuestions={examData.questions.length}
-            currentAnswer={answers[currentQuestion.id]?.answer}
-            onAnswerChange={(answer) => handleAnswerChange(currentQuestion.id, answer)}
-          />
+        <div className="lg:col-span-3 space-y-6 order-1 lg:order-2">
+          <div className="animate-fade-in">
+            <ExamQuestion
+              question={{
+                id: currentQuestion.id,
+                question_text: currentQuestion.question_text,
+                question_type: currentQuestion.question_type as 'multiple_choice' | 'true_false' | 'essay',
+                choices: currentQuestion.choices?.map(c => ({ text: c.text, value: c.id })),
+                points: currentQuestion.points,
+              }}
+              questionNumber={currentQuestionIndex + 1}
+              totalQuestions={examData.questions.length}
+              currentAnswer={answers[currentQuestion.id]?.answer}
+              onAnswerChange={(answer) => handleAnswerChange(currentQuestion.id, answer)}
+            />
+          </div>
 
           {/* Navigation Buttons */}
-          <div className="flex flex-col sm:flex-row items-stretch justify-between gap-3 w-full">
-            <div className="flex gap-3 w-full">
+          <div className="flex flex-col sm:flex-row items-stretch gap-4 w-full">
+            <div className="flex gap-4 w-full">
               <Button
                 variant="outline"
                 onClick={() => {
@@ -767,7 +777,7 @@ export default function StudentExamAttempt() {
                   setCurrentQuestionIndex((prev) => Math.max(0, prev - 1));
                 }}
                 disabled={currentQuestionIndex === 0}
-                className="flex-1 min-h-[48px] text-base font-semibold"
+                className="flex-1 h-14 text-base font-bold border-2 hover:shadow-md transition-all"
               >
                 <ChevronRight className="w-5 h-5 ml-2" />
                 السابق
@@ -783,7 +793,7 @@ export default function StudentExamAttempt() {
                       Math.min(examData.questions.length - 1, prev + 1)
                     );
                   }}
-                  className="flex-1 min-h-[48px] text-base font-semibold"
+                  className="flex-1 h-14 text-base font-bold shadow-md hover:shadow-lg transition-all"
                 >
                   التالي
                   <ChevronLeft className="w-5 h-5 mr-2" />
@@ -802,20 +812,33 @@ export default function StudentExamAttempt() {
                   handleSubmitClick();
                 }}
                 disabled={submitExamMutation.isPending}
-                className="w-full min-h-[56px] text-base font-bold bg-green-600 hover:bg-green-700 text-white shadow-lg"
+                className="w-full h-16 text-lg font-bold bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl transition-all"
               >
-                <Send className="w-5 h-5 ml-2" />
+                <Send className="w-6 h-6 ml-2" />
                 {submitExamMutation.isPending ? 'جاري التسليم...' : 'تقديم الامتحان'}
               </Button>
             )}
           </div>
 
           {/* Progress Info */}
-          <Alert>
-            <AlertDescription>
-              تم الإجابة على {answeredQuestions.size} من {examData.questions.length} سؤال
-            </AlertDescription>
-          </Alert>
+          <Card className="border-2 border-primary/20 bg-primary/5">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold">تم الإجابة على {answeredQuestions.size} من {examData.questions.length} سؤال</span>
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-32 bg-background rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-primary transition-all duration-300"
+                      style={{ width: `${(answeredQuestions.size / examData.questions.length) * 100}%` }}
+                    />
+                  </div>
+                  <span className="text-sm font-bold text-primary">
+                    {Math.round((answeredQuestions.size / examData.questions.length) * 100)}%
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
 
