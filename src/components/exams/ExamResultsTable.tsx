@@ -195,7 +195,13 @@ export const ExamResultsTable: React.FC<ExamResultsTableProps> = ({ exams }) => 
                         </TableCell>
                         <TableCell className="text-center" dir="ltr">
                           <span className="text-sm text-muted-foreground">
-                            {result.time_spent_minutes} د
+                            {result.time_spent_seconds > 0 ? (
+                              <>
+                                {Math.floor(result.time_spent_seconds / 60)} د {result.time_spent_seconds % 60} ث
+                              </>
+                            ) : (
+                              <span className="text-muted-foreground/50">لم يتم التسجيل</span>
+                            )}
                           </span>
                         </TableCell>
                         <TableCell className="text-center" dir="ltr">
