@@ -52,12 +52,46 @@ export default function StudentExamAttempt() {
     enabled: !!examId,
   });
 
-  // إنشاء محاولة جديدة
+  // إنشاء أو استرجاع محاولة
   const createAttemptMutation = useMutation({
     mutationFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('غير مصرح');
 
+      logger.info('🔍 التحقق من وجود محاولة سابقة...', { examId, userId: user.id });
+
+      // التحقق من وجود محاولة سابقة
+      const { data: existingAttempt, error: checkError } = await supabase
+        .from('exam_attempts')
+        .select('*')
+        .eq('exam_id', examId!)
+        .eq('student_id', user.id)
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        logger.error('❌ خطأ في التحقق من المحاولة', checkError instanceof Error ? checkError : new Error(String(checkError)), { originalError: checkError });
+        throw checkError;
+      }
+
+      // إذا كانت هناك محاولة سابقة
+      if (existingAttempt) {
+        logger.info('✅ تم العثور على محاولة سابقة', { 
+          attemptId: existingAttempt.id, 
+          status: existingAttempt.status 
+        });
+
+        if (existingAttempt.status === 'submitted') {
+          logger.warn('⚠️ المحاولة السابقة مكتملة');
+          throw new Error('لقد قمت بتقديم هذا الامتحان مسبقاً');
+        }
+
+        // استخدام المحاولة السابقة إذا كانت قيد التقدم
+        logger.info('🔄 استخدام المحاولة السابقة');
+        return existingAttempt;
+      }
+
+      // إنشاء محاولة جديدة
+      logger.info('➕ إنشاء محاولة جديدة...');
       const schoolData = await supabase.from('profiles').select('school_id').eq('user_id', user.id).single();
 
       const { data, error } = await supabase
@@ -73,12 +107,26 @@ export default function StudentExamAttempt() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        logger.error('❌ فشل إنشاء المحاولة', error instanceof Error ? error : new Error(String(error)), { originalError: error });
+        throw error;
+      }
+      
+      logger.info('✅ تم إنشاء محاولة جديدة بنجاح', { attemptId: data.id });
       return data;
     },
     onSuccess: (data) => {
       setAttemptId(data.id);
-      logger.info('تم إنشاء محاولة جديدة', { attemptId: data.id });
+      logger.info('✅ تم تعيين attemptId', { attemptId: data.id });
+      
+      // تحميل الإجابات السابقة إذا كانت موجودة
+      if (data.answers && typeof data.answers === 'object' && Object.keys(data.answers).length > 0) {
+        setAnswers(data.answers as Record<string, { answer: string; time_spent?: number }>);
+        logger.info('✅ تم تحميل الإجابات السابقة', { answersCount: Object.keys(data.answers).length });
+      }
+    },
+    onError: (error: any) => {
+      logger.error('💥 خطأ في createAttemptMutation', error instanceof Error ? error : new Error(String(error)), { originalError: error });
     },
   });
 
