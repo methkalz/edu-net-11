@@ -203,90 +203,68 @@ const ExamPreview: React.FC<ExamPreviewProps> = ({
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-0 h-[calc(95vh-12rem)] overflow-hidden">
           {/* Sidebar */}
-          <div className="lg:col-span-1 bg-gradient-to-b from-muted/30 to-background border-r p-4 space-y-4 overflow-y-auto">
+          <div className="lg:col-span-1 bg-gradient-to-b from-muted/30 to-background border-r p-3 space-y-2 overflow-hidden">
             {/* Timer Card */}
-            <Card className="bg-gradient-to-br from-blue-500/10 via-indigo-500/5 to-purple-500/10 border-2 border-blue-200/50 shadow-lg hover:shadow-xl transition-shadow">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm flex items-center gap-2 font-bold">
-                  <div className="p-1.5 bg-blue-500/20 rounded-lg">
-                    <Timer className="h-4 w-4 text-blue-600" />
+            <Card className="bg-gradient-to-br from-blue-500/10 via-indigo-500/5 to-purple-500/10 border-2 border-blue-200/50 shadow-sm">
+              <CardHeader className="pb-2 pt-2">
+                <CardTitle className="text-xs flex items-center gap-2 font-bold">
+                  <div className="p-1 bg-blue-500/20 rounded-lg">
+                    <Timer className="h-3 w-3 text-blue-600" />
                   </div>
                   الوقت المتبقي
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-0">
-                <div className={`text-2xl font-bold text-center ${getTimeColor()} mb-1`}>
+              <CardContent className="pt-0 pb-2">
+                <div className={`text-xl font-bold text-center ${getTimeColor()}`}>
                   {formatTime(timeRemaining)}
                 </div>
-                <div className="text-xs text-center text-muted-foreground font-medium">
-                  من أصل {examData.exam.duration_minutes} دقيقة
+                <div className="text-xs text-center text-muted-foreground">
+                  من {examData.exam.duration_minutes}د
                 </div>
               </CardContent>
             </Card>
 
             {/* Question Map */}
-            <Card className="border-2 shadow-md">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm flex items-center justify-between font-bold">
-                  <span className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-                    خريطة الأسئلة
-                  </span>
-                  <Badge variant="secondary" className="text-xs font-semibold px-2.5 py-1">
+            <Card className="border shadow-sm">
+              <CardHeader className="pb-2 pt-2">
+                <CardTitle className="text-xs flex items-center justify-between font-bold">
+                  <span>خريطة الأسئلة</span>
+                  <Badge variant="secondary" className="text-xs px-2 py-0.5">
                     {Object.keys(answers).length}/{examData.questions.length}
                   </Badge>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-0 space-y-3">
-                <div className="grid grid-cols-5 gap-1.5">
+              <CardContent className="pt-0 pb-2 space-y-2">
+                <div className="grid grid-cols-5 gap-1">
                   {examData.questions.map((_, index: number) => (
                     <button
                       key={index}
                       onClick={() => setCurrentQuestionIndex(index)}
-                      className={`w-8 h-8 text-xs font-bold rounded-lg border-2 transition-all duration-300 hover:scale-110 ${getQuestionStatusColor(index)}`}
+                      className={`w-7 h-7 text-xs font-bold rounded-md border transition-all ${getQuestionStatusColor(index)}`}
                     >
                       {index + 1}
                     </button>
                   ))}
                 </div>
-                
-                {/* Legend */}
-                <div className="pt-2 border-t grid grid-cols-1 gap-2 text-xs">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-green-500 rounded-md shadow-sm"></div>
-                    <span className="text-xs font-medium">مجاب</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-primary rounded-md shadow-sm"></div>
-                    <span className="text-xs font-medium">حالي</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-background border-2 rounded-md"></div>
-                    <span className="text-xs font-medium">باقي</span>
-                  </div>
-                </div>
               </CardContent>
             </Card>
 
             {/* Exam Info */}
-            <Card className="bg-gradient-to-br from-slate-500/5 via-gray-500/5 to-zinc-500/5 border-2 shadow-md">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-bold flex items-center gap-2">
-                  <BarChart3 className="h-4 w-4 text-primary" />
-                  تفاصيل الاختبار
-                </CardTitle>
+            <Card className="bg-gradient-to-br from-slate-500/5 via-gray-500/5 to-zinc-500/5 border shadow-sm">
+              <CardHeader className="pb-2 pt-2">
+                <CardTitle className="text-xs font-bold">تفاصيل الاختبار</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2.5 text-sm pt-0">
-                <div className="flex justify-between items-center p-2 rounded-lg bg-background/50">
-                  <span className="text-muted-foreground font-medium">الأسئلة:</span>
-                  <span className="font-bold text-foreground">{examData.questions.length}</span>
+              <CardContent className="space-y-1.5 text-xs pt-0 pb-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">الأسئلة:</span>
+                  <span className="font-bold">{examData.questions.length}</span>
                 </div>
-                <div className="flex justify-between items-center p-2 rounded-lg bg-background/50">
-                  <span className="text-muted-foreground font-medium">المدة:</span>
-                  <span className="font-bold text-foreground">{examData.exam.duration_minutes} دقيقة</span>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">المدة:</span>
+                  <span className="font-bold">{examData.exam.duration_minutes}د</span>
                 </div>
-                <div className="flex justify-between items-center p-2 rounded-lg bg-background/50">
-                  <span className="text-muted-foreground font-medium">النجاح:</span>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">النجاح:</span>
                   <span className="font-bold text-primary">{examData.exam.pass_percentage}%</span>
                 </div>
               </CardContent>
@@ -294,89 +272,83 @@ const ExamPreview: React.FC<ExamPreviewProps> = ({
           </div>
 
           {/* Question Content */}
-          <div className="lg:col-span-3 bg-gradient-to-b from-background to-muted/20 overflow-y-auto">
-            <div className="p-6 space-y-6">
+          <div className="lg:col-span-3 bg-gradient-to-b from-background to-muted/20 overflow-hidden flex flex-col">
+            <div className="p-4 space-y-3 flex-1 overflow-hidden">
               {currentQuestion && (
-                <div className="space-y-6 animate-fade-in">
+                <div className="space-y-3 h-full flex flex-col">
                   {/* Question Header */}
-                  <Card className="border-2 shadow-lg bg-gradient-to-br from-primary/5 via-background to-primary/5">
-                    <CardHeader className="pb-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <div className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground rounded-xl w-10 h-10 flex items-center justify-center text-base font-bold shadow-lg">
+                  <Card className="border-2 shadow-sm bg-gradient-to-br from-primary/5 via-background to-primary/5">
+                    <CardHeader className="pb-2 pt-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground rounded-lg w-8 h-8 flex items-center justify-center text-sm font-bold shadow-md">
                             {currentQuestionIndex + 1}
                           </div>
                           <div>
-                            <h3 className="text-base font-bold text-foreground">
+                            <h3 className="text-sm font-bold text-foreground">
                               السؤال {currentQuestionIndex + 1} من {examData.questions.length}
                             </h3>
-                            <p className="text-xs text-muted-foreground">اختر الإجابة الصحيحة</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5">
                           <Badge 
                             variant={
                               currentQuestion.difficulty_level === 'easy' ? 'default' :
                               currentQuestion.difficulty_level === 'medium' ? 'secondary' :
                               'destructive'
                             }
-                            className="px-3 py-1.5 text-xs font-semibold"
+                            className="px-2 py-0.5 text-xs"
                           >
-                            {currentQuestion.difficulty_level === 'easy' ? '🟢 سهل' :
-                             currentQuestion.difficulty_level === 'medium' ? '🟡 متوسط' : '🔴 صعب'}
+                            {currentQuestion.difficulty_level === 'easy' ? '🟢' :
+                             currentQuestion.difficulty_level === 'medium' ? '🟡' : '🔴'}
                           </Badge>
-                          <Badge variant="outline" className="px-3 py-1.5 text-xs font-semibold border-2">
+                          <Badge variant="outline" className="px-2 py-0.5 text-xs border">
                             {currentQuestion.points} علامة
                           </Badge>
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="pt-2 pb-3">
                       {/* Question Text */}
-                      <div className="text-lg font-bold leading-relaxed p-5 bg-background rounded-xl border-2 shadow-sm">
+                      <div className="text-base font-bold leading-relaxed p-3 bg-background rounded-lg border">
                         {currentQuestion.question_text}
                       </div>
                     </CardContent>
                   </Card>
 
                   {/* Answer Options */}
-                  <Card className="border-2 shadow-md">
-                    <CardHeader className="pb-4">
-                      <h4 className="font-bold text-base flex items-center gap-2">
-                        <CheckCircle className="h-5 w-5 text-green-600" />
+                  <Card className="border-2 shadow-sm flex-1 overflow-hidden flex flex-col">
+                    <CardHeader className="pb-2 pt-3">
+                      <h4 className="font-bold text-sm flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-600" />
                         اختر الإجابة الصحيحة
                       </h4>
                     </CardHeader>
-                    <CardContent className="space-y-3">
+                    <CardContent className="space-y-2 overflow-y-auto flex-1 pb-3">
 
                       {/* Multiple Choice */}
                       {currentQuestion.question_type === 'multiple_choice' && (
                         <RadioGroup
                           value={answers[currentQuestionIndex] || ''}
                           onValueChange={(value) => handleAnswerChange(currentQuestionIndex, value)}
-                          className="space-y-3"
+                          className="space-y-2"
                         >
                           {currentQuestion.choices?.map((choice, index: number) => (
                             <label 
                               key={index}
                               htmlFor={`choice-${index}`}
                               className={`
-                                flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer
-                                transition-all duration-300 hover:shadow-lg hover:scale-[1.02]
+                                flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer
+                                transition-all duration-200 hover:shadow-md
                                 ${answers[currentQuestionIndex] === (typeof choice === 'string' ? choice : choice.text)
-                                  ? 'border-primary bg-primary/10 shadow-md' 
+                                  ? 'border-primary bg-primary/10 shadow-sm' 
                                   : 'border-border hover:border-primary/50 bg-background'
                                 }
                               `}
                             >
-                              <RadioGroupItem 
-                                value={typeof choice === 'string' ? choice : choice.text}
-                                id={`choice-${index}`} 
-                                className="shrink-0"
-                              />
-                              <div className="flex items-center gap-3 flex-1">
+                              <div className="flex items-center gap-2.5 flex-1">
                                 <span className={`
-                                  w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors
+                                  w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors shrink-0
                                   ${answers[currentQuestionIndex] === (typeof choice === 'string' ? choice : choice.text)
                                     ? 'bg-primary text-primary-foreground' 
                                     : 'bg-muted text-muted-foreground'
@@ -384,8 +356,13 @@ const ExamPreview: React.FC<ExamPreviewProps> = ({
                                 `}>
                                   {String.fromCharCode(65 + index)}
                                 </span>
-                                <span className="text-base font-medium">{typeof choice === 'string' ? choice : choice.text}</span>
+                                <span className="text-sm font-medium flex-1">{typeof choice === 'string' ? choice : choice.text}</span>
                               </div>
+                              <RadioGroupItem 
+                                value={typeof choice === 'string' ? choice : choice.text}
+                                id={`choice-${index}`} 
+                                className="shrink-0"
+                              />
                             </label>
                           ))}
                         </RadioGroup>
@@ -396,53 +373,53 @@ const ExamPreview: React.FC<ExamPreviewProps> = ({
                         <RadioGroup
                           value={answers[currentQuestionIndex] || ''}
                           onValueChange={(value) => handleAnswerChange(currentQuestionIndex, value)}
-                          className="space-y-3"
+                          className="space-y-2"
                         >
                           <label 
                             htmlFor="true"
                             className={`
-                              flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer
-                              transition-all duration-300 hover:shadow-lg hover:scale-[1.02]
+                              flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer
+                              transition-all duration-200 hover:shadow-md
                               ${answers[currentQuestionIndex] === 'true' 
-                                ? 'border-green-500 bg-green-50 shadow-md' 
+                                ? 'border-green-500 bg-green-50 shadow-sm' 
                                 : 'border-border hover:border-green-400 bg-background'
                               }
                             `}
                           >
-                            <RadioGroupItem value="true" id="true" className="shrink-0" />
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2.5 flex-1">
                               <span className={`
-                                w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold transition-colors
+                                w-7 h-7 rounded-full flex items-center justify-center text-base font-bold transition-colors shrink-0
                                 ${answers[currentQuestionIndex] === 'true'
                                   ? 'bg-green-500 text-white' 
                                   : 'bg-green-100 text-green-700'
                                 }
                               `}>✓</span>
-                              <span className="text-base font-bold">صحيح</span>
+                              <span className="text-sm font-bold">صحيح</span>
                             </div>
+                            <RadioGroupItem value="true" id="true" className="shrink-0" />
                           </label>
                           <label 
                             htmlFor="false"
                             className={`
-                              flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer
-                              transition-all duration-300 hover:shadow-lg hover:scale-[1.02]
+                              flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer
+                              transition-all duration-200 hover:shadow-md
                               ${answers[currentQuestionIndex] === 'false' 
-                                ? 'border-red-500 bg-red-50 shadow-md' 
+                                ? 'border-red-500 bg-red-50 shadow-sm' 
                                 : 'border-border hover:border-red-400 bg-background'
                               }
                             `}
                           >
-                            <RadioGroupItem value="false" id="false" className="shrink-0" />
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2.5 flex-1">
                               <span className={`
-                                w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold transition-colors
+                                w-7 h-7 rounded-full flex items-center justify-center text-base font-bold transition-colors shrink-0
                                 ${answers[currentQuestionIndex] === 'false'
                                   ? 'bg-red-500 text-white' 
                                   : 'bg-red-100 text-red-700'
                                 }
                               `}>✗</span>
-                              <span className="text-base font-bold">خطأ</span>
+                              <span className="text-sm font-bold">خطأ</span>
                             </div>
+                            <RadioGroupItem value="false" id="false" className="shrink-0" />
                           </label>
                         </RadioGroup>
                       )}
@@ -453,7 +430,7 @@ const ExamPreview: React.FC<ExamPreviewProps> = ({
                           value={answers[currentQuestionIndex] || ''}
                           onChange={(e) => handleAnswerChange(currentQuestionIndex, e.target.value)}
                           placeholder="اكتب إجابتك هنا..."
-                          className="min-h-[150px] text-base border-2 focus:border-primary rounded-xl p-4 resize-none"
+                          className="min-h-[100px] text-sm border-2 focus:border-primary rounded-lg p-3 resize-none"
                         />
                       )}
                     </CardContent>
@@ -464,26 +441,26 @@ const ExamPreview: React.FC<ExamPreviewProps> = ({
           </div>
 
           {/* Navigation Sidebar */}
-          <div className="lg:col-span-1 bg-gradient-to-b from-muted/20 to-background border-l p-4 flex flex-col justify-between">
+          <div className="lg:col-span-1 bg-gradient-to-b from-muted/20 to-background border-l p-3 flex flex-col justify-between overflow-hidden">
             {/* Navigation Buttons */}
-            <div className="space-y-3">
+            <div className="space-y-2">
               <Button
                 onClick={handlePreviousQuestion}
                 disabled={currentQuestionIndex === 0}
                 variant="outline"
-                className="w-full text-sm h-11 font-semibold border-2 hover:scale-105 transition-transform"
+                className="w-full text-xs h-9 font-semibold border hover:scale-105 transition-transform"
               >
-                <ArrowRight className="h-4 w-4 ml-2" />
-                السؤال السابق
+                <ArrowRight className="h-3 w-3 ml-1.5" />
+                السابق
               </Button>
               
               <Button
                 onClick={handleNextQuestion}
                 disabled={isLastQuestion}
-                className="w-full text-sm h-11 font-semibold hover:scale-105 transition-transform shadow-md"
+                className="w-full text-xs h-9 font-semibold hover:scale-105 transition-transform shadow-sm"
               >
-                السؤال التالي
-                <ArrowLeft className="h-4 w-4 mr-2" />
+                التالي
+                <ArrowLeft className="h-3 w-3 mr-1.5" />
               </Button>
 
               {/* Finish Exam Dialog */}
@@ -491,10 +468,10 @@ const ExamPreview: React.FC<ExamPreviewProps> = ({
                 <AlertDialogTrigger asChild>
                   <Button 
                     variant="default"
-                    className="w-full bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-sm h-12 font-bold shadow-lg hover:scale-105 transition-all mt-3"
+                    className="w-full bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-xs h-10 font-bold shadow-md hover:scale-105 transition-all mt-2"
                   >
-                    <CheckCircle className="h-5 w-5 ml-2" />
-                    إنهاء الاختبار
+                    <CheckCircle className="h-4 w-4 ml-1.5" />
+                    إنهاء
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent className="max-w-md">
@@ -541,18 +518,18 @@ const ExamPreview: React.FC<ExamPreviewProps> = ({
             </div>
 
             {/* Progress Summary */}
-            <Card className="mt-4 bg-gradient-to-br from-primary/5 to-background border-2">
-              <CardContent className="pt-4 space-y-3">
+            <Card className="mt-2 bg-gradient-to-br from-primary/5 to-background border">
+              <CardContent className="pt-2 pb-2 space-y-2">
                 <div className="text-center">
-                  <div className="text-xs text-muted-foreground font-medium mb-1">السؤال الحالي</div>
-                  <div className="text-2xl font-bold bg-gradient-to-l from-primary to-primary/70 bg-clip-text text-transparent">
+                  <div className="text-xs text-muted-foreground mb-0.5">السؤال</div>
+                  <div className="text-xl font-bold bg-gradient-to-l from-primary to-primary/70 bg-clip-text text-transparent">
                     {currentQuestionIndex + 1} / {examData.questions.length}
                   </div>
                 </div>
                 
                 {answers[currentQuestionIndex] && (
-                  <Badge className="w-full justify-center bg-green-500/10 text-green-700 border-green-200 hover:bg-green-500/20 py-2">
-                    <CheckCircle className="h-4 w-4 ml-1.5" />
+                  <Badge className="w-full justify-center bg-green-500/10 text-green-700 border-green-200 hover:bg-green-500/20 py-1 text-xs">
+                    <CheckCircle className="h-3 w-3 ml-1" />
                     تم الإجابة
                   </Badge>
                 )}
