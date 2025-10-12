@@ -283,7 +283,7 @@ export default function StudentExamAttempt() {
           />
 
           {/* Navigation Buttons */}
-          <div className="flex items-center justify-between gap-2 sm:gap-4 relative z-10">
+          <div className="flex items-stretch justify-between gap-3 w-full">
             <Button
               variant="outline"
               onClick={() => {
@@ -291,37 +291,41 @@ export default function StudentExamAttempt() {
                 setCurrentQuestionIndex((prev) => Math.max(0, prev - 1));
               }}
               disabled={currentQuestionIndex === 0}
-              className="flex-1 sm:flex-initial h-12 sm:h-10 touch-manipulation"
+              className="flex-1 min-h-[48px] text-base font-semibold"
             >
-              <ChevronRight className="w-4 h-4 ml-2" />
+              <ChevronRight className="w-5 h-5 ml-2" />
               السابق
             </Button>
 
             {currentQuestionIndex === examData.questions.length - 1 ? (
               <Button
+                type="button"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
+                  logger.info('زر تقديم الامتحان تم النقر عليه');
                   handleSubmitClick();
                 }}
                 disabled={submitExamMutation.isPending}
-                className="gap-2 flex-1 sm:flex-initial h-12 sm:h-10 touch-manipulation bg-primary text-primary-foreground hover:bg-primary/90"
+                className="flex-1 min-h-[48px] text-base font-semibold bg-primary hover:bg-primary/90"
               >
-                <Send className="w-4 h-4" />
-                تقديم الامتحان
+                <Send className="w-5 h-5 ml-2" />
+                {submitExamMutation.isPending ? 'جاري التسليم...' : 'تقديم الامتحان'}
               </Button>
             ) : (
               <Button
-                onClick={() => {
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
                   logger.info('زر التالي تم النقر عليه');
                   setCurrentQuestionIndex((prev) => 
                     Math.min(examData.questions.length - 1, prev + 1)
                   );
                 }}
-                className="flex-1 sm:flex-initial h-12 sm:h-10 touch-manipulation"
+                className="flex-1 min-h-[48px] text-base font-semibold"
               >
                 التالي
-                <ChevronLeft className="w-4 h-4 mr-2" />
+                <ChevronLeft className="w-5 h-5 mr-2" />
               </Button>
             )}
           </div>
