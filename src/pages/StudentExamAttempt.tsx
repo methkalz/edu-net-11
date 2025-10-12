@@ -50,18 +50,26 @@ export default function StudentExamAttempt() {
     };
   }, []);
 
-  // إعادة تعيين الحالة عند تغيير examId
+  // إعادة تعيين الحالة عند mount الكومبوننت
+  useEffect(() => {
+    logger.info('🔄 Component mounted - resetting state');
+    setAttemptId(null);
+    setAnswers({});
+    setCurrentQuestionIndex(0);
+    setShowSubmitDialog(false);
+    setRecoveryMode(false);
+  }, []); // empty array - يعمل مرة واحدة فقط عند mount
+
+  // تتبع تغيير examId
   useEffect(() => {
     ExamDebugger.log({
       type: 'NAVIGATION_CHANGED',
       data: { newExamId: examId }
     });
     
+    logger.info('📍 examId changed - resetting attempt state', { examId });
     setAttemptId(null);
     setAnswers({});
-    setCurrentQuestionIndex(0);
-    setShowSubmitDialog(false);
-    setRecoveryMode(false);
   }, [examId]);
 
   // جلب بيانات الامتحان
@@ -425,10 +433,20 @@ export default function StudentExamAttempt() {
 
   // إنشاء محاولة عند تحميل الامتحان
   useEffect(() => {
-    if (examData && !attemptId && !createAttemptMutation.isPending) {
+    logger.info('🔍 useEffect check for attempt creation', {
+      hasExamData: !!examData,
+      hasAttemptId: !!attemptId,
+      isPending: createAttemptMutation.isPending,
+      isSuccess: createAttemptMutation.isSuccess,
+      isError: createAttemptMutation.isError,
+      mutationStatus: createAttemptMutation.status
+    });
+
+    if (examData && !attemptId && !createAttemptMutation.isPending && !createAttemptMutation.isSuccess) {
+      logger.info('✅ Conditions met - creating new attempt');
       createAttemptMutation.mutate();
     }
-  }, [examData, attemptId, createAttemptMutation.isPending]);
+  }, [examData]); // فقط examData - يعمل عند تحميل البيانات
 
   // Recovery Mode - إذا لم يتم إنشاء attemptId بعد 5 ثواني
   useEffect(() => {
