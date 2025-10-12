@@ -269,13 +269,13 @@ const GradeExamsAnalytics: React.FC = () => {
             <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-transparent backdrop-blur-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
               <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-50" />
               <CardContent className="p-4 relative">
-                <div className="flex flex-col items-center text-center space-y-2">
-                  <div className="p-2 rounded-lg bg-blue-500/10 backdrop-blur-sm">
-                    <FileText className="h-5 w-5 text-blue-500" />
+                <div className="flex flex-col items-center justify-center text-center space-y-2 mx-auto">
+                  <div className="p-2 rounded-lg bg-blue-500/10 backdrop-blur-sm mx-auto">
+                    <FileText className="h-5 w-5 text-blue-500 mx-auto" />
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground font-medium">إجمالي الامتحانات</p>
-                    <p className="text-2xl font-bold bg-gradient-to-br from-blue-500 to-blue-400 bg-clip-text text-transparent" dir="ltr">
+                  <div className="space-y-1 text-center w-full">
+                    <p className="text-xs text-muted-foreground font-medium text-center">إجمالي الامتحانات</p>
+                    <p className="text-2xl font-bold bg-gradient-to-br from-blue-500 to-blue-400 bg-clip-text text-transparent text-center mx-auto" dir="ltr">
                       {stats.totalExams}
                     </p>
                   </div>
@@ -287,13 +287,13 @@ const GradeExamsAnalytics: React.FC = () => {
             <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-green-500/10 via-green-500/5 to-transparent backdrop-blur-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
               <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent opacity-50" />
               <CardContent className="p-4 relative">
-                <div className="flex flex-col items-center text-center space-y-2">
-                  <div className="p-2 rounded-lg bg-green-500/10 backdrop-blur-sm">
-                    <CheckCircle2 className="h-5 w-5 text-green-500" />
+                <div className="flex flex-col items-center justify-center text-center space-y-2 mx-auto">
+                  <div className="p-2 rounded-lg bg-green-500/10 backdrop-blur-sm mx-auto">
+                    <CheckCircle2 className="h-5 w-5 text-green-500 mx-auto" />
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground font-medium">الامتحانات النشطة</p>
-                    <p className="text-2xl font-bold bg-gradient-to-br from-green-500 to-green-400 bg-clip-text text-transparent" dir="ltr">
+                  <div className="space-y-1 text-center w-full">
+                    <p className="text-xs text-muted-foreground font-medium text-center">الامتحانات النشطة</p>
+                    <p className="text-2xl font-bold bg-gradient-to-br from-green-500 to-green-400 bg-clip-text text-transparent text-center mx-auto" dir="ltr">
                       {stats.activeExams}
                     </p>
                   </div>
@@ -305,13 +305,13 @@ const GradeExamsAnalytics: React.FC = () => {
             <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-yellow-500/10 via-yellow-500/5 to-transparent backdrop-blur-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
               <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 to-transparent opacity-50" />
               <CardContent className="p-4 relative">
-                <div className="flex flex-col items-center text-center space-y-2">
-                  <div className="p-2 rounded-lg bg-yellow-500/10 backdrop-blur-sm">
-                    <CalendarClock className="h-5 w-5 text-yellow-500" />
+                <div className="flex flex-col items-center justify-center text-center space-y-2 mx-auto">
+                  <div className="p-2 rounded-lg bg-yellow-500/10 backdrop-blur-sm mx-auto">
+                    <CalendarClock className="h-5 w-5 text-yellow-500 mx-auto" />
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground font-medium">الامتحانات المجدولة</p>
-                    <p className="text-2xl font-bold bg-gradient-to-br from-yellow-500 to-yellow-400 bg-clip-text text-transparent" dir="ltr">
+                  <div className="space-y-1 text-center w-full">
+                    <p className="text-xs text-muted-foreground font-medium text-center">الامتحانات المجدولة</p>
+                    <p className="text-2xl font-bold bg-gradient-to-br from-yellow-500 to-yellow-400 bg-clip-text text-transparent text-center mx-auto" dir="ltr">
                       {stats.scheduledExams}
                     </p>
                   </div>
@@ -323,13 +323,13 @@ const GradeExamsAnalytics: React.FC = () => {
             <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-gray-500/10 via-gray-500/5 to-transparent backdrop-blur-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
               <div className="absolute inset-0 bg-gradient-to-br from-gray-500/5 to-transparent opacity-50" />
               <CardContent className="p-4 relative">
-                <div className="flex flex-col items-center text-center space-y-2">
-                  <div className="p-2 rounded-lg bg-gray-500/10 backdrop-blur-sm">
-                    <XCircle className="h-5 w-5 text-gray-500" />
+                <div className="flex flex-col items-center justify-center text-center space-y-2 mx-auto">
+                  <div className="p-2 rounded-lg bg-gray-500/10 backdrop-blur-sm mx-auto">
+                    <XCircle className="h-5 w-5 text-gray-500 mx-auto" />
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground font-medium">الامتحانات المنتهية</p>
-                    <p className="text-2xl font-bold bg-gradient-to-br from-gray-500 to-gray-400 bg-clip-text text-transparent" dir="ltr">
+                  <div className="space-y-1 text-center w-full">
+                    <p className="text-xs text-muted-foreground font-medium text-center">الامتحانات المنتهية</p>
+                    <p className="text-2xl font-bold bg-gradient-to-br from-gray-500 to-gray-400 bg-clip-text text-transparent text-center mx-auto" dir="ltr">
                       {stats.completedExams}
                     </p>
                   </div>
@@ -341,13 +341,13 @@ const GradeExamsAnalytics: React.FC = () => {
             <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-purple-500/10 via-purple-500/5 to-transparent backdrop-blur-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
               <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent opacity-50" />
               <CardContent className="p-4 relative">
-                <div className="flex flex-col items-center text-center space-y-2">
-                  <div className="p-2 rounded-lg bg-purple-500/10 backdrop-blur-sm">
-                    <Users className="h-5 w-5 text-purple-500" />
+                <div className="flex flex-col items-center justify-center text-center space-y-2 mx-auto">
+                  <div className="p-2 rounded-lg bg-purple-500/10 backdrop-blur-sm mx-auto">
+                    <Users className="h-5 w-5 text-purple-500 mx-auto" />
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground font-medium">إجمالي المحاولات</p>
-                    <p className="text-2xl font-bold bg-gradient-to-br from-purple-500 to-purple-400 bg-clip-text text-transparent" dir="ltr">
+                  <div className="space-y-1 text-center w-full">
+                    <p className="text-xs text-muted-foreground font-medium text-center">إجمالي المحاولات</p>
+                    <p className="text-2xl font-bold bg-gradient-to-br from-purple-500 to-purple-400 bg-clip-text text-transparent text-center mx-auto" dir="ltr">
                       {stats.totalAttempts}
                     </p>
                   </div>
@@ -359,13 +359,13 @@ const GradeExamsAnalytics: React.FC = () => {
             <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent backdrop-blur-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
               <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-50" />
               <CardContent className="p-4 relative">
-                <div className="flex flex-col items-center text-center space-y-2">
-                  <div className="p-2 rounded-lg bg-emerald-500/10 backdrop-blur-sm">
-                    <TrendingUp className="h-5 w-5 text-emerald-500" />
+                <div className="flex flex-col items-center justify-center text-center space-y-2 mx-auto">
+                  <div className="p-2 rounded-lg bg-emerald-500/10 backdrop-blur-sm mx-auto">
+                    <TrendingUp className="h-5 w-5 text-emerald-500 mx-auto" />
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground font-medium">متوسط النتائج</p>
-                    <p className="text-2xl font-bold bg-gradient-to-br from-emerald-500 to-emerald-400 bg-clip-text text-transparent" dir="ltr">
+                  <div className="space-y-1 text-center w-full">
+                    <p className="text-xs text-muted-foreground font-medium text-center">متوسط النتائج</p>
+                    <p className="text-2xl font-bold bg-gradient-to-br from-emerald-500 to-emerald-400 bg-clip-text text-transparent text-center mx-auto" dir="ltr">
                       {stats.avgScore > 0 ? `${stats.avgScore.toFixed(1)}%` : '-'}
                     </p>
                   </div>
@@ -377,13 +377,13 @@ const GradeExamsAnalytics: React.FC = () => {
             <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent backdrop-blur-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
               <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent opacity-50" />
               <CardContent className="p-4 relative">
-                <div className="flex flex-col items-center text-center space-y-2">
-                  <div className="p-2 rounded-lg bg-amber-500/10 backdrop-blur-sm">
-                    <Star className="h-5 w-5 text-amber-500" />
+                <div className="flex flex-col items-center justify-center text-center space-y-2 mx-auto">
+                  <div className="p-2 rounded-lg bg-amber-500/10 backdrop-blur-sm mx-auto">
+                    <Star className="h-5 w-5 text-amber-500 mx-auto" />
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground font-medium">أعلى متوسط نتائج</p>
-                    <p className="text-2xl font-bold bg-gradient-to-br from-amber-500 to-amber-400 bg-clip-text text-transparent" dir="ltr">
+                  <div className="space-y-1 text-center w-full">
+                    <p className="text-xs text-muted-foreground font-medium text-center">أعلى متوسط نتائج</p>
+                    <p className="text-2xl font-bold bg-gradient-to-br from-amber-500 to-amber-400 bg-clip-text text-transparent text-center mx-auto" dir="ltr">
                       {stats.highestScore > 0 ? `${stats.highestScore.toFixed(1)}%` : '-'}
                     </p>
                   </div>
@@ -395,13 +395,13 @@ const GradeExamsAnalytics: React.FC = () => {
             <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-red-400/10 via-red-400/5 to-transparent backdrop-blur-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
               <div className="absolute inset-0 bg-gradient-to-br from-red-400/5 to-transparent opacity-50" />
               <CardContent className="p-4 relative">
-                <div className="flex flex-col items-center text-center space-y-2">
-                  <div className="p-2 rounded-lg bg-red-400/10 backdrop-blur-sm">
-                    <TrendingDown className="h-5 w-5 text-red-400" />
+                <div className="flex flex-col items-center justify-center text-center space-y-2 mx-auto">
+                  <div className="p-2 rounded-lg bg-red-400/10 backdrop-blur-sm mx-auto">
+                    <TrendingDown className="h-5 w-5 text-red-400 mx-auto" />
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground font-medium">أدنى نتيجة</p>
-                    <p className="text-2xl font-bold bg-gradient-to-br from-red-400 to-red-300 bg-clip-text text-transparent" dir="ltr">
+                  <div className="space-y-1 text-center w-full">
+                    <p className="text-xs text-muted-foreground font-medium text-center">أدنى نتيجة</p>
+                    <p className="text-2xl font-bold bg-gradient-to-br from-red-400 to-red-300 bg-clip-text text-transparent text-center mx-auto" dir="ltr">
                       {stats.lowestScore > 0 ? `${stats.lowestScore.toFixed(1)}%` : '-'}
                     </p>
                   </div>
