@@ -851,38 +851,38 @@ const GradeExamsAnalytics: React.FC = () => {
               <div className="grid md:grid-cols-2 gap-4">
                 <Card className="border-0 bg-gradient-to-br from-green-500/5 to-transparent backdrop-blur-sm">
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-base flex items-center justify-center gap-2">
+                    <CardTitle className="text-base flex items-center justify-center gap-2 text-center w-full mx-auto">
                       <Calendar className="h-4 w-4 text-green-600" />
                       التواريخ والأوقات
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="text-center p-3 rounded-lg bg-background/50">
-                      <p className="text-xs text-muted-foreground mb-1">تاريخ البداية</p>
-                      <p className="text-sm font-mono font-semibold" dir="ltr">{formatDateTime(selectedExam.start_datetime)}</p>
+                  <CardContent className="space-y-3 flex flex-col items-center justify-center">
+                    <div className="text-center p-3 rounded-lg bg-background/50 w-full">
+                      <p className="text-xs text-muted-foreground mb-1 text-center w-full">تاريخ البداية</p>
+                      <p className="text-sm font-mono font-semibold text-center w-full mx-auto" dir="ltr">{formatDateTime(selectedExam.start_datetime)}</p>
                     </div>
-                    <div className="text-center p-3 rounded-lg bg-background/50">
-                      <p className="text-xs text-muted-foreground mb-1">تاريخ النهاية</p>
-                      <p className="text-sm font-mono font-semibold" dir="ltr">{formatDateTime(selectedExam.end_datetime)}</p>
+                    <div className="text-center p-3 rounded-lg bg-background/50 w-full">
+                      <p className="text-xs text-muted-foreground mb-1 text-center w-full">تاريخ النهاية</p>
+                      <p className="text-sm font-mono font-semibold text-center w-full mx-auto" dir="ltr">{formatDateTime(selectedExam.end_datetime)}</p>
                     </div>
                   </CardContent>
                 </Card>
 
                 <Card className="border-0 bg-gradient-to-br from-amber-500/5 to-transparent backdrop-blur-sm">
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-base flex items-center justify-center gap-2">
+                    <CardTitle className="text-base flex items-center justify-center gap-2 text-center w-full mx-auto">
                       <Clock className="h-4 w-4 text-amber-600" />
                       إعدادات الامتحان
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="text-center p-3 rounded-lg bg-background/50">
-                      <p className="text-xs text-muted-foreground mb-1">مدة الامتحان</p>
-                      <p className="text-lg font-bold" dir="ltr">{selectedExam.duration_minutes} دقيقة</p>
+                  <CardContent className="space-y-3 flex flex-col items-center justify-center">
+                    <div className="text-center p-3 rounded-lg bg-background/50 w-full">
+                      <p className="text-xs text-muted-foreground mb-1 text-center w-full">مدة الامتحان</p>
+                      <p className="text-lg font-bold text-center w-full mx-auto" dir="ltr">{selectedExam.duration_minutes} دقيقة</p>
                     </div>
-                    <div className="text-center p-3 rounded-lg bg-background/50">
-                      <p className="text-xs text-muted-foreground mb-1">نسبة النجاح</p>
-                      <p className="text-lg font-bold" dir="ltr">{selectedExam.passing_percentage}%</p>
+                    <div className="text-center p-3 rounded-lg bg-background/50 w-full">
+                      <p className="text-xs text-muted-foreground mb-1 text-center w-full">نسبة النجاح</p>
+                      <p className="text-lg font-bold text-center w-full mx-auto" dir="ltr">{selectedExam.passing_percentage}%</p>
                     </div>
                   </CardContent>
                 </Card>
