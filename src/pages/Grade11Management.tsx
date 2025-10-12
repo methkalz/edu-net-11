@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BookOpen, GraduationCap, Gamepad2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useBackPath } from '@/hooks/useBackPath';
+import { useSearchParams } from 'react-router-dom';
 import AppHeader from '@/components/shared/AppHeader';
 import AppFooter from '@/components/shared/AppFooter';
 import Grade11Content from '@/components/content/Grade11Content';
@@ -22,6 +23,11 @@ const Grade11Management: React.FC = () => {
   const {
     contentBackPath
   } = useBackPath();
+  const [searchParams] = useSearchParams();
+  
+  // قراءة التبويب من URL
+  const tabFromUrl = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState<string>('');
   console.log('🔍 User profile in Grade11Management:', userProfile?.role);
 
   // Validate all imports are loaded correctly
@@ -41,6 +47,17 @@ const Grade11Management: React.FC = () => {
   console.log('✅ Grade11Management permissions check:', {
     canManageContent
   });
+  
+  // تحديد التبويب الافتراضي بناءً على query parameter
+  useEffect(() => {
+    if (tabFromUrl) {
+      setActiveTab(tabFromUrl);
+    } else {
+      const defaultTab = canManageContent ? 'manage' : isSchoolAdmin ? 'school-view' : 'view';
+      setActiveTab(defaultTab);
+    }
+  }, [tabFromUrl, canManageContent, isSchoolAdmin]);
+  
   return <Grade11ErrorBoundary>
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
       <AppHeader title="إدارة محتوى الصف الحادي عشر" showBackButton={true} backPath={contentBackPath} showLogout={true} />
@@ -56,7 +73,7 @@ const Grade11Management: React.FC = () => {
           </div>
           
           {/* التبويبات الرئيسية */}
-          <Tabs defaultValue={canManageContent ? 'manage' : isSchoolAdmin ? 'school-view' : 'view'} className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className={canManageContent ? 'grid w-full grid-cols-4' : isSchoolAdmin ? 'grid w-full grid-cols-3' : 'grid w-full grid-cols-2'}>
               {canManageContent && <TabsTrigger value="manage">إدارة المحتوى</TabsTrigger>}
               {canManageContent && <TabsTrigger value="exams">الامتحانات</TabsTrigger>}
