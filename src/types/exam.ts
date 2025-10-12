@@ -144,4 +144,5 @@ export interface ExamResult {
   detailed_results: ExamAttempt['detailed_results'];
   can_review: boolean;
   show_correct_answers: boolean;
+  show_results_immediately: boolean;
 }
