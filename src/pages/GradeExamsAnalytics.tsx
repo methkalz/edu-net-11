@@ -672,19 +672,19 @@ const GradeExamsAnalytics: React.FC = () => {
 
                         {/* Mini Stats Grid */}
                         <div className="grid grid-cols-2 gap-3">
-                          <div className="space-y-1 p-2 rounded-lg bg-background/50">
+                          <div className="space-y-1 p-2 rounded-lg bg-background/50 text-center">
                             <p className="text-xs text-muted-foreground">الأسئلة</p>
                             <p className="text-sm font-bold" dir="ltr">{exam.total_questions}</p>
                           </div>
-                          <div className="space-y-1 p-2 rounded-lg bg-background/50">
+                          <div className="space-y-1 p-2 rounded-lg bg-background/50 text-center">
                             <p className="text-xs text-muted-foreground">النقاط</p>
                             <p className="text-sm font-bold" dir="ltr">{exam.total_points}</p>
                           </div>
-                          <div className="space-y-1 p-2 rounded-lg bg-background/50">
+                          <div className="space-y-1 p-2 rounded-lg bg-background/50 text-center">
                             <p className="text-xs text-muted-foreground">المحاولات</p>
                             <p className="text-sm font-bold" dir="ltr">{exam.attempts_count}</p>
                           </div>
-                          <div className="space-y-1 p-2 rounded-lg bg-background/50">
+                          <div className="space-y-1 p-2 rounded-lg bg-background/50 text-center">
                             <p className="text-xs text-muted-foreground">المتوسط</p>
                             <p className="text-sm font-bold" dir="ltr">
                               {exam.avg_percentage !== null ? `${exam.avg_percentage.toFixed(1)}%` : '-'}
