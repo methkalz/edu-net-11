@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ClipboardList, FileQuestion, TrendingUp, Users, ArrowRight, Plus, ArrowLeft, Trash2, Edit, AlertCircle, CheckCircle, Archive, Clock, Eye } from 'lucide-react';
+import { ClipboardList, FileQuestion, TrendingUp, Users, ArrowRight, Plus, ArrowLeft, Trash2, Edit, AlertCircle, CheckCircle, Archive, Clock, Eye, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ExamPreview from '@/components/content/ExamPreview';
 import { useExamPreview } from '@/hooks/useExamPreview';
@@ -844,48 +844,92 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                 .slice(0, 4).map((exam: any) => (
                 <div
                   key={exam.id}
-                  className="flex items-start justify-between p-4 bg-gradient-to-br from-background to-muted/30 rounded-xl border-2 border-border hover:border-primary/50 hover:shadow-md transition-all duration-200 group"
+                  className="relative p-6 bg-gradient-to-br from-primary/5 via-primary/3 to-transparent rounded-2xl border-2 border-primary/20 hover:border-primary/40 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 group"
                 >
-                  <div className="flex-1 space-y-2">
-                    <div className="flex items-center gap-2.5">
-                      <h4 className="font-bold text-base text-foreground">{exam.title}</h4>
-                      <Badge className={`${getStatusColor(exam.status)} font-semibold px-2.5 py-1`} variant="secondary">
+                  <div className="flex-1 space-y-4">
+                    {/* Header - العنوان والحالة */}
+                    <div className="flex items-center justify-between gap-3 pb-3 border-b border-border/50">
+                      <div className="flex items-center gap-2.5">
+                        <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                          <BookOpen className="w-5 h-5 text-primary" />
+                        </div>
+                        <h4 className="font-bold text-lg text-foreground">{exam.title}</h4>
+                      </div>
+                      <Badge className={`${getStatusColor(exam.status)} font-semibold px-3 py-1.5 text-sm`} variant="secondary">
                         {getStatusLabel(exam.status)}
                       </Badge>
                     </div>
-                    <div className="flex items-center gap-5 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1.5">
-                        <FileQuestion className="w-4 h-4" />
-                        <span className="font-semibold">{exam.total_questions}</span> سؤال
-                      </span>
-                      <span className="flex items-center gap-1.5">
-                        <Users className="w-4 h-4" />
-                        <span className="font-semibold">{exam.attempts_count}</span> محاولة
-                      </span>
-                      {exam.avg_percentage !== null && (
-                        <span className="flex items-center gap-1.5">
-                          <TrendingUp className="w-4 h-4 text-green-600" />
-                          <span className="font-bold text-green-600">{exam.avg_percentage.toFixed(1)}%</span>
-                        </span>
+
+                    {/* Statistics - الإحصائيات */}
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="flex flex-col items-center gap-2 p-3 rounded-xl bg-gradient-to-br from-blue-500/15 to-blue-500/5 border border-blue-500/20 hover:border-blue-500/40 hover:scale-105 transition-all">
+                        <FileQuestion className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-blue-700 dark:text-blue-300">
+                            {exam.total_questions}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-0.5">سؤال</div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col items-center gap-2 p-3 rounded-xl bg-gradient-to-br from-purple-500/15 to-purple-500/5 border border-purple-500/20 hover:border-purple-500/40 hover:scale-105 transition-all">
+                        <Users className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-purple-700 dark:text-purple-300">
+                            {exam.attempts_count}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-0.5">محاولة</div>
+                        </div>
+                      </div>
+
+                      {exam.avg_percentage !== null ? (
+                        <div className="flex flex-col items-center gap-2 p-3 rounded-xl bg-gradient-to-br from-green-500/15 to-green-500/5 border border-green-500/20 hover:border-green-500/40 hover:scale-105 transition-all">
+                          <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-400" />
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-green-700 dark:text-green-300">
+                              {exam.avg_percentage.toFixed(1)}%
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-0.5">المعدل</div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center gap-2 p-3 rounded-xl bg-gradient-to-br from-gray-500/15 to-gray-500/5 border border-gray-500/20">
+                          <TrendingUp className="w-5 h-5 text-gray-500" />
+                          <div className="text-center">
+                            <div className="text-xl font-bold text-gray-500">-</div>
+                            <div className="text-xs text-muted-foreground mt-0.5">المعدل</div>
+                          </div>
+                        </div>
                       )}
                     </div>
+
+                    {/* Dates - التواريخ */}
                     {(exam.status === 'scheduled' || exam.status === 'active') && exam.start_datetime && (
-                      <div className="mt-2.5 pt-2.5 border-t border-border">
-                        <div className="flex flex-col sm:flex-row gap-2.5 text-sm">
-                          <div className="flex items-center gap-2 bg-green-50 dark:bg-green-950/20 px-3 py-1.5 rounded-lg">
-                            <Clock className="w-4 h-4 text-green-600" />
-                            <span className="text-muted-foreground font-medium">البداية:</span>
-                            <span className="font-bold text-green-700 dark:text-green-400 font-mono" dir="ltr">
-                              {formatDateTime12H(exam.start_datetime)}
-                            </span>
-                          </div>
-                          {exam.end_datetime && (
-                            <div className="flex items-center gap-2 bg-orange-50 dark:bg-orange-950/20 px-3 py-1.5 rounded-lg">
-                              <Clock className="w-4 h-4 text-orange-600" />
-                              <span className="text-muted-foreground font-medium">النهاية:</span>
-                              <span className="font-bold text-orange-700 dark:text-orange-400 font-mono" dir="ltr">
-                                {formatDateTime12H(exam.end_datetime)}
+                      <div className="pt-3 border-t border-border/50">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-br from-green-500/20 to-green-500/10 border-2 border-green-500/30 hover:border-green-500/50 hover:shadow-md transition-all">
+                            <div className="p-2 rounded-lg bg-green-500/20">
+                              <Clock className="w-6 h-6 text-green-600 dark:text-green-400" />
+                            </div>
+                            <div className="flex flex-col flex-1">
+                              <span className="text-xs font-medium text-green-600 dark:text-green-400 mb-1">البداية</span>
+                              <span className="font-mono text-base font-bold text-green-700 dark:text-green-300" dir="ltr">
+                                {formatDateTime12H(exam.start_datetime)}
                               </span>
+                            </div>
+                          </div>
+
+                          {exam.end_datetime && (
+                            <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-br from-orange-500/20 to-orange-500/10 border-2 border-orange-500/30 hover:border-orange-500/50 hover:shadow-md transition-all">
+                              <div className="p-2 rounded-lg bg-orange-500/20">
+                                <Clock className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                              </div>
+                              <div className="flex flex-col flex-1">
+                                <span className="text-xs font-medium text-orange-600 dark:text-orange-400 mb-1">النهاية</span>
+                                <span className="font-mono text-base font-bold text-orange-700 dark:text-orange-300" dir="ltr">
+                                  {formatDateTime12H(exam.end_datetime)}
+                                </span>
+                              </div>
                             </div>
                           )}
                         </div>
