@@ -52,12 +52,23 @@ export default function StudentExamAttempt() {
 
   // إعادة تعيين الحالة عند mount الكومبوننت
   useEffect(() => {
-    logger.info('🔄 Component mounted - resetting state');
+    logger.info('🔄 Component mounted - resetting ALL state including mutation');
     setAttemptId(null);
     setAnswers({});
     setCurrentQuestionIndex(0);
     setShowSubmitDialog(false);
     setRecoveryMode(false);
+    
+    // ⭐ Reset mutation state أيضاً عند mount
+    createAttemptMutation.reset();
+    
+    return () => {
+      // Cleanup عند unmount
+      ExamDebugger.log({
+        type: 'COMPONENT_UNMOUNTED',
+        data: { examId, attemptId }
+      });
+    };
   }, []); // empty array - يعمل مرة واحدة فقط عند mount
 
   // تتبع تغيير examId
@@ -70,6 +81,9 @@ export default function StudentExamAttempt() {
     logger.info('📍 examId changed - resetting attempt state', { examId });
     setAttemptId(null);
     setAnswers({});
+    
+    // ⭐ إعادة تعيين state الـ mutation
+    createAttemptMutation.reset();
   }, [examId]);
 
   // جلب بيانات الامتحان
@@ -211,7 +225,15 @@ export default function StudentExamAttempt() {
       logger.info('✅ تم إنشاء محاولة جديدة بنجاح', { attemptId: data.id, attemptNumber });
       return data;
     },
-    retry: 3, // إعادة المحاولة 3 مرات
+    retry: (failureCount, error: any) => {
+      // لا تعيد المحاولة إذا كان الخطأ "استنفاد المحاولات"
+      if (error?.message?.includes('استنفدت جميع المحاولات') || error?.message?.includes('استنفاد المحاولات')) {
+        logger.warn('🛑 Retry stopped - max attempts reached');
+        return false;
+      }
+      // أعد المحاولة فقط للأخطاء الشبكية
+      return failureCount < 3;
+    },
     retryDelay: 1000, // تأخير ثانية واحدة بين المحاولات
     onSuccess: (data) => {
       setAttemptId(data.id);
@@ -446,7 +468,7 @@ export default function StudentExamAttempt() {
       logger.info('✅ Conditions met - creating new attempt');
       createAttemptMutation.mutate();
     }
-  }, [examData]); // فقط examData - يعمل عند تحميل البيانات
+  }, [examData, attemptId, createAttemptMutation.isPending, createAttemptMutation.isSuccess]); // ⭐ إضافة كل المتغيرات المستخدمة
 
   // Recovery Mode - إذا لم يتم إنشاء attemptId بعد 5 ثواني
   useEffect(() => {
