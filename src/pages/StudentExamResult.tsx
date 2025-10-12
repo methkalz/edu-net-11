@@ -47,6 +47,24 @@ export default function StudentExamResult() {
     );
   }
 
+  // حساب الوقت المستغرق الفعلي
+  const getActualTimeSpent = () => {
+    // إذا كان time_spent_seconds موجود ولا يساوي 0، استخدمه
+    if (result.time_spent_seconds && result.time_spent_seconds > 0) {
+      return result.time_spent_seconds;
+    }
+    
+    // إذا كان 0 أو غير موجود، احسبه من started_at و submitted_at
+    if (result.started_at && result.submitted_at) {
+      const startTime = new Date(result.started_at).getTime();
+      const endTime = new Date(result.submitted_at).getTime();
+      const diffSeconds = Math.floor((endTime - startTime) / 1000);
+      return diffSeconds;
+    }
+    
+    return 0;
+  };
+
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -108,7 +126,7 @@ export default function StudentExamResult() {
                 <div className="flex items-center gap-2">
                   <Clock className="w-6 h-6 text-primary" />
                   <span className="text-2xl font-bold">
-                    {formatTime(result.time_spent_seconds)}
+                    {formatTime(getActualTimeSpent())}
                   </span>
                 </div>
               </CardContent>
@@ -193,7 +211,7 @@ export default function StudentExamResult() {
                 <div className="flex items-center gap-2">
                   <Clock className="w-6 h-6 text-primary" />
                   <span className="text-2xl font-bold">
-                    {formatTime(result.time_spent_seconds)}
+                    {formatTime(getActualTimeSpent())}
                   </span>
                 </div>
               </CardContent>
