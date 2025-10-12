@@ -58,40 +58,49 @@ export default function StudentExamAttempt() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('غير مصرح');
 
-      logger.info('🔍 التحقق من وجود محاولة سابقة...', { examId, userId: user.id });
+      logger.info('🔍 التحقق من وجود محاولات سابقة...', { examId, userId: user.id });
 
-      // التحقق من وجود محاولة سابقة
-      const { data: existingAttempt, error: checkError } = await supabase
+      // التحقق من وجود محاولة قيد التقدم
+      const { data: inProgressAttempt } = await supabase
         .from('exam_attempts')
         .select('*')
         .eq('exam_id', examId!)
         .eq('student_id', user.id)
-        .single();
+        .eq('status', 'in_progress')
+        .maybeSingle();
 
-      if (checkError && checkError.code !== 'PGRST116') {
-        logger.error('❌ خطأ في التحقق من المحاولة', checkError instanceof Error ? checkError : new Error(String(checkError)), { originalError: checkError });
-        throw checkError;
-      }
-
-      // إذا كانت هناك محاولة سابقة
-      if (existingAttempt) {
-        logger.info('✅ تم العثور على محاولة سابقة', { 
-          attemptId: existingAttempt.id, 
-          status: existingAttempt.status 
+      // إذا كانت هناك محاولة قيد التقدم، استخدامها
+      if (inProgressAttempt) {
+        logger.info('✅ تم العثور على محاولة قيد التقدم', { 
+          attemptId: inProgressAttempt.id 
         });
-
-        if (existingAttempt.status === 'submitted') {
-          logger.warn('⚠️ المحاولة السابقة مكتملة');
-          throw new Error('لقد قمت بتقديم هذا الامتحان مسبقاً');
-        }
-
-        // استخدام المحاولة السابقة إذا كانت قيد التقدم
-        logger.info('🔄 استخدام المحاولة السابقة');
-        return existingAttempt;
+        return inProgressAttempt;
       }
+
+      // التحقق من عدد المحاولات المكتملة
+      const { count: completedAttempts } = await supabase
+        .from('exam_attempts')
+        .select('*', { count: 'exact', head: true })
+        .eq('exam_id', examId!)
+        .eq('student_id', user.id)
+        .eq('status', 'submitted');
+
+      logger.info('📊 عدد المحاولات المكتملة', { 
+        completedAttempts,
+        maxAttempts: examData?.exam.max_attempts 
+      });
+
+      // التحقق من عدد المحاولات المسموح بها
+      if (completedAttempts && completedAttempts >= (examData?.exam.max_attempts || 1)) {
+        logger.warn('⚠️ تم استنفاد جميع المحاولات المسموح بها');
+        throw new Error(`لقد استنفدت جميع المحاولات المسموح بها (${examData?.exam.max_attempts || 1})`);
+      }
+
+      // حساب رقم المحاولة الجديدة
+      const attemptNumber = (completedAttempts || 0) + 1;
 
       // إنشاء محاولة جديدة
-      logger.info('➕ إنشاء محاولة جديدة...');
+      logger.info('➕ إنشاء محاولة جديدة...', { attemptNumber });
       const schoolData = await supabase.from('profiles').select('school_id').eq('user_id', user.id).single();
 
       const { data, error } = await supabase
@@ -101,6 +110,7 @@ export default function StudentExamAttempt() {
           student_id: user.id,
           school_id: schoolData.data?.school_id!,
           status: 'in_progress' as any,
+          attempt_number: attemptNumber,
           questions_data: examData?.questions || [],
           answers: {},
         }] as any)
@@ -112,7 +122,7 @@ export default function StudentExamAttempt() {
         throw error;
       }
       
-      logger.info('✅ تم إنشاء محاولة جديدة بنجاح', { attemptId: data.id });
+      logger.info('✅ تم إنشاء محاولة جديدة بنجاح', { attemptId: data.id, attemptNumber });
       return data;
     },
     onSuccess: (data) => {
