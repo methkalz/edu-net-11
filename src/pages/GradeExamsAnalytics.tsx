@@ -781,134 +781,136 @@ const GradeExamsAnalytics: React.FC = () => {
 
       {/* Dialog للإحصائيات الأساسية */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-center">
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader className="pb-4 border-b">
+            <DialogTitle className="text-2xl font-bold text-center bg-gradient-to-br from-primary to-primary/60 bg-clip-text text-transparent">
               إحصائيات ونتائج الامتحان
             </DialogTitle>
           </DialogHeader>
           
           {selectedExam && (
-            <div className="space-y-6">
-              {/* معلومات الامتحان */}
-              <Card className="border-0 bg-gradient-to-br from-primary/5 to-transparent">
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <FileText className="h-5 w-5 text-primary" />
-                    معلومات الامتحان
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div>
-                    <p className="text-sm text-muted-foreground">العنوان</p>
-                    <p className="text-base font-semibold">{selectedExam.title}</p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">الحالة</p>
-                      <div className="mt-1">{getStatusBadge(selectedExam.status)}</div>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">الصف</p>
-                      <Badge variant="outline" className="mt-1">
-                        {selectedExam.grade_levels[0]}
-                      </Badge>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">تاريخ البداية</p>
-                      <p className="text-sm font-mono" dir="ltr">{formatDateTime(selectedExam.start_datetime)}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">تاريخ النهاية</p>
-                      <p className="text-sm font-mono" dir="ltr">{formatDateTime(selectedExam.end_datetime)}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+            <div className="space-y-6 pt-4">
+              {/* عنوان الامتحان */}
+              <div className="text-center space-y-2 pb-4 border-b">
+                <h3 className="text-xl font-bold">{selectedExam.title}</h3>
+                <div className="flex items-center justify-center gap-3">
+                  {getStatusBadge(selectedExam.status)}
+                  <Badge variant="outline" className="gap-1">
+                    <Target className="h-3 w-3" />
+                    {selectedExam.grade_levels[0]}
+                  </Badge>
+                </div>
+              </div>
 
-              {/* الإحصائيات الأساسية */}
-              <Card className="border-0 bg-gradient-to-br from-emerald-500/5 to-transparent">
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5 text-emerald-500" />
-                    الإحصائيات الأساسية
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="text-center p-4 rounded-lg bg-background/50 backdrop-blur-sm">
-                      <FileQuestion className="h-6 w-6 mx-auto mb-2 text-blue-500" />
-                      <p className="text-xs text-muted-foreground mb-1">عدد الأسئلة</p>
-                      <p className="text-2xl font-bold" dir="ltr">{selectedExam.total_questions}</p>
+              {/* الإحصائيات الأساسية - 4 بطاقات */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Card className="border-0 bg-gradient-to-br from-blue-500/10 to-transparent backdrop-blur-sm hover:shadow-lg transition-all">
+                  <CardContent className="p-6 text-center space-y-2">
+                    <div className="p-3 rounded-full bg-blue-500/10 w-fit mx-auto">
+                      <FileQuestion className="h-6 w-6 text-blue-500 mx-auto" />
                     </div>
-                    <div className="text-center p-4 rounded-lg bg-background/50 backdrop-blur-sm">
-                      <Target className="h-6 w-6 mx-auto mb-2 text-purple-500" />
-                      <p className="text-xs text-muted-foreground mb-1">إجمالي النقاط</p>
-                      <p className="text-2xl font-bold" dir="ltr">{selectedExam.total_points}</p>
-                    </div>
-                    <div className="text-center p-4 rounded-lg bg-background/50 backdrop-blur-sm">
-                      <Users className="h-6 w-6 mx-auto mb-2 text-indigo-500" />
-                      <p className="text-xs text-muted-foreground mb-1">المحاولات</p>
-                      <p className="text-2xl font-bold" dir="ltr">{selectedExam.attempts_count}</p>
-                    </div>
-                    <div className="text-center p-4 rounded-lg bg-background/50 backdrop-blur-sm">
-                      <Award className="h-6 w-6 mx-auto mb-2 text-amber-500" />
-                      <p className="text-xs text-muted-foreground mb-1">متوسط النتائج</p>
-                      <p className="text-2xl font-bold text-emerald-600" dir="ltr">
-                        {selectedExam.avg_percentage !== null ? `${selectedExam.avg_percentage.toFixed(1)}%` : '-'}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                    <p className="text-xs text-muted-foreground font-medium">عدد الأسئلة</p>
+                    <p className="text-3xl font-bold text-center" dir="ltr">{selectedExam.total_questions}</p>
+                  </CardContent>
+                </Card>
 
-              {/* إعدادات الامتحان */}
-              <Card className="border-0 bg-card/50 backdrop-blur-sm">
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Clock className="h-5 w-5 text-primary" />
-                    إعدادات الامتحان
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-muted-foreground">المدة:</span>
-                      <span className="font-semibold" dir="ltr">{selectedExam.duration_minutes} دقيقة</span>
+                <Card className="border-0 bg-gradient-to-br from-purple-500/10 to-transparent backdrop-blur-sm hover:shadow-lg transition-all">
+                  <CardContent className="p-6 text-center space-y-2">
+                    <div className="p-3 rounded-full bg-purple-500/10 w-fit mx-auto">
+                      <Target className="h-6 w-6 text-purple-500 mx-auto" />
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Target className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-muted-foreground">نسبة النجاح:</span>
-                      <span className="font-semibold" dir="ltr">{selectedExam.passing_percentage}%</span>
+                    <p className="text-xs text-muted-foreground font-medium">إجمالي النقاط</p>
+                    <p className="text-3xl font-bold text-center" dir="ltr">{selectedExam.total_points}</p>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-0 bg-gradient-to-br from-indigo-500/10 to-transparent backdrop-blur-sm hover:shadow-lg transition-all">
+                  <CardContent className="p-6 text-center space-y-2">
+                    <div className="p-3 rounded-full bg-indigo-500/10 w-fit mx-auto">
+                      <Users className="h-6 w-6 text-indigo-500 mx-auto" />
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                    <p className="text-xs text-muted-foreground font-medium">عدد المحاولات</p>
+                    <p className="text-3xl font-bold text-center" dir="ltr">{selectedExam.attempts_count}</p>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-0 bg-gradient-to-br from-emerald-500/10 to-transparent backdrop-blur-sm hover:shadow-lg transition-all">
+                  <CardContent className="p-6 text-center space-y-2">
+                    <div className="p-3 rounded-full bg-emerald-500/10 w-fit mx-auto">
+                      <Award className="h-6 w-6 text-emerald-500 mx-auto" />
+                    </div>
+                    <p className="text-xs text-muted-foreground font-medium">متوسط النتائج</p>
+                    <p className="text-3xl font-bold text-center text-emerald-600" dir="ltr">
+                      {selectedExam.avg_percentage !== null ? `${selectedExam.avg_percentage.toFixed(1)}%` : '-'}
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* التواريخ والإعدادات */}
+              <div className="grid md:grid-cols-2 gap-4">
+                <Card className="border-0 bg-gradient-to-br from-green-500/5 to-transparent backdrop-blur-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center justify-center gap-2">
+                      <Calendar className="h-4 w-4 text-green-600" />
+                      التواريخ والأوقات
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="text-center p-3 rounded-lg bg-background/50">
+                      <p className="text-xs text-muted-foreground mb-1">تاريخ البداية</p>
+                      <p className="text-sm font-mono font-semibold" dir="ltr">{formatDateTime(selectedExam.start_datetime)}</p>
+                    </div>
+                    <div className="text-center p-3 rounded-lg bg-background/50">
+                      <p className="text-xs text-muted-foreground mb-1">تاريخ النهاية</p>
+                      <p className="text-sm font-mono font-semibold" dir="ltr">{formatDateTime(selectedExam.end_datetime)}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-0 bg-gradient-to-br from-amber-500/5 to-transparent backdrop-blur-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center justify-center gap-2">
+                      <Clock className="h-4 w-4 text-amber-600" />
+                      إعدادات الامتحان
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="text-center p-3 rounded-lg bg-background/50">
+                      <p className="text-xs text-muted-foreground mb-1">مدة الامتحان</p>
+                      <p className="text-lg font-bold" dir="ltr">{selectedExam.duration_minutes} دقيقة</p>
+                    </div>
+                    <div className="text-center p-3 rounded-lg bg-background/50">
+                      <p className="text-xs text-muted-foreground mb-1">نسبة النجاح</p>
+                      <p className="text-lg font-bold" dir="ltr">{selectedExam.passing_percentage}%</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
 
               {/* أزرار الإجراءات */}
-              <div className="flex gap-3 pt-4">
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
                 <Button
+                  size="lg"
                   onClick={() => {
                     navigate(`/exam/${selectedExam.id}/results`);
                     setIsDialogOpen(false);
                   }}
-                  className="flex-1 gap-2"
+                  className="flex-1 gap-2 h-12 text-base"
                 >
-                  <Eye className="h-4 w-4" />
+                  <Eye className="h-5 w-5" />
                   عرض النتائج التفصيلية
                 </Button>
                 <Button
+                  size="lg"
                   variant="outline"
                   onClick={() => {
                     navigate(`/exam/${selectedExam.id}/edit`);
                     setIsDialogOpen(false);
                   }}
-                  className="flex-1 gap-2"
+                  className="flex-1 gap-2 h-12 text-base"
                 >
-                  <Edit className="h-4 w-4" />
+                  <Edit className="h-5 w-5" />
                   تعديل الامتحان
                 </Button>
               </div>
