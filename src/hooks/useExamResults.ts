@@ -48,25 +48,25 @@ export const useExamResults = (examId: string | null) => {
         throw examError;
       }
       
-      // جلب معلومات الطلاب
-      const studentIds = [...new Set(attemptsData.map(a => a.student_id))];
+      // جلب معلومات الطلاب - student_id في exam_attempts هو user_id
+      const studentUserIds = [...new Set(attemptsData.map(a => a.student_id))];
       const { data: studentsData, error: studentsError } = await supabase
         .from('students')
         .select('id, full_name, user_id')
-        .in('id', studentIds);
+        .in('user_id', studentUserIds);
       
       if (studentsError) {
         logger.error('خطأ في جلب معلومات الطلاب', studentsError);
         throw studentsError;
       }
       
-      // دمج البيانات
-      const studentsMap = new Map(studentsData?.map(s => [s.id, s]) || []);
+      // دمج البيانات - student_id في attempts = user_id في students
+      const studentsMap = new Map(studentsData?.map(s => [s.user_id, s]) || []);
       const data = attemptsData.map(attempt => {
         const student = studentsMap.get(attempt.student_id);
         return {
           ...attempt,
-          students: student || { id: attempt.student_id, full_name: 'غير معروف', user_id: null },
+          students: student || { id: '', full_name: 'غير معروف', user_id: attempt.student_id },
           exams: examData
         };
       });
