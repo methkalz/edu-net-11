@@ -97,22 +97,22 @@ export const ExamQuestion: React.FC<ExamQuestionProps> = ({
 
   return (
     <Card className="border-2">
-      <CardHeader className="bg-muted/30">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">
+      <CardHeader className="bg-muted/30 p-4 sm:p-6">
+        <div className="flex items-center justify-between gap-2">
+          <CardTitle className="text-base sm:text-lg">
             السؤال {questionNumber} من {totalQuestions}
           </CardTitle>
-          <Badge variant="outline" className="text-sm">
+          <Badge variant="outline" className="text-xs sm:text-sm shrink-0">
             {question.points} نقطة
           </Badge>
         </div>
       </CardHeader>
-      <CardContent className="pt-6 space-y-6">
-        <div className="text-lg font-medium leading-relaxed">
+      <CardContent className="pt-4 sm:pt-6 p-4 sm:p-6 space-y-4 sm:space-y-6">
+        <div className="text-base sm:text-lg font-medium leading-relaxed">
           {question.question_text}
         </div>
         
-        <div className="space-y-3">
+        <div className="space-y-2 sm:space-y-3">
           {renderChoices()}
         </div>
       </CardContent>

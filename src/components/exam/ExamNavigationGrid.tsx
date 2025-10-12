@@ -16,7 +16,7 @@ export const ExamNavigationGrid: React.FC<ExamNavigationGridProps> = ({
   onQuestionSelect
 }) => {
   return (
-    <div className="grid grid-cols-5 gap-2">
+    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
       {Array.from({ length: totalQuestions }, (_, i) => {
         const questionNumber = i + 1;
         const isAnswered = answeredQuestions.has(i);
@@ -28,7 +28,7 @@ export const ExamNavigationGrid: React.FC<ExamNavigationGridProps> = ({
             variant={isCurrent ? 'default' : isAnswered ? 'secondary' : 'outline'}
             size="sm"
             onClick={() => onQuestionSelect(i)}
-            className="relative"
+            className="relative h-12 sm:h-10"
           >
             {isAnswered ? (
               <CheckCircle2 className="w-4 h-4 absolute top-1 right-1 text-green-600" />

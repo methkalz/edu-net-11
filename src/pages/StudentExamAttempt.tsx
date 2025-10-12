@@ -202,27 +202,27 @@ export default function StudentExamAttempt() {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-6xl">
+    <div className="container mx-auto p-3 sm:p-6 max-w-6xl">
       {/* Header */}
-      <Card className="mb-6">
-        <CardHeader>
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <CardTitle className="text-2xl">{examData.exam.title}</CardTitle>
-            <div className={`flex items-center gap-2 text-lg font-semibold ${isLastFiveMinutes ? 'text-destructive' : ''}`}>
-              <Clock className="w-5 h-5" />
+      <Card className="mb-4 sm:mb-6">
+        <CardHeader className="p-4 sm:p-6">
+          <div className="flex items-center justify-between flex-wrap gap-3 sm:gap-4">
+            <CardTitle className="text-lg sm:text-2xl">{examData.exam.title}</CardTitle>
+            <div className={`flex items-center gap-2 text-base sm:text-lg font-semibold ${isLastFiveMinutes ? 'text-destructive' : ''}`}>
+              <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
               <span>{formattedTime}</span>
             </div>
           </div>
         </CardHeader>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
         {/* Navigation Grid */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle className="text-lg">الأسئلة</CardTitle>
+        <Card className="lg:col-span-1 order-2 lg:order-1">
+          <CardHeader className="p-4">
+            <CardTitle className="text-base sm:text-lg">الأسئلة</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4">
             <ExamNavigationGrid
               totalQuestions={examData.questions.length}
               answeredQuestions={answeredQuestions}
@@ -233,7 +233,7 @@ export default function StudentExamAttempt() {
         </Card>
 
         {/* Question Area */}
-        <div className="lg:col-span-3 space-y-6">
+        <div className="lg:col-span-3 space-y-4 sm:space-y-6 order-1 lg:order-2">
           <ExamQuestion
             question={{
               id: currentQuestion.id,
@@ -249,11 +249,12 @@ export default function StudentExamAttempt() {
           />
 
           {/* Navigation Buttons */}
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center justify-between gap-2 sm:gap-4">
             <Button
               variant="outline"
               onClick={() => setCurrentQuestionIndex((prev) => Math.max(0, prev - 1))}
               disabled={currentQuestionIndex === 0}
+              className="flex-1 sm:flex-initial h-11 sm:h-10"
             >
               <ChevronRight className="w-4 h-4 ml-2" />
               السابق
@@ -263,7 +264,7 @@ export default function StudentExamAttempt() {
               <Button
                 onClick={() => submitExamMutation.mutate()}
                 disabled={submitExamMutation.isPending}
-                className="gap-2"
+                className="gap-2 flex-1 sm:flex-initial h-11 sm:h-10"
               >
                 <Send className="w-4 h-4" />
                 تقديم الامتحان
@@ -273,6 +274,7 @@ export default function StudentExamAttempt() {
                 onClick={() => setCurrentQuestionIndex((prev) => 
                   Math.min(examData.questions.length - 1, prev + 1)
                 )}
+                className="flex-1 sm:flex-initial h-11 sm:h-10"
               >
                 التالي
                 <ChevronLeft className="w-4 h-4 mr-2" />
