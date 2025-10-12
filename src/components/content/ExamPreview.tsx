@@ -315,7 +315,7 @@ const ExamPreview: React.FC<ExamPreviewProps> = ({
                     </div>
                     
                     {/* Question Text */}
-                    <div className="text-sm leading-relaxed p-3 bg-white rounded-lg border shadow-sm">
+                    <div className="text-sm font-bold leading-relaxed p-3 bg-white rounded-lg border shadow-sm">
                       {currentQuestion.question_text}
                     </div>
                   </div>
