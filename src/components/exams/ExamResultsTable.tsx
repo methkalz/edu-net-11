@@ -22,6 +22,22 @@ export const ExamResultsTable: React.FC<ExamResultsTableProps> = ({ exams }) => 
   
   const { data, isLoading } = useExamResults(selectedExam || null);
   
+  // للتحقق من البيانات
+  React.useEffect(() => {
+    if (data?.results && data.results.length > 0) {
+      console.log('✅ بيانات النتائج المستلمة:', {
+        count: data.results.length,
+        sample: data.results[0],
+        all_times: data.results.map(r => ({
+          name: r.student_name,
+          time_seconds: r.time_spent_seconds,
+          is_null: r.time_spent_seconds === null,
+          is_undefined: r.time_spent_seconds === undefined,
+        }))
+      });
+    }
+  }, [data]);
+  
   const handleSort = (field: string) => {
     if (sortField === field) {
       setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
