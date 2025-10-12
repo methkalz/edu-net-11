@@ -844,43 +844,49 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                 .slice(0, 4).map((exam: any) => (
                 <div
                   key={exam.id}
-                  className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors group"
+                  className="flex items-start justify-between p-4 bg-gradient-to-br from-background to-muted/30 rounded-xl border-2 border-border hover:border-primary/50 hover:shadow-md transition-all duration-200 group"
                 >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-semibold text-sm">{exam.title}</h4>
-                      <Badge className={getStatusColor(exam.status)} variant="secondary">
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center gap-2.5">
+                      <h4 className="font-bold text-base text-foreground">{exam.title}</h4>
+                      <Badge className={`${getStatusColor(exam.status)} font-semibold px-2.5 py-1`} variant="secondary">
                         {getStatusLabel(exam.status)}
                       </Badge>
                     </div>
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <FileQuestion className="w-3 h-3" />
-                        {exam.total_questions} سؤال
+                    <div className="flex items-center gap-5 text-sm text-muted-foreground">
+                      <span className="flex items-center gap-1.5">
+                        <FileQuestion className="w-4 h-4" />
+                        <span className="font-semibold">{exam.total_questions}</span> سؤال
                       </span>
-                      <span className="flex items-center gap-1">
-                        <Users className="w-3 h-3" />
-                        {exam.attempts_count} محاولة
+                      <span className="flex items-center gap-1.5">
+                        <Users className="w-4 h-4" />
+                        <span className="font-semibold">{exam.attempts_count}</span> محاولة
                       </span>
                       {exam.avg_percentage !== null && (
-                        <span className="flex items-center gap-1">
-                          <TrendingUp className="w-3 h-3" />
-                          {exam.avg_percentage.toFixed(1)}%
+                        <span className="flex items-center gap-1.5">
+                          <TrendingUp className="w-4 h-4 text-green-600" />
+                          <span className="font-bold text-green-600">{exam.avg_percentage.toFixed(1)}%</span>
                         </span>
                       )}
                     </div>
                     {(exam.status === 'scheduled' || exam.status === 'active') && exam.start_datetime && (
-                      <div className="mt-2 pt-2 border-t border-border/50">
-                        <div className="flex items-center gap-4 text-xs">
-                          <span className="flex items-center gap-1 text-green-600 font-mono" dir="ltr">
-                            <Clock className="w-3 h-3" />
-                            البداية: {formatDateTime12H(exam.start_datetime)}
-                          </span>
-                          {exam.end_datetime && (
-                            <span className="flex items-center gap-1 text-orange-600 font-mono" dir="ltr">
-                              <Clock className="w-3 h-3" />
-                              النهاية: {formatDateTime12H(exam.end_datetime)}
+                      <div className="mt-2.5 pt-2.5 border-t border-border">
+                        <div className="flex flex-col sm:flex-row gap-2.5 text-sm">
+                          <div className="flex items-center gap-2 bg-green-50 dark:bg-green-950/20 px-3 py-1.5 rounded-lg">
+                            <Clock className="w-4 h-4 text-green-600" />
+                            <span className="text-muted-foreground font-medium">البداية:</span>
+                            <span className="font-bold text-green-700 dark:text-green-400 font-mono" dir="ltr">
+                              {formatDateTime12H(exam.start_datetime)}
                             </span>
+                          </div>
+                          {exam.end_datetime && (
+                            <div className="flex items-center gap-2 bg-orange-50 dark:bg-orange-950/20 px-3 py-1.5 rounded-lg">
+                              <Clock className="w-4 h-4 text-orange-600" />
+                              <span className="text-muted-foreground font-medium">النهاية:</span>
+                              <span className="font-bold text-orange-700 dark:text-orange-400 font-mono" dir="ltr">
+                                {formatDateTime12H(exam.end_datetime)}
+                              </span>
+                            </div>
                           )}
                         </div>
                       </div>
