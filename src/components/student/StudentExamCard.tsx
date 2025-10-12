@@ -66,7 +66,7 @@ export const StudentExamCard = ({ exam }: StudentExamCardProps) => {
           </div>
           <div className="flex items-center gap-2">
             <Trophy className="h-4 w-4 text-muted-foreground" />
-            <span>{exam.total_points} نقطة</span>
+            <span>{exam.total_points} علامة</span>
           </div>
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4 text-muted-foreground" />

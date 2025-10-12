@@ -196,7 +196,7 @@ export const QuestionBankManager: React.FC = () => {
                          question.difficulty === 'medium' ? 'متوسط' : 'صعب'}
                       </Badge>
                       <Badge variant="secondary">
-                        {question.points} نقطة
+                        {question.points} علامة
                       </Badge>
                       <Badge variant="outline">
                         {question.grade_level}

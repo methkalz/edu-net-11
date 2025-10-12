@@ -309,7 +309,7 @@ const ExamPreview: React.FC<ExamPreviewProps> = ({
                            currentQuestion.difficulty_level === 'medium' ? '🟡 متوسط' : '🔴 صعب'}
                         </Badge>
                         <Badge variant="outline" className="px-2 py-1 text-xs">
-                          {currentQuestion.points} نقطة
+                          {currentQuestion.points} علامة
                         </Badge>
                       </div>
                     </div>

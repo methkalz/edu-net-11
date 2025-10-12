@@ -132,12 +132,12 @@ export const ExamQuestion: React.FC<ExamQuestionProps> = ({
             السؤال {questionNumber} من {totalQuestions}
           </CardTitle>
           <Badge variant="secondary" className="text-sm font-semibold px-3 py-1">
-            {question.points} نقطة
+            {question.points} علامة
           </Badge>
         </div>
       </CardHeader>
       <CardContent className="p-6 space-y-6">
-        <div className="text-lg font-medium leading-relaxed text-foreground">
+        <div className="text-lg font-bold leading-relaxed text-foreground">
           {question.question_text}
         </div>
         
