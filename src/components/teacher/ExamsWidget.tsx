@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ClipboardList, FileQuestion, TrendingUp, Users, ArrowRight, Plus, ArrowLeft, Trash2, Edit, AlertCircle, CheckCircle, Archive, Clock, Eye, BookOpen } from 'lucide-react';
+import { ClipboardList, FileQuestion, TrendingUp, Users, ArrowRight, Plus, ArrowLeft, Trash2, Edit, AlertCircle, CheckCircle, Archive, Clock, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ExamPreview from '@/components/content/ExamPreview';
 import { useExamPreview } from '@/hooks/useExamPreview';
@@ -844,16 +844,55 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                 .slice(0, 4).map((exam: any) => (
                 <div
                   key={exam.id}
-                  className="group relative p-6 bg-card rounded-lg border border-border hover:shadow-md transition-all duration-200"
+                  className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors group"
                 >
-                  {/* Buttons */}
-                  <div className="absolute top-4 left-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h4 className="font-semibold text-sm">{exam.title}</h4>
+                      <Badge className={getStatusColor(exam.status)} variant="secondary">
+                        {getStatusLabel(exam.status)}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <FileQuestion className="w-3 h-3" />
+                        {exam.total_questions} سؤال
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Users className="w-3 h-3" />
+                        {exam.attempts_count} محاولة
+                      </span>
+                      {exam.avg_percentage !== null && (
+                        <span className="flex items-center gap-1">
+                          <TrendingUp className="w-3 h-3" />
+                          {exam.avg_percentage.toFixed(1)}%
+                        </span>
+                      )}
+                    </div>
+                    {(exam.status === 'scheduled' || exam.status === 'active') && exam.start_datetime && (
+                      <div className="mt-2 pt-2 border-t border-border/50">
+                        <div className="flex items-center gap-4 text-xs">
+                          <span className="flex items-center gap-1 text-green-600 font-mono" dir="ltr">
+                            <Clock className="w-3 h-3" />
+                            البداية: {formatDateTime12H(exam.start_datetime)}
+                          </span>
+                          {exam.end_datetime && (
+                            <span className="flex items-center gap-1 text-orange-600 font-mono" dir="ltr">
+                              <Clock className="w-3 h-3" />
+                              النهاية: {formatDateTime12H(exam.end_datetime)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     {/* زر المعاينة - متاح لجميع الحالات */}
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => setPreviewExamId(exam.id)}
-                      className="text-blue-600 hover:text-blue-600 hover:bg-blue-600/10 h-8 w-8"
+                      className="text-blue-600 hover:text-blue-600 hover:bg-blue-600/10"
                       title="معاينة الامتحان"
                     >
                       <Eye className="w-4 h-4" />
@@ -865,7 +904,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                           variant="ghost"
                           size="icon"
                           onClick={() => handleEditExam(exam.id)}
-                          className="text-primary hover:text-primary hover:bg-primary/10 h-8 w-8"
+                          className="text-primary hover:text-primary hover:bg-primary/10"
                           title="تعديل"
                         >
                           <Edit className="w-4 h-4" />
@@ -874,7 +913,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                           variant="ghost"
                           size="icon"
                           onClick={() => handlePublishExam(exam.id)}
-                          className="text-green-600 hover:text-green-600 hover:bg-green-600/10 h-8 w-8"
+                          className="text-green-600 hover:text-green-600 hover:bg-green-600/10"
                           title="نشر الامتحان"
                         >
                           <CheckCircle className="w-4 h-4" />
@@ -883,7 +922,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                           variant="ghost"
                           size="icon"
                           onClick={() => handleDeleteExam(exam.id)}
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
                           title="حذف"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -896,7 +935,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                           variant="ghost"
                           size="icon"
                           onClick={() => handleEditExam(exam.id)}
-                          className="text-primary hover:text-primary hover:bg-primary/10 h-8 w-8"
+                          className="text-primary hover:text-primary hover:bg-primary/10"
                           title="تعديل"
                         >
                           <Edit className="w-4 h-4" />
@@ -905,7 +944,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                           variant="ghost"
                           size="icon"
                           onClick={() => handleArchiveExam(exam.id)}
-                          className="text-orange-600 hover:text-orange-600 hover:bg-orange-600/10 h-8 w-8"
+                          className="text-orange-600 hover:text-orange-600 hover:bg-orange-600/10"
                           title="أرشفة"
                         >
                           <Archive className="w-4 h-4" />
@@ -918,7 +957,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                           variant="ghost"
                           size="icon"
                           onClick={() => handlePublishExam(exam.id)}
-                          className="text-green-600 hover:text-green-600 hover:bg-green-600/10 h-8 w-8"
+                          className="text-green-600 hover:text-green-600 hover:bg-green-600/10"
                           title="إعادة نشر"
                         >
                           <CheckCircle className="w-4 h-4" />
@@ -927,7 +966,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                           variant="ghost"
                           size="icon"
                           onClick={() => handleDeleteExam(exam.id)}
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
                           title="حذف"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -935,54 +974,6 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                       </>
                     )}
                   </div>
-
-                  {/* Header */}
-                  <div className="flex items-start justify-between gap-4 mb-4 pr-32">
-                    <h4 className="text-base font-semibold text-foreground leading-relaxed">{exam.title}</h4>
-                    <Badge variant="outline" className="text-xs shrink-0">
-                      {getStatusLabel(exam.status)}
-                    </Badge>
-                  </div>
-
-                  {/* Stats */}
-                  <div className="flex items-center gap-6 mb-4 text-sm">
-                    <div className="flex items-center gap-1.5 text-muted-foreground">
-                      <FileQuestion className="w-4 h-4" />
-                      <span>{exam.total_questions} سؤال</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-muted-foreground">
-                      <Users className="w-4 h-4" />
-                      <span>{exam.attempts_count} محاولة</span>
-                    </div>
-                    {exam.avg_percentage !== null && (
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-foreground font-medium">{exam.avg_percentage.toFixed(1)}%</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Dates */}
-                  {(exam.status === 'scheduled' || exam.status === 'active') && exam.start_datetime && (
-                    <div className="pt-4 border-t border-border">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Clock className="w-4 h-4 shrink-0" />
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span>من</span>
-                          <span className="font-mono text-foreground" dir="ltr">
-                            {formatDateTime12H(exam.start_datetime)}
-                          </span>
-                          {exam.end_datetime && (
-                            <>
-                              <span>إلى</span>
-                              <span className="font-mono text-foreground" dir="ltr">
-                                {formatDateTime12H(exam.end_datetime)}
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
               ))}
             </div>
