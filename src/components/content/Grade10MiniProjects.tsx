@@ -12,6 +12,7 @@ import { useGrade10MiniProjects } from '@/hooks/useGrade10MiniProjects';
 import { useAuth } from '@/hooks/useAuth';
 import { ModernLoader } from '@/components/ui/ModernLoader';
 import { toast } from '@/hooks/use-toast';
+import { toDateTimeLocalString, fromDateTimeLocalString } from '@/utils/dateFormatting';
 import Grade10MiniProjectEditor from './Grade10MiniProjectEditor';
 import type { ProjectFormData } from '@/types/grade10-projects';
 
@@ -47,7 +48,13 @@ const Grade10MiniProjects: React.FC = () => {
       return;
     }
 
-    const result = await createProject(formData);
+    // تحويل التاريخ من datetime-local إلى ISO
+    const projectData = {
+      ...formData,
+      due_date: formData.due_date ? fromDateTimeLocalString(formData.due_date) : ''
+    };
+
+    const result = await createProject(projectData);
     
     if (result) {
       setFormData({ title: '', description: '', due_date: '' });
@@ -162,7 +169,7 @@ const Grade10MiniProjects: React.FC = () => {
                   <Input
                     id="due_date"
                     type="datetime-local"
-                    value={formData.due_date}
+                    value={toDateTimeLocalString(formData.due_date)}
                     onChange={(e) => setFormData(prev => ({ ...prev, due_date: e.target.value }))}
                   />
                 </div>

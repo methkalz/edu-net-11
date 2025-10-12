@@ -24,6 +24,7 @@ import { VideoViewer } from './viewers/VideoViewer';
 import { DocumentViewer } from './viewers/DocumentViewer';
 import { LessonViewer } from './viewers/LessonViewer';
 import { ProjectViewer } from './viewers/ProjectViewer';
+import { toDateTimeLocalString, fromDateTimeLocalString } from '@/utils/dateFormatting';
 import AdvancedProjectEditor from '../content/AdvancedProjectEditor';
 
 import { 
@@ -193,7 +194,13 @@ export const StudentGradeContent: React.FC = () => {
       return;
     }
 
-    const result = await createProject(projectFormData);
+    // تحويل التاريخ من datetime-local إلى ISO
+    const projectData = {
+      ...projectFormData,
+      due_date: projectFormData.due_date ? fromDateTimeLocalString(projectFormData.due_date) : ''
+    };
+
+    const result = await createProject(projectData);
     
     if (result) {
       setProjectFormData({ title: '', description: '', due_date: '' });
@@ -218,11 +225,13 @@ export const StudentGradeContent: React.FC = () => {
       return;
     }
 
-    const result = await createFinalProject({
+    // تحويل التاريخ من datetime-local إلى ISO
+    const projectData = {
       ...finalProjectFormData,
-      project_content: '',
-      status: 'draft'
-    });
+      due_date: finalProjectFormData.due_date ? fromDateTimeLocalString(finalProjectFormData.due_date) : undefined
+    };
+
+    const result = await createFinalProject(projectData);
     
     if (result) {
       setFinalProjectFormData({ title: '', description: '', due_date: '' });
@@ -767,7 +776,7 @@ export const StudentGradeContent: React.FC = () => {
                             <Input
                               id="due_date"
                               type="datetime-local"
-                              value={projectFormData.due_date}
+                              value={toDateTimeLocalString(projectFormData.due_date)}
                               onChange={(e) => setProjectFormData(prev => ({ ...prev, due_date: e.target.value }))}
                             />
                           </div>
@@ -830,7 +839,7 @@ export const StudentGradeContent: React.FC = () => {
                             <Input
                               id="final-due-date"
                               type="datetime-local"
-                              value={finalProjectFormData.due_date}
+                              value={toDateTimeLocalString(finalProjectFormData.due_date)}
                               onChange={(e) => setFinalProjectFormData(prev => ({ ...prev, due_date: e.target.value }))}
                             />
                           </div>

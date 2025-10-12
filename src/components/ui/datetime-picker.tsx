@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { TimeInput } from "@/components/ui/time-input";
-import { formatDateNumeric, formatTimeOnly } from "@/utils/dateFormatting";
+import { formatDateNumeric, formatTimeOnly, toDateTimeLocalString } from "@/utils/dateFormatting";
 
 interface DateTimePickerProps {
   value?: string; // ISO string

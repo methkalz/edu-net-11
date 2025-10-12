@@ -53,3 +53,63 @@ export const formatDateTime12H = (date: Date | string) =>
 
 export const formatTimeOnly = (date: Date | string) => 
   formatDate(date, DateFormats.TIME_24H);
+
+/**
+ * تحويل ISO string إلى تنسيق datetime-local لـ HTML5 input
+ * يحول من: "2025-10-12T01:18:00.000Z" أو "2025-10-12T01:18:00+00:00"
+ * إلى: "2025-10-12T01:18"
+ */
+export const toDateTimeLocalString = (isoString: string | Date | null | undefined): string => {
+  if (!isoString) return '';
+  
+  try {
+    const date = typeof isoString === 'string' ? new Date(isoString) : isoString;
+    
+    // التحقق من صحة التاريخ
+    if (isNaN(date.getTime())) {
+      console.warn('Invalid date:', isoString);
+      return '';
+    }
+    
+    // تحويل إلى التوقيت المحلي بتنسيق yyyy-MM-ddTHH:mm
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  } catch (error) {
+    console.error('Error converting to datetime-local format:', error);
+    return '';
+  }
+};
+
+/**
+ * تحويل قيمة datetime-local input إلى ISO string
+ * يحول من: "2025-10-12T01:18"
+ * إلى: "2025-10-12T01:18:00.000Z"
+ */
+export const fromDateTimeLocalString = (localString: string | null | undefined): string => {
+  if (!localString) return '';
+  
+  try {
+    // إضافة ثواني إذا لم تكن موجودة
+    const dateTimeString = localString.includes(':') && localString.split(':').length === 2
+      ? `${localString}:00`
+      : localString;
+    
+    const date = new Date(dateTimeString);
+    
+    // التحقق من صحة التاريخ
+    if (isNaN(date.getTime())) {
+      console.warn('Invalid local datetime:', localString);
+      return '';
+    }
+    
+    return date.toISOString();
+  } catch (error) {
+    console.error('Error converting from datetime-local format:', error);
+    return '';
+  }
+};
