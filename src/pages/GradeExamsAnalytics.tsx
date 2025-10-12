@@ -134,9 +134,9 @@ const GradeExamsAnalytics: React.FC = () => {
   const performanceChartData = useMemo(() => {
     return filteredExams
       .filter(e => e.avg_percentage !== null && e.attempts_count > 0)
-      .slice(0, 10)
+      .slice(0, 8)
       .map(exam => ({
-        name: exam.title.length > 20 ? exam.title.substring(0, 20) + '...' : exam.title,
+        name: exam.title.length > 15 ? exam.title.substring(0, 15) + '...' : exam.title,
         'متوسط النتيجة': Number((exam.avg_percentage || 0).toFixed(1)),
         'عدد المحاولات': exam.attempts_count
       }));
@@ -423,10 +423,13 @@ const GradeExamsAnalytics: React.FC = () => {
                         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                         <XAxis 
                           dataKey="name" 
-                          tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }}
+                          tick={{ fill: 'hsl(var(--foreground))', fontSize: 11 }}
                           angle={-45}
                           textAnchor="end"
-                          height={80}
+                          height={120}
+                          interval={0}
+                          dx={-5}
+                          dy={10}
                         />
                         <YAxis tick={{ fill: 'hsl(var(--foreground))' }} />
                         <Tooltip 
@@ -461,12 +464,11 @@ const GradeExamsAnalytics: React.FC = () => {
                           data={statusChartData}
                           cx="50%"
                           cy="50%"
-                          labelLine={true}
-                          label={(entry) => `${entry.name}: ${entry.value}`}
+                          labelLine={false}
+                          label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
                           outerRadius={80}
                           fill="#8884d8"
                           dataKey="value"
-                          style={{ fontSize: '14px', fontWeight: '600', fill: 'hsl(var(--foreground))' }}
                         >
                           {statusChartData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={entry.color} />
@@ -479,6 +481,15 @@ const GradeExamsAnalytics: React.FC = () => {
                             borderRadius: '8px',
                             color: 'hsl(var(--foreground))'
                           }}
+                        />
+                        <Legend 
+                          verticalAlign="bottom" 
+                          height={36}
+                          formatter={(value, entry: any) => (
+                            <span style={{ color: entry.payload?.color || entry.color, fontWeight: '600' }}>
+                              {value}
+                            </span>
+                          )}
                         />
                       </PieChart>
                     </ResponsiveContainer>
