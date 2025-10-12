@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ExamResult } from '@/types/exam';
-import { Trophy, Clock, CheckCircle, XCircle, ArrowRight, Info, Sparkles } from 'lucide-react';
+import { Trophy, Clock, CheckCircle, XCircle, ArrowRight, Info, Sparkles, Frown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function StudentExamResult() {
@@ -107,10 +107,11 @@ export default function StudentExamResult() {
                       "absolute inset-0 rounded-full blur-2xl opacity-50",
                       result.passed ? "bg-green-500" : "bg-red-500"
                     )} />
-                    <Trophy className={cn(
-                      "w-16 h-16 relative z-10",
-                      result.passed ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                    )} />
+                    {result.passed ? (
+                      <Trophy className="w-16 h-16 relative z-10 text-green-600 dark:text-green-400" />
+                    ) : (
+                      <Frown className="w-16 h-16 relative z-10 text-red-600 dark:text-red-400" />
+                    )}
                   </div>
                 </div>
 
