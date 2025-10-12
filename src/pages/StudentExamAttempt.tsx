@@ -412,7 +412,7 @@ export default function StudentExamAttempt() {
     },
   });
 
-  const { remainingSeconds, formattedTime, isLastFiveMinutes, isTimeUp } = useExamTimer({
+  const timer = useExamTimer({
     durationMinutes: examData?.exam.duration_minutes || 60,
     onTimeUp: () => {
       ExamDebugger.log({
@@ -433,12 +433,19 @@ export default function StudentExamAttempt() {
         submitExamMutation.mutate();
       }
     },
-    startImmediately: !!attemptId,
+    startImmediately: false, // سيتم بدء العداد يدوياً عند إنشاء attemptId
   });
+  
+  const { remainingSeconds, formattedTime, isLastFiveMinutes, isTimeUp } = timer;
 
-  // تسجيل بدء المؤقت
+  // بدء العداد عند إنشاء أو استئناف المحاولة
   useEffect(() => {
-    if (attemptId && remainingSeconds > 0) {
+    if (attemptId && !timer.isRunning && !timer.isTimeUp && remainingSeconds > 0) {
+      logger.info('⏰ بدء العداد التنازلي', { 
+        attemptId, 
+        durationMinutes: examData?.exam.duration_minutes,
+        remainingSeconds 
+      });
       ExamDebugger.log({
         type: 'TIMER_STARTED',
         data: { 
@@ -447,8 +454,9 @@ export default function StudentExamAttempt() {
           remainingSeconds 
         }
       });
+      timer.start();
     }
-  }, [attemptId]);
+  }, [attemptId, timer, examData, remainingSeconds]);
 
   // تحذير عند اقتراب نهاية الوقت
   useEffect(() => {

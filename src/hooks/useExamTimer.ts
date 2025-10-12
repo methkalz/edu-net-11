@@ -68,6 +68,12 @@ export const useExamTimer = ({ durationMinutes, onTimeUp, startImmediately = tru
     };
   }, [isRunning, isTimeUp, onTimeUp]);
 
+  // إعادة تعيين الوقت المتبقي عند تغيير المدة
+  useEffect(() => {
+    setRemainingSeconds(durationMinutes * 60);
+    logger.debug('تم تحديث مدة الامتحان', { durationMinutes });
+  }, [durationMinutes]);
+
   // تنظيف عند إلغاء التثبيت
   useEffect(() => {
     return () => {
