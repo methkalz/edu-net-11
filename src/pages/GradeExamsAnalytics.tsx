@@ -256,11 +256,11 @@ const GradeExamsAnalytics: React.FC = () => {
       <main className="container mx-auto px-6 py-8">
         <div className="max-w-7xl mx-auto space-y-8 animate-fade-in">
           {/* العنوان */}
-          <div className="text-center space-y-3">
-            <h1 className="text-4xl font-bold bg-gradient-to-br from-primary to-primary/60 bg-clip-text text-transparent">
+          <div className="text-center space-y-2">
+            <h1 className="text-2xl font-bold bg-gradient-to-br from-primary to-primary/60 bg-clip-text text-transparent">
               إحصائيات امتحانات الصف {gradeLabel}
             </h1>
-            <p className="text-muted-foreground text-lg">نظرة شاملة لجميع الامتحانات والنتائج والإحصائيات</p>
+            <p className="text-muted-foreground text-sm text-center">نظرة شاملة لجميع الامتحانات والنتائج والإحصائيات</p>
           </div>
 
           {/* بطاقات الإحصائيات - 8 بطاقات */}
