@@ -32,15 +32,22 @@ export const useExamPreview = (examId: string | null) => {
       const totalQuestions = examQuestions?.length || 1;
       const pointsPerQuestion = calculateQuestionPoints(totalQuestions);
 
-      // جلب تفاصيل الأسئلة
-      const questions = await Promise.all(
-        examQuestions?.map(async (eq: any) => {
+      // جلب تفاصيل الأسئلة بنفس طريقة الطالب
+      const questionsPromises = examQuestions?.map(async (eq: any) => {
+        try {
           if (eq.question_source === 'bank' && eq.question_bank_id) {
-            const { data: bankQ } = await supabase
+            const { data: bankQ, error } = await supabase
               .from('question_bank')
               .select('*')
               .eq('id', eq.question_bank_id)
-              .single();
+              .maybeSingle();
+            
+            if (error) {
+              console.error('Error fetching bank question:', error);
+              return null;
+            }
+            
+            if (!bankQ) return null;
             
             return {
               id: bankQ.id,
@@ -51,25 +58,39 @@ export const useExamPreview = (examId: string | null) => {
               points: pointsPerQuestion,
               difficulty_level: (bankQ.difficulty || 'medium') as 'easy' | 'medium' | 'hard',
             };
-          } else if (eq.custom_question_id) {
-             const { data: customQ } = await supabase
+          } else if (eq.question_source === 'custom' && eq.custom_question_id) {
+            const { data: customQ, error } = await supabase
               .from('teacher_custom_questions')
               .select('*')
               .eq('id', eq.custom_question_id)
-              .single();
+              .maybeSingle();
+            
+            if (error) {
+              console.error('Error fetching custom question:', error);
+              return null;
+            }
+            
+            if (!customQ) return null;
             
             return {
-              id: customQ?.id || '',
-              question_text: customQ?.question_text || '',
-              question_type: (customQ?.question_type as 'multiple_choice' | 'true_false' | 'short_answer') || 'multiple_choice',
-              choices: (customQ?.choices as any) || [],
-              correct_answer: customQ?.correct_answer || '',
+              id: customQ.id,
+              question_text: customQ.question_text,
+              question_type: customQ.question_type as 'multiple_choice' | 'true_false' | 'short_answer',
+              choices: customQ.choices as any,
+              correct_answer: customQ.correct_answer,
               points: pointsPerQuestion,
-              difficulty_level: ((customQ as any)?.difficulty_level || 'medium') as 'easy' | 'medium' | 'hard',
+              difficulty_level: ((customQ as any).difficulty_level || (customQ as any).difficulty || 'medium') as 'easy' | 'medium' | 'hard',
             };
           }
-        }) || []
-      );
+          
+          return null;
+        } catch (error) {
+          console.error('Error processing question:', error);
+          return null;
+        }
+      }) || [];
+
+      const questions = (await Promise.all(questionsPromises)).filter(q => q !== null);
 
       return {
         exam: {
