@@ -22,21 +22,6 @@ export const ExamResultsTable: React.FC<ExamResultsTableProps> = ({ exams }) => 
   
   const { data, isLoading } = useExamResults(selectedExam || null);
   
-  // للتحقق من البيانات
-  React.useEffect(() => {
-    if (data?.results && data.results.length > 0) {
-      console.log('✅ بيانات النتائج المستلمة:', {
-        count: data.results.length,
-        sample: data.results[0],
-        all_times: data.results.map(r => ({
-          name: r.student_name,
-          time_seconds: r.time_spent_seconds,
-          is_null: r.time_spent_seconds === null,
-          is_undefined: r.time_spent_seconds === undefined,
-        }))
-      });
-    }
-  }, [data]);
   
   const handleSort = (field: string) => {
     if (sortField === field) {
@@ -210,11 +195,9 @@ export const ExamResultsTable: React.FC<ExamResultsTableProps> = ({ exams }) => 
                           </Badge>
                         </TableCell>
                         <TableCell className="text-center" dir="ltr">
-                          <span className="text-sm text-muted-foreground">
-                            {result.time_spent_seconds !== null && result.time_spent_seconds !== undefined ? (
-                              <>
-                                {Math.floor(Math.abs(result.time_spent_seconds) / 60)} د {Math.abs(result.time_spent_seconds) % 60} ث
-                              </>
+                          <span className="text-sm font-medium">
+                            {result.time_spent_minutes > 0 ? (
+                              `${result.time_spent_minutes} دقيقة`
                             ) : (
                               <span className="text-muted-foreground/50">-</span>
                             )}
