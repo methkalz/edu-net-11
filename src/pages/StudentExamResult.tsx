@@ -72,10 +72,13 @@ export default function StudentExamResult() {
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
     
+    // تنسيق الأرقام بحيث تكون دائماً رقمين
+    const pad = (num: number) => String(num).padStart(2, '0');
+    
     if (hours > 0) {
-      return `${hours}س ${minutes}د ${secs}ث`;
+      return `${hours}:${pad(minutes)}:${pad(secs)}`;
     }
-    return `${minutes}د ${secs}ث`;
+    return `${minutes}:${pad(secs)}`;
   };
 
   // التحقق من إظهار النتائج فوراً
@@ -112,7 +115,7 @@ export default function StudentExamResult() {
                 </div>
 
                 {/* Title */}
-                <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
+                <h1 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
                   {result.exam_title}
                 </h1>
 
@@ -257,14 +260,13 @@ export default function StudentExamResult() {
                 </div>
 
                 {/* Title */}
-                <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
+                <h1 className="text-3xl md:text-4xl font-bold mb-6 bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
                   {result.exam_title}
                 </h1>
 
                 {/* Success Message */}
-                <div className="max-w-2xl mx-auto space-y-3">
+                <div className="flex flex-col items-center gap-4">
                   <Badge className="text-xl px-6 py-2 rounded-full shadow-lg bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700">
-                    <Sparkles className="w-5 h-5 mr-2" />
                     تم التقديم بنجاح
                   </Badge>
                   <p className="text-lg text-muted-foreground">
