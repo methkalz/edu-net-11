@@ -672,21 +672,21 @@ const GradeExamsAnalytics: React.FC = () => {
 
                         {/* Mini Stats Grid */}
                         <div className="grid grid-cols-2 gap-3">
-                          <div className="space-y-1 p-2 rounded-lg bg-background/50 text-center">
+                          <div className="space-y-1 p-2 rounded-lg bg-background/50 text-right">
                             <p className="text-xs text-muted-foreground">الأسئلة</p>
-                            <p className="text-sm font-bold" dir="ltr">{exam.total_questions}</p>
+                            <p className="text-sm font-bold">{exam.total_questions}</p>
                           </div>
-                          <div className="space-y-1 p-2 rounded-lg bg-background/50 text-center">
+                          <div className="space-y-1 p-2 rounded-lg bg-background/50 text-right">
                             <p className="text-xs text-muted-foreground">النقاط</p>
-                            <p className="text-sm font-bold" dir="ltr">{exam.total_points}</p>
+                            <p className="text-sm font-bold">{exam.total_points}</p>
                           </div>
-                          <div className="space-y-1 p-2 rounded-lg bg-background/50 text-center">
+                          <div className="space-y-1 p-2 rounded-lg bg-background/50 text-right">
                             <p className="text-xs text-muted-foreground">المحاولات</p>
-                            <p className="text-sm font-bold" dir="ltr">{exam.attempts_count}</p>
+                            <p className="text-sm font-bold">{exam.attempts_count}</p>
                           </div>
-                          <div className="space-y-1 p-2 rounded-lg bg-background/50 text-center">
+                          <div className="space-y-1 p-2 rounded-lg bg-background/50 text-right">
                             <p className="text-xs text-muted-foreground">المتوسط</p>
-                            <p className="text-sm font-bold" dir="ltr">
+                            <p className="text-sm font-bold">
                               {exam.avg_percentage !== null ? `${exam.avg_percentage.toFixed(1)}%` : '-'}
                             </p>
                           </div>
