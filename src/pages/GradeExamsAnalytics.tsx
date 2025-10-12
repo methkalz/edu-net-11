@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import ModernHeader from '@/components/shared/ModernHeader';
 import AppFooter from '@/components/shared/AppFooter';
 import { 
@@ -60,6 +61,8 @@ const GradeExamsAnalytics: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedExam, setSelectedExam] = useState<any>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const gradeLevel = grade || '11';
   const gradeLabel = gradeLevel === '10' ? 'العاشر' : gradeLevel === '11' ? 'الحادي عشر' : 'الثاني عشر';
@@ -709,7 +712,10 @@ const GradeExamsAnalytics: React.FC = () => {
                           <Button
                             size="sm"
                             variant="default"
-                            onClick={() => navigate(`/exam/${exam.id}/results`)}
+                            onClick={() => {
+                              setSelectedExam(exam);
+                              setIsDialogOpen(true);
+                            }}
                             className="flex-1 rounded-lg gap-1"
                           >
                             <Eye className="h-3 w-3" />
@@ -772,6 +778,144 @@ const GradeExamsAnalytics: React.FC = () => {
       </main>
       
       <AppFooter />
+
+      {/* Dialog للإحصائيات الأساسية */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-center">
+              إحصائيات ونتائج الامتحان
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedExam && (
+            <div className="space-y-6">
+              {/* معلومات الامتحان */}
+              <Card className="border-0 bg-gradient-to-br from-primary/5 to-transparent">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-primary" />
+                    معلومات الامتحان
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div>
+                    <p className="text-sm text-muted-foreground">العنوان</p>
+                    <p className="text-base font-semibold">{selectedExam.title}</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">الحالة</p>
+                      <div className="mt-1">{getStatusBadge(selectedExam.status)}</div>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">الصف</p>
+                      <Badge variant="outline" className="mt-1">
+                        {selectedExam.grade_levels[0]}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">تاريخ البداية</p>
+                      <p className="text-sm font-mono" dir="ltr">{formatDateTime(selectedExam.start_datetime)}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">تاريخ النهاية</p>
+                      <p className="text-sm font-mono" dir="ltr">{formatDateTime(selectedExam.end_datetime)}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* الإحصائيات الأساسية */}
+              <Card className="border-0 bg-gradient-to-br from-emerald-500/5 to-transparent">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5 text-emerald-500" />
+                    الإحصائيات الأساسية
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center p-4 rounded-lg bg-background/50 backdrop-blur-sm">
+                      <FileQuestion className="h-6 w-6 mx-auto mb-2 text-blue-500" />
+                      <p className="text-xs text-muted-foreground mb-1">عدد الأسئلة</p>
+                      <p className="text-2xl font-bold" dir="ltr">{selectedExam.total_questions}</p>
+                    </div>
+                    <div className="text-center p-4 rounded-lg bg-background/50 backdrop-blur-sm">
+                      <Target className="h-6 w-6 mx-auto mb-2 text-purple-500" />
+                      <p className="text-xs text-muted-foreground mb-1">إجمالي النقاط</p>
+                      <p className="text-2xl font-bold" dir="ltr">{selectedExam.total_points}</p>
+                    </div>
+                    <div className="text-center p-4 rounded-lg bg-background/50 backdrop-blur-sm">
+                      <Users className="h-6 w-6 mx-auto mb-2 text-indigo-500" />
+                      <p className="text-xs text-muted-foreground mb-1">المحاولات</p>
+                      <p className="text-2xl font-bold" dir="ltr">{selectedExam.attempts_count}</p>
+                    </div>
+                    <div className="text-center p-4 rounded-lg bg-background/50 backdrop-blur-sm">
+                      <Award className="h-6 w-6 mx-auto mb-2 text-amber-500" />
+                      <p className="text-xs text-muted-foreground mb-1">متوسط النتائج</p>
+                      <p className="text-2xl font-bold text-emerald-600" dir="ltr">
+                        {selectedExam.avg_percentage !== null ? `${selectedExam.avg_percentage.toFixed(1)}%` : '-'}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* إعدادات الامتحان */}
+              <Card className="border-0 bg-card/50 backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Clock className="h-5 w-5 text-primary" />
+                    إعدادات الامتحان
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-muted-foreground">المدة:</span>
+                      <span className="font-semibold" dir="ltr">{selectedExam.duration_minutes} دقيقة</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Target className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-muted-foreground">نسبة النجاح:</span>
+                      <span className="font-semibold" dir="ltr">{selectedExam.passing_percentage}%</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* أزرار الإجراءات */}
+              <div className="flex gap-3 pt-4">
+                <Button
+                  onClick={() => {
+                    navigate(`/exam/${selectedExam.id}/results`);
+                    setIsDialogOpen(false);
+                  }}
+                  className="flex-1 gap-2"
+                >
+                  <Eye className="h-4 w-4" />
+                  عرض النتائج التفصيلية
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    navigate(`/exam/${selectedExam.id}/edit`);
+                    setIsDialogOpen(false);
+                  }}
+                  className="flex-1 gap-2"
+                >
+                  <Edit className="h-4 w-4" />
+                  تعديل الامتحان
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
