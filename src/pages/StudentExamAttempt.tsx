@@ -169,15 +169,23 @@ export default function StudentExamAttempt() {
   );
 
   const handleSubmitClick = () => {
+    logger.info('زر التسليم تم النقر عليه', {
+      answeredCount: answeredQuestions.size,
+      totalQuestions: examData?.questions.length || 0
+    });
+    
     const unansweredCount = (examData?.questions.length || 0) - answeredQuestions.size;
     if (unansweredCount > 0) {
+      logger.info('فتح نافذة التأكيد', { unansweredCount });
       setShowSubmitDialog(true);
     } else {
+      logger.info('تقديم الامتحان مباشرة');
       submitExamMutation.mutate();
     }
   };
 
   const handleConfirmSubmit = () => {
+    logger.info('تأكيد تقديم الامتحان');
     setShowSubmitDialog(false);
     submitExamMutation.mutate();
   };
@@ -319,17 +327,20 @@ export default function StudentExamAttempt() {
 
       {/* Submit Confirmation Dialog */}
       <AlertDialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle>تأكيد تقديم الامتحان</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-base sm:text-lg">تأكيد تقديم الامتحان</AlertDialogTitle>
+            <AlertDialogDescription className="text-sm sm:text-base">
               لم تجب على {(examData?.questions.length || 0) - answeredQuestions.size} سؤال.
               هل أنت متأكد من أنك تريد تقديم الامتحان الآن؟
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>إلغاء</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmSubmit}>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel className="w-full sm:w-auto">إلغاء</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmSubmit}
+              className="w-full sm:w-auto"
+            >
               نعم، قدم الامتحان
             </AlertDialogAction>
           </AlertDialogFooter>
