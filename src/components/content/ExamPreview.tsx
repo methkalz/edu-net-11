@@ -165,22 +165,27 @@ const ExamPreview: React.FC<ExamPreviewProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[98vw] max-h-[98vh] overflow-hidden p-0 m-2">
+      <DialogContent className="max-w-[98vw] max-h-[98vh] overflow-hidden p-0 m-2 gap-0">
         {/* Header */}
-        <div className="border-b bg-gradient-to-r from-primary/5 to-primary/10 p-3">
+        <div className="border-b bg-gradient-to-br from-primary/10 via-primary/5 to-background p-4">
           <DialogHeader>
             <div className="flex items-center justify-between">
-              <DialogTitle className="flex items-center gap-2">
-                <div className="p-1.5 bg-primary/10 rounded-lg">
-                  <FileText className="h-5 w-5 text-primary" />
+              <DialogTitle className="flex items-center gap-3">
+                <div className="p-2 bg-primary rounded-xl shadow-lg">
+                  <FileText className="h-6 w-6 text-primary-foreground" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold">{examData.exam.title}</h2>
-                  <p className="text-xs text-muted-foreground">معاينة الاختبار</p>
+                  <h2 className="text-xl font-bold bg-gradient-to-l from-primary to-primary/70 bg-clip-text text-transparent">
+                    {examData.exam.title}
+                  </h2>
+                  <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                    <AlertCircle className="h-3.5 w-3.5" />
+                    معاينة الاختبار
+                  </p>
                 </div>
               </DialogTitle>
-              <Badge variant="outline" className="text-xs px-2 py-1 bg-yellow-50 text-yellow-700 border-yellow-200">
-                <AlertCircle className="h-3 w-3 mr-1" />
+              <Badge className="px-3 py-1.5 bg-amber-500/10 text-amber-700 border-amber-200 hover:bg-amber-500/20 transition-colors">
+                <AlertCircle className="h-3.5 w-3.5 ml-1.5" />
                 معاينة فقط
               </Badge>
             </div>
@@ -188,310 +193,371 @@ const ExamPreview: React.FC<ExamPreviewProps> = ({
         </div>
 
         {/* Progress Bar */}
-        <div className="px-6 py-3 bg-muted/30 border-b">
-          <div className="flex items-center justify-between text-sm mb-2">
-            <span className="font-medium">تقدم الإجابة</span>
-            <span>{Object.keys(answers).length} من {examData.questions.length} سؤال</span>
+        <div className="px-6 py-4 bg-gradient-to-b from-muted/50 to-background border-b">
+          <div className="flex items-center justify-between text-sm mb-2.5">
+            <span className="font-semibold text-foreground">تقدم الإجابة</span>
+            <span className="text-muted-foreground font-medium">{Object.keys(answers).length} من {examData.questions.length} سؤال</span>
           </div>
-          <Progress value={getProgressPercentage()} className="h-2" />
+          <Progress value={getProgressPercentage()} className="h-2.5" />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-0 h-[calc(95vh-12rem)] overflow-hidden">
           {/* Sidebar */}
-          <div className="lg:col-span-1 bg-muted/20 border-r p-3 space-y-3 overflow-y-auto">
+          <div className="lg:col-span-1 bg-gradient-to-b from-muted/30 to-background border-r p-4 space-y-4 overflow-y-auto">
             {/* Timer Card */}
-            <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xs flex items-center gap-1">
-                  <Timer className="h-3 w-3 text-blue-600" />
+            <Card className="bg-gradient-to-br from-blue-500/10 via-indigo-500/5 to-purple-500/10 border-2 border-blue-200/50 shadow-lg hover:shadow-xl transition-shadow">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm flex items-center gap-2 font-bold">
+                  <div className="p-1.5 bg-blue-500/20 rounded-lg">
+                    <Timer className="h-4 w-4 text-blue-600" />
+                  </div>
                   الوقت المتبقي
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-0">
-                <div className={`text-lg font-bold text-center ${getTimeColor()}`}>
+                <div className={`text-2xl font-bold text-center ${getTimeColor()} mb-1`}>
                   {formatTime(timeRemaining)}
                 </div>
-                <div className="text-xs text-center text-muted-foreground">
+                <div className="text-xs text-center text-muted-foreground font-medium">
                   من أصل {examData.exam.duration_minutes} دقيقة
                 </div>
               </CardContent>
             </Card>
 
             {/* Question Map */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xs flex items-center justify-between">
-                  خريطة الأسئلة
-                  <Badge variant="outline" className="text-xs">
+            <Card className="border-2 shadow-md">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm flex items-center justify-between font-bold">
+                  <span className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+                    خريطة الأسئلة
+                  </span>
+                  <Badge variant="secondary" className="text-xs font-semibold px-2.5 py-1">
                     {Object.keys(answers).length}/{examData.questions.length}
                   </Badge>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-0">
-                <div className="grid grid-cols-5 gap-1">
+              <CardContent className="pt-0 space-y-3">
+                <div className="grid grid-cols-5 gap-1.5">
                   {examData.questions.map((_, index: number) => (
                     <button
                       key={index}
                       onClick={() => setCurrentQuestionIndex(index)}
-                      className={`w-6 h-6 text-xs font-medium rounded border transition-all duration-200 ${getQuestionStatusColor(index)}`}
+                      className={`w-8 h-8 text-xs font-bold rounded-lg border-2 transition-all duration-300 hover:scale-110 ${getQuestionStatusColor(index)}`}
                     >
                       {index + 1}
                     </button>
                   ))}
                 </div>
                 
-                {/* Compact Legend */}
-                <div className="mt-2 grid grid-cols-1 gap-1 text-xs">
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 bg-green-500 rounded-sm"></div>
-                    <span className="text-xs">مجاب</span>
+                {/* Legend */}
+                <div className="pt-2 border-t grid grid-cols-1 gap-2 text-xs">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-green-500 rounded-md shadow-sm"></div>
+                    <span className="text-xs font-medium">مجاب</span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 bg-primary rounded-sm"></div>
-                    <span className="text-xs">حالي</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-primary rounded-md shadow-sm"></div>
+                    <span className="text-xs font-medium">حالي</span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 bg-background border rounded-sm"></div>
-                    <span className="text-xs">باقي</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-background border-2 rounded-md"></div>
+                    <span className="text-xs font-medium">باقي</span>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Compact Exam Info */}
-            <Card className="bg-gradient-to-br from-gray-50 to-slate-50">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xs">تفاصيل الاختبار</CardTitle>
+            {/* Exam Info */}
+            <Card className="bg-gradient-to-br from-slate-500/5 via-gray-500/5 to-zinc-500/5 border-2 shadow-md">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-bold flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4 text-primary" />
+                  تفاصيل الاختبار
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-1 text-xs pt-0">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">الأسئلة:</span>
-                  <span className="font-medium">{examData.questions.length}</span>
+              <CardContent className="space-y-2.5 text-sm pt-0">
+                <div className="flex justify-between items-center p-2 rounded-lg bg-background/50">
+                  <span className="text-muted-foreground font-medium">الأسئلة:</span>
+                  <span className="font-bold text-foreground">{examData.questions.length}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">المدة:</span>
-                  <span className="font-medium">{examData.exam.duration_minutes}د</span>
+                <div className="flex justify-between items-center p-2 rounded-lg bg-background/50">
+                  <span className="text-muted-foreground font-medium">المدة:</span>
+                  <span className="font-bold text-foreground">{examData.exam.duration_minutes} دقيقة</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">النجاح:</span>
-                  <span className="font-medium">{examData.exam.pass_percentage}%</span>
+                <div className="flex justify-between items-center p-2 rounded-lg bg-background/50">
+                  <span className="text-muted-foreground font-medium">النجاح:</span>
+                  <span className="font-bold text-primary">{examData.exam.pass_percentage}%</span>
                 </div>
               </CardContent>
             </Card>
           </div>
 
           {/* Question Content */}
-          <div className="lg:col-span-3 bg-white overflow-y-auto">
-            <div className="p-4 space-y-4">
+          <div className="lg:col-span-3 bg-gradient-to-b from-background to-muted/20 overflow-y-auto">
+            <div className="p-6 space-y-6">
               {currentQuestion && (
-                <div className="space-y-4">
-                  {/* Compact Question Header */}
-                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-3 border border-blue-100">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <div className="bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
-                          {currentQuestionIndex + 1}
+                <div className="space-y-6 animate-fade-in">
+                  {/* Question Header */}
+                  <Card className="border-2 shadow-lg bg-gradient-to-br from-primary/5 via-background to-primary/5">
+                    <CardHeader className="pb-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground rounded-xl w-10 h-10 flex items-center justify-center text-base font-bold shadow-lg">
+                            {currentQuestionIndex + 1}
+                          </div>
+                          <div>
+                            <h3 className="text-base font-bold text-foreground">
+                              السؤال {currentQuestionIndex + 1} من {examData.questions.length}
+                            </h3>
+                            <p className="text-xs text-muted-foreground">اختر الإجابة الصحيحة</p>
+                          </div>
                         </div>
-                        <h3 className="text-sm font-semibold">
-                          السؤال {currentQuestionIndex + 1} من {examData.questions.length}
-                        </h3>
+                        <div className="flex items-center gap-2">
+                          <Badge 
+                            variant={
+                              currentQuestion.difficulty_level === 'easy' ? 'default' :
+                              currentQuestion.difficulty_level === 'medium' ? 'secondary' :
+                              'destructive'
+                            }
+                            className="px-3 py-1.5 text-xs font-semibold"
+                          >
+                            {currentQuestion.difficulty_level === 'easy' ? '🟢 سهل' :
+                             currentQuestion.difficulty_level === 'medium' ? '🟡 متوسط' : '🔴 صعب'}
+                          </Badge>
+                          <Badge variant="outline" className="px-3 py-1.5 text-xs font-semibold border-2">
+                            {currentQuestion.points} علامة
+                          </Badge>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <Badge 
-                          variant={
-                            currentQuestion.difficulty_level === 'easy' ? 'default' :
-                            currentQuestion.difficulty_level === 'medium' ? 'secondary' :
-                            'destructive'
-                          }
-                          className="px-2 py-1 text-xs"
-                        >
-                          {currentQuestion.difficulty_level === 'easy' ? '🟢 سهل' :
-                           currentQuestion.difficulty_level === 'medium' ? '🟡 متوسط' : '🔴 صعب'}
-                        </Badge>
-                        <Badge variant="outline" className="px-2 py-1 text-xs">
-                          {currentQuestion.points} علامة
-                        </Badge>
+                    </CardHeader>
+                    <CardContent>
+                      {/* Question Text */}
+                      <div className="text-lg font-bold leading-relaxed p-5 bg-background rounded-xl border-2 shadow-sm">
+                        {currentQuestion.question_text}
                       </div>
-                    </div>
-                    
-                    {/* Question Text */}
-                    <div className="text-sm font-bold leading-relaxed p-3 bg-white rounded-lg border shadow-sm">
-                      {currentQuestion.question_text}
-                    </div>
-                  </div>
+                    </CardContent>
+                  </Card>
 
                   {/* Answer Options */}
-                  <div className="space-y-3">
-                    <h4 className="font-medium text-sm flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                      اختر الإجابة الصحيحة:
-                    </h4>
+                  <Card className="border-2 shadow-md">
+                    <CardHeader className="pb-4">
+                      <h4 className="font-bold text-base flex items-center gap-2">
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                        اختر الإجابة الصحيحة
+                      </h4>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
 
-                    {/* Multiple Choice */}
-                    {currentQuestion.question_type === 'multiple_choice' && (
-                      <RadioGroup
-                        value={answers[currentQuestionIndex] || ''}
-                        onValueChange={(value) => handleAnswerChange(currentQuestionIndex, value)}
-                        className="space-y-2"
-                      >
-                        {currentQuestion.choices?.map((choice, index: number) => (
-                          <div key={index} className="group">
-                            <div className="flex items-start space-x-2 space-x-reverse">
+                      {/* Multiple Choice */}
+                      {currentQuestion.question_type === 'multiple_choice' && (
+                        <RadioGroup
+                          value={answers[currentQuestionIndex] || ''}
+                          onValueChange={(value) => handleAnswerChange(currentQuestionIndex, value)}
+                          className="space-y-3"
+                        >
+                          {currentQuestion.choices?.map((choice, index: number) => (
+                            <label 
+                              key={index}
+                              htmlFor={`choice-${index}`}
+                              className={`
+                                flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer
+                                transition-all duration-300 hover:shadow-lg hover:scale-[1.02]
+                                ${answers[currentQuestionIndex] === (typeof choice === 'string' ? choice : choice.text)
+                                  ? 'border-primary bg-primary/10 shadow-md' 
+                                  : 'border-border hover:border-primary/50 bg-background'
+                                }
+                              `}
+                            >
                               <RadioGroupItem 
                                 value={typeof choice === 'string' ? choice : choice.text}
                                 id={`choice-${index}`} 
-                                className="mt-1"
+                                className="shrink-0"
                               />
-                              <Label 
-                                htmlFor={`choice-${index}`} 
-                                className="flex-1 cursor-pointer p-2 rounded-lg border border-gray-200 hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 group-has-[:checked]:border-primary group-has-[:checked]:bg-primary/10"
-                              >
-                                <div className="flex items-center gap-2">
-                                  <span className="w-5 h-5 bg-gray-100 rounded-full flex items-center justify-center text-xs font-medium group-has-[:checked]:bg-primary group-has-[:checked]:text-white">
-                                    {String.fromCharCode(65 + index)}
-                                  </span>
-                                  <span className="text-sm">{typeof choice === 'string' ? choice : choice.text}</span>
-                                </div>
-                              </Label>
+                              <div className="flex items-center gap-3 flex-1">
+                                <span className={`
+                                  w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors
+                                  ${answers[currentQuestionIndex] === (typeof choice === 'string' ? choice : choice.text)
+                                    ? 'bg-primary text-primary-foreground' 
+                                    : 'bg-muted text-muted-foreground'
+                                  }
+                                `}>
+                                  {String.fromCharCode(65 + index)}
+                                </span>
+                                <span className="text-base font-medium">{typeof choice === 'string' ? choice : choice.text}</span>
+                              </div>
+                            </label>
+                          ))}
+                        </RadioGroup>
+                      )}
+
+                      {/* True/False */}
+                      {currentQuestion.question_type === 'true_false' && (
+                        <RadioGroup
+                          value={answers[currentQuestionIndex] || ''}
+                          onValueChange={(value) => handleAnswerChange(currentQuestionIndex, value)}
+                          className="space-y-3"
+                        >
+                          <label 
+                            htmlFor="true"
+                            className={`
+                              flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer
+                              transition-all duration-300 hover:shadow-lg hover:scale-[1.02]
+                              ${answers[currentQuestionIndex] === 'true' 
+                                ? 'border-green-500 bg-green-50 shadow-md' 
+                                : 'border-border hover:border-green-400 bg-background'
+                              }
+                            `}
+                          >
+                            <RadioGroupItem value="true" id="true" className="shrink-0" />
+                            <div className="flex items-center gap-3">
+                              <span className={`
+                                w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold transition-colors
+                                ${answers[currentQuestionIndex] === 'true'
+                                  ? 'bg-green-500 text-white' 
+                                  : 'bg-green-100 text-green-700'
+                                }
+                              `}>✓</span>
+                              <span className="text-base font-bold">صحيح</span>
                             </div>
-                          </div>
-                        ))}
-                      </RadioGroup>
-                    )}
+                          </label>
+                          <label 
+                            htmlFor="false"
+                            className={`
+                              flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer
+                              transition-all duration-300 hover:shadow-lg hover:scale-[1.02]
+                              ${answers[currentQuestionIndex] === 'false' 
+                                ? 'border-red-500 bg-red-50 shadow-md' 
+                                : 'border-border hover:border-red-400 bg-background'
+                              }
+                            `}
+                          >
+                            <RadioGroupItem value="false" id="false" className="shrink-0" />
+                            <div className="flex items-center gap-3">
+                              <span className={`
+                                w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold transition-colors
+                                ${answers[currentQuestionIndex] === 'false'
+                                  ? 'bg-red-500 text-white' 
+                                  : 'bg-red-100 text-red-700'
+                                }
+                              `}>✗</span>
+                              <span className="text-base font-bold">خطأ</span>
+                            </div>
+                          </label>
+                        </RadioGroup>
+                      )}
 
-                    {/* True/False */}
-                    {currentQuestion.question_type === 'true_false' && (
-                      <RadioGroup
-                        value={answers[currentQuestionIndex] || ''}
-                        onValueChange={(value) => handleAnswerChange(currentQuestionIndex, value)}
-                        className="space-y-2"
-                      >
-                        <div className="group">
-                          <div className="flex items-center space-x-2 space-x-reverse">
-                            <RadioGroupItem value="true" id="true" />
-                            <Label htmlFor="true" className="cursor-pointer p-2 rounded-lg border border-gray-200 hover:border-green-500 hover:bg-green-50 transition-all duration-200 flex-1 group-has-[:checked]:border-green-500 group-has-[:checked]:bg-green-50">
-                              <div className="flex items-center gap-2">
-                                <span className="w-5 h-5 bg-green-100 text-green-700 rounded-full flex items-center justify-center text-sm font-bold">✓</span>
-                                <span className="text-sm font-medium">صحيح</span>
-                              </div>
-                            </Label>
-                          </div>
-                        </div>
-                        <div className="group">
-                          <div className="flex items-center space-x-2 space-x-reverse">
-                            <RadioGroupItem value="false" id="false" />
-                            <Label htmlFor="false" className="cursor-pointer p-2 rounded-lg border border-gray-200 hover:border-red-500 hover:bg-red-50 transition-all duration-200 flex-1 group-has-[:checked]:border-red-500 group-has-[:checked]:bg-red-50">
-                              <div className="flex items-center gap-2">
-                                <span className="w-5 h-5 bg-red-100 text-red-700 rounded-full flex items-center justify-center text-sm font-bold">✗</span>
-                                <span className="text-sm font-medium">خطأ</span>
-                              </div>
-                            </Label>
-                          </div>
-                        </div>
-                      </RadioGroup>
-                    )}
-
-                    {/* Short Answer */}
-                    {currentQuestion.question_type === 'short_answer' && (
-                      <div className="space-y-2">
-                        <Label htmlFor="answer-input" className="text-sm font-medium">اكتب إجابتك:</Label>
+                      {/* Short Answer */}
+                      {currentQuestion.question_type === 'short_answer' && (
                         <Textarea
-                          id="answer-input"
                           value={answers[currentQuestionIndex] || ''}
                           onChange={(e) => handleAnswerChange(currentQuestionIndex, e.target.value)}
                           placeholder="اكتب إجابتك هنا..."
-                          className="min-h-[80px] p-3 text-sm border focus:border-primary resize-none"
+                          className="min-h-[150px] text-base border-2 focus:border-primary rounded-xl p-4 resize-none"
                         />
-                      </div>
-                    )}
-                  </div>
+                      )}
+                    </CardContent>
+                  </Card>
                 </div>
               )}
             </div>
+          </div>
 
-            {/* Navigation Controls */}
-            <div className="border-t bg-gradient-to-r from-gray-50 to-slate-50 p-6">
-              <div className="flex items-center justify-between max-w-4xl mx-auto">
-                <Button
-                  variant="outline"
-                  onClick={handlePreviousQuestion}
-                  disabled={currentQuestionIndex === 0}
-                  className="flex items-center gap-2 px-6 py-3 text-base disabled:opacity-50"
-                >
-                  <ArrowRight className="h-5 w-5" />
-                  السؤال السابق
-                </Button>
+          {/* Navigation Sidebar */}
+          <div className="lg:col-span-1 bg-gradient-to-b from-muted/20 to-background border-l p-4 flex flex-col justify-between">
+            {/* Navigation Buttons */}
+            <div className="space-y-3">
+              <Button
+                onClick={handlePreviousQuestion}
+                disabled={currentQuestionIndex === 0}
+                variant="outline"
+                className="w-full text-sm h-11 font-semibold border-2 hover:scale-105 transition-transform"
+              >
+                <ArrowRight className="h-4 w-4 ml-2" />
+                السؤال السابق
+              </Button>
+              
+              <Button
+                onClick={handleNextQuestion}
+                disabled={isLastQuestion}
+                className="w-full text-sm h-11 font-semibold hover:scale-105 transition-transform shadow-md"
+              >
+                السؤال التالي
+                <ArrowLeft className="h-4 w-4 mr-2" />
+              </Button>
 
-                <div className="flex items-center gap-4">
-                  <div className="text-center">
-                    <div className="text-sm text-muted-foreground">السؤال الحالي</div>
-                    <div className="text-lg font-bold text-primary">
-                      {currentQuestionIndex + 1} / {examData.questions.length}
-                    </div>
-                  </div>
-                  
-                  {answers[currentQuestionIndex] && (
-                    <Badge className="bg-green-100 text-green-800 border-green-300 px-3 py-1">
-                      <CheckCircle className="h-4 w-4 mr-1" />
-                      تم الإجابة
-                    </Badge>
-                  )}
-                </div>
-
-                {isLastQuestion ? (
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="default"
-                        className="flex items-center gap-1 px-4 py-2 text-sm bg-green-600 hover:bg-green-700"
-                      >
-                        إنهاء
-                        <Trophy className="h-4 w-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle className="flex items-center gap-2">
-                          <AlertCircle className="h-5 w-5 text-yellow-600" />
-                          تأكيد إنهاء الاختبار
-                        </AlertDialogTitle>
-                        <AlertDialogDescription className="text-right">
-                          هل أنت متأكد من أنك تريد إنهاء الاختبار؟
-                          <br />
-                          <div className="mt-3 p-3 bg-muted rounded-md">
-                            <div className="text-sm space-y-1">
-                              <div>الأسئلة المجاب عليها: {Object.keys(answers).length} من {examData?.questions?.length}</div>
-                              <div>الأسئلة المتبقية: {(examData?.questions?.length || 0) - Object.keys(answers).length}</div>
-                              {(examData?.questions?.length || 0) - Object.keys(answers).length > 0 && (
-                                <div className="text-yellow-600 font-medium">
-                                  ⚠️ لديك أسئلة لم تتم الإجابة عليها
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>إلغاء</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleFinishExam} className="bg-green-600 hover:bg-green-700">
-                          نعم، إنهاء الاختبار
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                ) : (
-                  <Button
+              {/* Finish Exam Dialog */}
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button 
                     variant="default"
-                    onClick={handleNextQuestion}
-                    disabled={currentQuestionIndex === examData.questions.length - 1}
-                    className="flex items-center gap-1 px-4 py-2 text-sm disabled:opacity-50"
+                    className="w-full bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-sm h-12 font-bold shadow-lg hover:scale-105 transition-all mt-3"
                   >
-                    التالي
-                    <ArrowLeft className="h-4 w-4" />
+                    <CheckCircle className="h-5 w-5 ml-2" />
+                    إنهاء الاختبار
                   </Button>
-                )}
-              </div>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="max-w-md">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="flex items-center gap-3 text-xl">
+                      <div className="p-2 bg-amber-500/10 rounded-lg">
+                        <AlertCircle className="h-6 w-6 text-amber-600" />
+                      </div>
+                      تأكيد إنهاء الاختبار
+                    </AlertDialogTitle>
+                    <AlertDialogDescription className="text-right text-base mt-4">
+                      هل أنت متأكد من أنك تريد إنهاء الاختبار؟
+                      <div className="mt-4 p-4 bg-muted rounded-xl border-2">
+                        <div className="text-sm space-y-2.5 text-foreground">
+                          <div className="flex justify-between items-center">
+                            <span className="font-medium">الأسئلة المجاب عليها:</span>
+                            <span className="font-bold text-primary">{Object.keys(answers).length} من {examData?.questions?.length}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="font-medium">الأسئلة المتبقية:</span>
+                            <span className="font-bold">{(examData?.questions?.length || 0) - Object.keys(answers).length}</span>
+                          </div>
+                          {(examData?.questions?.length || 0) - Object.keys(answers).length > 0 && (
+                            <div className="pt-2 border-t text-amber-600 font-semibold flex items-center gap-2">
+                              <AlertCircle className="h-4 w-4" />
+                              لديك أسئلة لم تتم الإجابة عليها
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter className="gap-2">
+                    <AlertDialogCancel className="font-semibold">إلغاء</AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={handleFinishExam} 
+                      className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 font-bold"
+                    >
+                      نعم، إنهاء الاختبار
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
+
+            {/* Progress Summary */}
+            <Card className="mt-4 bg-gradient-to-br from-primary/5 to-background border-2">
+              <CardContent className="pt-4 space-y-3">
+                <div className="text-center">
+                  <div className="text-xs text-muted-foreground font-medium mb-1">السؤال الحالي</div>
+                  <div className="text-2xl font-bold bg-gradient-to-l from-primary to-primary/70 bg-clip-text text-transparent">
+                    {currentQuestionIndex + 1} / {examData.questions.length}
+                  </div>
+                </div>
+                
+                {answers[currentQuestionIndex] && (
+                  <Badge className="w-full justify-center bg-green-500/10 text-green-700 border-green-200 hover:bg-green-500/20 py-2">
+                    <CheckCircle className="h-4 w-4 ml-1.5" />
+                    تم الإجابة
+                  </Badge>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
 
