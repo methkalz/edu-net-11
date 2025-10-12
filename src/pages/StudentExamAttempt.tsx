@@ -240,10 +240,22 @@ export default function StudentExamAttempt() {
 
   // إنشاء محاولة عند تحميل الامتحان
   useEffect(() => {
+    logger.info('🔵 useEffect triggered', { 
+      hasExamData: !!examData, 
+      attemptId, 
+      isPending: createAttemptMutation.isPending,
+      questionsCount: examData?.questions?.length
+    });
+    
     if (examData && !attemptId && !createAttemptMutation.isPending) {
+      logger.info('🟢 Will call createAttemptMutation.mutate()');
       createAttemptMutation.mutate();
+    } else {
+      logger.info('🔴 Will NOT call createAttemptMutation', {
+        reason: !examData ? 'no examData' : attemptId ? 'attemptId exists' : 'mutation pending'
+      });
     }
-  }, [examData]);
+  }, [examData, attemptId]);
 
   // حفظ الإجابات تلقائياً كل 30 ثانية
   useEffect(() => {
