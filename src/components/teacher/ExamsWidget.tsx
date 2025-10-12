@@ -306,13 +306,8 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
   };
 
   const handleManageExams = (grade: string) => {
-    // الصف الحادي عشر فقط يحتوي على تبويب الامتحانات
-    if (grade === '11') {
-      navigate(`/grade${grade}-management?tab=exams`);
-    } else {
-      // الصفوف الأخرى تذهب للصفحة الرئيسية
-      navigate(`/grade${grade}-management`);
-    }
+    // جميع الصفوف الآن لديها تبويب امتحانات
+    navigate(`/grade${grade}-management?tab=exams`);
   };
 
   const handleOpenCreateDialog = () => {

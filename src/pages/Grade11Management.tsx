@@ -14,7 +14,7 @@ import { EducationalTermsManager } from '@/components/content/EducationalTermsMa
 import { ContentGameLauncher } from '@/components/content/ContentGameLauncher';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Grade11ErrorBoundary } from '@/components/error-boundaries/Grade11ErrorBoundary';
-import { ExamManagement } from '@/components/exam/ExamManagement';
+import ExamsAnalytics from '@/pages/ExamsAnalytics';
 const Grade11Management: React.FC = () => {
   console.log('🎯 Grade11Management component rendering...');
   const {
@@ -90,7 +90,7 @@ const Grade11Management: React.FC = () => {
 
             {canManageContent && (
               <TabsContent value="exams" className="space-y-6">
-                <ExamManagement />
+                <ExamsAnalytics gradeLevel="11" />
               </TabsContent>
             )}
 
