@@ -260,7 +260,7 @@ export default function StudentExamResult() {
                 </div>
 
                 {/* Title */}
-                <h1 className="text-3xl md:text-4xl font-bold mb-6 bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
+                <h1 className="text-3xl md:text-4xl font-bold mb-6 bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent text-center">
                   {result.exam_title}
                 </h1>
 
