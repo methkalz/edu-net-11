@@ -48,7 +48,7 @@ export const useExamResults = (examId: string | null) => {
       // جلب معلومات الامتحان
       const { data: examData, error: examError } = await supabase
         .from('exams')
-        .select('title, total_points, passing_percentage')
+        .select('title, total_points, total_questions, passing_percentage')
         .eq('id', examId)
         .single();
       
@@ -90,19 +90,35 @@ export const useExamResults = (examId: string | null) => {
         : 0;
       
       return {
-        results: data.map(attempt => ({
-          id: attempt.id,
-          student_id: attempt.student_id,
-          student_name: attempt.students.full_name,
-          attempt_number: attempt.attempt_number,
-          score: attempt.score || 0,
-          total_points: attempt.exams.total_points,
-          percentage: attempt.percentage || 0,
-          passed: attempt.passed || false,
-          time_spent_seconds: attempt.time_spent_seconds ? Math.abs(attempt.time_spent_seconds) : 0,
-          time_spent_minutes: attempt.time_spent_seconds ? Math.floor(Math.abs(attempt.time_spent_seconds) / 60) : 0,
-          submitted_at: attempt.submitted_at,
-        })),
+        results: data.map(attempt => {
+          // حساب عدد الإجابات الصحيحة من detailed_results
+          let correctAnswers = 0;
+          let totalQuestions = examData.total_questions || 0;
+          
+          if (attempt.detailed_results && typeof attempt.detailed_results === 'object') {
+            const results = attempt.detailed_results as any;
+            if (Array.isArray(results.questions)) {
+              correctAnswers = results.questions.filter((q: any) => q.is_correct).length;
+              totalQuestions = results.questions.length;
+            }
+          }
+          
+          return {
+            id: attempt.id,
+            student_id: attempt.student_id,
+            student_name: attempt.students.full_name,
+            attempt_number: attempt.attempt_number,
+            score: attempt.score || 0,
+            total_points: attempt.exams.total_points,
+            correct_answers: correctAnswers,
+            total_questions: totalQuestions,
+            percentage: attempt.percentage || 0,
+            passed: attempt.passed || false,
+            time_spent_seconds: attempt.time_spent_seconds ? Math.abs(attempt.time_spent_seconds) : 0,
+            time_spent_minutes: attempt.time_spent_seconds ? Math.floor(Math.abs(attempt.time_spent_seconds) / 60) : 0,
+            submitted_at: attempt.submitted_at,
+          };
+        }),
         stats: {
           total_attempts: data.length,
           avg_percentage: Number(avgPercentage.toFixed(1)),

@@ -151,9 +151,9 @@ export const ExamResultsTable: React.FC<ExamResultsTableProps> = ({ exams }) => 
                         </Button>
                       </TableHead>
                       <TableHead className="text-center" dir="ltr">
-                        <Button variant="ghost" onClick={() => handleSort('score')} className="gap-2 font-semibold">
-                          الدرجة
-                          {getSortIcon('score')}
+                        <Button variant="ghost" onClick={() => handleSort('correct_answers')} className="gap-2 font-semibold">
+                          الإجابات الصحيحة
+                          {getSortIcon('correct_answers')}
                         </Button>
                       </TableHead>
                       <TableHead className="text-center" dir="ltr">
@@ -180,8 +180,10 @@ export const ExamResultsTable: React.FC<ExamResultsTableProps> = ({ exams }) => 
                           <Badge variant="outline">{result.attempt_number}</Badge>
                         </TableCell>
                         <TableCell className="text-center" dir="ltr">
-                          <span className="font-mono">
-                            {result.score} / {result.total_points}
+                          <span className="font-mono text-base">
+                            <span className="font-bold text-emerald-600">{result.correct_answers}</span>
+                            <span className="mx-1 text-muted-foreground">/</span>
+                            <span className="text-muted-foreground">{result.total_questions}</span>
                           </span>
                         </TableCell>
                         <TableCell className="text-center" dir="ltr">
