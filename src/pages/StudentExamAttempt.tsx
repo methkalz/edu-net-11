@@ -419,12 +419,19 @@ export default function StudentExamAttempt() {
         type: 'TIMER_EXPIRED',
         data: { attemptId }
       });
+      
+      logger.info('⏰ Time expired - auto-submitting exam', { attemptId });
+      
       toast({
-        title: 'انتهى الوقت',
-        description: 'سيتم تقديم الامتحان تلقائياً',
+        title: '⏰ انتهى وقت الامتحان',
+        description: 'جاري تقديم الامتحان تلقائياً...',
         variant: 'destructive',
       });
-      submitExamMutation.mutate();
+      
+      // تقديم الامتحان تلقائياً
+      if (attemptId && !submitExamMutation.isPending) {
+        submitExamMutation.mutate();
+      }
     },
     startImmediately: !!attemptId,
   });
@@ -450,8 +457,17 @@ export default function StudentExamAttempt() {
         type: 'TIMER_WARNING',
         data: { remainingSeconds }
       });
+      
+      // تحذير عند بقاء دقيقة واحدة فقط
+      if (remainingSeconds === 60) {
+        toast({
+          title: '⚠️ تحذير: بقيت دقيقة واحدة فقط!',
+          description: 'سيتم تقديم الامتحان تلقائياً عند انتهاء الوقت',
+          variant: 'destructive',
+        });
+      }
     }
-  }, [isLastFiveMinutes]);
+  }, [isLastFiveMinutes, remainingSeconds]);
 
   // إنشاء محاولة عند تحميل الامتحان
   useEffect(() => {
@@ -671,14 +687,31 @@ export default function StudentExamAttempt() {
         }}
       />
 
-      {/* Header */}
+      {/* Header with Timer */}
       <Card className="mb-4 sm:mb-6">
         <CardHeader className="p-4 sm:p-6">
           <div className="flex items-center justify-between flex-wrap gap-3 sm:gap-4">
-            <CardTitle className="text-lg sm:text-2xl">{examData.exam.title}</CardTitle>
-            <div className={`flex items-center gap-2 text-base sm:text-lg font-semibold ${isLastFiveMinutes ? 'text-destructive' : ''}`}>
-              <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span>{formattedTime}</span>
+            <div className="flex-1">
+              <CardTitle className="text-lg sm:text-2xl">{examData.exam.title}</CardTitle>
+              {examData.exam.description && (
+                <p className="text-sm text-muted-foreground mt-1">{examData.exam.description}</p>
+              )}
+            </div>
+            <div className={`flex flex-col items-end gap-1 ${isLastFiveMinutes ? 'animate-pulse' : ''}`}>
+              <div className="text-xs text-muted-foreground">الوقت المتبقي</div>
+              <div className={`flex items-center gap-2 text-xl sm:text-3xl font-bold px-4 py-2 rounded-lg border-2 ${
+                isLastFiveMinutes 
+                  ? 'text-destructive border-destructive bg-destructive/10' 
+                  : 'text-primary border-primary/20 bg-primary/5'
+              }`}>
+                <Clock className="w-5 h-5 sm:w-6 sm:h-6" />
+                <span className="tabular-nums">{formattedTime}</span>
+              </div>
+              {isLastFiveMinutes && (
+                <div className="text-xs text-destructive font-medium">
+                  ⚠️ سيتم التقديم تلقائياً عند انتهاء الوقت
+                </div>
+              )}
             </div>
           </div>
         </CardHeader>
