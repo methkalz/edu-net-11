@@ -24,6 +24,15 @@ export const useExamResults = (examId: string | null) => {
         throw attemptsError;
       }
       
+      // تسجيل البيانات للتحقق
+      logger.debug('📊 بيانات المحاولات من قاعدة البيانات', { 
+        count: attemptsData?.length || 0,
+        samples: attemptsData?.slice(0, 3).map(a => ({
+          id: a.id.substring(0, 8),
+          time_spent_seconds: a.time_spent_seconds
+        })) || []
+      });
+      
       if (!attemptsData || attemptsData.length === 0) {
         return {
           results: [],
