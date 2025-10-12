@@ -100,7 +100,7 @@ export const useExamResults = (examId: string | null) => {
           percentage: attempt.percentage || 0,
           passed: attempt.passed || false,
           time_spent_seconds: attempt.time_spent_seconds || 0,
-          time_spent_minutes: Math.floor((attempt.time_spent_seconds || 0) / 60),
+          time_spent_minutes: Math.floor(Math.abs(attempt.time_spent_seconds || 0) / 60),
           submitted_at: attempt.submitted_at,
         })),
         stats: {

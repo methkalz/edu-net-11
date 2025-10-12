@@ -22,17 +22,6 @@ export const ExamResultsTable: React.FC<ExamResultsTableProps> = ({ exams }) => 
   
   const { data, isLoading } = useExamResults(selectedExam || null);
   
-  // تسجيل البيانات للتحقق
-  React.useEffect(() => {
-    if (data?.results) {
-      console.log('📊 نتائج الامتحان:', data.results.map(r => ({
-        name: r.student_name,
-        time_seconds: r.time_spent_seconds,
-        time_minutes: r.time_spent_minutes
-      })));
-    }
-  }, [data]);
-  
   const handleSort = (field: string) => {
     if (sortField === field) {
       setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
@@ -207,15 +196,11 @@ export const ExamResultsTable: React.FC<ExamResultsTableProps> = ({ exams }) => 
                         <TableCell className="text-center" dir="ltr">
                           <span className="text-sm text-muted-foreground">
                             {result.time_spent_seconds !== null && result.time_spent_seconds !== undefined ? (
-                              result.time_spent_seconds >= 0 ? (
-                                <>
-                                  {Math.floor(result.time_spent_seconds / 60)} د {result.time_spent_seconds % 60} ث
-                                </>
-                              ) : (
-                                <span className="text-amber-500">قيمة غير صالحة</span>
-                              )
+                              <>
+                                {Math.floor(Math.abs(result.time_spent_seconds) / 60)} د {Math.abs(result.time_spent_seconds) % 60} ث
+                              </>
                             ) : (
-                              <span className="text-muted-foreground/50">لم يتم التسجيل</span>
+                              <span className="text-muted-foreground/50">-</span>
                             )}
                           </span>
                         </TableCell>
