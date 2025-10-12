@@ -283,49 +283,53 @@ export default function StudentExamAttempt() {
           />
 
           {/* Navigation Buttons */}
-          <div className="flex items-stretch justify-between gap-3 w-full">
-            <Button
-              variant="outline"
-              onClick={() => {
-                logger.info('زر السابق تم النقر عليه');
-                setCurrentQuestionIndex((prev) => Math.max(0, prev - 1));
-              }}
-              disabled={currentQuestionIndex === 0}
-              className="flex-1 min-h-[48px] text-base font-semibold"
-            >
-              <ChevronRight className="w-5 h-5 ml-2" />
-              السابق
-            </Button>
+          <div className="flex flex-col sm:flex-row items-stretch justify-between gap-3 w-full">
+            <div className="flex gap-3 w-full">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  logger.info('زر السابق تم النقر عليه');
+                  setCurrentQuestionIndex((prev) => Math.max(0, prev - 1));
+                }}
+                disabled={currentQuestionIndex === 0}
+                className="flex-1 min-h-[48px] text-base font-semibold"
+              >
+                <ChevronRight className="w-5 h-5 ml-2" />
+                السابق
+              </Button>
 
-            {currentQuestionIndex === examData.questions.length - 1 ? (
+              {currentQuestionIndex < examData.questions.length - 1 && (
+                <Button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    logger.info('زر التالي تم النقر عليه');
+                    setCurrentQuestionIndex((prev) => 
+                      Math.min(examData.questions.length - 1, prev + 1)
+                    );
+                  }}
+                  className="flex-1 min-h-[48px] text-base font-semibold"
+                >
+                  التالي
+                  <ChevronLeft className="w-5 h-5 mr-2" />
+                </Button>
+              )}
+            </div>
+
+            {currentQuestionIndex === examData.questions.length - 1 && (
               <Button
                 type="button"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  logger.info('زر تقديم الامتحان تم النقر عليه');
+                  logger.info('🔴 زر تقديم الامتحان تم النقر عليه');
                   handleSubmitClick();
                 }}
                 disabled={submitExamMutation.isPending}
-                className="flex-1 min-h-[48px] text-base font-semibold bg-primary hover:bg-primary/90"
+                className="w-full min-h-[56px] text-base font-bold bg-green-600 hover:bg-green-700 text-white"
               >
                 <Send className="w-5 h-5 ml-2" />
                 {submitExamMutation.isPending ? 'جاري التسليم...' : 'تقديم الامتحان'}
-              </Button>
-            ) : (
-              <Button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  logger.info('زر التالي تم النقر عليه');
-                  setCurrentQuestionIndex((prev) => 
-                    Math.min(examData.questions.length - 1, prev + 1)
-                  );
-                }}
-                className="flex-1 min-h-[48px] text-base font-semibold"
-              >
-                التالي
-                <ChevronLeft className="w-5 h-5 mr-2" />
               </Button>
             )}
           </div>
