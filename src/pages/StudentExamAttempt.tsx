@@ -5,6 +5,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { ExamQuestion } from '@/components/exam/ExamQuestion';
 import { ExamNavigationGrid } from '@/components/exam/ExamNavigationGrid';
@@ -20,6 +30,7 @@ export default function StudentExamAttempt() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, { answer: string; time_spent?: number }>>({});
   const [attemptId, setAttemptId] = useState<string | null>(null);
+  const [showSubmitDialog, setShowSubmitDialog] = useState(false);
 
   // جلب بيانات الامتحان
   const { data: examData, isLoading: examLoading } = useQuery({
@@ -151,10 +162,25 @@ export default function StudentExamAttempt() {
   };
 
   const answeredQuestions = new Set(
-    Object.keys(answers).map(id => 
-      examData?.questions.findIndex(q => q.id === id) || -1
-    ).filter(idx => idx !== -1)
+    Object.keys(answers).map(id => {
+      const index = examData?.questions.findIndex(q => q.id === id);
+      return index !== undefined ? index : -1;
+    }).filter(idx => idx !== -1)
   );
+
+  const handleSubmitClick = () => {
+    const unansweredCount = (examData?.questions.length || 0) - answeredQuestions.size;
+    if (unansweredCount > 0) {
+      setShowSubmitDialog(true);
+    } else {
+      submitExamMutation.mutate();
+    }
+  };
+
+  const handleConfirmSubmit = () => {
+    setShowSubmitDialog(false);
+    submitExamMutation.mutate();
+  };
 
   if (examLoading || createAttemptMutation.isPending) {
     return (
@@ -262,7 +288,7 @@ export default function StudentExamAttempt() {
 
             {currentQuestionIndex === examData.questions.length - 1 ? (
               <Button
-                onClick={() => submitExamMutation.mutate()}
+                onClick={handleSubmitClick}
                 disabled={submitExamMutation.isPending}
                 className="gap-2 flex-1 sm:flex-initial h-11 sm:h-10"
               >
@@ -290,6 +316,25 @@ export default function StudentExamAttempt() {
           </Alert>
         </div>
       </div>
+
+      {/* Submit Confirmation Dialog */}
+      <AlertDialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>تأكيد تقديم الامتحان</AlertDialogTitle>
+            <AlertDialogDescription>
+              لم تجب على {(examData?.questions.length || 0) - answeredQuestions.size} سؤال.
+              هل أنت متأكد من أنك تريد تقديم الامتحان الآن؟
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmSubmit}>
+              نعم، قدم الامتحان
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
