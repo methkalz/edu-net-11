@@ -169,17 +169,23 @@ export default function StudentExamAttempt() {
   );
 
   const handleSubmitClick = () => {
-    logger.info('زر التسليم تم النقر عليه', {
+    logger.info('🔴🔴🔴 handleSubmitClick تم استدعاؤه', {
       answeredCount: answeredQuestions.size,
-      totalQuestions: examData?.questions.length || 0
+      totalQuestions: examData?.questions.length || 0,
+      showSubmitDialog: showSubmitDialog
     });
     
     const unansweredCount = (examData?.questions.length || 0) - answeredQuestions.size;
+    
     if (unansweredCount > 0) {
-      logger.info('فتح نافذة التأكيد', { unansweredCount });
+      logger.info('🟡 يوجد أسئلة غير مجابة، فتح نافذة التأكيد', { 
+        unansweredCount,
+        willOpenDialog: true 
+      });
       setShowSubmitDialog(true);
+      logger.info('🟢 تم استدعاء setShowSubmitDialog(true)');
     } else {
-      logger.info('تقديم الامتحان مباشرة');
+      logger.info('🟢 جميع الأسئلة مجابة، تقديم الامتحان مباشرة');
       submitExamMutation.mutate();
     }
   };
@@ -319,14 +325,15 @@ export default function StudentExamAttempt() {
             {currentQuestionIndex === examData.questions.length - 1 && (
               <Button
                 type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  logger.info('🔴 زر تقديم الامتحان تم النقر عليه');
+                onClick={() => {
+                  logger.info('🔴🔴🔴 زر تقديم الامتحان تم النقر عليه', {
+                    currentQuestionIndex,
+                    totalQuestions: examData.questions.length
+                  });
                   handleSubmitClick();
                 }}
                 disabled={submitExamMutation.isPending}
-                className="w-full min-h-[56px] text-base font-bold bg-green-600 hover:bg-green-700 text-white"
+                className="w-full min-h-[56px] text-base font-bold bg-green-600 hover:bg-green-700 text-white shadow-lg"
               >
                 <Send className="w-5 h-5 ml-2" />
                 {submitExamMutation.isPending ? 'جاري التسليم...' : 'تقديم الامتحان'}
@@ -344,8 +351,14 @@ export default function StudentExamAttempt() {
       </div>
 
       {/* Submit Confirmation Dialog */}
-      <AlertDialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
-        <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
+      <AlertDialog 
+        open={showSubmitDialog} 
+        onOpenChange={(open) => {
+          logger.info('🔵 AlertDialog onOpenChange:', { open });
+          setShowSubmitDialog(open);
+        }}
+      >
+        <AlertDialogContent className="max-w-[90vw] sm:max-w-md z-[100]">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-base sm:text-lg">تأكيد تقديم الامتحان</AlertDialogTitle>
             <AlertDialogDescription className="text-sm sm:text-base">
@@ -354,10 +367,15 @@ export default function StudentExamAttempt() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-            <AlertDialogCancel className="w-full sm:w-auto">إلغاء</AlertDialogCancel>
+            <AlertDialogCancel 
+              className="w-full sm:w-auto"
+              onClick={() => logger.info('🔴 تم النقر على إلغاء')}
+            >
+              إلغاء
+            </AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleConfirmSubmit}
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto bg-green-600 hover:bg-green-700"
             >
               نعم، قدم الامتحان
             </AlertDialogAction>
