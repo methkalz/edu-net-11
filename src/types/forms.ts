@@ -41,7 +41,7 @@ export const examFormSchema = z.object({
   start_date: z.string().optional(),
   end_date: z.string().optional(),
   attempts_allowed: z.number().positive().default(1),
-  question_source_mode: z.enum(['smart', 'question_bank', 'my_questions']).default('smart'),
+  question_source_type: z.enum(['smart', 'question_bank', 'my_questions']).default('smart'),
   selected_sections: z.array(z.string()).optional(),
   selected_teacher_categories: z.array(z.string()).optional(),
   questions: z.array(z.object({

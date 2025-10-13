@@ -86,7 +86,7 @@ const createExamSchema = z.object({
   show_results_immediately: z.boolean().default(true),
   allow_review: z.boolean().default(true),
   // إعدادات الأسئلة المبسطة - وضع واحد أو متعدد
-  question_source_mode: z.enum(['smart', 'question_bank', 'my_questions', 'mixed']).default('smart'),
+  question_source_type: z.enum(['smart', 'question_bank', 'my_questions', 'mixed']).default('smart'),
   selected_sections: z.array(z.string()).optional(),
   selected_teacher_categories: z.array(z.string()).optional(),
   questions_count: z.number().min(1, 'عدد الأسئلة مطلوب').default(10),
@@ -228,7 +228,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
       shuffle_choices: false,
       show_results_immediately: true,
       allow_review: true,
-      question_source_mode: 'smart',
+      question_source_type: 'smart',
       selected_sections: [],
       selected_teacher_categories: [],
       source_distribution: createDefaultSources(10), // التوزيع الافتراضي
@@ -283,7 +283,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
 
   // حساب عدد الأسئلة المتاحة بناءً على الاختيارات
   const questionsCount = form.watch('questions_count');
-  const questionSourceMode = form.watch('question_source_mode') as 'smart' | 'question_bank' | 'my_questions';
+  const questionSourceMode = form.watch('question_source_type') as 'smart' | 'question_bank' | 'my_questions';
   const selectedSections = form.watch('selected_sections');
   const difficultyMode = form.watch('difficulty_mode');
   const customEasyCount = form.watch('custom_easy_count');
@@ -387,7 +387,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
       return availableQuestions;
     }
     
-    const sourceMode = form.getValues('question_source_mode');
+    const sourceMode = form.getValues('question_source_type');
     
     if (sourceMode === 'my_questions') {
       return teacherQuestionsStats;
@@ -431,7 +431,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
     }
     
     // المنطق القديم للحالات الأخرى
-    const sourceMode = form.getValues('question_source_mode');
+    const sourceMode = form.getValues('question_source_type');
     const selectedSects = form.getValues('selected_sections');
     const selectedCats = form.getValues('selected_teacher_categories');
     
@@ -546,7 +546,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         shuffle_choices: exam.shuffle_choices,
         show_results_immediately: exam.show_results_immediately,
         allow_review: exam.allow_review,
-        question_source_mode: ((exam as any).question_source_mode || 'smart') as 'smart' | 'question_bank' | 'my_questions',
+        question_source_type: ((exam as any).question_source_type || 'smart') as 'smart' | 'question_bank' | 'my_questions',
         selected_sections: exam.selected_sections || [],
         selected_teacher_categories: (exam as any).selected_teacher_categories || [],
         questions_count: exam.questions_count || 10,
@@ -687,7 +687,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         setCurrentStep(prev => prev + 1);
         return true;
       } else if (currentStep === 4) {
-        const sourceMode = form.getValues('question_source_mode');
+        const sourceMode = form.getValues('question_source_type');
         const sourceDistribution = form.getValues('source_distribution');
         
         // التحقق من التوزيع المتعدد المصادر
@@ -942,7 +942,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         shuffle_choices: data.shuffle_choices,
         show_results_immediately: data.show_results_immediately,
         allow_review: data.allow_review,
-        question_source_mode: data.question_source_mode,
+        question_source_type: data.question_source_type,
         selected_sections: data.selected_sections || [],
         selected_teacher_categories: data.selected_teacher_categories || [],
         questions_count: data.questions_count,
@@ -1033,7 +1033,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         // 6️⃣ فحص الـ Status & Enums
         console.log('🎯 Status & Enums:', {
           status: { value: examData.status, type: typeof examData.status },
-          question_source_mode: { value: examData.question_source_mode, type: typeof examData.question_source_mode }
+          question_source_type: { value: examData.question_source_type, type: typeof examData.question_source_type }
         });
 
         // 7️⃣ البيانات الكاملة للإرسال
@@ -1969,12 +1969,12 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                       sources={form.watch('source_distribution') || createDefaultSources(form.watch('questions_count') || 10)}
                       onSourcesChange={(sources) => {
                         form.setValue('source_distribution', sources);
-                        // تحديث question_source_mode بناءً على المصادر المفعلة
+                        // تحديث question_source_type بناءً على المصادر المفعلة
                         const enabledSources = sources.filter(s => s.enabled);
                         if (enabledSources.length === 1) {
-                          form.setValue('question_source_mode', enabledSources[0].type);
+                          form.setValue('question_source_type', enabledSources[0].type);
                         } else if (enabledSources.length > 1) {
-                          form.setValue('question_source_mode', 'mixed');
+                          form.setValue('question_source_type', 'mixed');
                         }
                         // تحديث الأقسام والتصنيفات المختارة
                         const bankSource = sources.find(s => s.type === 'question_bank');
