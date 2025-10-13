@@ -9,7 +9,7 @@ export const useTeacherQuestions = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // جلب أسئلة المعلم
+  // جلب أسئلة المعلم النشطة فقط
   const { data: questions, isLoading } = useQuery({
     queryKey: ['teacher-questions'],
     queryFn: async () => {
@@ -26,6 +26,30 @@ export const useTeacherQuestions = () => {
       }
 
       return data as any as TeacherCustomQuestion[];
+    },
+  });
+
+  // جلب جميع التصنيفات (من الأسئلة النشطة وغير النشطة)
+  const { data: categories } = useQuery({
+    queryKey: ['teacher-question-categories'],
+    queryFn: async () => {
+      logger.debug('جلب تصنيفات أسئلة المعلم');
+      const { data, error } = await supabase
+        .from('teacher_custom_questions')
+        .select('category')
+        .not('category', 'is', null);
+
+      if (error) {
+        logger.error('خطأ في جلب التصنيفات', error);
+        throw error;
+      }
+
+      // استخراج التصنيفات الفريدة
+      const uniqueCategories = Array.from(
+        new Set(data.map((item: any) => item.category).filter(Boolean))
+      ).sort();
+
+      return uniqueCategories as string[];
     },
   });
 
@@ -48,6 +72,7 @@ export const useTeacherQuestions = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['teacher-questions'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-question-categories'] });
       toast({
         title: 'تم بنجاح',
         description: 'تم إضافة السؤال',
@@ -82,6 +107,7 @@ export const useTeacherQuestions = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['teacher-questions'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-question-categories'] });
       toast({
         title: 'تم بنجاح',
         description: 'تم تحديث السؤال',
@@ -112,6 +138,7 @@ export const useTeacherQuestions = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['teacher-questions'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-question-categories'] });
       toast({
         title: 'تم بنجاح',
         description: 'تم حذف السؤال',
@@ -128,6 +155,7 @@ export const useTeacherQuestions = () => {
 
   return {
     questions: questions || [],
+    categories: categories || ['عام'],
     isLoading,
     addQuestion: addQuestion.mutate,
     updateQuestion: updateQuestion.mutate,

@@ -124,7 +124,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data, isLoading } = useTeacherExams(user?.id);
-  const { questions } = useTeacherQuestions();
+  const { questions, categories } = useTeacherQuestions();
   const queryClient = useQueryClient();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isQuestionDialogOpen, setIsQuestionDialogOpen] = useState(false);
@@ -327,11 +327,6 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
     logger.debug("فتح نافذة إضافة سؤال جديد");
     setIsQuestionDialogOpen(true);
   };
-
-  // استخراج التصنيفات الموجودة من أسئلة المعلم
-  const existingCategories = Array.from(
-    new Set(questions.map((q) => q.category || "عام"))
-  ).sort();
 
   const handleEditExam = async (examId: string) => {
     try {
@@ -2142,8 +2137,10 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
       onOpenChange={setIsQuestionDialogOpen}
       onSuccess={() => {
         queryClient.invalidateQueries({ queryKey: ['teacher-exams', user?.id] });
+        queryClient.invalidateQueries({ queryKey: ['teacher-questions'] });
+        queryClient.invalidateQueries({ queryKey: ['teacher-question-categories'] });
       }}
-      existingCategories={existingCategories}
+      existingCategories={categories}
     />
   </>
   );
