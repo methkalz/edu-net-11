@@ -53,30 +53,45 @@ class ExamSourceDebugger {
     if (data === null || data === undefined) return data;
     if (typeof data !== 'object') return data;
     
+    // Handle React elements
+    if (data.$$typeof) return '[React Element]';
+    
     if (Array.isArray(data)) {
       return data.map(item => this.extractSafeData(item));
     }
     
     const safe: any = {};
-    for (const key in data) {
-      if (data.hasOwnProperty(key)) {
+    try {
+      for (const key in data) {
+        if (!data.hasOwnProperty(key)) continue;
+        
         const value = data[key];
         
         // Skip React internals and DOM elements
-        if (key.startsWith('_') || key.startsWith('__react')) continue;
+        if (key.startsWith('_') || key.startsWith('__react') || key === '$$typeof') continue;
         if (value instanceof HTMLElement) continue;
+        if (value instanceof Node) continue;
+        if (typeof value === 'function') continue;
+        
+        // Handle React elements
+        if (value && typeof value === 'object' && value.$$typeof) {
+          safe[key] = '[React Element]';
+          continue;
+        }
         
         if (typeof value === 'object' && value !== null) {
           if (Array.isArray(value)) {
             safe[key] = value.map(item => this.extractSafeData(item));
           } else {
-            // Only go one level deep to avoid infinite loops
-            safe[key] = { ...value };
+            // Create a simple copy to avoid deep recursion
+            safe[key] = this.extractSafeData(value);
           }
         } else {
           safe[key] = value;
         }
       }
+    } catch (e) {
+      return '[Error extracting data]';
     }
     return safe;
   }

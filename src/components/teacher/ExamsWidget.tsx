@@ -912,10 +912,19 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
   };
 
   const onSubmit = async (data: CreateExamFormData) => {
+    // Clean data for logging
+    const cleanData = {
+      ...data,
+      source_distribution: data.source_distribution?.map((s: any) => ({
+        type: s.type,
+        enabled: s.enabled,
+        percentage: s.percentage,
+        count: s.count
+      }))
+    };
     examSourceDebugger.log('onSubmit:started', { 
-      formData: data, 
-      currentStep,
-      source_distribution: data.source_distribution 
+      formData: cleanData, 
+      currentStep
     });
     
     if (import.meta.env.DEV) {
@@ -2112,7 +2121,17 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                           : createDefaultSources(form.watch('questions_count') || 10)
                       }
                       onSourcesChange={(sources) => {
-                        examSourceDebugger.log('InteractiveSourceDistributor:onSourcesChange', { sources });
+                        // Clean sources before logging (remove React elements)
+                        const cleanSources = sources.map(s => ({
+                          type: s.type,
+                          enabled: s.enabled,
+                          percentage: s.percentage,
+                          count: s.count,
+                          label: s.label,
+                          description: s.description,
+                          color: s.color
+                        }));
+                        examSourceDebugger.log('InteractiveSourceDistributor:onSourcesChange', { sources: cleanSources });
                         form.setValue('source_distribution', sources);
                         
                         // تحديث question_source_type بناءً على المصادر المفعلة
