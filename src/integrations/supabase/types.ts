@@ -951,7 +951,7 @@ export type Database = {
           difficulty_distribution: Json | null
           difficulty_levels: string[] | null
           duration_minutes: number
-          end_datetime: string
+          end_datetime: string | null
           grade_levels: string[]
           id: string
           max_attempts: number
@@ -960,10 +960,11 @@ export type Database = {
           questions_count: number | null
           school_id: string
           selected_sections: string[] | null
+          selected_teacher_categories: string[] | null
           show_results_immediately: boolean
           shuffle_choices: boolean
           shuffle_questions: boolean
-          start_datetime: string
+          start_datetime: string | null
           status: Database["public"]["Enums"]["exam_status"]
           target_classes: string[] | null
           title: string
@@ -979,7 +980,7 @@ export type Database = {
           difficulty_distribution?: Json | null
           difficulty_levels?: string[] | null
           duration_minutes: number
-          end_datetime: string
+          end_datetime?: string | null
           grade_levels?: string[]
           id?: string
           max_attempts?: number
@@ -988,10 +989,11 @@ export type Database = {
           questions_count?: number | null
           school_id: string
           selected_sections?: string[] | null
+          selected_teacher_categories?: string[] | null
           show_results_immediately?: boolean
           shuffle_choices?: boolean
           shuffle_questions?: boolean
-          start_datetime: string
+          start_datetime?: string | null
           status?: Database["public"]["Enums"]["exam_status"]
           target_classes?: string[] | null
           title: string
@@ -1007,7 +1009,7 @@ export type Database = {
           difficulty_distribution?: Json | null
           difficulty_levels?: string[] | null
           duration_minutes?: number
-          end_datetime?: string
+          end_datetime?: string | null
           grade_levels?: string[]
           id?: string
           max_attempts?: number
@@ -1016,10 +1018,11 @@ export type Database = {
           questions_count?: number | null
           school_id?: string
           selected_sections?: string[] | null
+          selected_teacher_categories?: string[] | null
           show_results_immediately?: boolean
           shuffle_choices?: boolean
           shuffle_questions?: boolean
-          start_datetime?: string
+          start_datetime?: string | null
           status?: Database["public"]["Enums"]["exam_status"]
           target_classes?: string[] | null
           title?: string

@@ -75,8 +75,8 @@ const createExamSchema = z.object({
   selection_type: z.enum(['all_grade', 'specific_classes']).default('all_grade'),
   grade_levels: z.array(z.string()).optional(),
   target_classes: z.array(z.string()).optional(),
-  start_datetime: z.string().optional(),
-  end_datetime: z.string().optional(),
+  start_datetime: z.string().nullable().optional(),
+  end_datetime: z.string().nullable().optional(),
   duration_minutes: z.number().min(1, 'مدة الامتحان مطلوبة'),
   max_attempts: z.number().min(1, 'عدد المحاولات مطلوب'),
   passing_percentage: z.number().min(0).max(100).default(50),
@@ -662,8 +662,8 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
       
       if (data.publish_status === 'draft') {
         // مسح التواريخ للمسودات
-        data.start_datetime = '';
-        data.end_datetime = '';
+        data.start_datetime = null;
+        data.end_datetime = null;
       }
 
       // إعداد بيانات توزيع الصعوبة
@@ -683,8 +683,8 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         passing_percentage: data.passing_percentage,
         grade_levels: data.selection_type === 'all_grade' ? data.grade_levels : [],
         target_classes: data.selection_type === 'specific_classes' ? data.target_classes : [],
-        start_datetime: data.start_datetime,
-        end_datetime: data.end_datetime,
+        start_datetime: data.start_datetime || null,
+        end_datetime: data.end_datetime || null,
         max_attempts: data.max_attempts,
         shuffle_questions: data.shuffle_questions,
         shuffle_choices: data.shuffle_choices,
