@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { SimpleQuestionSourcePicker } from '@/components/exams/SimpleQuestionSourcePicker';
+import { InteractiveSourceDistributor, createDefaultSources, type SourceDistribution } from '@/components/exams/InteractiveSourceDistributor';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -85,11 +85,12 @@ const createExamSchema = z.object({
   shuffle_choices: z.boolean().default(false),
   show_results_immediately: z.boolean().default(true),
   allow_review: z.boolean().default(true),
-  // إعدادات الأسئلة المبسطة - وضع واحد فقط
-  question_source_mode: z.enum(['smart', 'question_bank', 'my_questions']).default('smart'),
+  // إعدادات الأسئلة المبسطة - وضع واحد أو متعدد
+  question_source_mode: z.enum(['smart', 'question_bank', 'my_questions', 'mixed']).default('smart'),
   selected_sections: z.array(z.string()).optional(),
   selected_teacher_categories: z.array(z.string()).optional(),
   questions_count: z.number().min(1, 'عدد الأسئلة مطلوب').default(10),
+  source_distribution: z.any().optional(), // توزيع المصادر المتعددة
   // توزيع الصعوبة الذكي بالأعداد المباشرة
   difficulty_mode: z.enum(['balanced', 'easy', 'hard', 'custom']).default('balanced'),
   custom_easy_count: z.number().min(0).optional(),
@@ -227,9 +228,10 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
       shuffle_choices: false,
       show_results_immediately: true,
       allow_review: true,
-      question_source_mode: 'smart', // الوضع الافتراضي
+      question_source_mode: 'smart',
       selected_sections: [],
       selected_teacher_categories: [],
+      source_distribution: createDefaultSources(10), // التوزيع الافتراضي
       questions_count: 10,
       difficulty_mode: 'balanced',
       custom_easy_count: undefined,
@@ -1850,10 +1852,29 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                       }}
                     />
 
-                    {/* مصدر الأسئلة - مبسط */}
-                    <SimpleQuestionSourcePicker
-                      mode={form.watch('question_source_mode')}
-                      onModeChange={(mode) => form.setValue('question_source_mode', mode)}
+                    {/* توزيع الأسئلة من المصادر */}
+                    <InteractiveSourceDistributor
+                      totalQuestions={form.watch('questions_count') || 10}
+                      sources={form.watch('source_distribution') || createDefaultSources(form.watch('questions_count') || 10)}
+                      onSourcesChange={(sources) => {
+                        form.setValue('source_distribution', sources);
+                        // تحديث question_source_mode بناءً على المصادر المفعلة
+                        const enabledSources = sources.filter(s => s.enabled);
+                        if (enabledSources.length === 1) {
+                          form.setValue('question_source_mode', enabledSources[0].type);
+                        } else if (enabledSources.length > 1) {
+                          form.setValue('question_source_mode', 'mixed');
+                        }
+                        // تحديث الأقسام والتصنيفات المختارة
+                        const bankSource = sources.find(s => s.type === 'question_bank');
+                        const myQuestionsSource = sources.find(s => s.type === 'my_questions');
+                        if (!bankSource?.enabled) {
+                          form.setValue('selected_sections', []);
+                        }
+                        if (!myQuestionsSource?.enabled) {
+                          form.setValue('selected_teacher_categories', []);
+                        }
+                      }}
                       availableSections={availableSections?.map(s => ({ value: s.id, label: s.name })) || []}
                       selectedSections={selectedSections || []}
                       onSectionsChange={(sections) => form.setValue('selected_sections', sections)}
