@@ -311,12 +311,12 @@ export default function StudentExamResult() {
         {/* Minimalist Action Button */}
         <div className="flex justify-center">
           <Button 
-            onClick={() => navigate('/student?tab=exams')} 
+            onClick={() => navigate('/student')} 
             variant="outline"
             className="group px-7 py-2.5 rounded-lg text-base font-medium hover:bg-foreground hover:text-background hover:shadow-xl hover:shadow-primary/10 hover:scale-105 transition-all duration-300"
           >
             <span className="flex items-center gap-2">
-              العودة للامتحانات
+              إنهاء
               <ArrowRight className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
             </span>
           </Button>
