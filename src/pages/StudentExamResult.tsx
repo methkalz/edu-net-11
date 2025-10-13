@@ -14,6 +14,7 @@ import { useCountUp } from '@/hooks/useCountUp';
 export default function StudentExamResult() {
   const { attemptId } = useParams<{ attemptId: string }>();
   const navigate = useNavigate();
+  const [showStatus, setShowStatus] = React.useState(false);
 
   const { data: result, isLoading } = useQuery({
     queryKey: ['exam-result', attemptId],
@@ -59,6 +60,14 @@ export default function StudentExamResult() {
     end: result?.detailed_results?.incorrect_count || 0, 
     duration: 1200 
   });
+
+  // إظهار الأيقونة والبادج بعد اكتمال عد النسبة المئوية
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowStatus(true);
+    }, 3000); // نفس مدة عد النسبة المئوية
+    return () => clearTimeout(timer);
+  }, []);
 
   if (isLoading) {
     return (
@@ -126,42 +135,44 @@ export default function StudentExamResult() {
             {/* Minimalist Hero Section */}
             <div className="text-center mb-16">
               {/* Title */}
-              <h1 className="text-2xl md:text-3xl font-semibold mb-8 text-foreground/90">
+              <h1 className="text-2xl md:text-3xl font-semibold mb-8 text-foreground/90 text-center">
                 {result.exam_title}
               </h1>
 
               {/* Percentage with Status - Hero Element */}
-              <div className="mb-12 flex items-center justify-center gap-8 md:gap-12">
+              <div className="mb-12 flex flex-col items-center gap-6">
                 {/* Percentage */}
                 <div className="text-7xl md:text-8xl font-bold text-foreground tracking-tight">
                   {percentageCount}<span className="text-5xl md:text-6xl text-muted-foreground">%</span>
                 </div>
                 
-                {/* Icon and Status Badge */}
-                <div className="flex items-center gap-3">
-                  <div className={cn(
-                    "w-16 h-16 rounded-full flex items-center justify-center transition-all duration-500",
-                    result.passed 
-                      ? "bg-green-50 dark:bg-green-950/30" 
-                      : "bg-red-50 dark:bg-red-950/30"
-                  )}>
-                    {result.passed ? (
-                      <CheckCircle2 className="w-8 h-8 text-green-600 dark:text-green-400" />
-                    ) : (
-                      <Frown className="w-8 h-8 text-red-600 dark:text-red-400" />
-                    )}
+                {/* Icon and Status Badge - يظهران بعد اكتمال العد */}
+                {showStatus && (
+                  <div className="flex items-center gap-3 animate-fade-in">
+                    <div className={cn(
+                      "w-16 h-16 rounded-full flex items-center justify-center transition-all duration-500",
+                      result.passed 
+                        ? "bg-green-50 dark:bg-green-950/30" 
+                        : "bg-red-50 dark:bg-red-950/30"
+                    )}>
+                      {result.passed ? (
+                        <CheckCircle2 className="w-8 h-8 text-green-600 dark:text-green-400" />
+                      ) : (
+                        <Frown className="w-8 h-8 text-red-600 dark:text-red-400" />
+                      )}
+                    </div>
+                    
+                    <Badge 
+                      variant={result.passed ? 'default' : 'destructive'} 
+                      className={cn(
+                        "text-base px-6 py-2 rounded-full font-medium",
+                        result.passed && "bg-green-600 hover:bg-green-700"
+                      )}
+                    >
+                      {result.passed ? 'ناجح' : 'راسب'}
+                    </Badge>
                   </div>
-                  
-                  <Badge 
-                    variant={result.passed ? 'default' : 'destructive'} 
-                    className={cn(
-                      "text-base px-6 py-2 rounded-full font-medium",
-                      result.passed && "bg-green-600 hover:bg-green-700"
-                    )}
-                  >
-                    {result.passed ? 'ناجح' : 'راسب'}
-                  </Badge>
-                </div>
+                )}
               </div>
             </div>
 
