@@ -311,7 +311,7 @@ export default function StudentExamResult() {
         {/* Minimalist Action Button */}
         <div className="flex justify-center">
           <Button 
-            onClick={() => navigate('/student')} 
+            onClick={() => navigate('/dashboard')} 
             variant="outline"
             className="group px-7 py-2.5 rounded-lg text-base font-medium hover:bg-foreground hover:text-background hover:shadow-xl hover:shadow-primary/10 hover:scale-105 transition-all duration-300"
           >
