@@ -561,6 +561,9 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         show_results_immediately: exam.show_results_immediately,
         allow_review: exam.allow_review,
         question_source_type: ((exam as any).question_source_type || 'smart') as 'smart' | 'question_bank' | 'my_questions',
+        source_distribution: (exam as any).source_distribution && Array.isArray((exam as any).source_distribution) && (exam as any).source_distribution.length > 0
+          ? (exam as any).source_distribution
+          : createDefaultSources(exam.questions_count || 10),
         selected_sections: exam.selected_sections || [],
         selected_teacher_categories: (exam as any).selected_teacher_categories || [],
         questions_count: exam.questions_count || 10,
@@ -1044,8 +1047,17 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         allow_review: data.allow_review,
         question_source_type: data.question_source_type,
         source_distribution: Array.isArray(data.source_distribution) && data.source_distribution.length > 0 
-          ? data.source_distribution 
-          : [], // ✅ التوزيع المتعدد
+          ? data.source_distribution.map((s: any) => ({
+              type: s.type,
+              enabled: s.enabled,
+              percentage: s.percentage,
+              count: s.count,
+              label: s.label,
+              description: s.description,
+              color: s.color
+              // نزيل icon لأنه React element ولا يمكن تخزينه
+            }))
+          : [],
         selected_sections: data.selected_sections || [],
         selected_teacher_categories: data.selected_teacher_categories || [],
         questions_count: data.questions_count,
