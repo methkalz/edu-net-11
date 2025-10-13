@@ -17,11 +17,31 @@ export default function StudentExamResult() {
   const { data: result, isLoading } = useQuery({
     queryKey: ['exam-result', attemptId],
     queryFn: async () => {
+      console.group('🔍 [EXAM RESULT DEBUG] جلب نتائج الامتحان');
+      console.log('📋 Attempt ID:', attemptId);
+      
       const { data, error } = await supabase
         .rpc('get_exam_results', { p_attempt_id: attemptId });
 
-      if (error) throw error;
-      return data as any as ExamResult;
+      if (error) {
+        console.error('❌ خطأ في جلب النتائج:', error);
+        console.groupEnd();
+        throw error;
+      }
+      
+      const resultData = data as any;
+      console.log('📊 البيانات المستلمة من get_exam_results:', resultData);
+      console.log('📈 Score:', resultData?.score);
+      console.log('📊 Total Points:', resultData?.total_points);
+      console.log('📐 Percentage:', resultData?.percentage);
+      console.log('✅ Passed:', resultData?.passed);
+      console.log('📝 Detailed Results:', resultData?.detailed_results);
+      console.log('🔢 Correct Count:', resultData?.detailed_results?.correct_count);
+      console.log('🔢 Incorrect Count:', resultData?.detailed_results?.incorrect_count);
+      console.log('🔢 Total Questions:', resultData?.detailed_results?.total_questions);
+      console.groupEnd();
+      
+      return resultData as ExamResult;
     },
     enabled: !!attemptId,
   });
