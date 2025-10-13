@@ -128,8 +128,8 @@ export default function StudentExamResult() {
   const showResults = result?.show_results_immediately || false;
 
   return (
-    <div className="min-h-screen bg-background py-16 px-4">
-      <div className="container mx-auto max-w-4xl">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/95 py-16 px-4">
+      <div className="container mx-auto max-w-4xl animate-fade-in">
         {showResults ? (
           <>
             {/* Minimalist Hero Section */}
@@ -142,8 +142,12 @@ export default function StudentExamResult() {
               {/* Percentage with Status - Hero Element */}
               <div className="mb-12 flex flex-col items-center gap-6">
                 {/* Percentage */}
-                <div className="text-7xl md:text-8xl font-bold text-foreground tracking-tight">
-                  {percentageCount}<span className="text-5xl md:text-6xl text-muted-foreground">%</span>
+                <div className="relative">
+                  <div className="text-7xl md:text-8xl font-bold text-foreground tracking-tight transition-all duration-500 hover:scale-105">
+                    {percentageCount}<span className="text-5xl md:text-6xl text-muted-foreground">%</span>
+                  </div>
+                  {/* Subtle glow effect */}
+                  <div className="absolute inset-0 blur-3xl opacity-20 bg-primary/30 -z-10" />
                 </div>
                 
                 {/* Icon and Status Badge - يظهران بعد اكتمال العد */}
@@ -179,8 +183,8 @@ export default function StudentExamResult() {
             {/* Clean Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
               {/* Score Card */}
-              <div className="border border-border rounded-xl p-6 hover:border-border/80 transition-colors">
-                <p className="text-sm font-medium text-muted-foreground mb-2 uppercase tracking-wider">العلامة</p>
+              <div className="group border border-border rounded-xl p-6 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-card via-card to-card/50">
+                <p className="text-sm font-medium text-muted-foreground mb-2 uppercase tracking-wider group-hover:text-primary transition-colors">العلامة</p>
                 <div className="flex items-baseline gap-1.5">
                   <span className="text-3xl font-bold text-foreground">
                     {scoreCount}
@@ -192,10 +196,10 @@ export default function StudentExamResult() {
               </div>
 
               {/* Time Card */}
-              <div className="border border-border rounded-xl p-6 hover:border-border/80 transition-colors">
-                <p className="text-sm font-medium text-muted-foreground mb-2 uppercase tracking-wider">الوقت</p>
+              <div className="group border border-border rounded-xl p-6 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-card via-card to-card/50">
+                <p className="text-sm font-medium text-muted-foreground mb-2 uppercase tracking-wider group-hover:text-primary transition-colors">الوقت</p>
                 <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-muted-foreground" />
+                  <Clock className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
                   <span className="text-3xl font-bold text-foreground">
                     {formatTime(getActualTimeSpent())}
                   </span>
@@ -203,8 +207,8 @@ export default function StudentExamResult() {
               </div>
 
               {/* Attempt Card */}
-              <div className="border border-border rounded-xl p-6 hover:border-border/80 transition-colors">
-                <p className="text-sm font-medium text-muted-foreground mb-2 uppercase tracking-wider">المحاولة</p>
+              <div className="group border border-border rounded-xl p-6 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-card via-card to-card/50">
+                <p className="text-sm font-medium text-muted-foreground mb-2 uppercase tracking-wider group-hover:text-primary transition-colors">المحاولة</p>
                 <div className="text-3xl font-bold text-foreground">
                   #{attemptCount}
                 </div>
@@ -213,16 +217,16 @@ export default function StudentExamResult() {
 
             {/* Minimalist Details */}
             {result.detailed_results && (
-              <div className="border border-border rounded-xl overflow-hidden mb-12">
-                <div className="px-6 py-4 border-b border-border text-center">
+              <div className="border border-border rounded-xl overflow-hidden mb-12 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 bg-gradient-to-br from-card via-card to-card/50">
+                <div className="px-6 py-4 border-b border-border text-center bg-muted/30">
                   <h2 className="text-base font-medium text-foreground uppercase tracking-wider">توزيع الإجابات</h2>
                 </div>
                 <div className="p-6">
                   <div className="grid grid-cols-2 gap-8 mb-8">
                     {/* Correct Answers */}
-                    <div className="text-center flex flex-col items-center">
-                      <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-50 dark:bg-green-950/30 mb-3">
-                        <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
+                    <div className="group text-center flex flex-col items-center hover:scale-105 transition-transform duration-300">
+                      <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-50 dark:bg-green-950/30 mb-3 group-hover:shadow-lg group-hover:shadow-green-500/20 transition-all">
+                        <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400 group-hover:scale-110 transition-transform" />
                       </div>
                       <p className="text-sm text-muted-foreground mb-2 uppercase tracking-wider">صحيحة</p>
                       <p className="text-3xl font-bold text-foreground">
@@ -231,9 +235,9 @@ export default function StudentExamResult() {
                     </div>
 
                     {/* Incorrect Answers */}
-                    <div className="text-center flex flex-col items-center">
-                      <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-red-50 dark:bg-red-950/30 mb-3">
-                        <XCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
+                    <div className="group text-center flex flex-col items-center hover:scale-105 transition-transform duration-300">
+                      <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-red-50 dark:bg-red-950/30 mb-3 group-hover:shadow-lg group-hover:shadow-red-500/20 transition-all">
+                        <XCircle className="w-6 h-6 text-red-600 dark:text-red-400 group-hover:scale-110 transition-transform" />
                       </div>
                       <p className="text-sm text-muted-foreground mb-2 uppercase tracking-wider">خاطئة</p>
                       <p className="text-3xl font-bold text-foreground">
@@ -258,9 +262,9 @@ export default function StudentExamResult() {
             {/* Minimalist Pending Results */}
             <div className="text-center mb-16">
               {/* Info Icon */}
-              <div className="flex justify-center mb-8">
-                <div className="w-20 h-20 rounded-full flex items-center justify-center bg-blue-50 dark:bg-blue-950/30">
-                  <Info className="w-10 h-10 text-blue-600 dark:text-blue-400" />
+              <div className="flex justify-center mb-8 animate-fade-in">
+                <div className="w-20 h-20 rounded-full flex items-center justify-center bg-blue-50 dark:bg-blue-950/30 shadow-lg shadow-blue-500/20 hover:scale-110 transition-all duration-300">
+                  <Info className="w-10 h-10 text-blue-600 dark:text-blue-400 animate-pulse" />
                 </div>
               </div>
 
@@ -283,10 +287,10 @@ export default function StudentExamResult() {
             {/* Clean Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12">
               {/* Time Card */}
-              <div className="border border-border rounded-xl p-6 hover:border-border/80 transition-colors">
-                <p className="text-sm font-medium text-muted-foreground mb-2 uppercase tracking-wider">الوقت</p>
+              <div className="group border border-border rounded-xl p-6 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-card via-card to-card/50">
+                <p className="text-sm font-medium text-muted-foreground mb-2 uppercase tracking-wider group-hover:text-primary transition-colors">الوقت</p>
                 <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-muted-foreground" />
+                  <Clock className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
                   <span className="text-3xl font-bold text-foreground">
                     {formatTime(getActualTimeSpent())}
                   </span>
@@ -294,8 +298,8 @@ export default function StudentExamResult() {
               </div>
 
               {/* Attempt Card */}
-              <div className="border border-border rounded-xl p-6 hover:border-border/80 transition-colors">
-                <p className="text-sm font-medium text-muted-foreground mb-2 uppercase tracking-wider">المحاولة</p>
+              <div className="group border border-border rounded-xl p-6 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-card via-card to-card/50">
+                <p className="text-sm font-medium text-muted-foreground mb-2 uppercase tracking-wider group-hover:text-primary transition-colors">المحاولة</p>
                 <div className="text-3xl font-bold text-foreground">
                   #{result.attempt_number}
                 </div>
@@ -309,7 +313,7 @@ export default function StudentExamResult() {
           <Button 
             onClick={() => navigate('/student?tab=exams')} 
             variant="outline"
-            className="group px-7 py-2.5 rounded-lg text-base font-medium hover:bg-foreground hover:text-background transition-all"
+            className="group px-7 py-2.5 rounded-lg text-base font-medium hover:bg-foreground hover:text-background hover:shadow-xl hover:shadow-primary/10 hover:scale-105 transition-all duration-300"
           >
             <span className="flex items-center gap-2">
               العودة للامتحانات
