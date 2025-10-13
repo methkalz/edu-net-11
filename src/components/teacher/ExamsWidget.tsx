@@ -17,8 +17,10 @@ if (import.meta.env.DEV) {
 }
 import { useNavigate } from 'react-router-dom';
 import { useTeacherExams } from '@/hooks/useTeacherExams';
+import { useTeacherQuestions } from '@/hooks/useTeacherQuestions';
 import { useAuth } from '@/hooks/useAuth';
 import { Skeleton } from '@/components/ui/skeleton';
+import { logger } from '@/lib/logging';
 import {
   Dialog,
   DialogContent,
@@ -57,6 +59,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Progress } from '@/components/ui/progress';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { TeacherQuestionDialog } from '@/components/exam/TeacherQuestionDialog';
 
 interface ExamsWidgetProps {
   canAccessGrade10: boolean;
@@ -120,8 +124,10 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data, isLoading } = useTeacherExams(user?.id);
+  const { questions } = useTeacherQuestions();
   const queryClient = useQueryClient();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isQuestionDialogOpen, setIsQuestionDialogOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingExamId, setEditingExamId] = useState<string | null>(null);
@@ -316,6 +322,16 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
     setEditingExamId(null);
     setIsCreateDialogOpen(true);
   };
+
+  const handleOpenQuestionDialog = () => {
+    logger.debug("فتح نافذة إضافة سؤال جديد");
+    setIsQuestionDialogOpen(true);
+  };
+
+  // استخراج التصنيفات الموجودة من أسئلة المعلم
+  const existingCategories = Array.from(
+    new Set(questions.map((q) => q.category || "عام"))
+  ).sort();
 
   const handleEditExam = async (examId: string) => {
     try {
@@ -750,6 +766,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
   const activeExams = data?.exams?.filter((e: any) => e.status === 'active').length || 0;
 
   return (
+    <>
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
@@ -757,10 +774,16 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
             <ClipboardList className="w-5 h-5" />
             الامتحانات الإلكترونية
           </CardTitle>
-          <Button onClick={handleOpenCreateDialog} size="sm">
-            <Plus className="w-4 h-4 ml-2" />
-            امتحان جديد
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={handleOpenQuestionDialog} size="sm" variant="outline">
+              <Plus className="w-4 h-4 ml-2" />
+              سؤال جديد
+            </Button>
+            <Button onClick={handleOpenCreateDialog} size="sm">
+              <Plus className="w-4 h-4 ml-2" />
+              امتحان جديد
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -2112,5 +2135,16 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         )}
       </CardContent>
     </Card>
+    
+    {/* حوار إضافة سؤال جديد */}
+    <TeacherQuestionDialog
+      open={isQuestionDialogOpen}
+      onOpenChange={setIsQuestionDialogOpen}
+      onSuccess={() => {
+        queryClient.invalidateQueries({ queryKey: ['teacher-exams', user?.id] });
+      }}
+      existingCategories={existingCategories}
+    />
+  </>
   );
 };

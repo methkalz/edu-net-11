@@ -4951,6 +4951,7 @@ export type Database = {
       }
       teacher_custom_questions: {
         Row: {
+          category: string | null
           choices: Json | null
           correct_answer: string
           created_at: string
@@ -4967,6 +4968,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          category?: string | null
           choices?: Json | null
           correct_answer: string
           created_at?: string
@@ -4983,6 +4985,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          category?: string | null
           choices?: Json | null
           correct_answer?: string
           created_at?: string

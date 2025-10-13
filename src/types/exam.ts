@@ -32,6 +32,7 @@ export interface TeacherCustomQuestion extends Omit<Question, 'section_name' | '
   teacher_id: string;
   school_id: string;
   tags: string[];
+  category?: string; // تصنيف/مجموعة السؤال
 }
 
 export interface Exam {
