@@ -57,6 +57,8 @@ export interface Exam {
   status: ExamStatus;
   created_at: string;
   updated_at: string;
+  question_sources?: string[]; // مصادر الأسئلة المتعددة
+  source_distribution?: Record<string, number>; // توزيع الأسئلة حسب المصدر
 }
 
 export interface ExamQuestion {

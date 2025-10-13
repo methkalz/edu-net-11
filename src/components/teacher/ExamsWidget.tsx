@@ -84,8 +84,10 @@ const createExamSchema = z.object({
   shuffle_choices: z.boolean().default(false),
   show_results_immediately: z.boolean().default(true),
   allow_review: z.boolean().default(true),
-  // إعدادات الأسئلة الذكية
-  question_source_type: z.enum(['random', 'specific_sections', 'my_questions']).default('random'),
+  // إعدادات الأسئلة الذكية - دعم مصادر متعددة
+  question_source_type: z.enum(['random', 'specific_sections', 'my_questions']).optional(), // للتوافق القديم
+  question_sources: z.array(z.enum(['random', 'specific_sections', 'my_questions'])).min(1, 'يجب اختيار مصدر واحد على الأقل').default(['random']),
+  source_distribution: z.record(z.string(), z.number().min(0)).optional(),
   selected_sections: z.array(z.string()).optional(),
   selected_teacher_categories: z.array(z.string()).optional(),
   questions_count: z.number().min(1, 'عدد الأسئلة مطلوب').default(10),
@@ -226,7 +228,8 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
       shuffle_choices: false,
       show_results_immediately: true,
       allow_review: true,
-      question_source_type: 'random',
+      question_sources: ['random'], // مصدر افتراضي
+      source_distribution: {},
       selected_sections: [],
       selected_teacher_categories: [],
       questions_count: 10,
@@ -280,7 +283,8 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
 
   // حساب عدد الأسئلة المتاحة بناءً على الاختيارات
   const questionsCount = form.watch('questions_count');
-  const questionSourceType = form.watch('question_source_type');
+  const questionSources = form.watch('question_sources') || [];
+  const sourceDistribution = form.watch('source_distribution') || {};
   const selectedSections = form.watch('selected_sections');
   const difficultyMode = form.watch('difficulty_mode');
   const customEasyCount = form.watch('custom_easy_count');
@@ -292,7 +296,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
 
     let counts = { easy: 0, medium: 0, hard: 0 };
 
-    if (questionSourceType === 'random') {
+    if (questionSources.includes('random')) {
       availableSections.forEach(section => {
         counts.easy += section.easy;
         counts.medium += section.medium;
@@ -601,8 +605,8 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         setCurrentStep(prev => prev + 1);
         return true;
       } else if (currentStep === 4) {
-        const questionSourceType = form.getValues('question_source_type');
-        if (questionSourceType === 'specific_sections') {
+        const sources = form.getValues('question_sources') || [];
+        if (sources.includes('specific_sections')) {
           const selectedSections = form.getValues('selected_sections');
           if (!selectedSections || selectedSections.length === 0) {
             toast.error('يجب اختيار قسم واحد على الأقل');
@@ -621,7 +625,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
             });
             return false;
           }
-        } else if (questionSourceType === 'my_questions') {
+        } else if (sources.includes('my_questions')) {
           const selectedCategories = form.getValues('selected_teacher_categories');
           if (!selectedCategories || selectedCategories.length === 0) {
             toast.error('يجب اختيار تصنيف واحد على الأقل من أسئلتك');
@@ -826,7 +830,8 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         shuffle_choices: data.shuffle_choices,
         show_results_immediately: data.show_results_immediately,
         allow_review: data.allow_review,
-        question_source_type: data.question_source_type,
+        question_sources: questionSources,
+        source_distribution: sourceDistribution,
         selected_sections: data.selected_sections || [],
         selected_teacher_categories: data.selected_teacher_categories || [],
         questions_count: data.questions_count,
@@ -1884,7 +1889,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                     />
 
                     {/* عرض تصنيفات أسئلة المعلم */}
-                    {questionSourceType === 'my_questions' && (
+                    {questionSources.includes('my_questions') && (
                       <div className="space-y-4">
                         {categories.length === 0 ? (
                           <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
@@ -1993,7 +1998,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                     )}
 
                     {/* عرض الأقسام المتاحة */}
-                    {questionSourceType === 'specific_sections' && (
+                    {questionSources.includes('specific_sections') && (
                       <div className="space-y-4">
                         {sectionsLoading ? (
                           <div className="text-center py-4">

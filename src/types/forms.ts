@@ -41,6 +41,8 @@ export const examFormSchema = z.object({
   start_date: z.string().optional(),
   end_date: z.string().optional(),
   attempts_allowed: z.number().positive().default(1),
+  question_sources: z.array(z.enum(['random', 'specific_sections', 'my_questions'])).min(1, 'يجب اختيار مصدر واحد على الأقل').optional(),
+  source_distribution: z.record(z.string(), z.number().min(0)).optional(),
   questions: z.array(z.object({
     question_text: z.string().min(1, 'نص السؤال مطلوب'),
     question_type: z.enum(['multiple_choice', 'true_false', 'short_answer', 'essay', 'code']),

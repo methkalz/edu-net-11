@@ -957,6 +957,7 @@ export type Database = {
           max_attempts: number
           passing_percentage: number
           question_source_type: string | null
+          question_sources: Json | null
           questions_count: number | null
           school_id: string
           selected_sections: string[] | null
@@ -964,6 +965,7 @@ export type Database = {
           show_results_immediately: boolean
           shuffle_choices: boolean
           shuffle_questions: boolean
+          source_distribution: Json | null
           start_datetime: string | null
           status: Database["public"]["Enums"]["exam_status"]
           target_classes: string[] | null
@@ -986,6 +988,7 @@ export type Database = {
           max_attempts?: number
           passing_percentage?: number
           question_source_type?: string | null
+          question_sources?: Json | null
           questions_count?: number | null
           school_id: string
           selected_sections?: string[] | null
@@ -993,6 +996,7 @@ export type Database = {
           show_results_immediately?: boolean
           shuffle_choices?: boolean
           shuffle_questions?: boolean
+          source_distribution?: Json | null
           start_datetime?: string | null
           status?: Database["public"]["Enums"]["exam_status"]
           target_classes?: string[] | null
@@ -1015,6 +1019,7 @@ export type Database = {
           max_attempts?: number
           passing_percentage?: number
           question_source_type?: string | null
+          question_sources?: Json | null
           questions_count?: number | null
           school_id?: string
           selected_sections?: string[] | null
@@ -1022,6 +1027,7 @@ export type Database = {
           show_results_immediately?: boolean
           shuffle_choices?: boolean
           shuffle_questions?: boolean
+          source_distribution?: Json | null
           start_datetime?: string | null
           status?: Database["public"]["Enums"]["exam_status"]
           target_classes?: string[] | null
