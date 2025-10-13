@@ -2166,103 +2166,115 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                     />
 
                     {/* Custom number inputs */}
-                    {difficultyMode === 'custom' && (
-                      <div className="space-y-6 border rounded-lg p-4 bg-muted/30">
-                        <h4 className="font-medium">تخصيص العدد يدوياً</h4>
-                        
-                        <FormField
-                          control={form.control}
-                          name="custom_easy_count"
-                          render={({ field }) => (
-                            <FormItem>
-                              <div className="flex items-center justify-between mb-2">
-                                <FormLabel>🟢 أسئلة سهلة</FormLabel>
-                              </div>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  min={0}
-                                  max={questionsCount}
-                                  {...field}
-                                  value={field.value || 0}
-                                  onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                                  placeholder="عدد الأسئلة"
-                                />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
+                    {difficultyMode === 'custom' && (() => {
+                      const availableStats = getAvailableDifficultyStats();
+                      return (
+                        <div className="space-y-6 border rounded-lg p-4 bg-muted/30">
+                          <h4 className="font-medium">تخصيص العدد يدوياً</h4>
+                          
+                          <FormField
+                            control={form.control}
+                            name="custom_easy_count"
+                            render={({ field }) => (
+                              <FormItem>
+                                <div className="flex items-center justify-between mb-2">
+                                  <FormLabel>🟢 أسئلة سهلة</FormLabel>
+                                  <span className="text-xs text-muted-foreground">
+                                    متاح: <span className="font-medium text-green-600">{availableStats.easy}</span>
+                                  </span>
+                                </div>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    min={0}
+                                    max={availableStats.easy}
+                                    {...field}
+                                    value={field.value || 0}
+                                    onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                    placeholder="عدد الأسئلة"
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
 
-                        <FormField
-                          control={form.control}
-                          name="custom_medium_count"
-                          render={({ field }) => (
-                            <FormItem>
-                              <div className="flex items-center justify-between mb-2">
-                                <FormLabel>🟡 أسئلة متوسطة</FormLabel>
-                              </div>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  min={0}
-                                  max={questionsCount}
-                                  {...field}
-                                  value={field.value || 0}
-                                  onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                                  placeholder="عدد الأسئلة"
-                                />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
+                          <FormField
+                            control={form.control}
+                            name="custom_medium_count"
+                            render={({ field }) => (
+                              <FormItem>
+                                <div className="flex items-center justify-between mb-2">
+                                  <FormLabel>🟡 أسئلة متوسطة</FormLabel>
+                                  <span className="text-xs text-muted-foreground">
+                                    متاح: <span className="font-medium text-yellow-600">{availableStats.medium}</span>
+                                  </span>
+                                </div>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    min={0}
+                                    max={availableStats.medium}
+                                    {...field}
+                                    value={field.value || 0}
+                                    onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                    placeholder="عدد الأسئلة"
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
 
-                        <FormField
-                          control={form.control}
-                          name="custom_hard_count"
-                          render={({ field }) => (
-                            <FormItem>
-                              <div className="flex items-center justify-between mb-2">
-                                <FormLabel>🔴 أسئلة صعبة</FormLabel>
-                              </div>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  min={0}
-                                  max={questionsCount}
-                                  {...field}
-                                  value={field.value || 0}
-                                  onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                                  placeholder="عدد الأسئلة"
-                                />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
+                          <FormField
+                            control={form.control}
+                            name="custom_hard_count"
+                            render={({ field }) => (
+                              <FormItem>
+                                <div className="flex items-center justify-between mb-2">
+                                  <FormLabel>🔴 أسئلة صعبة</FormLabel>
+                                  <span className="text-xs text-muted-foreground">
+                                    متاح: <span className="font-medium text-red-600">{availableStats.hard}</span>
+                                  </span>
+                                </div>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    min={0}
+                                    max={availableStats.hard}
+                                    {...field}
+                                    value={field.value || 0}
+                                    onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                    placeholder="عدد الأسئلة"
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
 
-                        {(() => {
-                          const total = (customEasyCount || 0) + (customMediumCount || 0) + (customHardCount || 0);
-                          if (total !== questionsCount) {
+                          {(() => {
+                            const total = (customEasyCount || 0) + (customMediumCount || 0) + (customHardCount || 0);
+                            if (total !== questionsCount) {
+                              return (
+                                <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+                                  <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                                    ⚠️ المجموع الحالي: {total} من {questionsCount}
+                                    {total < questionsCount && ` (يجب إضافة ${questionsCount - total} أسئلة)`}
+                                    {total > questionsCount && ` (يجب تقليل ${total - questionsCount} أسئلة)`}
+                                  </p>
+                                </div>
+                              );
+                            }
                             return (
-                              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
-                                <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                                  ⚠️ المجموع الحالي: {total} من {questionsCount}
-                                  {total < questionsCount && ` (يجب إضافة ${questionsCount - total} أسئلة)`}
-                                  {total > questionsCount && ` (يجب تقليل ${total - questionsCount} أسئلة)`}
+                              <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+                                <p className="text-sm text-green-800 dark:text-green-200 flex items-center gap-2">
+                                  <CheckCircle className="w-4 h-4" />
+                                  ✅ المجموع صحيح: {total} سؤال
                                 </p>
                               </div>
                             );
-                          }
-                          return (
-                            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
-                              <p className="text-sm text-green-800 dark:text-green-200 flex items-center gap-2">
-                                <CheckCircle className="w-4 h-4" />
-                                ✅ المجموع صحيح: {total} سؤال
-                              </p>
-                            </div>
-                          );
-                        })()}
-                      </div>
-                    )}
+                          })()}
+                        </div>
+                      );
+                    })()}
 
                     {/* معاينة التوزيع */}
                     <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
