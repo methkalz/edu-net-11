@@ -227,8 +227,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
       shuffle_choices: false,
       show_results_immediately: true,
       allow_review: true,
-      question_sources: ['random'], // مصدر افتراضي
-      source_distribution: {},
+      question_source_mode: 'smart', // الوضع الافتراضي
       selected_sections: [],
       selected_teacher_categories: [],
       questions_count: 10,
@@ -282,8 +281,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
 
   // حساب عدد الأسئلة المتاحة بناءً على الاختيارات
   const questionsCount = form.watch('questions_count');
-  const questionSources = (form.watch('question_sources') || []) as ('random' | 'specific_sections' | 'my_questions')[];
-  const sourceDistribution = form.watch('source_distribution') || {};
+  const questionSourceMode = form.watch('question_source_mode') as 'smart' | 'question_bank' | 'my_questions';
   const selectedSections = form.watch('selected_sections');
   const difficultyMode = form.watch('difficulty_mode');
   const customEasyCount = form.watch('custom_easy_count');
@@ -295,13 +293,15 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
 
     let counts = { easy: 0, medium: 0, hard: 0 };
 
-    if (questionSources.includes('random')) {
+    if (questionSourceMode === 'smart' || !selectedSections || selectedSections.length === 0) {
+      // في الوضع الذكي أو عدم اختيار أقسام: احسب كل الأقسام
       availableSections.forEach(section => {
         counts.easy += section.easy;
         counts.medium += section.medium;
         counts.hard += section.hard;
       });
     } else {
+      // في الوضع اليدوي: احسب الأقسام المحددة فقط
       availableSections
         .filter(section => selectedSections?.includes(section.id))  // البحث بـ ID
         .forEach(section => {
@@ -337,9 +337,9 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
 
   // دالة للحصول على إحصائيات الصعوبة المتاحة حسب المصدر
   const getAvailableDifficultyStats = () => {
-    const sourceType = form.getValues('question_source_type');
+    const sourceMode = form.getValues('question_source_mode');
     
-    if (sourceType === 'my_questions') {
+    if (sourceMode === 'my_questions') {
       return teacherQuestionsStats;
     } else {
       return availableQuestions;
@@ -348,22 +348,22 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
 
   // دالة لحساب الأسئلة المتاحة حسب المصدر
   const getAvailableQuestionsCount = () => {
-    const sourceType = form.getValues('question_source_type');
+    const sourceMode = form.getValues('question_source_mode');
     const selectedSects = form.getValues('selected_sections');
     const selectedCats = form.getValues('selected_teacher_categories');
     
     let availableCount = 0;
     
-    if (sourceType === 'random') {
+    if (sourceMode === 'smart') {
       // كل الأسئلة من الصف المختار
       availableCount = availableQuestions.total;
-    } else if (sourceType === 'specific_sections' && selectedSects?.length > 0) {
+    } else if (sourceMode === 'question_bank' && selectedSects?.length > 0) {
       // مجموع الأسئلة من الأقسام المحددة
       selectedSects.forEach(sectionId => {
         const section = availableSections?.find(s => s.id === sectionId);
         if (section) availableCount += section.total;
       });
-    } else if (sourceType === 'my_questions' && selectedCats?.length > 0) {
+    } else if (sourceMode === 'my_questions' && selectedCats?.length > 0) {
       // مجموع أسئلة المعلم من التصنيفات المحددة
       availableCount = teacherQuestionsStats.total;
     }
@@ -463,7 +463,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         shuffle_choices: exam.shuffle_choices,
         show_results_immediately: exam.show_results_immediately,
         allow_review: exam.allow_review,
-        question_source_type: (exam.question_source_type || 'random') as 'random' | 'specific_sections' | 'my_questions',
+        question_source_mode: ((exam as any).question_source_mode || 'smart') as 'smart' | 'question_bank' | 'my_questions',
         selected_sections: exam.selected_sections || [],
         selected_teacher_categories: (exam as any).selected_teacher_categories || [],
         questions_count: exam.questions_count || 10,
@@ -604,8 +604,8 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         setCurrentStep(prev => prev + 1);
         return true;
       } else if (currentStep === 4) {
-        const sources = form.getValues('question_sources') || [];
-        if (sources.includes('specific_sections')) {
+        const sourceMode = form.getValues('question_source_mode');
+        if (sourceMode === 'question_bank') {
           const selectedSections = form.getValues('selected_sections');
           if (!selectedSections || selectedSections.length === 0) {
             toast.error('يجب اختيار قسم واحد على الأقل');
@@ -624,7 +624,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
             });
             return false;
           }
-        } else if (sources.includes('my_questions')) {
+        } else if (sourceMode === 'my_questions') {
           const selectedCategories = form.getValues('selected_teacher_categories');
           if (!selectedCategories || selectedCategories.length === 0) {
             toast.error('يجب اختيار تصنيف واحد على الأقل من أسئلتك');
@@ -829,15 +829,14 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         shuffle_choices: data.shuffle_choices,
         show_results_immediately: data.show_results_immediately,
         allow_review: data.allow_review,
-        question_sources: questionSources,
-        source_distribution: sourceDistribution,
+        question_source_mode: data.question_source_mode,
         selected_sections: data.selected_sections || [],
         selected_teacher_categories: data.selected_teacher_categories || [],
         questions_count: data.questions_count,
         difficulty_distribution: diffDistribution,
         status: data.publish_status as 'draft' | 'scheduled' | 'active',
         total_questions: data.questions_count,
-        total_points: data.questions_count * 10, // افتراض 10 نقاط لكل سؤال
+        total_points: data.questions_count * 10, // افتراض 10 نقاط لكل سؤال,
       };
 
       // 🔍 DEVELOPMENT MODE: فحص شامل لبيانات الامتحان
@@ -921,8 +920,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         // 6️⃣ فحص الـ Status & Enums
         console.log('🎯 Status & Enums:', {
           status: { value: examData.status, type: typeof examData.status },
-          question_sources: { value: examData.question_sources, type: typeof examData.question_sources },
-          source_distribution: { value: examData.source_distribution, type: typeof examData.source_distribution }
+          question_source_mode: { value: examData.question_source_mode, type: typeof examData.question_source_mode }
         });
 
         // 7️⃣ البيانات الكاملة للإرسال
@@ -1863,157 +1861,6 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                       selectedCategories={form.watch('selected_teacher_categories') || []}
                       onCategoriesChange={(cats) => form.setValue('selected_teacher_categories', cats)}
                     />
-
-                                </FormItem>
-                              )}
-                            />
-
-                            {/* إحصائيات أسئلة المعلم */}
-                            {selectedTeacherCategories && selectedTeacherCategories.length > 0 && (
-                              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mt-4">
-                                <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-3">📊 أسئلتك المتاحة</h4>
-                                <div className="grid grid-cols-4 gap-4 text-sm">
-                                  <div>
-                                    <p className="text-muted-foreground">سهل</p>
-                                    <p className="font-bold text-green-600">{teacherQuestionsStats.easy}</p>
-                                  </div>
-                                  <div>
-                                    <p className="text-muted-foreground">متوسط</p>
-                                    <p className="font-bold text-yellow-600">{teacherQuestionsStats.medium}</p>
-                                  </div>
-                                  <div>
-                                    <p className="text-muted-foreground">صعب</p>
-                                    <p className="font-bold text-red-600">{teacherQuestionsStats.hard}</p>
-                                  </div>
-                                  <div>
-                                    <p className="text-muted-foreground">المجموع</p>
-                                    <p className="font-bold text-primary">{teacherQuestionsStats.total}</p>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    )}
-
-                    {/* عرض الأقسام المتاحة */}
-                    {questionSources.includes('specific_sections') && (
-                      <div className="space-y-4">
-                        {sectionsLoading ? (
-                          <div className="text-center py-4">
-                            <p className="text-muted-foreground">جاري تحميل الأقسام...</p>
-                          </div>
-                        ) : !availableSections || availableSections.length === 0 ? (
-                          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-                            <div className="flex items-start gap-3">
-                              <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
-                              <div>
-                                <p className="font-medium text-yellow-800 dark:text-yellow-200">لا توجد أقسام متاحة</p>
-                                <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
-                                  {!selectedGradeLevel 
-                                    ? 'يجب اختيار الصف أولاً في الخطوة 2'
-                                    : 'لا توجد أسئلة في بنك الأسئلة لهذا الصف'
-                                  }
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <FormField
-                            control={form.control}
-                            name="selected_sections"
-                            render={() => (
-                              <FormItem>
-                                <FormLabel className="text-base">اختر الأقسام</FormLabel>
-                                <div className="space-y-3 mt-3">
-                                  {availableSections.map((section) => (
-                                    <FormField
-                                      key={section.id}
-                                      control={form.control}
-                                      name="selected_sections"
-                                      render={({ field }) => (
-                                        <FormItem className="flex items-start space-x-3 space-x-reverse space-y-0 border rounded-lg p-4 hover:bg-muted/50">
-                                          <FormControl>
-                                            <Checkbox
-                                              checked={field.value?.includes(section.id)}
-                                              onCheckedChange={(checked) => {
-                                                return checked
-                                                  ? field.onChange([...(field.value || []), section.id])
-                                                  : field.onChange(field.value?.filter((value) => value !== section.id));
-                                              }}
-                                            />
-                                          </FormControl>
-                                          <div className="flex-1 space-y-2">
-                                            <FormLabel className="font-medium cursor-pointer">
-                                              {section.name}
-                                            </FormLabel>
-                                            <div className="flex items-center gap-4 text-xs">
-                                              <span className="flex items-center gap-1 text-green-600 dark:text-green-400">
-                                                <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                                                سهل: {section.easy}
-                                              </span>
-                                              <span className="flex items-center gap-1 text-yellow-600 dark:text-yellow-400">
-                                                <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
-                                                متوسط: {section.medium}
-                                              </span>
-                                              <span className="flex items-center gap-1 text-red-600 dark:text-red-400">
-                                                <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                                                صعب: {section.hard}
-                                              </span>
-                                              <span className="font-medium">
-                                                المجموع: {section.total}
-                                              </span>
-                                            </div>
-                                          </div>
-                                        </FormItem>
-                                      )}
-                                    />
-                                  ))}
-                                </div>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        )}
-
-                        {/* عرض الأقسام المحددة */}
-                        {selectedSections && selectedSections.length > 0 && (
-                          <div className="text-sm text-muted-foreground mt-3 p-3 bg-muted/30 rounded-lg">
-                            <span className="font-medium">الأقسام المحددة: </span>
-                            {selectedSections
-                              .map(id => availableSections?.find(s => s.id === id)?.name)
-                              .filter(Boolean)
-                              .join('، ')}
-                          </div>
-                        )}
-
-                        {/* إحصائيات الأسئلة المتاحة */}
-                        {availableSections && availableSections.length > 0 && (
-                          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                            <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-3">📊 الأسئلة المتاحة</h4>
-                            <div className="grid grid-cols-4 gap-4 text-sm">
-                              <div>
-                                <p className="text-muted-foreground">سهل</p>
-                                <p className="font-bold text-green-600">{availableQuestions.easy}</p>
-                              </div>
-                              <div>
-                                <p className="text-muted-foreground">متوسط</p>
-                                <p className="font-bold text-yellow-600">{availableQuestions.medium}</p>
-                              </div>
-                              <div>
-                                <p className="text-muted-foreground">صعب</p>
-                                <p className="font-bold text-red-600">{availableQuestions.hard}</p>
-                              </div>
-                              <div>
-                                <p className="text-muted-foreground">المجموع</p>
-                                <p className="font-bold text-primary">{availableQuestions.total}</p>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
                   </div>
                 )}
 

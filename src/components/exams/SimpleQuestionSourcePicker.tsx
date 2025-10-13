@@ -79,7 +79,7 @@ export const SimpleQuestionSourcePicker = ({
                   value={selectedSections}
                   onChange={onSectionsChange || (() => {})}
                   placeholder="اختر الأقسام..."
-                  emptyMessage="لا توجد أقسام متاحة"
+                  emptyText="لا توجد أقسام متاحة"
                 />
               </div>
             )}
@@ -117,7 +117,7 @@ export const SimpleQuestionSourcePicker = ({
                     value={selectedCategories}
                     onChange={onCategoriesChange || (() => {})}
                     placeholder="اختر التصنيفات..."
-                    emptyMessage="لا توجد تصنيفات متاحة"
+                    emptyText="لا توجد تصنيفات متاحة"
                   />
                 )}
               </div>
