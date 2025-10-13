@@ -89,11 +89,11 @@ const createExamSchema = z.object({
   selected_sections: z.array(z.string()).optional(),
   selected_teacher_categories: z.array(z.string()).optional(),
   questions_count: z.number().min(1, 'عدد الأسئلة مطلوب').default(10),
-  // توزيع الصعوبة الذكي
-  difficulty_mode: z.enum(['easy_focused', 'balanced', 'medium_focused', 'challenging', 'hard_focused', 'custom']).default('balanced'),
-  custom_easy: z.number().min(0).max(100).default(40),
-  custom_medium: z.number().min(0).max(100).default(40),
-  custom_hard: z.number().min(0).max(100).default(20),
+  // توزيع الصعوبة الذكي بالأعداد المباشرة
+  difficulty_mode: z.enum(['balanced', 'easy', 'hard', 'custom']).default('balanced'),
+  custom_easy_count: z.number().min(0).optional(),
+  custom_medium_count: z.number().min(0).optional(),
+  custom_hard_count: z.number().min(0).optional(),
   // إعدادات النشر
   publish_status: z.enum(['draft', 'scheduled', 'active']).default('draft'),
 });
@@ -111,14 +111,51 @@ const EXAM_STEPS = [
   { number: 7, title: 'النشر والجدولة', icon: '🚀' }
 ];
 
-// Presets for difficulty
+// Presets للتوزيع مع دوال ذكية
 const difficultyPresets = {
-  easy_focused: { easy: 60, medium: 30, hard: 10, label: 'سهل ومتوازن', icon: '📊' },
-  balanced: { easy: 40, medium: 40, hard: 20, label: 'متوازن (افتراضي)', icon: '⚖️' },
-  medium_focused: { easy: 30, medium: 50, hard: 20, label: 'متوسط متوازن', icon: '📈' },
-  challenging: { easy: 30, medium: 40, hard: 30, label: 'متوسط التحدي', icon: '🎯' },
-  hard_focused: { easy: 20, medium: 30, hard: 50, label: 'تحدي متقدم', icon: '🔥' },
-  custom: { easy: 33, medium: 33, hard: 34, label: 'مخصص', icon: '⚙️' },
+  balanced: {
+    label: 'متوازن',
+    icon: '⚖️',
+    description: '40% سهل • 40% متوسط • 20% صعب',
+    getDistribution: (total: number) => {
+      const easy = Math.floor(total * 0.4);
+      const medium = Math.floor(total * 0.4);
+      const hard = total - easy - medium; // الباقي يذهب للصعب
+      return { easy, medium, hard };
+    }
+  },
+  easy: {
+    label: 'سهل',
+    icon: '🟢',
+    description: '60% سهل • 30% متوسط • 10% صعب',
+    getDistribution: (total: number) => {
+      const easy = Math.floor(total * 0.6);
+      const medium = Math.floor(total * 0.3);
+      const hard = total - easy - medium;
+      return { easy, medium, hard };
+    }
+  },
+  hard: {
+    label: 'صعب',
+    icon: '🔴',
+    description: '20% سهل • 30% متوسط • 50% صعب',
+    getDistribution: (total: number) => {
+      const easy = Math.floor(total * 0.2);
+      const medium = Math.floor(total * 0.3);
+      const hard = total - easy - medium;
+      return { easy, medium, hard };
+    }
+  },
+  custom: {
+    label: 'تخصيص يدوي',
+    icon: '✏️',
+    description: 'حدد العدد بنفسك',
+    getDistribution: (total: number) => ({
+      easy: Math.floor(total / 3),
+      medium: Math.floor(total / 3),
+      hard: Math.ceil(total / 3)
+    })
+  }
 };
 
 export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canAccessGrade11 }) => {
@@ -194,9 +231,9 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
       selected_teacher_categories: [],
       questions_count: 10,
       difficulty_mode: 'balanced',
-      custom_easy: 40,
-      custom_medium: 40,
-      custom_hard: 20,
+      custom_easy_count: undefined,
+      custom_medium_count: undefined,
+      custom_hard_count: undefined,
       publish_status: 'draft',
     },
   });
@@ -246,9 +283,9 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
   const questionSourceType = form.watch('question_source_type');
   const selectedSections = form.watch('selected_sections');
   const difficultyMode = form.watch('difficulty_mode');
-  const customEasy = form.watch('custom_easy');
-  const customMedium = form.watch('custom_medium');
-  const customHard = form.watch('custom_hard');
+  const customEasyCount = form.watch('custom_easy_count');
+  const customMediumCount = form.watch('custom_medium_count');
+  const customHardCount = form.watch('custom_hard_count');
 
   const calculateAvailableQuestions = () => {
     if (!availableSections || availableSections.length === 0) return { easy: 0, medium: 0, hard: 0, total: 0 };
@@ -331,20 +368,17 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
     return availableCount;
   };
 
-  // حساب التوزيع المتوقع
-  const getDistribution = () => {
+  // حساب التوزيع المتوقع بالأعداد المباشرة
+  const expectedCounts = React.useMemo(() => {
     if (difficultyMode === 'custom') {
-      return { easy: customEasy, medium: customMedium, hard: customHard };
+      return {
+        easy: customEasyCount || 0,
+        medium: customMediumCount || 0,
+        hard: customHardCount || 0,
+      };
     }
-    return difficultyPresets[difficultyMode];
-  };
-
-  const distribution = getDistribution();
-  const expectedCounts = {
-    easy: Math.round((questionsCount * distribution.easy) / 100),
-    medium: Math.round((questionsCount * distribution.medium) / 100),
-    hard: Math.round((questionsCount * distribution.hard) / 100),
-  };
+    return difficultyPresets[difficultyMode].getDistribution(questionsCount);
+  }, [difficultyMode, questionsCount, customEasyCount, customMediumCount, customHardCount]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -396,7 +430,18 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
       if (error) throw error;
 
       // استخراج معلومات توزيع الصعوبة
-      const diffDist = exam.difficulty_distribution as any || { mode: 'balanced', distribution: { easy: 40, medium: 40, hard: 20 } };
+      const diffDist = exam.difficulty_distribution as any || { mode: 'balanced', distribution: { easy: 4, medium: 4, hard: 2 } };
+      
+      // حساب الأعداد إذا كان custom
+      const customDist = diffDist.mode === 'custom' ? {
+        custom_easy_count: diffDist.distribution?.easy || undefined,
+        custom_medium_count: diffDist.distribution?.medium || undefined,
+        custom_hard_count: diffDist.distribution?.hard || undefined,
+      } : {
+        custom_easy_count: undefined,
+        custom_medium_count: undefined,
+        custom_hard_count: undefined,
+      };
 
       // ملء البيانات في النموذج
       form.reset({
@@ -420,9 +465,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         selected_teacher_categories: (exam as any).selected_teacher_categories || [],
         questions_count: exam.questions_count || 10,
         difficulty_mode: (diffDist.mode || 'balanced') as any,
-        custom_easy: diffDist.distribution?.easy || 40,
-        custom_medium: diffDist.distribution?.medium || 40,
-        custom_hard: diffDist.distribution?.hard || 20,
+        ...customDist,
         publish_status: (exam.status || 'draft') as 'draft' | 'scheduled' | 'active',
       });
 
@@ -611,31 +654,25 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
       } else if (currentStep === 5) {
         // التحقق من توزيع الصعوبة
         if (difficultyMode === 'custom') {
-          const total = customEasy + customMedium + customHard;
-          if (total !== 100) {
-            toast.error('يجب أن يكون مجموع النسب 100%');
+          const total = (customEasyCount || 0) + (customMediumCount || 0) + (customHardCount || 0);
+          if (total !== questionsCount) {
+            toast.error(`المجموع ${total} يختلف عن العدد المطلوب ${questionsCount}`);
             return false;
           }
         }
         
         // ✨ التحقق الذكي: هل التوزيع المطلوب متاح؟
         const availableStats = getAvailableDifficultyStats();
-        const questionsCount = form.getValues('questions_count');
-        const distribution = getDistribution();
-        
-        const expectedEasy = Math.ceil((questionsCount * distribution.easy) / 100);
-        const expectedMedium = Math.ceil((questionsCount * distribution.medium) / 100);
-        const expectedHard = Math.ceil((questionsCount * distribution.hard) / 100);
         
         const issues = [];
-        if (expectedEasy > availableStats.easy) {
-          issues.push(`سهل: مطلوب ${expectedEasy} متاح ${availableStats.easy}`);
+        if (expectedCounts.easy > availableStats.easy) {
+          issues.push(`سهل: مطلوب ${expectedCounts.easy} متاح ${availableStats.easy}`);
         }
-        if (expectedMedium > availableStats.medium) {
-          issues.push(`متوسط: مطلوب ${expectedMedium} متاح ${availableStats.medium}`);
+        if (expectedCounts.medium > availableStats.medium) {
+          issues.push(`متوسط: مطلوب ${expectedCounts.medium} متاح ${availableStats.medium}`);
         }
-        if (expectedHard > availableStats.hard) {
-          issues.push(`صعب: مطلوب ${expectedHard} متاح ${availableStats.hard}`);
+        if (expectedCounts.hard > availableStats.hard) {
+          issues.push(`صعب: مطلوب ${expectedCounts.hard} متاح ${availableStats.hard}`);
         }
         
         if (issues.length > 0) {
@@ -772,11 +809,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
       // إعداد بيانات توزيع الصعوبة
       const diffDistribution = {
         mode: data.difficulty_mode,
-        distribution: {
-          easy: data.difficulty_mode === 'custom' ? data.custom_easy : difficultyPresets[data.difficulty_mode].easy,
-          medium: data.difficulty_mode === 'custom' ? data.custom_medium : difficultyPresets[data.difficulty_mode].medium,
-          hard: data.difficulty_mode === 'custom' ? data.custom_hard : difficultyPresets[data.difficulty_mode].hard,
-        }
+        distribution: expectedCounts
       };
 
       const examData = {
@@ -2097,26 +2130,34 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                           <FormLabel className="text-base">اختر نمط التوزيع</FormLabel>
                           <FormControl>
                             <RadioGroup value={field.value} onValueChange={field.onChange}>
-                              {Object.entries(difficultyPresets).map(([key, preset]) => (
-                                <div 
-                                  key={key}
-                                  className="flex items-center space-x-3 space-x-reverse border rounded-lg p-4 cursor-pointer hover:bg-muted/50"
-                                >
-                                  <RadioGroupItem value={key} id={key} />
-                                  <Label htmlFor={key} className="flex-1 cursor-pointer">
-                                    <div className="flex items-center justify-between">
-                                      <div>
-                                        <span className="text-base font-medium block">
-                                          {preset.icon} {preset.label}
-                                        </span>
-                                        <span className="text-sm text-muted-foreground">
-                                          {preset.easy}% سهل • {preset.medium}% متوسط • {preset.hard}% صعب
-                                        </span>
+                              {Object.entries(difficultyPresets).map(([key, preset]) => {
+                                const dist = preset.getDistribution(questionsCount);
+                                return (
+                                  <div 
+                                    key={key}
+                                    className="flex items-center space-x-3 space-x-reverse border rounded-lg p-4 cursor-pointer hover:bg-muted/50"
+                                  >
+                                    <RadioGroupItem value={key} id={key} />
+                                    <Label htmlFor={key} className="flex-1 cursor-pointer">
+                                      <div className="flex items-center justify-between">
+                                        <div>
+                                          <span className="text-base font-medium block">
+                                            {preset.icon} {preset.label}
+                                          </span>
+                                          <span className="text-sm text-muted-foreground">
+                                            {preset.description}
+                                          </span>
+                                          {key !== 'custom' && (
+                                            <span className="text-xs text-muted-foreground block mt-1">
+                                              {dist.easy} سهل • {dist.medium} متوسط • {dist.hard} صعب = {dist.easy + dist.medium + dist.hard} سؤال
+                                            </span>
+                                          )}
+                                        </div>
                                       </div>
-                                    </div>
-                                  </Label>
-                                </div>
-                              ))}
+                                    </Label>
+                                  </div>
+                                );
+                              })}
                             </RadioGroup>
                           </FormControl>
                           <FormMessage />
@@ -2124,27 +2165,28 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                       )}
                     />
 
-                    {/* Custom sliders */}
+                    {/* Custom number inputs */}
                     {difficultyMode === 'custom' && (
                       <div className="space-y-6 border rounded-lg p-4 bg-muted/30">
-                        <h4 className="font-medium">تخصيص النسب يدوياً</h4>
+                        <h4 className="font-medium">تخصيص العدد يدوياً</h4>
                         
                         <FormField
                           control={form.control}
-                          name="custom_easy"
+                          name="custom_easy_count"
                           render={({ field }) => (
                             <FormItem>
                               <div className="flex items-center justify-between mb-2">
-                                <FormLabel>أسئلة سهلة</FormLabel>
-                                <span className="text-sm font-medium">{field.value}%</span>
+                                <FormLabel>🟢 أسئلة سهلة</FormLabel>
                               </div>
                               <FormControl>
-                                <Slider
-                                  value={[field.value]}
-                                  onValueChange={([value]) => field.onChange(value)}
-                                  max={100}
-                                  step={5}
-                                  className="w-full"
+                                <Input
+                                  type="number"
+                                  min={0}
+                                  max={questionsCount}
+                                  {...field}
+                                  value={field.value || 0}
+                                  onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                  placeholder="عدد الأسئلة"
                                 />
                               </FormControl>
                             </FormItem>
@@ -2153,20 +2195,21 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
 
                         <FormField
                           control={form.control}
-                          name="custom_medium"
+                          name="custom_medium_count"
                           render={({ field }) => (
                             <FormItem>
                               <div className="flex items-center justify-between mb-2">
-                                <FormLabel>أسئلة متوسطة</FormLabel>
-                                <span className="text-sm font-medium">{field.value}%</span>
+                                <FormLabel>🟡 أسئلة متوسطة</FormLabel>
                               </div>
                               <FormControl>
-                                <Slider
-                                  value={[field.value]}
-                                  onValueChange={([value]) => field.onChange(value)}
-                                  max={100}
-                                  step={5}
-                                  className="w-full"
+                                <Input
+                                  type="number"
+                                  min={0}
+                                  max={questionsCount}
+                                  {...field}
+                                  value={field.value || 0}
+                                  onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                  placeholder="عدد الأسئلة"
                                 />
                               </FormControl>
                             </FormItem>
@@ -2175,33 +2218,49 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
 
                         <FormField
                           control={form.control}
-                          name="custom_hard"
+                          name="custom_hard_count"
                           render={({ field }) => (
                             <FormItem>
                               <div className="flex items-center justify-between mb-2">
-                                <FormLabel>أسئلة صعبة</FormLabel>
-                                <span className="text-sm font-medium">{field.value}%</span>
+                                <FormLabel>🔴 أسئلة صعبة</FormLabel>
                               </div>
                               <FormControl>
-                                <Slider
-                                  value={[field.value]}
-                                  onValueChange={([value]) => field.onChange(value)}
-                                  max={100}
-                                  step={5}
-                                  className="w-full"
+                                <Input
+                                  type="number"
+                                  min={0}
+                                  max={questionsCount}
+                                  {...field}
+                                  value={field.value || 0}
+                                  onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                  placeholder="عدد الأسئلة"
                                 />
                               </FormControl>
                             </FormItem>
                           )}
                         />
 
-                        {(customEasy + customMedium + customHard) !== 100 && (
-                          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
-                            <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                              ⚠️ المجموع الحالي: {customEasy + customMedium + customHard}% (يجب أن يكون 100%)
-                            </p>
-                          </div>
-                        )}
+                        {(() => {
+                          const total = (customEasyCount || 0) + (customMediumCount || 0) + (customHardCount || 0);
+                          if (total !== questionsCount) {
+                            return (
+                              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+                                <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                                  ⚠️ المجموع الحالي: {total} من {questionsCount}
+                                  {total < questionsCount && ` (يجب إضافة ${questionsCount - total} أسئلة)`}
+                                  {total > questionsCount && ` (يجب تقليل ${total - questionsCount} أسئلة)`}
+                                </p>
+                              </div>
+                            );
+                          }
+                          return (
+                            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+                              <p className="text-sm text-green-800 dark:text-green-200 flex items-center gap-2">
+                                <CheckCircle className="w-4 h-4" />
+                                ✅ المجموع صحيح: {total} سؤال
+                              </p>
+                            </div>
+                          );
+                        })()}
                       </div>
                     )}
 
@@ -2209,30 +2268,23 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                     <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                       <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-4">📈 معاينة التوزيع</h4>
                       
-                      <div className="space-y-3 mb-4">
-                        <div>
-                          <div className="flex items-center justify-between text-sm mb-1">
-                            <span className="text-green-700 dark:text-green-300">أسئلة سهلة</span>
-                            <span className="font-medium">{expectedCounts.easy} سؤال ({distribution.easy}%)</span>
-                          </div>
-                          <Progress value={distribution.easy} className="h-2" />
+                      <div className="grid grid-cols-3 gap-4 mb-4">
+                        <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                          <div className="text-2xl font-bold text-green-600">{expectedCounts.easy}</div>
+                          <div className="text-xs text-muted-foreground mt-1">أسئلة سهلة</div>
                         </div>
+                        <div className="text-center p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                          <div className="text-2xl font-bold text-yellow-600">{expectedCounts.medium}</div>
+                          <div className="text-xs text-muted-foreground mt-1">أسئلة متوسطة</div>
+                        </div>
+                        <div className="text-center p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                          <div className="text-2xl font-bold text-red-600">{expectedCounts.hard}</div>
+                          <div className="text-xs text-muted-foreground mt-1">أسئلة صعبة</div>
+                        </div>
+                      </div>
 
-                        <div>
-                          <div className="flex items-center justify-between text-sm mb-1">
-                            <span className="text-yellow-700 dark:text-yellow-300">أسئلة متوسطة</span>
-                            <span className="font-medium">{expectedCounts.medium} سؤال ({distribution.medium}%)</span>
-                          </div>
-                          <Progress value={distribution.medium} className="h-2" />
-                        </div>
-
-                        <div>
-                          <div className="flex items-center justify-between text-sm mb-1">
-                            <span className="text-red-700 dark:text-red-300">أسئلة صعبة</span>
-                            <span className="font-medium">{expectedCounts.hard} سؤال ({distribution.hard}%)</span>
-                          </div>
-                          <Progress value={distribution.hard} className="h-2" />
-                        </div>
+                      <div className="text-center text-sm text-muted-foreground mb-4">
+                        المجموع: {expectedCounts.easy + expectedCounts.medium + expectedCounts.hard} من {questionsCount} سؤال
                       </div>
 
                       {/* التحقق الذكي من التوافر */}
