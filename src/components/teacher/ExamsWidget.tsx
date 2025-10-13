@@ -164,7 +164,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data, isLoading } = useTeacherExams(user?.id);
-  const { questions, categories } = useTeacherQuestions();
+  const { questions = [], categories = [] } = useTeacherQuestions();
   const queryClient = useQueryClient();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isQuestionDialogOpen, setIsQuestionDialogOpen] = useState(false);
@@ -1989,7 +1989,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                       availableSections={availableSections?.map(s => ({ value: s.id, label: s.name })) || []}
                       selectedSections={selectedSections || []}
                       onSectionsChange={(sections) => form.setValue('selected_sections', sections)}
-                      availableCategories={categories.map(c => ({ value: c, label: c })) || []}
+                      availableCategories={Array.isArray(categories) ? categories.map(c => ({ value: c, label: c })) : []}
                       selectedCategories={form.watch('selected_teacher_categories') || []}
                       onCategoriesChange={(cats) => form.setValue('selected_teacher_categories', cats)}
                     />
