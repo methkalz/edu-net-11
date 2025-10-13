@@ -1035,6 +1035,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         show_results_immediately: data.show_results_immediately,
         allow_review: data.allow_review,
         question_source_type: data.question_source_type,
+        source_distribution: data.source_distribution || [], // ✅ إضافة التوزيع المتعدد
         selected_sections: data.selected_sections || [],
         selected_teacher_categories: data.selected_teacher_categories || [],
         questions_count: data.questions_count,
