@@ -70,7 +70,13 @@ export function SourceDistributionDebugPanel({ currentDistribution }: SourceDist
             <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200">
               <h3 className="font-semibold text-sm mb-2">📊 Current Distribution</h3>
               <pre className="text-xs overflow-x-auto bg-white dark:bg-gray-800 p-2 rounded border">
-                {JSON.stringify(currentDistribution, null, 2)}
+                {(() => {
+                  try {
+                    return JSON.stringify(currentDistribution, null, 2);
+                  } catch (e) {
+                    return 'Error: Circular reference detected';
+                  }
+                })()}
               </pre>
               <div className="mt-2 space-y-1">
                 <p className="text-xs">
@@ -114,7 +120,13 @@ export function SourceDistributionDebugPanel({ currentDistribution }: SourceDist
                   <p><strong>Stage:</strong> {report.errors[report.errors.length - 1].stage}</p>
                   <p><strong>Error:</strong> {report.errors[report.errors.length - 1].error}</p>
                   <pre className="text-xs overflow-x-auto bg-white dark:bg-gray-800 p-2 rounded border mt-2">
-                    {JSON.stringify(report.errors[report.errors.length - 1].data, null, 2)}
+                    {(() => {
+                      try {
+                        return JSON.stringify(report.errors[report.errors.length - 1].data, null, 2);
+                      } catch (e) {
+                        return 'Error: Circular reference';
+                      }
+                    })()}
                   </pre>
                 </div>
               </div>
@@ -153,7 +165,13 @@ export function SourceDistributionDebugPanel({ currentDistribution }: SourceDist
                     <details className="cursor-pointer">
                       <summary className="text-muted-foreground">Show data</summary>
                       <pre className="text-[10px] overflow-x-auto bg-white dark:bg-gray-900 p-2 rounded border mt-1">
-                        {JSON.stringify(event.data, null, 2)}
+                        {(() => {
+                          try {
+                            return JSON.stringify(event.data, null, 2);
+                          } catch (e) {
+                            return 'Error: Circular reference';
+                          }
+                        })()}
                       </pre>
                     </details>
                   </div>
