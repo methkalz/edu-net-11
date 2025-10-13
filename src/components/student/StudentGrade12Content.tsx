@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Video, FileText, FolderOpen, Play, Clock, CheckCircle, Star, ExternalLink, Search, Calendar, Eye, Trophy, Target, Sparkles, Plus, Edit3 } from 'lucide-react';
+import { Video, FileText, FolderOpen, Play, Clock, CheckCircle, Star, ExternalLink, Search, Calendar, Eye, Trophy, Target, Sparkles, Plus, Edit3, BookOpen } from 'lucide-react';
 import { toast } from 'sonner';
 import { useStudentProgress } from '@/hooks/useStudentProgress';
 import { useGrade12Projects } from '@/hooks/useGrade12Projects';
@@ -31,7 +31,8 @@ export const StudentGrade12Content: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedVideo, setSelectedVideo] = useState<any>(null);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('videos');
+  const [mainTab, setMainTab] = useState('content');
+  const [contentTab, setContentTab] = useState('videos');
   const [showProjectForm, setShowProjectForm] = useState(false);
 
   // Helper functions for video thumbnails
@@ -125,6 +126,7 @@ export const StudentGrade12Content: React.FC = () => {
   };
 
   const filteredVideos = videos.filter(video => video.title.toLowerCase().includes(searchTerm.toLowerCase()) || video.description && video.description.toLowerCase().includes(searchTerm.toLowerCase()));
+  
   const renderVideoPlayer = (video: any) => {
     const embedUrl = getEmbedUrl(video.video_url, video.source_type);
     const isGoogleDrive = video.source_type === 'google_drive' || video.video_url.includes('drive.google.com');
@@ -147,6 +149,7 @@ export const StudentGrade12Content: React.FC = () => {
         </div>
       </div>;
   };
+  
   if (loading) {
     return <div className="container mx-auto px-6 py-12">
         <div className="space-y-8">
@@ -169,6 +172,7 @@ export const StudentGrade12Content: React.FC = () => {
         </div>
       </div>;
   }
+  
   return <div className="container mx-auto px-6 py-12" dir="rtl">
       {/* Header */}
       <div className="text-center space-y-6 mb-12">
@@ -204,122 +208,138 @@ export const StudentGrade12Content: React.FC = () => {
         </div>
       </div>
 
-      {/* Content Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      {/* Main Tabs */}
+      <Tabs value={mainTab} onValueChange={setMainTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3 mb-8">
-          <TabsTrigger value="videos" className="flex items-center gap-2">
-            <Video className="h-4 w-4" />
-            الفيديوهات التعليمية ({videos.length})
+          <TabsTrigger value="content" className="flex items-center gap-2">
+            <BookOpen className="h-4 w-4" />
+            المحتوى
           </TabsTrigger>
-          <TabsTrigger value="documents" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            الملفات والمراجع ({documents.length})
-          </TabsTrigger>
-          <TabsTrigger value="projects" className="flex items-center gap-2">
+          <TabsTrigger value="project" className="flex items-center gap-2">
             <FolderOpen className="h-4 w-4" />
-            المشاريع النهائية ({projects.length})
+            المشروع النهائي
+          </TabsTrigger>
+          <TabsTrigger value="exams" className="flex items-center gap-2">
+            <Trophy className="h-4 w-4" />
+            الامتحانات
           </TabsTrigger>
         </TabsList>
 
-        {/* Videos Tab */}
-        <TabsContent value="videos">
-          {filteredVideos.length === 0 ? <div className="text-center py-16">
-              <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center">
-                <Video className="w-12 h-12 text-purple-600" />
-              </div>
-              <h3 className="text-2xl font-bold mb-4">
-                {searchTerm ? 'لا توجد نتائج' : 'لا توجد فيديوهات'}
-              </h3>
-              <p className="text-muted-foreground text-lg">
-                {searchTerm ? 'جرب البحث بمصطلحات مختلفة' : 'سيتم إضافة الفيديوهات التعليمية قريباً'}
-              </p>
-            </div> : <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredVideos.map(video => <Card key={video.id} className="group overflow-hidden hover:shadow-xl transition-all duration-500 border-0 bg-gradient-to-br from-background/80 to-background/40 backdrop-blur-md hover:scale-[1.02] hover:-translate-y-1">
-                  <div className="relative h-52 overflow-hidden">
-                    <img src={getVideoThumbnail(video)} alt={video.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" onError={e => {
-                (e.target as HTMLImageElement).src = '/placeholder.svg';
-              }} />
-                    
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-all duration-500 flex items-center justify-center cursor-pointer" onClick={() => openVideo(video)}>
-                      <div className="opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:scale-110">
-                        <div className="relative">
-                          <div className="absolute inset-0 bg-white/20 rounded-full blur-xl"></div>
-                          <div className="relative bg-white/15 hover:bg-white/25 rounded-full p-4 backdrop-blur-md border border-white/20 shadow-2xl">
-                            <Play className="w-8 h-8 text-white fill-white drop-shadow-lg" />
+        {/* Content Tab - with nested tabs for videos and documents */}
+        <TabsContent value="content">
+          <Tabs value={contentTab} onValueChange={setContentTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-8">
+              <TabsTrigger value="videos" className="flex items-center gap-2">
+                <Video className="h-4 w-4" />
+                الفيديوهات التعليمية ({videos.length})
+              </TabsTrigger>
+              <TabsTrigger value="documents" className="flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                الملفات والمراجع ({documents.length})
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Videos Tab */}
+            <TabsContent value="videos">
+              {filteredVideos.length === 0 ? <div className="text-center py-16">
+                  <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center">
+                    <Video className="w-12 h-12 text-purple-600" />
+                  </div>
+                  <h3 className="text-2xl font-bold mb-4">
+                    {searchTerm ? 'لا توجد نتائج' : 'لا توجد فيديوهات'}
+                  </h3>
+                  <p className="text-muted-foreground text-lg">
+                    {searchTerm ? 'جرب البحث بمصطلحات مختلفة' : 'سيتم إضافة الفيديوهات التعليمية قريباً'}
+                  </p>
+                </div> : <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {filteredVideos.map(video => <Card key={video.id} className="group overflow-hidden hover:shadow-xl transition-all duration-500 border-0 bg-gradient-to-br from-background/80 to-background/40 backdrop-blur-md hover:scale-[1.02] hover:-translate-y-1">
+                      <div className="relative h-52 overflow-hidden">
+                        <img src={getVideoThumbnail(video)} alt={video.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" onError={e => {
+                    (e.target as HTMLImageElement).src = '/placeholder.svg';
+                  }} />
+                        
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-all duration-500 flex items-center justify-center cursor-pointer" onClick={() => openVideo(video)}>
+                          <div className="opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:scale-110">
+                            <div className="relative">
+                              <div className="absolute inset-0 bg-white/20 rounded-full blur-xl"></div>
+                              <div className="relative bg-white/15 hover:bg-white/25 rounded-full p-4 backdrop-blur-md border border-white/20 shadow-2xl">
+                                <Play className="w-8 h-8 text-white fill-white drop-shadow-lg" />
+                              </div>
+                            </div>
                           </div>
                         </div>
+                        
+                        {video.duration && <div className="absolute bottom-4 left-4 bg-black/60 text-white text-xs px-3 py-1 rounded-full backdrop-blur-sm border border-white/20">
+                            <Clock className="w-3 h-3 inline mr-1" />
+                            {video.duration}
+                          </div>}
                       </div>
-                    </div>
-                    
-                    {video.duration && <div className="absolute bottom-4 left-4 bg-black/60 text-white text-xs px-3 py-1 rounded-full backdrop-blur-sm border border-white/20">
-                        <Clock className="w-3 h-3 inline mr-1" />
-                        {video.duration}
-                      </div>}
+                      
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-lg leading-7 line-clamp-2 group-hover:text-primary transition-colors duration-300">
+                          {video.title}
+                        </CardTitle>
+                        {video.description && <p className="text-sm text-muted-foreground line-clamp-2">
+                            {video.description}
+                          </p>}
+                      </CardHeader>
+
+                      <CardContent className="space-y-4">
+                        <div className="flex flex-wrap gap-2">
+                          {video.category && <Badge variant="outline" className="text-xs">
+                              {video.category}
+                            </Badge>}
+                        </div>
+
+                        <Button className="w-full gap-2" onClick={() => openVideo(video)}>
+                          <Play className="h-4 w-4" />
+                          مشاهدة الفيديو
+                        </Button>
+                      </CardContent>
+                    </Card>)}
+                </div>}
+            </TabsContent>
+
+            {/* Documents Tab */}
+            <TabsContent value="documents">
+              {documents.length === 0 ? <div className="text-center py-16">
+                  <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-full flex items-center justify-center">
+                    <FileText className="w-12 h-12 text-blue-600" />
                   </div>
-                  
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-lg leading-7 line-clamp-2 group-hover:text-primary transition-colors duration-300">
-                      {video.title}
-                    </CardTitle>
-                    {video.description && <p className="text-sm text-muted-foreground line-clamp-2">
-                        {video.description}
-                      </p>}
-                  </CardHeader>
-
-                  <CardContent className="space-y-4">
-                    <div className="flex flex-wrap gap-2">
-                      {video.category && <Badge variant="outline" className="text-xs">
-                          {video.category}
-                        </Badge>}
-                    </div>
-
-                    <Button className="w-full gap-2" onClick={() => openVideo(video)}>
-                      <Play className="h-4 w-4" />
-                      مشاهدة الفيديو
-                    </Button>
-                  </CardContent>
-                </Card>)}
-            </div>}
+                  <h3 className="text-2xl font-bold mb-4">لا توجد ملفات</h3>
+                  <p className="text-muted-foreground text-lg">
+                    سيتم إضافة الملفات والمراجع قريباً
+                  </p>
+                </div> : <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {documents.map(doc => <Card key={doc.id} className="hover:shadow-lg transition-shadow">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <FileText className="h-5 w-5 text-blue-600" />
+                          {doc.title}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        {doc.description && <p className="text-sm text-muted-foreground mb-4">
+                            {doc.description}
+                          </p>}
+                        <Button variant="outline" className="w-full" onClick={() => window.open(doc.file_path, '_blank')}>
+                          <ExternalLink className="h-4 w-4 mr-2" />
+                          فتح الملف
+                        </Button>
+                      </CardContent>
+                    </Card>)}
+                </div>}
+            </TabsContent>
+          </Tabs>
         </TabsContent>
 
-        {/* Documents Tab */}
-        <TabsContent value="documents">
-          {documents.length === 0 ? <div className="text-center py-16">
-              <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-full flex items-center justify-center">
-                <FileText className="w-12 h-12 text-blue-600" />
-              </div>
-              <h3 className="text-2xl font-bold mb-4">لا توجد ملفات</h3>
-              <p className="text-muted-foreground text-lg">
-                سيتم إضافة الملفات والمراجع قريباً
-              </p>
-            </div> : <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {documents.map(doc => <Card key={doc.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <FileText className="h-5 w-5 text-blue-600" />
-                      {doc.title}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {doc.description && <p className="text-sm text-muted-foreground mb-4">
-                        {doc.description}
-                      </p>}
-                    <Button variant="outline" className="w-full" onClick={() => window.open(doc.file_path, '_blank')}>
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      فتح الملف
-                    </Button>
-                  </CardContent>
-                </Card>)}
-            </div>}
-        </TabsContent>
-
-        {/* Projects Tab */}
-        <TabsContent value="projects">
+        {/* Project Tab */}
+        <TabsContent value="project">
           {projects.length === 0 ? <div className="text-center py-16">
               <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-amber-100 to-orange-100 rounded-full flex items-center justify-center">
                 <FolderOpen className="w-12 h-12 text-amber-600" />
               </div>
-              <h3 className="text-2xl font-bold mb-4">لا توجد مشاريع نهائية</h3>
+              <h3 className="text-2xl font-bold mb-4">لا يوجد مشروع نهائي</h3>
               <p className="text-muted-foreground text-lg mb-6">
                 أنشئ مشروعك النهائي وأظهر مهاراتك المتقدمة
               </p>
@@ -413,6 +433,19 @@ export const StudentGrade12Content: React.FC = () => {
                 })}
               </div>
             </div>}
+        </TabsContent>
+
+        {/* Exams Tab */}
+        <TabsContent value="exams">
+          <div className="text-center py-16">
+            <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center">
+              <Trophy className="w-12 h-12 text-blue-600" />
+            </div>
+            <h3 className="text-2xl font-bold mb-4">الامتحانات</h3>
+            <p className="text-muted-foreground text-lg">
+              سيتم إضافة الامتحانات قريباً
+            </p>
+          </div>
         </TabsContent>
       </Tabs>
 
