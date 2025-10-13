@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useGrade12Content } from '@/hooks/useGrade12Content';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,11 +8,13 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Video, FileText, FolderOpen, Play, Clock, CheckCircle, Star, ExternalLink, Search, Calendar, Eye, Trophy, Target, Sparkles, Plus } from 'lucide-react';
+import { Video, FileText, FolderOpen, Play, Clock, CheckCircle, Star, ExternalLink, Search, Calendar, Eye, Trophy, Target, Sparkles, Plus, Edit3 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useStudentProgress } from '@/hooks/useStudentProgress';
 import { useGrade12Projects } from '@/hooks/useGrade12Projects';
+import Grade12FinalProjectForm from '../content/Grade12FinalProjectForm';
 export const StudentGrade12Content: React.FC = () => {
+  const navigate = useNavigate();
   const {
     videos,
     documents,
@@ -29,6 +32,7 @@ export const StudentGrade12Content: React.FC = () => {
   const [selectedVideo, setSelectedVideo] = useState<any>(null);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('videos');
+  const [showProjectForm, setShowProjectForm] = useState(false);
 
   // Helper functions for video thumbnails
   const extractYouTubeId = (url: string): string | null => {
@@ -103,6 +107,23 @@ export const StudentGrade12Content: React.FC = () => {
       toast.error('حدث خطأ في تسجيل التقدم');
     }
   };
+
+  // Handle project creation
+  const handleCreateProject = async (projectData: any) => {
+    try {
+      await createProject(projectData);
+      setShowProjectForm(false);
+      toast.success('تم إنشاء المشروع النهائي بنجاح');
+    } catch (error: any) {
+      toast.error(error.message || 'فشل في إنشاء المشروع');
+    }
+  };
+
+  // Handle project click - navigate to editor
+  const handleProjectClick = (project: any) => {
+    navigate(`/grade12-project-editor/${project.id}`);
+  };
+
   const filteredVideos = videos.filter(video => video.title.toLowerCase().includes(searchTerm.toLowerCase()) || video.description && video.description.toLowerCase().includes(searchTerm.toLowerCase()));
   const renderVideoPlayer = (video: any) => {
     const embedUrl = getEmbedUrl(video.video_url, video.source_type);
@@ -302,31 +323,106 @@ export const StudentGrade12Content: React.FC = () => {
               <p className="text-muted-foreground text-lg mb-6">
                 أنشئ مشروعك النهائي وأظهر مهاراتك المتقدمة
               </p>
-              <Button size="lg" className="gap-2">
+              <Button size="lg" className="gap-2" onClick={() => setShowProjectForm(true)}>
                 <Plus className="h-5 w-5" />
                 إنشاء مشروع نهائي
               </Button>
-            </div> : <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {projects.map(project => <Card key={project.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <FolderOpen className="h-5 w-5 text-amber-600" />
-                      {project.title}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {project.description && <p className="text-sm text-muted-foreground mb-4">
-                        {project.description}
-                      </p>}
-                    <Button className="w-full">
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      فتح المشروع
-                    </Button>
-                  </CardContent>
-                </Card>)}
+            </div> : <div className="space-y-6">
+              <div className="flex justify-end">
+                <Button className="gap-2" onClick={() => setShowProjectForm(true)}>
+                  <Plus className="h-4 w-4" />
+                  إنشاء مشروع جديد
+                </Button>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {projects.map(project => {
+                  const statusColors: Record<string, string> = {
+                    'draft': 'bg-gray-100 text-gray-700',
+                    'in_progress': 'bg-blue-100 text-blue-700',
+                    'submitted': 'bg-yellow-100 text-yellow-700',
+                    'completed': 'bg-green-100 text-green-700',
+                    'reviewed': 'bg-purple-100 text-purple-700'
+                  };
+                  
+                  const statusTexts: Record<string, string> = {
+                    'draft': 'مسودة',
+                    'in_progress': 'قيد التنفيذ',
+                    'submitted': 'تم التسليم',
+                    'completed': 'مكتمل',
+                    'reviewed': 'تم المراجعة'
+                  };
+                  
+                  return (
+                    <Card key={project.id} className="hover:shadow-xl transition-all duration-300 border-0 bg-gradient-to-br from-background/80 to-background/40 backdrop-blur-md">
+                      <CardHeader>
+                        <div className="flex items-start justify-between mb-2">
+                          <CardTitle className="text-lg flex items-center gap-2 flex-1">
+                            <Trophy className="h-5 w-5 text-amber-600" />
+                            {project.title}
+                          </CardTitle>
+                          <Badge className={statusColors[project.status] || 'bg-gray-100'}>
+                            {statusTexts[project.status] || 'غير محدد'}
+                          </Badge>
+                        </div>
+                        {project.description && (
+                          <p className="text-sm text-muted-foreground line-clamp-2">
+                            {project.description}
+                          </p>
+                        )}
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        {project.due_date && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Calendar className="h-4 w-4" />
+                            <span>موعد التسليم: {new Date(project.due_date).toLocaleDateString('ar-EG')}</span>
+                          </div>
+                        )}
+                        
+                        {project.grade && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Target className="h-4 w-4" />
+                            <span>الدرجة: {project.grade}</span>
+                          </div>
+                        )}
+                        
+                        <div className="flex flex-col gap-2 pt-2">
+                          <Button 
+                            className="w-full gap-2" 
+                            onClick={() => handleProjectClick(project)}
+                          >
+                            <Edit3 className="h-4 w-4" />
+                            فتح المشروع
+                          </Button>
+                          
+                          {project.google_doc_url && (
+                            <Button 
+                              variant="outline"
+                              className="w-full gap-2" 
+                              onClick={() => window.open(project.google_doc_url, '_blank')}
+                            >
+                              <FileText className="h-4 w-4" />
+                              فتح مستند Google Docs
+                              <ExternalLink className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
             </div>}
         </TabsContent>
       </Tabs>
+
+      {/* Project Form Modal */}
+      {showProjectForm && (
+        <Grade12FinalProjectForm
+          onSave={handleCreateProject}
+          onClose={() => setShowProjectForm(false)}
+        />
+      )}
 
       {/* Video Modal */}
       <Dialog open={isVideoModalOpen} onOpenChange={setIsVideoModalOpen}>
