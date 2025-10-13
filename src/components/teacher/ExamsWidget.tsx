@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { InteractiveSourceDistributor, createDefaultSources, type SourceDistribution } from '@/components/exams/InteractiveSourceDistributor';
+import { examSourceDebugger } from '@/lib/exam-source-debugger';
+import { SourceDistributionDebugPanel } from '@/components/exam/SourceDistributionDebugPanel';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -907,6 +909,12 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
   };
 
   const onSubmit = async (data: CreateExamFormData) => {
+    examSourceDebugger.log('onSubmit:started', { 
+      formData: data, 
+      currentStep,
+      source_distribution: data.source_distribution 
+    });
+    
     if (import.meta.env.DEV) {
       console.group('🔍 [DEV] Exam Submission Debug');
       console.log('📝 Form Data:', JSON.stringify(data, null, 2));
@@ -1046,6 +1054,8 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         total_questions: data.questions_count,
         total_points: data.questions_count * 10, // افتراض 10 نقاط لكل سؤال,
       };
+
+      examSourceDebugger.log('onSubmit:examData', { examData });
 
       // 🔍 DEVELOPMENT MODE: فحص شامل لبيانات الامتحان
       if (import.meta.env.DEV) {
@@ -1199,6 +1209,13 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
           console.log('👤 User ID:', user.id);
           console.log('🏫 School ID:', profile.school_id);
           console.log('📤 Final data being sent to Supabase:', JSON.stringify(finalData, null, 2));
+          console.log('🎯 SOURCE DISTRIBUTION CHECK:', {
+            source_distribution: finalData.source_distribution,
+            isArray: Array.isArray(finalData.source_distribution),
+            length: finalData.source_distribution?.length,
+            isEmpty: !finalData.source_distribution || finalData.source_distribution.length === 0,
+            content: JSON.stringify(finalData.source_distribution)
+          });
           console.log('🔑 Data types check:', {
             created_by: { value: finalData.created_by, type: typeof finalData.created_by },
             school_id: { value: finalData.school_id, type: typeof finalData.school_id },
@@ -1207,10 +1224,14 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
           });
         }
         
+        examSourceDebugger.log('onSubmit:beforeInsert', { finalData });
+        
         const { data: insertResult, error: examError } = await supabase
           .from('exams')
           .insert(finalData)
           .select();
+
+        examSourceDebugger.log('onSubmit:afterInsert', { insertResult, examError: examError?.message });
 
         if (examError) {
           if (import.meta.env.DEV) {
@@ -2073,8 +2094,13 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                     {/* توزيع الأسئلة من المصادر */}
                     <InteractiveSourceDistributor
                       totalQuestions={form.watch('questions_count') || 10}
-                      sources={form.watch('source_distribution') || createDefaultSources(form.watch('questions_count') || 10)}
+                      sources={
+                        (Array.isArray(form.watch('source_distribution')) && form.watch('source_distribution').length > 0)
+                          ? form.watch('source_distribution')
+                          : createDefaultSources(form.watch('questions_count') || 10)
+                      }
                       onSourcesChange={(sources) => {
+                        examSourceDebugger.log('InteractiveSourceDistributor:onSourcesChange', { sources });
                         form.setValue('source_distribution', sources);
                         
                         // تحديث question_source_type بناءً على المصادر المفعلة
@@ -2744,6 +2770,11 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         queryClient.invalidateQueries({ queryKey: ['teacher-question-categories'] });
       }}
       existingCategories={categories}
+    />
+    
+    {/* Debug Panel - Development Only */}
+    <SourceDistributionDebugPanel 
+      currentDistribution={form.watch('source_distribution') || []} 
     />
   </>
   );
