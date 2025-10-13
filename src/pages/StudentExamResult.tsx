@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ExamResult } from '@/types/exam';
 import { CheckCircle2, Clock, CheckCircle, XCircle, ArrowRight, Info, Frown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useCountUp } from '@/hooks/useCountUp';
 
 export default function StudentExamResult() {
   const { attemptId } = useParams<{ attemptId: string }>();
@@ -104,6 +105,19 @@ export default function StudentExamResult() {
   // التحقق من إظهار النتائج فوراً
   const showResults = result.show_results_immediately;
 
+  // تأثيرات العد للأرقام
+  const scoreCount = useCountUp({ end: result.score || 0, duration: 1500 });
+  const percentageCount = useCountUp({ end: result.percentage || 0, duration: 1500, decimals: 1 });
+  const attemptCount = useCountUp({ end: result.attempt_number || 1, duration: 1000 });
+  const correctCount = useCountUp({ 
+    end: result.detailed_results?.correct_count || 0, 
+    duration: 1200 
+  });
+  const incorrectCount = useCountUp({ 
+    end: result.detailed_results?.incorrect_count || 0, 
+    duration: 1200 
+  });
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 py-12 px-4">
       <div className="container mx-auto max-w-5xl">
@@ -164,7 +178,7 @@ export default function StudentExamResult() {
                   <p className="text-sm font-medium text-muted-foreground mb-3">العلامة</p>
                   <div className="flex items-baseline gap-2">
                     <span className="text-4xl font-bold bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
-                      {result.score}
+                      {scoreCount}
                     </span>
                     <span className="text-2xl text-muted-foreground font-medium">
                       / {result.total_points}
@@ -172,7 +186,7 @@ export default function StudentExamResult() {
                   </div>
                   <div className="mt-2 inline-block px-3 py-1 rounded-full bg-primary/10 backdrop-blur-sm">
                     <p className="text-sm font-semibold text-primary">
-                      {result.percentage.toFixed(1)}%
+                      {percentageCount}%
                     </p>
                   </div>
                 </div>
@@ -201,7 +215,7 @@ export default function StudentExamResult() {
                   <p className="text-sm font-medium text-muted-foreground mb-3">المحاولة</p>
                   <div className="flex items-center gap-3">
                     <div className="text-4xl font-bold bg-gradient-to-br from-purple-600 to-purple-400 bg-clip-text text-transparent">
-                      #{result.attempt_number}
+                      #{attemptCount}
                     </div>
                   </div>
                 </div>
@@ -225,7 +239,7 @@ export default function StudentExamResult() {
                         <div>
                           <p className="text-sm font-medium text-muted-foreground mb-1">إجابات صحيحة</p>
                           <p className="text-3xl font-bold text-green-600 dark:text-green-400">
-                            {result.detailed_results.correct_count}
+                            {correctCount}
                           </p>
                         </div>
                       </div>
@@ -240,7 +254,7 @@ export default function StudentExamResult() {
                         <div>
                           <p className="text-sm font-medium text-muted-foreground mb-1">إجابات خاطئة</p>
                           <p className="text-3xl font-bold text-red-600 dark:text-red-400">
-                            {result.detailed_results.incorrect_count}
+                            {incorrectCount}
                           </p>
                         </div>
                       </div>
