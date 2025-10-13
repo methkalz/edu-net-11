@@ -90,7 +90,7 @@ const createExamSchema = z.object({
   selected_sections: z.array(z.string()).optional(),
   selected_teacher_categories: z.array(z.string()).optional(),
   questions_count: z.number().min(1, 'عدد الأسئلة مطلوب').default(10),
-  source_distribution: z.any().optional(), // توزيع المصادر المتعددة
+  source_distribution: z.array(z.any()).default([]), // توزيع المصادر المتعددة
   // توزيع الصعوبة الذكي بالأعداد المباشرة
   difficulty_mode: z.enum(['balanced', 'easy', 'hard', 'custom']).default('balanced'),
   custom_easy_count: z.number().min(0).optional(),
@@ -1035,7 +1035,9 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         show_results_immediately: data.show_results_immediately,
         allow_review: data.allow_review,
         question_source_type: data.question_source_type,
-        source_distribution: data.source_distribution || [], // ✅ إضافة التوزيع المتعدد
+        source_distribution: Array.isArray(data.source_distribution) && data.source_distribution.length > 0 
+          ? data.source_distribution 
+          : [], // ✅ التوزيع المتعدد
         selected_sections: data.selected_sections || [],
         selected_teacher_categories: data.selected_teacher_categories || [],
         questions_count: data.questions_count,
