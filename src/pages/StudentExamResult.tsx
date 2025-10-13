@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ExamResult } from '@/types/exam';
-import { Trophy, Clock, CheckCircle, XCircle, ArrowRight, Info, Sparkles, Frown } from 'lucide-react';
+import { CheckCircle2, Clock, CheckCircle, XCircle, ArrowRight, Info, Frown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function StudentExamResult() {
@@ -128,7 +128,7 @@ export default function StudentExamResult() {
                       result.passed ? "bg-green-500" : "bg-red-500"
                     )} />
                     {result.passed ? (
-                      <Trophy className="w-16 h-16 relative z-10 text-green-600 dark:text-green-400" />
+                      <CheckCircle2 className="w-16 h-16 relative z-10 text-green-600 dark:text-green-400" />
                     ) : (
                       <Frown className="w-16 h-16 relative z-10 text-red-600 dark:text-red-400" />
                     )}
@@ -136,7 +136,7 @@ export default function StudentExamResult() {
                 </div>
 
                 {/* Title */}
-                <h1 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent text-center">
+                <h1 className="text-2xl md:text-3xl font-bold mb-4 bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent text-center">
                   {result.exam_title}
                 </h1>
 
@@ -149,14 +149,7 @@ export default function StudentExamResult() {
                       result.passed && "bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
                     )}
                   >
-                    {result.passed ? (
-                      <>
-                        <Sparkles className="w-5 h-5 mr-2" />
-                        ناجح
-                      </>
-                    ) : (
-                      'راسب'
-                    )}
+                    {result.passed ? 'ناجح' : 'راسب'}
                   </Badge>
                 </div>
               </div>
@@ -168,7 +161,7 @@ export default function StudentExamResult() {
               <div className="group relative overflow-hidden rounded-2xl border border-border/50 backdrop-blur-md bg-card/60 shadow-lg hover:shadow-xl transition-all duration-300">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 <div className="relative p-6">
-                  <p className="text-sm font-medium text-muted-foreground mb-3">الدرجة</p>
+                  <p className="text-sm font-medium text-muted-foreground mb-3">العلامة</p>
                   <div className="flex items-baseline gap-2">
                     <span className="text-4xl font-bold bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
                       {result.score}
