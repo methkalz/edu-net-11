@@ -119,158 +119,123 @@ export default function StudentExamResult() {
   const showResults = result?.show_results_immediately || false;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 py-12 px-4">
-      <div className="container mx-auto max-w-5xl">
+    <div className="min-h-screen bg-background py-16 px-4">
+      <div className="container mx-auto max-w-4xl">
         {showResults ? (
           <>
-            {/* Hero Section */}
-            <div className="relative overflow-hidden rounded-3xl border border-border/50 backdrop-blur-md bg-gradient-to-br from-card/80 via-card/60 to-card/40 shadow-2xl mb-8">
-              <div className="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(white,transparent_85%)]" />
-              
-              <div className="relative p-16 text-center">
-                {/* Trophy Icon with Glow */}
-                <div className="flex justify-center mb-6">
-                  <div className={cn(
-                    "relative w-32 h-32 rounded-full flex items-center justify-center",
-                    "backdrop-blur-sm border-2 shadow-2xl",
-                    result.passed 
-                      ? "bg-gradient-to-br from-green-500/20 to-emerald-500/10 border-green-500/30" 
-                      : "bg-gradient-to-br from-red-500/20 to-rose-500/10 border-red-500/30"
-                  )}>
-                    <div className={cn(
-                      "absolute inset-0 rounded-full blur-2xl opacity-50",
-                      result.passed ? "bg-green-500" : "bg-red-500"
-                    )} />
-                    {result.passed ? (
-                      <CheckCircle2 className="w-16 h-16 relative z-10 text-green-600 dark:text-green-400" />
-                    ) : (
-                      <Frown className="w-16 h-16 relative z-10 text-red-600 dark:text-red-400" />
-                    )}
-                  </div>
-                </div>
-
-                {/* Title */}
-                <h1 className="text-2xl md:text-3xl font-bold mb-4 bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent text-center">
-                  {result.exam_title}
-                </h1>
-
-                {/* Percentage */}
-                <div className="flex justify-center mb-6">
-                  <div className="relative inline-block px-10 py-5 rounded-2xl bg-gradient-to-br from-primary/20 via-primary/15 to-primary/10 backdrop-blur-sm border border-primary/30 shadow-lg">
-                    <div className="absolute inset-0 rounded-2xl bg-primary/5 blur-xl" />
-                    <p className="relative text-4xl font-bold bg-gradient-to-br from-primary to-primary/70 bg-clip-text text-transparent">
-                      {percentageCount}%
-                    </p>
-                  </div>
-                </div>
-
-                {/* Status Badge */}
-                <div className="flex items-center justify-center gap-3 mb-2">
-                  <Badge 
-                    variant={result.passed ? 'default' : 'destructive'} 
-                    className={cn(
-                      "text-xl px-6 py-2 rounded-full shadow-lg",
-                      result.passed && "bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
-                    )}
-                  >
-                    {result.passed ? 'ناجح' : 'راسب'}
-                  </Badge>
+            {/* Minimalist Hero Section */}
+            <div className="text-center mb-16">
+              {/* Icon */}
+              <div className="flex justify-center mb-8">
+                <div className={cn(
+                  "w-20 h-20 rounded-full flex items-center justify-center transition-all duration-500",
+                  result.passed 
+                    ? "bg-green-50 dark:bg-green-950/30" 
+                    : "bg-red-50 dark:bg-red-950/30"
+                )}>
+                  {result.passed ? (
+                    <CheckCircle2 className="w-10 h-10 text-green-600 dark:text-green-400" />
+                  ) : (
+                    <Frown className="w-10 h-10 text-red-600 dark:text-red-400" />
+                  )}
                 </div>
               </div>
+
+              {/* Title */}
+              <h1 className="text-2xl md:text-3xl font-semibold mb-12 text-foreground/90">
+                {result.exam_title}
+              </h1>
+
+              {/* Percentage - Hero Element */}
+              <div className="mb-8">
+                <div className="text-7xl md:text-8xl font-bold text-foreground tracking-tight mb-3">
+                  {percentageCount}<span className="text-5xl md:text-6xl text-muted-foreground">%</span>
+                </div>
+              </div>
+
+              {/* Status Badge */}
+              <Badge 
+                variant={result.passed ? 'default' : 'destructive'} 
+                className={cn(
+                  "text-base px-6 py-2 rounded-full font-medium",
+                  result.passed && "bg-green-600 hover:bg-green-700"
+                )}
+              >
+                {result.passed ? 'ناجح' : 'راسب'}
+              </Badge>
             </div>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            {/* Clean Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
               {/* Score Card */}
-              <div className="group relative overflow-hidden rounded-2xl border border-border/50 backdrop-blur-md bg-card/60 shadow-lg hover:shadow-xl transition-all duration-300">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="relative p-6">
-                  <p className="text-sm font-medium text-muted-foreground mb-3">العلامة</p>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-4xl font-bold bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
-                      {scoreCount}
-                    </span>
-                    <span className="text-2xl text-muted-foreground font-medium">
-                      / {result.total_points}
-                    </span>
-                  </div>
+              <div className="border border-border rounded-xl p-6 hover:border-border/80 transition-colors">
+                <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">العلامة</p>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-3xl font-bold text-foreground">
+                    {scoreCount}
+                  </span>
+                  <span className="text-xl text-muted-foreground font-normal">
+                    / {result.total_points}
+                  </span>
                 </div>
               </div>
 
               {/* Time Card */}
-              <div className="group relative overflow-hidden rounded-2xl border border-border/50 backdrop-blur-md bg-card/60 shadow-lg hover:shadow-xl transition-all duration-300">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="relative p-6">
-                  <p className="text-sm font-medium text-muted-foreground mb-3">الوقت المستغرق</p>
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-xl bg-blue-500/10 backdrop-blur-sm">
-                      <Clock className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <span className="text-3xl font-bold">
-                      {formatTime(getActualTimeSpent())}
-                    </span>
-                  </div>
+              <div className="border border-border rounded-xl p-6 hover:border-border/80 transition-colors">
+                <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">الوقت</p>
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-3xl font-bold text-foreground">
+                    {formatTime(getActualTimeSpent())}
+                  </span>
                 </div>
               </div>
 
               {/* Attempt Card */}
-              <div className="group relative overflow-hidden rounded-2xl border border-border/50 backdrop-blur-md bg-card/60 shadow-lg hover:shadow-xl transition-all duration-300">
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="relative p-6">
-                  <p className="text-sm font-medium text-muted-foreground mb-3">المحاولة</p>
-                  <div className="flex items-center gap-3">
-                    <div className="text-4xl font-bold bg-gradient-to-br from-purple-600 to-purple-400 bg-clip-text text-transparent">
-                      #{attemptCount}
-                    </div>
-                  </div>
+              <div className="border border-border rounded-xl p-6 hover:border-border/80 transition-colors">
+                <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">المحاولة</p>
+                <div className="text-3xl font-bold text-foreground">
+                  #{attemptCount}
                 </div>
               </div>
             </div>
 
-            {/* Details Card */}
+            {/* Minimalist Details */}
             {result.detailed_results && (
-              <div className="rounded-2xl border border-border/50 backdrop-blur-md bg-card/60 shadow-lg overflow-hidden mb-8">
-                <div className="p-6 border-b border-border/30 bg-muted/30">
-                  <h2 className="text-xl font-bold">توزيع الإجابات</h2>
+              <div className="border border-border rounded-xl overflow-hidden mb-12">
+                <div className="px-6 py-4 border-b border-border">
+                  <h2 className="text-sm font-medium text-foreground uppercase tracking-wider">توزيع الإجابات</h2>
                 </div>
                 <div className="p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  <div className="grid grid-cols-2 gap-8 mb-8">
                     {/* Correct Answers */}
-                    <div className="relative overflow-hidden rounded-xl p-5 bg-gradient-to-br from-green-500/10 to-emerald-500/5 border border-green-500/20 backdrop-blur-sm">
-                      <div className="flex items-center gap-4">
-                        <div className="p-3 rounded-xl bg-green-500/20 backdrop-blur-sm">
-                          <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground mb-1">إجابات صحيحة</p>
-                          <p className="text-3xl font-bold text-green-600 dark:text-green-400">
-                            {correctCount}
-                          </p>
-                        </div>
+                    <div className="text-center">
+                      <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-50 dark:bg-green-950/30 mb-3">
+                        <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
                       </div>
+                      <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wider">صحيحة</p>
+                      <p className="text-3xl font-bold text-foreground">
+                        {correctCount}
+                      </p>
                     </div>
 
                     {/* Incorrect Answers */}
-                    <div className="relative overflow-hidden rounded-xl p-5 bg-gradient-to-br from-red-500/10 to-rose-500/5 border border-red-500/20 backdrop-blur-sm">
-                      <div className="flex items-center gap-4">
-                        <div className="p-3 rounded-xl bg-red-500/20 backdrop-blur-sm">
-                          <XCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground mb-1">إجابات خاطئة</p>
-                          <p className="text-3xl font-bold text-red-600 dark:text-red-400">
-                            {incorrectCount}
-                          </p>
-                        </div>
+                    <div className="text-center">
+                      <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-red-50 dark:bg-red-950/30 mb-3">
+                        <XCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
                       </div>
+                      <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wider">خاطئة</p>
+                      <p className="text-3xl font-bold text-foreground">
+                        {incorrectCount}
+                      </p>
                     </div>
                   </div>
 
                   {/* Pass Grade */}
-                  <div className="rounded-xl p-4 bg-muted/50 backdrop-blur-sm border border-border/30">
-                    <div className="flex flex-col items-center justify-center gap-2 text-center">
-                      <p className="text-sm font-medium text-muted-foreground">درجة النجاح المطلوبة</p>
-                      <p className="text-2xl font-bold text-primary">{result.passing_percentage}%</p>
+                  <div className="pt-6 border-t border-border">
+                    <div className="text-center">
+                      <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wider">درجة النجاح</p>
+                      <p className="text-xl font-semibold text-foreground">{result.passing_percentage}%</p>
                     </div>
                   </div>
                 </div>
@@ -279,85 +244,66 @@ export default function StudentExamResult() {
           </>
         ) : (
           <>
-            {/* Pending Results Hero */}
-            <div className="relative overflow-hidden rounded-3xl border border-border/50 backdrop-blur-md bg-gradient-to-br from-card/80 via-card/60 to-card/40 shadow-2xl mb-8">
-              <div className="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(white,transparent_85%)]" />
-              
-              <div className="relative p-12 text-center">
-                {/* Info Icon with Glow */}
-                <div className="flex justify-center mb-6">
-                  <div className="relative w-32 h-32 rounded-full flex items-center justify-center backdrop-blur-sm bg-gradient-to-br from-blue-500/20 to-blue-500/10 border-2 border-blue-500/30 shadow-2xl">
-                    <div className="absolute inset-0 rounded-full bg-blue-500 blur-2xl opacity-50" />
-                    <Info className="w-16 h-16 text-blue-600 dark:text-blue-400 relative z-10" />
-                  </div>
+            {/* Minimalist Pending Results */}
+            <div className="text-center mb-16">
+              {/* Info Icon */}
+              <div className="flex justify-center mb-8">
+                <div className="w-20 h-20 rounded-full flex items-center justify-center bg-blue-50 dark:bg-blue-950/30">
+                  <Info className="w-10 h-10 text-blue-600 dark:text-blue-400" />
                 </div>
+              </div>
 
-                {/* Title */}
-                <h1 className="text-3xl md:text-4xl font-bold mb-6 bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent text-center py-4 leading-relaxed">
-                  {result.exam_title}
-                </h1>
+              {/* Title */}
+              <h1 className="text-2xl md:text-3xl font-semibold mb-8 text-foreground/90">
+                {result.exam_title}
+              </h1>
 
-                {/* Success Message */}
-                <div className="flex flex-col items-center gap-4">
-                  <Badge className="text-xl px-6 py-2 rounded-full shadow-lg bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700">
-                    تم التقديم بنجاح
-                  </Badge>
-                  <p className="text-lg text-muted-foreground">
-                    سيتم نشر النتائج من قبل الأستاذ {result.teacher_name || 'المعلم'} قريباً
-                  </p>
-                  <p className="text-sm text-muted-foreground/80">
-                    ستتمكن من مشاهدة درجتك والتفاصيل بعد مراجعة المعلم
-                  </p>
-                </div>
+              {/* Success Message */}
+              <div className="space-y-3 mb-12">
+                <Badge className="text-base px-6 py-2 rounded-full font-medium bg-blue-600 hover:bg-blue-700">
+                  تم التقديم بنجاح
+                </Badge>
+                <p className="text-base text-muted-foreground">
+                  سيتم نشر النتائج من قبل {result.teacher_name || 'المعلم'} قريباً
+                </p>
               </div>
             </div>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            {/* Clean Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12">
               {/* Time Card */}
-              <div className="group relative overflow-hidden rounded-2xl border border-border/50 backdrop-blur-md bg-card/60 shadow-lg hover:shadow-xl transition-all duration-300">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="relative p-6">
-                  <p className="text-sm font-medium text-muted-foreground mb-3">الوقت المستغرق</p>
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-xl bg-blue-500/10 backdrop-blur-sm">
-                      <Clock className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <span className="text-3xl font-bold">
-                      {formatTime(getActualTimeSpent())}
-                    </span>
-                  </div>
+              <div className="border border-border rounded-xl p-6 hover:border-border/80 transition-colors">
+                <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">الوقت</p>
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-3xl font-bold text-foreground">
+                    {formatTime(getActualTimeSpent())}
+                  </span>
                 </div>
               </div>
 
               {/* Attempt Card */}
-              <div className="group relative overflow-hidden rounded-2xl border border-border/50 backdrop-blur-md bg-card/60 shadow-lg hover:shadow-xl transition-all duration-300">
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="relative p-6">
-                  <p className="text-sm font-medium text-muted-foreground mb-3">المحاولة</p>
-                  <div className="flex items-center gap-3">
-                    <div className="text-4xl font-bold bg-gradient-to-br from-purple-600 to-purple-400 bg-clip-text text-transparent">
-                      #{result.attempt_number}
-                    </div>
-                  </div>
+              <div className="border border-border rounded-xl p-6 hover:border-border/80 transition-colors">
+                <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">المحاولة</p>
+                <div className="text-3xl font-bold text-foreground">
+                  #{result.attempt_number}
                 </div>
               </div>
             </div>
           </>
         )}
 
-        {/* Action Button */}
+        {/* Minimalist Action Button */}
         <div className="flex justify-center">
           <Button 
             onClick={() => navigate('/student?tab=exams')} 
-            size="lg"
-            className="group relative overflow-hidden rounded-xl px-8 py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+            variant="outline"
+            className="group px-6 py-2 rounded-lg font-medium hover:bg-foreground hover:text-background transition-all"
           >
-            <span className="relative z-10 flex items-center gap-3">
+            <span className="flex items-center gap-2">
               العودة للامتحانات
-              <ArrowRight className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+              <ArrowRight className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
             </span>
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/90 to-primary opacity-0 group-hover:opacity-100 transition-opacity" />
           </Button>
         </div>
       </div>
