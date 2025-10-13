@@ -138,7 +138,7 @@ export default function StudentExamResult() {
                 </div>
                 
                 {/* Icon and Status Badge */}
-                <div className="flex flex-col items-center gap-3">
+                <div className="flex items-center gap-3">
                   <div className={cn(
                     "w-16 h-16 rounded-full flex items-center justify-center transition-all duration-500",
                     result.passed 
