@@ -922,7 +922,8 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         // 6️⃣ فحص الـ Status & Enums
         console.log('🎯 Status & Enums:', {
           status: { value: examData.status, type: typeof examData.status },
-          question_source_type: { value: examData.question_source_type, type: typeof examData.question_source_type }
+          question_sources: { value: examData.question_sources, type: typeof examData.question_sources },
+          source_distribution: { value: examData.source_distribution, type: typeof examData.source_distribution }
         });
 
         // 7️⃣ البيانات الكاملة للإرسال
