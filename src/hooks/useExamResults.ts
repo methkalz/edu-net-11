@@ -224,7 +224,8 @@ export const useStudentResults = (studentUserId: string | null, gradeLevel: stri
           total_points: attempt.exams.total_points,
           percentage: attempt.percentage || 0,
           passed: attempt.passed || false,
-          time_spent_minutes: Math.floor(attempt.time_spent_seconds / 60),
+          time_spent_seconds: attempt.time_spent_seconds ? Math.abs(attempt.time_spent_seconds) : 0,
+          time_spent_minutes: attempt.time_spent_seconds ? Math.floor(Math.abs(attempt.time_spent_seconds) / 60) : 0,
           submitted_at: attempt.submitted_at,
           improvement: improvement ? Number(improvement.toFixed(1)) : null,
           improvement_percentage: previousAttempt && improvement !== null
