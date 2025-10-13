@@ -29,9 +29,25 @@ export const useExamResults = (examId: string | null) => {
         count: attemptsData?.length || 0,
         samples: attemptsData?.slice(0, 3).map(a => ({
           id: a.id.substring(0, 8),
-          time_spent_seconds: a.time_spent_seconds
+          time_spent_seconds: a.time_spent_seconds,
+          started_at: a.started_at,
+          submitted_at: a.submitted_at
         })) || []
       });
+      
+      console.group('🔍 [EXAM RESULTS DEBUG]');
+      console.log('📊 عدد المحاولات:', attemptsData?.length);
+      console.log('🕐 أمثلة على البيانات الخام:');
+      attemptsData?.slice(0, 3).forEach((a, i) => {
+        console.log(`  محاولة ${i + 1}:`, {
+          id: a.id.substring(0, 8),
+          time_spent_seconds: a.time_spent_seconds,
+          started_at: a.started_at,
+          submitted_at: a.submitted_at,
+          status: a.status
+        });
+      });
+      console.groupEnd();
       
       if (!attemptsData || attemptsData.length === 0) {
         return {
@@ -102,6 +118,19 @@ export const useExamResults = (examId: string | null) => {
             totalQuestions = results.total_questions || examData.total_questions || 0;
           }
           
+          const timeSpentSeconds = attempt.time_spent_seconds ? Math.abs(attempt.time_spent_seconds) : 0;
+          const timeSpentMinutes = timeSpentSeconds > 0 ? Math.floor(timeSpentSeconds / 60) : 0;
+          
+          console.log('⏱️ حساب الوقت:', {
+            attempt_id: attempt.id.substring(0, 8),
+            student: attempt.students.full_name,
+            time_spent_seconds_raw: attempt.time_spent_seconds,
+            time_spent_seconds_calculated: timeSpentSeconds,
+            time_spent_minutes: timeSpentMinutes,
+            started_at: attempt.started_at,
+            submitted_at: attempt.submitted_at
+          });
+          
           return {
             id: attempt.id,
             student_id: attempt.student_id,
@@ -113,8 +142,8 @@ export const useExamResults = (examId: string | null) => {
             total_questions: totalQuestions,
             percentage: attempt.percentage || 0,
             passed: attempt.passed || false,
-            time_spent_seconds: attempt.time_spent_seconds ? Math.abs(attempt.time_spent_seconds) : 0,
-            time_spent_minutes: attempt.time_spent_seconds ? Math.floor(Math.abs(attempt.time_spent_seconds) / 60) : 0,
+            time_spent_seconds: timeSpentSeconds,
+            time_spent_minutes: timeSpentMinutes,
             submitted_at: attempt.submitted_at,
           };
         }),
