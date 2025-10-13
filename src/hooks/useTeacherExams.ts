@@ -40,11 +40,11 @@ export const useTeacherExams = (teacherId?: string) => {
         throw examsError;
       }
 
-      // جلب عدد الأسئلة في بنك الأسئلة
+      // جلب عدد الأسئلة النشطة في بنك الأسئلة (جميع الأسئلة المتاحة للمعلم)
       const { count: questionsCount, error: questionsError } = await supabase
         .from('question_bank')
         .select('*', { count: 'exact', head: true })
-        .eq('created_by', teacherId);
+        .eq('is_active', true);
 
       if (questionsError) {
         logger.error('خطأ في جلب عدد الأسئلة', questionsError);
