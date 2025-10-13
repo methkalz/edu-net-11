@@ -168,7 +168,7 @@ export default function StudentExamResult() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
               {/* Score Card */}
               <div className="border border-border rounded-xl p-6 hover:border-border/80 transition-colors">
-                <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">العلامة</p>
+                <p className="text-sm font-medium text-muted-foreground mb-2 uppercase tracking-wider">العلامة</p>
                 <div className="flex items-baseline gap-1.5">
                   <span className="text-3xl font-bold text-foreground">
                     {scoreCount}
@@ -181,7 +181,7 @@ export default function StudentExamResult() {
 
               {/* Time Card */}
               <div className="border border-border rounded-xl p-6 hover:border-border/80 transition-colors">
-                <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">الوقت</p>
+                <p className="text-sm font-medium text-muted-foreground mb-2 uppercase tracking-wider">الوقت</p>
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4 text-muted-foreground" />
                   <span className="text-3xl font-bold text-foreground">
@@ -192,7 +192,7 @@ export default function StudentExamResult() {
 
               {/* Attempt Card */}
               <div className="border border-border rounded-xl p-6 hover:border-border/80 transition-colors">
-                <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">المحاولة</p>
+                <p className="text-sm font-medium text-muted-foreground mb-2 uppercase tracking-wider">المحاولة</p>
                 <div className="text-3xl font-bold text-foreground">
                   #{attemptCount}
                 </div>
@@ -203,7 +203,7 @@ export default function StudentExamResult() {
             {result.detailed_results && (
               <div className="border border-border rounded-xl overflow-hidden mb-12">
                 <div className="px-6 py-4 border-b border-border text-center">
-                  <h2 className="text-sm font-medium text-foreground uppercase tracking-wider">توزيع الإجابات</h2>
+                  <h2 className="text-base font-medium text-foreground uppercase tracking-wider">توزيع الإجابات</h2>
                 </div>
                 <div className="p-6">
                   <div className="grid grid-cols-2 gap-8 mb-8">
@@ -212,7 +212,7 @@ export default function StudentExamResult() {
                       <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-50 dark:bg-green-950/30 mb-3">
                         <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
                       </div>
-                      <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wider">صحيحة</p>
+                      <p className="text-sm text-muted-foreground mb-2 uppercase tracking-wider">صحيحة</p>
                       <p className="text-3xl font-bold text-foreground">
                         {correctCount}
                       </p>
@@ -223,7 +223,7 @@ export default function StudentExamResult() {
                       <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-red-50 dark:bg-red-950/30 mb-3">
                         <XCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
                       </div>
-                      <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wider">خاطئة</p>
+                      <p className="text-sm text-muted-foreground mb-2 uppercase tracking-wider">خاطئة</p>
                       <p className="text-3xl font-bold text-foreground">
                         {incorrectCount}
                       </p>
@@ -233,7 +233,7 @@ export default function StudentExamResult() {
                   {/* Pass Grade */}
                   <div className="pt-6 border-t border-border">
                     <div className="text-center flex flex-col items-center">
-                      <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wider">درجة النجاح</p>
+                      <p className="text-sm text-muted-foreground mb-2 uppercase tracking-wider">درجة النجاح</p>
                       <p className="text-xl font-semibold text-foreground">{result.passing_percentage}%</p>
                     </div>
                   </div>
@@ -272,7 +272,7 @@ export default function StudentExamResult() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12">
               {/* Time Card */}
               <div className="border border-border rounded-xl p-6 hover:border-border/80 transition-colors">
-                <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">الوقت</p>
+                <p className="text-sm font-medium text-muted-foreground mb-2 uppercase tracking-wider">الوقت</p>
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4 text-muted-foreground" />
                   <span className="text-3xl font-bold text-foreground">
@@ -283,7 +283,7 @@ export default function StudentExamResult() {
 
               {/* Attempt Card */}
               <div className="border border-border rounded-xl p-6 hover:border-border/80 transition-colors">
-                <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">المحاولة</p>
+                <p className="text-sm font-medium text-muted-foreground mb-2 uppercase tracking-wider">المحاولة</p>
                 <div className="text-3xl font-bold text-foreground">
                   #{result.attempt_number}
                 </div>
@@ -297,7 +297,7 @@ export default function StudentExamResult() {
           <Button 
             onClick={() => navigate('/student?tab=exams')} 
             variant="outline"
-            className="group px-6 py-2 rounded-lg font-medium hover:bg-foreground hover:text-background transition-all"
+            className="group px-7 py-2.5 rounded-lg text-base font-medium hover:bg-foreground hover:text-background transition-all"
           >
             <span className="flex items-center gap-2">
               العودة للامتحانات
