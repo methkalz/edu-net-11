@@ -956,7 +956,7 @@ const GradeExamsAnalytics: React.FC = () => {
                   <CardContent className="space-y-3 flex flex-col items-center justify-center">
                     <div className="text-center p-3 rounded-lg bg-background/50 w-full">
                       <p className="text-xs text-muted-foreground mb-1 text-center w-full">مدة الامتحان</p>
-                      <p className="text-lg font-bold text-center w-full mx-auto" dir="ltr">{selectedExam.duration_minutes} دقيقة</p>
+                      <p className="text-lg font-bold text-center w-full mx-auto">{selectedExam.duration_minutes} دقيقة</p>
                     </div>
                     <div className="text-center p-3 rounded-lg bg-background/50 w-full">
                       <p className="text-xs text-muted-foreground mb-1 text-center w-full">نسبة النجاح</p>
