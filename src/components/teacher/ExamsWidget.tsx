@@ -295,6 +295,17 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
     };
   }, [selectedTeacherCategories, questions]);
 
+  // دالة للحصول على إحصائيات الصعوبة المتاحة حسب المصدر
+  const getAvailableDifficultyStats = () => {
+    const sourceType = form.getValues('question_source_type');
+    
+    if (sourceType === 'my_questions') {
+      return teacherQuestionsStats;
+    } else {
+      return availableQuestions;
+    }
+  };
+
   // دالة لحساب الأسئلة المتاحة حسب المصدر
   const getAvailableQuestionsCount = () => {
     const sourceType = form.getValues('question_source_type');
@@ -606,6 +617,38 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
             return false;
           }
         }
+        
+        // ✨ التحقق الذكي: هل التوزيع المطلوب متاح؟
+        const availableStats = getAvailableDifficultyStats();
+        const questionsCount = form.getValues('questions_count');
+        const distribution = getDistribution();
+        
+        const expectedEasy = Math.ceil((questionsCount * distribution.easy) / 100);
+        const expectedMedium = Math.ceil((questionsCount * distribution.medium) / 100);
+        const expectedHard = Math.ceil((questionsCount * distribution.hard) / 100);
+        
+        const issues = [];
+        if (expectedEasy > availableStats.easy) {
+          issues.push(`سهل: مطلوب ${expectedEasy} متاح ${availableStats.easy}`);
+        }
+        if (expectedMedium > availableStats.medium) {
+          issues.push(`متوسط: مطلوب ${expectedMedium} متاح ${availableStats.medium}`);
+        }
+        if (expectedHard > availableStats.hard) {
+          issues.push(`صعب: مطلوب ${expectedHard} متاح ${availableStats.hard}`);
+        }
+        
+        if (issues.length > 0) {
+          toast.error(
+            'التوزيع المطلوب غير متاح',
+            {
+              description: issues.join(' • '),
+              duration: 6000
+            }
+          );
+          return false;
+        }
+        
         setCurrentStep(prev => prev + 1);
         return true;
       } else if (currentStep === 6) {
@@ -2192,26 +2235,63 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                         </div>
                       </div>
 
-                      {/* تحذير إذا لم تكن هناك أسئلة كافية */}
-                      {availableQuestions.total > 0 && (
-                        <div className="mt-4 space-y-2">
-                          {expectedCounts.easy > availableQuestions.easy && (
-                            <p className="text-sm text-red-600 dark:text-red-400">
-                              ⚠️ تحتاج {expectedCounts.easy} سؤال سهل لكن المتاح فقط {availableQuestions.easy}
-                            </p>
-                          )}
-                          {expectedCounts.medium > availableQuestions.medium && (
-                            <p className="text-sm text-red-600 dark:text-red-400">
-                              ⚠️ تحتاج {expectedCounts.medium} سؤال متوسط لكن المتاح فقط {availableQuestions.medium}
-                            </p>
-                          )}
-                          {expectedCounts.hard > availableQuestions.hard && (
-                            <p className="text-sm text-red-600 dark:text-red-400">
-                              ⚠️ تحتاج {expectedCounts.hard} سؤال صعب لكن المتاح فقط {availableQuestions.hard}
-                            </p>
-                          )}
-                        </div>
-                      )}
+                      {/* التحقق الذكي من التوافر */}
+                      {(() => {
+                        const availableStats = getAvailableDifficultyStats();
+                        const hasIssues = 
+                          expectedCounts.easy > availableStats.easy ||
+                          expectedCounts.medium > availableStats.medium ||
+                          expectedCounts.hard > availableStats.hard;
+                        
+                        if (availableStats.total === 0) {
+                          return (
+                            <div className="mt-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+                              <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                                ⚠️ لم يتم اختيار مصدر الأسئلة بعد. عد للخطوة السابقة.
+                              </p>
+                            </div>
+                          );
+                        }
+                        
+                        if (!hasIssues) {
+                          return (
+                            <div className="mt-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+                              <p className="text-sm text-green-800 dark:text-green-200 flex items-center gap-2">
+                                <CheckCircle className="w-4 h-4" />
+                                ✅ التوزيع متاح! جميع الأسئلة المطلوبة متوفرة
+                              </p>
+                            </div>
+                          );
+                        }
+                        
+                        return (
+                          <div className="mt-4 space-y-2">
+                            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+                              <p className="text-sm font-medium text-red-800 dark:text-red-200 mb-2">
+                                ⚠️ التوزيع غير متاح بالكامل:
+                              </p>
+                              {expectedCounts.easy > availableStats.easy && (
+                                <p className="text-sm text-red-700 dark:text-red-300">
+                                  • سهل: مطلوب <strong>{expectedCounts.easy}</strong> لكن المتاح <strong>{availableStats.easy}</strong> فقط
+                                </p>
+                              )}
+                              {expectedCounts.medium > availableStats.medium && (
+                                <p className="text-sm text-red-700 dark:text-red-300">
+                                  • متوسط: مطلوب <strong>{expectedCounts.medium}</strong> لكن المتاح <strong>{availableStats.medium}</strong> فقط
+                                </p>
+                              )}
+                              {expectedCounts.hard > availableStats.hard && (
+                                <p className="text-sm text-red-700 dark:text-red-300">
+                                  • صعب: مطلوب <strong>{expectedCounts.hard}</strong> لكن المتاح <strong>{availableStats.hard}</strong> فقط
+                                </p>
+                              )}
+                              <p className="text-sm text-red-600 dark:text-red-400 mt-2 font-medium">
+                                💡 اختر توزيع مختلف أو أضف المزيد من الأسئلة
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 )}
