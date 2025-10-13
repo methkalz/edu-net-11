@@ -224,30 +224,30 @@ const StudentDashboard: React.FC = () => {
               hasGamesTab || hasFinalProjectTab ? 'grid-cols-5' : 
               'grid-cols-4'
             } bg-white/95 backdrop-blur-sm shadow-xl border border-white/20 rounded-2xl p-2 h-16`}>
-              <TabsTrigger value="overview" className="flex items-center justify-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105">
+              <TabsTrigger value="overview" className="flex items-center justify-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg">
                 <span className="text-center">نظرة عامة</span>
               </TabsTrigger>
-              <TabsTrigger value="content" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105">
+              <TabsTrigger value="content" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg">
                 <Video className="w-6 h-6" />
                 <span className="hidden sm:inline">المحتوى</span>
               </TabsTrigger>
               {hasFinalProjectTab && (
-                <TabsTrigger value="finalProject" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105">
+                <TabsTrigger value="finalProject" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg">
                   <FolderOpen className="w-6 h-6" />
                   <span className="hidden sm:inline">المشروع النهائي</span>
                 </TabsTrigger>
               )}
-              <TabsTrigger value="exams" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105">
+              <TabsTrigger value="exams" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg">
                 <FileText className="w-6 h-6" />
                 <span className="hidden sm:inline">الامتحانات</span>
               </TabsTrigger>
               {hasGamesTab && (
-                <TabsTrigger value="games" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105">
+                <TabsTrigger value="games" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg">
                   <Gamepad2 className="w-6 h-6" />
                   <span className="hidden sm:inline">الألعاب</span>
                 </TabsTrigger>
               )}
-              <TabsTrigger value="profile" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105">
+              <TabsTrigger value="profile" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg">
                 <Award className="w-6 h-6" />
                 <span className="hidden sm:inline">الملف الشخصي</span>
               </TabsTrigger>
