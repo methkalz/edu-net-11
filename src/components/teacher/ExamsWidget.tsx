@@ -86,7 +86,7 @@ const createExamSchema = z.object({
   show_results_immediately: z.boolean().default(true),
   allow_review: z.boolean().default(true),
   // إعدادات الأسئلة المبسطة - وضع واحد أو متعدد
-  question_source_type: z.enum(['smart', 'question_bank', 'my_questions', 'mixed']).default('smart'),
+  question_source_type: z.enum(['smart', 'question_bank', 'my_questions']).default('smart'),
   selected_sections: z.array(z.string()).optional(),
   selected_teacher_categories: z.array(z.string()).optional(),
   questions_count: z.number().min(1, 'عدد الأسئلة مطلوب').default(10),
@@ -1974,7 +1974,8 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                         if (enabledSources.length === 1) {
                           form.setValue('question_source_type', enabledSources[0].type);
                         } else if (enabledSources.length > 1) {
-                          form.setValue('question_source_type', 'mixed');
+                          // عند تفعيل أكثر من مصدر، نستخدم أول مصدر مفعّل
+                          form.setValue('question_source_type', enabledSources[0].type);
                         }
                         // تحديث الأقسام والتصنيفات المختارة
                         const bankSource = sources.find(s => s.type === 'question_bank');
