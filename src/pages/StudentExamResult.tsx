@@ -212,7 +212,7 @@ export default function StudentExamResult() {
             {result.detailed_results && (
               <div className="rounded-2xl border border-border/50 backdrop-blur-md bg-card/60 shadow-lg overflow-hidden mb-8">
                 <div className="p-6 border-b border-border/30 bg-muted/30">
-                  <h2 className="text-xl font-bold">تفاصيل الأداء</h2>
+                  <h2 className="text-xl font-bold">توزيع الإجابات</h2>
                 </div>
                 <div className="p-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
