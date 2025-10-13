@@ -9,6 +9,8 @@ export interface ExamStats {
   status: string;
   total_questions: number;
   total_points: number;
+  duration_minutes: number;
+  passing_percentage: number;
   start_datetime: string;
   end_datetime: string;
   attempts_count: number;
@@ -98,6 +100,8 @@ export const useTeacherExams = (teacherId?: string) => {
             status: exam.status,
             total_questions: exam.total_questions,
             total_points: exam.total_points,
+            duration_minutes: exam.duration_minutes,
+            passing_percentage: exam.passing_percentage,
             start_datetime: exam.start_datetime,
             end_datetime: exam.end_datetime,
             attempts_count: attemptsCount,
