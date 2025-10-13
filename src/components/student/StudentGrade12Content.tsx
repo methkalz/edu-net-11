@@ -174,18 +174,6 @@ export const StudentGrade12Content: React.FC<{ defaultTab?: string }> = ({ defau
   }
   
   return <div className="container mx-auto px-6 py-12" dir="rtl">
-      {/* Header */}
-      <div className="text-center space-y-6 mb-12">
-        <div className="inline-flex items-center gap-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-3 rounded-full shadow-lg">
-          <Trophy className="h-6 w-6" />
-          <span className="font-bold text-lg">الصف الثاني عشر</span>
-        </div>
-        
-        <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-          استكشف الفيديوهات التعليمية والمواد الدراسية المتقدمة للصف الثاني عشر
-        </p>
-      </div>
-
       {/* Search and Stats */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div className="flex items-center gap-4">
