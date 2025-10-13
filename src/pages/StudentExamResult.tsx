@@ -249,7 +249,7 @@ export default function StudentExamResult() {
 
                   {/* Pass Grade */}
                   <div className="rounded-xl p-4 bg-muted/50 backdrop-blur-sm border border-border/30">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col items-center justify-center gap-2 text-center">
                       <p className="text-sm font-medium text-muted-foreground">درجة النجاح المطلوبة</p>
                       <p className="text-2xl font-bold text-primary">{result.passing_percentage}%</p>
                     </div>
