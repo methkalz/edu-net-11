@@ -208,25 +208,9 @@ export const StudentGrade12Content: React.FC<{ defaultTab?: string }> = ({ defau
         </div>
       </div>
 
-      {/* Main Tabs */}
-      <Tabs value={mainTab} onValueChange={setMainTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-8">
-          <TabsTrigger value="content" className="flex items-center gap-2">
-            <BookOpen className="h-4 w-4" />
-            المحتوى
-          </TabsTrigger>
-          <TabsTrigger value="project" className="flex items-center gap-2">
-            <FolderOpen className="h-4 w-4" />
-            المشروع النهائي
-          </TabsTrigger>
-          <TabsTrigger value="exams" className="flex items-center gap-2">
-            <Trophy className="h-4 w-4" />
-            الامتحانات
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Content Tab - with nested tabs for videos and documents */}
-        <TabsContent value="content">
+      {/* Content based on mainTab state */}
+      {mainTab === 'content' && (
+        <div className="w-full">
           <Tabs value={contentTab} onValueChange={setContentTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-8">
               <TabsTrigger value="videos" className="flex items-center gap-2">
@@ -331,10 +315,12 @@ export const StudentGrade12Content: React.FC<{ defaultTab?: string }> = ({ defau
                 </div>}
             </TabsContent>
           </Tabs>
-        </TabsContent>
+        </div>
+      )}
 
-        {/* Project Tab */}
-        <TabsContent value="project">
+      {/* Project Tab */}
+      {mainTab === 'project' && (
+        <div className="w-full">
           {projects.length === 0 ? <div className="text-center py-16">
               <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-amber-100 to-orange-100 rounded-full flex items-center justify-center">
                 <FolderOpen className="w-12 h-12 text-amber-600" />
@@ -433,10 +419,12 @@ export const StudentGrade12Content: React.FC<{ defaultTab?: string }> = ({ defau
                 })}
               </div>
             </div>}
-        </TabsContent>
+        </div>
+      )}
 
-        {/* Exams Tab */}
-        <TabsContent value="exams">
+      {/* Exams Tab */}
+      {mainTab === 'exams' && (
+        <div className="w-full">
           <div className="text-center py-16">
             <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center">
               <Trophy className="w-12 h-12 text-blue-600" />
@@ -446,8 +434,8 @@ export const StudentGrade12Content: React.FC<{ defaultTab?: string }> = ({ defau
               سيتم إضافة الامتحانات قريباً
             </p>
           </div>
-        </TabsContent>
-      </Tabs>
+        </div>
+      )}
 
       {/* Project Form Modal */}
       {showProjectForm && (
