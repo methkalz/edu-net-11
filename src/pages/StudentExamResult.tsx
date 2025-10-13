@@ -49,7 +49,7 @@ export default function StudentExamResult() {
 
   // تأثيرات العد للأرقام - مع قيم افتراضية آمنة
   const scoreCount = useCountUp({ end: result?.score || 0, duration: 1500 });
-  const percentageCount = useCountUp({ end: result?.percentage || 0, duration: 1500, decimals: 1 });
+  const percentageCount = useCountUp({ end: result?.percentage || 0, duration: 3000, decimals: 1 });
   const attemptCount = useCountUp({ end: result?.attempt_number || 1, duration: 1000 });
   const correctCount = useCountUp({ 
     end: result?.detailed_results?.correct_count || 0, 
@@ -154,6 +154,15 @@ export default function StudentExamResult() {
                   {result.exam_title}
                 </h1>
 
+                {/* Percentage */}
+                <div className="flex justify-center mb-6">
+                  <div className="inline-block px-8 py-4 rounded-2xl bg-primary/15 backdrop-blur-sm border border-primary/20">
+                    <p className="text-5xl font-bold text-primary">
+                      {percentageCount}%
+                    </p>
+                  </div>
+                </div>
+
                 {/* Status Badge */}
                 <div className="flex items-center justify-center gap-3 mb-2">
                   <Badge 
@@ -183,11 +192,6 @@ export default function StudentExamResult() {
                     <span className="text-2xl text-muted-foreground font-medium">
                       / {result.total_points}
                     </span>
-                  </div>
-                  <div className="mt-2 inline-block px-3 py-1 rounded-full bg-primary/10 backdrop-blur-sm">
-                    <p className="text-sm font-semibold text-primary">
-                      {percentageCount}%
-                    </p>
                   </div>
                 </div>
               </div>
