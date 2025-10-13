@@ -276,6 +276,50 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
 
   const availableQuestions = calculateAvailableQuestions();
 
+  // حساب إحصائيات أسئلة المعلم
+  const selectedTeacherCategories = form.watch('selected_teacher_categories');
+  const teacherQuestionsStats = React.useMemo(() => {
+    if (!selectedTeacherCategories || selectedTeacherCategories.length === 0) {
+      return { easy: 0, medium: 0, hard: 0, total: 0 };
+    }
+    
+    const filteredQuestions = questions.filter(q => 
+      selectedTeacherCategories.includes(q.category)
+    );
+    
+    return {
+      easy: filteredQuestions.filter(q => q.difficulty === 'easy').length,
+      medium: filteredQuestions.filter(q => q.difficulty === 'medium').length,
+      hard: filteredQuestions.filter(q => q.difficulty === 'hard').length,
+      total: filteredQuestions.length,
+    };
+  }, [selectedTeacherCategories, questions]);
+
+  // دالة لحساب الأسئلة المتاحة حسب المصدر
+  const getAvailableQuestionsCount = () => {
+    const sourceType = form.getValues('question_source_type');
+    const selectedSects = form.getValues('selected_sections');
+    const selectedCats = form.getValues('selected_teacher_categories');
+    
+    let availableCount = 0;
+    
+    if (sourceType === 'random') {
+      // كل الأسئلة من الصف المختار
+      availableCount = availableQuestions.total;
+    } else if (sourceType === 'specific_sections' && selectedSects?.length > 0) {
+      // مجموع الأسئلة من الأقسام المحددة
+      selectedSects.forEach(sectionId => {
+        const section = availableSections?.find(s => s.id === sectionId);
+        if (section) availableCount += section.total;
+      });
+    } else if (sourceType === 'my_questions' && selectedCats?.length > 0) {
+      // مجموع أسئلة المعلم من التصنيفات المحددة
+      availableCount = teacherQuestionsStats.total;
+    }
+    
+    return availableCount;
+  };
+
   // حساب التوزيع المتوقع
   const getDistribution = () => {
     if (difficultyMode === 'custom') {
@@ -530,11 +574,27 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
             return false;
           }
         }
+        
         const questionsCount = form.getValues('questions_count');
         if (!questionsCount || questionsCount < 1) {
           toast.error('يجب تحديد عدد الأسئلة');
           return false;
         }
+        
+        // ✨ التحقق الجديد: عدد الأسئلة المتاحة
+        const availableCount = getAvailableQuestionsCount();
+        
+        if (questionsCount > availableCount) {
+          toast.error(
+            `عدد الأسئلة المطلوبة (${questionsCount}) أكبر من المتاح (${availableCount})`,
+            { 
+              description: 'يرجى تقليل عدد الأسئلة أو اختيار أقسام/تصنيفات إضافية',
+              duration: 5000 
+            }
+          );
+          return false;
+        }
+        
         setCurrentStep(prev => prev + 1);
         return true;
       } else if (currentStep === 5) {
@@ -1658,24 +1718,57 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                     <FormField
                       control={form.control}
                       name="questions_count"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-base">عدد الأسئلة المطلوبة *</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="number" 
-                              min={1}
-                              max={100}
-                              {...field} 
-                              onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
-                            />
-                          </FormControl>
-                          <FormDescription>
-                            إجمالي الأسئلة في الامتحان
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+                      render={({ field }) => {
+                        const availableCount = getAvailableQuestionsCount();
+                        const exceedsLimit = field.value > availableCount;
+                        
+                        return (
+                          <FormItem>
+                            <FormLabel className="text-base">عدد الأسئلة المطلوبة *</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number" 
+                                min={1}
+                                max={availableCount || 100}
+                                {...field} 
+                                onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                                className={exceedsLimit ? 'border-red-500' : ''}
+                              />
+                            </FormControl>
+                            
+                            {/* تحذير مباشر */}
+                            {exceedsLimit && availableCount > 0 && (
+                              <div className="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg mt-2">
+                                <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                                <div className="text-sm">
+                                  <p className="font-medium text-red-800 dark:text-red-200">
+                                    العدد المطلوب أكبر من المتاح!
+                                  </p>
+                                  <p className="text-red-700 dark:text-red-300">
+                                    الأسئلة المتاحة: {availableCount} فقط
+                                  </p>
+                                </div>
+                              </div>
+                            )}
+                            
+                            {/* معلومات مفيدة */}
+                            {!exceedsLimit && availableCount > 0 && (
+                              <FormDescription className="flex items-center gap-1">
+                                <CheckCircle className="w-4 h-4 text-green-600" />
+                                متاح: {availableCount} سؤال
+                              </FormDescription>
+                            )}
+                            
+                            {availableCount === 0 && (
+                              <FormDescription className="text-yellow-600">
+                                اختر مصدر الأسئلة أولاً لمعرفة العدد المتاح
+                              </FormDescription>
+                            )}
+                            
+                            <FormMessage />
+                          </FormItem>
+                        );
+                      }}
                     />
 
                     <FormField
@@ -1730,68 +1823,95 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                             </div>
                           </div>
                         ) : (
-                          <FormField
-                            control={form.control}
-                            name="selected_teacher_categories"
-                            render={() => (
-                              <FormItem>
-                                <FormLabel className="text-base">اختر التصنيفات</FormLabel>
-                                <div className="space-y-3 mt-3">
-                                  {categories.map((category) => {
-                                    const categoryQuestions = questions.filter(q => q.category === category);
-                                    const easyCount = categoryQuestions.filter(q => q.difficulty === 'easy').length;
-                                    const mediumCount = categoryQuestions.filter(q => q.difficulty === 'medium').length;
-                                    const hardCount = categoryQuestions.filter(q => q.difficulty === 'hard').length;
-                                    
-                                    return (
-                                      <FormField
-                                        key={category}
-                                        control={form.control}
-                                        name="selected_teacher_categories"
-                                        render={({ field }) => (
-                                          <FormItem className="flex items-start space-x-3 space-x-reverse space-y-0 border rounded-lg p-4 hover:bg-muted/50">
-                                            <FormControl>
-                                              <Checkbox
-                                                checked={field.value?.includes(category)}
-                                                onCheckedChange={(checked) => {
-                                                  return checked
-                                                    ? field.onChange([...(field.value || []), category])
-                                                    : field.onChange(field.value?.filter((value) => value !== category));
-                                                }}
-                                              />
-                                            </FormControl>
-                                            <div className="flex-1 space-y-2">
-                                              <FormLabel className="font-medium cursor-pointer">
-                                                {category}
-                                              </FormLabel>
-                                              <div className="flex items-center gap-4 text-xs">
-                                                <span className="flex items-center gap-1 text-green-600 dark:text-green-400">
-                                                  <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                                                  سهل: {easyCount}
-                                                </span>
-                                                <span className="flex items-center gap-1 text-yellow-600 dark:text-yellow-400">
-                                                  <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
-                                                  متوسط: {mediumCount}
-                                                </span>
-                                                <span className="flex items-center gap-1 text-red-600 dark:text-red-400">
-                                                  <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                                                  صعب: {hardCount}
-                                                </span>
-                                                <span className="font-medium">
-                                                  المجموع: {categoryQuestions.length}
-                                                </span>
+                          <>
+                            <FormField
+                              control={form.control}
+                              name="selected_teacher_categories"
+                              render={() => (
+                                <FormItem>
+                                  <FormLabel className="text-base">اختر التصنيفات</FormLabel>
+                                  <div className="space-y-3 mt-3">
+                                    {categories.map((category) => {
+                                      const categoryQuestions = questions.filter(q => q.category === category);
+                                      const easyCount = categoryQuestions.filter(q => q.difficulty === 'easy').length;
+                                      const mediumCount = categoryQuestions.filter(q => q.difficulty === 'medium').length;
+                                      const hardCount = categoryQuestions.filter(q => q.difficulty === 'hard').length;
+                                      
+                                      return (
+                                        <FormField
+                                          key={category}
+                                          control={form.control}
+                                          name="selected_teacher_categories"
+                                          render={({ field }) => (
+                                            <FormItem className="flex items-start space-x-3 space-x-reverse space-y-0 border rounded-lg p-4 hover:bg-muted/50">
+                                              <FormControl>
+                                                <Checkbox
+                                                  checked={field.value?.includes(category)}
+                                                  onCheckedChange={(checked) => {
+                                                    return checked
+                                                      ? field.onChange([...(field.value || []), category])
+                                                      : field.onChange(field.value?.filter((value) => value !== category));
+                                                  }}
+                                                />
+                                              </FormControl>
+                                              <div className="flex-1 space-y-2">
+                                                <FormLabel className="font-medium cursor-pointer">
+                                                  {category}
+                                                </FormLabel>
+                                                <div className="flex items-center gap-4 text-xs">
+                                                  <span className="flex items-center gap-1 text-green-600 dark:text-green-400">
+                                                    <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                                                    سهل: {easyCount}
+                                                  </span>
+                                                  <span className="flex items-center gap-1 text-yellow-600 dark:text-yellow-400">
+                                                    <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
+                                                    متوسط: {mediumCount}
+                                                  </span>
+                                                  <span className="flex items-center gap-1 text-red-600 dark:text-red-400">
+                                                    <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                                                    صعب: {hardCount}
+                                                  </span>
+                                                  <span className="font-medium">
+                                                    المجموع: {categoryQuestions.length}
+                                                  </span>
+                                                </div>
                                               </div>
-                                            </div>
-                                          </FormItem>
-                                        )}
-                                      />
-                                    );
-                                  })}
+                                            </FormItem>
+                                          )}
+                                        />
+                                      );
+                                    })}
+                                  </div>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            {/* إحصائيات أسئلة المعلم */}
+                            {selectedTeacherCategories && selectedTeacherCategories.length > 0 && (
+                              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mt-4">
+                                <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-3">📊 أسئلتك المتاحة</h4>
+                                <div className="grid grid-cols-4 gap-4 text-sm">
+                                  <div>
+                                    <p className="text-muted-foreground">سهل</p>
+                                    <p className="font-bold text-green-600">{teacherQuestionsStats.easy}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-muted-foreground">متوسط</p>
+                                    <p className="font-bold text-yellow-600">{teacherQuestionsStats.medium}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-muted-foreground">صعب</p>
+                                    <p className="font-bold text-red-600">{teacherQuestionsStats.hard}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-muted-foreground">المجموع</p>
+                                    <p className="font-bold text-primary">{teacherQuestionsStats.total}</p>
+                                  </div>
                                 </div>
-                                <FormMessage />
-                              </FormItem>
+                              </div>
                             )}
-                          />
+                          </>
                         )}
                       </div>
                     )}
