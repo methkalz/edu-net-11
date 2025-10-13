@@ -902,6 +902,16 @@ const GradeExamsAnalytics: React.FC = () => {
                   </CardContent>
                 </Card>
 
+                <Card className="border-0 bg-gradient-to-br from-cyan-500/10 to-transparent backdrop-blur-sm hover:shadow-lg transition-all">
+                  <CardContent className="p-6 flex flex-col items-center justify-center text-center space-y-2">
+                    <div className="p-3 rounded-full bg-cyan-500/10 w-fit mx-auto">
+                      <Users className="h-6 w-6 text-cyan-500 mx-auto" />
+                    </div>
+                    <p className="text-xs text-muted-foreground font-medium text-center w-full">عدد الطلاب المتقدمين</p>
+                    <p className="text-3xl font-bold text-center w-full mx-auto" dir="ltr">{selectedExam.unique_students_count || 0}</p>
+                  </CardContent>
+                </Card>
+
                 <Card className="border-0 bg-gradient-to-br from-indigo-500/10 to-transparent backdrop-blur-sm hover:shadow-lg transition-all">
                   <CardContent className="p-6 flex flex-col items-center justify-center text-center space-y-2">
                     <div className="p-3 rounded-full bg-indigo-500/10 w-fit mx-auto">
