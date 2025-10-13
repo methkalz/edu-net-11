@@ -437,10 +437,10 @@ const GradeExamsAnalytics: React.FC = () => {
                           tick={{ fill: 'hsl(var(--foreground))', fontSize: 11 }}
                           angle={-45}
                           textAnchor="end"
-                          height={120}
+                          height={140}
                           interval={0}
                           dx={-5}
-                          dy={10}
+                          dy={20}
                         />
                         <YAxis tick={{ fill: 'hsl(var(--foreground))' }} />
                         <Tooltip 
