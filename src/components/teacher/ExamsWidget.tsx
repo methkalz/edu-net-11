@@ -291,6 +291,47 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
   const customHardCount = form.watch('custom_hard_count');
 
   const calculateAvailableQuestions = () => {
+    const sourceDistribution = form.getValues('source_distribution');
+    
+    // إذا كان هناك توزيع متعدد المصادر
+    if (sourceDistribution && Array.isArray(sourceDistribution)) {
+      const enabledSources = sourceDistribution.filter((s: any) => s.enabled);
+      let counts = { easy: 0, medium: 0, hard: 0 };
+      
+      enabledSources.forEach((source: any) => {
+        if (source.type === 'smart') {
+          // كل الأسئلة من الصف المختار
+          if (availableSections && availableSections.length > 0) {
+            availableSections.forEach(section => {
+              counts.easy += section.easy;
+              counts.medium += section.medium;
+              counts.hard += section.hard;
+            });
+          }
+        } else if (source.type === 'question_bank') {
+          // من الأقسام المختارة
+          const selectedSects = form.getValues('selected_sections');
+          if (selectedSects && selectedSects.length > 0 && availableSections) {
+            availableSections
+              .filter(section => selectedSects.includes(section.id))
+              .forEach(section => {
+                counts.easy += section.easy;
+                counts.medium += section.medium;
+                counts.hard += section.hard;
+              });
+          }
+        } else if (source.type === 'my_questions') {
+          // من أسئلة المعلم
+          counts.easy += teacherQuestionsStats.easy;
+          counts.medium += teacherQuestionsStats.medium;
+          counts.hard += teacherQuestionsStats.hard;
+        }
+      });
+      
+      return { ...counts, total: counts.easy + counts.medium + counts.hard };
+    }
+    
+    // المنطق القديم للحالات الأخرى
     if (!availableSections || availableSections.length === 0) return { easy: 0, medium: 0, hard: 0, total: 0 };
 
     let counts = { easy: 0, medium: 0, hard: 0 };
@@ -339,6 +380,13 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
 
   // دالة للحصول على إحصائيات الصعوبة المتاحة حسب المصدر
   const getAvailableDifficultyStats = () => {
+    const sourceDistribution = form.getValues('source_distribution');
+    
+    // إذا كان هناك توزيع متعدد المصادر، نستخدم availableQuestions المحدثة
+    if (sourceDistribution && Array.isArray(sourceDistribution)) {
+      return availableQuestions;
+    }
+    
     const sourceMode = form.getValues('question_source_mode');
     
     if (sourceMode === 'my_questions') {
@@ -350,6 +398,39 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
 
   // دالة لحساب الأسئلة المتاحة حسب المصدر
   const getAvailableQuestionsCount = () => {
+    const sourceDistribution = form.getValues('source_distribution');
+    
+    // إذا كان هناك توزيع متعدد المصادر
+    if (sourceDistribution && Array.isArray(sourceDistribution)) {
+      const enabledSources = sourceDistribution.filter((s: any) => s.enabled);
+      let availableCount = 0;
+      
+      enabledSources.forEach((source: any) => {
+        if (source.type === 'smart') {
+          // كل الأسئلة من الصف المختار
+          availableCount += availableQuestions.total;
+        } else if (source.type === 'question_bank') {
+          // من الأقسام المختارة
+          const selectedSects = form.getValues('selected_sections');
+          if (selectedSects && selectedSects.length > 0) {
+            selectedSects.forEach((sectionId: string) => {
+              const section = availableSections?.find(s => s.id === sectionId);
+              if (section) availableCount += section.total;
+            });
+          }
+        } else if (source.type === 'my_questions') {
+          // من أسئلة المعلم
+          const selectedCats = form.getValues('selected_teacher_categories');
+          if (selectedCats && selectedCats.length > 0) {
+            availableCount += teacherQuestionsStats.total;
+          }
+        }
+      });
+      
+      return availableCount;
+    }
+    
+    // المنطق القديم للحالات الأخرى
     const sourceMode = form.getValues('question_source_mode');
     const selectedSects = form.getValues('selected_sections');
     const selectedCats = form.getValues('selected_teacher_categories');
@@ -607,30 +688,60 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         return true;
       } else if (currentStep === 4) {
         const sourceMode = form.getValues('question_source_mode');
-        if (sourceMode === 'question_bank') {
-          const selectedSections = form.getValues('selected_sections');
-          if (!selectedSections || selectedSections.length === 0) {
-            toast.error('يجب اختيار قسم واحد على الأقل');
+        const sourceDistribution = form.getValues('source_distribution');
+        
+        // التحقق من التوزيع المتعدد المصادر
+        if (sourceDistribution && Array.isArray(sourceDistribution)) {
+          const enabledSources = sourceDistribution.filter((s: any) => s.enabled);
+          
+          if (enabledSources.length === 0) {
+            toast.error('يجب تفعيل مصدر واحد على الأقل للأسئلة');
             return false;
           }
           
-          // تحقق إضافي: هل الـ IDs صحيحة؟
-          const invalidSections = selectedSections.filter(id => 
-            !availableSections?.some(s => s.id === id)
-          );
-          
-          if (invalidSections.length > 0) {
-            console.error('⚠️ Invalid section IDs detected:', invalidSections);
-            form.setError('selected_sections', {
-              message: 'بعض الأقسام المحددة غير صالحة'
-            });
-            return false;
+          // تحقق من كل مصدر مفعل لديه اختيارات
+          for (const source of enabledSources) {
+            if (source.type === 'question_bank') {
+              const selectedSections = form.getValues('selected_sections');
+              if (!selectedSections || selectedSections.length === 0) {
+                toast.error('يجب اختيار قسم واحد على الأقل من بنك الأسئلة');
+                return false;
+              }
+            } else if (source.type === 'my_questions') {
+              const selectedCategories = form.getValues('selected_teacher_categories');
+              if (!selectedCategories || selectedCategories.length === 0) {
+                toast.error('يجب اختيار تصنيف واحد على الأقل من أسئلتك');
+                return false;
+              }
+            }
           }
-        } else if (sourceMode === 'my_questions') {
-          const selectedCategories = form.getValues('selected_teacher_categories');
-          if (!selectedCategories || selectedCategories.length === 0) {
-            toast.error('يجب اختيار تصنيف واحد على الأقل من أسئلتك');
-            return false;
+        } else {
+          // التحقق القديم للحالات الأخرى
+          if (sourceMode === 'question_bank') {
+            const selectedSections = form.getValues('selected_sections');
+            if (!selectedSections || selectedSections.length === 0) {
+              toast.error('يجب اختيار قسم واحد على الأقل');
+              return false;
+            }
+            
+            // تحقق إضافي: هل الـ IDs صحيحة؟
+            const invalidSections = selectedSections.filter(id => 
+              !availableSections?.some(s => s.id === id)
+            );
+            
+            if (invalidSections.length > 0) {
+              console.error('⚠️ Invalid section IDs detected:', invalidSections);
+              form.setError('selected_sections', {
+                message: 'بعض الأقسام المحددة غير صالحة'
+              });
+              return false;
+            }
+          } else if (sourceMode === 'my_questions') {
+            const selectedCategories = form.getValues('selected_teacher_categories');
+            if (!selectedCategories || selectedCategories.length === 0) {
+              toast.error('يجب اختيار تصنيف واحد على الأقل من أسئلتك');
+              return false;
+            }
           }
         }
         
