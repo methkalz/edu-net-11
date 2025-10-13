@@ -431,6 +431,28 @@ const GradeExamsAnalytics: React.FC = () => {
                   <CardContent>
                     <ResponsiveContainer width="100%" height={350}>
                       <BarChart data={performanceChartData}>
+                        <defs>
+                          <linearGradient id="colorGreen" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="hsl(142, 76%, 45%)" stopOpacity={1}/>
+                            <stop offset="100%" stopColor="hsl(142, 76%, 36%)" stopOpacity={1}/>
+                          </linearGradient>
+                          <linearGradient id="colorLightGreen" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="hsl(142, 76%, 55%)" stopOpacity={1}/>
+                            <stop offset="100%" stopColor="hsl(142, 76%, 45%)" stopOpacity={1}/>
+                          </linearGradient>
+                          <linearGradient id="colorYellow" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="hsl(48, 96%, 63%)" stopOpacity={1}/>
+                            <stop offset="100%" stopColor="hsl(48, 96%, 53%)" stopOpacity={1}/>
+                          </linearGradient>
+                          <linearGradient id="colorOrange" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="hsl(25, 95%, 63%)" stopOpacity={1}/>
+                            <stop offset="100%" stopColor="hsl(25, 95%, 53%)" stopOpacity={1}/>
+                          </linearGradient>
+                          <linearGradient id="colorRed" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="hsl(0, 84%, 70%)" stopOpacity={1}/>
+                            <stop offset="100%" stopColor="hsl(0, 84%, 60%)" stopOpacity={1}/>
+                          </linearGradient>
+                        </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                         <XAxis 
                           dataKey="name" 
@@ -455,19 +477,19 @@ const GradeExamsAnalytics: React.FC = () => {
                         <Bar dataKey="متوسط النتيجة" radius={[8, 8, 0, 0]}>
                           {performanceChartData.map((entry, index) => {
                             const score = entry['متوسط النتيجة'];
-                            let color;
+                            let gradientId;
                             if (score >= 80) {
-                              color = 'hsl(142, 76%, 36%)'; // أخضر
+                              gradientId = 'url(#colorGreen)';
                             } else if (score >= 70) {
-                              color = 'hsl(142, 76%, 45%)'; // أخضر فاتح
+                              gradientId = 'url(#colorLightGreen)';
                             } else if (score >= 60) {
-                              color = 'hsl(48, 96%, 53%)'; // أصفر
+                              gradientId = 'url(#colorYellow)';
                             } else if (score >= 50) {
-                              color = 'hsl(25, 95%, 53%)'; // برتقالي
+                              gradientId = 'url(#colorOrange)';
                             } else {
-                              color = 'hsl(0, 84%, 60%)'; // أحمر
+                              gradientId = 'url(#colorRed)';
                             }
-                            return <Cell key={`cell-${index}`} fill={color} />;
+                            return <Cell key={`cell-${index}`} fill={gradientId} />;
                           })}
                         </Bar>
                       </BarChart>
@@ -488,6 +510,24 @@ const GradeExamsAnalytics: React.FC = () => {
                   <CardContent>
                     <ResponsiveContainer width="100%" height={300}>
                       <PieChart>
+                        <defs>
+                          <linearGradient id="gradientGreen" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stopColor="#10b981" stopOpacity={1}/>
+                            <stop offset="100%" stopColor="#059669" stopOpacity={1}/>
+                          </linearGradient>
+                          <linearGradient id="gradientYellow" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stopColor="#f59e0b" stopOpacity={1}/>
+                            <stop offset="100%" stopColor="#d97706" stopOpacity={1}/>
+                          </linearGradient>
+                          <linearGradient id="gradientGray" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stopColor="#6b7280" stopOpacity={1}/>
+                            <stop offset="100%" stopColor="#4b5563" stopOpacity={1}/>
+                          </linearGradient>
+                          <linearGradient id="gradientPurple" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stopColor="#8b5cf6" stopOpacity={1}/>
+                            <stop offset="100%" stopColor="#7c3aed" stopOpacity={1}/>
+                          </linearGradient>
+                        </defs>
                         <Pie
                           data={statusChartData}
                           cx="50%"
@@ -498,9 +538,14 @@ const GradeExamsAnalytics: React.FC = () => {
                           fill="#8884d8"
                           dataKey="value"
                         >
-                          {statusChartData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
+                          {statusChartData.map((entry, index) => {
+                            let gradientId = 'url(#gradientGreen)';
+                            if (entry.name === 'نشط') gradientId = 'url(#gradientGreen)';
+                            else if (entry.name === 'مجدول') gradientId = 'url(#gradientYellow)';
+                            else if (entry.name === 'منتهي') gradientId = 'url(#gradientGray)';
+                            else if (entry.name === 'مسودة') gradientId = 'url(#gradientPurple)';
+                            return <Cell key={`cell-${index}`} fill={gradientId} />;
+                          })}
                         </Pie>
                         <Tooltip 
                           contentStyle={{ 
