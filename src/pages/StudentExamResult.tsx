@@ -156,8 +156,9 @@ export default function StudentExamResult() {
 
                 {/* Percentage */}
                 <div className="flex justify-center mb-6">
-                  <div className="inline-block px-8 py-4 rounded-2xl bg-primary/15 backdrop-blur-sm border border-primary/20">
-                    <p className="text-5xl font-bold text-primary">
+                  <div className="relative inline-block px-10 py-5 rounded-2xl bg-gradient-to-br from-primary/20 via-primary/15 to-primary/10 backdrop-blur-sm border border-primary/30 shadow-lg">
+                    <div className="absolute inset-0 rounded-2xl bg-primary/5 blur-xl" />
+                    <p className="relative text-4xl font-bold bg-gradient-to-br from-primary to-primary/70 bg-clip-text text-transparent">
                       {percentageCount}%
                     </p>
                   </div>
