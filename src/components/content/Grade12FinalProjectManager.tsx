@@ -23,7 +23,8 @@ import {
   User,
   AlertCircle,
   Trophy,
-  Download
+  Download,
+  ExternalLink
 } from 'lucide-react';
 import { logger } from '@/lib/logger';
 import { toast } from 'sonner';
@@ -309,16 +310,31 @@ const Grade12FinalProjectManager: React.FC = () => {
                   <Separator />
                   
                   {/* Action Buttons */}
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEditProject(project)}
-                      className="flex-1 gap-2"
-                    >
-                      <Edit3 className="h-4 w-4" />
-                      تحرير المشروع
-                    </Button>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEditProject(project)}
+                        className="flex-1 gap-2"
+                      >
+                        <Edit3 className="h-4 w-4" />
+                        تحرير المشروع
+                      </Button>
+                    </div>
+                    
+                    {project.google_doc_url && (
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => window.open(project.google_doc_url, '_blank')}
+                        className="w-full gap-2"
+                      >
+                        <FileText className="h-4 w-4" />
+                        فتح مستند Google Docs
+                        <ExternalLink className="h-3 w-3" />
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>

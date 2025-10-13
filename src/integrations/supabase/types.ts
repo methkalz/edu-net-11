@@ -3191,6 +3191,8 @@ export type Database = {
           created_by: string
           description: string | null
           due_date: string | null
+          google_doc_id: string | null
+          google_doc_url: string | null
           grade: number | null
           id: string
           project_content: string | null
@@ -3208,6 +3210,8 @@ export type Database = {
           created_by: string
           description?: string | null
           due_date?: string | null
+          google_doc_id?: string | null
+          google_doc_url?: string | null
           grade?: number | null
           id?: string
           project_content?: string | null
@@ -3225,6 +3229,8 @@ export type Database = {
           created_by?: string
           description?: string | null
           due_date?: string | null
+          google_doc_id?: string | null
+          google_doc_url?: string | null
           grade?: number | null
           id?: string
           project_content?: string | null

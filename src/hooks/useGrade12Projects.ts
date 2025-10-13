@@ -4,6 +4,7 @@ import { useAuth } from './useAuth';
 import { useTeacherContentAccess } from './useTeacherContentAccess';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
+import { useGoogleDocs } from './useGoogleDocs';
 
 // Types للمشاريع النهائية
 interface Grade12FinalProject {
@@ -12,7 +13,9 @@ interface Grade12FinalProject {
   title: string;
   description?: string;
   content?: string;
-  project_content?: string; // إضافة الحقل الجديد
+  project_content?: string;
+  google_doc_id?: string;
+  google_doc_url?: string;
   status: string;
   grade?: number;
   teacher_feedback?: string;
@@ -62,6 +65,7 @@ interface Grade12ProjectRevision {
 export const useGrade12Projects = () => {
   const { userProfile } = useAuth();
   const { canAccessGrade, loading: accessLoading } = useTeacherContentAccess();
+  const { createDocument } = useGoogleDocs();
   const [projects, setProjects] = useState<Grade12FinalProject[]>([]);
   const [currentProject, setCurrentProject] = useState<Grade12FinalProject | null>(null);
   const [tasks, setTasks] = useState<Grade12ProjectTask[]>([]);
@@ -215,7 +219,7 @@ export const useGrade12Projects = () => {
   };
 
   // إنشاء مشروع جديد
-  const createProject = async (projectData: Partial<Grade12FinalProject>) => {
+  const createProject = async (projectData: Partial<Grade12FinalProject> & { createGoogleDoc?: boolean }) => {
     try {
       if (!userProfile?.user_id) {
         logger.error('User not authenticated');
@@ -233,8 +237,35 @@ export const useGrade12Projects = () => {
         status: projectData.status,
         due_date: projectData.due_date,
         student_id: userProfile.user_id,
-        school_id: userProfile.school_id
+        school_id: userProfile.school_id,
+        createGoogleDoc: projectData.createGoogleDoc
       });
+
+      // إنشاء مستند جوجل إذا تم طلبه
+      let googleDocId: string | undefined;
+      let googleDocUrl: string | undefined;
+      
+      if (projectData.createGoogleDoc && userProfile.full_name) {
+        toast.info('جاري إنشاء مستند Google Docs...', {
+          description: 'قد يستغرق هذا بضع ثوان'
+        });
+
+        const docResult = await createDocument({
+          studentName: userProfile.full_name,
+          documentContent: `المشروع النهائي: ${projectData.title}\n\nالوصف: ${projectData.description || 'لا يوجد وصف'}\n\n---\n\nابدأ العمل على مشروعك هنا...`
+        });
+
+        if (docResult && docResult.success) {
+          googleDocId = docResult.documentId;
+          googleDocUrl = docResult.documentUrl;
+          logger.info('Google Doc created successfully', { googleDocId, googleDocUrl });
+        } else {
+          logger.warn('Failed to create Google Doc, continuing without it');
+          toast.warning('تم إنشاء المشروع بدون مستند جوجل', {
+            description: 'يمكنك إنشاء المستند لاحقاً'
+          });
+        }
+      }
 
       const insertData = {
         title: projectData.title.trim(),
@@ -242,9 +273,10 @@ export const useGrade12Projects = () => {
         status: projectData.status || 'draft',
         due_date: projectData.due_date || null,
         student_id: userProfile.user_id,
-        // school_id مؤقتاً اختياري حتى يتم إصلاح بيانات المستخدمين
         school_id: userProfile.school_id || null,
         created_by: userProfile.user_id,
+        google_doc_id: googleDocId,
+        google_doc_url: googleDocUrl,
       };
 
       const { data, error } = await supabase
@@ -266,7 +298,9 @@ export const useGrade12Projects = () => {
 
       logger.info('Project created successfully', { project: data });
       setProjects(prev => [data, ...prev]);
-      toast.success('تم إنشاء المشروع بنجاح');
+      toast.success('تم إنشاء المشروع بنجاح', {
+        description: googleDocUrl ? 'تم إنشاء مستند Google Docs وربطه بالمشروع' : undefined
+      });
       
       return data;
     } catch (error: any) {

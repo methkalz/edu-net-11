@@ -7,17 +7,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Checkbox } from '@/components/ui/checkbox';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { logger } from '@/lib/logger';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Grade12FinalProjectFormData {
   title: string;
   description: string;
   status: 'draft' | 'in_progress' | 'submitted' | 'completed' | 'reviewed';
-  due_date?: string; // Change from Date to string
+  due_date?: string;
+  createGoogleDoc?: boolean;
 }
 
 interface Grade12FinalProjectFormProps {
@@ -31,15 +34,19 @@ const Grade12FinalProjectForm: React.FC<Grade12FinalProjectFormProps> = ({
   onClose,
   initialData
 }) => {
+  const { userProfile } = useAuth();
   const [formData, setFormData] = useState<Grade12FinalProjectFormData>({
     title: initialData?.title || '',
     description: initialData?.description || '',
     status: initialData?.status || 'draft',
+    createGoogleDoc: false,
   });
 
   const [dueDate, setDueDate] = useState<Date | undefined>(
     initialData?.due_date ? new Date(initialData.due_date) : undefined
   );
+
+  const isStudent = userProfile?.role === 'student';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -148,6 +155,31 @@ const Grade12FinalProjectForm: React.FC<Grade12FinalProjectFormProps> = ({
               </PopoverContent>
             </Popover>
           </div>
+
+          {/* إنشاء مستند جوجل */}
+          {!initialData && isStudent && (
+            <div className="flex items-center space-x-2 space-x-reverse p-4 border rounded-lg bg-muted/50">
+              <Checkbox
+                id="createGoogleDoc"
+                checked={formData.createGoogleDoc}
+                onCheckedChange={(checked) => 
+                  setFormData({ ...formData, createGoogleDoc: checked as boolean })
+                }
+              />
+              <div className="flex-1">
+                <Label 
+                  htmlFor="createGoogleDoc" 
+                  className="flex items-center gap-2 cursor-pointer font-medium"
+                >
+                  <FileText className="h-4 w-4 text-primary" />
+                  إنشاء مستند Google Docs تلقائياً
+                </Label>
+                <p className="text-sm text-muted-foreground mt-1">
+                  سيتم إنشاء مستند جوجل باسمك وربطه بالمشروع
+                </p>
+              </div>
+            </div>
+          )}
 
           <DialogFooter className="gap-2 sm:gap-0">
             <Button type="button" variant="outline" onClick={onClose}>
