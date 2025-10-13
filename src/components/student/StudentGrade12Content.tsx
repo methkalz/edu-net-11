@@ -32,6 +32,7 @@ export const StudentGrade12Content: React.FC = () => {
   const [selectedVideo, setSelectedVideo] = useState<any>(null);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('videos');
+  const [mainTab, setMainTab] = useState('content');
   const [showProjectForm, setShowProjectForm] = useState(false);
 
   // Helper functions for video thumbnails
@@ -204,25 +205,35 @@ export const StudentGrade12Content: React.FC = () => {
         </div>
       </div>
 
-      {/* Content Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-8">
-          <TabsTrigger value="videos" className="flex items-center gap-2">
+      {/* Main Tabs */}
+      <Tabs value={mainTab} onValueChange={setMainTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2 mb-8">
+          <TabsTrigger value="content" className="flex items-center gap-2">
             <Video className="h-4 w-4" />
-            الفيديوهات التعليمية ({videos.length})
+            المحتوى التعليمي
           </TabsTrigger>
-          <TabsTrigger value="documents" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            الملفات والمراجع ({documents.length})
-          </TabsTrigger>
-          <TabsTrigger value="projects" className="flex items-center gap-2">
+          <TabsTrigger value="project" className="flex items-center gap-2">
             <FolderOpen className="h-4 w-4" />
-            المشاريع النهائية ({projects.length})
+            المشروع النهائي
           </TabsTrigger>
         </TabsList>
 
-        {/* Videos Tab */}
-        <TabsContent value="videos">
+        {/* Content Tab */}
+        <TabsContent value="content">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-8">
+              <TabsTrigger value="videos" className="flex items-center gap-2">
+                <Video className="h-4 w-4" />
+                الفيديوهات التعليمية ({videos.length})
+              </TabsTrigger>
+              <TabsTrigger value="documents" className="flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                الملفات والمراجع ({documents.length})
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Videos Tab */}
+            <TabsContent value="videos">
           {filteredVideos.length === 0 ? <div className="text-center py-16">
               <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center">
                 <Video className="w-12 h-12 text-purple-600" />
@@ -280,10 +291,10 @@ export const StudentGrade12Content: React.FC = () => {
                   </CardContent>
                 </Card>)}
             </div>}
-        </TabsContent>
+            </TabsContent>
 
-        {/* Documents Tab */}
-        <TabsContent value="documents">
+            {/* Documents Tab */}
+            <TabsContent value="documents">
           {documents.length === 0 ? <div className="text-center py-16">
               <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-full flex items-center justify-center">
                 <FileText className="w-12 h-12 text-blue-600" />
@@ -311,15 +322,17 @@ export const StudentGrade12Content: React.FC = () => {
                   </CardContent>
                 </Card>)}
             </div>}
+            </TabsContent>
+          </Tabs>
         </TabsContent>
 
-        {/* Projects Tab */}
-        <TabsContent value="projects">
+        {/* Project Tab */}
+        <TabsContent value="project">
           {projects.length === 0 ? <div className="text-center py-16">
               <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-amber-100 to-orange-100 rounded-full flex items-center justify-center">
                 <FolderOpen className="w-12 h-12 text-amber-600" />
               </div>
-              <h3 className="text-2xl font-bold mb-4">لا توجد مشاريع نهائية</h3>
+              <h3 className="text-2xl font-bold mb-4">لا يوجد مشروع نهائي</h3>
               <p className="text-muted-foreground text-lg mb-6">
                 أنشئ مشروعك النهائي وأظهر مهاراتك المتقدمة
               </p>
