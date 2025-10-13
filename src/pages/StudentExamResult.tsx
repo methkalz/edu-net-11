@@ -49,7 +49,7 @@ export default function StudentExamResult() {
   });
 
   // تأثيرات العد للأرقام - مع قيم افتراضية آمنة
-  const scoreCount = useCountUp({ end: result?.score || 0, duration: 1000 });
+  const scoreCount = useCountUp({ end: result?.score || 0, duration: 2250 });
   const percentageCount = useCountUp({ end: result?.percentage || 0, duration: 3000, decimals: 1 });
   const attemptCount = useCountUp({ end: result?.attempt_number || 1, duration: 1000 });
   const correctCount = useCountUp({ 
