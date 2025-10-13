@@ -892,16 +892,6 @@ const GradeExamsAnalytics: React.FC = () => {
                   </CardContent>
                 </Card>
 
-                <Card className="border-0 bg-gradient-to-br from-purple-500/10 to-transparent backdrop-blur-sm hover:shadow-lg transition-all">
-                  <CardContent className="p-6 flex flex-col items-center justify-center text-center space-y-2">
-                    <div className="p-3 rounded-full bg-purple-500/10 w-fit mx-auto">
-                      <Target className="h-6 w-6 text-purple-500 mx-auto" />
-                    </div>
-                    <p className="text-xs text-muted-foreground font-medium text-center w-full">إجمالي النقاط</p>
-                    <p className="text-3xl font-bold text-center w-full mx-auto" dir="ltr">{selectedExam.total_points}</p>
-                  </CardContent>
-                </Card>
-
                 <Card className="border-0 bg-gradient-to-br from-cyan-500/10 to-transparent backdrop-blur-sm hover:shadow-lg transition-all">
                   <CardContent className="p-6 flex flex-col items-center justify-center text-center space-y-2">
                     <div className="p-3 rounded-full bg-cyan-500/10 w-fit mx-auto">
