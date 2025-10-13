@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { MultiSourceSelector } from '@/components/exams/MultiSourceSelector';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -283,7 +284,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
 
   // حساب عدد الأسئلة المتاحة بناءً على الاختيارات
   const questionsCount = form.watch('questions_count');
-  const questionSources = form.watch('question_sources') || [];
+  const questionSources = (form.watch('question_sources') || []) as ('random' | 'specific_sections' | 'my_questions')[];
   const sourceDistribution = form.watch('source_distribution') || {};
   const selectedSections = form.watch('selected_sections');
   const difficultyMode = form.watch('difficulty_mode');
@@ -1853,41 +1854,23 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                       }}
                     />
 
-                    <FormField
-                      control={form.control}
-                      name="question_source_type"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-base">اختر مصدر الأسئلة</FormLabel>
-                          <FormControl>
-                            <RadioGroup value={field.value} onValueChange={field.onChange}>
-                              <div className="flex items-center space-x-3 space-x-reverse border rounded-lg p-4 cursor-pointer hover:bg-muted/50">
-                                <RadioGroupItem value="random" id="random" />
-                                <Label htmlFor="random" className="flex-1 cursor-pointer">
-                                  <span className="text-base font-medium block">🎲 أسئلة عشوائية</span>
-                                  <span className="text-sm text-muted-foreground">سيتم اختيار الأسئلة بشكل عشوائي من جميع الأقسام</span>
-                                </Label>
-                              </div>
-                              <div className="flex items-center space-x-3 space-x-reverse border rounded-lg p-4 cursor-pointer hover:bg-muted/50">
-                                <RadioGroupItem value="specific_sections" id="specific" />
-                                <Label htmlFor="specific" className="flex-1 cursor-pointer">
-                                  <span className="text-base font-medium block">📂 أقسام محددة</span>
-                                  <span className="text-sm text-muted-foreground">اختر أقسام معينة من المنهج</span>
-                                </Label>
-                              </div>
-                              <div className="flex items-center space-x-3 space-x-reverse border rounded-lg p-4 cursor-pointer hover:bg-muted/50">
-                                <RadioGroupItem value="my_questions" id="my_questions" />
-                                <Label htmlFor="my_questions" className="flex-1 cursor-pointer">
-                                  <span className="text-base font-medium block">📝 أسئلتي</span>
-                                  <span className="text-sm text-muted-foreground">استخدم أسئلتك الخاصة من التصنيفات التي أنشأتها</span>
-                                </Label>
-                              </div>
-                            </RadioGroup>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    {/* مصدر الأسئلة - دعم مصادر متعددة */}
+                    <div className="space-y-4">
+                      <h3 className="text-base font-medium">اختر مصادر الأسئلة</h3>
+                      <MultiSourceSelector
+                        selectedSources={questionSources}
+                        sourceDistribution={sourceDistribution}
+                        onSourcesChange={(sources) => form.setValue('question_sources', sources as any)}
+                        onDistributionChange={(distribution) => form.setValue('source_distribution', distribution)}
+                        availableSections={availableSections?.map(s => ({ value: s.id, label: s.name })) || []}
+                        selectedSections={selectedSections || []}
+                        onSectionsChange={(sections) => form.setValue('selected_sections', sections)}
+                        availableCategories={categories.map(c => ({ value: c, label: c })) || []}
+                        selectedCategories={form.watch('selected_teacher_categories') || []}
+                        onCategoriesChange={(cats) => form.setValue('selected_teacher_categories', cats)}
+                        totalQuestions={questionsCount}
+                      />
+                    </div>
 
                     {/* عرض تصنيفات أسئلة المعلم */}
                     {questionSources.includes('my_questions') && (
