@@ -429,7 +429,7 @@ const GradeExamsAnalytics: React.FC = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <ResponsiveContainer width="100%" height={300}>
+                    <ResponsiveContainer width="100%" height={400}>
                       <BarChart data={performanceChartData}>
                         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                         <XAxis 
@@ -437,10 +437,10 @@ const GradeExamsAnalytics: React.FC = () => {
                           tick={{ fill: 'hsl(var(--foreground))', fontSize: 11 }}
                           angle={-45}
                           textAnchor="end"
-                          height={160}
+                          height={100}
                           interval={0}
                           dx={-5}
-                          dy={25}
+                          dy={35}
                         />
                         <YAxis tick={{ fill: 'hsl(var(--foreground))' }} />
                         <Tooltip 
