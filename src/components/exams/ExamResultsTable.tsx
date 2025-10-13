@@ -197,9 +197,20 @@ export const ExamResultsTable: React.FC<ExamResultsTableProps> = ({ exams }) => 
                           </Badge>
                         </TableCell>
                         <TableCell className="text-center" dir="ltr">
-                          <span className="text-sm font-medium">
-                            {result.time_spent_minutes > 0 ? (
-                              `${result.time_spent_minutes} دقيقة`
+                          <span className="text-sm font-medium font-mono">
+                            {result.time_spent_seconds > 0 ? (
+                              (() => {
+                                const totalSeconds = result.time_spent_seconds;
+                                const hours = Math.floor(totalSeconds / 3600);
+                                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                                const seconds = totalSeconds % 60;
+                                
+                                if (hours > 0) {
+                                  return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                                } else {
+                                  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                                }
+                              })()
                             ) : (
                               <span className="text-muted-foreground/50">-</span>
                             )}
