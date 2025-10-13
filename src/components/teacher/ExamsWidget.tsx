@@ -700,32 +700,210 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         total_points: data.questions_count * 10, // افتراض 10 نقاط لكل سؤال
       };
 
+      // 🔍 DEVELOPMENT MODE: فحص شامل لبيانات الامتحان
+      if (import.meta.env.DEV) {
+        console.group('🔍 === EXAM VALIDATION & DEBUG ===');
+        
+        // 1️⃣ فحص القيم الأساسية
+        console.log('📝 Basic Fields:', {
+          title: { value: examData.title, type: typeof examData.title, isEmpty: !examData.title },
+          description: { value: examData.description, type: typeof examData.description },
+          duration_minutes: { value: examData.duration_minutes, type: typeof examData.duration_minutes },
+          passing_percentage: { value: examData.passing_percentage, type: typeof examData.passing_percentage },
+          questions_count: { value: examData.questions_count, type: typeof examData.questions_count },
+          total_questions: { value: examData.total_questions, type: typeof examData.total_questions },
+          total_points: { value: examData.total_points, type: typeof examData.total_points },
+        });
+
+        // 2️⃣ فحص المصفوفات
+        console.log('📊 Arrays:', {
+          grade_levels: { 
+            value: examData.grade_levels, 
+            isArray: Array.isArray(examData.grade_levels),
+            length: examData.grade_levels?.length,
+            types: examData.grade_levels?.map(g => typeof g)
+          },
+          target_classes: { 
+            value: examData.target_classes, 
+            isArray: Array.isArray(examData.target_classes),
+            length: examData.target_classes?.length,
+            types: examData.target_classes?.map(c => typeof c)
+          },
+          selected_sections: { 
+            value: examData.selected_sections, 
+            isArray: Array.isArray(examData.selected_sections),
+            length: examData.selected_sections?.length,
+            types: examData.selected_sections?.map(s => typeof s),
+            sample: examData.selected_sections?.slice(0, 2)
+          },
+          selected_teacher_categories: { 
+            value: examData.selected_teacher_categories, 
+            isArray: Array.isArray(examData.selected_teacher_categories),
+            length: examData.selected_teacher_categories?.length
+          }
+        });
+
+        // 3️⃣ فحص التواريخ
+        console.log('📅 Dates:', {
+          start_datetime: { 
+            value: examData.start_datetime,
+            type: typeof examData.start_datetime,
+            isNull: examData.start_datetime === null,
+            isValid: examData.start_datetime ? !isNaN(new Date(examData.start_datetime).getTime()) : 'N/A'
+          },
+          end_datetime: { 
+            value: examData.end_datetime,
+            type: typeof examData.end_datetime,
+            isNull: examData.end_datetime === null,
+            isValid: examData.end_datetime ? !isNaN(new Date(examData.end_datetime).getTime()) : 'N/A'
+          }
+        });
+
+        // 4️⃣ فحص الـ Booleans
+        console.log('✅ Booleans:', {
+          shuffle_questions: { value: examData.shuffle_questions, type: typeof examData.shuffle_questions },
+          shuffle_choices: { value: examData.shuffle_choices, type: typeof examData.shuffle_choices },
+          show_results_immediately: { value: examData.show_results_immediately, type: typeof examData.show_results_immediately },
+          allow_review: { value: examData.allow_review, type: typeof examData.allow_review }
+        });
+
+        // 5️⃣ فحص الـ JSONB
+        console.log('📦 JSONB Fields:', {
+          difficulty_distribution: {
+            value: examData.difficulty_distribution,
+            type: typeof examData.difficulty_distribution,
+            stringified: JSON.stringify(examData.difficulty_distribution),
+            mode: examData.difficulty_distribution?.mode,
+            distribution: examData.difficulty_distribution?.distribution
+          }
+        });
+
+        // 6️⃣ فحص الـ Status & Enums
+        console.log('🎯 Status & Enums:', {
+          status: { value: examData.status, type: typeof examData.status },
+          question_source_type: { value: examData.question_source_type, type: typeof examData.question_source_type }
+        });
+
+        // 7️⃣ البيانات الكاملة للإرسال
+        console.log('📤 Complete Exam Data (will be sent to Supabase):', JSON.stringify(examData, null, 2));
+
+        // 8️⃣ فحص الأخطاء المحتملة
+        const validationErrors = [];
+        if (!examData.title) validationErrors.push('❌ Title is empty');
+        if (!examData.duration_minutes || examData.duration_minutes <= 0) validationErrors.push('❌ Invalid duration_minutes');
+        if (!examData.questions_count || examData.questions_count <= 0) validationErrors.push('❌ Invalid questions_count');
+        if (examData.status === 'scheduled' && !examData.start_datetime) validationErrors.push('❌ scheduled status requires start_datetime');
+        if (examData.status === 'scheduled' && !examData.end_datetime) validationErrors.push('❌ scheduled status requires end_datetime');
+        if (examData.status === 'active' && !examData.end_datetime) validationErrors.push('❌ active status requires end_datetime');
+        if (!Array.isArray(examData.grade_levels)) validationErrors.push('❌ grade_levels must be array');
+        if (!Array.isArray(examData.target_classes)) validationErrors.push('❌ target_classes must be array');
+        if (!Array.isArray(examData.selected_sections)) validationErrors.push('❌ selected_sections must be array');
+        if (!Array.isArray(examData.selected_teacher_categories)) validationErrors.push('❌ selected_teacher_categories must be array');
+        
+        if (validationErrors.length > 0) {
+          console.error('🚨 VALIDATION ERRORS FOUND:');
+          validationErrors.forEach(err => console.error(err));
+        } else {
+          console.log('✅ All validations passed!');
+        }
+
+        console.groupEnd();
+      }
+
       console.log('💾 Exam Data to Save:', examData);
-      console.log('🔑 Selected Sections Type Check:', {
-        isArray: Array.isArray(examData.selected_sections),
-        values: examData.selected_sections,
-        types: examData.selected_sections?.map(s => typeof s),
-        sampleIds: examData.selected_sections?.slice(0, 3)
-      });
 
       if (editingExamId) {
-        const { error: examError } = await supabase
+        if (import.meta.env.DEV) {
+          console.log('🔄 UPDATE MODE: Updating exam with ID:', editingExamId);
+          console.log('📤 Data being sent to Supabase:', JSON.stringify(examData, null, 2));
+        }
+        
+        const { data: updateResult, error: examError } = await supabase
           .from('exams')
           .update(examData)
-          .eq('id', editingExamId);
+          .eq('id', editingExamId)
+          .select();
 
-        if (examError) throw examError;
+        if (examError) {
+          if (import.meta.env.DEV) {
+            console.error('🚨 UPDATE ERROR:');
+            console.error('Error Object:', examError);
+            console.error('Error Message:', examError.message);
+            console.error('Error Code:', examError.code);
+            console.error('Error Details:', examError.details);
+            console.error('Error Hint:', examError.hint);
+          }
+          throw examError;
+        }
+        
+        if (import.meta.env.DEV) {
+          console.log('✅ Update successful! Result:', updateResult);
+        }
         toast.success('تم تحديث الامتحان بنجاح!');
       } else {
-        const { error: examError } = await supabase
-          .from('exams')
-          .insert({
-            ...examData,
-            created_by: user.id,
-            school_id: profile.school_id,
+        const finalData = {
+          ...examData,
+          created_by: user.id,
+          school_id: profile.school_id,
+        };
+        
+        if (import.meta.env.DEV) {
+          console.log('➕ INSERT MODE: Creating new exam');
+          console.log('👤 User ID:', user.id);
+          console.log('🏫 School ID:', profile.school_id);
+          console.log('📤 Final data being sent to Supabase:', JSON.stringify(finalData, null, 2));
+          console.log('🔑 Data types check:', {
+            created_by: { value: finalData.created_by, type: typeof finalData.created_by },
+            school_id: { value: finalData.school_id, type: typeof finalData.school_id },
+            title: { value: finalData.title, type: typeof finalData.title },
+            status: { value: finalData.status, type: typeof finalData.status }
           });
+        }
+        
+        const { data: insertResult, error: examError } = await supabase
+          .from('exams')
+          .insert(finalData)
+          .select();
 
-        if (examError) throw examError;
+        if (examError) {
+          if (import.meta.env.DEV) {
+            console.error('🚨 INSERT ERROR:');
+            console.error('Error Object:', examError);
+            console.error('Error Message:', examError.message);
+            console.error('Error Code:', examError.code);
+            console.error('Error Details:', examError.details);
+            console.error('Error Hint:', examError.hint);
+            console.error('PostgreSQL Error:', {
+              code: examError.code,
+              message: examError.message,
+              details: examError.details,
+              hint: examError.hint
+            });
+            
+            // فحص خاص بأخطاء RLS
+            if (examError.code === '42501') {
+              console.error('🔒 RLS POLICY ERROR: Row Level Security is blocking this operation');
+              console.error('Check if user has proper permissions and RLS policies are correctly configured');
+            }
+            
+            // فحص خاص بأخطاء القيم
+            if (examError.code === '23502') {
+              console.error('⚠️ NULL VALUE ERROR: A NOT NULL constraint is violated');
+              console.error('Check which field is missing in the data');
+            }
+            
+            // فحص خاص بأخطاء النوع
+            if (examError.code === '22P02') {
+              console.error('🔢 TYPE ERROR: Invalid input syntax for type');
+              console.error('Check if data types match database schema');
+            }
+          }
+          throw examError;
+        }
+        
+        if (import.meta.env.DEV) {
+          console.log('✅ Insert successful! Result:', insertResult);
+        }
         toast.success('تم إنشاء الامتحان بنجاح!');
       }
 
@@ -733,8 +911,49 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
       await queryClient.invalidateQueries({ queryKey: ['teacher-exams', user?.id] });
       console.log('✅ Exam saved successfully');
       console.groupEnd();
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error submitting exam:', error);
+      
+      if (import.meta.env.DEV) {
+        console.group('🚨 === DETAILED ERROR ANALYSIS ===');
+        console.error('Full Error Object:', error);
+        console.error('Error Type:', typeof error);
+        console.error('Error Constructor:', error?.constructor?.name);
+        
+        console.group('📋 Error Properties:');
+        console.error('message:', error?.message);
+        console.error('code:', error?.code);
+        console.error('details:', error?.details);
+        console.error('hint:', error?.hint);
+        console.error('status:', error?.status);
+        console.error('statusCode:', error?.statusCode);
+        console.groupEnd();
+        
+        if (error?.message) {
+          console.group('💬 Error Message Analysis:');
+          console.error('Message:', error.message);
+          if (error.message.includes('violates')) {
+            console.error('⚠️ Constraint Violation Detected');
+          }
+          if (error.message.includes('null')) {
+            console.error('⚠️ NULL Value Issue Detected');
+          }
+          if (error.message.includes('type')) {
+            console.error('⚠️ Type Mismatch Detected');
+          }
+          if (error.message.includes('permission') || error.message.includes('policy')) {
+            console.error('⚠️ Permission/RLS Policy Issue Detected');
+          }
+          console.groupEnd();
+        }
+        
+        console.group('🔍 Stack Trace:');
+        console.error(error?.stack || 'No stack trace available');
+        console.groupEnd();
+        
+        console.groupEnd();
+      }
+      
       console.error('📋 Error Details:', {
         message: error?.message,
         code: error?.code,
@@ -742,7 +961,14 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         hint: error?.hint
       });
       console.groupEnd();
-      toast.error('حدث خطأ أثناء حفظ الامتحان');
+      
+      // رسالة خطأ مفصلة للمستخدم
+      const errorMessage = error?.message || 'حدث خطأ أثناء حفظ الامتحان';
+      const detailedError = import.meta.env.DEV 
+        ? `${errorMessage}\nCode: ${error?.code}\nDetails: ${error?.details || 'N/A'}` 
+        : errorMessage;
+      
+      toast.error(detailedError);
     } finally {
       setIsSubmitting(false);
     }
