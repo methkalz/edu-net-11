@@ -735,7 +735,7 @@ const GradeExamsAnalytics: React.FC = () => {
                         </div>
 
                         {/* Mini Stats Grid */}
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-3 gap-2">
                           <div className="space-y-1 p-2 rounded-lg bg-background/50 text-right">
                             <p className="text-xs text-muted-foreground">الأسئلة</p>
                             <p className="text-sm font-bold">{exam.total_questions}</p>
@@ -745,14 +745,18 @@ const GradeExamsAnalytics: React.FC = () => {
                             <p className="text-sm font-bold">{exam.total_points}</p>
                           </div>
                           <div className="space-y-1 p-2 rounded-lg bg-background/50 text-right">
-                            <p className="text-xs text-muted-foreground">المحاولات</p>
-                            <p className="text-sm font-bold">{exam.attempts_count}</p>
-                          </div>
-                          <div className="space-y-1 p-2 rounded-lg bg-background/50 text-right">
                             <p className="text-xs text-muted-foreground">المتوسط</p>
                             <p className="text-sm font-bold">
                               {exam.avg_percentage !== null ? `${exam.avg_percentage.toFixed(1)}%` : '-'}
                             </p>
+                          </div>
+                          <div className="space-y-1 p-2 rounded-lg bg-background/50 text-right">
+                            <p className="text-xs text-muted-foreground">الطلاب</p>
+                            <p className="text-sm font-bold">{exam.unique_students_count}</p>
+                          </div>
+                          <div className="space-y-1 p-2 rounded-lg bg-background/50 text-right">
+                            <p className="text-xs text-muted-foreground">المحاولات</p>
+                            <p className="text-sm font-bold">{exam.attempts_count}</p>
                           </div>
                         </div>
 
