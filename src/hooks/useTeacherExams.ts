@@ -12,6 +12,7 @@ export interface ExamStats {
   start_datetime: string;
   end_datetime: string;
   attempts_count: number;
+  unique_students_count: number;
   avg_score: number | null;
   avg_percentage: number | null;
 }
@@ -55,7 +56,7 @@ export const useTeacherExams = (teacherId?: string) => {
         (exams || []).map(async (exam) => {
           const { data: attempts, error: attemptsError } = await supabase
             .from('exam_attempts')
-            .select('score, percentage')
+            .select('student_id, score, percentage')
             .eq('exam_id', exam.id)
             .eq('status', 'submitted');
 
@@ -64,11 +65,30 @@ export const useTeacherExams = (teacherId?: string) => {
           }
 
           const attemptsCount = attempts?.length || 0;
-          const avgScore = attemptsCount > 0
-            ? attempts!.reduce((sum, a) => sum + (a.score || 0), 0) / attemptsCount
+          
+          // حساب عدد الطلاب الفريدين
+          const uniqueStudents = new Set(attempts?.map(a => a.student_id) || []);
+          const uniqueStudentsCount = uniqueStudents.size;
+          
+          // حساب أعلى نتيجة لكل طالب
+          const studentBestScores = new Map<string, { score: number; percentage: number }>();
+          attempts?.forEach(attempt => {
+            const existing = studentBestScores.get(attempt.student_id);
+            if (!existing || (attempt.percentage || 0) > existing.percentage) {
+              studentBestScores.set(attempt.student_id, {
+                score: attempt.score || 0,
+                percentage: attempt.percentage || 0
+              });
+            }
+          });
+          
+          // حساب المتوسط من أفضل نتائج الطلاب
+          const bestScores = Array.from(studentBestScores.values());
+          const avgScore = bestScores.length > 0
+            ? bestScores.reduce((sum, s) => sum + s.score, 0) / bestScores.length
             : null;
-          const avgPercentage = attemptsCount > 0
-            ? attempts!.reduce((sum, a) => sum + (a.percentage || 0), 0) / attemptsCount
+          const avgPercentage = bestScores.length > 0
+            ? bestScores.reduce((sum, s) => sum + s.percentage, 0) / bestScores.length
             : null;
 
           return {
@@ -81,6 +101,7 @@ export const useTeacherExams = (teacherId?: string) => {
             start_datetime: exam.start_datetime,
             end_datetime: exam.end_datetime,
             attempts_count: attemptsCount,
+            unique_students_count: uniqueStudentsCount,
             avg_score: avgScore,
             avg_percentage: avgPercentage,
           };

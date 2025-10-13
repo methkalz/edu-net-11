@@ -576,7 +576,7 @@ const GradeExamsAnalytics: React.FC = () => {
                         <div className="flex-1 min-w-0">
                           <p className="font-medium truncate">{exam.title}</p>
                           <p className="text-xs text-muted-foreground" dir="ltr">
-                            {exam.attempts_count} محاولة
+                            {exam.unique_students_count} {exam.unique_students_count === 1 ? 'طالب' : 'طلاب'}
                           </p>
                         </div>
                         <div className="text-lg font-bold text-green-600" dir="ltr">
@@ -606,7 +606,7 @@ const GradeExamsAnalytics: React.FC = () => {
                         <div className="flex-1 min-w-0">
                           <p className="font-medium truncate">{exam.title}</p>
                           <p className="text-xs text-muted-foreground" dir="ltr">
-                            {exam.attempts_count} محاولة
+                            {exam.unique_students_count} {exam.unique_students_count === 1 ? 'طالب' : 'طلاب'}
                           </p>
                         </div>
                         <div className="text-lg font-bold text-red-500" dir="ltr">
