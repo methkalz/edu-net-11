@@ -125,44 +125,43 @@ export default function StudentExamResult() {
           <>
             {/* Minimalist Hero Section */}
             <div className="text-center mb-16">
-              {/* Icon */}
-              <div className="flex justify-center mb-8">
-                <div className={cn(
-                  "w-20 h-20 rounded-full flex items-center justify-center transition-all duration-500",
-                  result.passed 
-                    ? "bg-green-50 dark:bg-green-950/30" 
-                    : "bg-red-50 dark:bg-red-950/30"
-                )}>
-                  {result.passed ? (
-                    <CheckCircle2 className="w-10 h-10 text-green-600 dark:text-green-400" />
-                  ) : (
-                    <Frown className="w-10 h-10 text-red-600 dark:text-red-400" />
-                  )}
-                </div>
-              </div>
-
               {/* Title */}
-              <h1 className="text-2xl md:text-3xl font-semibold mb-12 text-foreground/90">
+              <h1 className="text-2xl md:text-3xl font-semibold mb-8 text-foreground/90">
                 {result.exam_title}
               </h1>
 
               {/* Percentage - Hero Element */}
-              <div className="mb-8">
+              <div className="mb-12">
                 <div className="text-7xl md:text-8xl font-bold text-foreground tracking-tight mb-3">
                   {percentageCount}<span className="text-5xl md:text-6xl text-muted-foreground">%</span>
                 </div>
               </div>
 
-              {/* Status Badge */}
-              <Badge 
-                variant={result.passed ? 'default' : 'destructive'} 
-                className={cn(
-                  "text-base px-6 py-2 rounded-full font-medium",
-                  result.passed && "bg-green-600 hover:bg-green-700"
-                )}
-              >
-                {result.passed ? 'ناجح' : 'راسب'}
-              </Badge>
+              {/* Icon and Status Badge - Side by Side */}
+              <div className="flex items-center justify-center gap-4 mb-12">
+                <div className={cn(
+                  "w-16 h-16 rounded-full flex items-center justify-center transition-all duration-500",
+                  result.passed 
+                    ? "bg-green-50 dark:bg-green-950/30" 
+                    : "bg-red-50 dark:bg-red-950/30"
+                )}>
+                  {result.passed ? (
+                    <CheckCircle2 className="w-8 h-8 text-green-600 dark:text-green-400" />
+                  ) : (
+                    <Frown className="w-8 h-8 text-red-600 dark:text-red-400" />
+                  )}
+                </div>
+                
+                <Badge 
+                  variant={result.passed ? 'default' : 'destructive'} 
+                  className={cn(
+                    "text-base px-6 py-2 rounded-full font-medium",
+                    result.passed && "bg-green-600 hover:bg-green-700"
+                  )}
+                >
+                  {result.passed ? 'ناجح' : 'راسب'}
+                </Badge>
+              </div>
             </div>
 
             {/* Clean Stats Grid */}
@@ -203,28 +202,28 @@ export default function StudentExamResult() {
             {/* Minimalist Details */}
             {result.detailed_results && (
               <div className="border border-border rounded-xl overflow-hidden mb-12">
-                <div className="px-6 py-4 border-b border-border">
+                <div className="px-6 py-4 border-b border-border text-center">
                   <h2 className="text-sm font-medium text-foreground uppercase tracking-wider">توزيع الإجابات</h2>
                 </div>
                 <div className="p-6">
                   <div className="grid grid-cols-2 gap-8 mb-8">
                     {/* Correct Answers */}
-                    <div className="text-center">
+                    <div className="text-center flex flex-col items-center">
                       <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-50 dark:bg-green-950/30 mb-3">
                         <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
                       </div>
-                      <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wider">صحيحة</p>
+                      <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wider">صحيحة</p>
                       <p className="text-3xl font-bold text-foreground">
                         {correctCount}
                       </p>
                     </div>
 
                     {/* Incorrect Answers */}
-                    <div className="text-center">
+                    <div className="text-center flex flex-col items-center">
                       <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-red-50 dark:bg-red-950/30 mb-3">
                         <XCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
                       </div>
-                      <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wider">خاطئة</p>
+                      <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wider">خاطئة</p>
                       <p className="text-3xl font-bold text-foreground">
                         {incorrectCount}
                       </p>
@@ -233,8 +232,8 @@ export default function StudentExamResult() {
 
                   {/* Pass Grade */}
                   <div className="pt-6 border-t border-border">
-                    <div className="text-center">
-                      <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wider">درجة النجاح</p>
+                    <div className="text-center flex flex-col items-center">
+                      <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wider">درجة النجاح</p>
                       <p className="text-xl font-semibold text-foreground">{result.passing_percentage}%</p>
                     </div>
                   </div>
