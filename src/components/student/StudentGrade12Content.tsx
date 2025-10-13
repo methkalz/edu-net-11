@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import { useStudentProgress } from '@/hooks/useStudentProgress';
 import { useGrade12Projects } from '@/hooks/useGrade12Projects';
 import Grade12FinalProjectForm from '../content/Grade12FinalProjectForm';
-export const StudentGrade12Content: React.FC = () => {
+export const StudentGrade12Content: React.FC<{ defaultTab?: string }> = ({ defaultTab = 'content' }) => {
   const navigate = useNavigate();
   const {
     videos,
@@ -31,7 +31,7 @@ export const StudentGrade12Content: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedVideo, setSelectedVideo] = useState<any>(null);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
-  const [mainTab, setMainTab] = useState('content');
+  const [mainTab, setMainTab] = useState(defaultTab);
   const [contentTab, setContentTab] = useState('videos');
   const [showProjectForm, setShowProjectForm] = useState(false);
 

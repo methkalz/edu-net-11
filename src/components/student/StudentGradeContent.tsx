@@ -53,7 +53,7 @@ import {
 import { toast } from 'sonner';
 import type { ProjectFormData } from '@/types/grade10-projects';
 
-export const StudentGradeContent: React.FC = () => {
+export const StudentGradeContent: React.FC<{ defaultTab?: string }> = ({ defaultTab }) => {
   const { 
     gradeContent, 
     assignedGrade, 
@@ -476,7 +476,7 @@ export const StudentGradeContent: React.FC = () => {
 
   // Special handling for Grade 12 - show grade 12 specific content
   if (assignedGrade === '12') {
-    return <StudentGrade12Content />;
+    return <StudentGrade12Content defaultTab={defaultTab} />;
   }
 
   if (!currentContent) {

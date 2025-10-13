@@ -41,6 +41,7 @@ import { UniversalAvatar } from '@/components/shared/UniversalAvatar';
 import { UserTitleBadge } from '@/components/shared/UserTitleBadge';
 import { useStudentTeacher } from '@/hooks/useStudentTeacher';
 import { useStudentGameStats } from '@/hooks/useStudentGameStats';
+import { useGrade12Projects } from '@/hooks/useGrade12Projects';
 
 const StudentDashboard: React.FC = () => {
   const { user, userProfile } = useAuth();
@@ -48,6 +49,7 @@ const StudentDashboard: React.FC = () => {
   const { assignedGrade, getProgressPercentage, refetch: refetchContent } = useStudentContent();
   const { teacher, loading: teacherLoading } = useStudentTeacher();
   const { refetch: refetchGameStats } = useStudentGameStats();
+  const { projects } = useGrade12Projects();
   const [activeTab, setActiveTab] = useState<string>('overview');
   
   // نظام تتبع الأوسمة والاحتفال
@@ -70,6 +72,8 @@ const StudentDashboard: React.FC = () => {
   
   // Check if student is in Grade 10 or 12 (no games available)
   const hasGamesTab = assignedGrade !== "10" && assignedGrade !== "12";
+  // Check if student is in Grade 12 (final project available)
+  const hasFinalProjectTab = assignedGrade === "12";
 
   const motivationalMessages = [
     'مرحباً بك في رحلة التعلم الرائعة! 🌟',
@@ -215,7 +219,11 @@ const StudentDashboard: React.FC = () => {
       <section className="container mx-auto px-6 py-8">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
           <div className="flex justify-center px-4">
-            <TabsList className={`grid w-full max-w-4xl ${hasGamesTab ? 'grid-cols-5' : 'grid-cols-4'} bg-white/95 backdrop-blur-sm shadow-xl border border-white/20 rounded-2xl p-2 h-16`}>
+            <TabsList className={`grid w-full max-w-4xl ${
+              hasGamesTab && hasFinalProjectTab ? 'grid-cols-6' : 
+              hasGamesTab || hasFinalProjectTab ? 'grid-cols-5' : 
+              'grid-cols-4'
+            } bg-white/95 backdrop-blur-sm shadow-xl border border-white/20 rounded-2xl p-2 h-16`}>
               <TabsTrigger value="overview" className="flex items-center justify-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105">
                 <span className="text-center">نظرة عامة</span>
               </TabsTrigger>
@@ -223,6 +231,12 @@ const StudentDashboard: React.FC = () => {
                 <Video className="w-6 h-6" />
                 <span className="hidden sm:inline">المحتوى</span>
               </TabsTrigger>
+              {hasFinalProjectTab && (
+                <TabsTrigger value="finalProject" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105">
+                  <FolderOpen className="w-6 h-6" />
+                  <span className="hidden sm:inline">المشروع النهائي</span>
+                </TabsTrigger>
+              )}
               <TabsTrigger value="exams" className="flex items-center gap-3 text-base font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:scale-105">
                 <FileText className="w-6 h-6" />
                 <span className="hidden sm:inline">الامتحانات</span>
@@ -344,6 +358,24 @@ const StudentDashboard: React.FC = () => {
             <TabsContent value="content">
               <StudentGradeContent />
             </TabsContent>
+
+            {hasFinalProjectTab && (
+              <TabsContent value="finalProject">
+                <div className="space-y-6">
+                  <div className="text-center space-y-4">
+                    <div className="inline-flex items-center gap-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-8 py-3 rounded-full shadow-lg">
+                      <FolderOpen className="h-6 w-6" />
+                      <span className="font-bold text-lg">المشروع النهائي</span>
+                    </div>
+                    <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                      شارك في المشروع النهائي وأظهر مهاراتك المتقدمة
+                    </p>
+                  </div>
+                  
+                  <StudentGradeContent defaultTab="project" />
+                </div>
+              </TabsContent>
+            )}
 
             <TabsContent value="exams">
               <StudentExamsSection />
