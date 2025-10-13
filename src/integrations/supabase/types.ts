@@ -5533,6 +5533,10 @@ export type Database = {
         Args: { p_class_id: string; p_teacher_id: string }
         Returns: boolean
       }
+      recalculate_exam_attempt: {
+        Args: { p_attempt_id: string }
+        Returns: Json
+      }
       recalculate_grade11_student_points: {
         Args: Record<PropertyKey, never>
         Returns: undefined
