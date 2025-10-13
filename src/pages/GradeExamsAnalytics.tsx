@@ -575,8 +575,9 @@ const GradeExamsAnalytics: React.FC = () => {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-medium truncate">{exam.title}</p>
-                          <p className="text-xs text-muted-foreground" dir="ltr">
-                            {exam.unique_students_count} {exam.unique_students_count === 1 ? 'طالب' : 'طلاب'}
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            <span>{exam.unique_students_count === 1 ? 'طالب' : 'طلاب'}</span>
+                            <span className="font-bold" dir="ltr">{exam.unique_students_count}</span>
                           </p>
                         </div>
                         <div className="text-lg font-bold text-green-600" dir="ltr">
@@ -605,8 +606,9 @@ const GradeExamsAnalytics: React.FC = () => {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-medium truncate">{exam.title}</p>
-                          <p className="text-xs text-muted-foreground" dir="ltr">
-                            {exam.unique_students_count} {exam.unique_students_count === 1 ? 'طالب' : 'طلاب'}
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            <span>{exam.unique_students_count === 1 ? 'طالب' : 'طلاب'}</span>
+                            <span className="font-bold" dir="ltr">{exam.unique_students_count}</span>
                           </p>
                         </div>
                         <div className="text-lg font-bold text-red-500" dir="ltr">
