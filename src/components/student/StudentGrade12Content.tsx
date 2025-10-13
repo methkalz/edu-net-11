@@ -174,28 +174,6 @@ export const StudentGrade12Content: React.FC<{ defaultTab?: string }> = ({ defau
   }
   
   return <div className="container mx-auto px-6 py-12" dir="rtl">
-      {/* Search and Stats */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-        <div className="flex items-center gap-4">
-          <Badge variant="secondary" className="text-lg px-4 py-2">
-            <Video className="h-4 w-4 mr-2" />
-            {videos.length} فيديو
-          </Badge>
-          <Badge variant="outline" className="text-lg px-4 py-2">
-            <FileText className="h-4 w-4 mr-2" />
-            {documents.length} ملف
-          </Badge>
-          <Badge variant="outline" className="text-lg px-4 py-2">
-            <FolderOpen className="h-4 w-4 mr-2" />
-            {projects.length} مشروع
-          </Badge>
-        </div>
-        <div className="relative w-full md:w-80">
-          <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-          <Input placeholder="البحث في المحتوى..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pr-10" />
-        </div>
-      </div>
-
       {/* Content based on mainTab state */}
       {mainTab === 'content' && (
         <div className="w-full">
