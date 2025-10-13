@@ -54,11 +54,11 @@ export default function StudentExamResult() {
   const attemptCount = useCountUp({ end: result?.attempt_number || 1, duration: 1000 });
   const correctCount = useCountUp({ 
     end: result?.detailed_results?.correct_count || 0, 
-    duration: 1200 
+    duration: 3000 
   });
   const incorrectCount = useCountUp({ 
     end: result?.detailed_results?.incorrect_count || 0, 
-    duration: 1200 
+    duration: 3000 
   });
 
   // إظهار الأيقونة والبادج بعد اكتمال عد النسبة المئوية
