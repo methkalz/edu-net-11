@@ -721,6 +721,28 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                 }
                 return false;
               }
+              
+              // ✅ تحقق إضافي: التأكد من أن الأقسام المختارة موجودة فعلاً
+              const validSections = selectedSections.filter(id => 
+                availableSections?.some(s => s.id === id)
+              );
+              
+              if (validSections.length === 0) {
+                toast.error('الأقسام المختارة غير صالحة. يرجى اختيار أقسام أخرى');
+                if (import.meta.env.DEV) {
+                  console.error('❌ Validation Failed: Selected sections are invalid');
+                  console.error('Selected sections:', selectedSections);
+                  console.error('Available sections:', availableSections?.map(s => s.id));
+                  console.groupEnd();
+                }
+                return false;
+              }
+              
+              // تحديث القائمة بالأقسام الصالحة فقط
+              if (validSections.length !== selectedSections.length) {
+                form.setValue('selected_sections', validSections);
+                toast.warning(`تم إزالة ${selectedSections.length - validSections.length} قسم غير صالح`);
+              }
             } else if (source.type === 'my_questions') {
               const selectedCategories = form.getValues('selected_teacher_categories');
               if (!selectedCategories || selectedCategories.length === 0) {
