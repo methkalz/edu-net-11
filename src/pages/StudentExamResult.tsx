@@ -130,37 +130,38 @@ export default function StudentExamResult() {
                 {result.exam_title}
               </h1>
 
-              {/* Percentage - Hero Element */}
-              <div className="mb-12">
-                <div className="text-7xl md:text-8xl font-bold text-foreground tracking-tight mb-3">
+              {/* Percentage with Status - Hero Element */}
+              <div className="mb-12 flex items-center justify-center gap-8 md:gap-12">
+                {/* Percentage */}
+                <div className="text-7xl md:text-8xl font-bold text-foreground tracking-tight">
                   {percentageCount}<span className="text-5xl md:text-6xl text-muted-foreground">%</span>
                 </div>
-              </div>
-
-              {/* Icon and Status Badge - Side by Side */}
-              <div className="flex items-center justify-center gap-4 mb-12">
-                <div className={cn(
-                  "w-16 h-16 rounded-full flex items-center justify-center transition-all duration-500",
-                  result.passed 
-                    ? "bg-green-50 dark:bg-green-950/30" 
-                    : "bg-red-50 dark:bg-red-950/30"
-                )}>
-                  {result.passed ? (
-                    <CheckCircle2 className="w-8 h-8 text-green-600 dark:text-green-400" />
-                  ) : (
-                    <Frown className="w-8 h-8 text-red-600 dark:text-red-400" />
-                  )}
-                </div>
                 
-                <Badge 
-                  variant={result.passed ? 'default' : 'destructive'} 
-                  className={cn(
-                    "text-base px-6 py-2 rounded-full font-medium",
-                    result.passed && "bg-green-600 hover:bg-green-700"
-                  )}
-                >
-                  {result.passed ? 'ناجح' : 'راسب'}
-                </Badge>
+                {/* Icon and Status Badge */}
+                <div className="flex flex-col items-center gap-3">
+                  <div className={cn(
+                    "w-16 h-16 rounded-full flex items-center justify-center transition-all duration-500",
+                    result.passed 
+                      ? "bg-green-50 dark:bg-green-950/30" 
+                      : "bg-red-50 dark:bg-red-950/30"
+                  )}>
+                    {result.passed ? (
+                      <CheckCircle2 className="w-8 h-8 text-green-600 dark:text-green-400" />
+                    ) : (
+                      <Frown className="w-8 h-8 text-red-600 dark:text-red-400" />
+                    )}
+                  </div>
+                  
+                  <Badge 
+                    variant={result.passed ? 'default' : 'destructive'} 
+                    className={cn(
+                      "text-base px-6 py-2 rounded-full font-medium",
+                      result.passed && "bg-green-600 hover:bg-green-700"
+                    )}
+                  >
+                    {result.passed ? 'ناجح' : 'راسب'}
+                  </Badge>
+                </div>
               </div>
             </div>
 
