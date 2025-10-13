@@ -47,6 +47,19 @@ export default function StudentExamResult() {
     enabled: !!attemptId,
   });
 
+  // تأثيرات العد للأرقام - مع قيم افتراضية آمنة
+  const scoreCount = useCountUp({ end: result?.score || 0, duration: 1500 });
+  const percentageCount = useCountUp({ end: result?.percentage || 0, duration: 1500, decimals: 1 });
+  const attemptCount = useCountUp({ end: result?.attempt_number || 1, duration: 1000 });
+  const correctCount = useCountUp({ 
+    end: result?.detailed_results?.correct_count || 0, 
+    duration: 1200 
+  });
+  const incorrectCount = useCountUp({ 
+    end: result?.detailed_results?.incorrect_count || 0, 
+    duration: 1200 
+  });
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20">
@@ -103,20 +116,7 @@ export default function StudentExamResult() {
   };
 
   // التحقق من إظهار النتائج فوراً
-  const showResults = result.show_results_immediately;
-
-  // تأثيرات العد للأرقام
-  const scoreCount = useCountUp({ end: result.score || 0, duration: 1500 });
-  const percentageCount = useCountUp({ end: result.percentage || 0, duration: 1500, decimals: 1 });
-  const attemptCount = useCountUp({ end: result.attempt_number || 1, duration: 1000 });
-  const correctCount = useCountUp({ 
-    end: result.detailed_results?.correct_count || 0, 
-    duration: 1200 
-  });
-  const incorrectCount = useCountUp({ 
-    end: result.detailed_results?.incorrect_count || 0, 
-    duration: 1200 
-  });
+  const showResults = result?.show_results_immediately || false;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 py-12 px-4">
