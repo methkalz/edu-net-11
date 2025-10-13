@@ -85,8 +85,9 @@ const createExamSchema = z.object({
   show_results_immediately: z.boolean().default(true),
   allow_review: z.boolean().default(true),
   // إعدادات الأسئلة الذكية
-  question_source_type: z.enum(['random', 'specific_sections']).default('random'),
+  question_source_type: z.enum(['random', 'specific_sections', 'my_questions']).default('random'),
   selected_sections: z.array(z.string()).optional(),
+  selected_teacher_categories: z.array(z.string()).optional(),
   questions_count: z.number().min(1, 'عدد الأسئلة مطلوب').default(10),
   // توزيع الصعوبة الذكي
   difficulty_mode: z.enum(['easy_focused', 'balanced', 'medium_focused', 'challenging', 'hard_focused', 'custom']).default('balanced'),
@@ -190,6 +191,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
       allow_review: true,
       question_source_type: 'random',
       selected_sections: [],
+      selected_teacher_categories: [],
       questions_count: 10,
       difficulty_mode: 'balanced',
       custom_easy: 40,
@@ -358,8 +360,9 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         shuffle_choices: exam.shuffle_choices,
         show_results_immediately: exam.show_results_immediately,
         allow_review: exam.allow_review,
-        question_source_type: (exam.question_source_type || 'random') as 'random' | 'specific_sections',
+        question_source_type: (exam.question_source_type || 'random') as 'random' | 'specific_sections' | 'my_questions',
         selected_sections: exam.selected_sections || [],
+        selected_teacher_categories: (exam as any).selected_teacher_categories || [],
         questions_count: exam.questions_count || 10,
         difficulty_mode: (diffDist.mode || 'balanced') as any,
         custom_easy: diffDist.distribution?.easy || 40,
@@ -518,6 +521,12 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
             form.setError('selected_sections', {
               message: 'بعض الأقسام المحددة غير صالحة'
             });
+            return false;
+          }
+        } else if (questionSourceType === 'my_questions') {
+          const selectedCategories = form.getValues('selected_teacher_categories');
+          if (!selectedCategories || selectedCategories.length === 0) {
+            toast.error('يجب اختيار تصنيف واحد على الأقل من أسئلتك');
             return false;
           }
         }
@@ -683,6 +692,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         allow_review: data.allow_review,
         question_source_type: data.question_source_type,
         selected_sections: data.selected_sections || [],
+        selected_teacher_categories: data.selected_teacher_categories || [],
         questions_count: data.questions_count,
         difficulty_distribution: diffDistribution,
         status: data.publish_status as 'draft' | 'scheduled' | 'active',
@@ -1464,12 +1474,101 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                                   <span className="text-sm text-muted-foreground">اختر أقسام معينة من المنهج</span>
                                 </Label>
                               </div>
+                              <div className="flex items-center space-x-3 space-x-reverse border rounded-lg p-4 cursor-pointer hover:bg-muted/50">
+                                <RadioGroupItem value="my_questions" id="my_questions" />
+                                <Label htmlFor="my_questions" className="flex-1 cursor-pointer">
+                                  <span className="text-base font-medium block">📝 أسئلتي</span>
+                                  <span className="text-sm text-muted-foreground">استخدم أسئلتك الخاصة من التصنيفات التي أنشأتها</span>
+                                </Label>
+                              </div>
                             </RadioGroup>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
+
+                    {/* عرض تصنيفات أسئلة المعلم */}
+                    {questionSourceType === 'my_questions' && (
+                      <div className="space-y-4">
+                        {categories.length === 0 ? (
+                          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                            <div className="flex items-start gap-3">
+                              <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+                              <div>
+                                <p className="font-medium text-yellow-800 dark:text-yellow-200">لا توجد تصنيفات</p>
+                                <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                                  لم تقم بإنشاء أي تصنيفات بعد. يمكنك إنشاء تصنيفات وأسئلة من خلال زر "سؤال جديد"
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <FormField
+                            control={form.control}
+                            name="selected_teacher_categories"
+                            render={() => (
+                              <FormItem>
+                                <FormLabel className="text-base">اختر التصنيفات</FormLabel>
+                                <div className="space-y-3 mt-3">
+                                  {categories.map((category) => {
+                                    const categoryQuestions = questions.filter(q => q.category === category);
+                                    const easyCount = categoryQuestions.filter(q => q.difficulty === 'easy').length;
+                                    const mediumCount = categoryQuestions.filter(q => q.difficulty === 'medium').length;
+                                    const hardCount = categoryQuestions.filter(q => q.difficulty === 'hard').length;
+                                    
+                                    return (
+                                      <FormField
+                                        key={category}
+                                        control={form.control}
+                                        name="selected_teacher_categories"
+                                        render={({ field }) => (
+                                          <FormItem className="flex items-start space-x-3 space-x-reverse space-y-0 border rounded-lg p-4 hover:bg-muted/50">
+                                            <FormControl>
+                                              <Checkbox
+                                                checked={field.value?.includes(category)}
+                                                onCheckedChange={(checked) => {
+                                                  return checked
+                                                    ? field.onChange([...(field.value || []), category])
+                                                    : field.onChange(field.value?.filter((value) => value !== category));
+                                                }}
+                                              />
+                                            </FormControl>
+                                            <div className="flex-1 space-y-2">
+                                              <FormLabel className="font-medium cursor-pointer">
+                                                {category}
+                                              </FormLabel>
+                                              <div className="flex items-center gap-4 text-xs">
+                                                <span className="flex items-center gap-1 text-green-600 dark:text-green-400">
+                                                  <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                                                  سهل: {easyCount}
+                                                </span>
+                                                <span className="flex items-center gap-1 text-yellow-600 dark:text-yellow-400">
+                                                  <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
+                                                  متوسط: {mediumCount}
+                                                </span>
+                                                <span className="flex items-center gap-1 text-red-600 dark:text-red-400">
+                                                  <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                                                  صعب: {hardCount}
+                                                </span>
+                                                <span className="font-medium">
+                                                  المجموع: {categoryQuestions.length}
+                                                </span>
+                                              </div>
+                                            </div>
+                                          </FormItem>
+                                        )}
+                                      />
+                                    );
+                                  })}
+                                </div>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        )}
+                      </div>
+                    )}
 
                     {/* عرض الأقسام المتاحة */}
                     {questionSourceType === 'specific_sections' && (
