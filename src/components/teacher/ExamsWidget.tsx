@@ -289,6 +289,25 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
   const customEasyCount = form.watch('custom_easy_count');
   const customMediumCount = form.watch('custom_medium_count');
   const customHardCount = form.watch('custom_hard_count');
+  const selectedTeacherCategories = form.watch('selected_teacher_categories');
+
+  // حساب إحصائيات أسئلة المعلم - يجب أن يكون قبل calculateAvailableQuestions
+  const teacherQuestionsStats = React.useMemo(() => {
+    if (!selectedTeacherCategories || selectedTeacherCategories.length === 0) {
+      return { easy: 0, medium: 0, hard: 0, total: 0 };
+    }
+    
+    const filteredQuestions = questions.filter(q => 
+      selectedTeacherCategories.includes(q.category)
+    );
+    
+    return {
+      easy: filteredQuestions.filter(q => q.difficulty === 'easy').length,
+      medium: filteredQuestions.filter(q => q.difficulty === 'medium').length,
+      hard: filteredQuestions.filter(q => q.difficulty === 'hard').length,
+      total: filteredQuestions.length,
+    };
+  }, [selectedTeacherCategories, questions]);
 
   const calculateAvailableQuestions = () => {
     const sourceDistribution = form.getValues('source_distribution');
@@ -358,25 +377,6 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
   };
 
   const availableQuestions = calculateAvailableQuestions();
-
-  // حساب إحصائيات أسئلة المعلم
-  const selectedTeacherCategories = form.watch('selected_teacher_categories');
-  const teacherQuestionsStats = React.useMemo(() => {
-    if (!selectedTeacherCategories || selectedTeacherCategories.length === 0) {
-      return { easy: 0, medium: 0, hard: 0, total: 0 };
-    }
-    
-    const filteredQuestions = questions.filter(q => 
-      selectedTeacherCategories.includes(q.category)
-    );
-    
-    return {
-      easy: filteredQuestions.filter(q => q.difficulty === 'easy').length,
-      medium: filteredQuestions.filter(q => q.difficulty === 'medium').length,
-      hard: filteredQuestions.filter(q => q.difficulty === 'hard').length,
-      total: filteredQuestions.length,
-    };
-  }, [selectedTeacherCategories, questions]);
 
   // دالة للحصول على إحصائيات الصعوبة المتاحة حسب المصدر
   const getAvailableDifficultyStats = () => {
