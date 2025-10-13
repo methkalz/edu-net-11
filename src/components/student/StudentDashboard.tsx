@@ -361,19 +361,7 @@ const StudentDashboard: React.FC = () => {
 
             {hasFinalProjectTab && (
               <TabsContent value="finalProject">
-                <div className="space-y-6">
-                  <div className="text-center space-y-4">
-                    <div className="inline-flex items-center gap-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-8 py-3 rounded-full shadow-lg">
-                      <FolderOpen className="h-6 w-6" />
-                      <span className="font-bold text-lg">المشروع النهائي</span>
-                    </div>
-                    <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                      شارك في المشروع النهائي وأظهر مهاراتك المتقدمة
-                    </p>
-                  </div>
-                  
-                  <StudentGradeContent defaultTab="project" />
-                </div>
+                <StudentGradeContent defaultTab="project" />
               </TabsContent>
             )}
 
