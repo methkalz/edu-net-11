@@ -929,8 +929,12 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
     
     if (import.meta.env.DEV) {
       console.group('🔍 [DEV] Exam Submission Debug');
-      console.log('📝 Form Data:', JSON.stringify(data, null, 2));
-      console.log('📊 Source Distribution:', data.source_distribution);
+      try {
+        console.log('📝 Form Data:', JSON.stringify(cleanData, null, 2));
+      } catch (e) {
+        console.log('📝 Form Data:', cleanData);
+      }
+      console.log('📊 Source Distribution:', cleanData.source_distribution);
       console.log('🎯 Question Source Type:', data.question_source_type);
       console.log('📚 Selected Sections:', data.selected_sections);
       console.log('📂 Selected Categories:', data.selected_teacher_categories);
@@ -1245,6 +1249,20 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
           });
         }
         
+        // فحص نهائي: إزالة أي React elements من source_distribution
+        if (finalData.source_distribution && Array.isArray(finalData.source_distribution)) {
+          finalData.source_distribution = finalData.source_distribution.map((s: any) => ({
+            type: s.type,
+            enabled: s.enabled,
+            percentage: s.percentage,
+            count: s.count,
+            label: s.label,
+            description: s.description,
+            color: s.color
+            // NO icon property!
+          }));
+        }
+        
         examSourceDebugger.log('onSubmit:beforeInsert', { finalData });
         
         const { data: insertResult, error: examError } = await supabase
@@ -1301,6 +1319,16 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
       console.log('✅ Exam saved successfully');
       console.groupEnd();
     } catch (error: any) {
+      // معالج خاص لأخطاء Circular Reference
+      if (error instanceof TypeError && error.message.includes('circular')) {
+        console.error('🚨 CIRCULAR REFERENCE ERROR - React elements in data');
+        toast.error('خطأ في بنية البيانات - الرجاء المحاولة مرة أخرى');
+        examSourceDebugger.log('onSubmit:circularError', { error: error.message });
+        setIsSubmitting(false);
+        if (import.meta.env.DEV) console.groupEnd();
+        return;
+      }
+      
       if (import.meta.env.DEV) {
         console.group('🚨 [DEV] === EXAM SUBMISSION ERROR ===');
         console.error('Full Error Object:', error);
