@@ -690,12 +690,22 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         const sourceMode = form.getValues('question_source_type');
         const sourceDistribution = form.getValues('source_distribution');
         
+        if (import.meta.env.DEV) {
+          console.group('🔍 [DEV] Step 4 Validation');
+          console.log('Source Mode:', sourceMode);
+          console.log('Source Distribution:', sourceDistribution);
+        }
+        
         // التحقق من التوزيع المتعدد المصادر
         if (sourceDistribution && Array.isArray(sourceDistribution)) {
           const enabledSources = sourceDistribution.filter((s: any) => s.enabled);
           
           if (enabledSources.length === 0) {
             toast.error('يجب تفعيل مصدر واحد على الأقل للأسئلة');
+            if (import.meta.env.DEV) {
+              console.error('❌ Validation Failed: No sources enabled');
+              console.groupEnd();
+            }
             return false;
           }
           
@@ -705,12 +715,20 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
               const selectedSections = form.getValues('selected_sections');
               if (!selectedSections || selectedSections.length === 0) {
                 toast.error('يجب اختيار قسم واحد على الأقل من بنك الأسئلة');
+                if (import.meta.env.DEV) {
+                  console.error('❌ Validation Failed: No sections selected for question_bank');
+                  console.groupEnd();
+                }
                 return false;
               }
             } else if (source.type === 'my_questions') {
               const selectedCategories = form.getValues('selected_teacher_categories');
               if (!selectedCategories || selectedCategories.length === 0) {
                 toast.error('يجب اختيار تصنيف واحد على الأقل من أسئلتك');
+                if (import.meta.env.DEV) {
+                  console.error('❌ Validation Failed: No categories selected for my_questions');
+                  console.groupEnd();
+                }
                 return false;
               }
             }
@@ -721,6 +739,10 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
             const selectedSections = form.getValues('selected_sections');
             if (!selectedSections || selectedSections.length === 0) {
               toast.error('يجب اختيار قسم واحد على الأقل');
+              if (import.meta.env.DEV) {
+                console.error('❌ Validation Failed: No sections selected');
+                console.groupEnd();
+              }
               return false;
             }
             
@@ -734,12 +756,19 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
               form.setError('selected_sections', {
                 message: 'بعض الأقسام المحددة غير صالحة'
               });
+              if (import.meta.env.DEV) {
+                console.groupEnd();
+              }
               return false;
             }
           } else if (sourceMode === 'my_questions') {
             const selectedCategories = form.getValues('selected_teacher_categories');
             if (!selectedCategories || selectedCategories.length === 0) {
               toast.error('يجب اختيار تصنيف واحد على الأقل من أسئلتك');
+              if (import.meta.env.DEV) {
+                console.error('❌ Validation Failed: No categories selected');
+                console.groupEnd();
+              }
               return false;
             }
           }
@@ -748,6 +777,10 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         const questionsCount = form.getValues('questions_count');
         if (!questionsCount || questionsCount < 1) {
           toast.error('يجب تحديد عدد الأسئلة');
+          if (import.meta.env.DEV) {
+            console.error('❌ Validation Failed: Invalid questions count');
+            console.groupEnd();
+          }
           return false;
         }
         
@@ -840,14 +873,20 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
   };
 
   const onSubmit = async (data: CreateExamFormData) => {
-    console.group('🔍 Exam Submission Debug');
-    console.log('📝 Form Data:', data);
-    console.log('📊 Selected Sections (IDs):', data.selected_sections);
-    console.log('📚 Available Sections:', availableSections);
+    if (import.meta.env.DEV) {
+      console.group('🔍 [DEV] Exam Submission Debug');
+      console.log('📝 Form Data:', JSON.stringify(data, null, 2));
+      console.log('📊 Source Distribution:', data.source_distribution);
+      console.log('🎯 Question Source Type:', data.question_source_type);
+      console.log('📚 Selected Sections:', data.selected_sections);
+      console.log('📂 Selected Categories:', data.selected_teacher_categories);
+      console.log('🔢 Questions Count:', data.questions_count);
+      console.log('📅 Available Sections:', availableSections);
+    }
     
     if (currentStep !== 7) {
       console.warn('Submit called from non-final step:', currentStep);
-      console.groupEnd();
+      if (import.meta.env.DEV) console.groupEnd();
       return;
     }
     
@@ -856,8 +895,27 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
 
       if (!user?.id) {
         toast.error('خطأ في المصادقة');
-        console.groupEnd();
+        if (import.meta.env.DEV) console.groupEnd();
         return;
+      }
+
+      // التحقق النهائي من البيانات قبل الإرسال
+      if (!data.question_source_type) {
+        throw new Error('question_source_type is required');
+      }
+
+      // تحقق إضافي: إذا كان source_type هو question_bank، يجب وجود selected_sections
+      if (data.question_source_type === 'question_bank') {
+        if (!data.selected_sections || data.selected_sections.length === 0) {
+          throw new Error('selected_sections is required when using question_bank');
+        }
+      }
+
+      // تحقق إضافي: إذا كان source_type هو my_questions، يجب وجود selected_teacher_categories
+      if (data.question_source_type === 'my_questions') {
+        if (!data.selected_teacher_categories || data.selected_teacher_categories.length === 0) {
+          throw new Error('selected_teacher_categories is required when using my_questions');
+        }
       }
 
       const { data: profile } = await supabase
@@ -868,7 +926,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
 
       if (!profile?.school_id) {
         toast.error('لا يمكن تحديد المدرسة');
-        console.groupEnd();
+        if (import.meta.env.DEV) console.groupEnd();
         return;
       }
 
@@ -877,7 +935,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         if (!data.start_datetime || !data.end_datetime) {
           toast.error('يجب تحديد تاريخ البدء والانتهاء للامتحان المجدول');
           setCurrentStep(7);
-          console.groupEnd();
+          if (import.meta.env.DEV) console.groupEnd();
           return;
         }
         const startDate = new Date(data.start_datetime);
@@ -887,14 +945,14 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         if (startDate < now) {
           toast.error('تاريخ البدء يجب أن يكون في المستقبل');
           setCurrentStep(7);
-          console.groupEnd();
+          if (import.meta.env.DEV) console.groupEnd();
           return;
         }
         
         if (startDate >= endDate) {
           toast.error('تاريخ البدء يجب أن يكون قبل تاريخ الانتهاء');
           setCurrentStep(7);
-          console.groupEnd();
+          if (import.meta.env.DEV) console.groupEnd();
           return;
         }
       }
@@ -903,13 +961,13 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         if (!data.end_datetime) {
           toast.error('يجب تحديد تاريخ الانتهاء للامتحان النشط');
           setCurrentStep(7);
-          console.groupEnd();
+          if (import.meta.env.DEV) console.groupEnd();
           return;
         }
         if (new Date(data.end_datetime) <= new Date()) {
           toast.error('تاريخ الانتهاء يجب أن يكون في المستقبل');
           setCurrentStep(7);
-          console.groupEnd();
+          if (import.meta.env.DEV) console.groupEnd();
           return;
         }
         // تعيين start_datetime للآن تلقائياً
@@ -1164,10 +1222,8 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
       console.log('✅ Exam saved successfully');
       console.groupEnd();
     } catch (error: any) {
-      console.error('❌ Error submitting exam:', error);
-      
       if (import.meta.env.DEV) {
-        console.group('🚨 === DETAILED ERROR ANALYSIS ===');
+        console.group('🚨 [DEV] === EXAM SUBMISSION ERROR ===');
         console.error('Full Error Object:', error);
         console.error('Error Type:', typeof error);
         console.error('Error Constructor:', error?.constructor?.name);
@@ -1185,16 +1241,24 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
           console.group('💬 Error Message Analysis:');
           console.error('Message:', error.message);
           if (error.message.includes('violates')) {
-            console.error('⚠️ Constraint Violation Detected');
+            console.error('⚠️ CHECK CONSTRAINT VIOLATION - قيمة غير مسموحة في قاعدة البيانات');
+            console.error('الحل: تأكد من أن القيم المرسلة تطابق قيود قاعدة البيانات');
           }
           if (error.message.includes('null')) {
-            console.error('⚠️ NULL Value Issue Detected');
+            console.error('⚠️ NULL VALUE ISSUE - حقل مطلوب فارغ');
+            console.error('الحل: تأكد من ملء جميع الحقول المطلوبة');
           }
           if (error.message.includes('type')) {
-            console.error('⚠️ Type Mismatch Detected');
+            console.error('⚠️ TYPE MISMATCH - نوع البيانات غير صحيح');
+            console.error('الحل: تأكد من نوع البيانات المرسلة يطابق نوع الحقل في قاعدة البيانات');
           }
           if (error.message.includes('permission') || error.message.includes('policy')) {
-            console.error('⚠️ Permission/RLS Policy Issue Detected');
+            console.error('⚠️ PERMISSION/RLS ISSUE - مشكلة في الصلاحيات');
+            console.error('الحل: تأكد من سياسات RLS وصلاحيات المستخدم');
+          }
+          if (error.message.includes('Could not find')) {
+            console.error('⚠️ COLUMN NOT FOUND - عمود غير موجود في قاعدة البيانات');
+            console.error('الحل: تأكد من أن اسم العمود صحيح ويطابق schema قاعدة البيانات');
           }
           console.groupEnd();
         }
@@ -1203,21 +1267,27 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         console.error(error?.stack || 'No stack trace available');
         console.groupEnd();
         
+        console.group('📊 Current Form State:');
+        console.log('Form Values:', form.getValues());
+        console.log('Form Errors:', form.formState.errors);
+        console.groupEnd();
+        
         console.groupEnd();
       }
       
+      console.error('❌ Error submitting exam:', error);
       console.error('📋 Error Details:', {
         message: error?.message,
         code: error?.code,
         details: error?.details,
         hint: error?.hint
       });
-      console.groupEnd();
+      if (import.meta.env.DEV) console.groupEnd();
       
       // رسالة خطأ مفصلة للمستخدم
       const errorMessage = error?.message || 'حدث خطأ أثناء حفظ الامتحان';
       const detailedError = import.meta.env.DEV 
-        ? `${errorMessage}\nCode: ${error?.code}\nDetails: ${error?.details || 'N/A'}` 
+        ? `${errorMessage}\n\nCode: ${error?.code || 'N/A'}\nDetails: ${error?.details || 'N/A'}\n\nتحقق من Console للمزيد من التفاصيل` 
         : errorMessage;
       
       toast.error(detailedError);
@@ -1969,22 +2039,44 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                       sources={form.watch('source_distribution') || createDefaultSources(form.watch('questions_count') || 10)}
                       onSourcesChange={(sources) => {
                         form.setValue('source_distribution', sources);
+                        
                         // تحديث question_source_type بناءً على المصادر المفعلة
                         const enabledSources = sources.filter(s => s.enabled);
-                        if (enabledSources.length === 1) {
+                        
+                        if (enabledSources.length === 0) {
+                          // لا يوجد مصدر مفعّل → استخدم smart كافتراضي
+                          form.setValue('question_source_type', 'smart');
+                        } else if (enabledSources.length === 1) {
+                          // مصدر واحد فقط → استخدمه مباشرة
                           form.setValue('question_source_type', enabledSources[0].type);
-                        } else if (enabledSources.length > 1) {
-                          // عند تفعيل أكثر من مصدر، نستخدم أول مصدر مفعّل
-                          form.setValue('question_source_type', enabledSources[0].type);
+                        } else {
+                          // أكثر من مصدر → استخدم أول مصدر مفعّل له نسبة > 0
+                          const primarySource = enabledSources.find(s => s.percentage > 0);
+                          form.setValue('question_source_type', primarySource?.type || enabledSources[0].type);
                         }
+                        
                         // تحديث الأقسام والتصنيفات المختارة
                         const bankSource = sources.find(s => s.type === 'question_bank');
                         const myQuestionsSource = sources.find(s => s.type === 'my_questions');
+                        
+                        // حذف الأقسام إذا تم تعطيل بنك الأسئلة
                         if (!bankSource?.enabled) {
                           form.setValue('selected_sections', []);
                         }
+                        
+                        // حذف التصنيفات إذا تم تعطيل "أسئلتي"
                         if (!myQuestionsSource?.enabled) {
                           form.setValue('selected_teacher_categories', []);
+                        }
+                        
+                        if (import.meta.env.DEV) {
+                          console.log('🔄 Sources Changed:', {
+                            enabledSources: enabledSources.map(s => s.type),
+                            question_source_type: form.getValues('question_source_type'),
+                            source_distribution: sources,
+                            selected_sections: form.getValues('selected_sections'),
+                            selected_categories: form.getValues('selected_teacher_categories')
+                          });
                         }
                       }}
                       availableSections={availableSections?.map(s => ({ value: s.id, label: s.name })) || []}
