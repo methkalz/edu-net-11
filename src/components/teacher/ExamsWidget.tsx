@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MultiSourceSelector } from '@/components/exams/MultiSourceSelector';
+import { SimpleQuestionSourcePicker } from '@/components/exams/SimpleQuestionSourcePicker';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -85,10 +85,8 @@ const createExamSchema = z.object({
   shuffle_choices: z.boolean().default(false),
   show_results_immediately: z.boolean().default(true),
   allow_review: z.boolean().default(true),
-  // إعدادات الأسئلة الذكية - دعم مصادر متعددة
-  question_source_type: z.enum(['random', 'specific_sections', 'my_questions']).optional(), // للتوافق القديم
-  question_sources: z.array(z.enum(['random', 'specific_sections', 'my_questions'])).min(1, 'يجب اختيار مصدر واحد على الأقل').default(['random']),
-  source_distribution: z.record(z.string(), z.number().min(0)).optional(),
+  // إعدادات الأسئلة المبسطة - وضع واحد فقط
+  question_source_mode: z.enum(['smart', 'question_bank', 'my_questions']).default('smart'),
   selected_sections: z.array(z.string()).optional(),
   selected_teacher_categories: z.array(z.string()).optional(),
   questions_count: z.number().min(1, 'عدد الأسئلة مطلوب').default(10),
@@ -1854,100 +1852,18 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                       }}
                     />
 
-                    {/* مصدر الأسئلة - دعم مصادر متعددة */}
-                    <div className="space-y-4">
-                      <h3 className="text-base font-medium">اختر مصادر الأسئلة</h3>
-                      <MultiSourceSelector
-                        selectedSources={questionSources}
-                        sourceDistribution={sourceDistribution}
-                        onSourcesChange={(sources) => form.setValue('question_sources', sources as any)}
-                        onDistributionChange={(distribution) => form.setValue('source_distribution', distribution)}
-                        availableSections={availableSections?.map(s => ({ value: s.id, label: s.name })) || []}
-                        selectedSections={selectedSections || []}
-                        onSectionsChange={(sections) => form.setValue('selected_sections', sections)}
-                        availableCategories={categories.map(c => ({ value: c, label: c })) || []}
-                        selectedCategories={form.watch('selected_teacher_categories') || []}
-                        onCategoriesChange={(cats) => form.setValue('selected_teacher_categories', cats)}
-                        totalQuestions={questionsCount}
-                      />
-                    </div>
+                    {/* مصدر الأسئلة - مبسط */}
+                    <SimpleQuestionSourcePicker
+                      mode={form.watch('question_source_mode')}
+                      onModeChange={(mode) => form.setValue('question_source_mode', mode)}
+                      availableSections={availableSections?.map(s => ({ value: s.id, label: s.name })) || []}
+                      selectedSections={selectedSections || []}
+                      onSectionsChange={(sections) => form.setValue('selected_sections', sections)}
+                      availableCategories={categories.map(c => ({ value: c, label: c })) || []}
+                      selectedCategories={form.watch('selected_teacher_categories') || []}
+                      onCategoriesChange={(cats) => form.setValue('selected_teacher_categories', cats)}
+                    />
 
-                    {/* عرض تصنيفات أسئلة المعلم */}
-                    {questionSources.includes('my_questions') && (
-                      <div className="space-y-4">
-                        {categories.length === 0 ? (
-                          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-                            <div className="flex items-start gap-3">
-                              <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
-                              <div>
-                                <p className="font-medium text-yellow-800 dark:text-yellow-200">لا توجد تصنيفات</p>
-                                <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
-                                  لم تقم بإنشاء أي تصنيفات بعد. يمكنك إنشاء تصنيفات وأسئلة من خلال زر "سؤال جديد"
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <>
-                            <FormField
-                              control={form.control}
-                              name="selected_teacher_categories"
-                              render={() => (
-                                <FormItem>
-                                  <FormLabel className="text-base">اختر التصنيفات</FormLabel>
-                                  <div className="space-y-3 mt-3">
-                                    {categories.map((category) => {
-                                      const categoryQuestions = questions.filter(q => q.category === category);
-                                      const easyCount = categoryQuestions.filter(q => q.difficulty === 'easy').length;
-                                      const mediumCount = categoryQuestions.filter(q => q.difficulty === 'medium').length;
-                                      const hardCount = categoryQuestions.filter(q => q.difficulty === 'hard').length;
-                                      
-                                      return (
-                                        <FormField
-                                          key={category}
-                                          control={form.control}
-                                          name="selected_teacher_categories"
-                                          render={({ field }) => (
-                                            <FormItem className="flex items-start space-x-3 space-x-reverse space-y-0 border rounded-lg p-4 hover:bg-muted/50">
-                                              <FormControl>
-                                                <Checkbox
-                                                  checked={field.value?.includes(category)}
-                                                  onCheckedChange={(checked) => {
-                                                    return checked
-                                                      ? field.onChange([...(field.value || []), category])
-                                                      : field.onChange(field.value?.filter((value) => value !== category));
-                                                  }}
-                                                />
-                                              </FormControl>
-                                              <div className="flex-1 space-y-2">
-                                                <FormLabel className="font-medium cursor-pointer">
-                                                  {category}
-                                                </FormLabel>
-                                                <div className="flex items-center gap-4 text-xs">
-                                                  <span className="flex items-center gap-1 text-green-600 dark:text-green-400">
-                                                    <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                                                    سهل: {easyCount}
-                                                  </span>
-                                                  <span className="flex items-center gap-1 text-yellow-600 dark:text-yellow-400">
-                                                    <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
-                                                    متوسط: {mediumCount}
-                                                  </span>
-                                                  <span className="flex items-center gap-1 text-red-600 dark:text-red-400">
-                                                    <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                                                    صعب: {hardCount}
-                                                  </span>
-                                                  <span className="font-medium">
-                                                    المجموع: {categoryQuestions.length}
-                                                  </span>
-                                                </div>
-                                              </div>
-                                            </FormItem>
-                                          )}
-                                        />
-                                      );
-                                    })}
-                                  </div>
-                                  <FormMessage />
                                 </FormItem>
                               )}
                             />
