@@ -429,7 +429,7 @@ const GradeExamsAnalytics: React.FC = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <ResponsiveContainer width="100%" height={400}>
+                    <ResponsiveContainer width="100%" height={350}>
                       <BarChart data={performanceChartData}>
                         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                         <XAxis 
@@ -452,7 +452,24 @@ const GradeExamsAnalytics: React.FC = () => {
                           }}
                         />
                         <Legend wrapperStyle={{ color: 'hsl(var(--foreground))' }} />
-                        <Bar dataKey="متوسط النتيجة" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
+                        <Bar dataKey="متوسط النتيجة" radius={[8, 8, 0, 0]}>
+                          {performanceChartData.map((entry, index) => {
+                            const score = entry['متوسط النتيجة'];
+                            let color;
+                            if (score >= 80) {
+                              color = 'hsl(142, 76%, 36%)'; // أخضر
+                            } else if (score >= 70) {
+                              color = 'hsl(142, 76%, 45%)'; // أخضر فاتح
+                            } else if (score >= 60) {
+                              color = 'hsl(48, 96%, 53%)'; // أصفر
+                            } else if (score >= 50) {
+                              color = 'hsl(25, 95%, 53%)'; // برتقالي
+                            } else {
+                              color = 'hsl(0, 84%, 60%)'; // أحمر
+                            }
+                            return <Cell key={`cell-${index}`} fill={color} />;
+                          })}
+                        </Bar>
                       </BarChart>
                     </ResponsiveContainer>
                   </CardContent>
