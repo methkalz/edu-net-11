@@ -80,29 +80,36 @@ export const useProjectNotifications = () => {
 
       // ✅ جلب معلومات المشاريع والطلاب بشكل فعّال
       const projectIds = [...new Set((notificationsData || []).map(n => n.project_id))];
+      console.log('🔔 Project IDs to fetch:', projectIds);
       
       // جلب مشاريع الصف 12
       const { data: grade12Projects } = await supabase
         .from('grade12_final_projects')
         .select('id, title, student_id')
         .in('id', projectIds);
+      console.log('🔔 Grade 12 projects:', grade12Projects?.length || 0, grade12Projects);
 
       // جلب مشاريع الصف 10
       const { data: grade10Projects } = await supabase
         .from('grade10_mini_projects')
         .select('id, title, student_id')
         .in('id', projectIds);
+      console.log('🔔 Grade 10 projects:', grade10Projects?.length || 0, grade10Projects);
 
       // دمج المشاريع
       const allProjects = [...(grade12Projects || []), ...(grade10Projects || [])];
       const projectsMap = new Map(allProjects.map(p => [p.id, p]));
+      console.log('🔔 Total projects found:', allProjects.length);
 
       // جلب معلومات الطلاب - student_id هو في الحقيقة user_id
       const studentUserIds = [...new Set(allProjects.map(p => p.student_id))];
+      console.log('🔔 Student user IDs to fetch:', studentUserIds);
+      
       const { data: students } = await supabase
         .from('profiles')
         .select('user_id, full_name')
         .in('user_id', studentUserIds);
+      console.log('🔔 Students found:', students?.length || 0, students);
 
       const studentsMap = new Map((students || []).map(s => [s.user_id, s]));
 
@@ -137,6 +144,7 @@ export const useProjectNotifications = () => {
         };
       });
 
+      console.log('🔔 Formatted notifications:', formattedNotifications.length, formattedNotifications);
       setNotifications(formattedNotifications);
       
       // حساب عدد الإشعارات غير المقروءة
