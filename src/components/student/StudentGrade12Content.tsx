@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGrade12Content } from '@/hooks/useGrade12Content';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -117,6 +118,36 @@ export const StudentGrade12Content: React.FC<{ defaultTab?: string }> = ({ defau
       await createProject(projectData);
       setShowProjectForm(false);
       toast.success('تم إنشاء المشروع النهائي بنجاح');
+    } catch (error: any) {
+      toast.error(error.message || 'فشل في إنشاء المشروع');
+    }
+  };
+
+  // Quick create project without form
+  const handleQuickCreateProject = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('يجب تسجيل الدخول أولاً');
+        return;
+      }
+
+      // Get user profile for full name
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('user_id', user.id)
+        .single();
+
+      const studentName = profile?.full_name || 'الطالب';
+      const projectTitle = `مشروع ${studentName}`;
+
+      await createProject({
+        title: projectTitle,
+        description: 'المشروع النهائي',
+        status: 'draft',
+        createGoogleDoc: true
+      });
     } catch (error: any) {
       toast.error(error.message || 'فشل في إنشاء المشروع');
     }
@@ -302,7 +333,7 @@ export const StudentGrade12Content: React.FC<{ defaultTab?: string }> = ({ defau
               <p className="text-muted-foreground text-lg mb-6 text-center">
                 انشئ المشروع النهائي الآن واتّبع المهام وتابع التعليقات
               </p>
-              <Button size="lg" className="gap-2" onClick={() => setShowProjectForm(true)}>
+              <Button size="lg" className="gap-2" onClick={handleQuickCreateProject}>
                 <Plus className="h-5 w-5" />
                 ابدأ الآن
               </Button>
