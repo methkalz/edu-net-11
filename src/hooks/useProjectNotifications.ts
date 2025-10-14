@@ -17,6 +17,7 @@ export interface ProjectNotification {
   updated_at: string;
   project_title?: string;
   student_name?: string;
+  grade_level?: string | null; // ✅ إضافة حقل الصف
 }
 
 export const useProjectNotifications = () => {
@@ -92,10 +93,18 @@ export const useProjectNotifications = () => {
 
       const studentsMap = new Map((students || []).map(s => [s.user_id, s]));
 
+      // تحديد نوع المشروع (grade10 أو grade12) بناءً على الجدول
+      const grade12ProjectIds = new Set((grade12Projects || []).map(p => p.id));
+      const grade10ProjectIds = new Set((grade10Projects || []).map(p => p.id));
+
       // تحويل البيانات
       const formattedNotifications = (notificationsData || []).map(notification => {
         const project = projectsMap.get(notification.project_id);
         const student = project ? studentsMap.get(project.student_id) : null;
+        
+        // تحديد الصف بناءً على أي جدول يحتوي على المشروع
+        const grade_level = grade12ProjectIds.has(notification.project_id) ? '12' : 
+                           grade10ProjectIds.has(notification.project_id) ? '10' : null;
 
         return {
           id: notification.id,
@@ -109,7 +118,8 @@ export const useProjectNotifications = () => {
           created_at: notification.created_at,
           updated_at: notification.updated_at,
           project_title: project?.title || 'مشروع غير محدد',
-          student_name: student?.full_name || 'طالب غير محدد'
+          student_name: student?.full_name || 'طالب غير محدد',
+          grade_level: grade_level // ✅ إضافة الصف
         };
       });
 

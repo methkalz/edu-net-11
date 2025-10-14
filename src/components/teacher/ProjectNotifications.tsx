@@ -73,10 +73,9 @@ const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({
   };
 
   // Filter notifications by grade if gradeFilter is provided
-  const filteredNotifications = gradeFilter ? notifications.filter(notification => {
-    // Check if notification is for the specified grade
-    return notification.notification_type?.includes(`grade${gradeFilter}`) || notification.project_id?.includes('grade' + gradeFilter) || !notification.notification_type?.includes('grade12') && gradeFilter === '10' || !notification.notification_type?.includes('grade10') && gradeFilter === '12';
-  }) : notifications;
+  const filteredNotifications = gradeFilter 
+    ? notifications.filter(notification => notification.grade_level === gradeFilter)
+    : notifications;
   const recentNotifications = filteredNotifications.slice(0, 10);
   return <Card className="border border-divider/60 bg-gradient-to-br from-surface-light to-card shadow-lg">
       <CardHeader className="pb-4">
