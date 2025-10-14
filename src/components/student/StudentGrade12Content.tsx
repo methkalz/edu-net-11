@@ -295,7 +295,7 @@ export const StudentGrade12Content: React.FC<{ defaultTab?: string }> = ({ defau
                   animationData={graduationFolderAnimation}
                   size="lg"
                   loop={true}
-                  className="w-32 h-32 mx-auto"
+                  className="w-48 h-48 mx-auto"
                 />
               </div>
               <h3 className="text-2xl font-bold mb-4 text-center">لم تبدأ بعد بمشروعك النهائي</h3>
