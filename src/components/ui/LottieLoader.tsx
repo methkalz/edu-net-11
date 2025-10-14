@@ -55,16 +55,6 @@ export const LottieLoader: React.FC<LottieLoaderProps> = ({
           }}
         />
       </div>
-      {text && (
-        <div className="text-center animate-fade-in-up">
-          <span className={`
-            font-medium text-muted-foreground transition-all duration-300
-            ${size === 'sm' ? 'text-sm' : size === 'lg' ? 'text-lg' : 'text-base'}
-          `}>
-            {text}
-          </span>
-        </div>
-      )}
     </div>
   );
 };
