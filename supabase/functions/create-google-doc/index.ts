@@ -167,8 +167,20 @@ serve(async (req) => {
       console.log('✅ Folder permissions verified');
     }
 
+    // حساب الرقم التسلسلي أولاً (قبل إنشاء المستند)
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const tempSupabase = createClient(supabaseUrl, supabaseKey);
+    
+    const { count } = await tempSupabase
+      .from('google_documents')
+      .select('*', { count: 'exact', head: true });
+    
+    const sequenceNumber = (count || 0) + 100;
+    const currentDate = new Date().toISOString().split('T')[0];
+    
     // Create Google Doc directly in folder using Drive API with Workspace support
-    const title = `مستند ${studentName} - ${new Date().toISOString().split('T')[0]}`;
+    const title = `مشروع ${studentName} ${currentDate} #${sequenceNumber}`;
     console.log('📝 Creating Google Doc via Drive API...');
     
     const createDocUrl = new URL('https://www.googleapis.com/drive/v3/files');
