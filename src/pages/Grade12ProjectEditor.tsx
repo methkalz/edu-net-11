@@ -235,11 +235,7 @@ const Grade12ProjectEditor: React.FC = () => {
                       <Calendar className="h-4 w-4 text-secondary" />
                       <span>الموعد النهائي: {project.due_date ? format(new Date(project.due_date), 'dd/MM/yyyy', { locale: ar }) : 'غير محدد'}</span>
                     </div>
-                    <div className="flex items-center gap-2 hover:text-foreground/80 transition-colors">
-                      <FileText className="h-4 w-4 text-accent" />
-                      <span className="font-medium">{wordCount} كلمة • {characterCount} حرف</span>
-                    </div>
-                    <Badge 
+                    <Badge
                       variant={
                         project?.status === 'completed' ? 'default' :
                         project?.status === 'submitted' ? 'secondary' :
