@@ -37,6 +37,8 @@ export const StudentGrade12Content: React.FC<{ defaultTab?: string }> = ({ defau
   const [mainTab, setMainTab] = useState(defaultTab);
   const [contentTab, setContentTab] = useState('videos');
   const [showProjectForm, setShowProjectForm] = useState(false);
+  const [showCreationOverlay, setShowCreationOverlay] = useState(false);
+  const [creationMessage, setCreationMessage] = useState('');
 
   // Helper functions for video thumbnails
   const extractYouTubeId = (url: string): string | null => {
@@ -126,8 +128,15 @@ export const StudentGrade12Content: React.FC<{ defaultTab?: string }> = ({ defau
   // Quick create project without form
   const handleQuickCreateProject = async () => {
     try {
+      setShowCreationOverlay(true);
+      
+      // Message 1
+      setCreationMessage('جارٍ إنشاء مشروعك النهائي..');
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
+        setShowCreationOverlay(false);
         toast.error('يجب تسجيل الدخول أولاً');
         return;
       }
@@ -142,13 +151,30 @@ export const StudentGrade12Content: React.FC<{ defaultTab?: string }> = ({ defau
       const studentName = profile?.full_name || 'الطالب';
       const projectTitle = `مشروع ${studentName}`;
 
+      // Message 2
+      setCreationMessage('يتم تجهيز المهام الخاصة بك..');
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Create project
       await createProject({
         title: projectTitle,
         description: 'المشروع النهائي',
         status: 'draft',
         createGoogleDoc: true
       });
+      
+      // Message 3
+      setCreationMessage('اللمسات النهائية..');
+      await new Promise(resolve => setTimeout(resolve, 1200));
+      
+      // Message 4
+      setCreationMessage('جاهز.. يمكنك أن تبدأ الآن');
+      await new Promise(resolve => setTimeout(resolve, 1200));
+      
+      // Hide overlay
+      setShowCreationOverlay(false);
     } catch (error: any) {
+      setShowCreationOverlay(false);
       toast.error(error.message || 'فشل في إنشاء المشروع');
     }
   };
@@ -207,6 +233,27 @@ export const StudentGrade12Content: React.FC<{ defaultTab?: string }> = ({ defau
   }
   
   return <div className="container mx-auto px-6 py-12" dir="rtl">
+      {/* Creation Overlay */}
+      {showCreationOverlay && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md">
+          <div className="text-center space-y-6 animate-fade-in">
+            <div className="relative">
+              <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full"></div>
+              <div className="relative bg-background/95 backdrop-blur-sm border border-primary/20 rounded-2xl p-12 shadow-2xl">
+                <div className="mb-6">
+                  <div className="w-16 h-16 mx-auto bg-gradient-to-br from-primary/20 to-primary/10 rounded-full flex items-center justify-center animate-pulse">
+                    <Sparkles className="w-8 h-8 text-primary" />
+                  </div>
+                </div>
+                <p className="text-2xl font-bold text-foreground animate-fade-in">
+                  {creationMessage}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Content based on mainTab state */}
       {mainTab === 'content' && (
         <div className="w-full">
