@@ -92,12 +92,15 @@ const Grade12ProjectsWidget: React.FC = () => {
     <Card className="border border-divider/60 bg-gradient-to-br from-surface-light to-card shadow-lg">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div 
+            className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={() => navigate('/grade12-projects-management')}
+          >
             <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-secondary/5 to-secondary/10 flex items-center justify-center border-2 border-secondary/15">
               <FileText className="h-5 w-5 text-secondary" />
             </div>
             <div>
-              <CardTitle className="text-lg font-medium text-foreground">
+              <CardTitle className="text-lg font-medium text-foreground hover:text-primary transition-colors">
                 مشاريع الثاني عشر
               </CardTitle>
               <CardDescription className="text-sm text-text-soft">
@@ -191,7 +194,7 @@ const Grade12ProjectsWidget: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-3">
-              {projects.slice(0, 5).map((project) => (
+              {projects.slice(0, 3).map((project) => (
                 <div
                   key={project.id}
                   className="p-5 border-2 border-divider/50 rounded-2xl hover:bg-surface-hover hover:border-secondary/30 transition-all duration-200"
@@ -279,14 +282,14 @@ const Grade12ProjectsWidget: React.FC = () => {
         </div>
 
         {/* رابط عرض المزيد */}
-        {projects.length > 5 && (
+        {projects.length > 3 && (
           <div className="text-center pt-4">
             <Button 
               variant="link" 
-              onClick={() => navigate('/grade12-management')}
+              onClick={() => navigate('/grade12-projects-management')}
               className="text-primary"
             >
-              عرض جميع المشاريع ({projects.length})
+              عرض جميع المشاريع ({grade12ProjectsCount})
             </Button>
           </div>
         )}
