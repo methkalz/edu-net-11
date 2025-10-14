@@ -73,17 +73,12 @@ const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({
   };
 
   // Filter notifications by grade if gradeFilter is provided
-  console.log('📌 [ProjectNotifications] All notifications:', notifications.length);
-  console.log('📌 [ProjectNotifications] gradeFilter:', gradeFilter);
-  console.log('📌 [ProjectNotifications] notifications with grade_level:', 
-    notifications.map(n => ({ id: n.id.substring(0, 8), grade_level: n.grade_level, title: n.title }))
-  );
-  
   const filteredNotifications = gradeFilter 
     ? notifications.filter(notification => notification.grade_level === gradeFilter)
     : notifications;
   
-  console.log('📌 [ProjectNotifications] Filtered notifications:', filteredNotifications.length);
+  // حساب عدد الإشعارات غير المقروءة للصف المُفلتر
+  const filteredUnreadCount = filteredNotifications.filter(n => !n.is_read).length;
   
   const recentNotifications = filteredNotifications.slice(0, 10);
   return <Card className="border border-divider/60 bg-gradient-to-br from-surface-light to-card shadow-lg">
@@ -96,8 +91,8 @@ const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({
             <div>
               <CardTitle className="text-lg font-medium text-foreground flex items-center gap-2">
                 {title}
-                {unreadCount > 0 && <Badge variant="destructive" className="text-xs px-2 py-1 rounded-full bg-red-500/10 text-red-600 border-2 border-red-200/60">
-                    {unreadCount}
+                {filteredUnreadCount > 0 && <Badge variant="destructive" className="text-xs px-2 py-1 rounded-full bg-red-500/10 text-red-600 border-2 border-red-200/60">
+                    {filteredUnreadCount}
                   </Badge>}
               </CardTitle>
               <CardDescription className="text-sm text-text-soft">
@@ -107,7 +102,7 @@ const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({
           </div>
           
           <div className="flex items-center gap-2">
-            {unreadCount > 0 && <Button variant="outline" size="sm" onClick={markAllAsRead} className="text-xs h-8 px-3 border-divider/60 hover:bg-surface-hover">
+            {filteredUnreadCount > 0 && <Button variant="outline" size="sm" onClick={markAllAsRead} className="text-xs h-8 px-3 border-divider/60 hover:bg-surface-hover">
                 <CheckCheck className="h-4 w-4 mr-1" />
                 تحديد الكل كمقروء
               </Button>}
