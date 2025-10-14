@@ -123,11 +123,6 @@ export const useProjectNotifications = () => {
         };
       });
 
-      // 🔍 تسجيل مؤقت للتأكد من البيانات
-      console.log('📊 Formatted Notifications:', formattedNotifications);
-      console.log('📊 Grade12 Project IDs:', Array.from(grade12ProjectIds));
-      console.log('📊 Grade10 Project IDs:', Array.from(grade10ProjectIds));
-      
       setNotifications(formattedNotifications);
       
       // حساب عدد الإشعارات غير المقروءة

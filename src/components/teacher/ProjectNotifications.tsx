@@ -77,12 +77,6 @@ const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({
     ? notifications.filter(notification => notification.grade_level === gradeFilter)
     : notifications;
   
-  // 🔍 تسجيل مؤقت
-  console.log('🔔 All Notifications:', notifications.length);
-  console.log('🔔 Grade Filter:', gradeFilter);
-  console.log('🔔 Filtered Notifications:', filteredNotifications.length);
-  console.log('🔔 Sample notification:', filteredNotifications[0]);
-  
   const recentNotifications = filteredNotifications.slice(0, 10);
   return <Card className="border border-divider/60 bg-gradient-to-br from-surface-light to-card shadow-lg">
       <CardHeader className="pb-4">
