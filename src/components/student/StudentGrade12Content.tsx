@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGrade12Content } from '@/hooks/useGrade12Content';
+import { useSecureDocument } from '@/hooks/useSecureDocument';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -28,6 +29,7 @@ export const StudentGrade12Content: React.FC<{ defaultTab?: string }> = ({ defau
     projects,
     createProject
   } = useGrade12Projects();
+  const { openDocument } = useSecureDocument();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedVideo, setSelectedVideo] = useState<any>(null);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
@@ -371,7 +373,7 @@ export const StudentGrade12Content: React.FC<{ defaultTab?: string }> = ({ defau
                             <Button 
                               variant="outline"
                               className="w-full gap-2" 
-                              onClick={() => window.open(project.google_doc_url, '_blank')}
+                              onClick={() => openDocument(undefined, project.id)}
                             >
                               <FileText className="h-4 w-4" />
                               فتح مستند Google Docs

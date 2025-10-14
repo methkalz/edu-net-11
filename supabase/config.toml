@@ -11,3 +11,12 @@ verify_jwt = false
 
 [functions.create-drive-folder]
 verify_jwt = false
+
+[functions.setup-school-drive-structure]
+verify_jwt = false
+
+[functions.get-student-document]
+verify_jwt = false
+
+[functions.migrate-existing-schools]
+verify_jwt = false
