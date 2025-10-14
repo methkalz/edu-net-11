@@ -198,6 +198,9 @@ serve(async (req) => {
 
     // Add content to the document with RTL and center alignment
     if (documentContent) {
+      // حساب موقع نهاية السطر الأول (أهلاً + اسم الطالب)
+      const firstLineEndIndex = documentContent.indexOf('\n') + 1;
+      
       const requests = [
         {
           insertText: {
@@ -219,7 +222,7 @@ serve(async (req) => {
             fields: 'direction,alignment'
           }
         },
-        // تطبيق حجم خط مناسب
+        // تطبيق حجم خط مناسب على كل النص
         {
           updateTextStyle: {
             range: {
@@ -233,6 +236,23 @@ serve(async (req) => {
               }
             },
             fields: 'fontSize'
+          }
+        },
+        // تطبيق Bold وحجم أكبر على السطر الأول (أهلاً + اسم الطالب)
+        {
+          updateTextStyle: {
+            range: {
+              startIndex: 1,
+              endIndex: firstLineEndIndex
+            },
+            textStyle: {
+              bold: true,
+              fontSize: {
+                magnitude: 18,
+                unit: 'PT'
+              }
+            },
+            fields: 'bold,fontSize'
           }
         }
       ];

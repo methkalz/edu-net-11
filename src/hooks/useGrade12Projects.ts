@@ -307,7 +307,7 @@ export const useGrade12Projects = () => {
           documentContent: `أهلاً ${userProfile.full_name}
 نتمنى لك النجاح في المشروع النهائي
 سيكون الأستاذ ${teacherName} في مرافقتك دائمًا
-مع تحيات: ادارة مدرسة ${schoolName}
+بالنجاح والتوفيق: ادارة ${schoolName}
 
 Edu-Net.me`
         });
