@@ -201,6 +201,10 @@ serve(async (req) => {
       // حساب موقع نهاية السطر الأول (أهلاً + اسم الطالب)
       const firstLineEndIndex = documentContent.indexOf('\n') + 1;
       
+      // حساب موقع "Edu-Net.me"
+      const eduNetStartIndex = documentContent.lastIndexOf('Edu-Net.me') + 1;
+      const eduNetEndIndex = eduNetStartIndex + 'Edu-Net.me'.length;
+      
       const requests = [
         {
           insertText: {
@@ -253,6 +257,28 @@ serve(async (req) => {
               }
             },
             fields: 'bold,fontSize'
+          }
+        },
+        // تطبيق Bold واللون الأزرق السماوي على "Edu-Net.me"
+        {
+          updateTextStyle: {
+            range: {
+              startIndex: eduNetStartIndex,
+              endIndex: eduNetEndIndex
+            },
+            textStyle: {
+              bold: true,
+              foregroundColor: {
+                color: {
+                  rgbColor: {
+                    red: 0.53,
+                    green: 0.81,
+                    blue: 0.92
+                  }
+                }
+              }
+            },
+            fields: 'bold,foregroundColor'
           }
         }
       ];
