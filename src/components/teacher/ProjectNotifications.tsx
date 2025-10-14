@@ -82,14 +82,6 @@ const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({
   
   const recentNotifications = filteredNotifications.slice(0, 10);
 
-  // Debug: تتبع التغييرات في البيانات
-  useEffect(() => {
-    console.log('🎯 [Effect] notifications changed:', notifications.length);
-    console.log('🎯 [Effect] filtered:', filteredNotifications.length);
-    console.log('🎯 [Effect] recent:', recentNotifications.length);
-  }, [notifications, filteredNotifications, recentNotifications]);
-
-  console.log('🎯 [Render] notifications:', notifications.length, 'filtered:', filteredNotifications.length, 'recent:', recentNotifications.length);
   
   return <Card className="border border-divider/60 bg-gradient-to-br from-surface-light to-card shadow-lg">
       <CardHeader className="pb-4">
