@@ -81,7 +81,8 @@ const ProjectTasksManager: React.FC<ProjectTasksManagerProps> = ({
       const { data: progressData, error: progressError } = await supabase
         .from('grade12_student_task_progress')
         .select('*')
-        .eq('student_id', studentId);
+        .eq('student_id', studentId)
+        .eq('project_id', projectId);
 
       if (progressError) throw progressError;
 
