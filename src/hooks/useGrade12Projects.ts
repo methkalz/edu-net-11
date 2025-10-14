@@ -246,9 +246,7 @@ export const useGrade12Projects = () => {
       let googleDocUrl: string | undefined;
       
       if (projectData.createGoogleDoc && userProfile.full_name) {
-        toast.info('جاري إنشاء مستند Google Docs...', {
-          description: 'قد يستغرق هذا بضع ثوان'
-        });
+        // No toast - using overlay messages instead
 
         // جلب معلومات المعلم والمدرسة
         let teacherName = 'المعلم المشرف';
@@ -318,9 +316,7 @@ Edu-Net.me`
           logger.info('Google Doc created successfully', { googleDocId, googleDocUrl });
         } else {
           logger.warn('Failed to create Google Doc, continuing without it');
-          toast.warning('تم إنشاء المشروع بدون مستند جوجل', {
-            description: 'يمكنك إنشاء المستند لاحقاً'
-          });
+          // No toast - using overlay messages instead
         }
       }
 
@@ -355,9 +351,7 @@ Edu-Net.me`
 
       logger.info('Project created successfully', { project: data });
       setProjects(prev => [data, ...prev]);
-      toast.success('تم إنشاء المشروع بنجاح', {
-        description: googleDocUrl ? 'تم إنشاء مستند Google Docs وربطه بالمشروع' : undefined
-      });
+      // No toast - using overlay messages instead
       
       return data;
     } catch (error: any) {
