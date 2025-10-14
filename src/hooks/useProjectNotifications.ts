@@ -30,8 +30,19 @@ export const useProjectNotifications = () => {
 
   // جلب الإشعارات مع فلترة حسب الصفوف المسؤول عنها
   const fetchNotifications = async () => {
-    if (!userProfile?.user_id || userProfile.role !== 'teacher' || accessLoading) return;
+    console.log('🔔 fetchNotifications called', { 
+      userId: userProfile?.user_id, 
+      role: userProfile?.role, 
+      accessLoading 
+    });
+    
+    if (!userProfile?.user_id || userProfile.role !== 'teacher' || accessLoading) {
+      console.log('🔔 fetchNotifications SKIPPED - conditions not met');
+      return;
+    }
 
+    console.log('🔔 fetchNotifications PROCEEDING...');
+    
     try {
       setLoading(true);
       setError(null);
@@ -64,6 +75,8 @@ export const useProjectNotifications = () => {
         .limit(50);
 
       if (notificationsError) throw notificationsError;
+      
+      console.log('🔔 Raw notifications from DB:', notificationsData?.length || 0);
 
       // ✅ جلب معلومات المشاريع والطلاب بشكل فعّال
       const projectIds = [...new Set((notificationsData || []).map(n => n.project_id))];
