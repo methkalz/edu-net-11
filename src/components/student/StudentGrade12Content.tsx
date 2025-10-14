@@ -39,6 +39,7 @@ export const StudentGrade12Content: React.FC<{ defaultTab?: string }> = ({ defau
   const [showProjectForm, setShowProjectForm] = useState(false);
   const [showCreationOverlay, setShowCreationOverlay] = useState(false);
   const [creationMessage, setCreationMessage] = useState('');
+  const [messageKey, setMessageKey] = useState(0);
 
   // Helper functions for video thumbnails
   const extractYouTubeId = (url: string): string | null => {
@@ -129,10 +130,12 @@ export const StudentGrade12Content: React.FC<{ defaultTab?: string }> = ({ defau
   const handleQuickCreateProject = async () => {
     try {
       setShowCreationOverlay(true);
+      setMessageKey(0);
       
       // Message 1
       setCreationMessage('جارٍ إنشاء مشروعك النهائي..');
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      setMessageKey(1);
+      await new Promise(resolve => setTimeout(resolve, 1800));
       
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -153,7 +156,8 @@ export const StudentGrade12Content: React.FC<{ defaultTab?: string }> = ({ defau
 
       // Message 2
       setCreationMessage('يتم تجهيز المهام الخاصة بك..');
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      setMessageKey(2);
+      await new Promise(resolve => setTimeout(resolve, 1800));
       
       // Create project
       await createProject({
@@ -165,11 +169,13 @@ export const StudentGrade12Content: React.FC<{ defaultTab?: string }> = ({ defau
       
       // Message 3
       setCreationMessage('اللمسات النهائية..');
-      await new Promise(resolve => setTimeout(resolve, 1200));
+      setMessageKey(3);
+      await new Promise(resolve => setTimeout(resolve, 1500));
       
       // Message 4
       setCreationMessage('جاهز.. يمكنك أن تبدأ الآن');
-      await new Promise(resolve => setTimeout(resolve, 1200));
+      setMessageKey(4);
+      await new Promise(resolve => setTimeout(resolve, 1500));
       
       // Hide overlay
       setShowCreationOverlay(false);
@@ -235,19 +241,24 @@ export const StudentGrade12Content: React.FC<{ defaultTab?: string }> = ({ defau
   return <div className="container mx-auto px-6 py-12" dir="rtl">
       {/* Creation Overlay */}
       {showCreationOverlay && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md">
-          <div className="text-center space-y-6 animate-fade-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md animate-fade-in">
+          <div className="text-center space-y-6">
             <div className="relative">
-              <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full"></div>
+              <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full animate-pulse"></div>
               <div className="relative bg-background/95 backdrop-blur-sm border border-primary/20 rounded-2xl p-12 shadow-2xl">
                 <div className="mb-6">
-                  <div className="w-16 h-16 mx-auto bg-gradient-to-br from-primary/20 to-primary/10 rounded-full flex items-center justify-center animate-pulse">
-                    <Sparkles className="w-8 h-8 text-primary" />
+                  <div className="w-20 h-20 mx-auto bg-gradient-to-br from-primary/30 to-primary/10 rounded-full flex items-center justify-center">
+                    <Sparkles className="w-10 h-10 text-primary animate-[spin_3s_ease-in-out_infinite]" />
                   </div>
                 </div>
-                <p className="text-2xl font-bold text-foreground animate-fade-in">
-                  {creationMessage}
-                </p>
+                <div className="min-h-[60px] flex items-center justify-center">
+                  <p 
+                    key={messageKey}
+                    className="text-2xl font-bold text-foreground animate-[slideUpFadeIn_0.6s_ease-out]"
+                  >
+                    {creationMessage}
+                  </p>
+                </div>
               </div>
             </div>
           </div>

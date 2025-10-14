@@ -205,6 +205,20 @@ export default {
 					'70%': { transform: 'scale(0.9)' },
 					'100%': { transform: 'scale(1)', opacity: '1' }
 				},
+				'slideUpFadeIn': {
+					'0%': { 
+						opacity: '0', 
+						transform: 'translateY(20px) scale(0.95)' 
+					},
+					'60%': { 
+						opacity: '1', 
+						transform: 'translateY(-5px) scale(1.02)' 
+					},
+					'100%': { 
+						opacity: '1', 
+						transform: 'translateY(0) scale(1)' 
+					}
+				},
 				
 				// Utility animations
 				'cursor-blink': {
@@ -232,6 +246,7 @@ export default {
 				'slide-up': 'slide-up 0.6s ease-out',
 				'scale-in': 'scale-in 0.4s ease-out',
 				'bounce-in': 'bounce-in 0.6s ease-out',
+				'slideUpFadeIn': 'slideUpFadeIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)',
 				
 				// Continuous animations for visual effects
 				'float': 'float 6s ease-in-out infinite',
