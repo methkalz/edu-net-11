@@ -266,12 +266,28 @@ async function createDriveFolder(
   });
 
   if (!response.ok) {
-    const error = await response.text();
-    console.error('Drive API error:', error);
-    throw new Error(`Failed to create folder: ${folderName}`);
+    const errorText = await response.text();
+    console.error('❌ Drive API error creating folder:', errorText);
+    
+    try {
+      const errorJson = JSON.parse(errorText);
+      if (errorJson.error?.code === 403 && errorJson.error?.message?.includes('quota')) {
+        throw new Error('مساحة التخزين في Google Drive ممتلئة. يرجى تفريغ المساحة أو استخدام حساب آخر.');
+      }
+    } catch (e) {
+      // إذا فشل parse الـ JSON، نستمر بالخطأ العادي
+    }
+    
+    throw new Error(`فشل في إنشاء المجلد: ${folderName} - ${errorText}`);
   }
 
   const folder = await response.json();
+  
+  if (!folder || !folder.id) {
+    throw new Error(`لم يتم إرجاع معلومات المجلد: ${folderName}`);
+  }
+
+  console.log(`✅ Folder created: ${folder.id}`);
 
   // جلب webViewLink
   const detailsResponse = await fetch(
@@ -281,5 +297,17 @@ async function createDriveFolder(
     }
   );
 
-  return await detailsResponse.json();
+  if (!detailsResponse.ok) {
+    const detailsError = await detailsResponse.text();
+    console.error('❌ Error fetching folder details:', detailsError);
+    throw new Error(`فشل في جلب تفاصيل المجلد: ${folderName}`);
+  }
+
+  const folderDetails = await detailsResponse.json();
+  
+  if (!folderDetails || !folderDetails.id) {
+    throw new Error(`تفاصيل المجلد فارغة: ${folderName}`);
+  }
+
+  return folderDetails;
 }
