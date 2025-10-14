@@ -120,9 +120,13 @@ export const StudentGrade12Content: React.FC<{ defaultTab?: string }> = ({ defau
     }
   };
 
-  // Handle project click - navigate to editor
+  // Handle project click - open Google Doc
   const handleProjectClick = (project: any) => {
-    navigate(`/grade12-project-editor/${project.id}`);
+    if (project.google_doc_url) {
+      window.open(project.google_doc_url, '_blank');
+    } else {
+      toast.error('لا يوجد مستند Google Docs لهذا المشروع');
+    }
   };
 
   const filteredVideos = videos.filter(video => video.title.toLowerCase().includes(searchTerm.toLowerCase()) || video.description && video.description.toLowerCase().includes(searchTerm.toLowerCase()));
