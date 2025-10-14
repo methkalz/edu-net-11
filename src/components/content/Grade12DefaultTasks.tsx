@@ -34,14 +34,18 @@ import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
 import Grade12DefaultTasksManager from './Grade12DefaultTasksManager';
 
-const Grade12DefaultTasks: React.FC = () => {
+interface Grade12DefaultTasksProps {
+  projectId?: string;
+}
+
+const Grade12DefaultTasks: React.FC<Grade12DefaultTasksProps> = ({ projectId }) => {
   const { userProfile } = useAuth();
   const {
     phases,
     loading,
     updateTaskCompletion,
     getOverallProgress,
-  } = useGrade12DefaultTasks();
+  } = useGrade12DefaultTasks(projectId);
 
   const [expandedPhases, setExpandedPhases] = useState<Set<number>>(new Set([1]));
   const [taskNotes, setTaskNotes] = useState<Record<string, string>>({});
@@ -71,7 +75,7 @@ const Grade12DefaultTasks: React.FC = () => {
 
     try {
       const notes = taskNotes[taskId] || '';
-      await updateTaskCompletion(taskId, isCompleted, notes);
+      await updateTaskCompletion(taskId, isCompleted, notes, projectId);
       
       if (isCompleted) {
         setTaskNotes(prev => {

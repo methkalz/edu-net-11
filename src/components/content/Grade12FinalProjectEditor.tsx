@@ -69,7 +69,7 @@ const Grade12FinalProjectEditor: React.FC<Grade12FinalProjectEditorProps> = ({
 }) => {
   const { userProfile } = useAuth();
   const { updateProject, saveRevision, addComment } = useGrade12Projects();
-  const { phases, updateTaskCompletion, getOverallProgress } = useGrade12DefaultTasks();
+  const { phases, updateTaskCompletion, getOverallProgress } = useGrade12DefaultTasks(project?.id);
   const [content, setContent] = useState(project?.project_content || '');
   const [wordCount, setWordCount] = useState(0);
   const [characterCount, setCharacterCount] = useState(0);
@@ -265,8 +265,13 @@ const Grade12FinalProjectEditor: React.FC<Grade12FinalProjectEditorProps> = ({
   }, [project?.id]);
 
   const handleTaskToggle = async (taskId: string, isCompleted: boolean) => {
+    if (!project?.id) {
+      toast({ title: 'خطأ', description: 'معرف المشروع غير موجود' });
+      return;
+    }
+
     try {
-      await updateTaskCompletion(taskId, isCompleted);
+      await updateTaskCompletion(taskId, isCompleted, undefined, project.id);
     } catch (error) {
       console.error('Error updating task:', error);
     }

@@ -323,7 +323,7 @@ const Grade12ProjectEditor: React.FC = () => {
                   </p>
                 </CardHeader>
                 <CardContent className="pt-2">
-                  <Grade12DefaultTasks />
+                  <Grade12DefaultTasks projectId={project?.id} />
                 </CardContent>
               </Card>
 

@@ -37,7 +37,7 @@ interface TaskPhase {
   completion_percentage: number;
 }
 
-export const useGrade12DefaultTasks = () => {
+export const useGrade12DefaultTasks = (projectId?: string) => {
   const { userProfile } = useAuth();
   const [phases, setPhases] = useState<TaskPhase[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,10 +69,17 @@ export const useGrade12DefaultTasks = () => {
     try {
       if (!userProfile?.user_id) return [];
 
-      const { data, error } = await supabase
+      let query = supabase
         .from('grade12_student_task_progress')
         .select('*')
         .eq('student_id', userProfile.user_id);
+      
+      // تصفية حسب project_id إذا تم تمريره
+      if (projectId) {
+        query = query.eq('project_id', projectId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setStudentProgress(data || []);
@@ -126,7 +133,7 @@ export const useGrade12DefaultTasks = () => {
   };
 
   // تحديث حالة إنجاز المهمة
-  const updateTaskCompletion = async (taskId: string, isCompleted: boolean, notes?: string) => {
+  const updateTaskCompletion = async (taskId: string, isCompleted: boolean, notes?: string, projectId?: string) => {
     try {
       logger.debug('updateTaskCompletion initiated', {
         taskId,
@@ -149,6 +156,7 @@ export const useGrade12DefaultTasks = () => {
       const updateData = {
         student_id: userProfile.user_id,
         default_task_id: taskId,
+        project_id: projectId || null,
         is_completed: isCompleted,
         completed_at: isCompleted ? new Date().toISOString() : null,
         notes: notes || null,
@@ -159,7 +167,7 @@ export const useGrade12DefaultTasks = () => {
       const { data, error } = await supabase
         .from('grade12_student_task_progress')
         .upsert(updateData, {
-          onConflict: 'student_id,default_task_id'
+          onConflict: 'student_id,default_task_id,project_id'
         })
         .select()
         .single();
@@ -235,7 +243,7 @@ export const useGrade12DefaultTasks = () => {
     if (userProfile) {
       loadData();
     }
-  }, [userProfile]);
+  }, [userProfile, projectId]);
 
   // إعادة تنظيم المراحل عند تغيير التقدم
   useEffect(() => {
