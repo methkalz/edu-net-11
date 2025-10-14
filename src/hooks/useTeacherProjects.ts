@@ -116,11 +116,12 @@ export const useTeacherProjects = () => {
 
               console.log('📊 إجمالي المهام الافتراضية:', totalDefaultTasks);
 
-              // جلب تقدم الطلاب في المهام
-              const { data: studentProgress } = await supabase
+              // جلب تقدم المهام لكل مشروع
+              const projectIds = grade12Projects.map(p => p.id);
+              const { data: projectProgress } = await supabase
                 .from('grade12_student_task_progress')
                 .select(`
-                  student_id,
+                  project_id,
                   is_completed,
                   grade12_default_tasks!inner (
                     task_title,
@@ -128,35 +129,37 @@ export const useTeacherProjects = () => {
                     order_index
                   )
                 `)
-                .in('student_id', studentIds);
+                .in('project_id', projectIds);
 
-              console.log('📈 تقدم الطلاب:', studentProgress?.length, 'سجل');
+              console.log('📈 تقدم المشاريع:', projectProgress?.length, 'سجل');
 
-              // حساب المهام المكتملة لكل طالب
-              const studentTasksMap = new Map<string, { completed: number; currentTask: any | null }>();
+              // حساب المهام المكتملة لكل مشروع
+              const projectTasksMap = new Map<string, { completed: number; currentTask: any | null }>();
               
-              if (studentProgress) {
-                for (const task of studentProgress) {
-                  const studentId = task.student_id;
+              if (projectProgress) {
+                for (const task of projectProgress) {
+                  const projectId = task.project_id;
                   
-                  if (!studentTasksMap.has(studentId)) {
-                    studentTasksMap.set(studentId, {
+                  if (!projectId) continue;
+                  
+                  if (!projectTasksMap.has(projectId)) {
+                    projectTasksMap.set(projectId, {
                       completed: 0,
                       currentTask: null
                     });
                   }
                   
-                  const studentData = studentTasksMap.get(studentId)!;
+                  const projectData = projectTasksMap.get(projectId)!;
                   
                   if (task.is_completed) {
-                    studentData.completed++;
+                    projectData.completed++;
                   }
                   
                   // أول مهمة غير مكتملة حسب الترتيب
                   const currentTask = task.grade12_default_tasks;
                   if (!task.is_completed && currentTask) {
-                    if (!studentData.currentTask || currentTask.order_index < studentData.currentTask.order_index) {
-                      studentData.currentTask = {
+                    if (!projectData.currentTask || currentTask.order_index < projectData.currentTask.order_index) {
+                      projectData.currentTask = {
                         task_title: currentTask.task_title,
                         phase_title: currentTask.phase_title,
                         order_index: currentTask.order_index
@@ -166,15 +169,15 @@ export const useTeacherProjects = () => {
                 }
               }
 
-              // طباعة التقدم لكل طالب
-              console.log('🎯 تقدم كل طالب:');
-              studentTasksMap.forEach((data, studentId) => {
-                const studentName = studentNamesMap.get(studentId);
-                console.log(`  - ${studentName}: ${data.completed} مهمة مكتملة`);
+              // طباعة التقدم لكل مشروع
+              console.log('🎯 تقدم كل مشروع:');
+              projectTasksMap.forEach((data, projectId) => {
+                const project = grade12Projects.find(p => p.id === projectId);
+                console.log(`  - ${project?.title}: ${data.completed} مهمة مكتملة`);
               });
 
               const formattedGrade12Projects = grade12Projects.map(project => {
-                const taskData = studentTasksMap.get(project.student_id);
+                const taskData = projectTasksMap.get(project.id);
                 const completedCount = taskData?.completed || 0;
                 const totalCount = totalDefaultTasks || 39;
                 const completionPercentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
