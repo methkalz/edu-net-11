@@ -84,12 +84,12 @@ export const useProjectNotifications = () => {
       const allProjects = [...(grade12Projects || []), ...(grade10Projects || [])];
       const projectsMap = new Map(allProjects.map(p => [p.id, p]));
 
-      // جلب معلومات الطلاب
-      const studentIds = [...new Set(allProjects.map(p => p.student_id))];
+      // جلب معلومات الطلاب - student_id هو في الحقيقة user_id
+      const studentUserIds = [...new Set(allProjects.map(p => p.student_id))];
       const { data: students } = await supabase
         .from('profiles')
         .select('user_id, full_name')
-        .in('user_id', studentIds);
+        .in('user_id', studentUserIds);
 
       const studentsMap = new Map((students || []).map(s => [s.user_id, s]));
 
@@ -100,6 +100,7 @@ export const useProjectNotifications = () => {
       // تحويل البيانات
       const formattedNotifications = (notificationsData || []).map(notification => {
         const project = projectsMap.get(notification.project_id);
+        // student_id في المشاريع هو في الواقع user_id
         const student = project ? studentsMap.get(project.student_id) : null;
         
         // تحديد الصف بناءً على أي جدول يحتوي على المشروع
@@ -119,7 +120,7 @@ export const useProjectNotifications = () => {
           updated_at: notification.updated_at,
           project_title: project?.title || 'مشروع غير محدد',
           student_name: student?.full_name || 'طالب غير محدد',
-          grade_level: grade_level // ✅ إضافة الصف
+          grade_level: grade_level
         };
       });
 
