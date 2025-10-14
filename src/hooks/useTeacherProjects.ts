@@ -93,10 +93,21 @@ export const useTeacherProjects = () => {
               .eq('school_id', userProfile.school_id);
 
             if (!error && grade12Projects) {
+              // جلب أسماء الطلاب من جدول profiles
+              const studentIds = grade12Projects.map(p => p.student_id);
+              const { data: studentsProfiles } = await supabase
+                .from('profiles')
+                .select('user_id, full_name')
+                .in('user_id', studentIds);
+
+              const studentNamesMap = new Map(
+                studentsProfiles?.map(p => [p.user_id, p.full_name]) || []
+              );
+
               const formattedGrade12Projects = grade12Projects.map(project => ({
                 ...project,
                 grade: 12,
-                student_name: 'جاري تحميل...',
+                student_name: studentNamesMap.get(project.student_id) || 'غير محدد',
                 unread_comments_count: 0,
                 total_comments_count: 0,
                 completion_percentage: 0
@@ -136,11 +147,22 @@ export const useTeacherProjects = () => {
               .eq('school_id', userProfile.school_id);
 
             if (!error && grade10Projects) {
+              // جلب أسماء الطلاب من جدول profiles
+              const studentIds = grade10Projects.map(p => p.student_id);
+              const { data: studentsProfiles } = await supabase
+                .from('profiles')
+                .select('user_id, full_name')
+                .in('user_id', studentIds);
+
+              const studentNamesMap = new Map(
+                studentsProfiles?.map(p => [p.user_id, p.full_name]) || []
+              );
+
               // تحويل مشاريع الصف العاشر لنفس التنسيق
               const formattedGrade10Projects = grade10Projects.map(project => ({
                 ...project,
                 grade: 10,
-                student_name: 'جاري تحميل...',
+                student_name: studentNamesMap.get(project.student_id) || 'غير محدد',
                 unread_comments_count: 0,
                 total_comments_count: 0,
                 completion_percentage: project.progress_percentage || 0
