@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { logger } from '@/lib/logger';
 import { handleError } from '@/lib/error-handler';
+import { MigrationManager } from '@/components/superadmin/MigrationManager';
 
 // Combined schema that handles both create and edit modes
 const schoolSchema = z.object({
@@ -982,6 +983,13 @@ const SchoolManagement = () => {
           </Dialog>
         </div>
       </div>
+
+      {/* Migration Manager - Superadmin Only */}
+      {userProfile?.role === 'superadmin' && (
+        <div className="mb-6">
+          <MigrationManager />
+        </div>
+      )}
 
       {/* Schools Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
