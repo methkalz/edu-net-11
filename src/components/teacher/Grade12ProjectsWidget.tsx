@@ -225,13 +225,18 @@ const Grade12ProjectsWidget: React.FC = () => {
                             locale: ar 
                           })}
                         </span>
-                        {project.current_task && (
+                        {project.completed_tasks_count !== undefined && project.total_tasks_count !== undefined && (
                           <span className="flex items-center gap-1.5 text-secondary font-medium">
                             <BarChart3 className="h-3.5 w-3.5" />
-                            {project.current_task}
+                            {project.completed_tasks_count} من {project.total_tasks_count} مهمة
                           </span>
                         )}
                       </div>
+                      {project.current_task && (
+                        <div className="text-xs text-text-soft mb-3">
+                          المهمة الحالية: <span className="text-secondary font-medium">{project.current_task}</span>
+                        </div>
+                      )}
 
                       {/* شريط التقدم */}
                       <div className="flex items-center gap-3 mb-3">
