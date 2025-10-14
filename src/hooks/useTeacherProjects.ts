@@ -39,6 +39,8 @@ export const useTeacherProjects = () => {
   const [recentComments, setRecentComments] = useState<ProjectComment[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [totalProjectsCount, setTotalProjectsCount] = useState(0);
+  const [grade12ProjectsCount, setGrade12ProjectsCount] = useState(0);
 
   // جلب مشاريع طلاب المعلم
   const fetchTeacherProjects = async () => {
@@ -152,6 +154,13 @@ export const useTeacherProjects = () => {
 
       // ترتيب المشاريع حسب تاريخ التحديث
       allProjects.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+
+      // حفظ العدد الكلي قبل التحديد
+      setTotalProjectsCount(allProjects.length);
+      
+      // حساب عدد مشاريع الصف 12 فقط
+      const grade12Count = allProjects.filter(p => p.grade === 12).length;
+      setGrade12ProjectsCount(grade12Count);
 
       // تحديد البيانات إلى أول 10 مشاريع
       const limitedProjects = allProjects.slice(0, 10);
@@ -415,7 +424,7 @@ export const useTeacherProjects = () => {
 
   // إحصائيات سريعة
   const getQuickStats = () => {
-    const totalProjects = projects.length;
+    const totalProjects = totalProjectsCount; // استخدام العدد الكلي الحقيقي
     const completedProjects = projects.filter(p => p.status === 'completed').length;
     const inProgressProjects = projects.filter(p => p.status === 'in_progress').length;
     const unreadCommentsTotal = projects.reduce((sum, p) => sum + p.unread_comments_count, 0);
@@ -481,6 +490,7 @@ export const useTeacherProjects = () => {
     loading,
     error,
     quickStats: getQuickStats(),
+    grade12ProjectsCount, // إضافة عدد مشاريع الصف 12
     fetchTeacherProjects,
     fetchRecentComments,
     markCommentAsRead,

@@ -24,7 +24,7 @@ import { ar } from 'date-fns/locale';
 
 const Grade12ProjectsWidget: React.FC = () => {
   const navigate = useNavigate();
-  const { projects, quickStats, loading } = useTeacherProjects();
+  const { projects, quickStats, loading, grade12ProjectsCount } = useTeacherProjects();
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -118,7 +118,7 @@ const Grade12ProjectsWidget: React.FC = () => {
               </div>
             </div>
             <div className="text-2xl font-semibold text-foreground mb-1">
-              {quickStats.totalProjects}
+              {grade12ProjectsCount}
             </div>
             <div className="text-xs text-text-soft font-medium">
               إجمالي المشاريع
