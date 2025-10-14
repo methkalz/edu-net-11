@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { useGrade12Projects } from '@/hooks/useGrade12Projects';
 import { useGrade12DefaultTasks } from '@/hooks/useGrade12DefaultTasks';
+import { supabase } from '@/integrations/supabase/client';
 import { ProfessionalDocumentEditor } from '@/components/editor/ProfessionalDocumentEditor';
 import ProjectTasksManager from '@/components/content/ProjectTasksManager';
 import { ProjectCommentsSection } from '@/components/content/ProjectCommentsSection';
@@ -54,20 +55,25 @@ const Grade12ProjectEditor: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [wordCount, setWordCount] = useState(0);
   const [characterCount, setCharacterCount] = useState(0);
+  const [loadingStats, setLoadingStats] = useState(false);
   const [newCommentsCount, setNewCommentsCount] = useState(0);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'editor');
 
-  // Load project data
+  // Load project data and fetch stats from Google Docs
   useEffect(() => {
     if (projectId && projects.length > 0) {
       const foundProject = projects.find(p => p.id === projectId);
       if (foundProject) {
         setProject(foundProject);
         setContent(foundProject.project_content || '');
-        // حساب عدد الكلمات الأولي
-        if (foundProject.project_content) {
+        
+        // If project has Google Doc, fetch stats from it
+        if (foundProject.google_doc_url) {
+          fetchGoogleDocStats(foundProject.id);
+        } else if (foundProject.project_content) {
+          // حساب عدد الكلمات من المحتوى المحلي
           try {
             const parsed = JSON.parse(foundProject.project_content);
             const text = extractTextFromTiptapContent(parsed);
@@ -88,6 +94,32 @@ const Grade12ProjectEditor: React.FC = () => {
       }
     }
   }, [projectId, projects, navigate]);
+
+  // Fetch Google Doc stats
+  const fetchGoogleDocStats = async (docId: string) => {
+    setLoadingStats(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('get-google-doc-stats', {
+        body: { documentId: docId }
+      });
+
+      if (error) throw error;
+
+      if (data?.success && data?.stats) {
+        setWordCount(data.stats.wordCount);
+        setCharacterCount(data.stats.characterCount);
+      }
+    } catch (error) {
+      console.error('Error fetching Google Doc stats:', error);
+      toast({
+        title: "تنبيه",
+        description: "تعذر جلب إحصائيات المستند",
+        variant: "default",
+      });
+    } finally {
+      setLoadingStats(false);
+    }
+  };
 
   // دالة لاستخراج النص من محتوى TipTap
   const extractTextFromTiptapContent = (content: any): string => {
@@ -437,13 +469,21 @@ const Grade12ProjectEditor: React.FC = () => {
                           <div className="grid grid-cols-2 gap-4 mb-6">
                             <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20 hover:shadow-md transition-all duration-200">
                               <CardContent className="p-6 text-center">
-                                <div className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">{wordCount}</div>
+                                {loadingStats ? (
+                                  <div className="text-3xl font-bold text-muted-foreground animate-pulse">...</div>
+                                ) : (
+                                  <div className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">{wordCount}</div>
+                                )}
                                 <Label className="text-sm text-muted-foreground">عدد الكلمات</Label>
                               </CardContent>
                             </Card>
                             <Card className="bg-gradient-to-br from-secondary/5 to-secondary/10 border-secondary/20 hover:shadow-md transition-all duration-200">
                               <CardContent className="p-6 text-center">
-                                <div className="text-3xl font-bold bg-gradient-to-r from-secondary to-secondary/70 bg-clip-text text-transparent">{characterCount}</div>
+                                {loadingStats ? (
+                                  <div className="text-3xl font-bold text-muted-foreground animate-pulse">...</div>
+                                ) : (
+                                  <div className="text-3xl font-bold bg-gradient-to-r from-secondary to-secondary/70 bg-clip-text text-transparent">{characterCount}</div>
+                                )}
                                 <Label className="text-sm text-muted-foreground">عدد الأحرف</Label>
                               </CardContent>
                             </Card>
