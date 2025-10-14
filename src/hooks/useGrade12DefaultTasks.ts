@@ -21,7 +21,6 @@ interface Grade12StudentTaskProgress {
   id: string;
   student_id: string;
   default_task_id: string;
-  project_id?: string;
   is_completed: boolean;
   completed_at?: string;
   notes?: string;
@@ -38,7 +37,7 @@ interface TaskPhase {
   completion_percentage: number;
 }
 
-export const useGrade12DefaultTasks = (projectId?: string) => {
+export const useGrade12DefaultTasks = () => {
   const { userProfile } = useAuth();
   const [phases, setPhases] = useState<TaskPhase[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,23 +69,16 @@ export const useGrade12DefaultTasks = (projectId?: string) => {
     try {
       if (!userProfile?.user_id) return [];
 
-      const query = supabase
+      const { data, error } = await supabase
         .from('grade12_student_task_progress')
         .select('*')
         .eq('student_id', userProfile.user_id);
-
-      // إذا كان هناك project_id، فلتر به أيضاً
-      if (projectId) {
-        query.eq('project_id', projectId);
-      }
-
-      const { data, error } = await query;
 
       if (error) throw error;
       setStudentProgress(data || []);
       return data || [];
     } catch (error) {
-      logger.error('Error fetching student progress', error as Error, { userId: userProfile?.user_id, projectId });
+      logger.error('Error fetching student progress', error as Error, { userId: userProfile?.user_id });
       toast.error('خطأ في جلب تقدم الطالب');
       return [];
     }
@@ -157,7 +149,6 @@ export const useGrade12DefaultTasks = (projectId?: string) => {
       const updateData = {
         student_id: userProfile.user_id,
         default_task_id: taskId,
-        project_id: projectId || null,
         is_completed: isCompleted,
         completed_at: isCompleted ? new Date().toISOString() : null,
         notes: notes || null,
@@ -168,7 +159,7 @@ export const useGrade12DefaultTasks = (projectId?: string) => {
       const { data, error } = await supabase
         .from('grade12_student_task_progress')
         .upsert(updateData, {
-          onConflict: projectId ? 'student_id,default_task_id,project_id' : 'student_id,default_task_id'
+          onConflict: 'student_id,default_task_id'
         })
         .select()
         .single();

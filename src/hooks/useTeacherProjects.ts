@@ -18,10 +18,6 @@ export interface TeacherProject {
   unread_comments_count: number;
   total_comments_count: number;
   completion_percentage: number;
-  current_task?: string;
-  current_phase?: string;
-  completed_tasks_count?: number;
-  total_tasks_count?: number;
 }
 
 export interface ProjectComment {
@@ -108,93 +104,14 @@ export const useTeacherProjects = () => {
                 studentsProfiles?.map(p => [p.user_id, p.full_name]) || []
               );
 
-              // جلب إجمالي المهام الافتراضية
-              const { count: totalDefaultTasks } = await supabase
-                .from('grade12_default_tasks')
-                .select('*', { count: 'exact', head: true })
-                .eq('is_active', true);
-
-              console.log('📊 إجمالي المهام الافتراضية:', totalDefaultTasks);
-
-              // جلب تقدم المهام لكل مشروع
-              const projectIds = grade12Projects.map(p => p.id);
-              const { data: projectProgress } = await supabase
-                .from('grade12_student_task_progress')
-                .select(`
-                  project_id,
-                  is_completed,
-                  grade12_default_tasks!inner (
-                    task_title,
-                    phase_title,
-                    order_index
-                  )
-                `)
-                .in('project_id', projectIds);
-
-              console.log('📈 تقدم المشاريع:', projectProgress?.length, 'سجل');
-
-              // حساب المهام المكتملة لكل مشروع
-              const projectTasksMap = new Map<string, { completed: number; currentTask: any | null }>();
-              
-              if (projectProgress) {
-                for (const task of projectProgress) {
-                  const projectId = task.project_id;
-                  
-                  if (!projectId) continue;
-                  
-                  if (!projectTasksMap.has(projectId)) {
-                    projectTasksMap.set(projectId, {
-                      completed: 0,
-                      currentTask: null
-                    });
-                  }
-                  
-                  const projectData = projectTasksMap.get(projectId)!;
-                  
-                  if (task.is_completed) {
-                    projectData.completed++;
-                  }
-                  
-                  // أول مهمة غير مكتملة حسب الترتيب
-                  const currentTask = task.grade12_default_tasks;
-                  if (!task.is_completed && currentTask) {
-                    if (!projectData.currentTask || currentTask.order_index < projectData.currentTask.order_index) {
-                      projectData.currentTask = {
-                        task_title: currentTask.task_title,
-                        phase_title: currentTask.phase_title,
-                        order_index: currentTask.order_index
-                      };
-                    }
-                  }
-                }
-              }
-
-              // طباعة التقدم لكل مشروع
-              console.log('🎯 تقدم كل مشروع:');
-              projectTasksMap.forEach((data, projectId) => {
-                const project = grade12Projects.find(p => p.id === projectId);
-                console.log(`  - ${project?.title}: ${data.completed} مهمة مكتملة`);
-              });
-
-              const formattedGrade12Projects = grade12Projects.map(project => {
-                const taskData = projectTasksMap.get(project.id);
-                const completedCount = taskData?.completed || 0;
-                const totalCount = totalDefaultTasks || 39;
-                const completionPercentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
-
-                return {
-                  ...project,
-                  grade: 12,
-                  student_name: studentNamesMap.get(project.student_id) || 'غير محدد',
-                  unread_comments_count: 0,
-                  total_comments_count: 0,
-                  completion_percentage: completionPercentage,
-                  completed_tasks_count: completedCount,
-                  total_tasks_count: totalCount,
-                  current_task: taskData?.currentTask?.task_title,
-                  current_phase: taskData?.currentTask?.phase_title
-                };
-              });
+              const formattedGrade12Projects = grade12Projects.map(project => ({
+                ...project,
+                grade: 12,
+                student_name: studentNamesMap.get(project.student_id) || 'غير محدد',
+                unread_comments_count: 0,
+                total_comments_count: 0,
+                completion_percentage: 0
+              }));
 
               allProjects.push(...formattedGrade12Projects);
             }
