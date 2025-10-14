@@ -435,6 +435,63 @@ export const useGrade10Projects = () => {
       };
       
       setComments(prev => [mappedComment, ...prev]);
+      
+      // إنشاء إشعارات يدوياً
+      try {
+        const { data: project } = await supabase
+          .from('grade10_mini_projects')
+          .select('student_id, title, school_id')
+          .eq('id', commentData.project_id!)
+          .single();
+
+        if (project && userProfile) {
+          if (userProfile.role === 'student') {
+            const { data: teachers } = await supabase
+              .from('profiles')
+              .select('user_id')
+              .eq('school_id', project.school_id)
+              .eq('role', 'teacher');
+
+            if (teachers) {
+              for (const teacher of teachers) {
+                const { data: hasAccess } = await supabase
+                  .rpc('can_teacher_access_project', {
+                    teacher_user_id: teacher.user_id,
+                    project_student_id: project.student_id,
+                    project_type: 'grade10'
+                  });
+
+                if (hasAccess) {
+                  await supabase
+                    .from('teacher_notifications')
+                    .insert({
+                      teacher_id: teacher.user_id,
+                      project_id: commentData.project_id!,
+                      comment_id: data.id,
+                      notification_type: 'student_comment',
+                      title: 'تعليق جديد من طالب',
+                      message: `${userProfile.full_name} أضاف تعليقاً على مشروع "${project.title}"`
+                    });
+                }
+              }
+            }
+          } else if (userProfile.role === 'teacher' || userProfile.role === 'school_admin') {
+            await supabase
+              .from('student_notifications')
+              .insert({
+                student_id: project.student_id,
+                project_id: commentData.project_id!,
+                comment_id: data.id,
+                notification_type: 'teacher_comment',
+                title: 'تعليق جديد من المعلم',
+                message: `أضاف ${userProfile.full_name} تعليقاً على مشروعك "${project.title}"`
+              });
+          }
+        }
+      } catch (notificationError) {
+        console.error('Error creating notification:', notificationError);
+      }
+      
       toast.success('تم إضافة التعليق بنجاح');
       
       return mappedComment;
