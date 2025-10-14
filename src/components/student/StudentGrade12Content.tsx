@@ -13,6 +13,8 @@ import { toast } from 'sonner';
 import { useStudentProgress } from '@/hooks/useStudentProgress';
 import { useGrade12Projects } from '@/hooks/useGrade12Projects';
 import Grade12FinalProjectForm from '../content/Grade12FinalProjectForm';
+import { LottieLoader } from '@/components/ui/LottieLoader';
+import graduationFolderAnimation from '@/assets/graduation-folder.json';
 export const StudentGrade12Content: React.FC<{ defaultTab?: string }> = ({ defaultTab = 'content' }) => {
   const navigate = useNavigate();
   const {
@@ -288,8 +290,13 @@ export const StudentGrade12Content: React.FC<{ defaultTab?: string }> = ({ defau
       {mainTab === 'project' && (
         <div className="w-full">
           {projects.length === 0 ? <div className="text-center py-16">
-              <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-amber-100 to-orange-100 rounded-full flex items-center justify-center">
-                <FolderOpen className="w-12 h-12 text-amber-600" />
+              <div className="mx-auto mb-6">
+                <LottieLoader 
+                  animationData={graduationFolderAnimation}
+                  size="lg"
+                  loop={true}
+                  className="w-32 h-32 mx-auto"
+                />
               </div>
               <h3 className="text-2xl font-bold mb-4 text-center">لم تبدأ بعد بمشروعك النهائي</h3>
               <p className="text-muted-foreground text-lg mb-6 text-center">
