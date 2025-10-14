@@ -73,9 +73,17 @@ const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({
   };
 
   // Filter notifications by grade if gradeFilter is provided
+  console.log('📌 [ProjectNotifications] All notifications:', notifications.length);
+  console.log('📌 [ProjectNotifications] gradeFilter:', gradeFilter);
+  console.log('📌 [ProjectNotifications] notifications with grade_level:', 
+    notifications.map(n => ({ id: n.id.substring(0, 8), grade_level: n.grade_level, title: n.title }))
+  );
+  
   const filteredNotifications = gradeFilter 
     ? notifications.filter(notification => notification.grade_level === gradeFilter)
     : notifications;
+  
+  console.log('📌 [ProjectNotifications] Filtered notifications:', filteredNotifications.length);
   
   const recentNotifications = filteredNotifications.slice(0, 10);
   return <Card className="border border-divider/60 bg-gradient-to-br from-surface-light to-card shadow-lg">
