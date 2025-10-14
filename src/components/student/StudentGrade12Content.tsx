@@ -300,11 +300,11 @@ export const StudentGrade12Content: React.FC<{ defaultTab?: string }> = ({ defau
               </div>
               <h3 className="text-2xl font-bold mb-4 text-center">لم تبدأ بعد بمشروعك النهائي</h3>
               <p className="text-muted-foreground text-lg mb-6 text-center">
-                أنشئ مشروعك النهائي وأظهر مهاراتك المتقدمة
+                انشئ المشروع النهائي الآن واتّبع المهام وتابع التعليقات
               </p>
               <Button size="lg" className="gap-2" onClick={() => setShowProjectForm(true)}>
                 <Plus className="h-5 w-5" />
-                إنشاء مشروع نهائي
+                ابدأ الآن
               </Button>
             </div> : <div className="space-y-6">
               <div className="flex justify-end">
