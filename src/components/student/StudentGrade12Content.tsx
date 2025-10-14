@@ -468,18 +468,6 @@ export const StudentGrade12Content: React.FC<{ defaultTab?: string }> = ({ defau
                             <Edit3 className="h-4 w-4" />
                             فتح المشروع
                           </Button>
-                          
-                          {project.google_doc_url && (
-                            <Button 
-                              variant="outline"
-                              className="w-full gap-2" 
-                              onClick={() => window.open(project.google_doc_url, '_blank')}
-                            >
-                              <FileText className="h-4 w-4" />
-                              فتح مستند Google Docs
-                              <ExternalLink className="h-3 w-3" />
-                            </Button>
-                          )}
                         </div>
                       </CardContent>
                     </Card>
