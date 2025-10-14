@@ -108,8 +108,14 @@ export const useTeacherProjects = () => {
                 studentsProfiles?.map(p => [p.user_id, p.full_name]) || []
               );
 
-              // جلب جميع المهام للطلاب
-              const { data: allTasks } = await supabase
+              // جلب إجمالي المهام الافتراضية
+              const { count: totalDefaultTasks } = await supabase
+                .from('grade12_default_tasks')
+                .select('*', { count: 'exact', head: true })
+                .eq('is_active', true);
+
+              // جلب تقدم الطلاب في المهام
+              const { data: studentProgress } = await supabase
                 .from('grade12_student_task_progress')
                 .select(`
                   student_id,
@@ -122,20 +128,19 @@ export const useTeacherProjects = () => {
                 `)
                 .in('student_id', studentIds);
 
-              // حساب المهام لكل طالب
+              // حساب المهام المكتملة لكل طالب
               const studentTasksMap = new Map();
-              allTasks?.forEach(task => {
+              
+              studentProgress?.forEach(task => {
                 const studentId = task.student_id;
                 if (!studentTasksMap.has(studentId)) {
                   studentTasksMap.set(studentId, {
-                    total: 0,
                     completed: 0,
                     currentTask: null
                   });
                 }
                 
                 const studentData = studentTasksMap.get(studentId);
-                studentData.total++;
                 if (task.is_completed) {
                   studentData.completed++;
                 }
@@ -156,7 +161,7 @@ export const useTeacherProjects = () => {
               const formattedGrade12Projects = grade12Projects.map(project => {
                 const taskData = studentTasksMap.get(project.student_id);
                 const completedCount = taskData?.completed || 0;
-                const totalCount = taskData?.total || 0;
+                const totalCount = totalDefaultTasks || 39; // استخدام إجمالي المهام الافتراضية
                 const completionPercentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
                 return {
