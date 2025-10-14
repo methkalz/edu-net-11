@@ -3489,7 +3489,6 @@ export type Database = {
           id: string
           is_completed: boolean
           notes: string | null
-          project_id: string | null
           student_id: string
           updated_at: string
         }
@@ -3500,7 +3499,6 @@ export type Database = {
           id?: string
           is_completed?: boolean
           notes?: string | null
-          project_id?: string | null
           student_id: string
           updated_at?: string
         }
@@ -3511,7 +3509,6 @@ export type Database = {
           id?: string
           is_completed?: boolean
           notes?: string | null
-          project_id?: string | null
           student_id?: string
           updated_at?: string
         }
@@ -3521,20 +3518,6 @@ export type Database = {
             columns: ["default_task_id"]
             isOneToOne: false
             referencedRelation: "grade12_default_tasks"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "grade12_student_task_progress_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "grade12_final_projects"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "grade12_student_task_progress_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "teacher_projects_view"
             referencedColumns: ["id"]
           },
         ]
