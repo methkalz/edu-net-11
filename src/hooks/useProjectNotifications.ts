@@ -112,12 +112,16 @@ export const useProjectNotifications = () => {
       console.log('🔔 Students found:', students?.length || 0, students);
 
       const studentsMap = new Map((students || []).map(s => [s.user_id, s]));
+      console.log('🔔 Students map:', studentsMap);
 
       // تحديد نوع المشروع (grade10 أو grade12) بناءً على الجدول
       const grade12ProjectIds = new Set((grade12Projects || []).map(p => p.id));
       const grade10ProjectIds = new Set((grade10Projects || []).map(p => p.id));
+      console.log('🔔 Grade 12 project IDs:', Array.from(grade12ProjectIds));
+      console.log('🔔 Grade 10 project IDs:', Array.from(grade10ProjectIds));
 
       // تحويل البيانات
+      console.log('🔔 Starting to format notifications...');
       const formattedNotifications = (notificationsData || []).map(notification => {
         const project = projectsMap.get(notification.project_id);
         // student_id في المشاريع هو في الواقع user_id
@@ -144,12 +148,22 @@ export const useProjectNotifications = () => {
         };
       });
 
-      console.log('🔔 Formatted notifications:', formattedNotifications.length, formattedNotifications);
+      console.log('🔔 Formatted notifications RESULT:', formattedNotifications.length);
+      console.log('🔔 Formatted notifications DETAILS:', JSON.stringify(formattedNotifications.map(n => ({
+        id: n.id.substring(0,8),
+        grade_level: n.grade_level,
+        project_title: n.project_title,
+        student_name: n.student_name
+      })), null, 2));
+      
+      console.log('🔔 About to call setNotifications with', formattedNotifications.length, 'notifications');
       setNotifications(formattedNotifications);
+      console.log('🔔 setNotifications called!');
       
       // حساب عدد الإشعارات غير المقروءة
       const unreadNotifications = formattedNotifications.filter(n => !n.is_read);
       setUnreadCount(unreadNotifications.length);
+      console.log('🔔 setUnreadCount called with', unreadNotifications.length);
 
     } catch (error: any) {
       console.error('Error fetching notifications:', error);
