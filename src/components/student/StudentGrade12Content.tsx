@@ -9,13 +9,14 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Video, FileText, FolderOpen, Play, Clock, CheckCircle, Star, ExternalLink, Search, Calendar, Eye, Trophy, Target, Sparkles, Plus, Edit3, BookOpen } from 'lucide-react';
+import { Video, FileText, FolderOpen, Play, Clock, CheckCircle, Star, ExternalLink, Search, Calendar, Eye, Trophy, Target, Plus, Edit3, BookOpen } from 'lucide-react';
 import { toast } from 'sonner';
 import { useStudentProgress } from '@/hooks/useStudentProgress';
 import { useGrade12Projects } from '@/hooks/useGrade12Projects';
 import Grade12FinalProjectForm from '../content/Grade12FinalProjectForm';
 import { LottieLoader } from '@/components/ui/LottieLoader';
 import graduationFolderAnimation from '@/assets/graduation-folder.json';
+import loadingAnimation from '@/assets/loading-animation.json';
 export const StudentGrade12Content: React.FC<{ defaultTab?: string }> = ({ defaultTab = 'content' }) => {
   const navigate = useNavigate();
   const {
@@ -247,8 +248,13 @@ export const StudentGrade12Content: React.FC<{ defaultTab?: string }> = ({ defau
               <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full animate-pulse"></div>
               <div className="relative bg-background/95 backdrop-blur-sm border border-primary/20 rounded-2xl p-12 shadow-2xl">
                 <div className="mb-6">
-                  <div className="w-20 h-20 mx-auto bg-gradient-to-br from-primary/30 to-primary/10 rounded-full flex items-center justify-center">
-                    <Sparkles className="w-10 h-10 text-primary animate-[spin_3s_ease-in-out_infinite]" />
+                  <div className="w-32 h-32 mx-auto">
+                    <LottieLoader 
+                      animationData={loadingAnimation}
+                      size="lg"
+                      loop={true}
+                      speed={1}
+                    />
                   </div>
                 </div>
                 <div className="min-h-[60px] flex items-center justify-center">
