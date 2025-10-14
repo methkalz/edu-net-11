@@ -114,54 +114,57 @@ export const useTeacherProjects = () => {
                 .select('*', { count: 'exact', head: true })
                 .eq('is_active', true);
 
-              // جلب تقدم الطلاب في المهام
-              const { data: studentProgress } = await supabase
-                .from('grade12_student_task_progress')
-                .select(`
-                  student_id,
-                  is_completed,
-                  grade12_default_tasks!inner (
-                    task_title,
-                    phase_title,
-                    order_index
-                  )
-                `)
-                .in('student_id', studentIds);
-
-              // حساب المهام المكتملة لكل طالب
-              const studentTasksMap = new Map();
+              // حساب المهام المكتملة لكل مشروع بشكل منفصل
+              const projectTasksMap = new Map();
               
-              studentProgress?.forEach(task => {
-                const studentId = task.student_id;
-                if (!studentTasksMap.has(studentId)) {
-                  studentTasksMap.set(studentId, {
-                    completed: 0,
-                    currentTask: null
-                  });
-                }
-                
-                const studentData = studentTasksMap.get(studentId);
-                if (task.is_completed) {
-                  studentData.completed++;
-                }
-                
-                // أول مهمة غير مكتملة حسب الترتيب
-                const currentTask = task.grade12_default_tasks;
-                if (!task.is_completed && currentTask) {
-                  if (!studentData.currentTask || currentTask.order_index < studentData.currentTask.order_index) {
-                    studentData.currentTask = {
-                      task_title: currentTask.task_title,
-                      phase_title: currentTask.phase_title,
-                      order_index: currentTask.order_index
-                    };
+              // جلب تقدم المهام لكل مشروع على حدة
+              for (const project of grade12Projects) {
+                const { data: projectProgress } = await supabase
+                  .from('grade12_student_task_progress')
+                  .select(`
+                    student_id,
+                    project_id,
+                    is_completed,
+                    grade12_default_tasks!inner (
+                      task_title,
+                      phase_title,
+                      order_index
+                    )
+                  `)
+                  .eq('student_id', project.student_id)
+                  .eq('project_id', project.id);
+
+                let completedCount = 0;
+                let currentTask = null;
+
+                projectProgress?.forEach(task => {
+                  if (task.is_completed) {
+                    completedCount++;
                   }
-                }
-              });
+                  
+                  // أول مهمة غير مكتملة حسب الترتيب
+                  const taskDetails = task.grade12_default_tasks;
+                  if (!task.is_completed && taskDetails) {
+                    if (!currentTask || taskDetails.order_index < currentTask.order_index) {
+                      currentTask = {
+                        task_title: taskDetails.task_title,
+                        phase_title: taskDetails.phase_title,
+                        order_index: taskDetails.order_index
+                      };
+                    }
+                  }
+                });
+
+                projectTasksMap.set(project.id, {
+                  completed: completedCount,
+                  currentTask: currentTask
+                });
+              }
 
               const formattedGrade12Projects = grade12Projects.map(project => {
-                const taskData = studentTasksMap.get(project.student_id);
+                const taskData = projectTasksMap.get(project.id);
                 const completedCount = taskData?.completed || 0;
-                const totalCount = totalDefaultTasks || 39; // استخدام إجمالي المهام الافتراضية
+                const totalCount = totalDefaultTasks || 39;
                 const completionPercentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
                 return {
