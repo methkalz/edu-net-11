@@ -682,70 +682,6 @@ export type Database = {
         }
         Relationships: []
       }
-      drive_folders: {
-        Row: {
-          created_at: string
-          display_name: string
-          encrypted_folder_id: string
-          encrypted_folder_url: string
-          folder_type: string
-          grade_level: string | null
-          id: string
-          parent_folder_id: string | null
-          school_id: string
-          student_id: string | null
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          display_name: string
-          encrypted_folder_id: string
-          encrypted_folder_url: string
-          folder_type: string
-          grade_level?: string | null
-          id?: string
-          parent_folder_id?: string | null
-          school_id: string
-          student_id?: string | null
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          display_name?: string
-          encrypted_folder_id?: string
-          encrypted_folder_url?: string
-          folder_type?: string
-          grade_level?: string | null
-          id?: string
-          parent_folder_id?: string | null
-          school_id?: string
-          student_id?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "drive_folders_parent_folder_id_fkey"
-            columns: ["parent_folder_id"]
-            isOneToOne: false
-            referencedRelation: "drive_folders"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "drive_folders_school_id_fkey"
-            columns: ["school_id"]
-            isOneToOne: false
-            referencedRelation: "schools"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "drive_folders_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "students"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       email_logs: {
         Row: {
           created_at_utc: string
@@ -1269,9 +1205,6 @@ export type Database = {
           created_at: string
           doc_google_id: string
           doc_url: string
-          drive_folder_id: string | null
-          encrypted_doc_id: string | null
-          encrypted_doc_url: string | null
           id: string
           last_accessed_at: string | null
           owner_email: string
@@ -1285,9 +1218,6 @@ export type Database = {
           created_at?: string
           doc_google_id: string
           doc_url: string
-          drive_folder_id?: string | null
-          encrypted_doc_id?: string | null
-          encrypted_doc_url?: string | null
           id?: string
           last_accessed_at?: string | null
           owner_email: string
@@ -1301,9 +1231,6 @@ export type Database = {
           created_at?: string
           doc_google_id?: string
           doc_url?: string
-          drive_folder_id?: string | null
-          encrypted_doc_id?: string | null
-          encrypted_doc_url?: string | null
           id?: string
           last_accessed_at?: string | null
           owner_email?: string
@@ -1314,13 +1241,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "google_documents_drive_folder_id_fkey"
-            columns: ["drive_folder_id"]
-            isOneToOne: false
-            referencedRelation: "drive_folders"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "google_documents_school_id_fkey"
             columns: ["school_id"]
