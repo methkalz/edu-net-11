@@ -259,7 +259,7 @@ const Grade12ProjectEditor: React.FC = () => {
             <div className="mx-auto w-4/5">
               <Card className="shadow-lg border-0 bg-gradient-to-br from-card via-card to-card/95 backdrop-blur-sm">
                 <CardContent className="p-0">
-                  <div className="h-[calc(100vh-280px)] min-h-[700px]">
+                  <div className="h-[calc(100vh-200px)] min-h-[900px]">
                     {project?.google_doc_url ? (
                       <iframe
                         src={project.google_doc_url}
