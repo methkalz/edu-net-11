@@ -43,7 +43,7 @@ export const useProjectNotifications = () => {
         return;
       }
 
-      // جلب الإشعارات الأساسية مع استخدام RLS policies المحدثة
+      // ✅ جلب الإشعارات مباشرة - الـ RLS policies تتولى الفلترة تلقائياً
       const { data: notificationsData, error: notificationsError } = await supabase
         .from('teacher_notifications')
         .select(`
@@ -64,96 +64,59 @@ export const useProjectNotifications = () => {
 
       if (notificationsError) throw notificationsError;
 
-      // تحويل البيانات مع جلب معلومات إضافية والتحقق من الصلاحيات
-      const formattedNotifications = await Promise.all(
-        (notificationsData || []).map(async (notification) => {
-          let projectData = null;
-          let studentProfile = null;
-          let isAuthorized = false;
-
-          // تحديد نوع المشروع وجلب بياناته
-          // محاولة جلب من مشاريع الصف الثاني عشر أولاً
-          const { data: grade12Project } = await supabase
-            .from('grade12_final_projects')
-            .select('title, student_id, school_id')
-            .eq('id', notification.project_id)
-            .single();
-
-          if (grade12Project) {
-            projectData = grade12Project;
-            
-            // التحقق من صلاحية الوصول لمشروع الصف الثاني عشر
-            if (allowedGrades.includes('12')) {
-              const { data: accessCheck } = await supabase
-                .rpc('can_teacher_access_project', {
-                  teacher_user_id: userProfile.user_id,
-                  project_student_id: grade12Project.student_id,
-                  project_type: 'grade12'
-                });
-              isAuthorized = accessCheck || false;
-            }
-          } else {
-            // محاولة جلب من مشاريع الصف العاشر
-            const { data: grade10Project } = await supabase
-              .from('grade10_mini_projects')
-              .select('title, student_id, school_id')
-              .eq('id', notification.project_id)
-              .single();
-
-            if (grade10Project) {
-              projectData = grade10Project;
-              
-              // التحقق من صلاحية الوصول لمشروع الصف العاشر
-              if (allowedGrades.includes('10')) {
-                const { data: accessCheck } = await supabase
-                  .rpc('can_teacher_access_project', {
-                    teacher_user_id: userProfile.user_id,
-                    project_student_id: grade10Project.student_id,
-                    project_type: 'grade10'
-                  });
-                isAuthorized = accessCheck || false;
-              }
-            }
-          }
-
-          // إذا لم يكن مصرحاً بالوصول، تجاهل الإشعار
-          if (!isAuthorized || !projectData) {
-            return null;
-          }
-
-          // جلب معلومات الطالب
-          const { data: studentProfileData } = await supabase
-            .from('profiles')
-            .select('full_name')
-            .eq('user_id', projectData.student_id)
-            .single();
-
-          studentProfile = studentProfileData;
-
-          return {
-            id: notification.id,
-            teacher_id: notification.teacher_id,
-            project_id: notification.project_id,
-            comment_id: notification.comment_id,
-            notification_type: notification.notification_type,
-            title: notification.title,
-            message: notification.message,
-            is_read: notification.is_read,
-            created_at: notification.created_at,
-            updated_at: notification.updated_at,
-            project_title: projectData?.title || 'مشروع غير محدد',
-            student_name: studentProfile?.full_name || 'طالب غير محدد'
-          };
-        })
-      );
-
-      // فلترة الإشعارات الصالحة فقط
-      const validNotifications = formattedNotifications.filter(n => n !== null);
+      // ✅ جلب معلومات المشاريع والطلاب بشكل فعّال
+      const projectIds = [...new Set((notificationsData || []).map(n => n.project_id))];
       
-      setNotifications(validNotifications);
+      // جلب مشاريع الصف 12
+      const { data: grade12Projects } = await supabase
+        .from('grade12_final_projects')
+        .select('id, title, student_id')
+        .in('id', projectIds);
+
+      // جلب مشاريع الصف 10
+      const { data: grade10Projects } = await supabase
+        .from('grade10_mini_projects')
+        .select('id, title, student_id')
+        .in('id', projectIds);
+
+      // دمج المشاريع
+      const allProjects = [...(grade12Projects || []), ...(grade10Projects || [])];
+      const projectsMap = new Map(allProjects.map(p => [p.id, p]));
+
+      // جلب معلومات الطلاب
+      const studentIds = [...new Set(allProjects.map(p => p.student_id))];
+      const { data: students } = await supabase
+        .from('profiles')
+        .select('user_id, full_name')
+        .in('user_id', studentIds);
+
+      const studentsMap = new Map((students || []).map(s => [s.user_id, s]));
+
+      // تحويل البيانات
+      const formattedNotifications = (notificationsData || []).map(notification => {
+        const project = projectsMap.get(notification.project_id);
+        const student = project ? studentsMap.get(project.student_id) : null;
+
+        return {
+          id: notification.id,
+          teacher_id: notification.teacher_id,
+          project_id: notification.project_id,
+          comment_id: notification.comment_id,
+          notification_type: notification.notification_type,
+          title: notification.title,
+          message: notification.message,
+          is_read: notification.is_read,
+          created_at: notification.created_at,
+          updated_at: notification.updated_at,
+          project_title: project?.title || 'مشروع غير محدد',
+          student_name: student?.full_name || 'طالب غير محدد'
+        };
+      });
+
+      setNotifications(formattedNotifications);
       
       // حساب عدد الإشعارات غير المقروءة
-      const unreadNotifications = validNotifications.filter(n => !n.is_read);
+      const unreadNotifications = formattedNotifications.filter(n => !n.is_read);
       setUnreadCount(unreadNotifications.length);
 
     } catch (error: any) {
