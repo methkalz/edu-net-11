@@ -73,10 +73,24 @@ export const useGoogleDocs = () => {
   }: CreateDocumentParams): Promise<CreateDocumentResponse | null> => {
     setIsLoading(true);
     try {
+      // جلب معلومات الطالب الحالي
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('يجب تسجيل الدخول أولاً');
+      }
+
+      const { data: student } = await supabase
+        .from('students')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
       const { data, error } = await supabase.functions.invoke('create-google-doc', {
         body: {
           studentName,
           documentContent,
+          student_id: student?.id,
+          grade_level: '12',
           ...(folderId && { folderId })
         }
       });
