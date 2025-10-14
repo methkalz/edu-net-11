@@ -11,6 +11,3 @@ verify_jwt = false
 
 [functions.create-drive-folder]
 verify_jwt = false
-
-[functions.get-google-doc-stats]
-verify_jwt = false
