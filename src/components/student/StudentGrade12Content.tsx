@@ -291,7 +291,7 @@ export const StudentGrade12Content: React.FC<{ defaultTab?: string }> = ({ defau
               <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-amber-100 to-orange-100 rounded-full flex items-center justify-center">
                 <FolderOpen className="w-12 h-12 text-amber-600" />
               </div>
-              <h3 className="text-2xl font-bold mb-4 text-center">لا يوجد مشروع نهائي</h3>
+              <h3 className="text-2xl font-bold mb-4 text-center">لم تبدأ بعد بمشروعك النهائي</h3>
               <p className="text-muted-foreground text-lg mb-6 text-center">
                 أنشئ مشروعك النهائي وأظهر مهاراتك المتقدمة
               </p>
