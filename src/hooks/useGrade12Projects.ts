@@ -250,9 +250,66 @@ export const useGrade12Projects = () => {
           description: 'قد يستغرق هذا بضع ثوان'
         });
 
+        // جلب معلومات المعلم والمدرسة
+        let teacherName = 'المعلم المشرف';
+        let schoolName = 'المدرسة';
+
+        // جلب اسم المدرسة
+        if (userProfile.school_id) {
+          const { data: schoolData } = await supabase
+            .from('schools')
+            .select('name')
+            .eq('id', userProfile.school_id)
+            .maybeSingle();
+          
+          if (schoolData) {
+            schoolName = schoolData.name;
+          }
+        }
+
+        // جلب اسم المعلم المسؤول
+        const { data: studentData } = await supabase
+          .from('students')
+          .select('id')
+          .eq('user_id', userProfile.user_id)
+          .maybeSingle();
+
+        if (studentData) {
+          const { data: classData } = await supabase
+            .from('class_students')
+            .select(`
+              classes!inner(
+                teacher_classes!inner(
+                  teacher_id
+                )
+              )
+            `)
+            .eq('student_id', studentData.id)
+            .limit(1)
+            .maybeSingle();
+          
+          if (classData?.classes?.teacher_classes?.[0]?.teacher_id) {
+            const teacherId = classData.classes.teacher_classes[0].teacher_id;
+            const { data: teacherProfile } = await supabase
+              .from('profiles')
+              .select('full_name')
+              .eq('user_id', teacherId)
+              .maybeSingle();
+            
+            if (teacherProfile?.full_name) {
+              teacherName = teacherProfile.full_name;
+            }
+          }
+        }
+
         const docResult = await createDocument({
           studentName: userProfile.full_name,
-          documentContent: `المشروع النهائي: ${projectData.title}\n\nالوصف: ${projectData.description || 'لا يوجد وصف'}\n\n---\n\nابدأ العمل على مشروعك هنا...`
+          documentContent: `أهلاً ${userProfile.full_name}
+نتمنى لك النجاح في المشروع النهائي
+سيكون الأستاذ ${teacherName} في مرافقتك دائمًا
+مع تحيات: ادارة مدرسة ${schoolName}
+
+Edu-Net.me`
         });
 
         if (docResult && docResult.success) {

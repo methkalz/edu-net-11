@@ -196,24 +196,57 @@ serve(async (req) => {
     const documentId = doc.id;
     console.log('✅ Document created:', documentId);
 
-    // Add content to the document
+    // Add content to the document with RTL and center alignment
     if (documentContent) {
+      const requests = [
+        {
+          insertText: {
+            location: { index: 1 },
+            text: documentContent
+          }
+        },
+        // تطبيق RTL والمحاذاة المركزية على كل النص
+        {
+          updateParagraphStyle: {
+            range: {
+              startIndex: 1,
+              endIndex: documentContent.length + 1
+            },
+            paragraphStyle: {
+              direction: 'RIGHT_TO_LEFT',
+              alignment: 'CENTER'
+            },
+            fields: 'direction,alignment'
+          }
+        },
+        // تطبيق حجم خط مناسب
+        {
+          updateTextStyle: {
+            range: {
+              startIndex: 1,
+              endIndex: documentContent.length + 1
+            },
+            textStyle: {
+              fontSize: {
+                magnitude: 14,
+                unit: 'PT'
+              }
+            },
+            fields: 'fontSize'
+          }
+        }
+      ];
+
       await fetch(`https://docs.googleapis.com/v1/documents/${documentId}:batchUpdate`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${accessToken}`,
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-          requests: [{
-            insertText: {
-              location: { index: 1 },
-              text: documentContent
-            }
-          }]
-        })
+        body: JSON.stringify({ requests })
       });
-      console.log('✅ Content added');
+      
+      console.log('✅ Content added with RTL and center alignment');
     }
 
     // Set permissions with Workspace support
