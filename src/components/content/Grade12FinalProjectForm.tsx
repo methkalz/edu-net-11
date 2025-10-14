@@ -39,7 +39,7 @@ const Grade12FinalProjectForm: React.FC<Grade12FinalProjectFormProps> = ({
     title: initialData?.title || '',
     description: initialData?.description || '',
     status: initialData?.status || 'draft',
-    createGoogleDoc: true, // تفعيل إنشاء المستند تلقائياً
+    createGoogleDoc: false,
   });
 
   const [dueDate, setDueDate] = useState<Date | undefined>(
