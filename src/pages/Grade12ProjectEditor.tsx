@@ -297,20 +297,23 @@ const Grade12ProjectEditor: React.FC = () => {
               <Card className="shadow-lg border-0 bg-gradient-to-br from-card via-card to-card/95 backdrop-blur-sm">
                 <CardContent className="p-0">
                   <div className="h-[calc(100vh-280px)] min-h-[700px]">
-                    <ProfessionalDocumentEditor
-                      documentId={projectId}
-                      initialContent={project?.project_content ? JSON.parse(project.project_content) : undefined}
-                      onContentChange={handleContentChange}
-                      onSave={handleEditorSave}
-                      className="h-full rounded-lg"
-                      showToolbar={true}
-                      enableCollaboration={false}
-                      autoSave={true}
-                      title={project?.title || "مشروع التخرج"}
-                      wordCount={wordCount}
-                      enableImagePasting={true}
-                      enableImageResizing={true}
-                    />
+                    {project?.google_doc_url ? (
+                      <iframe
+                        src={project.google_doc_url}
+                        className="w-full h-full rounded-lg border-0"
+                        title={project?.title || "مستند Google Docs"}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+                        <FileText className="h-16 w-16 text-muted-foreground mb-4" />
+                        <h3 className="text-xl font-semibold mb-2">لا يوجد مستند Google Docs</h3>
+                        <p className="text-muted-foreground">
+                          لم يتم ربط مستند Google Docs بهذا المشروع بعد
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
