@@ -35,13 +35,8 @@ export const useProjectNotifications = () => {
       setLoading(true);
       setError(null);
 
-      // التحقق من الصفوف المسموح بها
-      if (allowedGrades.length === 0) {
-        console.log('Teacher has no allowed grades - no notifications');
-        setNotifications([]);
-        setUnreadCount(0);
-        return;
-      }
+      console.log('Fetching notifications for teacher:', userProfile.user_id);
+      console.log('Allowed grades:', allowedGrades);
 
       // جلب الإشعارات الأساسية مع استخدام RLS policies المحدثة
       const { data: notificationsData, error: notificationsError } = await supabase
@@ -320,10 +315,10 @@ export const useProjectNotifications = () => {
   };
 
   useEffect(() => {
-    if (userProfile?.user_id && userProfile?.role === 'teacher' && !accessLoading) {
+    if (userProfile?.user_id && userProfile?.role === 'teacher' && !accessLoading && allowedGrades.length > 0) {
       fetchNotifications();
     }
-  }, [userProfile?.user_id, userProfile?.role, accessLoading]); // تجنب allowedGrades في dependency array
+  }, [userProfile?.user_id, userProfile?.role, accessLoading, allowedGrades.length]);
 
   // إعداد real-time subscription للإشعارات الجديدة
   useEffect(() => {
