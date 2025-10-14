@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -81,6 +81,16 @@ const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({
   const filteredUnreadCount = filteredNotifications.filter(n => !n.is_read).length;
   
   const recentNotifications = filteredNotifications.slice(0, 10);
+
+  // Debug: تتبع التغييرات في البيانات
+  useEffect(() => {
+    console.log('🎯 [Effect] notifications changed:', notifications.length);
+    console.log('🎯 [Effect] filtered:', filteredNotifications.length);
+    console.log('🎯 [Effect] recent:', recentNotifications.length);
+  }, [notifications, filteredNotifications, recentNotifications]);
+
+  console.log('🎯 [Render] notifications:', notifications.length, 'filtered:', filteredNotifications.length, 'recent:', recentNotifications.length);
+  
   return <Card className="border border-divider/60 bg-gradient-to-br from-surface-light to-card shadow-lg">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
