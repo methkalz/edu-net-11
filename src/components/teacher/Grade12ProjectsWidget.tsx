@@ -225,10 +225,10 @@ const Grade12ProjectsWidget: React.FC = () => {
                             locale: ar 
                           })}
                         </span>
-                        {project.grade && (
-                          <span className="flex items-center gap-1.5">
+                        {project.current_task && (
+                          <span className="flex items-center gap-1.5 text-secondary font-medium">
                             <BarChart3 className="h-3.5 w-3.5" />
-                            الدرجة: {project.grade}
+                            {project.current_task}
                           </span>
                         )}
                       </div>

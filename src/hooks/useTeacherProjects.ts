@@ -18,6 +18,8 @@ export interface TeacherProject {
   unread_comments_count: number;
   total_comments_count: number;
   completion_percentage: number;
+  current_task?: string;
+  current_phase?: string;
 }
 
 export interface ProjectComment {
@@ -104,13 +106,44 @@ export const useTeacherProjects = () => {
                 studentsProfiles?.map(p => [p.user_id, p.full_name]) || []
               );
 
+              // جلب جميع المهام غير المكتملة للطلاب
+              const { data: allIncompleteTasks } = await supabase
+                .from('grade12_student_task_progress')
+                .select(`
+                  student_id,
+                  grade12_default_tasks!inner (
+                    task_title,
+                    phase_title,
+                    order_index
+                  )
+                `)
+                .in('student_id', studentIds)
+                .eq('is_completed', false);
+
+              // تنظيم المهام حسب الطالب والحصول على أول مهمة فقط
+              const studentCurrentTaskMap = new Map();
+              allIncompleteTasks?.forEach(task => {
+                const existing = studentCurrentTaskMap.get(task.student_id);
+                const currentTask = task.grade12_default_tasks;
+                
+                if (!existing || (currentTask && currentTask.order_index < existing.order_index)) {
+                  studentCurrentTaskMap.set(task.student_id, {
+                    task_title: currentTask?.task_title,
+                    phase_title: currentTask?.phase_title,
+                    order_index: currentTask?.order_index
+                  });
+                }
+              });
+
               const formattedGrade12Projects = grade12Projects.map(project => ({
                 ...project,
                 grade: 12,
                 student_name: studentNamesMap.get(project.student_id) || 'غير محدد',
                 unread_comments_count: 0,
                 total_comments_count: 0,
-                completion_percentage: 0
+                completion_percentage: 0,
+                current_task: studentCurrentTaskMap.get(project.student_id)?.task_title,
+                current_phase: studentCurrentTaskMap.get(project.student_id)?.phase_title
               }));
 
               allProjects.push(...formattedGrade12Projects);
