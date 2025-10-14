@@ -292,7 +292,7 @@ export const StudentGrade12Content: React.FC<{ defaultTab?: string }> = ({ defau
                 <FolderOpen className="w-12 h-12 text-amber-600" />
               </div>
               <h3 className="text-2xl font-bold mb-4 text-center">لا يوجد مشروع نهائي</h3>
-              <p className="text-muted-foreground text-lg mb-6">
+              <p className="text-muted-foreground text-lg mb-6 text-center">
                 أنشئ مشروعك النهائي وأظهر مهاراتك المتقدمة
               </p>
               <Button size="lg" className="gap-2" onClick={() => setShowProjectForm(true)}>
