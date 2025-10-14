@@ -583,6 +583,33 @@ Edu-Net.me`
     }
   };
 
+  // حذف المشروع
+  const deleteProject = async (projectId: string) => {
+    try {
+      logger.info('Deleting Grade 12 project', { projectId });
+      
+      // حذف المشروع - سيتم حذف المهام والتعليقات تلقائياً بسبب cascade
+      const { error } = await supabase
+        .from('grade12_final_projects')
+        .delete()
+        .eq('id', projectId);
+
+      if (error) throw error;
+
+      // تحديث القائمة المحلية
+      setProjects(prev => prev.filter(p => p.id !== projectId));
+      
+      toast.success('تم حذف المشروع بنجاح');
+      logger.info('Project deleted successfully', { projectId });
+      
+      return true;
+    } catch (error) {
+      logger.error('خطأ في حذف المشروع', error);
+      toast.error('فشل حذف المشروع. حاول مرة أخرى.');
+      return false;
+    }
+  };
+
   useEffect(() => {
     if (userProfile && !accessLoading) {
       fetchProjects();
@@ -603,6 +630,7 @@ Edu-Net.me`
     fetchRevisions,
     createProject,
     updateProject,
+    deleteProject,
     saveRevision,
     addTask,
     updateTaskStatus,

@@ -34,7 +34,8 @@ import {
   MessageCircle,
   Eye,
   EyeOff,
-  User
+  User,
+  Trash2
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -45,7 +46,7 @@ const Grade12ProjectEditor: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, userProfile } = useAuth();
-  const { projects, updateProject, saveRevision, addComment } = useGrade12Projects();
+  const { projects, updateProject, deleteProject, saveRevision, addComment } = useGrade12Projects();
   const { phases, updateTaskCompletion, getOverallProgress } = useGrade12DefaultTasks();
   
   const [project, setProject] = useState<any>(null);
@@ -57,6 +58,7 @@ const Grade12ProjectEditor: React.FC = () => {
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'editor');
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   // Load project data
   useEffect(() => {
@@ -79,6 +81,17 @@ const Grade12ProjectEditor: React.FC = () => {
   // معالجة تغيير المحتوى من المحرر
   const handleContentChange = (newContent: any, html: string, plainText: string) => {
     setContent(JSON.stringify(newContent));
+  };
+
+  // حذف المشروع
+  const handleDeleteProject = async () => {
+    if (!project?.id) return;
+    
+    const success = await deleteProject(project.id);
+    if (success) {
+      navigate('/dashboard');
+    }
+    setShowDeleteDialog(false);
   };
 
   // حفظ المحرر
@@ -187,6 +200,16 @@ const Grade12ProjectEditor: React.FC = () => {
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setShowDeleteDialog(true)}
+                  className="gap-2 shadow-sm hover:shadow-md transition-all duration-200"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  حذف المشروع
+                </Button>
+
                 <Button
                   variant={isPreviewMode ? "default" : "outline"}
                   size="sm"
@@ -421,6 +444,49 @@ const Grade12ProjectEditor: React.FC = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Dialog تأكيد الحذف */}
+      {showDeleteDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="max-w-md w-full shadow-2xl">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-destructive">
+                <Trash2 className="h-5 w-5" />
+                تأكيد حذف المشروع
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-muted-foreground">
+                هل أنت متأكد من حذف هذا المشروع؟ سيتم حذف جميع البيانات المرتبطة به بما في ذلك:
+              </p>
+              <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground pr-4">
+                <li>جميع المهام والمهام الفرعية</li>
+                <li>جميع التعليقات والملاحظات</li>
+                <li>جميع المراجعات والإصدارات السابقة</li>
+              </ul>
+              <p className="text-sm font-semibold text-destructive">
+                تحذير: هذا الإجراء لا يمكن التراجع عنه!
+              </p>
+              <div className="flex gap-3 justify-end pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowDeleteDialog(false)}
+                >
+                  إلغاء
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleDeleteProject}
+                  className="gap-2"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  حذف نهائياً
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 };
