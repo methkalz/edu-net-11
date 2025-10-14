@@ -17,7 +17,6 @@ export interface ProjectNotification {
   updated_at: string;
   project_title?: string;
   student_name?: string;
-  grade_level?: string | null; // ✅ إضافة حقل الصف
 }
 
 export const useProjectNotifications = () => {
@@ -30,19 +29,8 @@ export const useProjectNotifications = () => {
 
   // جلب الإشعارات مع فلترة حسب الصفوف المسؤول عنها
   const fetchNotifications = async () => {
-    console.log('🔔 fetchNotifications called', { 
-      userId: userProfile?.user_id, 
-      role: userProfile?.role, 
-      accessLoading 
-    });
-    
-    if (!userProfile?.user_id || userProfile.role !== 'teacher' || accessLoading) {
-      console.log('🔔 fetchNotifications SKIPPED - conditions not met');
-      return;
-    }
+    if (!userProfile?.user_id || userProfile.role !== 'teacher' || accessLoading) return;
 
-    console.log('🔔 fetchNotifications PROCEEDING...');
-    
     try {
       setLoading(true);
       setError(null);
@@ -55,7 +43,7 @@ export const useProjectNotifications = () => {
         return;
       }
 
-      // ✅ جلب الإشعارات مباشرة - الـ RLS policies تتولى الفلترة تلقائياً
+      // جلب الإشعارات الأساسية مع استخدام RLS policies المحدثة
       const { data: notificationsData, error: notificationsError } = await supabase
         .from('teacher_notifications')
         .select(`
@@ -75,95 +63,98 @@ export const useProjectNotifications = () => {
         .limit(50);
 
       if (notificationsError) throw notificationsError;
+
+      // تحويل البيانات مع جلب معلومات إضافية والتحقق من الصلاحيات
+      const formattedNotifications = await Promise.all(
+        (notificationsData || []).map(async (notification) => {
+          let projectData = null;
+          let studentProfile = null;
+          let isAuthorized = false;
+
+          // تحديد نوع المشروع وجلب بياناته
+          // محاولة جلب من مشاريع الصف الثاني عشر أولاً
+          const { data: grade12Project } = await supabase
+            .from('grade12_final_projects')
+            .select('title, student_id, school_id')
+            .eq('id', notification.project_id)
+            .single();
+
+          if (grade12Project) {
+            projectData = grade12Project;
+            
+            // التحقق من صلاحية الوصول لمشروع الصف الثاني عشر
+            if (allowedGrades.includes('12')) {
+              const { data: accessCheck } = await supabase
+                .rpc('can_teacher_access_project', {
+                  teacher_user_id: userProfile.user_id,
+                  project_student_id: grade12Project.student_id,
+                  project_type: 'grade12'
+                });
+              isAuthorized = accessCheck || false;
+            }
+          } else {
+            // محاولة جلب من مشاريع الصف العاشر
+            const { data: grade10Project } = await supabase
+              .from('grade10_mini_projects')
+              .select('title, student_id, school_id')
+              .eq('id', notification.project_id)
+              .single();
+
+            if (grade10Project) {
+              projectData = grade10Project;
+              
+              // التحقق من صلاحية الوصول لمشروع الصف العاشر
+              if (allowedGrades.includes('10')) {
+                const { data: accessCheck } = await supabase
+                  .rpc('can_teacher_access_project', {
+                    teacher_user_id: userProfile.user_id,
+                    project_student_id: grade10Project.student_id,
+                    project_type: 'grade10'
+                  });
+                isAuthorized = accessCheck || false;
+              }
+            }
+          }
+
+          // إذا لم يكن مصرحاً بالوصول، تجاهل الإشعار
+          if (!isAuthorized || !projectData) {
+            return null;
+          }
+
+          // جلب معلومات الطالب
+          const { data: studentProfileData } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('user_id', projectData.student_id)
+            .single();
+
+          studentProfile = studentProfileData;
+
+          return {
+            id: notification.id,
+            teacher_id: notification.teacher_id,
+            project_id: notification.project_id,
+            comment_id: notification.comment_id,
+            notification_type: notification.notification_type,
+            title: notification.title,
+            message: notification.message,
+            is_read: notification.is_read,
+            created_at: notification.created_at,
+            updated_at: notification.updated_at,
+            project_title: projectData?.title || 'مشروع غير محدد',
+            student_name: studentProfile?.full_name || 'طالب غير محدد'
+          };
+        })
+      );
+
+      // فلترة الإشعارات الصالحة فقط
+      const validNotifications = formattedNotifications.filter(n => n !== null);
       
-      console.log('🔔 Raw notifications from DB:', notificationsData?.length || 0);
-
-      // ✅ جلب معلومات المشاريع والطلاب بشكل فعّال
-      const projectIds = [...new Set((notificationsData || []).map(n => n.project_id))];
-      console.log('🔔 Project IDs to fetch:', projectIds);
-      
-      // جلب مشاريع الصف 12
-      const { data: grade12Projects } = await supabase
-        .from('grade12_final_projects')
-        .select('id, title, student_id')
-        .in('id', projectIds);
-      console.log('🔔 Grade 12 projects:', grade12Projects?.length || 0, grade12Projects);
-
-      // جلب مشاريع الصف 10
-      const { data: grade10Projects } = await supabase
-        .from('grade10_mini_projects')
-        .select('id, title, student_id')
-        .in('id', projectIds);
-      console.log('🔔 Grade 10 projects:', grade10Projects?.length || 0, grade10Projects);
-
-      // دمج المشاريع
-      const allProjects = [...(grade12Projects || []), ...(grade10Projects || [])];
-      const projectsMap = new Map(allProjects.map(p => [p.id, p]));
-      console.log('🔔 Total projects found:', allProjects.length);
-
-      // جلب معلومات الطلاب - student_id هو في الحقيقة user_id
-      const studentUserIds = [...new Set(allProjects.map(p => p.student_id))];
-      console.log('🔔 Student user IDs to fetch:', studentUserIds);
-      
-      const { data: students } = await supabase
-        .from('profiles')
-        .select('user_id, full_name')
-        .in('user_id', studentUserIds);
-      console.log('🔔 Students found:', students?.length || 0, students);
-
-      const studentsMap = new Map((students || []).map(s => [s.user_id, s]));
-      console.log('🔔 Students map:', studentsMap);
-
-      // تحديد نوع المشروع (grade10 أو grade12) بناءً على الجدول
-      const grade12ProjectIds = new Set((grade12Projects || []).map(p => p.id));
-      const grade10ProjectIds = new Set((grade10Projects || []).map(p => p.id));
-      console.log('🔔 Grade 12 project IDs:', Array.from(grade12ProjectIds));
-      console.log('🔔 Grade 10 project IDs:', Array.from(grade10ProjectIds));
-
-      // تحويل البيانات
-      console.log('🔔 Starting to format notifications...');
-      const formattedNotifications = (notificationsData || []).map(notification => {
-        const project = projectsMap.get(notification.project_id);
-        // student_id في المشاريع هو في الواقع user_id
-        const student = project ? studentsMap.get(project.student_id) : null;
-        
-        // تحديد الصف بناءً على أي جدول يحتوي على المشروع
-        const grade_level = grade12ProjectIds.has(notification.project_id) ? '12' : 
-                           grade10ProjectIds.has(notification.project_id) ? '10' : null;
-
-        return {
-          id: notification.id,
-          teacher_id: notification.teacher_id,
-          project_id: notification.project_id,
-          comment_id: notification.comment_id,
-          notification_type: notification.notification_type,
-          title: notification.title,
-          message: notification.message,
-          is_read: notification.is_read,
-          created_at: notification.created_at,
-          updated_at: notification.updated_at,
-          project_title: project?.title || 'مشروع غير محدد',
-          student_name: student?.full_name || 'طالب غير محدد',
-          grade_level: grade_level
-        };
-      });
-
-      console.log('🔔 Formatted notifications RESULT:', formattedNotifications.length);
-      console.log('🔔 Formatted notifications DETAILS:', JSON.stringify(formattedNotifications.map(n => ({
-        id: n.id.substring(0,8),
-        grade_level: n.grade_level,
-        project_title: n.project_title,
-        student_name: n.student_name
-      })), null, 2));
-      
-      console.log('🔔 About to call setNotifications with', formattedNotifications.length, 'notifications');
-      setNotifications(formattedNotifications);
-      console.log('🔔 setNotifications called!');
+      setNotifications(validNotifications);
       
       // حساب عدد الإشعارات غير المقروءة
-      const unreadNotifications = formattedNotifications.filter(n => !n.is_read);
+      const unreadNotifications = validNotifications.filter(n => !n.is_read);
       setUnreadCount(unreadNotifications.length);
-      console.log('🔔 setUnreadCount called with', unreadNotifications.length);
 
     } catch (error: any) {
       console.error('Error fetching notifications:', error);

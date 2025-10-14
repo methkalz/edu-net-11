@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -73,16 +73,11 @@ const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({
   };
 
   // Filter notifications by grade if gradeFilter is provided
-  const filteredNotifications = gradeFilter 
-    ? notifications.filter(notification => notification.grade_level === gradeFilter)
-    : notifications;
-  
-  // حساب عدد الإشعارات غير المقروءة للصف المُفلتر
-  const filteredUnreadCount = filteredNotifications.filter(n => !n.is_read).length;
-  
+  const filteredNotifications = gradeFilter ? notifications.filter(notification => {
+    // Check if notification is for the specified grade
+    return notification.notification_type?.includes(`grade${gradeFilter}`) || notification.project_id?.includes('grade' + gradeFilter) || !notification.notification_type?.includes('grade12') && gradeFilter === '10' || !notification.notification_type?.includes('grade10') && gradeFilter === '12';
+  }) : notifications;
   const recentNotifications = filteredNotifications.slice(0, 10);
-
-  
   return <Card className="border border-divider/60 bg-gradient-to-br from-surface-light to-card shadow-lg">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
@@ -93,8 +88,8 @@ const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({
             <div>
               <CardTitle className="text-lg font-medium text-foreground flex items-center gap-2">
                 {title}
-                {filteredUnreadCount > 0 && <Badge variant="destructive" className="text-xs px-2 py-1 rounded-full bg-red-500/10 text-red-600 border-2 border-red-200/60">
-                    {filteredUnreadCount}
+                {unreadCount > 0 && <Badge variant="destructive" className="text-xs px-2 py-1 rounded-full bg-red-500/10 text-red-600 border-2 border-red-200/60">
+                    {unreadCount}
                   </Badge>}
               </CardTitle>
               <CardDescription className="text-sm text-text-soft">
@@ -104,7 +99,7 @@ const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({
           </div>
           
           <div className="flex items-center gap-2">
-            {filteredUnreadCount > 0 && <Button variant="outline" size="sm" onClick={markAllAsRead} className="text-xs h-8 px-3 border-divider/60 hover:bg-surface-hover">
+            {unreadCount > 0 && <Button variant="outline" size="sm" onClick={markAllAsRead} className="text-xs h-8 px-3 border-divider/60 hover:bg-surface-hover">
                 <CheckCheck className="h-4 w-4 mr-1" />
                 تحديد الكل كمقروء
               </Button>}
