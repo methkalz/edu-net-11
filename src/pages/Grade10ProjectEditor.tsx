@@ -145,16 +145,6 @@ const Grade10ProjectEditor: React.FC = () => {
                     تحديد كمكتمل
                   </Button>
                 )}
-
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => setShowDeleteDialog(true)}
-                  className="gap-2 shadow-sm hover:shadow-md transition-all duration-200"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  حذف المشروع
-                </Button>
               </div>
             </div>
           </CardContent>
