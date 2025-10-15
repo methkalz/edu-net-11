@@ -150,17 +150,6 @@ const Grade10ProjectEditor: React.FC = () => {
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
-                {isStudent && project?.status !== 'completed' && (
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={handleMarkComplete}
-                    className="gap-2 shadow-md hover:shadow-lg transition-all duration-200"
-                  >
-                    <CheckCircle className="h-4 w-4" />
-                    تحديد كمكتمل
-                  </Button>
-                )}
               </div>
             </div>
           </CardContent>
