@@ -150,9 +150,10 @@ Edu-Net.me`
         }
       }
 
-      // إنشاء المشروع
+      // إنشاء المشروع (نستبعد createGoogleDoc لأنه ليس عمود في الجدول)
+      const { createGoogleDoc, ...restProjectData } = projectData;
       const projectPayload = {
-        ...projectData,
+        ...restProjectData,
         student_id: userProfile.user_id,
         school_id: userProfile.school_id,
         status: 'draft' as const,
