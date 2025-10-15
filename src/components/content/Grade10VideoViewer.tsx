@@ -156,8 +156,12 @@ const Grade10VideoViewer: React.FC<Grade10VideoViewerProps> = ({ videos, loading
         <video
           src={video.video_url}
           controls
+          controlsList="nodownload"
           className="w-full h-96 rounded-lg"
+          preload="metadata"
         >
+          <source src={video.video_url} type="video/mp4" />
+          <source src={video.video_url} type="video/webm" />
           متصفحك لا يدعم تشغيل الفيديو
         </video>
       );

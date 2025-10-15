@@ -114,9 +114,13 @@ const MediaPreview: React.FC<MediaPreviewProps> = ({ media, onClose, onUpdateMed
             <video
               src={media.file_path}
               controls
+              controlsList="nodownload"
               className="w-full max-h-96 rounded-lg"
               poster={media.metadata?.thumbnail_url}
+              preload="metadata"
             >
+              <source src={media.file_path} type="video/mp4" />
+              <source src={media.file_path} type="video/webm" />
               متصفحك لا يدعم تشغيل الفيديو.
             </video>
           );

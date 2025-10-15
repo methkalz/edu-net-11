@@ -145,8 +145,13 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
                 title={media.file_name}
                 className="w-full h-full object-cover"
                 controls
+                controlsList="nodownload"
                 preload="metadata"
-              />
+              >
+                <source src={media.file_path} type="video/mp4" />
+                <source src={media.file_path} type="video/webm" />
+                متصفحك لا يدعم تشغيل الفيديو
+              </video>
             </div>
           );
         }

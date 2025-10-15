@@ -117,13 +117,17 @@ const Grade10LessonContentDisplay: React.FC<Grade10LessonContentDisplayProps> = 
         }
 
         return (
-          <video 
-            controls 
-            className="w-full rounded-xl shadow-lg"
-            src={file_path}
-          >
-            متصفحك لا يدعم تشغيل الفيديو
-          </video>
+              <video 
+                controls 
+                controlsList="nodownload"
+                className="w-full rounded-xl shadow-lg"
+                src={file_path}
+                preload="metadata"
+              >
+                <source src={file_path} type="video/mp4" />
+                <source src={file_path} type="video/webm" />
+                متصفحك لا يدعم تشغيل الفيديو
+              </video>
         );
 
       case 'image':

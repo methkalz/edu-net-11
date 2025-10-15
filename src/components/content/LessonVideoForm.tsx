@@ -10,6 +10,8 @@ import { Upload, X, Video, Youtube, Globe, HardDrive, FolderOpen } from 'lucide-
 import { logger } from '@/lib/logger';
 import SharedMediaPicker from './SharedMediaPicker';
 import type { SharedMediaFile } from '@/hooks/useSharedMediaLibrary';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface LessonVideoFormProps {
   onSave: (videoData: any) => void;
@@ -43,12 +45,30 @@ const LessonVideoForm: React.FC<LessonVideoFormProps> = ({ onSave, onCancel }) =
     setIsLoadingDuration(true);
 
     try {
-      // في التطبيق الحقيقي، يجب رفع الملف إلى Supabase Storage
-      const tempUrl = URL.createObjectURL(file);
-      handleInputChange('video_url', tempUrl);
+      // ✅ رفع الملف إلى Supabase Storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
+      const filePath = `lesson-videos/${fileName}`;
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('lesson-media')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) throw uploadError;
+
+      // الحصول على الرابط العام للفيديو
+      const { data: { publicUrl } } = supabase.storage
+        .from('lesson-media')
+        .getPublicUrl(filePath);
+
+      handleInputChange('video_url', publicUrl);
       handleInputChange('source_type', 'upload');
 
-      // محاولة الحصول على مدة الفيديو
+      // الحصول على مدة الفيديو
+      const tempUrl = URL.createObjectURL(file);
       const video = document.createElement('video');
       video.src = tempUrl;
       
@@ -59,14 +79,20 @@ const LessonVideoForm: React.FC<LessonVideoFormProps> = ({ onSave, onCancel }) =
         const formattedDuration = `${minutes}:${seconds.toString().padStart(2, '0')}`;
         handleInputChange('duration', formattedDuration);
         setIsLoadingDuration(false);
+        URL.revokeObjectURL(tempUrl); // تنظيف الرابط المؤقت
       };
 
       video.onerror = () => {
         handleInputChange('duration', 'غير محدد');
         setIsLoadingDuration(false);
+        URL.revokeObjectURL(tempUrl);
       };
+
     } catch (error) {
       logger.error('Error uploading video', error as Error);
+      toast.error('فشل رفع الفيديو', {
+        description: 'حدث خطأ أثناء رفع الفيديو. حاول مرة أخرى.'
+      });
       handleInputChange('duration', 'غير محدد');
       setIsLoadingDuration(false);
     } finally {
