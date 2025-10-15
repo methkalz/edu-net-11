@@ -250,7 +250,7 @@ const GameMapReal: React.FC<GameMapRealProps> = ({
             </div>
             <div className="flex items-center gap-2">
               <MapPin className="h-3 w-3 text-primary" />
-              <span>العقدة النشطة</span>
+              <span>المرحلة النشطة</span>
             </div>
           </div>
         </CardContent>
