@@ -12,6 +12,9 @@ import StudentGrade12Content from './StudentGrade12Content';
 import KnowledgeAdventureRealContent from '../games/KnowledgeAdventureRealContent';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { LottieLoader } from '@/components/ui/LottieLoader';
+import loadingAnimation from '@/assets/loading-animation.json';
+import { supabase } from '@/integrations/supabase/client';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -124,6 +127,9 @@ export const StudentGradeContent: React.FC<{ defaultTab?: string }> = ({ default
   // Mini Project states
   const [isCreateProjectDialogOpen, setIsCreateProjectDialogOpen] = useState(false);
   const [isProjectEditorOpen, setIsProjectEditorOpen] = useState(false);
+  const [showCreationOverlay, setShowCreationOverlay] = useState(false);
+  const [creationMessage, setCreationMessage] = useState('');
+  const [messageKey, setMessageKey] = useState(0);
   const [projectFormData, setProjectFormData] = useState<ProjectFormData>({
     title: '',
     description: '',
@@ -206,6 +212,63 @@ export const StudentGradeContent: React.FC<{ defaultTab?: string }> = ({ default
       setProjectFormData({ title: '', description: '', due_date: '' });
       setIsCreateProjectDialogOpen(false);
       toast.success('تم إنشاء المشروع بنجاح');
+    }
+  };
+
+  // Quick create project with overlay animation
+  const handleQuickCreateProject = async () => {
+    try {
+      setShowCreationOverlay(true);
+      setMessageKey(0);
+      
+      // المرحلة 1: جارٍ إنشاء المشروع
+      setCreationMessage('جارٍ إنشاء مشروعك المصغر..');
+      setMessageKey(1);
+      await new Promise(resolve => setTimeout(resolve, 1800));
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setShowCreationOverlay(false);
+        toast.error('يجب تسجيل الدخول أولاً');
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('user_id', user.id)
+        .single();
+
+      const studentName = profile?.full_name || 'الطالب';
+      const projectTitle = `مشروع ${studentName} المصغر`;
+
+      // المرحلة 2: إنشاء مستند Google
+      setCreationMessage('يتم إنشاء مستند Google الخاص بك..');
+      setMessageKey(2);
+      await new Promise(resolve => setTimeout(resolve, 1800));
+      
+      // إنشاء المشروع مع Google Doc
+      await createProject({
+        title: projectTitle,
+        description: 'مشروعي المصغر للصف العاشر',
+        due_date: '',
+        createGoogleDoc: true
+      });
+      
+      // المرحلة 3: اللمسات النهائية
+      setCreationMessage('اللمسات النهائية..');
+      setMessageKey(3);
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // المرحلة 4: جاهز
+      setCreationMessage('جاهز.. يمكنك أن تبدأ الآن');
+      setMessageKey(4);
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      setShowCreationOverlay(false);
+    } catch (error: any) {
+      setShowCreationOverlay(false);
+      toast.error(error.message || 'فشل في إنشاء المشروع');
     }
   };
 
@@ -728,20 +791,55 @@ export const StudentGradeContent: React.FC<{ defaultTab?: string }> = ({ default
                           <p className="text-sm text-amber-700 mt-1">
                             المشاريع النهائية ستكون متاحة قريباً مع أدوات متقدمة
                           </p>
-                        </div>
-                      </div>
+      </div>
+
+      {/* Creation Overlay for Grade 10 Mini Projects */}
+      {showCreationOverlay && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md animate-fade-in">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-8 shadow-2xl border border-gray-700/50 max-w-md w-full mx-4">
+            <div className="flex flex-col items-center space-y-6">
+              <div className="relative">
+                <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full"></div>
+                <LottieLoader 
+                  animationData={loadingAnimation}
+                  loop={true}
+                  className="w-32 h-32 relative z-10"
+                />
+              </div>
+              <div 
+                key={messageKey}
+                className="text-center animate-[slideUpFadeIn_0.6s_ease-out]"
+              >
+                <p className="text-xl font-semibold text-white mb-2">
+                  {creationMessage}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
                     </Alert>
                   </div>
                 )}
 
                 {/* Add Create Project Button for Grade 10 Mini Projects Tab */}
                 {tab.id === 'mini_projects' && assignedGrade === '10' && (
-                  <div className="mb-6 flex justify-center">
+                  <div className="mb-6 flex justify-center gap-3">
+                    <Button 
+                      onClick={handleQuickCreateProject}
+                      className="gap-2 bg-primary hover:bg-primary/90"
+                      size="lg"
+                    >
+                      <Plus className="h-5 w-5" />
+                      بدء مشروع مصغر
+                    </Button>
+                    
                     <Dialog open={isCreateProjectDialogOpen} onOpenChange={setIsCreateProjectDialogOpen}>
                       <DialogTrigger asChild>
-                        <Button className="gap-2" size="lg">
+                        <Button variant="outline" className="gap-2" size="lg">
                           <Plus className="h-5 w-5" />
-                          إنشاء ميني بروجكت جديد
+                          إنشاء مع خيارات متقدمة
                         </Button>
                       </DialogTrigger>
                       <DialogContent className="sm:max-w-[500px]">
@@ -1013,6 +1111,32 @@ export const StudentGradeContent: React.FC<{ defaultTab?: string }> = ({ default
           }}
           project={currentProject}
         />
+      )}
+
+      {/* Creation Overlay for Grade 10 Mini Projects */}
+      {showCreationOverlay && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md animate-fade-in">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-8 shadow-2xl border border-gray-700/50 max-w-md w-full mx-4">
+            <div className="flex flex-col items-center space-y-6">
+              <div className="relative">
+                <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full"></div>
+                <LottieLoader 
+                  animationData={loadingAnimation}
+                  loop={true}
+                  className="w-32 h-32 relative z-10"
+                />
+              </div>
+              <div 
+                key={messageKey}
+                className="text-center animate-[slideUpFadeIn_0.6s_ease-out]"
+              >
+                <p className="text-xl font-semibold text-white mb-2">
+                  {creationMessage}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

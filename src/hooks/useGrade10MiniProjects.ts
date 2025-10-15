@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { useGoogleDocs } from '@/hooks/useGoogleDocs';
 import { toast } from 'sonner';
 import type { Grade10MiniProject, Grade10ProjectTask, Grade10ProjectComment, Grade10ProjectFile, ProjectFormData, TaskFormData, CommentFormData } from '@/types/grade10-projects';
 
@@ -13,7 +12,6 @@ export const useGrade10MiniProjects = () => {
   const [files, setFiles] = useState<Grade10ProjectFile[]>([]);
   const [loading, setLoading] = useState(false);
   const { userProfile } = useAuth();
-  const { createDocument } = useGoogleDocs();
 
   // جلب جميع المشاريع
   const fetchProjects = async () => {
@@ -133,54 +131,20 @@ export const useGrade10MiniProjects = () => {
           }
         }
 
-        // جلب اسم المعلم المسؤول
-        let teacherName = 'المعلم المشرف';
-        const { data: studentData } = await supabase
-          .from('students')
-          .select('id')
-          .eq('user_id', userProfile.user_id)
-          .maybeSingle();
-
-        if (studentData) {
-          const { data: classData } = await supabase
-            .from('class_students')
-            .select(`
-              classes!inner(
-                teacher_classes!inner(
-                  teacher_id
-                )
-              )
-            `)
-            .eq('student_id', studentData.id)
-            .limit(1)
-            .maybeSingle();
-          
-          if (classData?.classes?.teacher_classes?.[0]?.teacher_id) {
-            const teacherId = classData.classes.teacher_classes[0].teacher_id;
-            const { data: teacherProfile } = await supabase
-              .from('profiles')
-              .select('full_name')
-              .eq('user_id', teacherId)
-              .maybeSingle();
-            
-            if (teacherProfile?.full_name) {
-              teacherName = teacherProfile.full_name;
-            }
-          }
-        }
-
-        // إنشاء المستند
-        const docResult = await createDocument({
-          studentName: userProfile.full_name,
-          documentContent: `أهلاً ${userProfile.full_name}
+        // إنشاء المستند باستخدام edge function مباشرة
+        const { data: docResult, error: docError } = await supabase.functions.invoke('create-google-doc', {
+          body: {
+            studentName: userProfile.full_name,
+            documentContent: `أهلاً ${userProfile.full_name}
 نتمنى لك النجاح في مشروعك المصغر
 سنكون دائمًا في مرافقتك
 بالنجاح والتوفيق: إدارة مدرسة ${schoolName}
 
 Edu-Net.me`
+          }
         });
 
-        if (docResult && docResult.success) {
+        if (!docError && docResult && docResult.success) {
           googleDocId = docResult.documentId;
           googleDocUrl = docResult.documentUrl;
         }
