@@ -1,40 +1,44 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Progress } from '@/components/ui/progress';
+import { Separator } from '@/components/ui/separator';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Plus, FileText, CheckSquare, MessageSquare, Calendar, Eye, Edit3, Clock, Trash2 } from 'lucide-react';
+import { Plus, FileText, CheckSquare, Calendar, Edit3, Trash2, BookOpen, CheckCircle, Clock, Target, User, Trophy } from 'lucide-react';
 import { useGrade10MiniProjects } from '@/hooks/useGrade10MiniProjects';
 import { useAuth } from '@/hooks/useAuth';
-import { ModernLoader } from '@/components/ui/ModernLoader';
+import { format } from 'date-fns';
+import { ar } from 'date-fns/locale';
 import { toast } from '@/hooks/use-toast';
 import { toDateTimeLocalString, fromDateTimeLocalString } from '@/utils/dateFormatting';
-import Grade10MiniProjectEditor from './Grade10MiniProjectEditor';
 import type { ProjectFormData } from '@/types/grade10-projects';
 
 const Grade10MiniProjects: React.FC = () => {
+  const navigate = useNavigate();
   const { 
     projects, 
+    tasks,
     loading, 
     createProject, 
-    fetchProject,
-    currentProject,
-    setCurrentProject,
     deleteProject 
   } = useGrade10MiniProjects();
   
   const { userProfile } = useAuth();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isProjectEditorOpen, setIsProjectEditorOpen] = useState(false);
   const [formData, setFormData] = useState<ProjectFormData>({
     title: '',
     description: '',
     due_date: ''
   });
+
+  const isTeacher = userProfile?.role === 'teacher' || userProfile?.role === 'school_admin' || userProfile?.role === 'superadmin';
+  const isStudent = userProfile?.role === 'student';
 
   const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,10 +70,18 @@ const Grade10MiniProjects: React.FC = () => {
     }
   };
 
-  const handleProjectClick = async (project: any) => {
-    setCurrentProject(project);
-    await fetchProject(project.id);
-    setIsProjectEditorOpen(true);
+  // التوجيه إلى صفحة المحرر المنفصلة
+  const handleEditProject = (project: any) => {
+    navigate(`/grade10-project-editor/${project.id}`);
+  };
+
+  // حساب نسبة التقدم للمشروع
+  const calculateProjectProgress = (projectId: string): number => {
+    const projectTasks = tasks.filter(task => task.project_id === projectId);
+    if (projectTasks.length === 0) return 0;
+    
+    const completedTasks = projectTasks.filter(task => task.is_completed);
+    return Math.round((completedTasks.length / projectTasks.length) * 100);
   };
 
   const handleDeleteProject = async (projectId: string, projectTitle: string) => {
@@ -114,8 +126,22 @@ const Grade10MiniProjects: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <ModernLoader />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[...Array(3)].map((_, i) => (
+          <Card key={i} className="animate-pulse">
+            <CardHeader>
+              <div className="h-4 bg-muted rounded w-3/4"></div>
+              <div className="h-3 bg-muted rounded w-1/2"></div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="h-3 bg-muted rounded"></div>
+                <div className="h-3 bg-muted rounded w-5/6"></div>
+                <div className="h-8 bg-muted rounded"></div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
     );
   }
@@ -123,18 +149,20 @@ const Grade10MiniProjects: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold text-foreground">المشاريع المصغرة</h2>
-          <p className="text-muted-foreground">إدارة المشاريع الصغيرة للصف العاشر</p>
+          <p className="text-muted-foreground">
+            {isTeacher ? 'إدارة المشاريع المصغرة للطلاب' : 'مشاريعك المصغرة للصف العاشر'}
+          </p>
         </div>
         
-        {userProfile?.role === 'student' && (
+        {(isTeacher || (isStudent && projects.length === 0)) && (
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
               <Button className="gap-2">
                 <Plus className="h-4 w-4" />
-                إنشاء مشروع جديد
+                {isTeacher ? 'إضافة مشروع جديد' : 'بدء مشروعي المصغر'}
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[500px]">
@@ -189,6 +217,76 @@ const Grade10MiniProjects: React.FC = () => {
           </Dialog>
         )}
       </div>
+
+      {/* Statistics Cards */}
+      {isTeacher && projects.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="bg-blue-100 p-2 rounded-lg">
+                  <BookOpen className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">إجمالي المشاريع</p>
+                  <p className="text-2xl font-bold">{projects.length}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="bg-green-100 p-2 rounded-lg">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">مكتملة</p>
+                  <p className="text-2xl font-bold">
+                    {projects.filter(p => p.status === 'completed' || p.status === 'reviewed').length}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="bg-yellow-100 p-2 rounded-lg">
+                  <Clock className="h-5 w-5 text-yellow-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">قيد التنفيذ</p>
+                  <p className="text-2xl font-bold">
+                    {projects.filter(p => p.status === 'in_progress').length}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="bg-purple-100 p-2 rounded-lg">
+                  <Trophy className="h-5 w-5 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">متوسط التقدم</p>
+                  <p className="text-2xl font-bold">
+                    {projects.length > 0 
+                      ? Math.round(projects.reduce((sum, p) => sum + p.progress_percentage, 0) / projects.length)
+                      : 0
+                    }%
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Demo Notice for SuperAdmin */}
       {userProfile?.role === 'superadmin' && (
@@ -267,21 +365,11 @@ const Grade10MiniProjects: React.FC = () => {
                   size="sm" 
                   variant="outline" 
                   className="flex-1 gap-2"
-                  onClick={() => handleProjectClick(project)}
+                  onClick={() => handleEditProject(project)}
                 >
-                  <Eye className="h-4 w-4" />
-                  عرض
+                  <Edit3 className="h-4 w-4" />
+                  تحرير المشروع
                 </Button>
-                {(userProfile?.role === 'student' && project.student_id === userProfile?.user_id) && (
-                  <Button 
-                    size="sm" 
-                    className="flex-1 gap-2"
-                    onClick={() => handleProjectClick(project)}
-                  >
-                    <Edit3 className="h-4 w-4" />
-                    تحرير
-                  </Button>
-                )}
                 {/* Delete Button - visible to project owner or admins */}
                 {((userProfile?.role === 'student' && project.student_id === userProfile?.user_id) ||
                   ['teacher', 'school_admin', 'superadmin'].includes(userProfile?.role || '')) && (
@@ -293,7 +381,6 @@ const Grade10MiniProjects: React.FC = () => {
                         className="gap-2"
                       >
                         <Trash2 className="h-4 w-4" />
-                        حذف
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
@@ -340,41 +427,24 @@ const Grade10MiniProjects: React.FC = () => {
 
       {/* Empty State */}
       {projects.length === 0 && (
-        <Card className="text-center py-12">
-          <CardContent>
-            <FileText className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-lg font-semibold mb-2">لا توجد مشاريع</h3>
-            <p className="text-muted-foreground mb-4">
-              {userProfile?.role === 'student' 
-                ? 'ابدأ بإنشاء مشروعك الأول' 
-                : 'لم يتم إنشاء أي مشاريع بعد'}
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">
+              {isTeacher ? 'لا توجد مشاريع حتى الآن' : 'لم تبدأ مشروعك المصغر بعد'}
+            </h3>
+            <p className="text-muted-foreground text-center mb-4">
+              {isTeacher 
+                ? 'ابدأ بإضافة المشاريع المصغرة للطلاب'
+                : 'ابدأ الآن في العمل على مشروعك المصغر'
+              }
             </p>
-            {userProfile?.role === 'student' && (
-              <Button 
-                className="gap-2"
-                onClick={() => setIsCreateDialogOpen(true)}
-              >
-                <Plus className="h-4 w-4" />
-                إنشاء مشروع جديد
-              </Button>
-            )}
+            <Button onClick={() => setIsCreateDialogOpen(true)} className="gap-2">
+              <Plus className="h-4 w-4" />
+              {isTeacher ? 'إضافة مشروع جديد' : 'بدء مشروعي المصغر'}
+            </Button>
           </CardContent>
         </Card>
-      )}
-
-      {/* Mini Project Editor Dialog */}
-      {currentProject && (
-        <Grade10MiniProjectEditor 
-          project={currentProject}
-          isOpen={isProjectEditorOpen}
-          onClose={() => {
-            setIsProjectEditorOpen(false);
-            setCurrentProject(null);
-          }}
-          onSave={() => {
-            // Refresh projects list if needed
-          }}
-        />
       )}
     </div>
   );

@@ -20,14 +20,18 @@ export interface Grade10MiniProject {
 export interface Grade10ProjectTask {
   id: string;
   project_id: string;
+  parent_task_id?: string;
   title: string;
   description?: string;
   is_completed: boolean;
-  order_index: number;
-  created_by: string;
+  due_date?: string;
   completed_at?: string;
+  order_index: number;
+  task_type: string;
+  created_by: string;
   created_at: string;
   updated_at: string;
+  subtasks?: Grade10ProjectTask[];
 }
 
 export interface Grade10ProjectComment {

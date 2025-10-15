@@ -1880,10 +1880,13 @@ export type Database = {
           created_at: string
           created_by: string
           description: string | null
+          due_date: string | null
           id: string
           is_completed: boolean | null
           order_index: number | null
+          parent_task_id: string | null
           project_id: string
+          task_type: string
           title: string
           updated_at: string
         }
@@ -1892,10 +1895,13 @@ export type Database = {
           created_at?: string
           created_by: string
           description?: string | null
+          due_date?: string | null
           id?: string
           is_completed?: boolean | null
           order_index?: number | null
+          parent_task_id?: string | null
           project_id: string
+          task_type?: string
           title: string
           updated_at?: string
         }
@@ -1904,14 +1910,24 @@ export type Database = {
           created_at?: string
           created_by?: string
           description?: string | null
+          due_date?: string | null
           id?: string
           is_completed?: boolean | null
           order_index?: number | null
+          parent_task_id?: string | null
           project_id?: string
+          task_type?: string
           title?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "grade10_project_tasks_parent_task_id_fkey"
+            columns: ["parent_task_id"]
+            isOneToOne: false
+            referencedRelation: "grade10_project_tasks"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "grade10_project_tasks_project_id_fkey"
             columns: ["project_id"]
