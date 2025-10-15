@@ -130,7 +130,7 @@ const Grade11VideoLibrary: React.FC<Grade11VideoLibraryProps> = ({
 
       {/* Videos grid */}
       {filteredVideos.length === 0 ? (
-        <div className="text-center py-12">
+        <div className="flex flex-col items-center justify-center text-center py-12">
           <Video className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <h3 className="text-lg font-semibold mb-2">لا توجد فيديوهات</h3>
           <p className="text-muted-foreground mb-4">
