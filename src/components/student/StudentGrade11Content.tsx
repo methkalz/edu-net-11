@@ -11,6 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import Grade11LessonContentDisplay from '../content/Grade11LessonContentDisplay';
 import { Grade11VideoViewer } from '@/components/content/Grade11VideoViewer';
 import { useStudentProgress } from '@/hooks/useStudentProgress';
+import { useVideoInfoCards } from '@/hooks/useVideoInfoCards';
+import VideoInfoCard from '../content/VideoInfoCard';
 
 export const StudentGrade11Content: React.FC = () => {
   const {
@@ -21,6 +23,7 @@ export const StudentGrade11Content: React.FC = () => {
     getContentStats
   } = useStudentGrade11Content();
   const { updateProgress, logActivity } = useStudentProgress();
+  const { cards, loading: cardsLoading } = useVideoInfoCards('11');
   const [openSections, setOpenSections] = useState<string[]>([]);
   const [openTopics, setOpenTopics] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -290,22 +293,19 @@ export const StudentGrade11Content: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="videos" className="space-y-4 mt-6">
-          {/* OSI Model Video Series Introduction */}
-          <Card className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border-2 border-blue-200/50 shadow-sm">
-            <CardContent className="p-6">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shrink-0">
-                  <div className="text-white text-lg font-bold">OSI</div>
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-bold text-blue-900 mb-2">نموذج OSI - الطبقات السبع</h3>
-                  <p className="text-blue-800 leading-relaxed">
-                    أمامك سلسلة فيديوهات تشرح نموذج OSI بطبقاته السبع. مناسبة لك إذا أردت تقوية معلوماتك. نشرح خطوة بخطوة وظيفة كل طبقة والأجهزة التي تعمل فيها.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Info Cards from Database */}
+          {!cardsLoading && cards.length > 0 && (
+            <div className="space-y-4">
+              {cards.map((card) => (
+                <VideoInfoCard
+                  key={card.id}
+                  title={card.title}
+                  description={card.description}
+                  canEdit={false}
+                />
+              ))}
+            </div>
+          )}
           
           {filteredVideos.length === 0 ? <Card className="text-center p-8">
               <div className="space-y-4">
