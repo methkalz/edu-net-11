@@ -51,10 +51,12 @@ import {
   Network,
   Phone,
   Radio,
-  Gamepad2
+  Gamepad2,
+  Trash2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { ProjectFormData } from '@/types/grade10-projects';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 export const StudentGradeContent: React.FC<{ defaultTab?: string }> = ({ defaultTab }) => {
   const { 
@@ -72,7 +74,8 @@ export const StudentGradeContent: React.FC<{ defaultTab?: string }> = ({ default
     fetchProject: async () => null,
     currentProject: null,
     setCurrentProject: () => {},
-    loading: false
+    loading: false,
+    deleteProject: async () => false
   };
   
   const grade10LessonsResult = assignedGrade === '10' ? useStudentGrade10Lessons() : {
@@ -88,7 +91,8 @@ export const StudentGradeContent: React.FC<{ defaultTab?: string }> = ({ default
     createProject: async () => null,
     currentProject: null,
     setCurrentProject: () => {},
-    loading: false
+    loading: false,
+    deleteProject: async () => false
   };
   
   const { 
@@ -97,7 +101,8 @@ export const StudentGradeContent: React.FC<{ defaultTab?: string }> = ({ default
     fetchProject,
     currentProject,
     setCurrentProject,
-    loading: projectsLoading
+    loading: projectsLoading,
+    deleteProject: deleteMiniProject
   } = grade10HooksResult;
   
   const { 
@@ -105,7 +110,8 @@ export const StudentGradeContent: React.FC<{ defaultTab?: string }> = ({ default
     createProject: createFinalProject,
     currentProject: currentFinalProject,
     setCurrentProject: setCurrentFinalProject,
-    loading: finalProjectsLoading
+    loading: finalProjectsLoading,
+    deleteProject: deleteFinalProject
   } = grade12HooksResult;
   
   const [activeContentTab, setActiveContentTab] = useState('computer_structure');
@@ -364,6 +370,25 @@ export const StudentGradeContent: React.FC<{ defaultTab?: string }> = ({ default
     navigate(`/grade12-project-editor/${project.id}`);
   };
 
+  // Handle project deletion
+  const handleDeleteProject = async (projectId: string, projectTitle: string) => {
+    try {
+      let success = false;
+      
+      if (assignedGrade === '10') {
+        success = await deleteMiniProject(projectId);
+      } else if (assignedGrade === '12') {
+        success = await deleteFinalProject(projectId);
+      }
+      
+      if (success) {
+        toast.success(`تم حذف المشروع "${projectTitle}" بنجاح`);
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'حدث خطأ أثناء حذف المشروع');
+    }
+  };
+
   const closeViewer = () => {
     setSelectedContent(null);
     setViewerType(null);
@@ -409,14 +434,53 @@ export const StudentGradeContent: React.FC<{ defaultTab?: string }> = ({ default
     type: 'video' | 'document' | 'lesson' | 'project';
     icon: any;
     color: string;
-  }> = ({ item, type, icon: IconComponent, color }) => {
+    onDelete?: (id: string, title: string) => void;
+  }> = ({ item, type, icon: IconComponent, color, onDelete }) => {
     const progress = item.progress?.progress_percentage || 0;
     const isCompleted = progress >= 100;
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
     return (
       <Card className="group relative hover:shadow-xl transition-all duration-500 border-0 bg-gradient-to-br from-background/80 to-background/40 backdrop-blur-md overflow-hidden hover:scale-[1.02] hover:-translate-y-1">
         {/* Animated Border */}
         <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-transparent to-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-lg" />
+        
+        {/* Delete Button - Only for projects */}
+        {type === 'project' && onDelete && (
+          <>
+            <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-3 left-3 z-10 bg-background/80 backdrop-blur-sm hover:bg-destructive hover:text-destructive-foreground transition-all duration-300 shadow-lg"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    هل أنت متأكد من حذف المشروع "{item.title}"؟ لا يمكن التراجع عن هذا الإجراء.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => {
+                      onDelete(item.id, item.title);
+                      setShowDeleteDialog(false);
+                    }}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    حذف
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </>
+        )}
         
         <CardContent className="p-0 relative">
           {/* Video Thumbnail Section - Enhanced */}
@@ -1092,6 +1156,7 @@ export const StudentGradeContent: React.FC<{ defaultTab?: string }> = ({ default
                           type={contentType}
                           icon={tab.icon}
                           color={tab.color}
+                          onDelete={contentType === 'project' ? handleDeleteProject : undefined}
                         />
                       );
                     })}
