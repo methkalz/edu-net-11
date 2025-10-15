@@ -37,7 +37,7 @@ interface TaskPhase {
   completion_percentage: number;
 }
 
-export const useGrade12DefaultTasks = (projectId?: string) => {
+export const useGrade12DefaultTasks = (projectId?: string, viewAsStudentId?: string) => {
   const { userProfile } = useAuth();
   const [phases, setPhases] = useState<TaskPhase[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,12 +67,15 @@ export const useGrade12DefaultTasks = (projectId?: string) => {
   // جلب تقدم الطالب
   const fetchStudentProgress = async () => {
     try {
-      if (!userProfile?.user_id) return [];
+      // استخدام viewAsStudentId إذا كان موجوداً (للمعلم) أو userProfile.user_id (للطالب)
+      const targetStudentId = viewAsStudentId || userProfile?.user_id;
+      
+      if (!targetStudentId) return [];
 
       let query = supabase
         .from('grade12_student_task_progress')
         .select('*')
-        .eq('student_id', userProfile.user_id);
+        .eq('student_id', targetStudentId);
       
       // تصفية حسب project_id إذا تم تمريره
       if (projectId) {
@@ -85,7 +88,7 @@ export const useGrade12DefaultTasks = (projectId?: string) => {
       setStudentProgress(data || []);
       return data || [];
     } catch (error) {
-      logger.error('Error fetching student progress', error as Error, { userId: userProfile?.user_id });
+      logger.error('Error fetching student progress', error as Error, { userId: viewAsStudentId || userProfile?.user_id });
       toast.error('خطأ في جلب تقدم الطالب');
       return [];
     }
@@ -240,10 +243,10 @@ export const useGrade12DefaultTasks = (projectId?: string) => {
   };
 
   useEffect(() => {
-    if (userProfile) {
+    if (userProfile || viewAsStudentId) {
       loadData();
     }
-  }, [userProfile, projectId]);
+  }, [userProfile, projectId, viewAsStudentId]);
 
   // إعادة تنظيم المراحل عند تغيير التقدم
   useEffect(() => {

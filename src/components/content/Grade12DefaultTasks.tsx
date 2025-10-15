@@ -36,16 +36,17 @@ import Grade12DefaultTasksManager from './Grade12DefaultTasksManager';
 
 interface Grade12DefaultTasksProps {
   projectId?: string;
+  studentId?: string;
 }
 
-const Grade12DefaultTasks: React.FC<Grade12DefaultTasksProps> = ({ projectId }) => {
+const Grade12DefaultTasks: React.FC<Grade12DefaultTasksProps> = ({ projectId, studentId }) => {
   const { userProfile } = useAuth();
   const {
     phases,
     loading,
     updateTaskCompletion,
     getOverallProgress,
-  } = useGrade12DefaultTasks(projectId);
+  } = useGrade12DefaultTasks(projectId, studentId);
 
   const [expandedPhases, setExpandedPhases] = useState<Set<number>>(new Set([1]));
   const [taskNotes, setTaskNotes] = useState<Record<string, string>>({});

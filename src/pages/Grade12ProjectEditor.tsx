@@ -47,9 +47,14 @@ const Grade12ProjectEditor: React.FC = () => {
   const [searchParams] = useSearchParams();
   const { user, userProfile } = useAuth();
   const { projects, updateProject, deleteProject, saveRevision, addComment } = useGrade12Projects();
-  const { phases, updateTaskCompletion, getOverallProgress } = useGrade12DefaultTasks();
   
   const [project, setProject] = useState<any>(null);
+  
+  // جلب student_id من المشروع الحالي
+  const currentProject = projects.find(p => p.id === projectId);
+  const studentIdForTasks = currentProject?.student_id;
+  
+  const { phases, updateTaskCompletion, getOverallProgress } = useGrade12DefaultTasks(projectId, studentIdForTasks);
   const [content, setContent] = useState('');
   const [isAutoSaving, setIsAutoSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -323,7 +328,10 @@ const Grade12ProjectEditor: React.FC = () => {
                   </p>
                 </CardHeader>
                 <CardContent className="pt-2">
-                  <Grade12DefaultTasks projectId={project?.id} />
+                  <Grade12DefaultTasks 
+                    projectId={project?.id} 
+                    studentId={project?.student_id}
+                  />
                 </CardContent>
               </Card>
 
