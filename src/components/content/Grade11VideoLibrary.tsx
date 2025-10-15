@@ -8,6 +8,8 @@ import { formatDistanceToNow } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useContentPermissions } from '@/hooks/useContentPermissions';
+import VideoInfoCard from './VideoInfoCard';
+import { useVideoInfoCards } from '@/hooks/useVideoInfoCards';
 
 interface Video {
   id: string;
@@ -28,6 +30,8 @@ interface Grade11VideoLibraryProps {
   onAddVideo: () => void;
   onEditVideo: (video: Video) => void;
   onDeleteVideo: (id: string) => void;
+  onEditInfoCard?: (card: any) => void;
+  onDeleteInfoCard?: (id: string) => void;
 }
 
 const Grade11VideoLibrary: React.FC<Grade11VideoLibraryProps> = ({
@@ -35,10 +39,13 @@ const Grade11VideoLibrary: React.FC<Grade11VideoLibraryProps> = ({
   loading,
   onAddVideo,
   onEditVideo,
-  onDeleteVideo
+  onDeleteVideo,
+  onEditInfoCard,
+  onDeleteInfoCard
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const { isManager } = useContentPermissions();
+  const { cards, loading: cardsLoading } = useVideoInfoCards('11');
 
   const filteredVideos = videos.filter(video => {
     const matchesSearch = video.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -130,6 +137,22 @@ const Grade11VideoLibrary: React.FC<Grade11VideoLibraryProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* Info Cards */}
+      {!cardsLoading && cards.length > 0 && (
+        <div className="space-y-4">
+          {cards.map((card) => (
+            <VideoInfoCard
+              key={card.id}
+              title={card.title}
+              description={card.description}
+              canEdit={isManager}
+              onEdit={() => onEditInfoCard?.(card)}
+              onDelete={() => onDeleteInfoCard?.(card.id)}
+            />
+          ))}
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
         <div className="flex items-center gap-4">

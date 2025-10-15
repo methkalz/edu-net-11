@@ -12,6 +12,7 @@ import Grade11TopicForm from './Grade11TopicForm';
 import Grade11LessonForm from './Grade11LessonForm';
 import Grade11DocumentForm from './Grade11DocumentForm';
 import Grade11VideoForm from './Grade11VideoForm';
+import VideoInfoCardForm from './VideoInfoCardForm';
 import Grade11FileLibrary from './Grade11FileLibrary';
 import Grade11VideoLibrary from './Grade11VideoLibrary';
 import Grade11CollapsibleSection from './Grade11CollapsibleSection';
@@ -19,6 +20,7 @@ import Grade11ContentControls from './Grade11ContentControls';
 import GameLauncher from './GameLauncher';
 import KnowledgeAdventureRealContent from '../games/KnowledgeAdventureRealContent';
 import { logger } from '@/lib/logger';
+import { useVideoInfoCards } from '@/hooks/useVideoInfoCards';
 const Grade11Content = () => {
   const {
     userProfile
@@ -64,14 +66,19 @@ const Grade11Content = () => {
   const [showLessonForm, setShowLessonForm] = useState(false);
   const [showDocumentForm, setShowDocumentForm] = useState(false);
   const [showVideoForm, setShowVideoForm] = useState(false);
+  const [showInfoCardForm, setShowInfoCardForm] = useState(false);
   const [editingSection, setEditingSection] = useState<Grade11Section | undefined>();
   const [editingTopic, setEditingTopic] = useState<Grade11Topic | undefined>();
   const [editingLesson, setEditingLesson] = useState<Grade11Lesson | undefined>();
   const [editingDocument, setEditingDocument] = useState<any>(null);
   const [editingVideo, setEditingVideo] = useState<any>(null);
+  const [editingInfoCard, setEditingInfoCard] = useState<any>(null);
   const [selectedSectionId, setSelectedSectionId] = useState<string>('');
   const [selectedTopicId, setSelectedTopicId] = useState<string>('');
   const [showGameFullscreen, setShowGameFullscreen] = useState(false);
+
+  // Video info cards hook
+  const { addCard, updateCard, deleteCard } = useVideoInfoCards('11');
 
   // New state for enhanced UI
   const [searchTerm, setSearchTerm] = useState('');
@@ -137,11 +144,13 @@ const Grade11Content = () => {
     setShowLessonForm(false);
     setShowDocumentForm(false);
     setShowVideoForm(false);
+    setShowInfoCardForm(false);
     setEditingSection(undefined);
     setEditingTopic(undefined);
     setEditingLesson(undefined);
     setEditingDocument(null);
     setEditingVideo(null);
+    setEditingInfoCard(null);
     setSelectedSectionId('');
     setSelectedTopicId('');
   };
@@ -309,6 +318,24 @@ const Grade11Content = () => {
     }
     handleCloseForm();
   };
+  
+  const handleEditInfoCard = (card: any) => {
+    setEditingInfoCard(card);
+    setShowInfoCardForm(true);
+  };
+  
+  const handleSaveInfoCard = async (cardData: { title: string; description: string }) => {
+    if (editingInfoCard) {
+      await updateCard(editingInfoCard.id, cardData);
+    } else {
+      await addCard({ ...cardData, grade_level: '11', order_index: 0, is_active: true });
+    }
+    handleCloseForm();
+  };
+  
+  const handleDeleteInfoCard = async (id: string) => {
+    await deleteCard(id);
+  };
   if (loading || filesLoading) {
     return <div className="space-y-6">
         <div className="space-y-4">
@@ -392,7 +419,15 @@ const Grade11Content = () => {
                   إضافة فيديو جديد
                 </Button>
               </div>}
-            <Grade11VideoLibrary videos={videos} loading={filesLoading} onAddVideo={canManageContent ? handleAddVideo : () => {}} onEditVideo={canManageContent ? handleEditVideo : () => {}} onDeleteVideo={canManageContent ? deleteVideo : () => {}} />
+            <Grade11VideoLibrary 
+              videos={videos} 
+              loading={filesLoading} 
+              onAddVideo={canManageContent ? handleAddVideo : () => {}} 
+              onEditVideo={canManageContent ? handleEditVideo : () => {}} 
+              onDeleteVideo={canManageContent ? deleteVideo : () => {}} 
+              onEditInfoCard={canManageContent ? handleEditInfoCard : undefined}
+              onDeleteInfoCard={canManageContent ? handleDeleteInfoCard : undefined}
+            />
           </div>
         </TabsContent>
 
@@ -412,6 +447,11 @@ const Grade11Content = () => {
       {showVideoForm && <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <Grade11VideoForm onSave={handleSaveVideo} onCancel={handleCloseForm} initialData={editingVideo} />
         </div>}
+
+      {showInfoCardForm && <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <VideoInfoCardForm onSave={handleSaveInfoCard} onCancel={handleCloseForm} initialData={editingInfoCard} />
+        </div>}
     </div>;
 };
+
 export default Grade11Content;
