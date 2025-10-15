@@ -330,9 +330,9 @@ export const MyQuestionsManager: React.FC<MyQuestionsManagerProps> = ({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-6xl max-h-[95vh] p-0 gap-0">
+        <DialogContent className="max-w-6xl max-h-[90vh] p-0 gap-0 flex flex-col overflow-hidden">
           {/* Header */}
-          <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border-b sticky top-0 z-10">
+          <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border-b flex-shrink-0">
             <DialogHeader className="p-6 pb-4">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg">
@@ -348,7 +348,8 @@ export const MyQuestionsManager: React.FC<MyQuestionsManagerProps> = ({
             </DialogHeader>
           </div>
 
-          <div className="p-6 space-y-6">
+          <ScrollArea className="flex-1 overflow-auto">
+            <div className="p-6 space-y-6">
             {/* إحصائيات سريعة */}
             <div className="grid grid-cols-5 gap-3">
               <Card className="border-0 bg-gradient-to-br from-blue-500/10 to-blue-600/5 shadow-sm">
@@ -474,7 +475,7 @@ export const MyQuestionsManager: React.FC<MyQuestionsManagerProps> = ({
                 </div>
 
                 {/* قائمة الأسئلة */}
-                <ScrollArea className="h-[450px]">
+                <div className="max-h-[400px] overflow-auto pr-2">
                   {isLoading ? (
                     <div className="space-y-3">
                       {[1, 2, 3].map(i => (
@@ -484,7 +485,7 @@ export const MyQuestionsManager: React.FC<MyQuestionsManagerProps> = ({
                   ) : filteredQuestions.length === 0 ? (
                     <Card className="border-dashed border-2">
                       <CardContent className="py-16 text-center">
-                        <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+                        <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
                           <AlertCircle className="h-10 w-10 text-muted-foreground" />
                         </div>
                         <p className="text-lg font-medium mb-2">لا توجد أسئلة</p>
@@ -496,39 +497,64 @@ export const MyQuestionsManager: React.FC<MyQuestionsManagerProps> = ({
                       </CardContent>
                     </Card>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-3 pb-2">
                       {filteredQuestions.map((question) => (
-                        <Card key={question.id} className="hover:shadow-md transition-all group border-l-4" style={{
-                          borderLeftColor: question.difficulty === 'easy' ? '#10b981' : 
-                                          question.difficulty === 'medium' ? '#f59e0b' : '#ef4444'
-                        }}>
-                          <CardContent className="p-5">
+                        <Card 
+                          key={question.id} 
+                          className={cn(
+                            "group relative overflow-hidden transition-all duration-300 hover:shadow-lg border-l-4",
+                            "hover:scale-[1.01] hover:-translate-y-0.5"
+                          )}
+                          style={{
+                            borderLeftColor: question.difficulty === 'easy' ? '#10b981' : 
+                                            question.difficulty === 'medium' ? '#f59e0b' : '#ef4444'
+                          }}
+                        >
+                          {/* خلفية تدرج خفيفة */}
+                          <div 
+                            className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                            style={{
+                              background: `linear-gradient(135deg, ${
+                                question.difficulty === 'easy' ? 'rgba(16, 185, 129, 0.03)' : 
+                                question.difficulty === 'medium' ? 'rgba(245, 158, 11, 0.03)' : 
+                                'rgba(239, 68, 68, 0.03)'
+                              } 0%, transparent 100%)`
+                            }}
+                          />
+                          
+                          <CardContent className="p-5 relative">
                             <div className="flex items-start justify-between gap-4 mb-3">
-                              <div className="flex-1">
-                                <h4 className="text-base font-semibold mb-2 text-foreground leading-relaxed">
+                              <div className="flex-1 min-w-0">
+                                <h4 className="text-base font-semibold mb-3 text-foreground leading-relaxed">
                                   {question.question_text}
                                 </h4>
                                 <div className="flex items-center gap-2 flex-wrap">
-                                  <Badge variant="outline" className={getDifficultyColor(question.difficulty)}>
+                                  <Badge 
+                                    variant="outline" 
+                                    className={cn(
+                                      "shadow-sm",
+                                      getDifficultyColor(question.difficulty)
+                                    )}
+                                  >
                                     {getDifficultyLabel(question.difficulty)}
                                   </Badge>
-                                  <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200">
+                                  <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200 shadow-sm">
                                     {getQuestionTypeLabel(question.question_type)}
                                   </Badge>
-                                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 shadow-sm">
                                     {question.category}
                                   </Badge>
-                                  <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                                  <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 shadow-sm">
                                     {question.points} نقطة
                                   </Badge>
                                 </div>
                               </div>
-                              <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 flex-shrink-0">
                                 <Button
                                   variant="ghost"
                                   size="icon"
                                   onClick={() => handleEditQuestion(question)}
-                                  className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                  className="h-9 w-9 text-blue-600 hover:text-blue-700 hover:bg-blue-50 hover:scale-110 transition-transform"
                                 >
                                   <Edit className="h-4 w-4" />
                                 </Button>
@@ -536,7 +562,7 @@ export const MyQuestionsManager: React.FC<MyQuestionsManagerProps> = ({
                                   variant="ghost"
                                   size="icon"
                                   onClick={() => setQuestionToDelete(question.id)}
-                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  className="h-9 w-9 text-red-600 hover:text-red-700 hover:bg-red-50 hover:scale-110 transition-transform"
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -544,25 +570,33 @@ export const MyQuestionsManager: React.FC<MyQuestionsManagerProps> = ({
                             </div>
 
                             {question.question_type === 'multiple_choice' && (
-                              <div className="space-y-1.5 mt-3">
+                              <div className="space-y-2 mt-4">
                                 {question.choices.map((choice: any, idx: number) => {
                                   const isCorrect = choice.id === question.correct_answer;
                                   return (
                                     <div
                                       key={idx}
                                       className={cn(
-                                        "flex items-center gap-2 p-2.5 rounded-lg text-sm transition-colors",
+                                        "flex items-center gap-3 p-3 rounded-xl text-sm transition-all duration-200",
                                         isCorrect 
-                                          ? 'bg-emerald-50 border border-emerald-200' 
-                                          : 'bg-muted/30 hover:bg-muted/50'
+                                          ? 'bg-gradient-to-r from-emerald-50 to-emerald-50/50 border-2 border-emerald-200 shadow-sm' 
+                                          : 'bg-muted/40 border border-transparent hover:bg-muted/60 hover:border-border'
                                       )}
                                     >
-                                      {isCorrect ? (
-                                        <CheckCircle className="h-4 w-4 text-emerald-600 flex-shrink-0" />
-                                      ) : (
-                                        <XCircle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                                      )}
-                                      <span className={isCorrect ? 'text-emerald-700 font-medium' : 'text-muted-foreground'}>
+                                      <div className={cn(
+                                        "w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0",
+                                        isCorrect ? "bg-emerald-500" : "bg-muted"
+                                      )}>
+                                        {isCorrect ? (
+                                          <CheckCircle className="h-4 w-4 text-white" />
+                                        ) : (
+                                          <span className="text-xs text-muted-foreground font-medium">{idx + 1}</span>
+                                        )}
+                                      </div>
+                                      <span className={cn(
+                                        "flex-1",
+                                        isCorrect ? 'text-emerald-900 font-semibold' : 'text-foreground/80'
+                                      )}>
                                         {choice.text}
                                       </span>
                                     </div>
@@ -572,17 +606,25 @@ export const MyQuestionsManager: React.FC<MyQuestionsManagerProps> = ({
                             )}
 
                             {question.question_type === 'true_false' && (
-                              <div className="flex gap-2 mt-3">
+                              <div className="flex gap-3 mt-4">
                                 <Badge 
                                   variant={question.correct_answer === 'true' ? 'default' : 'outline'}
-                                  className="px-4 py-1.5"
+                                  className={cn(
+                                    "px-5 py-2 text-sm transition-all",
+                                    question.correct_answer === 'true' && "shadow-md"
+                                  )}
                                 >
+                                  <CheckCircle className="h-3.5 w-3.5 ml-1" />
                                   صح {question.correct_answer === 'true' && '✓'}
                                 </Badge>
                                 <Badge 
                                   variant={question.correct_answer === 'false' ? 'default' : 'outline'}
-                                  className="px-4 py-1.5"
+                                  className={cn(
+                                    "px-5 py-2 text-sm transition-all",
+                                    question.correct_answer === 'false' && "shadow-md"
+                                  )}
                                 >
+                                  <XCircle className="h-3.5 w-3.5 ml-1" />
                                   خطأ {question.correct_answer === 'false' && '✓'}
                                 </Badge>
                               </div>
@@ -592,7 +634,7 @@ export const MyQuestionsManager: React.FC<MyQuestionsManagerProps> = ({
                       ))}
                     </div>
                   )}
-                </ScrollArea>
+                </div>
               </TabsContent>
 
               {/* تبويب التصنيفات */}
@@ -647,7 +689,7 @@ export const MyQuestionsManager: React.FC<MyQuestionsManagerProps> = ({
                   </CardContent>
                 </Card>
 
-                <ScrollArea className="h-[400px]">
+                <div className="max-h-[400px] overflow-auto pr-2">
                   <div className="grid grid-cols-2 gap-3">
                     {categories.map((category) => {
                       const count = questions.filter(q => q.category === category).length;
@@ -680,10 +722,11 @@ export const MyQuestionsManager: React.FC<MyQuestionsManagerProps> = ({
                       );
                     })}
                   </div>
-                </ScrollArea>
+                </div>
               </TabsContent>
             </Tabs>
           </div>
+          </ScrollArea>
         </DialogContent>
       </Dialog>
 
