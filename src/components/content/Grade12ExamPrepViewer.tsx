@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { BookOpen, FileText, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Grade12ExamPrepSectionWithTopics, Grade12ExamPrepTopicWithLessons, Grade12ExamPrepLessonWithMedia } from '@/hooks/useGrade12ExamPrepAdmin';
@@ -10,7 +11,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 const Grade12ExamPrepViewer: React.FC = () => {
   const [sections, setSections] = useState<Grade12ExamPrepSectionWithTopics[]>([]);
   const [loading, setLoading] = useState(true);
-  const [expandedLesson, setExpandedLesson] = useState<string | null>(null);
+  const [selectedLesson, setSelectedLesson] = useState<Grade12ExamPrepLessonWithMedia | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchContent();
@@ -185,11 +187,15 @@ const Grade12ExamPrepViewer: React.FC = () => {
                               ) : (
                                 <div className="grid gap-2">
                                   {topic.lessons.map((lesson) => (
-                                    <div key={lesson.id} className="border rounded-lg ml-4">
-                                      <div 
-                                        className="flex items-center justify-between p-3 cursor-pointer hover:bg-muted/50 transition-colors"
-                                        onClick={() => setExpandedLesson(expandedLesson === lesson.id ? null : lesson.id)}
-                                      >
+                                    <div 
+                                      key={lesson.id} 
+                                      className="border rounded-lg ml-4 p-3 cursor-pointer hover:bg-muted/50 transition-colors"
+                                      onClick={() => {
+                                        setSelectedLesson(lesson);
+                                        setIsDialogOpen(true);
+                                      }}
+                                    >
+                                      <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
                                           <FileText className="h-4 w-4 text-primary" />
                                           <p className="font-medium">{lesson.title}</p>
@@ -200,14 +206,6 @@ const Grade12ExamPrepViewer: React.FC = () => {
                                           </Badge>
                                         )}
                                       </div>
-                                      {expandedLesson === lesson.id && lesson.content && (
-                                        <div className="p-4 border-t">
-                                          <div 
-                                            className="prose prose-sm max-w-none"
-                                            dangerouslySetInnerHTML={{ __html: lesson.content }}
-                                          />
-                                        </div>
-                                      )}
                                     </div>
                                   ))}
                                 </div>
@@ -224,6 +222,32 @@ const Grade12ExamPrepViewer: React.FC = () => {
           );
         })}
       </Accordion>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl">{selectedLesson?.title}</DialogTitle>
+          </DialogHeader>
+          {selectedLesson?.content && (
+            <div 
+              className="prose prose-sm max-w-none mt-4"
+              dangerouslySetInnerHTML={{ __html: selectedLesson.content }}
+            />
+          )}
+          {selectedLesson?.media && selectedLesson.media.length > 0 && (
+            <div className="mt-4 space-y-2">
+              <h4 className="font-medium">الوسائط المرفقة:</h4>
+              <div className="grid gap-2">
+                {selectedLesson.media.map((media) => (
+                  <Badge key={media.id} variant="outline">
+                    {media.media_type}: {media.file_name || media.file_path}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
