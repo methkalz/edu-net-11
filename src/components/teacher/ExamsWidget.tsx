@@ -1468,7 +1468,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
           <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 p-4 rounded-lg border border-purple-500/20">
             <div className="flex items-center gap-2 mb-2">
               <TrendingUp className="w-4 h-4 text-purple-600" />
-              <span className="text-sm text-muted-foreground">متوسط الدرجات</span>
+              <span className="text-sm text-muted-foreground">متوسط العلامات</span>
             </div>
             <p className="text-2xl font-bold text-purple-600">
               {data?.stats?.avgScoreAll ? `${data.stats.avgScoreAll.toFixed(1)}%` : '--'}
