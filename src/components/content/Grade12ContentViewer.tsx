@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import Grade12VideoViewer from './Grade12VideoViewer';
+import Grade12ExamPrepViewer from './Grade12ExamPrepViewer';
 
 const Grade12ContentViewer: React.FC = () => {
   // استخدام hook قاعدة البيانات للعرض فقط
@@ -150,21 +151,7 @@ const Grade12ContentViewer: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="exam-prep" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5 text-blue-600" />
-                تحضيرات امتحان المشروع
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-12">
-                <FileText className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-                <h3 className="text-lg font-semibold mb-2">قريباً</h3>
-                <p className="text-muted-foreground">سيتم إضافة محتوى تحضيرات امتحان المشروع قريباً</p>
-              </div>
-            </CardContent>
-          </Card>
+          <Grade12ExamPrepViewer />
         </TabsContent>
       </Tabs>
     </div>

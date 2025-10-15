@@ -3322,6 +3322,156 @@ export type Database = {
         }
         Relationships: []
       }
+      grade12_exam_prep_lesson_media: {
+        Row: {
+          created_at: string
+          file_name: string | null
+          file_path: string | null
+          id: string
+          lesson_id: string
+          media_type: string
+          metadata: Json | null
+          order_index: number
+        }
+        Insert: {
+          created_at?: string
+          file_name?: string | null
+          file_path?: string | null
+          id?: string
+          lesson_id: string
+          media_type: string
+          metadata?: Json | null
+          order_index?: number
+        }
+        Update: {
+          created_at?: string
+          file_name?: string | null
+          file_path?: string | null
+          id?: string
+          lesson_id?: string
+          media_type?: string
+          metadata?: Json | null
+          order_index?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grade12_exam_prep_lesson_media_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "grade12_exam_prep_lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      grade12_exam_prep_lessons: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          order_index: number
+          title: string
+          topic_id: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          order_index?: number
+          title: string
+          topic_id: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          order_index?: number
+          title?: string
+          topic_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grade12_exam_prep_lessons_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "grade12_exam_prep_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      grade12_exam_prep_sections: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          order_index: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          order_index?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          order_index?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      grade12_exam_prep_topics: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: string
+          order_index: number
+          section_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          order_index?: number
+          section_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          order_index?: number
+          section_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grade12_exam_prep_topics_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "grade12_exam_prep_sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       grade12_final_projects: {
         Row: {
           content: string | null

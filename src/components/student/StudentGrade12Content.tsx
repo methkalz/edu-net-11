@@ -17,6 +17,7 @@ import Grade12FinalProjectForm from '../content/Grade12FinalProjectForm';
 import { LottieLoader } from '@/components/ui/LottieLoader';
 import graduationFolderAnimation from '@/assets/graduation-folder.json';
 import loadingAnimation from '@/assets/loading-animation.json';
+import Grade12ExamPrepViewer from '../content/Grade12ExamPrepViewer';
 export const StudentGrade12Content: React.FC<{ defaultTab?: string }> = ({ defaultTab = 'content' }) => {
   const navigate = useNavigate();
   const {
@@ -494,21 +495,7 @@ export const StudentGrade12Content: React.FC<{ defaultTab?: string }> = ({ defau
         </TabsContent>
 
         <TabsContent value="exam-prep">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5 text-blue-600" />
-                تحضيرات امتحان المشروع
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-12">
-                <FileText className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-                <h3 className="text-lg font-semibold mb-2">قريباً</h3>
-                <p className="text-muted-foreground">سيتم إضافة محتوى تحضيرات امتحان المشروع قريباً</p>
-              </div>
-            </CardContent>
-          </Card>
+          <Grade12ExamPrepViewer />
         </TabsContent>
 
         <TabsContent value="exams">

@@ -30,6 +30,7 @@ import Grade12FinalProjectManager from './Grade12FinalProjectManager';
 import Grade12VideoLibrary from './Grade12VideoLibrary';
 import Grade12DefaultTasks from './Grade12DefaultTasks';
 import FileLibraryManager from './FileLibraryManager';
+import Grade12ExamPrepAdmin from './Grade12ExamPrepAdmin';
 
 const Grade12Content: React.FC = () => {
   const { userProfile } = useAuth();
@@ -102,21 +103,7 @@ const Grade12Content: React.FC = () => {
 
         {/* Exam Prep Tab */}
         <TabsContent value="exam-prep" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5 text-blue-600" />
-                تحضيرات امتحان المشروع
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-12">
-                <FileText className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-                <h3 className="text-lg font-semibold mb-2">قريباً</h3>
-                <p className="text-muted-foreground">سيتم إضافة محتوى تحضيرات امتحان المشروع قريباً</p>
-              </div>
-            </CardContent>
-          </Card>
+          <Grade12ExamPrepAdmin />
         </TabsContent>
 
         {/* Library Tab */}
