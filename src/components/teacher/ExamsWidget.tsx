@@ -168,6 +168,25 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
   const { data, isLoading } = useTeacherExams(user?.id);
   const { questions = [], categories = [] } = useTeacherQuestions();
   const queryClient = useQueryClient();
+  
+  // جلب عدد أسئلة المعلم الخاصة
+  const { data: myQuestionsCount } = useQuery({
+    queryKey: ['my-questions-count', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return 0;
+      
+      const { count, error } = await supabase
+        .from('teacher_custom_questions')
+        .select('*', { count: 'exact', head: true })
+        .eq('teacher_id', user.id)
+        .eq('is_active', true);
+      
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: !!user?.id,
+  });
+  
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isQuestionDialogOpen, setIsQuestionDialogOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
@@ -1448,7 +1467,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
       </CardHeader>
       <CardContent className="space-y-6">
         {/* إحصائيات سريعة */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-4 gap-4 mb-6">
           <div className="bg-gradient-to-br from-green-500/10 to-green-600/5 p-4 rounded-lg border border-green-500/20">
             <div className="flex items-center gap-2 mb-2">
               <ClipboardList className="w-4 h-4 text-green-600" />
@@ -1463,6 +1482,14 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
               <span className="text-sm text-muted-foreground">بنك الأسئلة</span>
             </div>
             <p className="text-2xl font-bold text-blue-600">{totalQuestions}</p>
+          </div>
+
+          <div className="bg-gradient-to-br from-orange-500/10 to-orange-600/5 p-4 rounded-lg border border-orange-500/20">
+            <div className="flex items-center gap-2 mb-2">
+              <Edit className="w-4 h-4 text-orange-600" />
+              <span className="text-sm text-muted-foreground">أسئلتي</span>
+            </div>
+            <p className="text-2xl font-bold text-orange-600">{myQuestionsCount || 0}</p>
           </div>
 
           <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 p-4 rounded-lg border border-purple-500/20">
