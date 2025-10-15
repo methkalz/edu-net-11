@@ -461,7 +461,7 @@ const Grade12ProjectsManagement: React.FC = () => {
                 </p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {filteredProjects.map((project) => (
                   <div
                     key={project.id}
