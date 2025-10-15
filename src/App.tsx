@@ -162,7 +162,7 @@ const App = () => {
                    element={<Suspense fallback={<PageLoading message="جاري تحميل محرر المشروع..." />}><Grade10ProjectEditorPage /></Suspense>} 
                  />
                  <Route 
-                   path="/grade10-management" 
+                   path="/grade10-projects-management" 
                    element={<Suspense fallback={<PageLoading message="جاري تحميل إدارة المشاريع المصغرة..." />}><Grade10ProjectsManagement /></Suspense>} 
                  />
                

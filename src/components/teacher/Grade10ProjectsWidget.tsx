@@ -154,13 +154,13 @@ const Grade10ProjectsWidget: React.FC = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-primary/5 to-primary/10 flex items-center justify-center border-2 border-primary/15 cursor-pointer hover:scale-105 transition-all duration-200"
-              onClick={() => navigate('/grade10-management')}
+              onClick={() => navigate('/grade10-projects-management')}
             >
               <Zap className="h-5 w-5 text-primary" />
             </div>
             <div>
               <CardTitle className="text-lg font-medium text-foreground cursor-pointer hover:text-primary transition-colors"
-                onClick={() => navigate('/grade10-management')}
+                onClick={() => navigate('/grade10-projects-management')}
               >
                 مشاريع العاشر المصغرة
               </CardTitle>
@@ -337,7 +337,7 @@ const Grade10ProjectsWidget: React.FC = () => {
           <div className="text-center pt-4">
             <Button 
               variant="link" 
-              onClick={() => navigate('/grade10-management')}
+              onClick={() => navigate('/grade10-projects-management')}
               className="text-primary"
             >
               عرض جميع المشاريع ({projectsWithProgress.length})
