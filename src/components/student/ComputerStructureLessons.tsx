@@ -403,7 +403,7 @@ export const ComputerStructureLessons: React.FC = () => {
                   <div className="bg-muted/20 p-6 rounded-lg border">
                     <h4 className="text-lg font-semibold mb-3 text-foreground">محتوى الدرس:</h4>
                     <div 
-                      className="text-muted-foreground leading-relaxed prose prose-lg max-w-none"
+                      className="lesson-content text-muted-foreground leading-relaxed prose prose-lg max-w-none"
                       dangerouslySetInnerHTML={{ __html: selectedLesson.content }}
                     />
                   </div>

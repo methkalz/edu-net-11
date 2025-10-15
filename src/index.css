@@ -302,6 +302,31 @@ All colors MUST be HSL.
   }
 }
 
+/* إجبار خط Cairo على كل محتوى الدروس */
+.lesson-content,
+.lesson-content *,
+.lesson-content p,
+.lesson-content span,
+.lesson-content div,
+.lesson-content h1,
+.lesson-content h2,
+.lesson-content h3,
+.lesson-content h4,
+.lesson-content h5,
+.lesson-content h6,
+.lesson-content li,
+.lesson-content td,
+.lesson-content th,
+.lesson-content strong,
+.lesson-content em,
+.lesson-content a {
+  font-family: 'Cairo', sans-serif !important;
+}
+
+.force-cairo-font {
+  font-family: 'Cairo', sans-serif !important;
+}
+
 @layer base {
   * {
     @apply border-border;

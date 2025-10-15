@@ -260,7 +260,7 @@ const Grade10LessonContentDisplay: React.FC<Grade10LessonContentDisplayProps> = 
           <h2 className="text-2xl font-bold">{lesson.title}</h2>
           {lesson.content && (
             <div 
-              className="prose prose-slate max-w-none text-foreground/80"
+              className="lesson-content text-xl text-foreground/90 leading-9 break-words max-w-full p-8 bg-gradient-to-r from-muted/30 to-muted/20 rounded-3xl border-2 border-border/30 shadow-sm prose prose-lg max-w-none [&_p]:min-h-[1.5em] [&_p]:mb-2"
               dangerouslySetInnerHTML={{ __html: lesson.content }}
             />
           )}
