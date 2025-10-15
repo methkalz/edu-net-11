@@ -40,6 +40,27 @@ const Grade11VideoForm: React.FC<Grade11VideoFormProps> = ({
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
   const [thumbnailPreview, setThumbnailPreview] = useState<string>(initialData?.thumbnail_url || '');
 
+  // Auto-detect source type from URL
+  const detectSourceType = (url: string): string => {
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      return 'youtube';
+    } else if (url.includes('vimeo.com')) {
+      return 'vimeo';
+    } else if (url.includes('drive.google.com')) {
+      return 'drive';
+    }
+    return 'direct';
+  };
+
+  const handleVideoUrlChange = (url: string) => {
+    const detectedType = detectSourceType(url);
+    setFormData({ 
+      ...formData, 
+      video_url: url,
+      source_type: detectedType
+    });
+  };
+
   const handleThumbnailUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -125,6 +146,7 @@ const Grade11VideoForm: React.FC<Grade11VideoFormProps> = ({
   const sourceTypeOptions = [
     { value: 'youtube', label: 'YouTube' },
     { value: 'vimeo', label: 'Vimeo' },
+    { value: 'drive', label: 'Google Drive' },
     { value: 'direct', label: 'رابط مباشر' }
   ];
 
@@ -212,15 +234,20 @@ const Grade11VideoForm: React.FC<Grade11VideoFormProps> = ({
                   <Input
                     id="video_url"
                     value={formData.video_url}
-                    onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
+                    onChange={(e) => handleVideoUrlChange(e.target.value)}
                     placeholder="https://youtube.com/watch?v=..."
                     required
                     className="text-base font-mono text-sm"
                     dir="ltr"
                   />
-                  <p className="text-xs text-muted-foreground">
-                    يدعم YouTube, Vimeo, Google Drive وروابط مباشرة
-                  </p>
+                  <div className="text-xs text-muted-foreground space-y-1 bg-muted/50 p-3 rounded-lg">
+                    <p className="font-medium">أمثلة على الروابط المدعومة:</p>
+                    <ul className="list-disc list-inside space-y-1 mr-2">
+                      <li>YouTube: https://youtube.com/watch?v=...</li>
+                      <li>Vimeo: https://vimeo.com/...</li>
+                      <li>Google Drive: https://drive.google.com/file/d/.../view</li>
+                    </ul>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -240,6 +267,9 @@ const Grade11VideoForm: React.FC<Grade11VideoFormProps> = ({
                       ))}
                     </SelectContent>
                   </Select>
+                  <p className="text-xs text-muted-foreground">
+                    💡 يتم اكتشاف نوع المصدر تلقائياً من الرابط
+                  </p>
                 </div>
               </TabsContent>
 

@@ -54,6 +54,8 @@ const Grade11VideoLibrary: React.FC<Grade11VideoLibraryProps> = ({
         return '🎬';
       case 'vimeo':
         return '📹';
+      case 'drive':
+        return '💾';
       default:
         return '🎥';
     }
@@ -68,13 +70,46 @@ const Grade11VideoLibrary: React.FC<Grade11VideoLibraryProps> = ({
         return 'YouTube';
       case 'vimeo':
         return 'Vimeo';
+      case 'drive':
+        return 'Google Drive';
       default:
         return 'رابط مباشر';
     }
   };
 
   const handlePlayVideo = (videoUrl: string) => {
-    window.open(videoUrl, '_blank');
+    let playUrl = videoUrl;
+    
+    // Convert Google Drive links to preview format for better playback
+    if (videoUrl.includes('drive.google.com')) {
+      // Extract file ID from various Google Drive URL formats
+      const fileIdMatch = videoUrl.match(/\/d\/([^\/]+)/) || 
+                         videoUrl.match(/id=([^&]+)/) ||
+                         videoUrl.match(/\/file\/d\/([^\/]+)/);
+      
+      if (fileIdMatch && fileIdMatch[1]) {
+        const fileId = fileIdMatch[1];
+        // Use preview URL for better embedded playback
+        playUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+      }
+    }
+    // Convert YouTube watch URLs to embed format for better playback
+    else if (videoUrl.includes('youtube.com/watch')) {
+      const urlParams = new URLSearchParams(videoUrl.split('?')[1]);
+      const videoId = urlParams.get('v');
+      if (videoId) {
+        playUrl = `https://www.youtube.com/embed/${videoId}`;
+      }
+    }
+    // Convert YouTube short URLs
+    else if (videoUrl.includes('youtu.be/')) {
+      const videoId = videoUrl.split('youtu.be/')[1]?.split('?')[0];
+      if (videoId) {
+        playUrl = `https://www.youtube.com/embed/${videoId}`;
+      }
+    }
+    
+    window.open(playUrl, '_blank');
   };
 
   if (loading) {
