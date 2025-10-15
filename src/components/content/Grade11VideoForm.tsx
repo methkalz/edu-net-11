@@ -5,9 +5,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Video, X } from 'lucide-react';
+import { Video, X, Link, Upload, ImageIcon } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { logger } from '@/lib/logger';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 
 interface Grade11VideoFormProps {
   onSave: (videoData: any) => Promise<void>;
@@ -32,6 +34,71 @@ const Grade11VideoForm: React.FC<Grade11VideoFormProps> = ({
     ...initialData
   });
   const [loading, setLoading] = useState(false);
+  const [thumbnailMode, setThumbnailMode] = useState<'url' | 'upload'>('url');
+  const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
+  const [thumbnailPreview, setThumbnailPreview] = useState<string>(initialData?.thumbnail_url || '');
+
+  const handleThumbnailUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: 'خطأ',
+        description: 'الرجاء اختيار ملف صورة',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: 'خطأ',
+        description: 'حجم الصورة يجب أن يكون أقل من 5 ميجابايت',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setUploadingThumbnail(true);
+    try {
+      // Create unique file name
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
+      const filePath = `grade11-videos/${fileName}`;
+
+      // Upload to Supabase storage
+      const { error: uploadError } = await supabase.storage
+        .from('grade11_thumbnails')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('grade11_thumbnails')
+        .getPublicUrl(filePath);
+
+      setFormData({ ...formData, thumbnail_url: publicUrl });
+      setThumbnailPreview(publicUrl);
+      
+      toast({
+        title: 'تم الرفع بنجاح',
+        description: 'تم رفع الصورة المصغرة بنجاح'
+      });
+    } catch (error) {
+      logger.error('Error uploading thumbnail', error as Error);
+      toast({
+        title: 'خطأ',
+        description: 'فشل رفع الصورة المصغرة',
+        variant: 'destructive'
+      });
+    } finally {
+      setUploadingThumbnail(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,14 +192,85 @@ const Grade11VideoForm: React.FC<Grade11VideoFormProps> = ({
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="thumbnail_url">رابط الصورة المصغرة</Label>
-            <Input
-              id="thumbnail_url"
-              value={formData.thumbnail_url}
-              onChange={(e) => setFormData({ ...formData, thumbnail_url: e.target.value })}
-              placeholder="أدخل رابط الصورة المصغرة"
-            />
+          <div className="space-y-3">
+            <Label>الصورة المصغرة</Label>
+            
+            {/* Mode selector */}
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant={thumbnailMode === 'url' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setThumbnailMode('url')}
+                className="flex-1"
+              >
+                <Link className="h-4 w-4 mr-2" />
+                رابط
+              </Button>
+              <Button
+                type="button"
+                variant={thumbnailMode === 'upload' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setThumbnailMode('upload')}
+                className="flex-1"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                رفع صورة
+              </Button>
+            </div>
+
+            {/* URL input */}
+            {thumbnailMode === 'url' && (
+              <Input
+                id="thumbnail_url"
+                value={formData.thumbnail_url}
+                onChange={(e) => {
+                  setFormData({ ...formData, thumbnail_url: e.target.value });
+                  setThumbnailPreview(e.target.value);
+                }}
+                placeholder="أدخل رابط الصورة المصغرة"
+              />
+            )}
+
+            {/* File upload */}
+            {thumbnailMode === 'upload' && (
+              <div className="space-y-2">
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleThumbnailUpload}
+                  disabled={uploadingThumbnail}
+                />
+                {uploadingThumbnail && (
+                  <p className="text-sm text-muted-foreground">جاري رفع الصورة...</p>
+                )}
+              </div>
+            )}
+
+            {/* Preview */}
+            {thumbnailPreview && (
+              <div className="relative rounded-lg overflow-hidden border bg-muted aspect-video max-w-xs">
+                <img 
+                  src={thumbnailPreview} 
+                  alt="معاينة الصورة المصغرة"
+                  className="w-full h-full object-cover"
+                  onError={() => setThumbnailPreview('')}
+                />
+                <div className="absolute top-2 right-2">
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => {
+                      setFormData({ ...formData, thumbnail_url: '' });
+                      setThumbnailPreview('');
+                    }}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">
