@@ -23,7 +23,7 @@ import {
   Maximize2
 } from 'lucide-react';
 import { useStudentGrade10Lessons, Grade10LessonWithMedia, Grade10LessonMedia } from '@/hooks/useStudentGrade10Lessons';
-import Grade10MediaPreview from '@/components/content/Grade10MediaPreview';
+import Grade10LessonContentDisplay from '@/components/content/Grade10LessonContentDisplay';
 import { useStudentProgress } from '@/hooks/useStudentProgress';
 
 export const StudentGrade10Lessons: React.FC = () => {
@@ -33,7 +33,6 @@ export const StudentGrade10Lessons: React.FC = () => {
   const [openTopics, setOpenTopics] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLesson, setSelectedLesson] = useState<Grade10LessonWithMedia | null>(null);
-  const [previewMedia, setPreviewMedia] = useState<Grade10LessonMedia | null>(null);
 
   const stats = getContentStats();
 
@@ -121,26 +120,6 @@ export const StudentGrade10Lessons: React.FC = () => {
       })
     );
   });
-
-  const getMediaIcon = (mediaType: string) => {
-    switch (mediaType) {
-      case 'video': return <Video className="w-4 h-4 text-white" />;
-      case 'image': return <ImageIcon className="w-4 h-4 text-white" />;
-      case 'code': return <Code className="w-4 h-4 text-white" />;
-      case 'lottie': return <Play className="w-4 h-4 text-white" />;
-      default: return <FileText className="w-4 h-4 text-white" />;
-    }
-  };
-
-  const getMediaColor = (mediaType: string) => {
-    switch (mediaType) {
-      case 'video': return 'bg-gradient-to-r from-blue-500 to-cyan-500';
-      case 'image': return 'bg-gradient-to-r from-green-500 to-emerald-500';
-      case 'code': return 'bg-gradient-to-r from-purple-500 to-violet-500';
-      case 'lottie': return 'bg-gradient-to-r from-pink-500 to-rose-500';
-      default: return 'bg-gradient-to-r from-gray-500 to-slate-500';
-    }
-  };
 
   if (loading) {
     return (
@@ -415,66 +394,12 @@ export const StudentGrade10Lessons: React.FC = () => {
 
       {/* Lesson Details Modal */}
       <Dialog open={!!selectedLesson} onOpenChange={() => setSelectedLesson(null)}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold">
-              {selectedLesson?.title}
-            </DialogTitle>
-          </DialogHeader>
-          
+        <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
           {selectedLesson && (
-            <div className="space-y-6">
-              {/* Lesson Content */}
-              {selectedLesson.content && (
-                <div className="prose prose-sm max-w-none">
-                  <div 
-                    className="text-xl text-foreground/90 leading-9 break-words max-w-full p-8 bg-gradient-to-r from-muted/30 to-muted/20 rounded-3xl border-2 border-border/30 shadow-sm prose prose-lg"
-                    dangerouslySetInnerHTML={{ __html: selectedLesson.content }}
-                  />
-                </div>
-              )}
-
-              {/* Media Files */}
-              {selectedLesson.media && selectedLesson.media.length > 0 && (
-                <div className="space-y-4">
-                  <h4 className="text-lg font-semibold">الملفات المرفقة</h4>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    {selectedLesson.media.map((media) => (
-                      <Card key={media.id} className="p-4 hover:shadow-md transition-shadow cursor-pointer" onClick={() => setPreviewMedia(media)}>
-                        <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${getMediaColor(media.media_type)}`}>
-                            {getMediaIcon(media.media_type)}
-                          </div>
-                          <div className="flex-1">
-                            <h5 className="font-medium">{media.file_name}</h5>
-                            <p className="text-sm text-muted-foreground">
-                              {media.media_type === 'video' ? 'فيديو' : 
-                               media.media_type === 'image' ? 'صورة' :
-                               media.media_type === 'code' ? 'كود' : 
-                               media.media_type === 'lottie' ? 'أنيميشن' : 'ملف'}
-                            </p>
-                          </div>
-                          <Button variant="outline" size="sm">
-                            <Maximize2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+            <Grade10LessonContentDisplay lesson={selectedLesson} />
           )}
         </DialogContent>
       </Dialog>
-
-      {/* Media Preview Modal */}
-      {previewMedia && (
-        <Grade10MediaPreview
-          media={previewMedia}
-          onClose={() => setPreviewMedia(null)}
-        />
-      )}
     </div>
   );
 };
