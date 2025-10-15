@@ -152,22 +152,39 @@ Edu-Net.me`
 
       // إنشاء المشروع (نستبعد createGoogleDoc لأنه ليس عمود في الجدول)
       const { createGoogleDoc, ...restProjectData } = projectData;
-      const projectPayload = {
-        ...restProjectData,
+      
+      // تنظيف البيانات: إزالة الحقول الفارغة لتجنب أخطاء timestamp
+      const cleanedData: any = {
+        title: restProjectData.title,
         student_id: userProfile.user_id,
         school_id: userProfile.school_id,
         status: 'draft' as const,
         content: '',
         progress_percentage: 0,
-        google_doc_id: googleDocId,
-        google_doc_url: googleDocUrl
       };
+      
+      // إضافة الحقول الاختيارية فقط إذا كانت لها قيم صحيحة
+      if (restProjectData.description && restProjectData.description.trim()) {
+        cleanedData.description = restProjectData.description;
+      }
+      
+      if (restProjectData.due_date && restProjectData.due_date.trim()) {
+        cleanedData.due_date = restProjectData.due_date;
+      }
+      
+      if (googleDocId) {
+        cleanedData.google_doc_id = googleDocId;
+      }
+      
+      if (googleDocUrl) {
+        cleanedData.google_doc_url = googleDocUrl;
+      }
 
-      console.log('Creating project with payload:', projectPayload);
+      console.log('Creating project with payload:', cleanedData);
 
       const { data: newProject, error: projectError } = await supabase
         .from('grade10_mini_projects')
-        .insert(projectPayload)
+        .insert(cleanedData)
         .select()
         .single();
 
