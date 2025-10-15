@@ -36,7 +36,7 @@ const Grade10ProjectEditor: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, userProfile } = useAuth();
-  const { projects, updateProjectStatus, deleteProject } = useGrade10MiniProjects();
+  const { projects, updateProjectStatus, deleteProject, tasks, fetchTasks } = useGrade10MiniProjects();
   
   const [project, setProject] = useState<any>(null);
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'editor');
@@ -58,6 +58,22 @@ const Grade10ProjectEditor: React.FC = () => {
       }
     }
   }, [projectId, projects, navigate]);
+
+  // Load tasks when project is loaded
+  useEffect(() => {
+    if (projectId) {
+      fetchTasks(projectId);
+    }
+  }, [projectId, fetchTasks]);
+
+  // Calculate progress based on completed tasks
+  const calculateProgress = () => {
+    if (!tasks || tasks.length === 0) return 0;
+    const completedTasks = tasks.filter(task => task.is_completed).length;
+    return Math.round((completedTasks / tasks.length) * 100);
+  };
+
+  const currentProgress = calculateProgress();
 
   // حذف المشروع
   const handleDeleteProject = async () => {
@@ -308,11 +324,11 @@ const Grade10ProjectEditor: React.FC = () => {
 
                             <div className="p-4 rounded-lg bg-background/50 border border-border/30">
                               <Label className="text-base font-semibold text-foreground block mb-2">التقدم</Label>
-                              <div className="text-muted-foreground text-sm mb-2">{project.progress || 0}%</div>
+                              <div className="text-muted-foreground text-sm mb-2">{currentProgress}%</div>
                               <div className="w-full bg-muted rounded-full h-2">
                                 <div 
                                   className="bg-primary h-2 rounded-full transition-all duration-300"
-                                  style={{ width: `${project.progress || 0}%` }}
+                                  style={{ width: `${currentProgress}%` }}
                                 />
                               </div>
                             </div>
