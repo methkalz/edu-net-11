@@ -120,7 +120,7 @@ const Grade10LessonContentDisplay: React.FC<Grade10LessonContentDisplayProps> = 
               <video 
                 controls 
                 controlsList="nodownload"
-                className="w-full rounded-xl shadow-lg"
+                className="w-full max-h-[600px] object-contain rounded-xl shadow-lg"
                 src={file_path}
                 preload="metadata"
               >

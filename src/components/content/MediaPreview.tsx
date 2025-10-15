@@ -115,7 +115,7 @@ const MediaPreview: React.FC<MediaPreviewProps> = ({ media, onClose, onUpdateMed
               src={media.file_path}
               controls
               controlsList="nodownload"
-              className="w-full max-h-96 rounded-lg"
+              className="w-full max-h-[600px] object-contain rounded-lg"
               poster={media.metadata?.thumbnail_url}
               preload="metadata"
             >

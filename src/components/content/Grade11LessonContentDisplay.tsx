@@ -139,11 +139,11 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
           );
         } else if (metadata.source_type === 'upload' || metadata.source_type === 'url') {
           return (
-            <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-100">
+            <div className="relative rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
               <video
                 src={media.file_path}
                 title={media.file_name}
-                className="w-full h-full object-cover"
+                className="w-full max-h-[600px] object-contain"
                 controls
                 controlsList="nodownload"
                 preload="metadata"
