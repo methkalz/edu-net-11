@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { LottieLoader } from '@/components/ui/LottieLoader';
 import loadingAnimation from '@/assets/loading-animation.json';
+import graduationFolderAnimation from '@/assets/graduation-folder.json';
 import { supabase } from '@/integrations/supabase/client';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -1080,59 +1081,54 @@ export const StudentGradeContent: React.FC<{ defaultTab?: string }> = ({ default
                 
                 {tab.items.length === 0 ? (
                   <div className="flex items-center justify-center min-h-[400px]">
-                    <Card className="border-none shadow-xl bg-gradient-to-br from-background/50 to-background backdrop-blur-sm">
-                      <CardContent className="flex flex-col items-center justify-center py-20 px-6">
-                        {/* Icon with gradient background */}
-                        <div className="relative mb-8">
-                          <div className={`absolute inset-0 bg-gradient-to-br ${tab.color.replace('from-', 'from-').replace('to-', 'to-')}/20 rounded-3xl blur-2xl`} />
-                          <div className={`relative bg-gradient-to-br ${tab.color} p-6 rounded-3xl shadow-2xl`}>
-                            <tab.icon className="h-16 w-16 text-white" strokeWidth={1.5} />
-                          </div>
-                        </div>
-                        
-                        {/* Title and Description */}
-                        <div className="text-center space-y-3 mb-8 max-w-md">
-                          <h3 className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                            {tab.id === 'mini_projects' && assignedGrade === '10' 
-                              ? 'لم تبدأ بمشروعك المصغر بعد' 
-                              : tab.id === 'projects' && assignedGrade === '12'
-                              ? 'لم تبدأ بمشروعك النهائي بعد'
-                              : `لا يوجد ${tab.label} متاح`
-                            }
-                          </h3>
-                          <p className="text-muted-foreground leading-relaxed text-base">
-                            {tab.id === 'mini_projects' && assignedGrade === '10'
-                              ? 'ابدأ المشروع النصي الآن وتابع المهام وتاريخ التسليم'
-                              : tab.id === 'projects' && assignedGrade === '12'
-                              ? 'أنشئ المشروع النصي الآن وتابع المهام وتاريخ التسليم'
-                              : `سيتم إضافة ${tab.label} قريباً للصف ${assignedGrade}`
-                            }
-                          </p>
-                        </div>
-                        
-                        {/* Action Buttons */}
-                        {tab.id === 'mini_projects' && assignedGrade === '10' && (
-                          <Button 
-                            className="gap-2 px-8 py-6 text-lg font-medium shadow-xl hover:shadow-2xl transition-all duration-300 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 border-0"
-                            onClick={handleQuickCreateProject}
-                            size="lg"
-                          >
-                            <Plus className="h-6 w-6" />
-                            ابدأ الآن
-                          </Button>
-                        )}
-                        {tab.id === 'projects' && assignedGrade === '12' && (
-                          <Button 
-                            className="gap-2 px-8 py-6 text-lg font-medium shadow-xl hover:shadow-2xl transition-all duration-300 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 border-0"
-                            onClick={handleQuickCreateFinalProject}
-                            size="lg"
-                          >
-                            <Plus className="h-6 w-6" />
-                            ابدأ الآن
-                          </Button>
-                        )}
-                      </CardContent>
-                    </Card>
+                    <div className="text-center py-16">
+                      <div className="mx-auto mb-6">
+                        <LottieLoader 
+                          animationData={graduationFolderAnimation}
+                          size="lg"
+                          loop={true}
+                          className="w-48 h-48 mx-auto"
+                        />
+                      </div>
+                      <h3 className="text-2xl font-bold mb-4 text-center">
+                        {tab.id === 'mini_projects' && assignedGrade === '10' 
+                          ? 'لم تبدأ بعد بمشروعك المصغر' 
+                          : tab.id === 'projects' && assignedGrade === '12'
+                          ? 'لم تبدأ بعد بمشروعك النهائي'
+                          : `لا يوجد ${tab.label} متاح`
+                        }
+                      </h3>
+                      <p className="text-muted-foreground text-lg mb-6 text-center">
+                        {tab.id === 'mini_projects' && assignedGrade === '10'
+                          ? 'انشئ المشروع النصي الآن واتّبع المهام وتابع التعليقات'
+                          : tab.id === 'projects' && assignedGrade === '12'
+                          ? 'انشئ المشروع النهائي الآن واتّبع المهام وتابع التعليقات'
+                          : `سيتم إضافة ${tab.label} قريباً للصف ${assignedGrade}`
+                        }
+                      </p>
+                      
+                      {/* Action Buttons */}
+                      {tab.id === 'mini_projects' && assignedGrade === '10' && (
+                        <Button 
+                          size="lg" 
+                          className="gap-2"
+                          onClick={handleQuickCreateProject}
+                        >
+                          <Plus className="h-5 w-5" />
+                          ابدأ الآن
+                        </Button>
+                      )}
+                      {tab.id === 'projects' && assignedGrade === '12' && (
+                        <Button 
+                          size="lg" 
+                          className="gap-2"
+                          onClick={handleQuickCreateFinalProject}
+                        >
+                          <Plus className="h-5 w-5" />
+                          ابدأ الآن
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 ) : (
                   <div className="grid gap-8 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
