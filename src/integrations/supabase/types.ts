@@ -1679,6 +1679,8 @@ export type Database = {
           created_at: string
           description: string | null
           due_date: string | null
+          google_doc_id: string | null
+          google_doc_url: string | null
           id: string
           progress_percentage: number | null
           reviewed_at: string | null
@@ -1695,6 +1697,8 @@ export type Database = {
           created_at?: string
           description?: string | null
           due_date?: string | null
+          google_doc_id?: string | null
+          google_doc_url?: string | null
           id?: string
           progress_percentage?: number | null
           reviewed_at?: string | null
@@ -1711,6 +1715,8 @@ export type Database = {
           created_at?: string
           description?: string | null
           due_date?: string | null
+          google_doc_id?: string | null
+          google_doc_url?: string | null
           id?: string
           progress_percentage?: number | null
           reviewed_at?: string | null

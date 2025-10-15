@@ -10,6 +10,8 @@ export interface Grade10MiniProject {
   status: 'draft' | 'in_progress' | 'completed' | 'reviewed';
   progress_percentage: number;
   due_date?: string;
+  google_doc_id?: string;
+  google_doc_url?: string;
   created_at: string;
   updated_at: string;
   completed_at?: string;
@@ -62,6 +64,7 @@ export interface ProjectFormData {
   title: string;
   description?: string;
   due_date?: string;
+  createGoogleDoc?: boolean;
 }
 
 export interface TaskFormData {

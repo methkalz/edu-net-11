@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useGoogleDocs } from '@/hooks/useGoogleDocs';
 import { toast } from 'sonner';
 import type { Grade10MiniProject, Grade10ProjectTask, Grade10ProjectComment, Grade10ProjectFile, ProjectFormData, TaskFormData, CommentFormData } from '@/types/grade10-projects';
 
@@ -12,6 +13,7 @@ export const useGrade10MiniProjects = () => {
   const [files, setFiles] = useState<Grade10ProjectFile[]>([]);
   const [loading, setLoading] = useState(false);
   const { userProfile } = useAuth();
+  const { createDocument } = useGoogleDocs();
 
   // جلب جميع المشاريع
   const fetchProjects = async () => {
@@ -112,6 +114,78 @@ export const useGrade10MiniProjects = () => {
         return;
       }
 
+      // إنشاء مستند Google إذا تم طلبه
+      let googleDocId: string | undefined;
+      let googleDocUrl: string | undefined;
+      
+      if (projectData.createGoogleDoc && userProfile.full_name) {
+        // جلب اسم المدرسة
+        let schoolName = 'المدرسة';
+        if (userProfile.school_id) {
+          const { data: schoolData } = await supabase
+            .from('schools')
+            .select('name')
+            .eq('id', userProfile.school_id)
+            .maybeSingle();
+          
+          if (schoolData) {
+            schoolName = schoolData.name;
+          }
+        }
+
+        // جلب اسم المعلم المسؤول
+        let teacherName = 'المعلم المشرف';
+        const { data: studentData } = await supabase
+          .from('students')
+          .select('id')
+          .eq('user_id', userProfile.user_id)
+          .maybeSingle();
+
+        if (studentData) {
+          const { data: classData } = await supabase
+            .from('class_students')
+            .select(`
+              classes!inner(
+                teacher_classes!inner(
+                  teacher_id
+                )
+              )
+            `)
+            .eq('student_id', studentData.id)
+            .limit(1)
+            .maybeSingle();
+          
+          if (classData?.classes?.teacher_classes?.[0]?.teacher_id) {
+            const teacherId = classData.classes.teacher_classes[0].teacher_id;
+            const { data: teacherProfile } = await supabase
+              .from('profiles')
+              .select('full_name')
+              .eq('user_id', teacherId)
+              .maybeSingle();
+            
+            if (teacherProfile?.full_name) {
+              teacherName = teacherProfile.full_name;
+            }
+          }
+        }
+
+        // إنشاء المستند
+        const docResult = await createDocument({
+          studentName: userProfile.full_name,
+          documentContent: `أهلاً ${userProfile.full_name}
+نتمنى لك النجاح في مشروعك المصغر
+سنكون دائمًا في مرافقتك
+بالنجاح والتوفيق: إدارة مدرسة ${schoolName}
+
+Edu-Net.me`
+        });
+
+        if (docResult && docResult.success) {
+          googleDocId = docResult.documentId;
+          googleDocUrl = docResult.documentUrl;
+        }
+      }
+
       // إنشاء المشروع
       const projectPayload = {
         ...projectData,
@@ -119,7 +193,9 @@ export const useGrade10MiniProjects = () => {
         school_id: userProfile.school_id,
         status: 'draft' as const,
         content: '',
-        progress_percentage: 0
+        progress_percentage: 0,
+        google_doc_id: googleDocId,
+        google_doc_url: googleDocUrl
       };
 
       console.log('Creating project with payload:', projectPayload);

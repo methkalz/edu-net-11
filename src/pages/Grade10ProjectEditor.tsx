@@ -28,6 +28,7 @@ import {
   MessageSquare,
   History,
   Info,
+  ExternalLink,
   BarChart3,
   CheckSquare,
   MessageCircle,
@@ -423,6 +424,21 @@ const Grade10ProjectEditor: React.FC = () => {
                                 <p className="text-lg font-bold mt-1">{project?.grade ? `${project.grade}/100` : 'لم يُقيم بعد'}</p>
                               </div>
                             </div>
+                            
+                            {/* Google Docs Link */}
+                            {project?.google_doc_url && (
+                              <div className="p-4 rounded-lg bg-background/50 border border-border/30">
+                                <Label className="text-sm font-medium text-muted-foreground mb-2 block">مستند Google Drive</Label>
+                                <Button 
+                                  variant="outline"
+                                  onClick={() => window.open(project.google_doc_url, '_blank')}
+                                  className="w-full justify-start gap-2"
+                                >
+                                  <ExternalLink className="h-4 w-4" />
+                                  فتح المستند في Google Docs
+                                </Button>
+                              </div>
+                            )}
                           </div>
                         </div>
 
