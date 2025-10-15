@@ -64,6 +64,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Progress } from '@/components/ui/progress';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { TeacherQuestionDialog } from '@/components/exam/TeacherQuestionDialog';
+import { MyQuestionsManager } from '@/components/exam/MyQuestionsManager';
 
 interface ExamsWidgetProps {
   canAccessGrade10: boolean;
@@ -189,6 +190,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
   
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isQuestionDialogOpen, setIsQuestionDialogOpen] = useState(false);
+  const [isMyQuestionsOpen, setIsMyQuestionsOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingExamId, setEditingExamId] = useState<string | null>(null);
@@ -1484,7 +1486,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
             <p className="text-2xl font-bold text-blue-600">{totalQuestions}</p>
           </div>
 
-          <div className="bg-gradient-to-br from-orange-500/10 to-orange-600/5 p-4 rounded-lg border border-orange-500/20">
+          <div className="bg-gradient-to-br from-orange-500/10 to-orange-600/5 p-4 rounded-lg border border-orange-500/20 cursor-pointer hover:shadow-md transition-all" onClick={() => setIsMyQuestionsOpen(true)}>
             <div className="flex items-center gap-2 mb-2">
               <Edit className="w-4 h-4 text-orange-600" />
               <span className="text-sm text-muted-foreground">أسئلتي</span>
@@ -2854,8 +2856,15 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         queryClient.invalidateQueries({ queryKey: ['teacher-exams', user?.id] });
         queryClient.invalidateQueries({ queryKey: ['teacher-questions'] });
         queryClient.invalidateQueries({ queryKey: ['teacher-question-categories'] });
+        queryClient.invalidateQueries({ queryKey: ['my-questions-count', user?.id] });
       }}
       existingCategories={categories}
+    />
+    
+    {/* نافذة إدارة أسئلتي */}
+    <MyQuestionsManager
+      open={isMyQuestionsOpen}
+      onOpenChange={setIsMyQuestionsOpen}
     />
     
     {/* Debug Panel - Development Only */}
