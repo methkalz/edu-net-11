@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import BackButton from '@/components/shared/BackButton';
 import { 
   FileText, 
   Search, 
@@ -112,6 +113,7 @@ const Grade12ProjectsManagement: React.FC = () => {
       <ModernHeader title="مشاريع الصف الثاني عشر" />
       
       <div className="container mx-auto p-6 space-y-6">
+        <BackButton />
 
         {/* الإحصائيات الرئيسية */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
