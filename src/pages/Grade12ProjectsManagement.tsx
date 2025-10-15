@@ -28,7 +28,7 @@ import { useTeacherProjects } from '@/hooks/useTeacherProjects';
 import { formatDistanceToNow } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import ModernHeader from '@/components/shared/ModernHeader';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Area, AreaChart } from 'recharts';
 
 const Grade12ProjectsManagement: React.FC = () => {
   const navigate = useNavigate();
@@ -251,45 +251,142 @@ const Grade12ProjectsManagement: React.FC = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Clock className="h-4 w-4" />
-                    <span>قيد التنفيذ</span>
-                  </div>
-                  <p className="text-3xl font-bold">{projects.filter(p => p.status === 'in_progress').length}</p>
-                  <Progress 
-                    value={(projects.filter(p => p.status === 'in_progress').length / grade12ProjectsCount) * 100} 
-                    className="h-2"
-                  />
+              <div className="space-y-6">
+                {/* رسم بياني شريطي لحالات المشاريع */}
+                <div className="space-y-4">
+                  <h4 className="text-sm font-semibold text-muted-foreground">توزيع حالات المشاريع</h4>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <BarChart
+                      data={[
+                        { 
+                          name: 'قيد التنفيذ', 
+                          value: projects.filter(p => p.status === 'in_progress').length,
+                          fill: 'url(#colorInProgress)'
+                        },
+                        { 
+                          name: 'مكتملة', 
+                          value: projects.filter(p => p.status === 'completed').length,
+                          fill: 'url(#colorCompleted)'
+                        },
+                        { 
+                          name: 'مسودات', 
+                          value: projects.filter(p => p.status === 'draft').length,
+                          fill: 'url(#colorDraft)'
+                        },
+                      ]}
+                      margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                    >
+                      <defs>
+                        <linearGradient id="colorInProgress" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.9}/>
+                          <stop offset="100%" stopColor="#2563eb" stopOpacity={0.7}/>
+                        </linearGradient>
+                        <linearGradient id="colorCompleted" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#10b981" stopOpacity={0.9}/>
+                          <stop offset="100%" stopColor="#059669" stopOpacity={0.7}/>
+                        </linearGradient>
+                        <linearGradient id="colorDraft" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.9}/>
+                          <stop offset="100%" stopColor="#7c3aed" stopOpacity={0.7}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
+                      <XAxis 
+                        dataKey="name" 
+                        stroke="hsl(var(--muted-foreground))"
+                        style={{ fontSize: '12px' }}
+                      />
+                      <YAxis 
+                        stroke="hsl(var(--muted-foreground))"
+                        style={{ fontSize: '12px' }}
+                      />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'hsl(var(--card))', 
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px',
+                          fontSize: '12px'
+                        }}
+                        cursor={{ fill: 'hsl(var(--muted))', opacity: 0.1 }}
+                      />
+                      <Bar 
+                        dataKey="value" 
+                        radius={[8, 8, 0, 0]}
+                        maxBarSize={80}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
 
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <FileText className="h-4 w-4" />
-                    <span>مسودات</span>
+                {/* مؤشرات الأداء الرئيسية */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="relative overflow-hidden p-5 rounded-2xl bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-transparent border border-blue-500/20">
+                    <div className="relative z-10 space-y-2">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
+                        <Clock className="h-4 w-4 text-blue-600" />
+                        <span>قيد التنفيذ</span>
+                      </div>
+                      <p className="text-4xl font-bold text-foreground">{projects.filter(p => p.status === 'in_progress').length}</p>
+                      <div className="flex items-center gap-2">
+                        <Progress 
+                          value={(projects.filter(p => p.status === 'in_progress').length / grade12ProjectsCount) * 100} 
+                          className="h-2 flex-1"
+                        />
+                        <span className="text-xs font-semibold text-blue-600">
+                          {((projects.filter(p => p.status === 'in_progress').length / grade12ProjectsCount) * 100).toFixed(0)}%
+                        </span>
+                      </div>
+                    </div>
+                    <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl"></div>
                   </div>
-                  <p className="text-3xl font-bold">{projects.filter(p => p.status === 'draft').length}</p>
-                  <Progress 
-                    value={(projects.filter(p => p.status === 'draft').length / grade12ProjectsCount) * 100} 
-                    className="h-2"
-                  />
-                </div>
 
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <MessageSquare className="h-4 w-4" />
-                    <span>إجمالي التعليقات</span>
+                  <div className="relative overflow-hidden p-5 rounded-2xl bg-gradient-to-br from-purple-500/10 via-purple-500/5 to-transparent border border-purple-500/20">
+                    <div className="relative z-10 space-y-2">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
+                        <FileText className="h-4 w-4 text-purple-600" />
+                        <span>مسودات</span>
+                      </div>
+                      <p className="text-4xl font-bold text-foreground">{projects.filter(p => p.status === 'draft').length}</p>
+                      <div className="flex items-center gap-2">
+                        <Progress 
+                          value={(projects.filter(p => p.status === 'draft').length / grade12ProjectsCount) * 100} 
+                          className="h-2 flex-1"
+                        />
+                        <span className="text-xs font-semibold text-purple-600">
+                          {((projects.filter(p => p.status === 'draft').length / grade12ProjectsCount) * 100).toFixed(0)}%
+                        </span>
+                      </div>
+                    </div>
+                    <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl"></div>
                   </div>
-                  <p className="text-3xl font-bold">{projects.reduce((sum, p) => sum + (p.total_comments_count || 0), 0)}</p>
-                </div>
 
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Users className="h-4 w-4" />
-                    <span>الطلاب النشطون</span>
+                  <div className="relative overflow-hidden p-5 rounded-2xl bg-gradient-to-br from-orange-500/10 via-orange-500/5 to-transparent border border-orange-500/20">
+                    <div className="relative z-10 space-y-2">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
+                        <MessageSquare className="h-4 w-4 text-orange-600" />
+                        <span>إجمالي التعليقات</span>
+                      </div>
+                      <p className="text-4xl font-bold text-foreground">{projects.reduce((sum, p) => sum + (p.total_comments_count || 0), 0)}</p>
+                      <p className="text-xs text-orange-600 font-medium">
+                        {quickStats.unreadCommentsTotal} تعليق جديد
+                      </p>
+                    </div>
+                    <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-orange-500/10 rounded-full blur-2xl"></div>
                   </div>
-                  <p className="text-3xl font-bold">{new Set(projects.map(p => p.student_id)).size}</p>
+
+                  <div className="relative overflow-hidden p-5 rounded-2xl bg-gradient-to-br from-teal-500/10 via-teal-500/5 to-transparent border border-teal-500/20">
+                    <div className="relative z-10 space-y-2">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
+                        <Users className="h-4 w-4 text-teal-600" />
+                        <span>الطلاب النشطون</span>
+                      </div>
+                      <p className="text-4xl font-bold text-foreground">{new Set(projects.map(p => p.student_id)).size}</p>
+                      <p className="text-xs text-teal-600 font-medium">
+                        من أصل {new Set(projects.map(p => p.student_id)).size} طالب
+                      </p>
+                    </div>
+                    <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-teal-500/10 rounded-full blur-2xl"></div>
+                  </div>
                 </div>
               </div>
             </CardContent>
