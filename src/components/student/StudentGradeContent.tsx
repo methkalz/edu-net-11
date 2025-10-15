@@ -876,26 +876,6 @@ export const StudentGradeContent: React.FC<{ defaultTab?: string }> = ({ default
               <ComputerStructureLessons />
             ) : (
               <>
-                {/* Enhanced Development Notice for Grade 10 Mini Projects */}
-                {tab.id === 'mini_projects' && assignedGrade === '10' && (
-                  <div className="mb-8">
-                    <Alert className="bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200/60 shadow-sm">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
-                          <Settings className="h-5 w-5 text-amber-600" />
-                        </div>
-                        <div>
-                          <AlertDescription className="text-base font-medium text-amber-800">
-                            جارٍ أعمال تطويرية.. سيعمل قريباً
-                          </AlertDescription>
-                          <p className="text-sm text-amber-700 mt-1">
-                            نعمل على إضافة المزيد من المشاريع المثيرة قريباً
-                          </p>
-                        </div>
-                      </div>
-                    </Alert>
-                  </div>
-                )}
 
                 {/* Enhanced Development Notice for Grade 12 Final Projects */}
                 {tab.id === 'projects' && assignedGrade === '12' && (
