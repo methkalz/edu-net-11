@@ -465,39 +465,48 @@ const Grade12ProjectsManagement: React.FC = () => {
                 {filteredProjects.map((project) => (
                   <div
                     key={project.id}
-                    className="p-6 border border-border/50 rounded-2xl bg-card/30 hover:bg-card/60 hover:border-primary/30 transition-all duration-200 hover:shadow-lg"
+                    className="group relative overflow-hidden p-6 rounded-2xl bg-gradient-to-br from-card/50 via-card/30 to-transparent border border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-xl backdrop-blur-sm"
                   >
-                    <div className="flex items-start justify-between gap-4">
+                    {/* خلفية متحركة عند الـ hover */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    
+                    <div className="relative flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0 space-y-4">
                         {/* العنوان والحالة */}
                         <div className="flex items-start gap-3">
-                          <div className="w-12 h-12 rounded-xl bg-primary/5 flex items-center justify-center shrink-0 ring-1 ring-primary/10">
-                            {getStatusIcon(project.status)}
+                          <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${
+                            project.status === 'completed' ? 'from-emerald-500/15 via-emerald-500/10 to-transparent' :
+                            project.status === 'in_progress' ? 'from-blue-500/15 via-blue-500/10 to-transparent' :
+                            'from-purple-500/15 via-purple-500/10 to-transparent'
+                          } flex items-center justify-center shrink-0 ring-2 ring-primary/10 group-hover:ring-primary/20 transition-all duration-300`}>
+                            <div className="group-hover:scale-110 transition-transform duration-300">
+                              {getStatusIcon(project.status)}
+                            </div>
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <h3 className="font-bold text-lg text-foreground truncate">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h3 className="font-bold text-lg text-foreground truncate group-hover:text-primary transition-colors duration-200">
                                 {project.title}
                               </h3>
                               <Badge className={getStatusColor(project.status)}>
                                 {getStatusText(project.status)}
                               </Badge>
                             </div>
-                            <p className="text-sm text-muted-foreground line-clamp-2">
+                            <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
                               {project.description || 'لا يوجد وصف للمشروع'}
                             </p>
                           </div>
                         </div>
 
                         {/* معلومات الطالب والتاريخ */}
-                        <div className="flex items-center gap-4 text-sm flex-wrap">
-                          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted/50">
-                            <Users className="h-4 w-4 text-primary" />
-                            <span className="font-medium">{project.student_name}</span>
+                        <div className="flex items-center gap-3 text-sm flex-wrap">
+                          <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-transparent border border-blue-500/20">
+                            <Users className="h-4 w-4 text-blue-600" />
+                            <span className="font-semibold text-foreground">{project.student_name}</span>
                           </div>
-                          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted/50">
+                          <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-br from-muted/50 to-transparent border border-border/30">
                             <Calendar className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-muted-foreground">
+                            <span className="text-muted-foreground font-medium">
                               {formatDistanceToNow(new Date(project.updated_at), { 
                                 addSuffix: true, 
                                 locale: ar 
@@ -505,9 +514,9 @@ const Grade12ProjectsManagement: React.FC = () => {
                             </span>
                           </div>
                           {project.completed_tasks_count !== undefined && project.total_tasks_count !== undefined && (
-                            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/5">
+                            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20">
                               <BarChart3 className="h-4 w-4 text-primary" />
-                              <span className="text-primary font-semibold">
+                              <span className="text-primary font-bold">
                                 {project.completed_tasks_count} من {project.total_tasks_count} مهمة
                               </span>
                             </div>
@@ -516,35 +525,44 @@ const Grade12ProjectsManagement: React.FC = () => {
 
                         {/* المهمة الحالية */}
                         {project.current_task && (
-                          <div className="flex items-center gap-2 text-sm bg-blue-500/5 border border-blue-500/20 px-4 py-2.5 rounded-xl">
-                            <Clock className="h-4 w-4 text-blue-600" />
-                            <span className="text-muted-foreground font-medium">المهمة الحالية:</span>
-                            <span className="text-blue-600 font-semibold">{project.current_task}</span>
+                          <div className="flex items-start gap-2 text-sm bg-gradient-to-r from-blue-500/10 via-blue-500/5 to-transparent border border-blue-500/20 px-4 py-3 rounded-xl shadow-sm">
+                            <Clock className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <span className="text-muted-foreground font-medium">المهمة الحالية: </span>
+                              <span className="text-blue-600 font-bold">{project.current_task}</span>
+                            </div>
                           </div>
                         )}
 
                         {/* شريط التقدم */}
-                        <div className="space-y-2">
+                        <div className="space-y-3 p-4 rounded-xl bg-gradient-to-br from-muted/30 to-transparent border border-border/30">
                           <div className="flex items-center justify-between text-sm">
-                            <span className="text-muted-foreground font-medium">نسبة الإنجاز</span>
-                            <span className="text-foreground font-bold text-base">
+                            <div className="flex items-center gap-2">
+                              <TrendingUp className="h-4 w-4 text-primary" />
+                              <span className="text-muted-foreground font-semibold">نسبة الإنجاز</span>
+                            </div>
+                            <span className="text-foreground font-bold text-lg">
                               {project.completion_percentage}%
                             </span>
                           </div>
-                          <Progress 
-                            value={project.completion_percentage} 
-                            className="h-3"
-                          />
+                          <div className="relative">
+                            <Progress 
+                              value={project.completion_percentage} 
+                              className="h-3 bg-muted/50"
+                            />
+                            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-primary/20 to-transparent pointer-events-none"></div>
+                          </div>
                         </div>
 
                         {/* التعليقات */}
                         <div className="flex items-center gap-3 pt-2">
-                          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                            <MessageSquare className="h-4 w-4" />
-                            <span>{project.total_comments_count} تعليق</span>
+                          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/40 text-sm">
+                            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-muted-foreground font-medium">{project.total_comments_count} تعليق</span>
                           </div>
                           {project.unread_comments_count > 0 && (
-                            <Badge className="bg-red-500/10 text-red-600 border-red-500/20 hover:bg-red-500/20">
+                            <Badge className="bg-gradient-to-r from-orange-500/15 to-red-500/15 text-orange-600 border-orange-500/30 hover:from-orange-500/25 hover:to-red-500/25 font-bold shadow-sm">
+                              <MessageCircle className="h-3 w-3 ml-1" />
                               {project.unread_comments_count} جديد
                             </Badge>
                           )}
@@ -554,12 +572,12 @@ const Grade12ProjectsManagement: React.FC = () => {
                       {/* زر العرض */}
                       <Button
                         onClick={() => navigate(`/grade12-project-editor/${project.id}`)}
-                        className="gap-2 px-6"
+                        className="gap-2 px-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                         size="lg"
                       >
                         <Eye className="h-4 w-4" />
                         عرض المشروع
-                        <ArrowRight className="h-4 w-4" />
+                        <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-200" />
                       </Button>
                     </div>
                   </div>
