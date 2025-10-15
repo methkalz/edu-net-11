@@ -288,8 +288,8 @@ const Grade10ProjectEditor: React.FC = () => {
 
                             {project.due_date && (
                               <div className="p-4 rounded-lg bg-background/50 border border-border/30">
-                                <Label className="text-base font-semibold text-foreground block mb-2">الموعد النهائي</Label>
-                                <p className="text-muted-foreground">{format(new Date(project.due_date), 'dd MMMM yyyy', { locale: ar })}</p>
+                              <Label className="text-base font-semibold text-foreground block mb-2">الموعد النهائي</Label>
+                                <p className="text-muted-foreground">{format(new Date(project.due_date), 'dd/MM/yyyy', { locale: ar })}</p>
                               </div>
                             )}
 
@@ -332,12 +332,12 @@ const Grade10ProjectEditor: React.FC = () => {
                           <div className="space-y-6">
                             <div className="p-4 rounded-lg bg-background/50 border border-border/30">
                               <Label className="text-base font-semibold text-foreground block mb-2">تاريخ الإنشاء</Label>
-                              <p className="text-muted-foreground">{format(new Date(project.created_at), 'dd MMMM yyyy - hh:mm a', { locale: ar })}</p>
+                              <p className="text-muted-foreground">{format(new Date(project.created_at), 'dd/MM/yyyy - hh:mm a', { locale: ar })}</p>
                             </div>
 
                             <div className="p-4 rounded-lg bg-background/50 border border-border/30">
                               <Label className="text-base font-semibold text-foreground block mb-2">آخر تحديث</Label>
-                              <p className="text-muted-foreground">{format(new Date(project.updated_at), 'dd MMMM yyyy - hh:mm a', { locale: ar })}</p>
+                              <p className="text-muted-foreground">{format(new Date(project.updated_at), 'dd/MM/yyyy - hh:mm a', { locale: ar })}</p>
                             </div>
                           </div>
                         </div>
