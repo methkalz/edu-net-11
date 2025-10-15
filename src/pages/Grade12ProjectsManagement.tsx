@@ -33,9 +33,22 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Ba
 
 const Grade12ProjectsManagement: React.FC = () => {
   const navigate = useNavigate();
-  const { projects, quickStats, loading, grade12ProjectsCount } = useTeacherProjects();
+  const { projects: allProjects, loading } = useTeacherProjects();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  
+  // فلترة مشاريع الصف 12 فقط
+  const projects = allProjects.filter(p => p.grade === 12);
+  const grade12ProjectsCount = projects.length;
+  
+  // حساب الإحصائيات السريعة لمشاريع الصف 12 فقط
+  const quickStats = {
+    completedProjects: projects.filter(p => p.status === 'completed').length,
+    unreadCommentsTotal: projects.reduce((sum, p) => sum + (p.unread_comments_count || 0), 0),
+    averageCompletion: projects.length > 0 
+      ? Math.round(projects.reduce((sum, p) => sum + (p.completion_percentage || 0), 0) / projects.length)
+      : 0
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
