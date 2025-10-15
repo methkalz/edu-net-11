@@ -249,8 +249,8 @@ export const StudentGradeContent: React.FC<{ defaultTab?: string }> = ({ default
       const studentName = profile?.full_name || 'الطالب';
       const projectTitle = `مشروع ${studentName} المصغر`;
 
-      // المرحلة 2: إنشاء مستند Google
-      setCreationMessage('يتم إنشاء مستند Google الخاص بك..');
+      // المرحلة 2: إنشاء ميني برويكت
+      setCreationMessage('يتم إنشاء ميني برويكت الخاص بك..');
       setMessageKey(2);
       await new Promise(resolve => setTimeout(resolve, 1800));
       
