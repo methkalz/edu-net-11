@@ -271,9 +271,28 @@ export const StudentGrade12Content: React.FC<{ defaultTab?: string }> = ({ defau
         </div>
       )}
 
-      {/* Content based on mainTab state */}
-      {mainTab === 'content' && (
-        <div className="w-full">
+      {/* Main Tabs */}
+      <Tabs value={mainTab} onValueChange={setMainTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-4 mb-8">
+          <TabsTrigger value="content" className="flex items-center gap-2">
+            <BookOpen className="h-4 w-4" />
+            المحتوى التعليمي
+          </TabsTrigger>
+          <TabsTrigger value="project" className="flex items-center gap-2">
+            <Trophy className="h-4 w-4" />
+            المشروع النهائي
+          </TabsTrigger>
+          <TabsTrigger value="exam-prep" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            تحضيرات امتحان المشروع
+          </TabsTrigger>
+          <TabsTrigger value="exams" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            الامتحانات
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="content">
           <Tabs value={contentTab} onValueChange={setContentTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-8">
               <TabsTrigger value="videos" className="flex items-center gap-2">
@@ -378,12 +397,9 @@ export const StudentGrade12Content: React.FC<{ defaultTab?: string }> = ({ defau
                 </div>}
             </TabsContent>
           </Tabs>
-        </div>
-      )}
+        </TabsContent>
 
-      {/* Project Tab */}
-      {mainTab === 'project' && (
-        <div className="w-full">
+        <TabsContent value="project">
           {projects.length === 0 ? <div className="text-center py-16">
               <div className="mx-auto mb-6">
                 <LottieLoader 
@@ -475,12 +491,27 @@ export const StudentGrade12Content: React.FC<{ defaultTab?: string }> = ({ defau
                 })}
               </div>
             </div>}
-        </div>
-      )}
+        </TabsContent>
 
-      {/* Exams Tab */}
-      {mainTab === 'exams' && (
-        <div className="w-full">
+        <TabsContent value="exam-prep">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5 text-blue-600" />
+                تحضيرات امتحان المشروع
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-12">
+                <FileText className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                <h3 className="text-lg font-semibold mb-2">قريباً</h3>
+                <p className="text-muted-foreground">سيتم إضافة محتوى تحضيرات امتحان المشروع قريباً</p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="exams">
           <div className="text-center py-16">
             <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center">
               <Trophy className="w-12 h-12 text-blue-600" />
@@ -490,8 +521,8 @@ export const StudentGrade12Content: React.FC<{ defaultTab?: string }> = ({ defau
               سيتم إضافة الامتحانات قريباً
             </p>
           </div>
-        </div>
-      )}
+        </TabsContent>
+      </Tabs>
 
       {/* Project Form Modal */}
       {showProjectForm && (
