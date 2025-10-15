@@ -386,8 +386,7 @@ const Grade11Content = () => {
 
         <TabsContent value="videos" className="space-y-6">
           <div className="space-y-4">
-            {canManageContent && <div className="flex justify-between items-center">
-                
+            {canManageContent && <div className="flex justify-center items-center py-8">
                 <Button onClick={handleAddVideo} className="flex items-center gap-2">
                   <Plus className="h-4 w-4" />
                   إضافة فيديو جديد
