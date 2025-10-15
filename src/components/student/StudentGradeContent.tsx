@@ -255,7 +255,7 @@ export const StudentGradeContent: React.FC<{ defaultTab?: string }> = ({ default
       await new Promise(resolve => setTimeout(resolve, 1800));
       
       // إنشاء المشروع مع Google Doc
-      await createProject({
+      const result = await createProject({
         title: projectTitle,
         description: 'مشروعي المصغر للصف العاشر',
         due_date: '',
@@ -273,17 +273,20 @@ export const StudentGradeContent: React.FC<{ defaultTab?: string }> = ({ default
       await new Promise(resolve => setTimeout(resolve, 1500));
       
       setShowCreationOverlay(false);
+      
+      // الانتقال إلى صفحة المشروع
+      if (result?.id) {
+        navigate(`/grade10-project-editor/${result.id}`);
+      }
     } catch (error: any) {
       setShowCreationOverlay(false);
       toast.error(error.message || 'فشل في إنشاء المشروع');
     }
   };
 
-  // Handle mini project click
+  // Handle mini project click - navigate to full page editor
   const handleMiniProjectClick = async (project: any) => {
-    setCurrentProject(project);
-    await fetchProject(project.id);
-    setIsProjectEditorOpen(true);
+    navigate(`/grade10-project-editor/${project.id}`);
   };
 
   // Quick create final project with overlay animation for Grade 12
