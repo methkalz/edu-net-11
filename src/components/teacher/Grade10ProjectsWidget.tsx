@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,22 +22,65 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { useGrade10Projects } from '@/hooks/useGrade10Projects';
+import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
 import { ar } from 'date-fns/locale';
 
 const Grade10ProjectsWidget: React.FC = () => {
   const navigate = useNavigate();
   const { projects, loading, fetchProjects } = useGrade10Projects();
+  const [projectsWithProgress, setProjectsWithProgress] = useState<any[]>([]);
+
+  // جلب المهام وحساب التقدم لكل مشروع
+  useEffect(() => {
+    const fetchTasksAndCalculateProgress = async () => {
+      if (projects.length === 0) return;
+
+      const projectsData = await Promise.all(
+        projects.map(async (project) => {
+          try {
+            const { data: tasks, error } = await supabase
+              .from('grade10_project_tasks')
+              .select('*')
+              .eq('project_id', project.id);
+
+            if (error) throw error;
+
+            const completedTasks = tasks?.filter(task => task.is_completed).length || 0;
+            const totalTasks = tasks?.length || 0;
+            const calculatedProgress = totalTasks > 0 
+              ? Math.round((completedTasks / totalTasks) * 100) 
+              : 0;
+
+            return {
+              ...project,
+              calculated_progress: calculatedProgress
+            };
+          } catch (error) {
+            console.error('Error fetching tasks for project:', project.id, error);
+            return {
+              ...project,
+              calculated_progress: 0
+            };
+          }
+        })
+      );
+
+      setProjectsWithProgress(projectsData);
+    };
+
+    fetchTasksAndCalculateProgress();
+  }, [projects]);
 
   // Calculate quick stats with memoization for performance
   const quickStats = useMemo(() => ({
-    totalProjects: projects.length,
-    completedProjects: projects.filter(p => p.status === 'completed').length,
-    inProgressProjects: projects.filter(p => p.status === 'in_progress').length,
-    averageCompletion: projects.length > 0 
-      ? Math.round(projects.reduce((acc, p) => acc + (p.progress_percentage || 0), 0) / projects.length)
+    totalProjects: projectsWithProgress.length,
+    completedProjects: projectsWithProgress.filter(p => p.status === 'completed').length,
+    inProgressProjects: projectsWithProgress.filter(p => p.status === 'in_progress').length,
+    averageCompletion: projectsWithProgress.length > 0 
+      ? Math.round(projectsWithProgress.reduce((acc, p) => acc + (p.calculated_progress || 0), 0) / projectsWithProgress.length)
       : 0
-  }), [projects]);
+  }), [projectsWithProgress]);
 
   const handleRefresh = () => {
     fetchProjects();
@@ -196,7 +239,7 @@ const Grade10ProjectsWidget: React.FC = () => {
             آخر المشاريع المحدّثة
           </h4>
           
-          {projects.length === 0 ? (
+          {projectsWithProgress.length === 0 ? (
             <div className="text-center py-16">
               <div className="w-20 h-20 mx-auto mb-5 rounded-3xl bg-gradient-to-br from-primary/5 to-primary/10 flex items-center justify-center">
                 <Zap className="h-8 w-8 text-primary/40" />
@@ -208,7 +251,7 @@ const Grade10ProjectsWidget: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-3">
-              {projects.slice(0, 5).map((project) => (
+              {projectsWithProgress.slice(0, 5).map((project) => (
                 <div
                   key={project.id}
                   className="p-5 border-2 border-divider/50 rounded-2xl hover:bg-surface-hover hover:border-primary/30 transition-all duration-200"
@@ -247,11 +290,11 @@ const Grade10ProjectsWidget: React.FC = () => {
                       {/* شريط التقدم */}
                       <div className="flex items-center gap-3 mb-3">
                         <Progress 
-                          value={project.progress_percentage} 
+                          value={project.calculated_progress || 0} 
                           className="flex-1 h-2 bg-surface-light"
                         />
                         <span className="text-xs text-text-soft font-semibold min-w-[35px]">
-                          {project.progress_percentage}%
+                          {project.calculated_progress || 0}%
                         </span>
                       </div>
 
@@ -286,14 +329,14 @@ const Grade10ProjectsWidget: React.FC = () => {
         </div>
 
         {/* رابط عرض المزيد */}
-        {projects.length > 5 && (
+        {projectsWithProgress.length > 5 && (
           <div className="text-center pt-4">
             <Button 
               variant="link" 
               onClick={() => navigate('/grade10-management')}
               className="text-primary"
             >
-              عرض جميع المشاريع ({projects.length})
+              عرض جميع المشاريع ({projectsWithProgress.length})
             </Button>
           </div>
         )}
