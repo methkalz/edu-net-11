@@ -279,6 +279,62 @@ export const StudentGradeContent: React.FC<{ defaultTab?: string }> = ({ default
     setIsProjectEditorOpen(true);
   };
 
+  // Quick create final project with overlay animation for Grade 12
+  const handleQuickCreateFinalProject = async () => {
+    try {
+      setShowCreationOverlay(true);
+      setMessageKey(0);
+      
+      // المرحلة 1: جارٍ إنشاء المشروع
+      setCreationMessage('جارٍ إنشاء مشروعك النهائي..');
+      setMessageKey(1);
+      await new Promise(resolve => setTimeout(resolve, 1800));
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setShowCreationOverlay(false);
+        toast.error('يجب تسجيل الدخول أولاً');
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('user_id', user.id)
+        .single();
+
+      const studentName = profile?.full_name || 'الطالب';
+      const projectTitle = `مشروع ${studentName} النهائي`;
+
+      // المرحلة 2: إنشاء مستند Google
+      setCreationMessage('يتم إنشاء مستند Google الخاص بك..');
+      setMessageKey(2);
+      await new Promise(resolve => setTimeout(resolve, 1800));
+      
+      // إنشاء المشروع مع Google Doc
+      await createFinalProject({
+        title: projectTitle,
+        description: 'مشروعي النهائي للصف الثاني عشر',
+        due_date: ''
+      });
+      
+      // المرحلة 3: اللمسات النهائية
+      setCreationMessage('اللمسات النهائية..');
+      setMessageKey(3);
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // المرحلة 4: جاهز
+      setCreationMessage('جاهز.. يمكنك أن تبدأ الآن');
+      setMessageKey(4);
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      setShowCreationOverlay(false);
+    } catch (error: any) {
+      setShowCreationOverlay(false);
+      toast.error(error.message || 'فشل في إنشاء المشروع النهائي');
+    }
+  };
+
   // Handle final project creation for Grade 12
   const handleCreateFinalProject = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -960,28 +1016,31 @@ export const StudentGradeContent: React.FC<{ defaultTab?: string }> = ({ default
                 
                 {tab.items.length === 0 ? (
                   <div className="flex items-center justify-center min-h-[400px]">
-                    <Card className="text-center p-16 bg-gradient-to-br from-background/50 to-muted/20 border-border/40 shadow-lg backdrop-blur-sm max-w-md mx-auto">
-                      <div className="space-y-6">
-                        {/* Enhanced Icon Container */}
-                        <div className="w-20 h-20 mx-auto bg-gradient-to-br from-muted/30 to-muted/10 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-border/20">
-                          <tab.icon className="w-10 h-10 text-muted-foreground/70" />
+                    <Card className="border-none shadow-xl bg-gradient-to-br from-background/50 to-background backdrop-blur-sm">
+                      <CardContent className="flex flex-col items-center justify-center py-20 px-6">
+                        {/* Icon with gradient background */}
+                        <div className="relative mb-8">
+                          <div className={`absolute inset-0 bg-gradient-to-br ${tab.color.replace('from-', 'from-').replace('to-', 'to-')}/20 rounded-3xl blur-2xl`} />
+                          <div className={`relative bg-gradient-to-br ${tab.color} p-6 rounded-3xl shadow-2xl`}>
+                            <tab.icon className="h-16 w-16 text-white" strokeWidth={1.5} />
+                          </div>
                         </div>
                         
                         {/* Title and Description */}
-                        <div className="space-y-3">
-                          <h3 className="text-xl font-semibold text-foreground">
+                        <div className="text-center space-y-3 mb-8 max-w-md">
+                          <h3 className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
                             {tab.id === 'mini_projects' && assignedGrade === '10' 
-                              ? 'لا يوجد مشاريع مصغرة' 
+                              ? 'لم تبدأ بمشروعك المصغر بعد' 
                               : tab.id === 'projects' && assignedGrade === '12'
-                              ? 'لا يوجد مشاريع نهائية'
+                              ? 'لم تبدأ بمشروعك النهائي بعد'
                               : `لا يوجد ${tab.label} متاح`
                             }
                           </h3>
-                          <p className="text-muted-foreground leading-relaxed">
+                          <p className="text-muted-foreground leading-relaxed text-base">
                             {tab.id === 'mini_projects' && assignedGrade === '10'
-                              ? 'ابدأ رحلتك التعليمية بإنشاء مشروعك الأول'
+                              ? 'ابدأ المشروع النصي الآن وتابع المهام وتاريخ التسليم'
                               : tab.id === 'projects' && assignedGrade === '12'
-                              ? 'أنشئ مشروعك النهائي وأظهر مهاراتك المتقدمة'
+                              ? 'أنشئ المشروع النصي الآن وتابع المهام وتاريخ التسليم'
                               : `سيتم إضافة ${tab.label} قريباً للصف ${assignedGrade}`
                             }
                           </p>
@@ -990,25 +1049,25 @@ export const StudentGradeContent: React.FC<{ defaultTab?: string }> = ({ default
                         {/* Action Buttons */}
                         {tab.id === 'mini_projects' && assignedGrade === '10' && (
                           <Button 
-                            className="gap-2 px-6 py-3 text-base font-medium shadow-md hover:shadow-lg transition-all duration-300"
-                            onClick={() => setIsCreateProjectDialogOpen(true)}
+                            className="gap-2 px-8 py-6 text-lg font-medium shadow-xl hover:shadow-2xl transition-all duration-300 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 border-0"
+                            onClick={handleQuickCreateProject}
                             size="lg"
                           >
-                            <Plus className="h-5 w-5" />
-                            إنشاء مشروع جديد
+                            <Plus className="h-6 w-6" />
+                            ابدأ الآن
                           </Button>
                         )}
                         {tab.id === 'projects' && assignedGrade === '12' && (
                           <Button 
-                            className="gap-2 px-6 py-3 text-base font-medium shadow-md hover:shadow-lg transition-all duration-300"
-                            onClick={() => setIsCreateFinalProjectDialogOpen(true)}
+                            className="gap-2 px-8 py-6 text-lg font-medium shadow-xl hover:shadow-2xl transition-all duration-300 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 border-0"
+                            onClick={handleQuickCreateFinalProject}
                             size="lg"
                           >
-                            <Plus className="h-5 w-5" />
-                            إنشاء مشروع نهائي
+                            <Plus className="h-6 w-6" />
+                            ابدأ الآن
                           </Button>
                         )}
-                      </div>
+                      </CardContent>
                     </Card>
                   </div>
                 ) : (

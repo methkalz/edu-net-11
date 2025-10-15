@@ -10,7 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Plus, FileText, CheckSquare, Calendar, Edit3, Trash2, BookOpen, CheckCircle, Clock, Target, User, Trophy } from 'lucide-react';
+import { Plus, FileText, CheckSquare, Calendar, Edit3, Trash2, BookOpen, CheckCircle, Clock, Target, User, Trophy, FolderOpen } from 'lucide-react';
 import { useGrade10MiniProjects } from '@/hooks/useGrade10MiniProjects';
 import { useAuth } from '@/hooks/useAuth';
 import { format } from 'date-fns';
@@ -380,22 +380,49 @@ const Grade10MiniProjects: React.FC = () => {
 
       {/* Projects List */}
       {projects.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">
-              {isTeacher ? 'لا توجد مشاريع حتى الآن' : 'لم تبدأ مشروعك المصغر بعد'}
-            </h3>
-            <p className="text-muted-foreground text-center mb-4">
-              {isTeacher 
-                ? 'ابدأ بإضافة المشاريع المصغرة للطلاب'
-                : 'ابدأ الآن في العمل على مشروعك المصغر'
-              }
-            </p>
-            <Button onClick={() => setIsCreateDialogOpen(true)} className="gap-2">
-              <Plus className="h-4 w-4" />
-              {isTeacher ? 'إضافة مشروع جديد' : 'بدء مشروعي المصغر'}
-            </Button>
+        <Card className="border-none shadow-xl bg-gradient-to-br from-background/50 to-background backdrop-blur-sm">
+          <CardContent className="flex flex-col items-center justify-center py-20 px-6">
+            {/* Icon with gradient background */}
+            <div className="relative mb-8">
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-500/20 to-orange-500/20 rounded-3xl blur-2xl" />
+              <div className="relative bg-gradient-to-br from-amber-500 to-orange-500 p-6 rounded-3xl shadow-2xl">
+                <FolderOpen className="h-16 w-16 text-white" strokeWidth={1.5} />
+              </div>
+            </div>
+            
+            {/* Title and Description */}
+            <div className="text-center space-y-3 mb-8 max-w-md">
+              <h3 className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                {isTeacher ? 'لا توجد مشاريع حتى الآن' : 'لم تبدأ بمشروعك المصغر بعد'}
+              </h3>
+              <p className="text-muted-foreground leading-relaxed text-base">
+                {isTeacher 
+                  ? 'ابدأ بإضافة المشاريع المصغرة للطلاب وتابع تقدمهم'
+                  : 'ابدأ المشروع النصي الآن وتابع المهام وتاريخ التسليم'
+                }
+              </p>
+            </div>
+            
+            {/* Action Button */}
+            {isStudent ? (
+              <Button 
+                onClick={handleQuickCreateProject}
+                size="lg"
+                className="gap-2 px-8 py-6 text-lg font-medium shadow-xl hover:shadow-2xl transition-all duration-300 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 border-0"
+              >
+                <Plus className="h-6 w-6" />
+                ابدأ الآن
+              </Button>
+            ) : (
+              <Button 
+                onClick={() => setIsCreateDialogOpen(true)}
+                size="lg"
+                className="gap-2 px-8 py-6 text-lg font-medium shadow-xl hover:shadow-2xl transition-all duration-300"
+              >
+                <Plus className="h-6 w-6" />
+                إضافة مشروع جديد
+              </Button>
+            )}
           </CardContent>
         </Card>
       ) : (
