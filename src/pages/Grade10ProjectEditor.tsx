@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { useGrade10MiniProjects } from '@/hooks/useGrade10MiniProjects';
 import { supabase } from '@/integrations/supabase/client';
-import ProjectTasksManager from '@/components/content/ProjectTasksManager';
+import Grade10ProjectTasksManager from '@/components/content/Grade10ProjectTasksManager';
 import { ProjectCommentsSection } from '@/components/content/ProjectCommentsSection';
 import BackButton from '@/components/shared/BackButton';
 
@@ -254,7 +254,7 @@ const Grade10ProjectEditor: React.FC = () => {
                   </p>
                 </CardHeader>
                 <CardContent className="pt-2">
-                  <ProjectTasksManager 
+                  <Grade10ProjectTasksManager 
                     projectId={projectId!}
                     isTeacher={isTeacher}
                     isStudent={isStudent}
