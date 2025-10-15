@@ -7,6 +7,7 @@ import { Video, Play, Edit, Trash2, Search, Plus, ExternalLink } from 'lucide-re
 import { formatDistanceToNow } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { useContentPermissions } from '@/hooks/useContentPermissions';
 
 interface Video {
   id: string;
@@ -37,6 +38,7 @@ const Grade11VideoLibrary: React.FC<Grade11VideoLibraryProps> = ({
   onDeleteVideo
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const { isManager } = useContentPermissions();
 
   const filteredVideos = videos.filter(video => {
     const matchesSearch = video.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -239,7 +241,35 @@ const Grade11VideoLibrary: React.FC<Grade11VideoLibraryProps> = ({
                     <ExternalLink className="h-3 w-3 mr-1" />
                     مشاهدة
                   </Button>
-                  {/* أزرار التعديل والحذف - يُظهر فقط للسوبر آدمن في مكون آخر */}
+                  {isManager && (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            هل أنت متأكد من حذف هذا الفيديو؟ سيتم حذفه نهائياً ولن يظهر لأي مستخدم.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => onDeleteVideo(video.id)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            حذف
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
                 </div>
               </CardContent>
             </Card>
