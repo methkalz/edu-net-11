@@ -242,152 +242,122 @@ const Grade12ProjectsManagement: React.FC = () => {
             </CardContent>
           </Card>
 
-          {/* إحصائيات إضافية */}
+          {/* نشاطات المشاريع الأخيرة - Timeline */}
           <Card className="lg:col-span-2 border-0 bg-card/50 backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Activity className="h-5 w-5 text-primary" />
-                نظرة عامة على الأداء
+                آخر النشاطات على المشاريع
               </CardTitle>
+              <CardDescription>
+                Timeline للتحديثات والتعديلات الأخيرة
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-6">
-                {/* رسم بياني شريطي لحالات المشاريع */}
-                <div className="space-y-4">
-                  <h4 className="text-sm font-semibold text-muted-foreground">توزيع حالات المشاريع</h4>
-                  <ResponsiveContainer width="100%" height={200}>
-                    <BarChart
-                      data={[
-                        { 
-                          name: 'قيد التنفيذ', 
-                          value: projects.filter(p => p.status === 'in_progress').length,
-                          fill: 'url(#colorInProgress)'
-                        },
-                        { 
-                          name: 'مكتملة', 
-                          value: projects.filter(p => p.status === 'completed').length,
-                          fill: 'url(#colorCompleted)'
-                        },
-                        { 
-                          name: 'مسودات', 
-                          value: projects.filter(p => p.status === 'draft').length,
-                          fill: 'url(#colorDraft)'
-                        },
-                      ]}
-                      margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
-                    >
-                      <defs>
-                        <linearGradient id="colorInProgress" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.9}/>
-                          <stop offset="100%" stopColor="#2563eb" stopOpacity={0.7}/>
-                        </linearGradient>
-                        <linearGradient id="colorCompleted" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#10b981" stopOpacity={0.9}/>
-                          <stop offset="100%" stopColor="#059669" stopOpacity={0.7}/>
-                        </linearGradient>
-                        <linearGradient id="colorDraft" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.9}/>
-                          <stop offset="100%" stopColor="#7c3aed" stopOpacity={0.7}/>
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
-                      <XAxis 
-                        dataKey="name" 
-                        stroke="hsl(var(--muted-foreground))"
-                        style={{ fontSize: '12px' }}
-                      />
-                      <YAxis 
-                        stroke="hsl(var(--muted-foreground))"
-                        style={{ fontSize: '12px' }}
-                      />
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: 'hsl(var(--card))', 
-                          border: '1px solid hsl(var(--border))',
-                          borderRadius: '8px',
-                          fontSize: '12px'
-                        }}
-                        cursor={{ fill: 'hsl(var(--muted))', opacity: 0.1 }}
-                      />
-                      <Bar 
-                        dataKey="value" 
-                        radius={[8, 8, 0, 0]}
-                        maxBarSize={80}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
+              <div className="relative">
+                {/* خط الـ Timeline */}
+                <div className="absolute right-[19px] top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary/50 via-primary/30 to-transparent"></div>
+                
+                <div className="space-y-6">
+                  {projects
+                    .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+                    .slice(0, 6)
+                    .map((project, index) => {
+                      const isRecent = new Date(project.updated_at).getTime() > Date.now() - 24 * 60 * 60 * 1000;
+                      const statusColors = {
+                        completed: 'from-emerald-500/20 to-emerald-500/5',
+                        in_progress: 'from-blue-500/20 to-blue-500/5',
+                        draft: 'from-purple-500/20 to-purple-500/5'
+                      };
+                      
+                      return (
+                        <div key={project.id} className="relative flex items-start gap-4 group">
+                          {/* نقطة Timeline */}
+                          <div className={`relative z-10 flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br ${statusColors[project.status as keyof typeof statusColors] || 'from-gray-500/20 to-gray-500/5'} flex items-center justify-center border-2 border-background shadow-lg ring-2 ring-primary/20`}>
+                            {getStatusIcon(project.status)}
+                            {isRecent && (
+                              <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full border-2 border-background animate-pulse"></div>
+                            )}
+                          </div>
+                          
+                          {/* محتوى النشاط */}
+                          <div className="flex-1 min-w-0 pb-6">
+                            <div className={`p-4 rounded-2xl bg-gradient-to-br ${statusColors[project.status as keyof typeof statusColors] || 'from-gray-500/20 to-gray-500/5'} border border-border/50 hover:border-primary/30 transition-all duration-200 group-hover:shadow-md`}>
+                              <div className="flex items-start justify-between gap-3 mb-3">
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="font-bold text-base text-foreground mb-1 truncate">
+                                    {project.title}
+                                  </h4>
+                                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <Users className="h-3.5 w-3.5" />
+                                    <span className="font-medium">{project.student_name}</span>
+                                    <span className="text-xs">•</span>
+                                    <Badge variant="outline" className={getStatusColor(project.status)}>
+                                      {getStatusText(project.status)}
+                                    </Badge>
+                                  </div>
+                                </div>
+                                <div className="text-xs text-muted-foreground whitespace-nowrap">
+                                  <div className="flex items-center gap-1">
+                                    <Clock className="h-3 w-3" />
+                                    {formatDistanceToNow(new Date(project.updated_at), { 
+                                      addSuffix: true, 
+                                      locale: ar 
+                                    })}
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              {/* تفاصيل التقدم */}
+                              <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border/30">
+                                <div className="flex items-center gap-2 text-xs">
+                                  <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
+                                    <div 
+                                      className="h-full bg-gradient-to-r from-primary to-primary/70 rounded-full transition-all duration-300"
+                                      style={{ width: `${project.completion_percentage}%` }}
+                                    />
+                                  </div>
+                                  <span className="font-bold text-primary">{project.completion_percentage}%</span>
+                                </div>
+                                
+                                {project.completed_tasks_count !== undefined && project.total_tasks_count !== undefined && (
+                                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                    <BarChart3 className="h-3.5 w-3.5" />
+                                    <span>{project.completed_tasks_count}/{project.total_tasks_count} مهمة</span>
+                                  </div>
+                                )}
+                                
+                                {project.unread_comments_count > 0 && (
+                                  <div className="flex items-center gap-1.5 text-xs">
+                                    <MessageCircle className="h-3.5 w-3.5 text-orange-600" />
+                                    <span className="text-orange-600 font-semibold">
+                                      {project.unread_comments_count} جديد
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                              
+                              {/* المهمة الحالية */}
+                              {project.current_task && (
+                                <div className="mt-3 flex items-center gap-2 text-xs bg-primary/5 px-3 py-2 rounded-lg">
+                                  <Target className="h-3.5 w-3.5 text-primary" />
+                                  <span className="text-muted-foreground">المهمة الحالية:</span>
+                                  <span className="text-primary font-semibold">{project.current_task}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                 </div>
-
-                {/* مؤشرات الأداء الرئيسية */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="relative overflow-hidden p-5 rounded-2xl bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-transparent border border-blue-500/20">
-                    <div className="relative z-10 space-y-2">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
-                        <Clock className="h-4 w-4 text-blue-600" />
-                        <span>قيد التنفيذ</span>
-                      </div>
-                      <p className="text-4xl font-bold text-foreground">{projects.filter(p => p.status === 'in_progress').length}</p>
-                      <div className="flex items-center gap-2">
-                        <Progress 
-                          value={(projects.filter(p => p.status === 'in_progress').length / grade12ProjectsCount) * 100} 
-                          className="h-2 flex-1"
-                        />
-                        <span className="text-xs font-semibold text-blue-600">
-                          {((projects.filter(p => p.status === 'in_progress').length / grade12ProjectsCount) * 100).toFixed(0)}%
-                        </span>
-                      </div>
-                    </div>
-                    <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl"></div>
+                
+                {projects.length === 0 && (
+                  <div className="text-center py-12">
+                    <Activity className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3" />
+                    <p className="text-muted-foreground">لا توجد نشاطات حديثة</p>
                   </div>
-
-                  <div className="relative overflow-hidden p-5 rounded-2xl bg-gradient-to-br from-purple-500/10 via-purple-500/5 to-transparent border border-purple-500/20">
-                    <div className="relative z-10 space-y-2">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
-                        <FileText className="h-4 w-4 text-purple-600" />
-                        <span>مسودات</span>
-                      </div>
-                      <p className="text-4xl font-bold text-foreground">{projects.filter(p => p.status === 'draft').length}</p>
-                      <div className="flex items-center gap-2">
-                        <Progress 
-                          value={(projects.filter(p => p.status === 'draft').length / grade12ProjectsCount) * 100} 
-                          className="h-2 flex-1"
-                        />
-                        <span className="text-xs font-semibold text-purple-600">
-                          {((projects.filter(p => p.status === 'draft').length / grade12ProjectsCount) * 100).toFixed(0)}%
-                        </span>
-                      </div>
-                    </div>
-                    <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl"></div>
-                  </div>
-
-                  <div className="relative overflow-hidden p-5 rounded-2xl bg-gradient-to-br from-orange-500/10 via-orange-500/5 to-transparent border border-orange-500/20">
-                    <div className="relative z-10 space-y-2">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
-                        <MessageSquare className="h-4 w-4 text-orange-600" />
-                        <span>إجمالي التعليقات</span>
-                      </div>
-                      <p className="text-4xl font-bold text-foreground">{projects.reduce((sum, p) => sum + (p.total_comments_count || 0), 0)}</p>
-                      <p className="text-xs text-orange-600 font-medium">
-                        {quickStats.unreadCommentsTotal} تعليق جديد
-                      </p>
-                    </div>
-                    <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-orange-500/10 rounded-full blur-2xl"></div>
-                  </div>
-
-                  <div className="relative overflow-hidden p-5 rounded-2xl bg-gradient-to-br from-teal-500/10 via-teal-500/5 to-transparent border border-teal-500/20">
-                    <div className="relative z-10 space-y-2">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
-                        <Users className="h-4 w-4 text-teal-600" />
-                        <span>الطلاب النشطون</span>
-                      </div>
-                      <p className="text-4xl font-bold text-foreground">{new Set(projects.map(p => p.student_id)).size}</p>
-                      <p className="text-xs text-teal-600 font-medium">
-                        من أصل {new Set(projects.map(p => p.student_id)).size} طالب
-                      </p>
-                    </div>
-                    <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-teal-500/10 rounded-full blur-2xl"></div>
-                  </div>
-                </div>
+                )}
               </div>
             </CardContent>
           </Card>
