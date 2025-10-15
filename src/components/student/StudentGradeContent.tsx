@@ -1009,7 +1009,7 @@ export const StudentGradeContent: React.FC<{ defaultTab?: string }> = ({ default
                       </h3>
                       <p className="text-muted-foreground text-lg mb-6 text-center">
                         {tab.id === 'mini_projects' && assignedGrade === '10'
-                          ? 'انشئ المشروع النصي الآن واتّبع المهام وتابع التعليقات'
+                          ? 'انشئ ميني برويكت الآن واتّبع المهام وموعد التسليم'
                           : tab.id === 'projects' && assignedGrade === '12'
                           ? 'انشئ المشروع النهائي الآن واتّبع المهام وتابع التعليقات'
                           : `سيتم إضافة ${tab.label} قريباً للصف ${assignedGrade}`
