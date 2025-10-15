@@ -176,7 +176,7 @@ const Grade12ProjectEditor: React.FC = () => {
               <div className="flex items-center gap-4">
                 <BackButton />
                 <div className="flex-1">
-                  <h1 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
+                  <h1 className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
                     {project?.title || 'جاري التحميل...'}
                   </h1>
                   <div className="flex flex-wrap items-center gap-6 mt-3 text-sm text-muted-foreground">
