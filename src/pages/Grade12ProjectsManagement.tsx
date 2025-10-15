@@ -25,7 +25,7 @@ import {
   Activity
 } from 'lucide-react';
 import { useTeacherProjects } from '@/hooks/useTeacherProjects';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import ModernHeader from '@/components/shared/ModernHeader';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Area, AreaChart } from 'recharts';
@@ -270,6 +270,24 @@ const Grade12ProjectsManagement: React.FC = () => {
                         draft: 'from-purple-500/20 to-purple-500/5'
                       };
                       
+                      // إنشاء وصف تفصيلي للنشاط
+                      const getActivityDescription = () => {
+                        if (project.status === 'completed') {
+                          return `قام الطالب ${project.student_name} بإكمال المشروع بنجاح بنسبة إنجاز ${project.completion_percentage}%`;
+                        } else if (project.completed_tasks_count !== undefined && project.total_tasks_count !== undefined) {
+                          if (project.completed_tasks_count === 0) {
+                            return `بدأ الطالب ${project.student_name} العمل على المشروع`;
+                          } else if (project.current_task) {
+                            return `قام الطالب ${project.student_name} بإكمال ${project.completed_tasks_count} من ${project.total_tasks_count} مهمة، ويعمل حالياً على: ${project.current_task}`;
+                          } else {
+                            return `حدّث الطالب ${project.student_name} المشروع - تم إنجاز ${project.completed_tasks_count} من ${project.total_tasks_count} مهمة`;
+                          }
+                        } else if (project.status === 'draft') {
+                          return `قام الطالب ${project.student_name} بإنشاء مسودة جديدة للمشروع`;
+                        }
+                        return `حدّث الطالب ${project.student_name} المشروع`;
+                      };
+                      
                       return (
                         <div key={project.id} className="relative flex items-start gap-4 group">
                           {/* نقطة Timeline */}
@@ -283,35 +301,45 @@ const Grade12ProjectsManagement: React.FC = () => {
                           {/* محتوى النشاط */}
                           <div className="flex-1 min-w-0 pb-6">
                             <div className={`p-4 rounded-2xl bg-gradient-to-br ${statusColors[project.status as keyof typeof statusColors] || 'from-gray-500/20 to-gray-500/5'} border border-border/50 hover:border-primary/30 transition-all duration-200 group-hover:shadow-md`}>
-                              <div className="flex items-start justify-between gap-3 mb-3">
-                                <div className="flex-1 min-w-0">
-                                  <h4 className="font-bold text-base text-foreground mb-1 truncate">
-                                    {project.title}
-                                  </h4>
-                                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                    <Users className="h-3.5 w-3.5" />
-                                    <span className="font-medium">{project.student_name}</span>
-                                    <span className="text-xs">•</span>
-                                    <Badge variant="outline" className={getStatusColor(project.status)}>
-                                      {getStatusText(project.status)}
-                                    </Badge>
-                                  </div>
-                                </div>
-                                <div className="text-xs text-muted-foreground whitespace-nowrap">
-                                  <div className="flex items-center gap-1">
-                                    <Clock className="h-3 w-3" />
-                                    {formatDistanceToNow(new Date(project.updated_at), { 
-                                      addSuffix: true, 
-                                      locale: ar 
-                                    })}
-                                  </div>
-                                </div>
+                              {/* التوقيت المحدد */}
+                              <div className="flex items-center gap-2 mb-3 text-xs">
+                                <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                                <span className="font-semibold text-foreground">
+                                  {format(new Date(project.updated_at), 'dd/MM/yyyy')}
+                                </span>
+                                <span className="text-muted-foreground">•</span>
+                                <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                                <span className="font-semibold text-foreground">
+                                  {format(new Date(project.updated_at), 'HH:mm')}
+                                </span>
+                                <span className="text-muted-foreground mr-auto">
+                                  ({formatDistanceToNow(new Date(project.updated_at), { 
+                                    addSuffix: true, 
+                                    locale: ar 
+                                  })})
+                                </span>
                               </div>
                               
+                              {/* عنوان المشروع والحالة */}
+                              <div className="flex items-start justify-between gap-3 mb-2">
+                                <h4 className="font-bold text-base text-foreground">
+                                  {project.title}
+                                </h4>
+                                <Badge variant="outline" className={getStatusColor(project.status)}>
+                                  {getStatusText(project.status)}
+                                </Badge>
+                              </div>
+                              
+                              {/* الوصف التفصيلي للنشاط */}
+                              <p className="text-sm text-foreground/80 leading-relaxed mb-3">
+                                {getActivityDescription()}
+                              </p>
+                              
                               {/* تفاصيل التقدم */}
-                              <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border/30">
+                              <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border/30 flex-wrap">
                                 <div className="flex items-center gap-2 text-xs">
-                                  <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
+                                  <span className="text-muted-foreground">نسبة الإنجاز:</span>
+                                  <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
                                     <div 
                                       className="h-full bg-gradient-to-r from-primary to-primary/70 rounded-full transition-all duration-300"
                                       style={{ width: `${project.completion_percentage}%` }}
@@ -321,17 +349,20 @@ const Grade12ProjectsManagement: React.FC = () => {
                                 </div>
                                 
                                 {project.completed_tasks_count !== undefined && project.total_tasks_count !== undefined && (
-                                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                    <BarChart3 className="h-3.5 w-3.5" />
-                                    <span>{project.completed_tasks_count}/{project.total_tasks_count} مهمة</span>
+                                  <div className="flex items-center gap-1.5 text-xs">
+                                    <BarChart3 className="h-3.5 w-3.5 text-muted-foreground" />
+                                    <span className="text-muted-foreground">المهام:</span>
+                                    <span className="font-semibold text-foreground">
+                                      {project.completed_tasks_count} من {project.total_tasks_count}
+                                    </span>
                                   </div>
                                 )}
                                 
                                 {project.unread_comments_count > 0 && (
-                                  <div className="flex items-center gap-1.5 text-xs">
+                                  <div className="flex items-center gap-1.5 text-xs bg-orange-500/10 px-2 py-1 rounded-md">
                                     <MessageCircle className="h-3.5 w-3.5 text-orange-600" />
                                     <span className="text-orange-600 font-semibold">
-                                      {project.unread_comments_count} جديد
+                                      {project.unread_comments_count} تعليق جديد
                                     </span>
                                   </div>
                                 )}
@@ -339,10 +370,12 @@ const Grade12ProjectsManagement: React.FC = () => {
                               
                               {/* المهمة الحالية */}
                               {project.current_task && (
-                                <div className="mt-3 flex items-center gap-2 text-xs bg-primary/5 px-3 py-2 rounded-lg">
-                                  <Target className="h-3.5 w-3.5 text-primary" />
-                                  <span className="text-muted-foreground">المهمة الحالية:</span>
-                                  <span className="text-primary font-semibold">{project.current_task}</span>
+                                <div className="mt-3 flex items-start gap-2 text-xs bg-primary/5 px-3 py-2 rounded-lg border border-primary/20">
+                                  <Target className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
+                                  <div>
+                                    <span className="text-muted-foreground font-medium">المهمة الحالية: </span>
+                                    <span className="text-primary font-semibold">{project.current_task}</span>
+                                  </div>
                                 </div>
                               )}
                             </div>
