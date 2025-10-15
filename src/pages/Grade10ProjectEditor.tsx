@@ -134,18 +134,6 @@ const Grade10ProjectEditor: React.FC = () => {
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
-                {project?.google_doc_url && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => window.open(project.google_doc_url, '_blank')}
-                    className="gap-2 shadow-sm hover:shadow-md transition-all duration-200"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                    فتح في Google Docs
-                  </Button>
-                )}
-
                 {isStudent && project?.status !== 'completed' && (
                   <Button
                     variant="default"
@@ -180,7 +168,7 @@ const Grade10ProjectEditor: React.FC = () => {
               className="gap-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-md transition-all duration-200 hover:bg-background/50"
             >
               <FileText className="h-4 w-4" />
-              <span className="hidden sm:inline">محرر Google</span>
+              <span className="hidden sm:inline">محرر المشروع</span>
               <span className="sm:hidden">المحرر</span>
             </TabsTrigger>
             <TabsTrigger 
