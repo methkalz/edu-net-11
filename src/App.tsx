@@ -56,6 +56,7 @@ import {
 const Grade12ProjectEditorPage = React.lazy(() => import('@/pages/Grade12ProjectEditor'));
 const Grade12ProjectsManagement = React.lazy(() => import('@/pages/Grade12ProjectsManagement'));
 const Grade10ProjectEditorPage = React.lazy(() => import('@/pages/Grade10ProjectEditor'));
+const Grade10ProjectsManagement = React.lazy(() => import('@/pages/Grade10ProjectsManagement'));
 const LandingPage = React.lazy(() => import('@/pages/LandingPage'));
 const KnowledgeAdventurePage = React.lazy(() => import('@/pages/KnowledgeAdventurePage'));
 const StudentTrackingPage = React.lazy(() => import('@/pages/teacher/StudentTracking'));
@@ -159,6 +160,10 @@ const App = () => {
                  <Route 
                    path="/grade10-project-editor/:projectId" 
                    element={<Suspense fallback={<PageLoading message="جاري تحميل محرر المشروع..." />}><Grade10ProjectEditorPage /></Suspense>} 
+                 />
+                 <Route 
+                   path="/grade10-management" 
+                   element={<Suspense fallback={<PageLoading message="جاري تحميل إدارة المشاريع المصغرة..." />}><Grade10ProjectsManagement /></Suspense>} 
                  />
                
                {/* Teacher routes */}
