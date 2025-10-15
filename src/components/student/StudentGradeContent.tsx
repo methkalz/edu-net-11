@@ -728,7 +728,7 @@ export const StudentGradeContent: React.FC<{ defaultTab?: string }> = ({ default
       id: 'knowledge_adventure',
       label: 'لعبة المعرفة',
       icon: Gamepad2,
-      count: 0, // سيتم حساب الإحصائيات لاحقاً
+      count: 1,
       items: [],
       color: 'from-violet-500 to-purple-500'
     },
