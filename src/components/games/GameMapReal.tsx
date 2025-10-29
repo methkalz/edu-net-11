@@ -6,6 +6,12 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { GameLesson, PlayerProgress } from '@/hooks/useGrade11Game';
 
+const stripHtml = (html: string): string => {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  return tmp.textContent || tmp.innerText || '';
+};
+
 interface GameMapRealProps {
   lessons: GameLesson[];
   progress: Record<string, PlayerProgress>;
@@ -156,7 +162,7 @@ const GameMapReal: React.FC<GameMapRealProps> = ({
                   {/* Content */}
                   <h3 className="font-bold text-lg mb-2">{lesson.title}</h3>
                   <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
-                    {lesson.content?.substring(0, 100)}...
+                    {stripHtml(lesson.content || "").substring(0, 100)}...
                   </p>
 
                   {/* Section Info */}
