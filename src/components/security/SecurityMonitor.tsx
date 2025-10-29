@@ -16,7 +16,7 @@ import {
   Database,
   Zap
 } from 'lucide-react';
-import { usePerformanceMonitor } from '@/lib/performance-monitor';
+import { PerformanceMonitor } from '@/lib/performance-monitor';
 
 interface SecurityMetric {
   id: string;
@@ -32,8 +32,6 @@ interface SecurityMonitorProps {
 }
 
 export const SecurityMonitor: FC<SecurityMonitorProps> = ({ className }) => {
-  const { metrics } = usePerformanceMonitor();
-
   const securityMetrics: SecurityMetric[] = [
     {
       id: 'rls-policies',
@@ -155,41 +153,6 @@ export const SecurityMonitor: FC<SecurityMonitorProps> = ({ className }) => {
           <Progress value={averageScore} className="h-3" />
         </CardContent>
       </Card>
-
-      {/* Performance Metrics */}
-      {metrics && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Monitor className="h-5 w-5" />
-              مراقب الأداء
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="text-center p-4 border rounded-lg">
-                <Clock className="h-8 w-8 mx-auto mb-2 text-blue-600" />
-                <div className="text-2xl font-bold">{Math.round(metrics.pageLoadTime)}ms</div>
-                <div className="text-sm text-muted-foreground">وقت تحميل الصفحة</div>
-              </div>
-              
-              <div className="text-center p-4 border rounded-lg">
-                <Zap className="h-8 w-8 mx-auto mb-2 text-green-600" />
-                <div className="text-2xl font-bold">
-                  {Math.round(metrics.jsHeapSizeUsed / 1024 / 1024)}MB
-                </div>
-                <div className="text-sm text-muted-foreground">استخدام الذاكرة</div>
-              </div>
-              
-              <div className="text-center p-4 border rounded-lg">
-                <Activity className="h-8 w-8 mx-auto mb-2 text-purple-600" />
-                <div className="text-2xl font-bold">{metrics.errorCount}</div>
-                <div className="text-sm text-muted-foreground">عدد الأخطاء</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Security Metrics Detail */}
       <Card>

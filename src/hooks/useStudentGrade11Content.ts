@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
 import { QUERY_KEYS, CACHE_TIMES } from '@/lib/query-keys';
+import { PerformanceMonitor } from '@/lib/performance-monitor';
 
 export interface Grade11Section {
   id: string;
@@ -76,59 +77,102 @@ export interface Grade11Video {
   updated_at: string;
 }
 
-// Fetch functions with optimized Nested Joins (single query instead of N+1)
-const fetchGrade11Sections = async (): Promise<Grade11SectionWithTopics[]> => {
-  try {
-    // ⚡ Optimized: Single query with nested joins instead of multiple queries
-    const { data, error } = await supabase
-      .from('grade11_sections')
-      .select(`
-        *,
-        topics:grade11_topics(
-          *,
-          lessons:grade11_lessons(
-            *,
-            media:grade11_lesson_media(*)
+// ⚡ المرحلة 1: جلب البنية الأساسية فقط (sections + topics بدون محتوى الدروس)
+const fetchGrade11Structure = async (): Promise<any[]> => {
+  return PerformanceMonitor.measure('fetchGrade11Structure', async () => {
+    try {
+      const { data, error } = await supabase
+        .from('grade11_sections')
+        .select(`
+          id, title, description, order_index, created_at, updated_at,
+          topics:grade11_topics(
+            id, title, content, order_index, created_at, updated_at,
+            lessons_count:grade11_lessons(count)
           )
-        )
-      `)
-      .order('order_index');
+        `)
+        .order('order_index');
 
-    if (error) {
-      console.error('Sections fetch error:', error);
-      logger.error('Error fetching Grade 11 content for student', error as Error);
+      if (error) {
+        logger.error('Error fetching Grade 11 structure', error as Error);
+        throw error;
+      }
+
+      if (!data || data.length === 0) {
+        return [];
+      }
+
+      // ترتيب المواضيع
+      return data.map(section => ({
+        ...section,
+        topics: (section.topics || []).sort((a, b) => a.order_index - b.order_index)
+      }));
+    } catch (error) {
+      logger.error('Error fetching Grade 11 structure', error as Error);
       throw error;
     }
+  });
+};
 
-    if (!data || data.length === 0) {
-      return [];
+// ⚡ المرحلة 2: جلب دروس موضوع معين عند الحاجة
+export const fetchTopicLessons = async (topicId: string): Promise<any[]> => {
+  return PerformanceMonitor.measure(`fetchTopicLessons-${topicId}`, async () => {
+    try {
+      const { data, error } = await supabase
+        .from('grade11_lessons')
+        .select(`
+          id, title, order_index, created_at, updated_at, topic_id,
+          media_count:grade11_lesson_media(count)
+        `)
+        .eq('topic_id', topicId)
+        .order('order_index');
+
+      if (error) {
+        logger.error(`Error fetching lessons for topic ${topicId}`, error as Error);
+        throw error;
+      }
+
+      return data || [];
+    } catch (error) {
+      logger.error(`Error fetching lessons for topic ${topicId}`, error as Error);
+      throw error;
     }
+  });
+};
 
-    // Sort nested relations by order_index (Supabase doesn't support ORDER BY in nested selects yet)
-    return data.map(section => ({
-      ...section,
-      topics: (section.topics || [])
-        .sort((a, b) => a.order_index - b.order_index)
-        .map(topic => ({
-          ...topic,
-          lessons: (topic.lessons || [])
-            .sort((a, b) => a.order_index - b.order_index)
-            .map(lesson => ({
-              ...lesson,
-              media: (lesson.media || [])
-                .sort((a, b) => a.order_index - b.order_index)
-                .map(media => ({
-                  ...media,
-                  metadata: media.metadata as Record<string, any> | null
-                }))
-            }))
-        }))
-    }));
-  } catch (error) {
-    console.error('Complete error in fetchSections:', error);
-    logger.error('Error fetching Grade 11 content for student', error as Error);
-    throw error;
-  }
+// ⚡ المرحلة 3: جلب محتوى درس كامل مع الوسائط عند فتحه
+export const fetchLessonContent = async (lessonId: string): Promise<Grade11LessonWithMedia | null> => {
+  return PerformanceMonitor.measure(`fetchLessonContent-${lessonId}`, async () => {
+    try {
+      const { data, error } = await supabase
+        .from('grade11_lessons')
+        .select(`
+          *,
+          media:grade11_lesson_media(*)
+        `)
+        .eq('id', lessonId)
+        .single();
+
+      if (error) {
+        logger.error(`Error fetching lesson content ${lessonId}`, error as Error);
+        throw error;
+      }
+
+      if (!data) return null;
+
+      return {
+        ...data,
+        media: (data.media || [])
+          .sort((a, b) => a.order_index - b.order_index)
+          .map(media => ({
+            ...media,
+            metadata: media.metadata as Record<string, any> | null
+          }))
+      };
+    } catch (error) {
+      logger.error(`Error fetching lesson content ${lessonId}`, error as Error);
+      throw error;
+    }
+  });
 };
 
 const fetchGrade11Videos = async (): Promise<Grade11Video[]> => {
@@ -153,17 +197,17 @@ const fetchGrade11Videos = async (): Promise<Grade11Video[]> => {
 };
 
 export const useStudentGrade11Content = () => {
-  // Sections query
+  // ⚡ جلب البنية الأساسية فقط (خفيف جداً ~10KB بدلاً من 15MB+)
   const {
-    data: sections = [],
-    isLoading: sectionsLoading,
-    error: sectionsError,
-    refetch: refetchSections
+    data: structure = [],
+    isLoading: structureLoading,
+    error: structureError,
+    refetch: refetchStructure
   } = useQuery({
     queryKey: QUERY_KEYS.GRADE_CONTENT.GRADE_11_SECTIONS(),
-    queryFn: fetchGrade11Sections,
-    staleTime: CACHE_TIMES.LONG, // Cache for 1 hour - content doesn't change often
-    gcTime: CACHE_TIMES.VERY_LONG, // Keep in cache for 24 hours
+    queryFn: fetchGrade11Structure,
+    staleTime: CACHE_TIMES.VERY_LONG, // Cache طويل جداً للبنية
+    gcTime: CACHE_TIMES.VERY_LONG,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     refetchOnMount: false,
@@ -192,24 +236,25 @@ export const useStudentGrade11Content = () => {
     }
   });
 
-  const loading = sectionsLoading || videosLoading;
-  const error = sectionsError?.message || videosError?.message || null;
+  const loading = structureLoading || videosLoading;
+  const error = structureError?.message || videosError?.message || null;
 
   // Get statistics for student dashboard
   const getContentStats = () => {
-    const sectionsArray = sections as Grade11SectionWithTopics[];
+    const structureArray = structure as any[];
     const videosArray = videos as Grade11Video[];
     
-    const totalSections = sectionsArray.length;
-    const totalTopics = sectionsArray.reduce((acc, section) => acc + section.topics.length, 0);
-    const totalLessons = sectionsArray.reduce((acc, section) => 
-      acc + section.topics.reduce((topicAcc, topic) => topicAcc + topic.lessons.length, 0), 0
+    const totalSections = structureArray.length;
+    const totalTopics = structureArray.reduce((acc, section) => 
+      acc + (section.topics?.length || 0), 0
     );
-    const totalMedia = sectionsArray.reduce((acc, section) => 
-      acc + section.topics.reduce((topicAcc, topic) => 
-        topicAcc + topic.lessons.reduce((lessonAcc, lesson) => lessonAcc + lesson.media.length, 0), 0
+    // حساب الدروس من lessons_count
+    const totalLessons = structureArray.reduce((acc, section) => 
+      acc + (section.topics || []).reduce((topicAcc: number, topic: any) => 
+        topicAcc + (topic.lessons_count?.[0]?.count || 0), 0
       ), 0
     );
+    const totalMedia = 0; // سنحسبه لاحقاً عند تحميل الدروس
     const totalVideos = videosArray.length;
 
     return {
@@ -222,15 +267,18 @@ export const useStudentGrade11Content = () => {
   };
 
   const refetch = () => {
-    refetchSections();
+    refetchStructure();
   };
 
   return {
-    sections: sections as Grade11SectionWithTopics[],
+    structure: structure as any[],
     videos: videos as Grade11Video[],
     loading,
     error,
     getContentStats,
-    refetch
+    refetch,
+    // تصدير دوال التحميل الإضافية
+    fetchTopicLessons,
+    fetchLessonContent
   };
 };

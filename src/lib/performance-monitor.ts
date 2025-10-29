@@ -1,259 +1,157 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { logError, logInfo } from '@/lib/logger';
+/**
+ * أداة مراقبة الأداء - تتبع وقياس أداء العمليات
+ */
 
-interface PerformanceMetrics {
-  // Page performance
-  pageLoadTime: number;
-  domContentLoaded: number;
-  firstContentfulPaint: number;
-  
-  // JavaScript performance
-  jsHeapSizeUsed: number;
-  jsHeapSizeTotal: number;
-  jsHeapSizeLimit: number;
-  
-  // Network performance
-  connectionType: string;
-  effectiveType: string;
-  downlink: number;
-  rtt: number;
-  
-  // Custom metrics
-  renderTime: number;
-  interactionTime: number;
-  errorCount: number;
-}
-
-interface ResourceMetrics {
-  name: string;
-  type: string;
-  size: number;
-  duration: number;
+interface PerformanceMark {
   startTime: number;
+  label: string;
 }
 
 export class PerformanceMonitor {
-  private static instance: PerformanceMonitor;
-  private metrics: Partial<PerformanceMetrics> = {};
-  private resources: ResourceMetrics[] = [];
-  private startTime: number = Date.now();
-  private observer: PerformanceObserver | null = null;
-
-  private constructor() {
-    this.initializeMonitoring();
-  }
-
-  public static getInstance(): PerformanceMonitor {
-    if (!PerformanceMonitor.instance) {
-      PerformanceMonitor.instance = new PerformanceMonitor();
+  private static marks: Map<string, PerformanceMark> = new Map();
+  private static measurements: Map<string, number[]> = new Map();
+  
+  /**
+   * بدء قياس عملية
+   */
+  static start(label: string): void {
+    const startTime = performance.now();
+    this.marks.set(label, { startTime, label });
+    
+    if (import.meta.env.DEV) {
+      console.log(`⏱️ [START] ${label}`);
     }
-    return PerformanceMonitor.instance;
   }
-
-  private initializeMonitoring() {
-    // Monitor navigation timing
-    this.collectNavigationMetrics();
+  
+  /**
+   * إنهاء قياس عملية وحساب المدة
+   */
+  static end(label: string): number {
+    const mark = this.marks.get(label);
     
-    // Monitor resource loading
-    this.collectResourceMetrics();
+    if (!mark) {
+      console.warn(`⚠️ No start mark found for: ${label}`);
+      return 0;
+    }
     
-    // Monitor JavaScript heap
-    this.collectMemoryMetrics();
+    const duration = performance.now() - mark.startTime;
+    this.marks.delete(label);
     
-    // Monitor network information
-    this.collectNetworkMetrics();
+    // حفظ القياس في السجل
+    const measurements = this.measurements.get(label) || [];
+    measurements.push(duration);
+    this.measurements.set(label, measurements);
     
-    // Set up performance observer
-    this.setupPerformanceObserver();
-  }
-
-  private collectNavigationMetrics() {
-    if ('performance' in window && 'getEntriesByType' in performance) {
-      const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
+    if (import.meta.env.DEV) {
+      console.log(`⏱️ [END] ${label}: ${duration.toFixed(2)}ms`);
       
-      this.metrics.pageLoadTime = navigation.loadEventEnd - navigation.fetchStart;
-      this.metrics.domContentLoaded = navigation.domContentLoadedEventEnd - navigation.fetchStart;
-      
-      // First Contentful Paint
-      const paintEntries = performance.getEntriesByType('paint');
-      const fcp = paintEntries.find(entry => entry.name === 'first-contentful-paint');
-      if (fcp) {
-        this.metrics.firstContentfulPaint = fcp.startTime;
+      // تحذير للعمليات البطيئة
+      if (duration > 1000) {
+        console.warn(`🐌 Slow operation: ${label} took ${duration.toFixed(2)}ms`);
+      } else if (duration > 500) {
+        console.warn(`⚠️ Moderate delay: ${label} took ${duration.toFixed(2)}ms`);
       }
     }
+    
+    return duration;
   }
-
-  private collectResourceMetrics() {
-    if ('performance' in window) {
-      const resources = performance.getEntriesByType('resource') as PerformanceResourceTiming[];
+  
+  /**
+   * قياس دالة async
+   */
+  static async measure<T>(
+    label: string, 
+    fn: () => Promise<T>
+  ): Promise<T> {
+    this.start(label);
+    
+    try {
+      const result = await fn();
+      this.end(label);
+      return result;
+    } catch (error) {
+      this.end(label);
+      console.error(`❌ Error in ${label}:`, error);
+      throw error;
+    }
+  }
+  
+  /**
+   * قياس دالة عادية
+   */
+  static measureSync<T>(
+    label: string, 
+    fn: () => T
+  ): T {
+    this.start(label);
+    
+    try {
+      const result = fn();
+      this.end(label);
+      return result;
+    } catch (error) {
+      this.end(label);
+      console.error(`❌ Error in ${label}:`, error);
+      throw error;
+    }
+  }
+  
+  /**
+   * الحصول على إحصائيات الأداء
+   */
+  static getStats(label?: string): Record<string, any> {
+    if (label) {
+      const measurements = this.measurements.get(label) || [];
+      if (measurements.length === 0) return {};
       
-      this.resources = resources.map(resource => ({
-        name: resource.name,
-        type: this.getResourceType(resource.name),
-        size: resource.transferSize || 0,
-        duration: resource.responseEnd - resource.requestStart,
-        startTime: resource.startTime
-      }));
+      const avg = measurements.reduce((a, b) => a + b, 0) / measurements.length;
+      const min = Math.min(...measurements);
+      const max = Math.max(...measurements);
+      
+      return {
+        label,
+        count: measurements.length,
+        avg: avg.toFixed(2),
+        min: min.toFixed(2),
+        max: max.toFixed(2)
+      };
+    }
+    
+    // إحصائيات لجميع القياسات
+    const allStats: Record<string, any> = {};
+    this.measurements.forEach((measurements, label) => {
+      if (measurements.length > 0) {
+        const avg = measurements.reduce((a, b) => a + b, 0) / measurements.length;
+        const min = Math.min(...measurements);
+        const max = Math.max(...measurements);
+        
+        allStats[label] = {
+          count: measurements.length,
+          avg: avg.toFixed(2),
+          min: min.toFixed(2),
+          max: max.toFixed(2)
+        };
+      }
+    });
+    
+    return allStats;
+  }
+  
+  /**
+   * طباعة تقرير الأداء
+   */
+  static printReport(): void {
+    if (import.meta.env.DEV) {
+      console.log('📊 Performance Report:');
+      console.table(this.getStats());
     }
   }
-
-  private collectMemoryMetrics() {
-    if ('memory' in performance) {
-      const memory = (performance as any).memory;
-      this.metrics.jsHeapSizeUsed = memory.usedJSHeapSize;
-      this.metrics.jsHeapSizeTotal = memory.totalJSHeapSize;
-      this.metrics.jsHeapSizeLimit = memory.jsHeapSizeLimit;
-    }
-  }
-
-  private collectNetworkMetrics() {
-    if ('connection' in navigator) {
-      const connection = (navigator as any).connection;
-      this.metrics.connectionType = connection.type || 'unknown';
-      this.metrics.effectiveType = connection.effectiveType || 'unknown';
-      this.metrics.downlink = connection.downlink || 0;
-      this.metrics.rtt = connection.rtt || 0;
-    }
-  }
-
-  private setupPerformanceObserver() {
-    if ('PerformanceObserver' in window) {
-      this.observer = new PerformanceObserver((list) => {
-        const entries = list.getEntries();
-        entries.forEach(entry => {
-          if (entry.entryType === 'measure' || entry.entryType === 'mark') {
-            logInfo('Performance entry recorded', {
-              name: entry.name,
-              duration: entry.duration,
-              startTime: entry.startTime
-            });
-          }
-        });
-      });
-
-      this.observer.observe({ entryTypes: ['measure', 'mark', 'paint'] });
-    }
-  }
-
-  private getResourceType(url: string): string {
-    if (url.includes('.js')) return 'script';
-    if (url.includes('.css')) return 'stylesheet';
-    if (url.match(/\.(jpg|jpeg|png|gif|svg|webp)$/)) return 'image';
-    if (url.match(/\.(woff|woff2|ttf|eot)$/)) return 'font';
-    return 'other';
-  }
-
-  public markStart(name: string) {
-    if ('performance' in window && 'mark' in performance) {
-      performance.mark(`${name}-start`);
-    }
-  }
-
-  public markEnd(name: string) {
-    if ('performance' in window && 'mark' in performance && 'measure' in performance) {
-      performance.mark(`${name}-end`);
-      performance.measure(name, `${name}-start`, `${name}-end`);
-    }
-  }
-
-  public measureRenderTime(componentName: string, renderFn: () => void) {
-    this.markStart(`render-${componentName}`);
-    renderFn();
-    this.markEnd(`render-${componentName}`);
-  }
-
-  public getMetrics(): PerformanceMetrics {
-    return {
-      pageLoadTime: this.metrics.pageLoadTime || 0,
-      domContentLoaded: this.metrics.domContentLoaded || 0,
-      firstContentfulPaint: this.metrics.firstContentfulPaint || 0,
-      jsHeapSizeUsed: this.metrics.jsHeapSizeUsed || 0,
-      jsHeapSizeTotal: this.metrics.jsHeapSizeTotal || 0,
-      jsHeapSizeLimit: this.metrics.jsHeapSizeLimit || 0,
-      connectionType: this.metrics.connectionType || 'unknown',
-      effectiveType: this.metrics.effectiveType || 'unknown',
-      downlink: this.metrics.downlink || 0,
-      rtt: this.metrics.rtt || 0,
-      renderTime: this.metrics.renderTime || 0,
-      interactionTime: this.metrics.interactionTime || 0,
-      errorCount: this.metrics.errorCount || 0
-    };
-  }
-
-  public getResourceMetrics(): ResourceMetrics[] {
-    return this.resources;
-  }
-
-  public incrementErrorCount() {
-    this.metrics.errorCount = (this.metrics.errorCount || 0) + 1;
-  }
-
-  public destroy() {
-    if (this.observer) {
-      this.observer.disconnect();
-      this.observer = null;
-    }
+  
+  /**
+   * مسح جميع القياسات
+   */
+  static clear(): void {
+    this.marks.clear();
+    this.measurements.clear();
   }
 }
-
-// React hook for performance monitoring
-export const usePerformanceMonitor = () => {
-  const [metrics, setMetrics] = useState<PerformanceMetrics | null>(null);
-  const [resources, setResources] = useState<ResourceMetrics[]>([]);
-  const monitor = PerformanceMonitor.getInstance();
-
-  const updateMetrics = useCallback(() => {
-    setMetrics(monitor.getMetrics());
-    setResources(monitor.getResourceMetrics());
-  }, [monitor]);
-
-  useEffect(() => {
-    // Update metrics periodically
-    const interval = setInterval(updateMetrics, 5000);
-    
-    // Initial update
-    updateMetrics();
-
-    return () => clearInterval(interval);
-  }, [updateMetrics]);
-
-  const markStart = useCallback((name: string) => {
-    monitor.markStart(name);
-  }, [monitor]);
-
-  const markEnd = useCallback((name: string) => {
-    monitor.markEnd(name);
-  }, [monitor]);
-
-  const measureComponent = useCallback((componentName: string, renderFn: () => void) => {
-    monitor.measureRenderTime(componentName, renderFn);
-  }, [monitor]);
-
-  return {
-    metrics,
-    resources,
-    markStart,
-    markEnd,
-    measureComponent,
-    updateMetrics
-  };
-};
-
-// HOC for measuring component render time
-export const withPerformanceTracking = <P extends Record<string, any>>(
-  WrappedComponent: React.ComponentType<P>,
-  componentName: string
-) => {
-  return (props: P) => {
-    const monitor = PerformanceMonitor.getInstance();
-    
-    useEffect(() => {
-      monitor.markStart(`component-${componentName}`);
-      return () => {
-        monitor.markEnd(`component-${componentName}`);
-      };
-    }, [monitor]);
-
-    return React.createElement(WrappedComponent, props);
-  };
-};

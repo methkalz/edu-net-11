@@ -13,14 +13,17 @@ import { Grade11VideoViewer } from '@/components/content/Grade11VideoViewer';
 import { useStudentProgress } from '@/hooks/useStudentProgress';
 import { useVideoInfoCards } from '@/hooks/useVideoInfoCards';
 import VideoInfoCard from '../content/VideoInfoCard';
+import { toast } from 'sonner';
 
 export const StudentGrade11Content: React.FC = () => {
   const {
-    sections,
+    structure,
     videos,
     loading,
     error,
-    getContentStats
+    getContentStats,
+    fetchTopicLessons,
+    fetchLessonContent
   } = useStudentGrade11Content();
   const { updateProgress, logActivity } = useStudentProgress();
   const { cards, loading: cardsLoading } = useVideoInfoCards('11');
@@ -30,6 +33,11 @@ export const StudentGrade11Content: React.FC = () => {
   const [selectedLesson, setSelectedLesson] = useState<any>(null);
   const [selectedVideo, setSelectedVideo] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('lessons');
+  
+  // ⚡ حالة الدروس المحملة لكل topic
+  const [topicLessons, setTopicLessons] = useState<Map<string, any[]>>(new Map());
+  const [loadingTopics, setLoadingTopics] = useState<Set<string>>(new Set());
+  
   const stats = getContentStats();
 
   // Toggle section open/close
@@ -37,16 +45,60 @@ export const StudentGrade11Content: React.FC = () => {
     setOpenSections(prev => prev.includes(sectionId) ? prev.filter(id => id !== sectionId) : [...prev, sectionId]);
   };
 
-  // Toggle topic open/close
-  const toggleTopic = (topicId: string) => {
-    setOpenTopics(prev => prev.includes(topicId) ? prev.filter(id => id !== topicId) : [...prev, topicId]);
+  // ⚡ Toggle topic open/close مع lazy loading للدروس
+  const toggleTopic = async (topicId: string) => {
+    const isOpening = !openTopics.includes(topicId);
+    setOpenTopics(prev => 
+      prev.includes(topicId) ? prev.filter(id => id !== topicId) : [...prev, topicId]
+    );
+    
+    // تحميل الدروس عند فتح الموضوع لأول مرة
+    if (isOpening && !topicLessons.has(topicId) && !loadingTopics.has(topicId)) {
+      setLoadingTopics(prev => new Set(prev).add(topicId));
+      
+      try {
+        const lessons = await fetchTopicLessons(topicId);
+        setTopicLessons(prev => new Map(prev).set(topicId, lessons));
+      } catch (error) {
+        console.error('Error loading topic lessons:', error);
+        toast.error('فشل تحميل الدروس');
+      } finally {
+        setLoadingTopics(prev => {
+          const next = new Set(prev);
+          next.delete(topicId);
+          return next;
+        });
+      }
+    }
   };
 
-  // Filter sections based on search
-  const filteredSections = (sections || []).filter(section => {
+  // ⚡ تحميل محتوى الدرس الكامل عند النقر عليه
+  const handleLessonClick = async (lessonId: string) => {
+    try {
+      const lessonContent = await fetchLessonContent(lessonId);
+      if (lessonContent) {
+        setSelectedLesson(lessonContent);
+        
+        // تسجيل التقدم
+        await updateProgress(lessonId, 'lesson', 100, 0, 10);
+        await logActivity('document_read', lessonId, 0, 10);
+      }
+    } catch (error) {
+      console.error('Error loading lesson content:', error);
+      toast.error('فشل تحميل محتوى الدرس');
+    }
+  };
+
+  // Filter structure based on search
+  const filteredSections = (structure || []).filter(section => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
-    return section.title.toLowerCase().includes(query) || section.description?.toLowerCase().includes(query) || section.topics?.some(topic => topic.title.toLowerCase().includes(query) || topic.content?.toLowerCase().includes(query) || topic.lessons?.some(lesson => lesson.title.toLowerCase().includes(query) || lesson.content?.toLowerCase().includes(query)));
+    return section.title.toLowerCase().includes(query) || 
+           section.description?.toLowerCase().includes(query) || 
+           section.topics?.some((topic: any) => 
+             topic.title.toLowerCase().includes(query) || 
+             topic.content?.toLowerCase().includes(query)
+           );
   });
 
   // Filter videos based on search
@@ -177,7 +229,7 @@ export const StudentGrade11Content: React.FC = () => {
         <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 h-14 bg-surface-light border border-divider">
           <TabsTrigger value="lessons" className="flex items-center gap-3 text-base font-light py-3">
             <BookOpen className="w-5 h-5" />
-            الدروس ({(sections || []).length})
+            الدروس ({(structure || []).length})
           </TabsTrigger>
           <TabsTrigger value="videos" className="flex items-center gap-3 text-base font-light py-3">
             <Video className="w-5 h-5" />
@@ -251,36 +303,46 @@ export const StudentGrade11Content: React.FC = () => {
 
                               <CollapsibleContent>
                                 <CardContent className="pt-0 px-6 pb-6">
-                                  <div className="space-y-3">
-                                    {topic.lessons.map(lesson => <div key={lesson.id} className="flex items-center justify-between p-5 bg-gradient-to-br from-purple-50/50 to-purple-100/30 rounded-2xl border border-purple-200/60 hover:bg-purple-50/80 transition-colors cursor-pointer group" onClick={async () => {
-                                        setSelectedLesson(lesson);
-                                        // تسجيل إكمال الدرس فوراً
-                                        try {
-                                          await updateProgress(lesson.id, 'lesson', 100, 0, 10);
-                                          await logActivity('document_read', lesson.id, 0, 10);
-                                        } catch (error) {
-                                          console.error('Error tracking lesson view:', error);
-                                        }
-                                      }}>
-                                        <div className="flex items-center gap-5">
-                                          <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-sm">
-                                            <BookOpen className="w-5 h-5 text-white" />
+                                  {/* ⚡ عرض skeleton loader أثناء تحميل الدروس */}
+                                  {loadingTopics.has(topic.id) ? (
+                                    <div className="space-y-3">
+                                      {[1, 2, 3].map(i => (
+                                        <div key={i} className="h-20 bg-purple-100/50 animate-pulse rounded-2xl" />
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <div className="space-y-3">
+                                      {(topicLessons.get(topic.id) || []).map((lesson: any) => (
+                                        <div 
+                                          key={lesson.id} 
+                                          className="flex items-center justify-between p-5 bg-gradient-to-br from-purple-50/50 to-purple-100/30 rounded-2xl border border-purple-200/60 hover:bg-purple-50/80 transition-colors cursor-pointer group" 
+                                          onClick={() => handleLessonClick(lesson.id)}
+                                        >
+                                          <div className="flex items-center gap-5">
+                                            <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-sm">
+                                              <BookOpen className="w-5 h-5 text-white" />
+                                            </div>
+                                            <div>
+                                              <h5 className="text-base font-semibold text-slate-700 group-hover:text-purple-700 transition-colors">
+                                                {lesson.title}
+                                              </h5>
+                                              {lesson.media_count?.[0]?.count > 0 && (
+                                                <div className="flex items-center gap-2 mt-2">
+                                                  <PlayCircle className="w-4 h-4 text-slate-400" />
+                                                  <span className="text-sm text-slate-500 font-medium">
+                                                    {lesson.media_count[0].count} ملف وسائط
+                                                  </span>
+                                                </div>
+                                              )}
+                                            </div>
                                           </div>
-                                          <div>
-                                            <h5 className="text-base font-semibold text-slate-700 group-hover:text-purple-700 transition-colors">{lesson.title}</h5>
-                                            {lesson.media && lesson.media.length > 0 && <div className="flex items-center gap-2 mt-2">
-                                                <PlayCircle className="w-4 h-4 text-slate-400" />
-                                                <span className="text-sm text-slate-500 font-medium">
-                                                  {lesson.media.length} ملف وسائط
-                                                </span>
-                                              </div>}
-                                          </div>
+                                          <Button variant="ghost" className="px-5 text-purple-600 hover:text-purple-700 hover:bg-purple-50 font-medium">
+                                            عرض
+                                          </Button>
                                         </div>
-                                        <Button variant="ghost" className="px-5 text-purple-600 hover:text-purple-700 hover:bg-purple-50 font-medium">
-                                          عرض
-                                        </Button>
-                                      </div>)}
-                                  </div>
+                                      ))}
+                                    </div>
+                                  )}
                                 </CardContent>
                               </CollapsibleContent>
                             </Collapsible>
