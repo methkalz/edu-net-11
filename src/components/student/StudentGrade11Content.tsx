@@ -14,6 +14,7 @@ import { useStudentProgress } from '@/hooks/useStudentProgress';
 import { useVideoInfoCards } from '@/hooks/useVideoInfoCards';
 import VideoInfoCard from '../content/VideoInfoCard';
 import { toast } from 'sonner';
+import { PerformanceDebugPanel } from '@/components/debug/PerformanceDebugPanel';
 
 export const StudentGrade11Content: React.FC = () => {
   const {
@@ -182,7 +183,11 @@ export const StudentGrade11Content: React.FC = () => {
         </div>
       </Card>;
   }
-  return <div className="space-y-8 max-w-7xl mx-auto">
+  return <>
+      {/* Performance Debug Panel - DEV Only */}
+      <PerformanceDebugPanel />
+      
+      <div className="space-y-8 max-w-7xl mx-auto">
       {/* Minimal Header */}
       <div className="text-center space-y-3">
         
@@ -505,5 +510,6 @@ export const StudentGrade11Content: React.FC = () => {
             </div>
           </DialogContent>
         </Dialog>}
-    </div>;
+    </div>
+  </>;
 };
