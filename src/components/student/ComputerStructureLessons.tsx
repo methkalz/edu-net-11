@@ -27,6 +27,12 @@ import { useStudentGrade10Lessons, Grade10LessonWithMedia, Grade10LessonMedia } 
 import { useStudentProgress } from '@/hooks/useStudentProgress';
 import Grade10MediaPreview from '@/components/content/Grade10MediaPreview';
 
+const stripHtml = (html: string): string => {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  return tmp.textContent || tmp.innerText || '';
+};
+
 export const ComputerStructureLessons: React.FC = () => {
   const { sections, loading, error, getContentStats } = useStudentGrade10Lessons();
   const { updateProgress, logActivity } = useStudentProgress();
@@ -353,7 +359,7 @@ export const ComputerStructureLessons: React.FC = () => {
                                           <h5 className="font-medium text-base">{lesson.title}</h5>
                                           {lesson.content && (
                                             <p className="text-base text-muted-foreground mt-0.5 line-clamp-1">
-                                              {lesson.content}
+                                              {stripHtml(lesson.content)}
                                             </p>
                                           )}
                                         </div>
