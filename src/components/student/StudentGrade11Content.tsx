@@ -40,6 +40,35 @@ export const StudentGrade11Content: React.FC = () => {
   
   const stats = getContentStats();
 
+  // ⚡ Prefetch أول موضوعين من كل قسم عند التحميل
+  React.useEffect(() => {
+    if (structure && structure.length > 0 && !loading) {
+      const firstTopics = structure
+        .flatMap(section => section.topics || [])
+        .slice(0, 2)
+        .map(topic => topic.id);
+      
+      const prefetchTopics = async () => {
+        for (const topicId of firstTopics) {
+          try {
+            const lessons = await fetchTopicLessons(topicId);
+            setTopicLessons(prev => {
+              if (!prev.has(topicId)) {
+                return new Map(prev).set(topicId, lessons);
+              }
+              return prev;
+            });
+          } catch {
+            // Silent prefetch errors
+          }
+        }
+      };
+      
+      prefetchTopics();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [structure?.length, loading]);
+
   // Toggle section open/close
   const toggleSection = (sectionId: string) => {
     setOpenSections(prev => prev.includes(sectionId) ? prev.filter(id => id !== sectionId) : [...prev, sectionId]);

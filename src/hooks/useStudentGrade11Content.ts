@@ -84,9 +84,9 @@ const fetchGrade11Structure = async (): Promise<any[]> => {
       const { data, error } = await supabase
         .from('grade11_sections')
         .select(`
-          id, title, description, order_index, created_at, updated_at,
+          id, title, description, order_index,
           topics:grade11_topics(
-            id, title, content, order_index, created_at, updated_at,
+            id, title, order_index,
             lessons_count:grade11_lessons(count)
           )
         `)
@@ -120,7 +120,7 @@ export const fetchTopicLessons = async (topicId: string): Promise<any[]> => {
       const { data, error } = await supabase
         .from('grade11_lessons')
         .select(`
-          id, title, order_index, created_at, updated_at, topic_id,
+          id, title, order_index,
           media_count:grade11_lesson_media(count)
         `)
         .eq('topic_id', topicId)
@@ -206,18 +206,15 @@ export const useStudentGrade11Content = () => {
   } = useQuery({
     queryKey: QUERY_KEYS.GRADE_CONTENT.GRADE_11_SECTIONS(),
     queryFn: fetchGrade11Structure,
-    staleTime: CACHE_TIMES.VERY_LONG, // Cache طويل جداً للبنية
+    staleTime: CACHE_TIMES.VERY_LONG,
     gcTime: CACHE_TIMES.VERY_LONG,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     refetchOnMount: false,
-    retry: (failureCount, error: any) => {
-      if (error?.status >= 400 && error?.status < 500) return false;
-      return failureCount < 2;
-    }
+    retry: 1
   });
 
-  // Videos query
+  // Videos query - أخف وأسرع
   const {
     data: videos = [],
     isLoading: videosLoading,
@@ -225,15 +222,13 @@ export const useStudentGrade11Content = () => {
   } = useQuery({
     queryKey: QUERY_KEYS.GRADE_CONTENT.GRADE_11_VIDEOS(),
     queryFn: fetchGrade11Videos,
-    staleTime: CACHE_TIMES.MEDIUM, // Cache for 15 minutes
-    gcTime: CACHE_TIMES.LONG, // Keep in cache for 1 hour
+    staleTime: CACHE_TIMES.VERY_LONG,
+    gcTime: CACHE_TIMES.VERY_LONG,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     refetchOnMount: false,
-    retry: (failureCount, error: any) => {
-      if (error?.status >= 400 && error?.status < 500) return false;
-      return failureCount < 2;
-    }
+    retry: 1,
+    enabled: !!structure.length // تحميل Videos بعد Structure
   });
 
   const loading = structureLoading || videosLoading;
