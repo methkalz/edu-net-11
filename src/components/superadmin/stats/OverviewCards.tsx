@@ -1,5 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card';
-import { School, Users, GraduationCap, Trophy } from 'lucide-react';
+import { School, Users, GraduationCap, BookOpen, TrendingUp, TrendingDown } from 'lucide-react';
+import { formatNumber } from '@/utils/dateFormatting';
 
 interface OverviewStats {
   total_schools: number;
@@ -22,31 +23,39 @@ export const OverviewCards = ({ stats }: Props) => {
   const cards = [
     {
       title: 'إجمالي المدارس',
-      value: (stats.total_schools || 0).toLocaleString('ar-SA'),
-      subtitle: `${stats.schools_with_activity || 0} مدرسة نشطة`,
+      value: formatNumber(stats.total_schools),
+      subtitle: `${formatNumber(stats.schools_with_activity)} مدرسة نشطة`,
       icon: School,
       gradient: 'from-blue-500 to-cyan-500',
+      bgColor: 'bg-blue-500/10',
+      iconColor: 'text-blue-500',
     },
     {
       title: 'إجمالي الطلاب',
-      value: (stats.total_students || 0).toLocaleString('ar-SA'),
-      subtitle: `نسبة ${stats.avg_student_teacher_ratio || 0}:1 لكل معلم`,
+      value: formatNumber(stats.total_students),
+      subtitle: `نسبة ${formatNumber(stats.avg_student_teacher_ratio)}:1 لكل معلم`,
       icon: Users,
       gradient: 'from-purple-500 to-pink-500',
+      bgColor: 'bg-purple-500/10',
+      iconColor: 'text-purple-500',
     },
     {
       title: 'إجمالي المعلمين',
-      value: (stats.total_teachers || 0).toLocaleString('ar-SA'),
-      subtitle: `${(stats.total_classes || 0).toLocaleString('ar-SA')} صف دراسي`,
+      value: formatNumber(stats.total_teachers),
+      subtitle: `${formatNumber(stats.total_classes)} صف دراسي`,
       icon: GraduationCap,
       gradient: 'from-orange-500 to-red-500',
+      bgColor: 'bg-orange-500/10',
+      iconColor: 'text-orange-500',
     },
     {
       title: 'الصفوف الدراسية',
-      value: (stats.total_classes || 0).toLocaleString('ar-SA'),
+      value: formatNumber(stats.total_classes),
       subtitle: 'إجمالي الصفوف',
-      icon: Trophy,
+      icon: BookOpen,
       gradient: 'from-green-500 to-emerald-500',
+      bgColor: 'bg-green-500/10',
+      iconColor: 'text-green-500',
     },
   ];
 
@@ -55,19 +64,21 @@ export const OverviewCards = ({ stats }: Props) => {
       {cards.map((card, index) => {
         const Icon = card.icon;
         return (
-          <Card key={index} className="overflow-hidden">
+          <Card key={index} className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300">
             <CardContent className="p-6">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground">{card.title}</p>
-                  <h3 className="text-2xl font-bold">{card.value}</h3>
-                  {card.subtitle && (
-                    <p className="text-xs text-muted-foreground">{card.subtitle}</p>
-                  )}
+              <div className="flex items-start justify-between mb-4">
+                <div className={`rounded-xl p-3 ${card.bgColor}`}>
+                  <Icon className={`h-6 w-6 ${card.iconColor}`} />
                 </div>
-                <div className={`rounded-full p-3 bg-gradient-to-br ${card.gradient}`}>
-                  <Icon className="h-5 w-5 text-white" />
-                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-muted-foreground">{card.title}</p>
+                <h3 className="text-3xl font-bold tracking-tight">{card.value}</h3>
+                {card.subtitle && (
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    {card.subtitle}
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>

@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Search } from 'lucide-react';
+import { formatNumber } from '@/utils/dateFormatting';
 
 interface SchoolStats {
   school_id: string;
@@ -71,9 +72,9 @@ export const SchoolsTable = ({ schools }: Props) => {
                   <td className="py-3">
                     <Badge variant="outline">{school.package_name || '-'}</Badge>
                   </td>
-                  <td className="py-3">{school.total_students.toLocaleString('ar-SA')}</td>
-                  <td className="py-3">{school.total_teachers.toLocaleString('ar-SA')}</td>
-                  <td className="py-3">{school.total_classes.toLocaleString('ar-SA')}</td>
+                  <td className="py-3">{formatNumber(school.total_students)}</td>
+                  <td className="py-3">{formatNumber(school.total_teachers)}</td>
+                  <td className="py-3">{formatNumber(school.total_classes)}</td>
                   <td className="py-3">
                     <Badge variant="secondary">
                       {school.student_teacher_ratio}:1

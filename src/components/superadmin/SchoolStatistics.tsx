@@ -21,7 +21,7 @@ export const SchoolStatistics = () => {
 
       {/* التابات */}
       <Tabs defaultValue="activity" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="activity" className="gap-2">
             <Activity className="h-4 w-4" />
             النشاط
@@ -30,13 +30,9 @@ export const SchoolStatistics = () => {
             <School className="h-4 w-4" />
             المدارس
           </TabsTrigger>
-          <TabsTrigger value="trends" className="gap-2">
-            <TrendingUp className="h-4 w-4" />
-            الاتجاهات
-          </TabsTrigger>
-          <TabsTrigger value="charts" className="gap-2">
+          <TabsTrigger value="analytics" className="gap-2">
             <BarChart className="h-4 w-4" />
-            الرسوم البيانية
+            التحليلات
           </TabsTrigger>
         </TabsList>
 
@@ -51,11 +47,7 @@ export const SchoolStatistics = () => {
           <SchoolsTable schools={schoolsStats || []} />
         </TabsContent>
 
-        <TabsContent value="trends" className="mt-6">
-          <ActivityCharts trends={activityTrends || []} />
-        </TabsContent>
-
-        <TabsContent value="charts" className="mt-6">
+        <TabsContent value="analytics" className="mt-6">
           <ActivityCharts trends={activityTrends || []} />
         </TabsContent>
       </Tabs>

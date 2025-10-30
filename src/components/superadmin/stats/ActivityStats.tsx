@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Users, GraduationCap, TrendingUp, Clock } from 'lucide-react';
+import { formatNumber } from '@/utils/dateFormatting';
 
 interface SchoolStats {
   school_id: string;
@@ -84,9 +85,9 @@ export const ActivityStats = ({ schools, trends }: Props) => {
             <div className="flex items-start justify-between">
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">نشاط الطلاب - 7 أيام</p>
-                <h3 className="text-2xl font-bold">{activityStats.activeStudents7d.toLocaleString('ar-SA')}</h3>
+                <h3 className="text-2xl font-bold">{formatNumber(activityStats.activeStudents7d)}</h3>
                 <p className="text-xs text-muted-foreground">
-                  متوسط {activityStats.avgDaily7d.toLocaleString('ar-SA')} طالب/يوم
+                  متوسط {formatNumber(activityStats.avgDaily7d)} طالب/يوم
                 </p>
               </div>
               <div className="rounded-full p-3 bg-gradient-to-br from-blue-500 to-cyan-500">
@@ -101,9 +102,9 @@ export const ActivityStats = ({ schools, trends }: Props) => {
             <div className="flex items-start justify-between">
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">نشاط المعلمين - 7 أيام</p>
-                <h3 className="text-2xl font-bold">{activityStats.activeTeachers7d.toLocaleString('ar-SA')}</h3>
+                <h3 className="text-2xl font-bold">{formatNumber(activityStats.activeTeachers7d)}</h3>
                 <p className="text-xs text-muted-foreground">
-                  متوسط {activityStats.avgTeachers7d.toLocaleString('ar-SA')} معلم/يوم
+                  متوسط {formatNumber(activityStats.avgTeachers7d)} معلم/يوم
                 </p>
               </div>
               <div className="rounded-full p-3 bg-gradient-to-br from-green-500 to-emerald-500">
@@ -118,9 +119,9 @@ export const ActivityStats = ({ schools, trends }: Props) => {
             <div className="flex items-start justify-between">
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">نشاط الطلاب - 30 يوم</p>
-                <h3 className="text-2xl font-bold">{activityStats.activeStudents30d.toLocaleString('ar-SA')}</h3>
+                <h3 className="text-2xl font-bold">{formatNumber(activityStats.activeStudents30d)}</h3>
                 <p className="text-xs text-muted-foreground">
-                  متوسط {activityStats.avgDaily30d.toLocaleString('ar-SA')} طالب/يوم
+                  متوسط {formatNumber(activityStats.avgDaily30d)} طالب/يوم
                 </p>
               </div>
               <div className="rounded-full p-3 bg-gradient-to-br from-purple-500 to-pink-500">
@@ -135,9 +136,9 @@ export const ActivityStats = ({ schools, trends }: Props) => {
             <div className="flex items-start justify-between">
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">المدارس النشطة</p>
-                <h3 className="text-2xl font-bold">{activityStats.activeSchools.toLocaleString('ar-SA')}</h3>
+                <h3 className="text-2xl font-bold">{formatNumber(activityStats.activeSchools)}</h3>
                 <p className="text-xs text-muted-foreground">
-                  من أصل {activityStats.totalSchools.toLocaleString('ar-SA')} مدرسة
+                  من أصل {formatNumber(activityStats.totalSchools)} مدرسة
                 </p>
               </div>
               <div className="rounded-full p-3 bg-gradient-to-br from-orange-500 to-red-500">
@@ -182,7 +183,7 @@ export const ActivityStats = ({ schools, trends }: Props) => {
                     <span className="font-medium">{schoolName}</span>
                   </div>
                   <div className="text-left">
-                    <p className="font-bold">{count.toLocaleString('ar-SA')}</p>
+                    <p className="font-bold">{formatNumber(count)}</p>
                     <p className="text-xs text-muted-foreground">طالب نشط</p>
                   </div>
                 </div>

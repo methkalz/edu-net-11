@@ -40,6 +40,33 @@ export const DateFormats = {
 } as const;
 
 /**
+ * تنسيق الأرقام بالإنجليزية (لا يستخدم toLocaleString العربي)
+ */
+export const formatNumber = (num: number | null | undefined): string => {
+  if (num === null || num === undefined) return '0';
+  return num.toLocaleString('en-US');
+};
+
+/**
+ * تنسيق التاريخ بالأرقام فقط (بدون أسماء الأشهر)
+ * مثال: 15/03/2024
+ */
+export const formatDateNumericOnly = (date: Date | string): string => {
+  return formatDate(date, DateFormats.DATE_NUMERIC);
+};
+
+/**
+ * تنسيق التاريخ للرسوم البيانية (dd/MM)
+ * مثال: 15/03
+ */
+export const formatDateChart = (date: Date | string): string => {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  const day = String(dateObj.getDate()).padStart(2, '0');
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+  return `${day}/${month}`;
+};
+
+/**
  * دوال مساعدة سريعة
  */
 export const formatDateNumeric = (date: Date | string) => 
