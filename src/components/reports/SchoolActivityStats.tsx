@@ -88,11 +88,7 @@ export const SchoolActivityStats: FC<SchoolActivityStatsProps> = ({ teachers }) 
               >
                 <div className="flex items-center justify-between relative z-10">
                   <div className="flex items-center gap-3 flex-1">
-                    <div className={`w-8 h-8 rounded-xl backdrop-blur-sm flex items-center justify-center font-bold text-sm border ${
-                      index === 0 ? 'bg-yellow-100 text-yellow-700 border-yellow-300' :
-                      index === 1 ? 'bg-gray-100 text-gray-700 border-gray-300' :
-                      'bg-orange-100 text-orange-700 border-orange-300'
-                    }`}>
+                    <div className="w-8 h-8 rounded-xl backdrop-blur-sm bg-muted/30 border border-border/30 flex items-center justify-center font-bold text-sm text-muted-foreground">
                       {index + 1}
                     </div>
                     <div className="flex-1 min-w-0">
