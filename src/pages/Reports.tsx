@@ -57,27 +57,10 @@ const Reports = () => {
   });
   
   const [loading, setLoading] = useState(true);
-
-  // المعلمين والمدراء النشطين خلال آخر 30 يوم
-  const activeTeachers = useMemo(() => {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    
-    return teachers.filter(t => 
-      t.role === 'teacher' && 
-      new Date(t.last_seen_at) >= thirtyDaysAgo
-    );
-  }, [teachers]);
-
-  const activeSchoolAdmins = useMemo(() => {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    
-    return teachers.filter(t => 
-      t.role === 'school_admin' && 
-      new Date(t.last_seen_at) >= thirtyDaysAgo
-    );
-  }, [teachers]);
+  const [activeUsersStats, setActiveUsersStats] = useState({
+    activeTeachers: 0,
+    activeSchoolAdmins: 0
+  });
 
   // بيانات الرسوم البيانية
   const weeklyData = [
@@ -136,6 +119,41 @@ const Reports = () => {
 
     fetchData();
   }, [userProfile]);
+
+  // جلب المعلمين والمدراء النشطين بناءً على تسجيلات الدخول الفعلية
+  useEffect(() => {
+    const fetchActiveUsers = async () => {
+      try {
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        
+        // جلب المعلمين النشطين
+        const { data: teachers } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('role', 'teacher')
+          .gt('login_count', 0)
+          .gte('last_login_at', thirtyDaysAgo.toISOString());
+        
+        // جلب المدراء النشطين
+        const { data: admins } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('role', 'school_admin')
+          .gt('login_count', 0)
+          .gte('last_login_at', thirtyDaysAgo.toISOString());
+        
+        setActiveUsersStats({
+          activeTeachers: teachers?.length || 0,
+          activeSchoolAdmins: admins?.length || 0
+        });
+      } catch (error) {
+        console.error('خطأ في جلب المستخدمين النشطين:', error);
+      }
+    };
+    
+    fetchActiveUsers();
+  }, []);
 
   // مكون الإحصائية المبسطة
   const StatCard = ({ title, value, change, icon: Icon, trend = 'up', color = 'blue' }) => {
@@ -237,18 +255,18 @@ const Reports = () => {
           />
           <StatCard
             title="المعلمين النشطين"
-            value={activeTeachers.length}
-            change={activeTeachers.length > 0 ? '+5%' : '0%'}
+            value={activeUsersStats.activeTeachers}
+            change={activeUsersStats.activeTeachers > 0 ? '+5%' : '0%'}
             icon={Users}
-            trend={activeTeachers.length > 0 ? 'up' : 'neutral'}
+            trend={activeUsersStats.activeTeachers > 0 ? 'up' : 'neutral'}
             color="green"
           />
           <StatCard
             title="المدراء النشطين"
-            value={activeSchoolAdmins.length}
-            change={activeSchoolAdmins.length > 0 ? '+2%' : '0%'}
+            value={activeUsersStats.activeSchoolAdmins}
+            change={activeUsersStats.activeSchoolAdmins > 0 ? '+2%' : '0%'}
             icon={Shield}
-            trend={activeSchoolAdmins.length > 0 ? 'up' : 'neutral'}
+            trend={activeUsersStats.activeSchoolAdmins > 0 ? 'up' : 'neutral'}
             color="purple"
           />
           <StatCard
