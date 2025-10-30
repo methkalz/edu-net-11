@@ -43,6 +43,7 @@ import { supabase } from '@/integrations/supabase/client';
 import BackButton from '@/components/shared/BackButton';
 import AppFooter from '@/components/shared/AppFooter';
 import { TeacherActivityDialog } from '@/components/reports/TeacherActivityDialog';
+import { StudentActivityDialog } from '@/components/reports/StudentActivityDialog';
 
 const Reports = () => {
   const { userProfile } = useAuth();
@@ -63,6 +64,7 @@ const Reports = () => {
     activeSchoolAdmins: 0
   });
   const [teacherDialogOpen, setTeacherDialogOpen] = useState(false);
+  const [studentDialogOpen, setStudentDialogOpen] = useState(false);
 
   // بيانات الرسوم البيانية
   const weeklyData = [
@@ -261,14 +263,16 @@ const Reports = () => {
             trend="up"
             color="blue"
           />
-          <StatCard
-            title="الطلاب النشطين"
-            value={stats.activeUsers.toLocaleString()}
-            change="+8%"
-            icon={GraduationCap}
-            trend="up"
-            color="blue"
-          />
+          <div onClick={() => setStudentDialogOpen(true)} className="cursor-pointer">
+            <StatCard
+              title="الطلاب النشطين"
+              value={stats.activeUsers.toLocaleString()}
+              change="+8%"
+              icon={GraduationCap}
+              trend="up"
+              color="blue"
+            />
+          </div>
           <div onClick={() => setTeacherDialogOpen(true)} className="cursor-pointer">
             <StatCard
               title="المعلمين النشطين"
@@ -491,6 +495,10 @@ const Reports = () => {
       <TeacherActivityDialog 
         open={teacherDialogOpen} 
         onOpenChange={setTeacherDialogOpen} 
+      />
+      <StudentActivityDialog 
+        open={studentDialogOpen} 
+        onOpenChange={setStudentDialogOpen} 
       />
     </div>
   );
