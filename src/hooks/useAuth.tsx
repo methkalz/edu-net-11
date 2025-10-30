@@ -331,22 +331,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
 
-        // Record successful login using Edge Function
+        // تحديث login_count و last_login_at مباشرة
         try {
-          const { data: functionData, error: functionError } = await supabase.functions.invoke(
-            'track-login',
-            {
-              body: { user_id: data.user.id }
-            }
-          );
-
-          if (functionError) {
-            logError('Error calling track-login function', functionError);
+          const now = new Date().toISOString();
+          
+          // جلب login_count الحالي
+          const { data: currentProfile } = await supabase
+            .from('profiles')
+            .select('login_count')
+            .eq('user_id', data.user.id)
+            .single();
+          
+          const newLoginCount = (currentProfile?.login_count || 0) + 1;
+          
+          // تحديث البيانات
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({
+              last_login_at: now,
+              login_count: newLoginCount
+            })
+            .eq('user_id', data.user.id);
+          
+          if (updateError) {
+            logError('Error updating login count', updateError);
           } else {
-            logInfo('Login tracked successfully', functionData);
+            logInfo('Login tracked successfully', { 
+              userId: data.user.id, 
+              loginCount: newLoginCount 
+            });
           }
-
-          // Log the login event via audit system
+          
+          // تسجيل في audit log
           setTimeout(async () => {
             try {
               const { auditLogger, AUDIT_ACTIONS, AUDIT_ENTITIES } = await import('@/lib/audit');
@@ -356,19 +372,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 entity_id: data.user.id,
                 actor_user_id: data.user.id,
                 payload_json: {
-                  timestamp: new Date().toISOString(),
+                  timestamp: now,
                   method: 'password_login',
-                  login_count: functionData?.login_count || 0
+                  login_count: newLoginCount
                 }
               });
-              
-              logInfo('Login event logged successfully', { userId: data.user.id });
             } catch (auditError) {
-              logError('Error logging audit entry for login', auditError as Error);
+              logError('Error logging audit entry', auditError as Error);
             }
           }, 0);
         } catch (loginTrackingError) {
-          logError('Error with login tracking setup', loginTrackingError as Error);
+          logError('Error tracking login', loginTrackingError as Error);
         }
       }
 
