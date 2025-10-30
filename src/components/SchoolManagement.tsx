@@ -13,11 +13,13 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format } from 'date-fns';
-import { School, Users, MapPin, Plus, X, Trash2, Edit, Search, Package } from 'lucide-react';
+import { School, Users, MapPin, Plus, X, Trash2, Edit, Search, Package, BarChart3 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { logger } from '@/lib/logger';
 import { handleError } from '@/lib/error-handler';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { SchoolStatistics } from './superadmin/SchoolStatistics';
 
 // Combined schema that handles both create and edit modes
 const schoolSchema = z.object({
@@ -718,6 +720,19 @@ const SchoolManagement = () => {
 
   return (
     <div className="space-y-6">
+      <Tabs defaultValue="management" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsTrigger value="management" className="gap-2">
+            <School className="h-4 w-4" />
+            إدارة المدارس
+          </TabsTrigger>
+          <TabsTrigger value="statistics" className="gap-2">
+            <BarChart3 className="h-4 w-4" />
+            الإحصائيات
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="management" className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-reverse space-x-3">
@@ -1080,6 +1095,12 @@ const SchoolManagement = () => {
           </CardContent>
         </Card>
       )}
+        </TabsContent>
+
+        <TabsContent value="statistics">
+          <SchoolStatistics />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
