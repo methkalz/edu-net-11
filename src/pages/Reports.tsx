@@ -277,14 +277,16 @@ const Reports = () => {
               color="green"
             />
           </div>
-          <StatCard
-            title="المدراء النشطين"
-            value={activeUsersStats.activeSchoolAdmins}
-            change={activeUsersStats.activeSchoolAdmins > 0 ? '+2%' : '0%'}
-            icon={Shield}
-            trend={activeUsersStats.activeSchoolAdmins > 0 ? 'up' : 'neutral'}
-            color="purple"
-          />
+          <div onClick={() => setTeacherDialogOpen(true)} className="cursor-pointer">
+            <StatCard
+              title="المدراء النشطين"
+              value={activeUsersStats.activeSchoolAdmins}
+              change={activeUsersStats.activeSchoolAdmins > 0 ? '+2%' : '0%'}
+              icon={Shield}
+              trend={activeUsersStats.activeSchoolAdmins > 0 ? 'up' : 'neutral'}
+              color="purple"
+            />
+          </div>
           <StatCard
             title="المحتوى التعليمي"
             value={stats.totalContent.toLocaleString()}
