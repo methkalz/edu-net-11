@@ -1,9 +1,10 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueries } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
 import { QUERY_KEYS, CACHE_TIMES } from '@/lib/query-keys';
 import { PerformanceMonitor } from '@/lib/performance-monitor';
+import React from 'react';
 
 export interface Grade11Section {
   id: string;
@@ -231,7 +232,26 @@ export const useStudentGrade11Content = () => {
     enabled: !!structure.length // تحميل Videos بعد Structure
   });
 
-  const loading = structureLoading || videosLoading;
+  // ⚡ تحميل جميع دروس المواضيع بشكل متوازي
+  const allTopicIds = React.useMemo(() => {
+    return (structure as any[]).flatMap(section => 
+      (section.topics || []).map((topic: any) => topic.id)
+    );
+  }, [structure]);
+
+  const lessonQueries = useQueries({
+    queries: allTopicIds.map(topicId => ({
+      queryKey: ['grade11-lessons', topicId],
+      queryFn: () => fetchTopicLessons(topicId),
+      staleTime: CACHE_TIMES.VERY_LONG,
+      gcTime: CACHE_TIMES.VERY_LONG,
+      retry: 1,
+      enabled: !!structure.length,
+    })),
+  });
+
+  const isLoadingLessons = lessonQueries.some(q => q.isLoading);
+  const loading = structureLoading || videosLoading || isLoadingLessons;
   const error = structureError?.message || videosError?.message || null;
 
   // Get statistics for student dashboard
