@@ -123,7 +123,7 @@ export const StudentActivityTable: FC<StudentActivityTableProps> = ({ students }
 
               {/* الحالة */}
               <div className="col-span-2 flex justify-center">
-                {student.is_online ? (
+                {student.is_online_now ? (
                   <Badge className="backdrop-blur-sm bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/30 rounded-xl">
                     <Wifi className="h-3 w-3 ml-1" />
                     متصل

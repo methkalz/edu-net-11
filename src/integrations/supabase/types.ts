@@ -5895,6 +5895,27 @@ export type Database = {
         Args: { p_exam_id: string; p_student_id: string }
         Returns: Json
       }
+      get_active_students_for_reports: {
+        Args: never
+        Returns: {
+          class_name: string
+          current_page: string
+          email: string
+          full_name: string
+          grade_level: string
+          id: string
+          is_active_last_24h: boolean
+          is_active_last_30d: boolean
+          is_online: boolean
+          is_online_now: boolean
+          last_seen_at: string
+          school_id: string
+          school_name: string
+          student_id: string
+          user_id: string
+          username: string
+        }[]
+      }
       get_available_exams: {
         Args: { p_student_id: string }
         Returns: {

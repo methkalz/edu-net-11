@@ -12,7 +12,6 @@ import { useStudentPresenceForReports, StudentPresenceReportData } from '@/hooks
 import { StudentActivityStats } from './StudentActivityStats';
 import { StudentActivityTable } from './StudentActivityTable';
 import { SchoolStudentActivityStats } from './SchoolStudentActivityStats';
-import { isWithinLast24Hours, isWithinLast30Days } from '@/lib/dateUtils';
 import { Search, Download, RefreshCw, X, School, GraduationCap } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -83,9 +82,9 @@ export const StudentActivityDialog: FC<StudentActivityDialogProps> = ({
   // حساب الأعداد للتابات بناءً على الفلترة الأساسية
   const tabCounts = useMemo(() => {
     return {
-      online: baseFilteredStudents.filter(s => s.is_online).length,
-      last24h: baseFilteredStudents.filter(s => isWithinLast24Hours(s.last_seen_at)).length,
-      last30d: baseFilteredStudents.filter(s => isWithinLast30Days(s.last_seen_at)).length,
+      online: baseFilteredStudents.filter(s => s.is_online_now).length,
+      last24h: baseFilteredStudents.filter(s => s.is_active_last_24h).length,
+      last30d: baseFilteredStudents.filter(s => s.is_active_last_30d).length,
       all: baseFilteredStudents.length,
     };
   }, [baseFilteredStudents]);
@@ -97,13 +96,13 @@ export const StudentActivityDialog: FC<StudentActivityDialogProps> = ({
     // تصفية حسب التاب النشط
     switch (activeTab) {
       case 'online':
-        filtered = filtered.filter(s => s.is_online);
+        filtered = filtered.filter(s => s.is_online_now);
         break;
       case 'last24h':
-        filtered = filtered.filter(s => isWithinLast24Hours(s.last_seen_at));
+        filtered = filtered.filter(s => s.is_active_last_24h);
         break;
       case 'last30d':
-        filtered = filtered.filter(s => isWithinLast30Days(s.last_seen_at));
+        filtered = filtered.filter(s => s.is_active_last_30d);
         break;
       case 'all':
       default:
@@ -134,7 +133,7 @@ export const StudentActivityDialog: FC<StudentActivityDialogProps> = ({
             s.email || s.username,
             s.school_name,
             s.grade_level || s.class_name || 'غير محدد',
-            s.is_online ? 'متصل' : 'غير متصل',
+            s.is_online_now ? 'متصل' : 'غير متصل',
             s.last_seen_at,
           ].join(',')
         ),

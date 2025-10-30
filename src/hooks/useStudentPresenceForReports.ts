@@ -15,6 +15,9 @@ export interface StudentPresenceReportData {
   current_page: string | null;
   class_name?: string;
   grade_level?: string;
+  is_online_now: boolean;
+  is_active_last_24h: boolean;
+  is_active_last_30d: boolean;
 }
 
 /**
@@ -30,97 +33,44 @@ export const useStudentPresenceForReports = () => {
       setLoading(true);
       setError(null);
 
-      // جلب بيانات student_presence مع معلومات الطالب
-      const { data: presenceData, error: presenceError } = await supabase
-        .from('student_presence')
-        .select(`
-          *,
-          student:students!inner(
-            id,
-            full_name,
-            username,
-            email
-          )
-        `)
-        .order('last_seen_at', { ascending: false });
+      // استدعاء الدالة الجديدة التي تحسب كل شيء على الخادم
+      const { data, error: rpcError } = await supabase
+        .rpc('get_active_students_for_reports');
 
-      if (presenceError) {
-        console.error('❌ Error fetching student presence:', presenceError);
-        setError(presenceError.message);
+      if (rpcError) {
+        console.error('❌ Error fetching student presence:', rpcError);
+        setError(rpcError.message);
         return;
       }
 
-      if (!presenceData || presenceData.length === 0) {
+      if (!data || data.length === 0) {
         setStudents([]);
         console.log('ℹ️ No student presence records found');
         return;
       }
 
-      // جلب بيانات المدارس
-      const schoolIds = [...new Set(presenceData.map(p => p.school_id))];
-      const { data: schoolsData, error: schoolsError } = await supabase
-        .from('schools')
-        .select('id, name')
-        .in('id', schoolIds);
-
-      if (schoolsError) {
-        console.error('❌ Error fetching schools:', schoolsError);
-        setError(schoolsError.message);
-        return;
-      }
-
-      // جلب معلومات الصفوف
-      const studentIds = presenceData.map(p => p.student_id);
-      const { data: classData, error: classError } = await supabase
-        .from('class_students')
-        .select(`
-          student_id,
-          class:classes!inner(
-            id,
-            class_name:class_names!inner(name),
-            grade_level:grade_levels!inner(label)
-          )
-        `)
-        .in('student_id', studentIds);
-
-      if (classError) {
-        console.error('❌ Error fetching class info:', classError);
-      }
-
-      // دمج البيانات
-      const schoolsMap = new Map(schoolsData?.map(s => [s.id, s.name]) || []);
-      const classMap = new Map(classData?.map(c => [c.student_id, c.class]) || []);
-      
-      const formattedData: StudentPresenceReportData[] = presenceData.map((item: any) => {
-        const classInfo = classMap.get(item.student_id);
-        
-        // حساب الثواني منذ آخر تواجد
-        const lastSeenDate = new Date(item.last_seen_at);
-        const now = new Date();
-        const secondsSinceLastSeen = (now.getTime() - lastSeenDate.getTime()) / 1000;
-        
-        // نعتبره متواجد إذا: is_online === true أو last_seen_at خلال آخر 120 ثانية
-        const isActuallyOnline = item.is_online || secondsSinceLastSeen < 120;
-        
-        return {
-          id: item.id,
-          user_id: item.user_id,
-          student_id: item.student_id,
-          school_id: item.school_id,
-          school_name: schoolsMap.get(item.school_id) || 'Unknown',
-          full_name: item.student?.full_name || 'Unknown',
-          email: item.student?.email || '',
-          username: item.student?.username || '',
-          is_online: isActuallyOnline,
-          last_seen_at: item.last_seen_at,
-          current_page: item.current_page,
-          class_name: classInfo?.class_name?.name,
-          grade_level: classInfo?.grade_level?.label,
-        };
-      });
+      // تحويل البيانات إلى الصيغة المطلوبة
+      const formattedData: StudentPresenceReportData[] = data.map((item: any) => ({
+        id: item.id,
+        user_id: item.user_id,
+        student_id: item.student_id,
+        school_id: item.school_id,
+        school_name: item.school_name,
+        full_name: item.full_name,
+        email: item.email,
+        username: item.username,
+        is_online: item.is_online,
+        last_seen_at: item.last_seen_at,
+        current_page: item.current_page,
+        class_name: item.class_name,
+        grade_level: item.grade_level,
+        is_online_now: item.is_online_now,
+        is_active_last_24h: item.is_active_last_24h,
+        is_active_last_30d: item.is_active_last_30d,
+      }));
 
       setStudents(formattedData);
-      const onlineCount = formattedData.filter(s => s.is_online).length;
+      const onlineCount = formattedData.filter(s => s.is_online_now).length;
       console.log(`✅ Fetched ${formattedData.length} student presence records (${onlineCount} online)`);
 
     } catch (err) {
@@ -165,7 +115,7 @@ export const useStudentPresenceForReports = () => {
     loading,
     error,
     refetch: fetchStudentPresence,
-    onlineStudents: students.filter(s => s.is_online),
-    offlineStudents: students.filter(s => !s.is_online),
+    onlineStudents: students.filter(s => s.is_online_now),
+    offlineStudents: students.filter(s => !s.is_online_now),
   };
 };

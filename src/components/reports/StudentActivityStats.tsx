@@ -2,7 +2,6 @@ import { FC, useMemo } from 'react';
 import { Users, Clock, TrendingUp, Activity } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { StudentPresenceReportData } from '@/hooks/useStudentPresenceForReports';
-import { isWithinLast24Hours, isWithinLast30Days } from '@/lib/dateUtils';
 
 interface StudentActivityStatsProps {
   students: StudentPresenceReportData[];
@@ -10,17 +9,9 @@ interface StudentActivityStatsProps {
 
 export const StudentActivityStats: FC<StudentActivityStatsProps> = ({ students }) => {
   const stats = useMemo(() => {
-    const onlineNow = students.filter(s => s.is_online).length;
-    const last24Hours = students.filter(s => {
-      const lastSeen = s.last_seen_at;
-      if (!lastSeen) return false;
-      return isWithinLast24Hours(lastSeen);
-    }).length;
-    const last30Days = students.filter(s => {
-      const lastSeen = s.last_seen_at;
-      if (!lastSeen) return false;
-      return isWithinLast30Days(lastSeen);
-    }).length;
+    const onlineNow = students.filter(s => s.is_online_now).length;
+    const last24Hours = students.filter(s => s.is_active_last_24h).length;
+    const last30Days = students.filter(s => s.is_active_last_30d).length;
     
     const totalStudents = students.length;
     const onlinePercentage = totalStudents > 0 ? Math.round((onlineNow / totalStudents) * 100) : 0;
