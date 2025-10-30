@@ -13,7 +13,7 @@ import { TeacherActivityStats } from './TeacherActivityStats';
 import { TeacherActivityTable } from './TeacherActivityTable';
 import { SchoolActivityStats } from './SchoolActivityStats';
 import { isWithinLast24Hours, isWithinLast30Days } from '@/lib/dateUtils';
-import { Search, Download, RefreshCw } from 'lucide-react';
+import { Search, Download, RefreshCw, X, School, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   Select,
@@ -63,14 +63,12 @@ export const TeacherActivityDialog: FC<TeacherActivityDialogProps> = ({
         filtered = filtered.filter(t => t.is_online);
         break;
       case 'last24h':
-        // نستخدم last_login_at للدقة - فقط من سجل دخول فعلياً
         filtered = filtered.filter(t => {
           if (!t.last_login_at) return false;
           return isWithinLast24Hours(t.last_login_at);
         });
         break;
       case 'last30d':
-        // نستخدم last_login_at للدقة - فقط من سجل دخول فعلياً
         filtered = filtered.filter(t => {
           if (!t.last_login_at) return false;
           return isWithinLast30Days(t.last_login_at);
@@ -151,16 +149,31 @@ export const TeacherActivityDialog: FC<TeacherActivityDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-bold flex items-center justify-between">
-            <span>إحصائيات المعلمين والمدراء</span>
+      <DialogContent className="max-w-[95vw] max-h-[95vh] backdrop-blur-2xl bg-background/95 border border-border/50 rounded-3xl overflow-hidden">
+        <DialogHeader className="pb-4 space-y-4">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-2xl backdrop-blur-sm bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/20 shadow-lg">
+                <Users className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <DialogTitle className="text-2xl font-bold text-foreground/90">
+                  إحصائيات المعلمين والمدراء
+                </DialogTitle>
+                <p className="text-sm text-muted-foreground mt-1">
+                  تتبع حضور ونشاط المعلمين والمدراء
+                </p>
+              </div>
+            </div>
+            
             <div className="flex gap-2">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleRefresh}
                 disabled={loading}
+                className="backdrop-blur-sm bg-background/50 border-border/50 hover:bg-background/80 rounded-xl"
               >
                 <RefreshCw className={`h-4 w-4 ml-2 ${loading ? 'animate-spin' : ''}`} />
                 تحديث
@@ -170,15 +183,16 @@ export const TeacherActivityDialog: FC<TeacherActivityDialogProps> = ({
                 size="sm"
                 onClick={handleExport}
                 disabled={filteredTeachers.length === 0}
+                className="backdrop-blur-sm bg-background/50 border-border/50 hover:bg-background/80 rounded-xl"
               >
                 <Download className="h-4 w-4 ml-2" />
-                تصدير CSV
+                تصدير
               </Button>
             </div>
-          </DialogTitle>
+          </div>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
+        <div className="space-y-6 max-h-[calc(95vh-120px)] overflow-y-auto px-1">
           {/* الإحصائيات العامة */}
           <TeacherActivityStats teachers={schoolFilter === 'all' ? teachers : filteredTeachers} />
 
@@ -186,77 +200,95 @@ export const TeacherActivityDialog: FC<TeacherActivityDialogProps> = ({
           <SchoolActivityStats teachers={teachers} />
 
           {/* الفلاتر والبحث */}
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <div className="space-y-3">
+            {/* شريط البحث */}
+            <div className="relative">
+              <Search className="absolute right-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground/60" />
               <Input
                 placeholder="ابحث بالاسم أو البريد الإلكتروني..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pr-10"
+                className="pr-12 pl-12 h-12 backdrop-blur-xl bg-background/50 border border-border/50 rounded-2xl focus:border-primary/40 focus:bg-background/80 transition-all"
               />
+              {searchQuery && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute left-2 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 rounded-xl"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
             </div>
-            <Select value={schoolFilter} onValueChange={setSchoolFilter}>
-              <SelectTrigger className="w-full md:w-[200px]">
-                <SelectValue placeholder="المدرسة" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">جميع المدارس</SelectItem>
-                {schools.map(school => (
-                  <SelectItem key={school.id} value={school.id}>
-                    {school.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={roleFilter} onValueChange={(value: any) => setRoleFilter(value)}>
-              <SelectTrigger className="w-full md:w-[200px]">
-                <SelectValue placeholder="الدور" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">جميع الأدوار</SelectItem>
-                <SelectItem value="teacher">معلم</SelectItem>
-                <SelectItem value="school_admin">مدير مدرسة</SelectItem>
-              </SelectContent>
-            </Select>
+
+            {/* Filters */}
+            <div className="flex flex-col md:flex-row gap-3">
+              <Select value={schoolFilter} onValueChange={setSchoolFilter}>
+                <SelectTrigger className="flex-1 h-11 backdrop-blur-xl bg-background/50 border border-border/50 rounded-xl">
+                  <School className="h-4 w-4 ml-2 text-muted-foreground" />
+                  <SelectValue placeholder="المدرسة" />
+                </SelectTrigger>
+                <SelectContent className="backdrop-blur-xl bg-background/95 border border-border/50 rounded-xl">
+                  <SelectItem value="all">جميع المدارس</SelectItem>
+                  {schools.map(school => (
+                    <SelectItem key={school.id} value={school.id}>
+                      {school.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              <Select value={roleFilter} onValueChange={(value: any) => setRoleFilter(value)}>
+                <SelectTrigger className="flex-1 h-11 backdrop-blur-xl bg-background/50 border border-border/50 rounded-xl">
+                  <Users className="h-4 w-4 ml-2 text-muted-foreground" />
+                  <SelectValue placeholder="الدور" />
+                </SelectTrigger>
+                <SelectContent className="backdrop-blur-xl bg-background/95 border border-border/50 rounded-xl">
+                  <SelectItem value="all">جميع الأدوار</SelectItem>
+                  <SelectItem value="teacher">معلم</SelectItem>
+                  <SelectItem value="school_admin">مدير مدرسة</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* التابات والجدول */}
-          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabValue)}>
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="online">
-                المتواجدين الآن ({teachers.filter(t => t.is_online).length})
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabValue)} className="space-y-4">
+            <TabsList className="grid w-full grid-cols-4 h-12 backdrop-blur-xl bg-background/50 border border-border/50 rounded-2xl p-1">
+              <TabsTrigger value="online" className="rounded-xl data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+                المتواجدين ({teachers.filter(t => t.is_online).length})
               </TabsTrigger>
-              <TabsTrigger value="last24h">
+              <TabsTrigger value="last24h" className="rounded-xl data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
                 آخر 24 ساعة ({teachers.filter(t => t.last_login_at && isWithinLast24Hours(t.last_login_at)).length})
               </TabsTrigger>
-              <TabsTrigger value="last30d">
+              <TabsTrigger value="last30d" className="rounded-xl data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
                 آخر 30 يوم ({teachers.filter(t => t.last_login_at && isWithinLast30Days(t.last_login_at)).length})
               </TabsTrigger>
-              <TabsTrigger value="all">
+              <TabsTrigger value="all" className="rounded-xl data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
                 الكل ({teachers.length})
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="online" className="mt-6">
+            <TabsContent value="online">
               <TeacherActivityTable teachers={filteredTeachers} />
             </TabsContent>
 
-            <TabsContent value="last24h" className="mt-6">
+            <TabsContent value="last24h">
               <TeacherActivityTable teachers={filteredTeachers} />
             </TabsContent>
 
-            <TabsContent value="last30d" className="mt-6">
+            <TabsContent value="last30d">
               <TeacherActivityTable teachers={filteredTeachers} />
             </TabsContent>
 
-            <TabsContent value="all" className="mt-6">
+            <TabsContent value="all">
               <TeacherActivityTable teachers={filteredTeachers} />
             </TabsContent>
           </Tabs>
 
           {/* معلومات إضافية */}
-          <div className="text-sm text-muted-foreground text-center pt-4 border-t">
+          <div className="text-sm text-muted-foreground text-center py-4">
             عرض {filteredTeachers.length} من أصل {teachers.length} معلم ومدير
           </div>
         </div>
