@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState } from 'react';
 import { useStudentGrade11Content } from '@/hooks/useStudentGrade11Content';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,20 +13,14 @@ import { Grade11VideoViewer } from '@/components/content/Grade11VideoViewer';
 import { useStudentProgress } from '@/hooks/useStudentProgress';
 import { useVideoInfoCards } from '@/hooks/useVideoInfoCards';
 import VideoInfoCard from '../content/VideoInfoCard';
-import { toast } from 'sonner';
-import { PerformanceDebugPanel } from '@/components/debug/PerformanceDebugPanel';
 
 export const StudentGrade11Content: React.FC = () => {
   const {
-    structure,
+    sections,
     videos,
     loading,
     error,
-    getContentStats,
-    fetchSectionTopics, // ⚡ جلب مواضيع قسم محدد
-    fetchAllTopicsBatch, // ⚡ **NEW** جلب عدة أقسام دفعة واحدة
-    fetchTopicLessons,
-    fetchLessonContent
+    getContentStats
   } = useStudentGrade11Content();
   const { updateProgress, logActivity } = useStudentProgress();
   const { cards, loading: cardsLoading } = useVideoInfoCards('11');
@@ -36,152 +30,31 @@ export const StudentGrade11Content: React.FC = () => {
   const [selectedLesson, setSelectedLesson] = useState<any>(null);
   const [selectedVideo, setSelectedVideo] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('lessons');
-  
-  // ⚡ حالة المواضيع المحملة لكل section (Lazy Loading)
-  const [sectionTopics, setSectionTopics] = useState<Map<string, any[]>>(new Map());
-  const [loadingSections, setLoadingSections] = useState<Set<string>>(new Set());
-  
-  // ⚡ حالة الدروس المحملة لكل topic
-  const [topicLessons, setTopicLessons] = useState<Map<string, any[]>>(new Map());
-  const [loadingTopics, setLoadingTopics] = useState<Set<string>>(new Set());
-  
-  // ⚡ استخدام useMemo للإحصائيات (تقليل Re-renders)
-  const stats = useMemo(() => getContentStats(), [getContentStats]);
+  const stats = getContentStats();
 
-  // ⚡ **NEW** Batch Prefetch: جلب مواضيع أول 3 أقسام في طلب واحد
-  React.useEffect(() => {
-    if (structure && structure.length > 0 && !loading && sectionTopics.size === 0) {
-      const prefetchMultipleSections = async () => {
-        try {
-          // جلب أول 3 أقسام في طلب واحد (بدلاً من 3 طلبات منفصلة)
-          const firstThreeSections = structure.slice(0, 3);
-          const sectionIds = firstThreeSections.map((s: any) => s.id);
-          
-          const topicsBatch = await fetchAllTopicsBatch(sectionIds);
-          
-          // تحديث الحالة لكل الأقسام المحملة
-          setSectionTopics(prev => {
-            const updated = new Map(prev);
-            Object.entries(topicsBatch).forEach(([sectionId, topics]) => {
-              updated.set(sectionId, topics);
-            });
-            return updated;
-          });
-          
-          // فتح القسم الأول تلقائياً
-          if (firstThreeSections.length > 0) {
-            setOpenSections([firstThreeSections[0].id]);
-          }
-        } catch (error) {
-          console.error('Error prefetching sections batch:', error);
-        }
-      };
-      
-      prefetchMultipleSections();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [structure?.length, loading]);
+  // Toggle section open/close
+  const toggleSection = (sectionId: string) => {
+    setOpenSections(prev => prev.includes(sectionId) ? prev.filter(id => id !== sectionId) : [...prev, sectionId]);
+  };
 
-  // ⚡ Toggle section مع useCallback (تقليل Re-renders)
-  const toggleSection = useCallback(async (sectionId: string) => {
-    const isOpening = !openSections.includes(sectionId);
-    setOpenSections(prev => 
-      prev.includes(sectionId) ? prev.filter(id => id !== sectionId) : [...prev, sectionId]
-    );
-    
-    // تحميل المواضيع عند فتح القسم لأول مرة
-    if (isOpening && !sectionTopics.has(sectionId) && !loadingSections.has(sectionId)) {
-      setLoadingSections(prev => new Set(prev).add(sectionId));
-      
-      try {
-        const topics = await fetchSectionTopics(sectionId);
-        setSectionTopics(prev => new Map(prev).set(sectionId, topics));
-      } catch (error) {
-        console.error('Error loading section topics:', error);
-        toast.error('فشل تحميل المواضيع');
-      } finally {
-        setLoadingSections(prev => {
-          const next = new Set(prev);
-          next.delete(sectionId);
-          return next;
-        });
-      }
-    }
-  }, [openSections, sectionTopics, loadingSections, fetchSectionTopics]);
+  // Toggle topic open/close
+  const toggleTopic = (topicId: string) => {
+    setOpenTopics(prev => prev.includes(topicId) ? prev.filter(id => id !== topicId) : [...prev, topicId]);
+  };
 
-  // ⚡ Toggle topic مع useCallback (تقليل Re-renders)
-  const toggleTopic = useCallback(async (topicId: string) => {
-    const isOpening = !openTopics.includes(topicId);
-    setOpenTopics(prev => 
-      prev.includes(topicId) ? prev.filter(id => id !== topicId) : [...prev, topicId]
-    );
-    
-    // تحميل الدروس عند فتح الموضوع لأول مرة
-    if (isOpening && !topicLessons.has(topicId) && !loadingTopics.has(topicId)) {
-      setLoadingTopics(prev => new Set(prev).add(topicId));
-      
-      try {
-        const lessons = await fetchTopicLessons(topicId);
-        setTopicLessons(prev => new Map(prev).set(topicId, lessons));
-      } catch (error) {
-        console.error('Error loading topic lessons:', error);
-        toast.error('فشل تحميل الدروس');
-      } finally {
-        setLoadingTopics(prev => {
-          const next = new Set(prev);
-          next.delete(topicId);
-          return next;
-        });
-      }
-    }
-  }, [openTopics, topicLessons, loadingTopics, fetchTopicLessons]);
+  // Filter sections based on search
+  const filteredSections = (sections || []).filter(section => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return section.title.toLowerCase().includes(query) || section.description?.toLowerCase().includes(query) || section.topics?.some(topic => topic.title.toLowerCase().includes(query) || topic.content?.toLowerCase().includes(query) || topic.lessons?.some(lesson => lesson.title.toLowerCase().includes(query) || lesson.content?.toLowerCase().includes(query)));
+  });
 
-  // ⚡ Handle lesson click مع useCallback (تقليل Re-renders)
-  const handleLessonClick = useCallback(async (lessonId: string) => {
-    try {
-      const lessonContent = await fetchLessonContent(lessonId);
-      if (lessonContent) {
-        setSelectedLesson(lessonContent);
-        
-        // تسجيل التقدم
-        await updateProgress(lessonId, 'lesson', 100, 0, 10);
-        await logActivity('document_read', lessonId, 0, 10);
-      }
-    } catch (error) {
-      console.error('Error loading lesson content:', error);
-      toast.error('فشل تحميل محتوى الدرس');
-    }
-  }, [fetchLessonContent, updateProgress, logActivity]);
-
-  // ⚡ Filter structure مع useMemo (تقليل Re-renders)
-  const filteredSections = useMemo(() => {
-    return (structure || []).filter(section => {
-      if (!searchQuery) return true;
-      const query = searchQuery.toLowerCase();
-      
-      // البحث في عنوان القسم
-      if (section.title.toLowerCase().includes(query)) return true;
-      if (section.description?.toLowerCase().includes(query)) return true;
-      
-      // البحث في المواضيع المحملة
-      const topics = sectionTopics.get(section.id) || [];
-      return topics.some((topic: any) => 
-        topic.title.toLowerCase().includes(query) || 
-        topic.content?.toLowerCase().includes(query)
-      );
-    });
-  }, [structure, searchQuery, sectionTopics]);
-
-  // ⚡ Filter videos مع useMemo (تقليل Re-renders)
-  const filteredVideos = useMemo(() => {
-    return (videos || []).filter(video => {
-      if (!searchQuery) return true;
-      const query = searchQuery.toLowerCase();
-      return video.title.toLowerCase().includes(query) || 
-             video.description?.toLowerCase().includes(query) || 
-             video.category.toLowerCase().includes(query);
-    });
-  }, [videos, searchQuery]);
+  // Filter videos based on search
+  const filteredVideos = (videos || []).filter(video => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return video.title.toLowerCase().includes(query) || video.description?.toLowerCase().includes(query) || video.category.toLowerCase().includes(query);
+  });
   if (loading) {
     return <div className="space-y-8 max-w-7xl mx-auto">
         <div className="text-center space-y-3">
@@ -228,11 +101,7 @@ export const StudentGrade11Content: React.FC = () => {
         </div>
       </Card>;
   }
-  return <>
-      {/* Performance Debug Panel - DEV Only */}
-      <PerformanceDebugPanel />
-      
-      <div className="space-y-8 max-w-7xl mx-auto">
+  return <div className="space-y-8 max-w-7xl mx-auto">
       {/* Minimal Header */}
       <div className="text-center space-y-3">
         
@@ -308,7 +177,7 @@ export const StudentGrade11Content: React.FC = () => {
         <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 h-14 bg-surface-light border border-divider">
           <TabsTrigger value="lessons" className="flex items-center gap-3 text-base font-light py-3">
             <BookOpen className="w-5 h-5" />
-            الدروس ({(structure || []).length})
+            الدروس ({(sections || []).length})
           </TabsTrigger>
           <TabsTrigger value="videos" className="flex items-center gap-3 text-base font-light py-3">
             <Video className="w-5 h-5" />
@@ -343,7 +212,7 @@ export const StudentGrade11Content: React.FC = () => {
                         </div>
                         <div className="flex items-center gap-4">
                           <Badge variant="secondary" className="text-sm px-4 py-2 bg-blue-50 text-blue-600 border-blue-200 font-medium">
-                            {sectionTopics.get(section.id)?.length || 0} موضوع
+                            {section.topics.length} موضوع
                           </Badge>
                           {openSections.includes(section.id) ? <ChevronDown className="w-6 h-6 text-slate-400" /> : <ChevronRight className="w-6 h-6 text-slate-400" />}
                         </div>
@@ -353,89 +222,70 @@ export const StudentGrade11Content: React.FC = () => {
 
                   <CollapsibleContent>
                     <CardContent className="pt-0 px-8 pb-8">
-                      {loadingSections.has(section.id) ? (
-                        <div className="text-center py-8">
-                          <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
-                          <p className="text-slate-500 mt-4">جاري تحميل المواضيع...</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-4">
-                          {(sectionTopics.get(section.id) || []).map(topic => (
-                            <Card key={topic.id} className="mr-8 bg-gradient-to-br from-white to-green-50/30 border-green-200/60 shadow-sm">
-                              <Collapsible open={openTopics.includes(topic.id)} onOpenChange={() => toggleTopic(topic.id)}>
-                                <CollapsibleTrigger asChild>
-                                  <CardHeader className="cursor-pointer hover:bg-green-50/30 transition-colors py-6">
-                                     <div className="flex items-center justify-between">
-                                      <div className="flex items-center gap-5">
-                                        <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center shadow-md">
-                                          <Target className="w-6 h-6 text-white" />
-                                        </div>
-                                        <div className="text-left">
-                                          <h4 className="font-semibold text-lg text-slate-700">{topic.title}</h4>
-                                          {topic.content && <p className="text-sm text-slate-500 mt-2 line-clamp-2 font-medium">
-                                              {topic.content}
-                                            </p>}
-                                        </div>
+                      <div className="space-y-4">
+                        {section.topics.map(topic => <Card key={topic.id} className="mr-8 bg-gradient-to-br from-white to-green-50/30 border-green-200/60 shadow-sm">
+                            <Collapsible open={openTopics.includes(topic.id)} onOpenChange={() => toggleTopic(topic.id)}>
+                              <CollapsibleTrigger asChild>
+                                <CardHeader className="cursor-pointer hover:bg-green-50/30 transition-colors py-6">
+                                   <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-5">
+                                      <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center shadow-md">
+                                        <Target className="w-6 h-6 text-white" />
                                       </div>
-                                      <div className="flex items-center gap-3">
-                                        <Badge variant="outline" className="text-sm px-3 py-1 font-medium border-green-200 text-green-600">
-                                          {topic.lessons_count || 0} درس
-                                        </Badge>
-                                        {openTopics.includes(topic.id) ? <ChevronDown className="w-5 h-5 text-slate-400" /> : <ChevronRight className="w-5 h-5 text-slate-400" />}
+                                      <div className="text-left">
+                                        <h4 className="font-semibold text-lg text-slate-700">{topic.title}</h4>
+                                        {topic.content && <p className="text-sm text-slate-500 mt-2 line-clamp-2 font-medium">
+                                            {topic.content}
+                                          </p>}
                                       </div>
                                     </div>
-                                  </CardHeader>
-                                </CollapsibleTrigger>
+                                    <div className="flex items-center gap-3">
+                                      <Badge variant="outline" className="text-sm px-3 py-1 font-medium border-green-200 text-green-600">
+                                        {topic.lessons.length} درس
+                                      </Badge>
+                                      {openTopics.includes(topic.id) ? <ChevronDown className="w-5 h-5 text-slate-400" /> : <ChevronRight className="w-5 h-5 text-slate-400" />}
+                                    </div>
+                                  </div>
+                                </CardHeader>
+                              </CollapsibleTrigger>
 
                               <CollapsibleContent>
                                 <CardContent className="pt-0 px-6 pb-6">
-                                  {/* ⚡ عرض skeleton loader أثناء تحميل الدروس */}
-                                  {loadingTopics.has(topic.id) ? (
-                                    <div className="space-y-3">
-                                      {[1, 2, 3].map(i => (
-                                        <div key={i} className="h-20 bg-purple-100/50 animate-pulse rounded-2xl" />
-                                      ))}
-                                    </div>
-                                  ) : (
-                                    <div className="space-y-3">
-                                      {(topicLessons.get(topic.id) || []).map((lesson: any) => (
-                                        <div 
-                                          key={lesson.id} 
-                                          className="flex items-center justify-between p-5 bg-gradient-to-br from-purple-50/50 to-purple-100/30 rounded-2xl border border-purple-200/60 hover:bg-purple-50/80 transition-colors cursor-pointer group" 
-                                          onClick={() => handleLessonClick(lesson.id)}
-                                        >
-                                          <div className="flex items-center gap-5">
-                                            <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-sm">
-                                              <BookOpen className="w-5 h-5 text-white" />
-                                            </div>
-                                            <div>
-                                              <h5 className="text-base font-semibold text-slate-700 group-hover:text-purple-700 transition-colors">
-                                                {lesson.title}
-                                              </h5>
-                                              {lesson.media_count?.[0]?.count > 0 && (
-                                                <div className="flex items-center gap-2 mt-2">
-                                                  <PlayCircle className="w-4 h-4 text-slate-400" />
-                                                  <span className="text-sm text-slate-500 font-medium">
-                                                    {lesson.media_count[0].count} ملف وسائط
-                                                  </span>
-                                                </div>
-                                              )}
-                                            </div>
+                                  <div className="space-y-3">
+                                    {topic.lessons.map(lesson => <div key={lesson.id} className="flex items-center justify-between p-5 bg-gradient-to-br from-purple-50/50 to-purple-100/30 rounded-2xl border border-purple-200/60 hover:bg-purple-50/80 transition-colors cursor-pointer group" onClick={async () => {
+                                        setSelectedLesson(lesson);
+                                        // تسجيل إكمال الدرس فوراً
+                                        try {
+                                          await updateProgress(lesson.id, 'lesson', 100, 0, 10);
+                                          await logActivity('document_read', lesson.id, 0, 10);
+                                        } catch (error) {
+                                          console.error('Error tracking lesson view:', error);
+                                        }
+                                      }}>
+                                        <div className="flex items-center gap-5">
+                                          <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-sm">
+                                            <BookOpen className="w-5 h-5 text-white" />
                                           </div>
-                                          <Button variant="ghost" className="px-5 text-purple-600 hover:text-purple-700 hover:bg-purple-50 font-medium">
-                                            عرض
-                                          </Button>
+                                          <div>
+                                            <h5 className="text-base font-semibold text-slate-700 group-hover:text-purple-700 transition-colors">{lesson.title}</h5>
+                                            {lesson.media && lesson.media.length > 0 && <div className="flex items-center gap-2 mt-2">
+                                                <PlayCircle className="w-4 h-4 text-slate-400" />
+                                                <span className="text-sm text-slate-500 font-medium">
+                                                  {lesson.media.length} ملف وسائط
+                                                </span>
+                                              </div>}
+                                          </div>
                                         </div>
-                                      ))}
-                                    </div>
-                                  )}
+                                        <Button variant="ghost" className="px-5 text-purple-600 hover:text-purple-700 hover:bg-purple-50 font-medium">
+                                          عرض
+                                        </Button>
+                                      </div>)}
+                                  </div>
                                 </CardContent>
                               </CollapsibleContent>
                             </Collapsible>
-                          </Card>
-                          ))}
-                        </div>
-                      )}
+                          </Card>)}
+                      </div>
                     </CardContent>
                   </CollapsibleContent>
                 </Collapsible>
@@ -564,6 +414,5 @@ export const StudentGrade11Content: React.FC = () => {
             </div>
           </DialogContent>
         </Dialog>}
-    </div>
-  </>;
+    </div>;
 };

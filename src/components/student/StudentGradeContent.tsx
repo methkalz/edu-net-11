@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStudentContent } from '@/hooks/useStudentContent';
 import { useStudentProgress } from '@/hooks/useStudentProgress';
@@ -116,13 +116,6 @@ export const StudentGradeContent: React.FC<{ defaultTab?: string }> = ({ default
   } = grade12HooksResult;
   
   const [activeContentTab, setActiveContentTab] = useState('computer_structure');
-  
-  // ⚡ Lazy loading states
-  const [visibleVideoCount, setVisibleVideoCount] = useState(10);
-  const [visibleDocCount, setVisibleDocCount] = useState(10);
-  const LOAD_INCREMENT = 10;
-  const loadMoreVideosRef = useRef<HTMLDivElement>(null);
-  const loadMoreDocsRef = useRef<HTMLDivElement>(null);
   
   // Viewer states
   // Debug logging for Grade 10 video categories
@@ -785,56 +778,6 @@ export const StudentGradeContent: React.FC<{ defaultTab?: string }> = ({ default
     }
   ];
 
-  // ⚡ Lazy loading: Calculate visible items for current tab
-  const getVisibleItems = useCallback((tab: any) => {
-    if (tab.id === 'videos' && assignedGrade !== '10') {
-      return tab.items.slice(0, visibleVideoCount);
-    } else if (tab.id === 'documents') {
-      return tab.items.slice(0, visibleDocCount);
-    }
-    return tab.items; // No lazy loading for other tabs
-  }, [visibleVideoCount, visibleDocCount, assignedGrade]);
-
-  // ⚡ Intersection Observer for videos
-  useEffect(() => {
-    if (assignedGrade === '10' || activeContentTab !== 'videos') return;
-    
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          const currentTab = contentTabs.find(t => t.id === activeContentTab);
-          if (currentTab && visibleVideoCount < currentTab.items.length) {
-            setVisibleVideoCount(prev => Math.min(prev + LOAD_INCREMENT, currentTab.items.length));
-          }
-        }
-      },
-      { threshold: 0.5, rootMargin: '200px' }
-    );
-    
-    if (loadMoreVideosRef.current) observer.observe(loadMoreVideosRef.current);
-    return () => observer.disconnect();
-  }, [activeContentTab, visibleVideoCount, contentTabs, assignedGrade]);
-
-  // ⚡ Intersection Observer for documents
-  useEffect(() => {
-    if (activeContentTab !== 'documents') return;
-    
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          const currentTab = contentTabs.find(t => t.id === activeContentTab);
-          if (currentTab && visibleDocCount < currentTab.items.length) {
-            setVisibleDocCount(prev => Math.min(prev + LOAD_INCREMENT, currentTab.items.length));
-          }
-        }
-      },
-      { threshold: 0.5, rootMargin: '200px' }
-    );
-    
-    if (loadMoreDocsRef.current) observer.observe(loadMoreDocsRef.current);
-    return () => observer.disconnect();
-  }, [activeContentTab, visibleDocCount, contentTabs]);
-
   return (
     <div className="container mx-auto px-6 py-12 space-y-12">
       {/* Enhanced Header Section */}
@@ -1100,48 +1043,32 @@ export const StudentGradeContent: React.FC<{ defaultTab?: string }> = ({ default
                     </div>
                   </div>
                 ) : (
-                  <>
-                    <div className="grid gap-8 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-                      {getVisibleItems(tab).map((item: any) => {
-                        // Determine the correct content type
-                        let contentType: 'video' | 'document' | 'lesson' | 'project' = 'video';
-                        if (tab.id === 'mini_projects') {
-                          contentType = 'project';
-                        } else if (['windows_basics', 'computer_structure', 'network_intro'].includes(tab.id)) {
-                          contentType = 'video';
-                        } else if (tab.id === 'documents') {
-                          contentType = 'document';
-                        } else if (tab.id === 'lessons') {
-                          contentType = 'lesson';
-                        }
+                  <div className="grid gap-8 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                    {tab.items.map((item: any) => {
+                      // Determine the correct content type
+                      let contentType: 'video' | 'document' | 'lesson' | 'project' = 'video';
+                      if (tab.id === 'mini_projects') {
+                        contentType = 'project';
+                      } else if (['windows_basics', 'computer_structure', 'network_intro'].includes(tab.id)) {
+                        contentType = 'video';
+                      } else if (tab.id === 'documents') {
+                        contentType = 'document';
+                      } else if (tab.id === 'lessons') {
+                        contentType = 'lesson';
+                      }
 
-                        return (
-                          <ContentCard
-                            key={item.id}
-                            item={item}
-                            type={contentType}
-                            icon={tab.icon}
-                            color={tab.color}
-                            onDelete={contentType === 'project' ? handleDeleteProject : undefined}
-                          />
-                        );
-                      })}
-                    </div>
-
-                    {/* Load More Trigger for Videos */}
-                    {tab.id === 'videos' && assignedGrade !== '10' && visibleVideoCount < tab.items.length && (
-                      <div ref={loadMoreVideosRef} className="text-center py-8">
-                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                      </div>
-                    )}
-
-                    {/* Load More Trigger for Documents */}
-                    {tab.id === 'documents' && visibleDocCount < tab.items.length && (
-                      <div ref={loadMoreDocsRef} className="text-center py-8">
-                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                      </div>
-                    )}
-                  </>
+                      return (
+                        <ContentCard
+                          key={item.id}
+                          item={item}
+                          type={contentType}
+                          icon={tab.icon}
+                          color={tab.color}
+                          onDelete={contentType === 'project' ? handleDeleteProject : undefined}
+                        />
+                      );
+                    })}
+                  </div>
                 )}
               </>
             )}

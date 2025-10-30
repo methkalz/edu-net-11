@@ -19,7 +19,6 @@ export interface Grade11Topic {
   title: string;
   content?: string;
   order_index: number;
-  lessons_count?: number;
   created_at: string;
   updated_at: string;
 }
@@ -51,7 +50,7 @@ export interface Grade11SectionWithTopics extends Grade11Section {
 }
 
 export interface Grade11TopicWithLessons extends Grade11Topic {
-  lessons?: Grade11LessonWithMedia[];
+  lessons: Grade11LessonWithMedia[];
 }
 
 export interface Grade11LessonWithMedia extends Grade11Lesson {

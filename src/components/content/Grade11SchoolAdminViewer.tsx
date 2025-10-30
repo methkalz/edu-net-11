@@ -24,8 +24,7 @@ const Grade11SchoolAdminViewer: React.FC = () => {
       section.topics.map(topic => ({
         ...topic,
         sectionTitle: section.title,
-        sectionId: section.id,
-        lessons_count: topic.lessons?.length || 0
+        sectionId: section.id
       }))
     );
   }, [sections]);
@@ -45,9 +44,9 @@ const Grade11SchoolAdminViewer: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const totalLessons = allTopics.reduce((sum, topic) => sum + (topic.lessons?.length || 0), 0);
+  const totalLessons = allTopics.reduce((sum, topic) => sum + topic.lessons.length, 0);
   const totalMedia = allTopics.reduce((sum, topic) => 
-    sum + (topic.lessons?.reduce((lessonSum, lesson) => lessonSum + (lesson.media?.length || 0), 0) || 0), 0
+    sum + topic.lessons.reduce((lessonSum, lesson) => lessonSum + (lesson.media?.length || 0), 0), 0
   );
 
   if (loading) {

@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
-import { Grade11TopicWithLessons } from '@/hooks/useStudentGrade11Content';
+import { Grade11TopicWithLessons } from '@/hooks/useGrade11Content';
 
 interface Grade11TopicCardProps {
   topic: Grade11TopicWithLessons;
@@ -12,7 +12,7 @@ interface Grade11TopicCardProps {
 }
 
 const Grade11TopicCard: React.FC<Grade11TopicCardProps> = ({ topic, onViewDetails }) => {
-  const totalMedia = topic.lessons?.reduce((sum, lesson) => sum + (lesson.media?.length || 0), 0) || 0;
+  const totalMedia = topic.lessons.reduce((sum, lesson) => sum + (lesson.media?.length || 0), 0);
   
   const getGradientColor = (index: number) => {
     const gradients = [
@@ -72,7 +72,7 @@ const Grade11TopicCard: React.FC<Grade11TopicCardProps> = ({ topic, onViewDetail
           <div className="flex items-center gap-3 text-sm">
             <div className="flex items-center gap-1 text-blue-600">
               <BookOpen className="h-4 w-4" />
-              <span className="font-medium">{topic.lessons_count || 0}</span>
+              <span className="font-medium">{topic.lessons.length}</span>
               <span className="text-muted-foreground">درس</span>
             </div>
             
@@ -96,12 +96,12 @@ const Grade11TopicCard: React.FC<Grade11TopicCardProps> = ({ topic, onViewDetail
               variant="secondary" 
               className="bg-white/60 text-foreground text-xs"
             >
-              {(topic.lessons_count || 0) === 0 ? 'فارغ' : 'متاح'}
+              {topic.lessons.length === 0 ? 'فارغ' : 'متاح'}
             </Badge>
           </div>
 
           {/* Preview of lessons */}
-          {topic.lessons && topic.lessons.length > 0 && (
+          {topic.lessons.length > 0 && (
             <div className="pt-2 border-t border-white/40">
               <div className="text-xs text-muted-foreground">
                 <span className="font-medium">آخر درس:</span> {topic.lessons[topic.lessons.length - 1]?.title}
