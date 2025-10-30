@@ -87,16 +87,24 @@ const Reports = () => {
       setLoading(true);
       try {
         if (userProfile?.role === 'superadmin') {
-          const [usersResult, studentsResult] = await Promise.all([
+          const thirtyDaysAgo = new Date();
+          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+          
+          const [usersResult, studentsResult, activeStudentsResult] = await Promise.all([
             supabase.from('profiles').select('*', { count: 'exact' }),
-            supabase.rpc('get_students_for_school_admin')
+            supabase.rpc('get_students_for_school_admin'),
+            supabase
+              .from('student_presence')
+              .select('user_id', { count: 'exact' })
+              .gte('last_seen_at', thirtyDaysAgo.toISOString())
           ]);
 
           const total = (usersResult.count || 0) + (studentsResult.data?.length || 0);
+          const activeStudentsLast30Days = activeStudentsResult.count || 0;
           
           setStats({
             totalUsers: total,
-            activeUsers: Math.floor(total * 0.78),
+            activeUsers: activeStudentsLast30Days,
             totalContent: 156,
             averageScore: 87.3,
             engagementRate: 92.1,
