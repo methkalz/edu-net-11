@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   BarChart3, 
   TrendingUp, 
@@ -14,12 +15,14 @@ import {
   BookOpen,
   Activity,
   Star,
-  Calendar,
   Download,
   Filter,
   ArrowUp,
   ArrowDown,
-  Minus
+  Minus,
+  Radio,
+  Building2,
+  LineChart as LineChartIcon
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -39,6 +42,9 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import BackButton from '@/components/shared/BackButton';
 import AppFooter from '@/components/shared/AppFooter';
+import { LiveActivityTab } from '@/components/superadmin/reports/LiveActivityTab';
+import { SchoolsStatsTab } from '@/components/superadmin/reports/SchoolsStatsTab';
+import { AdvancedTab } from '@/components/superadmin/reports/AdvancedTab';
 
 const Reports = () => {
   const { userProfile } = useAuth();
@@ -185,215 +191,255 @@ const Reports = () => {
           </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard
-            title="إجمالي المستخدمين"
-            value={stats.totalUsers.toLocaleString()}
-            change="+12%"
-            icon={Users}
-            trend="up"
-          />
-          <StatCard
-            title="المستخدمين النشطين"
-            value={stats.activeUsers.toLocaleString()}
-            change="+8%"
-            icon={Activity}
-            trend="up"
-          />
-          <StatCard
-            title="المحتوى التعليمي"
-            value={stats.totalContent.toLocaleString()}
-            change="+15%"
-            icon={BookOpen}
-            trend="up"
-          />
-          <StatCard
-            title="متوسط الدرجات"
-            value={`${stats.averageScore}%`}
-            change="+2%"
-            icon={Star}
-            trend="up"
-          />
-        </div>
+        {/* Tabs Navigation */}
+        <Tabs defaultValue="overview" className="w-full">
+          <TabsList className="grid w-full grid-cols-4 mb-8">
+            <TabsTrigger value="overview" className="gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="live-activity" className="gap-2">
+              <Radio className="h-4 w-4" />
+              Live Activity
+            </TabsTrigger>
+            <TabsTrigger value="schools" className="gap-2">
+              <Building2 className="h-4 w-4" />
+              Schools Stats
+            </TabsTrigger>
+            <TabsTrigger value="advanced" className="gap-2">
+              <LineChartIcon className="h-4 w-4" />
+              Advanced
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          
-          {/* Weekly Activity Chart */}
-          <Card className="border-0 shadow-sm bg-white">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-blue-600" />
-                النشاط الأسبوعي
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={weeklyData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis 
-                    dataKey="day" 
-                    tick={{ fontSize: 12, fill: '#6b7280' }}
-                    axisLine={{ stroke: '#e5e7eb' }}
-                  />
-                  <YAxis 
-                    tick={{ fontSize: 12, fill: '#6b7280' }}
-                    axisLine={{ stroke: '#e5e7eb' }}
-                  />
-                  <Tooltip 
-                    contentStyle={{
-                      backgroundColor: 'white',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px',
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                    }}
-                  />
-                  <Bar dataKey="users" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+          {/* Overview Tab (Original Content) */}
+          <TabsContent value="overview" className="space-y-8">
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <StatCard
+                title="إجمالي المستخدمين"
+                value={stats.totalUsers.toLocaleString()}
+                change="+12%"
+                icon={Users}
+                trend="up"
+              />
+              <StatCard
+                title="المستخدمين النشطين"
+                value={stats.activeUsers.toLocaleString()}
+                change="+8%"
+                icon={Activity}
+                trend="up"
+              />
+              <StatCard
+                title="المحتوى التعليمي"
+                value={stats.totalContent.toLocaleString()}
+                change="+15%"
+                icon={BookOpen}
+                trend="up"
+              />
+              <StatCard
+                title="متوسط الدرجات"
+                value={`${stats.averageScore}%`}
+                change="+2%"
+                icon={Star}
+                trend="up"
+              />
+            </div>
 
-          {/* Content Distribution */}
-          <Card className="border-0 shadow-sm bg-white">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-blue-600" />
-                توزيع المحتوى
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={contentDistribution}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={120}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {contentDistribution.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+            {/* Charts Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              
+              {/* Weekly Activity Chart */}
+              <Card className="border-0 shadow-sm bg-white">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5 text-blue-600" />
+                    النشاط الأسبوعي
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={weeklyData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis 
+                        dataKey="day" 
+                        tick={{ fontSize: 12, fill: '#6b7280' }}
+                        axisLine={{ stroke: '#e5e7eb' }}
+                      />
+                      <YAxis 
+                        tick={{ fontSize: 12, fill: '#6b7280' }}
+                        axisLine={{ stroke: '#e5e7eb' }}
+                      />
+                      <Tooltip 
+                        contentStyle={{
+                          backgroundColor: 'white',
+                          border: '1px solid #e5e7eb',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                        }}
+                      />
+                      <Bar dataKey="users" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              {/* Content Distribution */}
+              <Card className="border-0 shadow-sm bg-white">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5 text-blue-600" />
+                    توزيع المحتوى
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={contentDistribution}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={120}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        {contentDistribution.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        contentStyle={{
+                          backgroundColor: 'white',
+                          border: '1px solid #e5e7eb',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="mt-4 grid grid-cols-2 gap-3">
+                    {contentDistribution.map((item, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <div 
+                          className="w-3 h-3 rounded-full" 
+                          style={{ backgroundColor: item.color }}
+                        ></div>
+                        <span className="text-sm text-gray-600">{item.name}</span>
+                        <span className="text-sm font-medium text-gray-900">{item.value}</span>
+                      </div>
                     ))}
-                  </Pie>
-                  <Tooltip 
-                    contentStyle={{
-                      backgroundColor: 'white',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px',
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="mt-4 grid grid-cols-2 gap-3">
-                {contentDistribution.map((item, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <div 
-                      className="w-3 h-3 rounded-full" 
-                      style={{ backgroundColor: item.color }}
-                    ></div>
-                    <span className="text-sm text-gray-600">{item.name}</span>
-                    <span className="text-sm font-medium text-gray-900">{item.value}</span>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                </CardContent>
+              </Card>
+            </div>
 
-        {/* Performance Trends */}
-        <Card className="border-0 shadow-sm bg-white">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <Activity className="h-5 w-5 text-blue-600" />
-              اتجاهات الأداء
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={400}>
-              <LineChart data={weeklyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis 
-                  dataKey="day" 
-                  tick={{ fontSize: 12, fill: '#6b7280' }}
-                  axisLine={{ stroke: '#e5e7eb' }}
-                />
-                <YAxis 
-                  tick={{ fontSize: 12, fill: '#6b7280' }}
-                  axisLine={{ stroke: '#e5e7eb' }}
-                />
-                <Tooltip 
-                  contentStyle={{
-                    backgroundColor: 'white',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                  }}
-                />
-                <Legend />
-                <Line 
-                  type="monotone" 
-                  dataKey="users" 
-                  stroke="#3b82f6" 
-                  strokeWidth={3}
-                  dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
-                  name="المستخدمين"
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="engagement" 
-                  stroke="#10b981" 
-                  strokeWidth={3}
-                  dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
-                  name="معدل التفاعل"
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+            {/* Performance Trends */}
+            <Card className="border-0 shadow-sm bg-white">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <Activity className="h-5 w-5 text-blue-600" />
+                  اتجاهات الأداء
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={400}>
+                  <LineChart data={weeklyData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis 
+                      dataKey="day" 
+                      tick={{ fontSize: 12, fill: '#6b7280' }}
+                      axisLine={{ stroke: '#e5e7eb' }}
+                    />
+                    <YAxis 
+                      tick={{ fontSize: 12, fill: '#6b7280' }}
+                      axisLine={{ stroke: '#e5e7eb' }}
+                    />
+                    <Tooltip 
+                      contentStyle={{
+                        backgroundColor: 'white',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                      }}
+                    />
+                    <Legend />
+                    <Line 
+                      type="monotone" 
+                      dataKey="users" 
+                      stroke="#3b82f6" 
+                      strokeWidth={3}
+                      dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
+                      name="المستخدمين"
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="engagement" 
+                      stroke="#10b981" 
+                      strokeWidth={3}
+                      dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
+                      name="معدل التفاعل"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="border-0 shadow-sm bg-white">
-            <CardContent className="p-6 text-center">
-              <div className="text-3xl font-bold text-blue-600 mb-2">
-                {stats.engagementRate}%
-              </div>
-              <div className="text-sm text-gray-600">معدل التفاعل اليومي</div>
-              <Badge className="mt-2 bg-green-50 text-green-700 border-green-200">
-                ممتاز
-              </Badge>
-            </CardContent>
-          </Card>
+            {/* Quick Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card className="border-0 shadow-sm bg-white">
+                <CardContent className="p-6 text-center">
+                  <div className="text-3xl font-bold text-blue-600 mb-2">
+                    {stats.engagementRate}%
+                  </div>
+                  <div className="text-sm text-gray-600">معدل التفاعل اليومي</div>
+                  <Badge className="mt-2 bg-green-50 text-green-700 border-green-200">
+                    ممتاز
+                  </Badge>
+                </CardContent>
+              </Card>
 
-          <Card className="border-0 shadow-sm bg-white">
-            <CardContent className="p-6 text-center">
-              <div className="text-3xl font-bold text-green-600 mb-2">
-                +{stats.weeklyGrowth}%
-              </div>
-              <div className="text-sm text-gray-600">النمو الأسبوعي</div>
-              <Badge className="mt-2 bg-blue-50 text-blue-700 border-blue-200">
-                متزايد
-              </Badge>
-            </CardContent>
-          </Card>
+              <Card className="border-0 shadow-sm bg-white">
+                <CardContent className="p-6 text-center">
+                  <div className="text-3xl font-bold text-green-600 mb-2">
+                    +{stats.weeklyGrowth}%
+                  </div>
+                  <div className="text-sm text-gray-600">النمو الأسبوعي</div>
+                  <Badge className="mt-2 bg-blue-50 text-blue-700 border-blue-200">
+                    متزايد
+                  </Badge>
+                </CardContent>
+              </Card>
 
-          <Card className="border-0 shadow-sm bg-white">
-            <CardContent className="p-6 text-center">
-              <div className="text-3xl font-bold text-purple-600 mb-2">
-                24/7
-              </div>
-              <div className="text-sm text-gray-600">النظام متاح</div>
-              <Badge className="mt-2 bg-purple-50 text-purple-700 border-purple-200">
-                مستقر
-              </Badge>
-            </CardContent>
-          </Card>
-        </div>
+              <Card className="border-0 shadow-sm bg-white">
+                <CardContent className="p-6 text-center">
+                  <div className="text-3xl font-bold text-purple-600 mb-2">
+                    24/7
+                  </div>
+                  <div className="text-sm text-gray-600">النظام متاح</div>
+                  <Badge className="mt-2 bg-purple-50 text-purple-700 border-purple-200">
+                    مستقر
+                  </Badge>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Live Activity Tab */}
+          <TabsContent value="live-activity">
+            <LiveActivityTab />
+          </TabsContent>
+
+          {/* Schools Stats Tab */}
+          <TabsContent value="schools">
+            <SchoolsStatsTab />
+          </TabsContent>
+
+          {/* Advanced Tab */}
+          <TabsContent value="advanced">
+            <AdvancedTab />
+          </TabsContent>
+        </Tabs>
 
       </div>
       <AppFooter />
