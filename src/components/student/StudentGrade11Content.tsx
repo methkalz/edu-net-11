@@ -23,6 +23,7 @@ export const StudentGrade11Content: React.FC = () => {
     loading,
     error,
     getContentStats,
+    fetchSectionTopics, // ⚡ جلب مواضيع قسم محدد
     fetchTopicLessons,
     fetchLessonContent
   } = useStudentGrade11Content();
@@ -35,44 +36,66 @@ export const StudentGrade11Content: React.FC = () => {
   const [selectedVideo, setSelectedVideo] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('lessons');
   
+  // ⚡ حالة المواضيع المحملة لكل section (Lazy Loading)
+  const [sectionTopics, setSectionTopics] = useState<Map<string, any[]>>(new Map());
+  const [loadingSections, setLoadingSections] = useState<Set<string>>(new Set());
+  
   // ⚡ حالة الدروس المحملة لكل topic
   const [topicLessons, setTopicLessons] = useState<Map<string, any[]>>(new Map());
   const [loadingTopics, setLoadingTopics] = useState<Set<string>>(new Set());
   
   const stats = getContentStats();
 
-  // ⚡ Prefetch أول موضوعين من كل قسم عند التحميل
+  // ⚡ Prefetch مواضيع القسم الأول عند التحميل
   React.useEffect(() => {
     if (structure && structure.length > 0 && !loading) {
-      const firstTopics = structure
-        .flatMap(section => section.topics || [])
-        .slice(0, 2)
-        .map(topic => topic.id);
+      const firstSection = structure[0];
       
-      const prefetchTopics = async () => {
-        for (const topicId of firstTopics) {
+      // جلب مواضيع القسم الأول
+      if (firstSection && !sectionTopics.has(firstSection.id)) {
+        const prefetchFirstSection = async () => {
           try {
-            const lessons = await fetchTopicLessons(topicId);
-            setTopicLessons(prev => {
-              if (!prev.has(topicId)) {
-                return new Map(prev).set(topicId, lessons);
-              }
-              return prev;
-            });
-          } catch {
-            // Silent prefetch errors
+            const topics = await fetchSectionTopics(firstSection.id);
+            setSectionTopics(prev => new Map(prev).set(firstSection.id, topics));
+            
+            // فتح القسم الأول تلقائياً
+            setOpenSections([firstSection.id]);
+          } catch (error) {
+            console.error('Error prefetching first section:', error);
           }
-        }
-      };
-      
-      prefetchTopics();
+        };
+        
+        prefetchFirstSection();
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [structure?.length, loading]);
 
-  // Toggle section open/close
-  const toggleSection = (sectionId: string) => {
-    setOpenSections(prev => prev.includes(sectionId) ? prev.filter(id => id !== sectionId) : [...prev, sectionId]);
+  // ⚡ Toggle section open/close مع lazy loading للمواضيع
+  const toggleSection = async (sectionId: string) => {
+    const isOpening = !openSections.includes(sectionId);
+    setOpenSections(prev => 
+      prev.includes(sectionId) ? prev.filter(id => id !== sectionId) : [...prev, sectionId]
+    );
+    
+    // تحميل المواضيع عند فتح القسم لأول مرة
+    if (isOpening && !sectionTopics.has(sectionId) && !loadingSections.has(sectionId)) {
+      setLoadingSections(prev => new Set(prev).add(sectionId));
+      
+      try {
+        const topics = await fetchSectionTopics(sectionId);
+        setSectionTopics(prev => new Map(prev).set(sectionId, topics));
+      } catch (error) {
+        console.error('Error loading section topics:', error);
+        toast.error('فشل تحميل المواضيع');
+      } finally {
+        setLoadingSections(prev => {
+          const next = new Set(prev);
+          next.delete(sectionId);
+          return next;
+        });
+      }
+    }
   };
 
   // ⚡ Toggle topic open/close مع lazy loading للدروس
@@ -298,7 +321,7 @@ export const StudentGrade11Content: React.FC = () => {
                         </div>
                         <div className="flex items-center gap-4">
                           <Badge variant="secondary" className="text-sm px-4 py-2 bg-blue-50 text-blue-600 border-blue-200 font-medium">
-                            {section.topics.length} موضوع
+                            {sectionTopics.get(section.id)?.length || 0} موضوع
                           </Badge>
                           {openSections.includes(section.id) ? <ChevronDown className="w-6 h-6 text-slate-400" /> : <ChevronRight className="w-6 h-6 text-slate-400" />}
                         </div>
@@ -308,32 +331,39 @@ export const StudentGrade11Content: React.FC = () => {
 
                   <CollapsibleContent>
                     <CardContent className="pt-0 px-8 pb-8">
-                      <div className="space-y-4">
-                        {section.topics.map(topic => <Card key={topic.id} className="mr-8 bg-gradient-to-br from-white to-green-50/30 border-green-200/60 shadow-sm">
-                            <Collapsible open={openTopics.includes(topic.id)} onOpenChange={() => toggleTopic(topic.id)}>
-                              <CollapsibleTrigger asChild>
-                                <CardHeader className="cursor-pointer hover:bg-green-50/30 transition-colors py-6">
-                                   <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-5">
-                                      <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center shadow-md">
-                                        <Target className="w-6 h-6 text-white" />
+                      {loadingSections.has(section.id) ? (
+                        <div className="text-center py-8">
+                          <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
+                          <p className="text-slate-500 mt-4">جاري تحميل المواضيع...</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {(sectionTopics.get(section.id) || []).map(topic => (
+                            <Card key={topic.id} className="mr-8 bg-gradient-to-br from-white to-green-50/30 border-green-200/60 shadow-sm">
+                              <Collapsible open={openTopics.includes(topic.id)} onOpenChange={() => toggleTopic(topic.id)}>
+                                <CollapsibleTrigger asChild>
+                                  <CardHeader className="cursor-pointer hover:bg-green-50/30 transition-colors py-6">
+                                     <div className="flex items-center justify-between">
+                                      <div className="flex items-center gap-5">
+                                        <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center shadow-md">
+                                          <Target className="w-6 h-6 text-white" />
+                                        </div>
+                                        <div className="text-left">
+                                          <h4 className="font-semibold text-lg text-slate-700">{topic.title}</h4>
+                                          {topic.content && <p className="text-sm text-slate-500 mt-2 line-clamp-2 font-medium">
+                                              {topic.content}
+                                            </p>}
+                                        </div>
                                       </div>
-                                      <div className="text-left">
-                                        <h4 className="font-semibold text-lg text-slate-700">{topic.title}</h4>
-                                        {topic.content && <p className="text-sm text-slate-500 mt-2 line-clamp-2 font-medium">
-                                            {topic.content}
-                                          </p>}
+                                      <div className="flex items-center gap-3">
+                                        <Badge variant="outline" className="text-sm px-3 py-1 font-medium border-green-200 text-green-600">
+                                          {topic.lessons_count || 0} درس
+                                        </Badge>
+                                        {openTopics.includes(topic.id) ? <ChevronDown className="w-5 h-5 text-slate-400" /> : <ChevronRight className="w-5 h-5 text-slate-400" />}
                                       </div>
                                     </div>
-                                    <div className="flex items-center gap-3">
-                                      <Badge variant="outline" className="text-sm px-3 py-1 font-medium border-green-200 text-green-600">
-                                        {topic.lessons_count?.[0]?.count || 0} درس
-                                      </Badge>
-                                      {openTopics.includes(topic.id) ? <ChevronDown className="w-5 h-5 text-slate-400" /> : <ChevronRight className="w-5 h-5 text-slate-400" />}
-                                    </div>
-                                  </div>
-                                </CardHeader>
-                              </CollapsibleTrigger>
+                                  </CardHeader>
+                                </CollapsibleTrigger>
 
                               <CollapsibleContent>
                                 <CardContent className="pt-0 px-6 pb-6">
@@ -380,8 +410,10 @@ export const StudentGrade11Content: React.FC = () => {
                                 </CardContent>
                               </CollapsibleContent>
                             </Collapsible>
-                          </Card>)}
-                      </div>
+                          </Card>
+                          ))}
+                        </div>
+                      )}
                     </CardContent>
                   </CollapsibleContent>
                 </Collapsible>

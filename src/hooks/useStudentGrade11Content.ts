@@ -78,18 +78,13 @@ export interface Grade11Video {
   updated_at: string;
 }
 
-// ⚡ المرحلة 1: جلب البنية الأساسية فقط (sections + topics بدون محتوى الدروس)
+// ⚡ المرحلة 1: جلب الأقسام فقط (بدون مواضيع - Lazy Loading)
 const fetchGrade11Structure = async (): Promise<any[]> => {
   return PerformanceMonitor.measure('fetchGrade11Structure', async () => {
     try {
       const { data, error } = await supabase
         .from('grade11_sections')
-        .select(`
-          id, title, description, order_index,
-          topics:grade11_topics(
-            id, title, order_index, lessons_count
-          )
-        `)
+        .select('id, title, description, order_index')
         .order('order_index');
 
       if (error) {
@@ -97,17 +92,36 @@ const fetchGrade11Structure = async (): Promise<any[]> => {
         throw error;
       }
 
-      if (!data || data.length === 0) {
-        return [];
-      }
-
-      // ترتيب المواضيع
-      return data.map(section => ({
+      // إرجاع الأقسام مع topics فارغة (سنحملها لاحقاً)
+      return (data || []).map(section => ({
         ...section,
-        topics: (section.topics || []).sort((a, b) => a.order_index - b.order_index)
+        topics: []
       }));
     } catch (error) {
       logger.error('Error fetching Grade 11 structure', error as Error);
+      throw error;
+    }
+  });
+};
+
+// ⚡ جلب مواضيع قسم معين عند فتحه (Lazy Loading)
+export const fetchSectionTopics = async (sectionId: string): Promise<any[]> => {
+  return PerformanceMonitor.measure(`fetchSectionTopics-${sectionId}`, async () => {
+    try {
+      const { data, error } = await supabase
+        .from('grade11_topics')
+        .select('id, title, content, order_index, lessons_count')
+        .eq('section_id', sectionId)
+        .order('order_index');
+
+      if (error) {
+        logger.error(`Error fetching topics for section ${sectionId}`, error as Error);
+        throw error;
+      }
+
+      return data || [];
+    } catch (error) {
+      logger.error(`Error fetching topics for section ${sectionId}`, error as Error);
       throw error;
     }
   });
@@ -309,8 +323,9 @@ export const useStudentGrade11Content = () => {
     getContentStats,
     refetch,
     // تصدير دوال التحميل الإضافية
+    fetchSectionTopics, // ⚡ جلب مواضيع قسم محدد
     fetchTopicLessons,
     fetchLessonContent,
-    fetchLessonsForTopics // ⚡ دالة جديدة لجلب دروس متعددة دفعة واحدة
+    fetchLessonsForTopics
   };
 };
