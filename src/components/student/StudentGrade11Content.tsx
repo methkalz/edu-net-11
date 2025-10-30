@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useStudentGrade11Content } from '@/hooks/useStudentGrade11Content';
 import { useTopicLessons } from '@/hooks/useTopicLessons';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,6 +15,45 @@ import { useStudentProgress } from '@/hooks/useStudentProgress';
 import { useVideoInfoCards } from '@/hooks/useVideoInfoCards';
 import VideoInfoCard from '../content/VideoInfoCard';
 import type { Grade11LessonWithMedia } from '@/hooks/useStudentGrade11Content';
+import { useDebouncedCallback } from 'use-debounce';
+
+// ⚡ Memoized Lesson Card Component
+const LessonCard = React.memo<{
+  lesson: Grade11LessonWithMedia;
+  onClick: () => void;
+}>(({ lesson, onClick }) => (
+  <div 
+    className="flex items-center justify-between p-5 bg-gradient-to-br from-purple-50/50 to-purple-100/30 rounded-2xl border border-purple-200/60 hover:bg-purple-50/80 transition-colors cursor-pointer group" 
+    onClick={onClick}
+  >
+    <div className="flex items-center gap-5">
+      <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-sm">
+        <BookOpen className="w-5 h-5 text-white" />
+      </div>
+      <div>
+        <h5 className="font-medium text-slate-700 group-hover:text-purple-700 transition-colors">
+          {lesson.title}
+        </h5>
+        {lesson.content && (
+          <p className="text-xs text-slate-500 mt-1 line-clamp-1">
+            {lesson.content.substring(0, 80)}...
+          </p>
+        )}
+      </div>
+    </div>
+    <div className="flex items-center gap-3">
+      {lesson.media && lesson.media.length > 0 && (
+        <Badge variant="secondary" className="text-xs px-2 py-1 bg-purple-100/60 text-purple-600 border-purple-200">
+          <PlayCircle className="w-3 h-3 ml-1" />
+          {lesson.media.length}
+        </Badge>
+      )}
+      <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-purple-600 transition-colors" />
+    </div>
+  </div>
+));
+
+LessonCard.displayName = 'LessonCard';
 
 export const StudentGrade11Content: React.FC = () => {
   const {
@@ -49,13 +88,12 @@ export const StudentGrade11Content: React.FC = () => {
     }
   }, [topicLessons, currentTopicId]);
 
-  // Toggle section open/close
-  const toggleSection = (sectionId: string) => {
+  // ⚡ Debounced toggle functions for better performance
+  const toggleSection = useDebouncedCallback((sectionId: string) => {
     setOpenSections(prev => prev.includes(sectionId) ? prev.filter(id => id !== sectionId) : [...prev, sectionId]);
-  };
+  }, 100);
 
-  // Toggle topic open/close with lazy loading
-  const toggleTopic = (topicId: string) => {
+  const toggleTopic = useDebouncedCallback((topicId: string) => {
     const isOpening = !openTopics.includes(topicId);
     setOpenTopics(prev => 
       prev.includes(topicId) ? prev.filter(id => id !== topicId) : [...prev, topicId]
@@ -65,21 +103,46 @@ export const StudentGrade11Content: React.FC = () => {
     if (isOpening && !loadedTopics[topicId]) {
       setCurrentTopicId(topicId);
     }
-  };
+  }, 100);
 
-  // Filter sections based on search
-  const filteredSections = (sections || []).filter(section => {
-    if (!searchQuery) return true;
+  // ⚡ Memoized filtered data for better performance
+  const filteredSections = useMemo(() => {
+    if (!sections) return [];
+    if (!searchQuery) return sections;
+    
     const query = searchQuery.toLowerCase();
-    return section.title.toLowerCase().includes(query) || section.description?.toLowerCase().includes(query) || section.topics?.some(topic => topic.title.toLowerCase().includes(query) || topic.content?.toLowerCase().includes(query) || topic.lessons?.some(lesson => lesson.title.toLowerCase().includes(query) || lesson.content?.toLowerCase().includes(query)));
-  });
+    return sections.filter(section => 
+      section.title.toLowerCase().includes(query) || 
+      section.description?.toLowerCase().includes(query) || 
+      section.topics?.some(topic => 
+        topic.title.toLowerCase().includes(query) || 
+        topic.content?.toLowerCase().includes(query)
+      )
+    );
+  }, [sections, searchQuery]);
 
-  // Filter videos based on search
-  const filteredVideos = (videos || []).filter(video => {
-    if (!searchQuery) return true;
+  const filteredVideos = useMemo(() => {
+    if (!videos) return [];
+    if (!searchQuery) return videos;
+    
     const query = searchQuery.toLowerCase();
-    return video.title.toLowerCase().includes(query) || video.description?.toLowerCase().includes(query) || video.category.toLowerCase().includes(query);
-  });
+    return videos.filter(video => 
+      video.title.toLowerCase().includes(query) || 
+      video.description?.toLowerCase().includes(query) || 
+      video.category.toLowerCase().includes(query)
+    );
+  }, [videos, searchQuery]);
+
+  // ⚡ Memoized lesson click handler
+  const handleLessonClick = useCallback(async (lesson: Grade11LessonWithMedia) => {
+    setSelectedLesson(lesson);
+    try {
+      await updateProgress(lesson.id, 'lesson', 100, 0, 10);
+      await logActivity('document_read', lesson.id, 0, 10);
+    } catch (error) {
+      console.error('Error tracking lesson view:', error);
+    }
+  }, [updateProgress, logActivity]);
   if (loading) {
     return <div className="space-y-8 max-w-7xl mx-auto">
         <div className="text-center space-y-3">
@@ -276,41 +339,20 @@ export const StudentGrade11Content: React.FC = () => {
 
                               <CollapsibleContent>
                                 <CardContent className="pt-0 px-6 pb-6">
-                                  {topicLessonsLoading && currentTopicId === topic.id ? (
+                                   {topicLessonsLoading && currentTopicId === topic.id ? (
                                     <div className="flex items-center justify-center py-8">
                                       <Loader2 className="w-6 h-6 animate-spin text-purple-600" />
                                       <span className="mr-3 text-sm text-slate-600">جاري تحميل الدروس...</span>
                                     </div>
                                   ) : (
                                     <div className="space-y-3">
-                                      {(loadedTopics[topic.id] || []).map(lesson => <div key={lesson.id} className="flex items-center justify-between p-5 bg-gradient-to-br from-purple-50/50 to-purple-100/30 rounded-2xl border border-purple-200/60 hover:bg-purple-50/80 transition-colors cursor-pointer group" onClick={async () => {
-                                        setSelectedLesson(lesson);
-                                        // تسجيل إكمال الدرس فوراً
-                                        try {
-                                          await updateProgress(lesson.id, 'lesson', 100, 0, 10);
-                                          await logActivity('document_read', lesson.id, 0, 10);
-                                        } catch (error) {
-                                          console.error('Error tracking lesson view:', error);
-                                        }
-                                      }}>
-                                        <div className="flex items-center gap-5">
-                                          <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-sm">
-                                            <BookOpen className="w-5 h-5 text-white" />
-                                          </div>
-                                          <div>
-                                            <h5 className="text-base font-semibold text-slate-700 group-hover:text-purple-700 transition-colors">{lesson.title}</h5>
-                                            {lesson.media && lesson.media.length > 0 && <div className="flex items-center gap-2 mt-2">
-                                                <PlayCircle className="w-4 h-4 text-slate-400" />
-                                                <span className="text-sm text-slate-500 font-medium">
-                                                  {lesson.media.length} ملف وسائط
-                                                </span>
-                                              </div>}
-                                          </div>
-                                        </div>
-                                        <Button variant="ghost" className="px-5 text-purple-600 hover:text-purple-700 hover:bg-purple-50 font-medium">
-                                          عرض
-                                        </Button>
-                                      </div>)}
+                                      {(loadedTopics[topic.id] || []).map(lesson => (
+                                        <LessonCard
+                                          key={lesson.id}
+                                          lesson={lesson}
+                                          onClick={() => handleLessonClick(lesson)}
+                                        />
+                                      ))}
                                     </div>
                                   )}
                                 </CardContent>

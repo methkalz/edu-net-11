@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStudentContent } from '@/hooks/useStudentContent';
 import { useStudentProgress } from '@/hooks/useStudentProgress';
@@ -433,13 +433,14 @@ export const StudentGradeContent: React.FC<{ defaultTab?: string }> = ({ default
     return '/placeholder.svg';
   };
 
-  const ContentCard: React.FC<{ 
+  // ⚡ Memoized ContentCard for better performance
+  const ContentCard = React.memo<{ 
     item: any; 
     type: 'video' | 'document' | 'lesson' | 'project';
     icon: any;
     color: string;
     onDelete?: (id: string, title: string) => void;
-  }> = ({ item, type, icon: IconComponent, color, onDelete }) => {
+  }>(({ item, type, icon: IconComponent, color, onDelete }) => {
     const progress = item.progress?.progress_percentage || 0;
     const isCompleted = progress >= 100;
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -618,7 +619,7 @@ export const StudentGradeContent: React.FC<{ defaultTab?: string }> = ({ default
         </CardContent>
       </Card>
     );
-  };
+  });
 
   if (loading) {
     return (
