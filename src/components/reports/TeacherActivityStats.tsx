@@ -9,10 +9,19 @@ interface TeacherActivityStatsProps {
 }
 
 export const TeacherActivityStats: FC<TeacherActivityStatsProps> = ({ teachers }) => {
+  console.log('📊 TeacherActivityStats - Total teachers:', teachers.length);
+  
   const onlineNow = teachers.filter(t => t.is_online).length;
+  console.log('✅ Online now:', onlineNow);
+  
   const last24Hours = teachers.filter(t => isWithinLast24Hours(t.last_seen_at)).length;
+  console.log('🕐 Last 24 hours:', last24Hours);
+  
   const last30Days = teachers.filter(t => isWithinLast30Days(t.last_seen_at)).length;
+  console.log('📅 Last 30 days:', last30Days);
+  
   const avgTime = calculateAverageTime(teachers.map(t => t.total_time_minutes));
+  console.log('⏱️ Average time:', avgTime, 'minutes');
   
   const totalTeachers = teachers.length;
   const onlinePercentage = totalTeachers > 0 ? Math.round((onlineNow / totalTeachers) * 100) : 0;

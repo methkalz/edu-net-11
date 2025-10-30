@@ -1,4 +1,4 @@
-import { formatDistanceToNow, isWithinInterval, subDays, subHours } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
 import { ar } from 'date-fns/locale';
 
 /**
@@ -32,37 +32,69 @@ export const formatDuration = (minutes: number): string => {
 };
 
 /**
- * التحقق من أن التاريخ خلال آخر 24 ساعة
+ * التحقق من أن التاريخ خلال آخر 24 ساعة - دقة 100%
  */
 export const isWithinLast24Hours = (date: string | Date): boolean => {
   try {
     const dateObj = typeof date === 'string' ? new Date(date) : date;
-    const now = new Date();
-    const twentyFourHoursAgo = subHours(now, 24);
     
-    return isWithinInterval(dateObj, {
-      start: twentyFourHoursAgo,
-      end: now
+    // التحقق من صحة التاريخ
+    if (isNaN(dateObj.getTime())) {
+      console.error('Invalid date:', date);
+      return false;
+    }
+    
+    const now = new Date();
+    const diffMs = now.getTime() - dateObj.getTime();
+    const diffHours = diffMs / (1000 * 60 * 60);
+    
+    // يجب أن يكون خلال آخر 24 ساعة (وليس في المستقبل)
+    const result = diffHours >= 0 && diffHours <= 24;
+    
+    console.log('🕐 isWithinLast24Hours:', {
+      date: dateObj.toISOString(),
+      now: now.toISOString(),
+      diffHours: diffHours.toFixed(2),
+      result
     });
-  } catch {
+    
+    return result;
+  } catch (error) {
+    console.error('Error in isWithinLast24Hours:', error);
     return false;
   }
 };
 
 /**
- * التحقق من أن التاريخ خلال آخر 30 يوم
+ * التحقق من أن التاريخ خلال آخر 30 يوم - دقة 100%
  */
 export const isWithinLast30Days = (date: string | Date): boolean => {
   try {
     const dateObj = typeof date === 'string' ? new Date(date) : date;
-    const now = new Date();
-    const thirtyDaysAgo = subDays(now, 30);
     
-    return isWithinInterval(dateObj, {
-      start: thirtyDaysAgo,
-      end: now
+    // التحقق من صحة التاريخ
+    if (isNaN(dateObj.getTime())) {
+      console.error('Invalid date:', date);
+      return false;
+    }
+    
+    const now = new Date();
+    const diffMs = now.getTime() - dateObj.getTime();
+    const diffDays = diffMs / (1000 * 60 * 60 * 24);
+    
+    // يجب أن يكون خلال آخر 30 يوم (وليس في المستقبل)
+    const result = diffDays >= 0 && diffDays <= 30;
+    
+    console.log('📅 isWithinLast30Days:', {
+      date: dateObj.toISOString(),
+      now: now.toISOString(),
+      diffDays: diffDays.toFixed(2),
+      result
     });
-  } catch {
+    
+    return result;
+  } catch (error) {
+    console.error('Error in isWithinLast30Days:', error);
     return false;
   }
 };
