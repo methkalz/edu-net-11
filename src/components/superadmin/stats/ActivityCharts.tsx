@@ -17,6 +17,7 @@ import {
 interface ActivityTrend {
   date: string;
   total_active_students: number;
+  total_active_teachers: number;
   avg_session_duration: number;
   peak_hour: number;
   school_name: string;
