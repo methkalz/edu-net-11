@@ -30,50 +30,60 @@ export const useTeacherPresence = () => {
       setLoading(true);
       setError(null);
 
-      const { data, error: fetchError } = await supabase
+      // جلب بيانات teacher_presence
+      const { data: presenceData, error: presenceError } = await supabase
         .from('teacher_presence')
-        .select(`
-          id,
-          user_id,
-          school_id,
-          role,
-          is_online,
-          last_seen_at,
-          current_page,
-          total_time_minutes,
-          profiles!inner (
-            full_name,
-            email,
-            login_count,
-            last_login_at
-          )
-        `)
+        .select('*')
         .order('last_seen_at', { ascending: false });
 
-      if (fetchError) {
-        console.error('❌ Error fetching teacher presence:', fetchError);
-        setError(fetchError.message);
+      if (presenceError) {
+        console.error('❌ Error fetching teacher presence:', presenceError);
+        setError(presenceError.message);
         return;
       }
 
-      // تحويل البيانات للشكل المطلوب
-      const formattedData: TeacherPresenceData[] = (data || []).map((item: any) => ({
-        id: item.id,
-        user_id: item.user_id,
-        school_id: item.school_id,
-        role: item.role,
-        full_name: item.profiles?.full_name || 'Unknown',
-        email: item.profiles?.email || 'Unknown',
-        is_online: item.is_online,
-        last_seen_at: item.last_seen_at,
-        current_page: item.current_page,
-        total_time_minutes: item.total_time_minutes,
-        login_count: item.profiles?.login_count || 0,
-        last_login_at: item.profiles?.last_login_at || null,
-      }));
+      if (!presenceData || presenceData.length === 0) {
+        setTeachers([]);
+        console.log('ℹ️ No teacher presence records found');
+        return;
+      }
+
+      // جلب بيانات المستخدمين من profiles
+      const userIds = presenceData.map(p => p.user_id);
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, email, login_count, last_login_at')
+        .in('user_id', userIds);
+
+      if (profilesError) {
+        console.error('❌ Error fetching profiles:', profilesError);
+        setError(profilesError.message);
+        return;
+      }
+
+      // دمج البيانات
+      const profilesMap = new Map(profilesData?.map(p => [p.user_id, p]) || []);
+      
+      const formattedData: TeacherPresenceData[] = presenceData.map((item: any) => {
+        const profile = profilesMap.get(item.user_id);
+        return {
+          id: item.id,
+          user_id: item.user_id,
+          school_id: item.school_id,
+          role: item.role,
+          full_name: profile?.full_name || 'Unknown',
+          email: profile?.email || 'Unknown',
+          is_online: item.is_online,
+          last_seen_at: item.last_seen_at,
+          current_page: item.current_page,
+          total_time_minutes: item.total_time_minutes || 0,
+          login_count: profile?.login_count || 0,
+          last_login_at: profile?.last_login_at || null,
+        };
+      });
 
       setTeachers(formattedData);
-      console.log(`✅ Fetched ${formattedData.length} teacher presence records`);
+      console.log(`✅ Fetched ${formattedData.length} teacher presence records (${formattedData.filter(t => t.is_online).length} online)`);
 
     } catch (err) {
       console.error('❌ Unexpected error:', err);
