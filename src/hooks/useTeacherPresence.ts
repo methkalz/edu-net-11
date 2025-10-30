@@ -66,6 +66,13 @@ export const useTeacherPresence = () => {
       
       const formattedData: TeacherPresenceData[] = presenceData.map((item: any) => {
         const profile = profilesMap.get(item.user_id);
+        
+        // اعتبار المستخدم online إذا كان last_seen_at خلال آخر دقيقتين (120 ثانية)
+        const lastSeenDate = new Date(item.last_seen_at);
+        const now = new Date();
+        const secondsSinceLastSeen = (now.getTime() - lastSeenDate.getTime()) / 1000;
+        const isActuallyOnline = item.is_online || secondsSinceLastSeen < 120;
+        
         return {
           id: item.id,
           user_id: item.user_id,
@@ -73,7 +80,7 @@ export const useTeacherPresence = () => {
           role: item.role,
           full_name: profile?.full_name || 'Unknown',
           email: profile?.email || 'Unknown',
-          is_online: item.is_online,
+          is_online: isActuallyOnline,
           last_seen_at: item.last_seen_at,
           current_page: item.current_page,
           total_time_minutes: item.total_time_minutes || 0,
