@@ -332,30 +332,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 
         // تحديث login_count و last_login_at مباشرة
+        console.log('🔵 Starting login tracking for user:', data.user.id);
         try {
           const now = new Date().toISOString();
           
           // جلب login_count الحالي
-          const { data: currentProfile } = await supabase
+          console.log('🔵 Fetching current profile...');
+          const { data: currentProfile, error: fetchError } = await supabase
             .from('profiles')
             .select('login_count')
             .eq('user_id', data.user.id)
             .single();
           
+          if (fetchError) {
+            console.error('🔴 Error fetching profile:', fetchError);
+            logError('Error fetching profile', fetchError);
+          }
+          
+          console.log('🔵 Current profile:', currentProfile);
           const newLoginCount = (currentProfile?.login_count || 0) + 1;
+          console.log('🔵 New login count will be:', newLoginCount);
           
           // تحديث البيانات
-          const { error: updateError } = await supabase
+          console.log('🔵 Updating profile with:', { last_login_at: now, login_count: newLoginCount });
+          const { data: updateData, error: updateError } = await supabase
             .from('profiles')
             .update({
               last_login_at: now,
               login_count: newLoginCount
             })
-            .eq('user_id', data.user.id);
+            .eq('user_id', data.user.id)
+            .select();
           
           if (updateError) {
+            console.error('🔴 Error updating login count:', updateError);
             logError('Error updating login count', updateError);
           } else {
+            console.log('✅ Login tracked successfully!', { 
+              userId: data.user.id, 
+              loginCount: newLoginCount,
+              updateData 
+            });
             logInfo('Login tracked successfully', { 
               userId: data.user.id, 
               loginCount: newLoginCount 
@@ -378,10 +395,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 }
               });
             } catch (auditError) {
+              console.error('🔴 Error logging audit entry:', auditError);
               logError('Error logging audit entry', auditError as Error);
             }
           }, 0);
         } catch (loginTrackingError) {
+          console.error('🔴 Error tracking login:', loginTrackingError);
           logError('Error tracking login', loginTrackingError as Error);
         }
       }
