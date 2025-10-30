@@ -521,6 +521,7 @@ export type Database = {
           peak_hour: number | null
           school_id: string
           total_active_students: number
+          total_active_teachers: number | null
           updated_at: string
         }
         Insert: {
@@ -533,6 +534,7 @@ export type Database = {
           peak_hour?: number | null
           school_id: string
           total_active_students?: number
+          total_active_teachers?: number | null
           updated_at?: string
         }
         Update: {
@@ -545,6 +547,7 @@ export type Database = {
           peak_hour?: number | null
           school_id?: string
           total_active_students?: number
+          total_active_teachers?: number | null
           updated_at?: string
         }
         Relationships: []
@@ -5730,9 +5733,7 @@ export type Database = {
         Row: {
           avg_student_points: number | null
           city: string | null
-          created_at: string | null
           last_refreshed: string | null
-          package_id: string | null
           package_name: string | null
           school_id: string | null
           school_name: string | null
@@ -5742,15 +5743,7 @@ export type Database = {
           total_students: number | null
           total_teachers: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "fk_school_packages_package_id"
-            columns: ["package_id"]
-            isOneToOne: false
-            referencedRelation: "packages"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       teacher_assigned_grades: {
         Row: {
@@ -5798,6 +5791,10 @@ export type Database = {
     Functions: {
       calculate_daily_activity_stats: {
         Args: { target_date: string; target_school_id: string }
+        Returns: undefined
+      }
+      calculate_daily_stats_for_superadmin: {
+        Args: { p_date?: string; p_school_id: string }
         Returns: undefined
       }
       calculate_student_title: {
@@ -5877,6 +5874,17 @@ export type Database = {
         Args: { school_uuid: string }
         Returns: Json
       }
+      get_school_activity_trends: {
+        Args: { p_days?: number; p_school_id?: string }
+        Returns: {
+          avg_session_duration: number
+          date: string
+          peak_hour: number
+          school_name: string
+          total_active_students: number
+          total_active_teachers: number
+        }[]
+      }
       get_school_content_settings: {
         Args: { school_uuid: string }
         Returns: Json
@@ -5917,6 +5925,19 @@ export type Database = {
           id: string
           school_id: string
           username: string
+        }[]
+      }
+      get_superadmin_overview_stats: {
+        Args: never
+        Returns: {
+          avg_student_teacher_ratio: number
+          last_updated: string
+          schools_with_activity: number
+          total_classes: number
+          total_points: number
+          total_schools: number
+          total_students: number
+          total_teachers: number
         }[]
       }
       get_teacher_assigned_grade_levels: {
