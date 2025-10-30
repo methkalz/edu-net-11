@@ -45,7 +45,7 @@ import AppFooter from '@/components/shared/AppFooter';
 
 const Reports = () => {
   const { userProfile } = useAuth();
-  const { onlineTeachers, loading: teacherLoading } = useTeacherPresence();
+  const { teachers, loading: teacherLoading } = useTeacherPresence();
   
   const [stats, setStats] = useState({
     totalUsers: 0,
@@ -63,21 +63,21 @@ const Reports = () => {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     
-    return onlineTeachers.filter(t => 
+    return teachers.filter(t => 
       t.role === 'teacher' && 
       new Date(t.last_seen_at) >= thirtyDaysAgo
     );
-  }, [onlineTeachers]);
+  }, [teachers]);
 
   const activeSchoolAdmins = useMemo(() => {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     
-    return onlineTeachers.filter(t => 
+    return teachers.filter(t => 
       t.role === 'school_admin' && 
       new Date(t.last_seen_at) >= thirtyDaysAgo
     );
-  }, [onlineTeachers]);
+  }, [teachers]);
 
   // بيانات الرسوم البيانية
   const weeklyData = [
