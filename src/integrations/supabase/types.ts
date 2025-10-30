@@ -5887,6 +5887,10 @@ export type Database = {
       }
       cleanup_expired_pins: { Args: never; Returns: undefined }
       cleanup_expired_quiz_sessions: { Args: never; Returns: undefined }
+      count_active_students_last_30_days: {
+        Args: { p_school_id?: string }
+        Returns: number
+      }
       generate_exam_questions: {
         Args: { p_exam_id: string; p_student_id: string }
         Returns: Json

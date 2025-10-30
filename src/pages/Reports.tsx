@@ -87,20 +87,14 @@ const Reports = () => {
       setLoading(true);
       try {
         if (userProfile?.role === 'superadmin') {
-          const thirtyDaysAgo = new Date();
-          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-          
           const [usersResult, studentsResult, activeStudentsResult] = await Promise.all([
             supabase.from('profiles').select('*', { count: 'exact' }),
             supabase.rpc('get_students_for_school_admin'),
-            supabase
-              .from('student_presence')
-              .select('user_id', { count: 'exact' })
-              .gte('last_seen_at', thirtyDaysAgo.toISOString())
+            supabase.rpc('count_active_students_last_30_days')
           ]);
 
           const total = (usersResult.count || 0) + (studentsResult.data?.length || 0);
-          const activeStudentsLast30Days = activeStudentsResult.count || 0;
+          const activeStudentsLast30Days = activeStudentsResult.data || 0;
           
           setStats({
             totalUsers: total,
