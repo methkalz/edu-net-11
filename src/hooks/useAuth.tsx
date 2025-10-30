@@ -198,24 +198,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                       updateData 
                     });
                   }
-                  
-                  // تسجيل في audit log
-                  const { auditLogger, AUDIT_ACTIONS, AUDIT_ENTITIES } = await import('@/lib/audit');
-                  await auditLogger.log({
-                    action: AUDIT_ACTIONS.USER_LOGIN,
-                    entity: AUDIT_ENTITIES.USER,
-                    entity_id: session.user.id,
-                    actor_user_id: session.user.id,
-                    payload_json: {
-                      timestamp: now,
-                      method: event,
-                      login_count: newLoginCount
-                    }
-                  });
                 } catch (loginTrackingError) {
                   console.error('🔴 Error tracking login:', loginTrackingError);
                 }
-              }, 0);
+              }, 100);
             }
           }
           
