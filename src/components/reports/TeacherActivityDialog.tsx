@@ -54,8 +54,36 @@ export const TeacherActivityDialog: FC<TeacherActivityDialogProps> = ({
       .sort((a, b) => a.name.localeCompare(b.name, 'ar'));
   }, [teachers]);
 
-  const filteredTeachers = useMemo(() => {
+  // المعلمين بعد فلترة المدرسة والدور فقط (قبل فلترة التاب والبحث)
+  const baseFilteredTeachers = useMemo(() => {
     let filtered = teachers;
+
+    // تصفية حسب الدور
+    if (roleFilter !== 'all') {
+      filtered = filtered.filter(t => t.role === roleFilter);
+    }
+
+    // تصفية حسب المدرسة
+    if (schoolFilter !== 'all') {
+      filtered = filtered.filter(t => t.school_id === schoolFilter);
+    }
+
+    return filtered;
+  }, [teachers, roleFilter, schoolFilter]);
+
+  // حساب الأعداد للتابات بناءً على الفلترة الأساسية
+  const tabCounts = useMemo(() => {
+    return {
+      online: baseFilteredTeachers.filter(t => t.is_online).length,
+      last24h: baseFilteredTeachers.filter(t => t.last_login_at && isWithinLast24Hours(t.last_login_at)).length,
+      last30d: baseFilteredTeachers.filter(t => t.last_login_at && isWithinLast30Days(t.last_login_at)).length,
+      all: baseFilteredTeachers.length,
+    };
+  }, [baseFilteredTeachers]);
+
+  // المعلمين بعد جميع الفلاتر (بما فيها التاب والبحث)
+  const filteredTeachers = useMemo(() => {
+    let filtered = baseFilteredTeachers;
 
     // تصفية حسب التاب النشط
     switch (activeTab) {
@@ -79,16 +107,6 @@ export const TeacherActivityDialog: FC<TeacherActivityDialogProps> = ({
         break;
     }
 
-    // تصفية حسب الدور
-    if (roleFilter !== 'all') {
-      filtered = filtered.filter(t => t.role === roleFilter);
-    }
-
-    // تصفية حسب المدرسة
-    if (schoolFilter !== 'all') {
-      filtered = filtered.filter(t => t.school_id === schoolFilter);
-    }
-
     // تصفية حسب البحث
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
@@ -100,7 +118,7 @@ export const TeacherActivityDialog: FC<TeacherActivityDialogProps> = ({
     }
 
     return filtered;
-  }, [teachers, activeTab, searchQuery, roleFilter, schoolFilter]);
+  }, [baseFilteredTeachers, activeTab, searchQuery]);
 
   const handleExport = () => {
     try {
@@ -257,16 +275,16 @@ export const TeacherActivityDialog: FC<TeacherActivityDialogProps> = ({
           <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabValue)} className="space-y-4">
             <TabsList className="grid w-full grid-cols-4 h-12 backdrop-blur-xl bg-background/50 border border-border/50 rounded-2xl p-1">
               <TabsTrigger value="online" className="rounded-xl data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
-                المتواجدين ({teachers.filter(t => t.is_online).length})
+                المتواجدين ({tabCounts.online})
               </TabsTrigger>
               <TabsTrigger value="last24h" className="rounded-xl data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
-                آخر 24 ساعة ({teachers.filter(t => t.last_login_at && isWithinLast24Hours(t.last_login_at)).length})
+                آخر 24 ساعة ({tabCounts.last24h})
               </TabsTrigger>
               <TabsTrigger value="last30d" className="rounded-xl data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
-                آخر 30 يوم ({teachers.filter(t => t.last_login_at && isWithinLast30Days(t.last_login_at)).length})
+                آخر 30 يوم ({tabCounts.last30d})
               </TabsTrigger>
               <TabsTrigger value="all" className="rounded-xl data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
-                الكل ({teachers.length})
+                الكل ({tabCounts.all})
               </TabsTrigger>
             </TabsList>
 
