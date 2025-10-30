@@ -152,6 +152,73 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // بدء مراقبة الجلسة عند تسجيل الدخول
           sessionMonitor.startMonitoring();
           
+          // تحديث login_count و last_login_at عند أي نوع من تسجيل الدخول
+          if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+            console.log('🔵 Auth event:', event, 'for user:', session.user.id);
+            
+            // تتبع تسجيل الدخول فقط عند SIGNED_IN (وليس عند كل token refresh)
+            if (event === 'SIGNED_IN') {
+              setTimeout(async () => {
+                try {
+                  const now = new Date().toISOString();
+                  
+                  console.log('🔵 Starting login tracking for user:', session.user.id);
+                  
+                  // جلب login_count الحالي
+                  const { data: currentProfile, error: fetchError } = await supabase
+                    .from('profiles')
+                    .select('login_count')
+                    .eq('user_id', session.user.id)
+                    .single();
+                  
+                  if (fetchError) {
+                    console.error('🔴 Error fetching profile:', fetchError);
+                  }
+                  
+                  console.log('🔵 Current profile:', currentProfile);
+                  const newLoginCount = (currentProfile?.login_count || 0) + 1;
+                  console.log('🔵 New login count will be:', newLoginCount);
+                  
+                  // تحديث البيانات
+                  const { data: updateData, error: updateError } = await supabase
+                    .from('profiles')
+                    .update({
+                      last_login_at: now,
+                      login_count: newLoginCount
+                    })
+                    .eq('user_id', session.user.id)
+                    .select();
+                  
+                  if (updateError) {
+                    console.error('🔴 Error updating login count:', updateError);
+                  } else {
+                    console.log('✅ Login tracked successfully!', { 
+                      userId: session.user.id, 
+                      loginCount: newLoginCount,
+                      updateData 
+                    });
+                  }
+                  
+                  // تسجيل في audit log
+                  const { auditLogger, AUDIT_ACTIONS, AUDIT_ENTITIES } = await import('@/lib/audit');
+                  await auditLogger.log({
+                    action: AUDIT_ACTIONS.USER_LOGIN,
+                    entity: AUDIT_ENTITIES.USER,
+                    entity_id: session.user.id,
+                    actor_user_id: session.user.id,
+                    payload_json: {
+                      timestamp: now,
+                      method: event,
+                      login_count: newLoginCount
+                    }
+                  });
+                } catch (loginTrackingError) {
+                  console.error('🔴 Error tracking login:', loginTrackingError);
+                }
+              }, 0);
+            }
+          }
+          
           // Fetch user profile with school information
           // Using setTimeout to avoid blocking the auth state change
           setTimeout(async () => {
