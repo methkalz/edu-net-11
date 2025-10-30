@@ -152,59 +152,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // بدء مراقبة الجلسة عند تسجيل الدخول
           sessionMonitor.startMonitoring();
           
-          // تحديث login_count و last_login_at عند أي نوع من تسجيل الدخول
-          if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-            console.log('🔵 Auth event:', event, 'for user:', session.user.id);
-            
-            // تتبع تسجيل الدخول فقط عند SIGNED_IN (وليس عند كل token refresh)
-            if (event === 'SIGNED_IN') {
-              setTimeout(async () => {
-                try {
-                  const now = new Date().toISOString();
-                  
-                  console.log('🔵 Starting login tracking for user:', session.user.id);
-                  
-                  // جلب login_count الحالي
-                  const { data: currentProfile, error: fetchError } = await supabase
-                    .from('profiles')
-                    .select('login_count')
-                    .eq('user_id', session.user.id)
-                    .single();
-                  
-                  if (fetchError) {
-                    console.error('🔴 Error fetching profile:', fetchError);
-                  }
-                  
-                  console.log('🔵 Current profile:', currentProfile);
-                  const newLoginCount = (currentProfile?.login_count || 0) + 1;
-                  console.log('🔵 New login count will be:', newLoginCount);
-                  
-                  // تحديث البيانات
-                  const { data: updateData, error: updateError } = await supabase
-                    .from('profiles')
-                    .update({
-                      last_login_at: now,
-                      login_count: newLoginCount
-                    })
-                    .eq('user_id', session.user.id)
-                    .select();
-                  
-                  if (updateError) {
-                    console.error('🔴 Error updating login count:', updateError);
-                  } else {
-                    console.log('✅ Login tracked successfully!', { 
-                      userId: session.user.id, 
-                      loginCount: newLoginCount,
-                      updateData 
-                    });
-                  }
-                } catch (loginTrackingError) {
-                  console.error('🔴 Error tracking login:', loginTrackingError);
-                }
-              }, 100);
-            }
-          }
-          
           // Fetch user profile with school information
           // Using setTimeout to avoid blocking the auth state change
           setTimeout(async () => {
@@ -384,55 +331,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
 
-        // تحديث login_count و last_login_at مباشرة
-        console.log('🔵 Starting login tracking for user:', data.user.id);
+        // Record successful login using Edge Function
         try {
-          const now = new Date().toISOString();
-          
-          // جلب login_count الحالي
-          console.log('🔵 Fetching current profile...');
-          const { data: currentProfile, error: fetchError } = await supabase
-            .from('profiles')
-            .select('login_count')
-            .eq('user_id', data.user.id)
-            .single();
-          
-          if (fetchError) {
-            console.error('🔴 Error fetching profile:', fetchError);
-            logError('Error fetching profile', fetchError);
-          }
-          
-          console.log('🔵 Current profile:', currentProfile);
-          const newLoginCount = (currentProfile?.login_count || 0) + 1;
-          console.log('🔵 New login count will be:', newLoginCount);
-          
-          // تحديث البيانات
-          console.log('🔵 Updating profile with:', { last_login_at: now, login_count: newLoginCount });
-          const { data: updateData, error: updateError } = await supabase
-            .from('profiles')
-            .update({
-              last_login_at: now,
-              login_count: newLoginCount
-            })
-            .eq('user_id', data.user.id)
-            .select();
-          
-          if (updateError) {
-            console.error('🔴 Error updating login count:', updateError);
-            logError('Error updating login count', updateError);
+          const { data: functionData, error: functionError } = await supabase.functions.invoke(
+            'track-login',
+            {
+              body: { user_id: data.user.id }
+            }
+          );
+
+          if (functionError) {
+            logError('Error calling track-login function', functionError);
           } else {
-            console.log('✅ Login tracked successfully!', { 
-              userId: data.user.id, 
-              loginCount: newLoginCount,
-              updateData 
-            });
-            logInfo('Login tracked successfully', { 
-              userId: data.user.id, 
-              loginCount: newLoginCount 
-            });
+            logInfo('Login tracked successfully', functionData);
           }
-          
-          // تسجيل في audit log
+
+          // Log the login event via audit system
           setTimeout(async () => {
             try {
               const { auditLogger, AUDIT_ACTIONS, AUDIT_ENTITIES } = await import('@/lib/audit');
@@ -442,19 +356,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 entity_id: data.user.id,
                 actor_user_id: data.user.id,
                 payload_json: {
-                  timestamp: now,
+                  timestamp: new Date().toISOString(),
                   method: 'password_login',
-                  login_count: newLoginCount
+                  login_count: functionData?.login_count || 0
                 }
               });
+              
+              logInfo('Login event logged successfully', { userId: data.user.id });
             } catch (auditError) {
-              console.error('🔴 Error logging audit entry:', auditError);
-              logError('Error logging audit entry', auditError as Error);
+              logError('Error logging audit entry for login', auditError as Error);
             }
           }, 0);
         } catch (loginTrackingError) {
-          console.error('🔴 Error tracking login:', loginTrackingError);
-          logError('Error tracking login', loginTrackingError as Error);
+          logError('Error with login tracking setup', loginTrackingError as Error);
         }
       }
 

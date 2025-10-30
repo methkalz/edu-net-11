@@ -42,7 +42,6 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import BackButton from '@/components/shared/BackButton';
 import AppFooter from '@/components/shared/AppFooter';
-import { TeacherActivityDialog } from '@/components/reports/TeacherActivityDialog';
 
 const Reports = () => {
   const { userProfile } = useAuth();
@@ -62,7 +61,6 @@ const Reports = () => {
     activeTeachers: 0,
     activeSchoolAdmins: 0
   });
-  const [teacherDialogOpen, setTeacherDialogOpen] = useState(false);
 
   // بيانات الرسوم البيانية
   const weeklyData = [
@@ -130,32 +128,20 @@ const Reports = () => {
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
         
         // جلب المعلمين النشطين
-        const { data: teachers, error: teachersError } = await supabase
+        const { data: teachers } = await supabase
           .from('profiles')
-          .select('user_id')
+          .select('id')
           .eq('role', 'teacher')
           .gt('login_count', 0)
           .gte('last_login_at', thirtyDaysAgo.toISOString());
         
-        if (teachersError) {
-          console.error('🔴 Error fetching active teachers:', teachersError);
-        } else {
-          console.log('✅ Active teachers:', teachers);
-        }
-        
         // جلب المدراء النشطين
-        const { data: admins, error: adminsError } = await supabase
+        const { data: admins } = await supabase
           .from('profiles')
-          .select('user_id')
+          .select('id')
           .eq('role', 'school_admin')
           .gt('login_count', 0)
           .gte('last_login_at', thirtyDaysAgo.toISOString());
-        
-        if (adminsError) {
-          console.error('🔴 Error fetching active admins:', adminsError);
-        } else {
-          console.log('✅ Active admins:', admins);
-        }
         
         setActiveUsersStats({
           activeTeachers: teachers?.length || 0,
@@ -267,16 +253,14 @@ const Reports = () => {
             trend="up"
             color="blue"
           />
-          <div onClick={() => setTeacherDialogOpen(true)} className="cursor-pointer">
-            <StatCard
-              title="المعلمين النشطين"
-              value={activeUsersStats.activeTeachers}
-              change={activeUsersStats.activeTeachers > 0 ? '+5%' : '0%'}
-              icon={Users}
-              trend={activeUsersStats.activeTeachers > 0 ? 'up' : 'neutral'}
-              color="green"
-            />
-          </div>
+          <StatCard
+            title="المعلمين النشطين"
+            value={activeUsersStats.activeTeachers}
+            change={activeUsersStats.activeTeachers > 0 ? '+5%' : '0%'}
+            icon={Users}
+            trend={activeUsersStats.activeTeachers > 0 ? 'up' : 'neutral'}
+            color="green"
+          />
           <StatCard
             title="المدراء النشطين"
             value={activeUsersStats.activeSchoolAdmins}
@@ -483,11 +467,6 @@ const Reports = () => {
 
       </div>
       <AppFooter />
-      
-      <TeacherActivityDialog 
-        open={teacherDialogOpen} 
-        onOpenChange={setTeacherDialogOpen} 
-      />
     </div>
   );
 };
