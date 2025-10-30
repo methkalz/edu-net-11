@@ -20,6 +20,7 @@ export interface Grade11Topic {
   title: string;
   content?: string;
   order_index: number;
+  lessons_count?: number;
   created_at: string;
   updated_at: string;
 }
@@ -51,7 +52,7 @@ export interface Grade11SectionWithTopics extends Grade11Section {
 }
 
 export interface Grade11TopicWithLessons extends Grade11Topic {
-  lessons: Grade11LessonWithMedia[];
+  lessons?: Grade11LessonWithMedia[];
 }
 
 export interface Grade11LessonWithMedia extends Grade11Lesson {
@@ -86,8 +87,7 @@ const fetchGrade11Structure = async (): Promise<any[]> => {
         .select(`
           id, title, description, order_index,
           topics:grade11_topics(
-            id, title, order_index,
-            lessons_count:grade11_lessons(count)
+            id, title, order_index, lessons_count
           )
         `)
         .order('order_index');
@@ -282,7 +282,7 @@ export const useStudentGrade11Content = () => {
     // حساب الدروس من lessons_count
     const totalLessons = structureArray.reduce((acc, section) => 
       acc + (section.topics || []).reduce((topicAcc: number, topic: any) => 
-        topicAcc + (topic.lessons_count?.[0]?.count || 0), 0
+        topicAcc + (topic.lessons_count || 0), 0
       ), 0
     );
     const totalMedia = 0; // سنحسبه لاحقاً عند تحميل الدروس

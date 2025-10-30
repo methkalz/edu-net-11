@@ -3103,6 +3103,7 @@ export type Database = {
           content: string | null
           created_at: string
           id: string
+          lessons_count: number | null
           order_index: number
           section_id: string
           title: string
@@ -3112,6 +3113,7 @@ export type Database = {
           content?: string | null
           created_at?: string
           id?: string
+          lessons_count?: number | null
           order_index?: number
           section_id: string
           title: string
@@ -3121,6 +3123,7 @@ export type Database = {
           content?: string | null
           created_at?: string
           id?: string
+          lessons_count?: number | null
           order_index?: number
           section_id?: string
           title?: string
