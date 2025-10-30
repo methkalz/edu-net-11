@@ -58,16 +58,26 @@ const Reports = () => {
   
   const [loading, setLoading] = useState(true);
 
-  // فصل المعلمين عن المدراء
-  const onlineRegularTeachers = useMemo(
-    () => onlineTeachers.filter(t => t.role === 'teacher'),
-    [onlineTeachers]
-  );
+  // المعلمين والمدراء النشطين خلال آخر 30 يوم
+  const activeTeachers = useMemo(() => {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    return onlineTeachers.filter(t => 
+      t.role === 'teacher' && 
+      new Date(t.last_seen_at) >= thirtyDaysAgo
+    );
+  }, [onlineTeachers]);
 
-  const onlineSchoolAdmins = useMemo(
-    () => onlineTeachers.filter(t => t.role === 'school_admin'),
-    [onlineTeachers]
-  );
+  const activeSchoolAdmins = useMemo(() => {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    return onlineTeachers.filter(t => 
+      t.role === 'school_admin' && 
+      new Date(t.last_seen_at) >= thirtyDaysAgo
+    );
+  }, [onlineTeachers]);
 
   // بيانات الرسوم البيانية
   const weeklyData = [
@@ -227,18 +237,18 @@ const Reports = () => {
           />
           <StatCard
             title="المعلمين النشطين"
-            value={onlineRegularTeachers.length}
-            change={onlineRegularTeachers.length > 0 ? '+5%' : '0%'}
+            value={activeTeachers.length}
+            change={activeTeachers.length > 0 ? '+5%' : '0%'}
             icon={Users}
-            trend={onlineRegularTeachers.length > 0 ? 'up' : 'neutral'}
+            trend={activeTeachers.length > 0 ? 'up' : 'neutral'}
             color="green"
           />
           <StatCard
             title="المدراء النشطين"
-            value={onlineSchoolAdmins.length}
-            change={onlineSchoolAdmins.length > 0 ? '+2%' : '0%'}
+            value={activeSchoolAdmins.length}
+            change={activeSchoolAdmins.length > 0 ? '+2%' : '0%'}
             icon={Shield}
-            trend={onlineSchoolAdmins.length > 0 ? 'up' : 'neutral'}
+            trend={activeSchoolAdmins.length > 0 ? 'up' : 'neutral'}
             color="purple"
           />
           <StatCard
