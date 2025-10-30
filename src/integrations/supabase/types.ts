@@ -251,13 +251,6 @@ export type Database = {
             referencedRelation: "schools"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "calendar_events_school_id_fkey"
-            columns: ["school_id"]
-            isOneToOne: false
-            referencedRelation: "superadmin_school_stats"
-            referencedColumns: ["school_id"]
-          },
         ]
       }
       calendar_settings: {
@@ -337,13 +330,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "schools"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "class_names_school_id_fkey"
-            columns: ["school_id"]
-            isOneToOne: false
-            referencedRelation: "superadmin_school_stats"
-            referencedColumns: ["school_id"]
           },
         ]
       }
@@ -453,13 +439,6 @@ export type Database = {
             referencedRelation: "schools"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "classes_school_id_fkey"
-            columns: ["school_id"]
-            isOneToOne: false
-            referencedRelation: "superadmin_school_stats"
-            referencedColumns: ["school_id"]
-          },
         ]
       }
       courses: {
@@ -501,13 +480,6 @@ export type Database = {
             referencedRelation: "schools"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "courses_school_id_fkey"
-            columns: ["school_id"]
-            isOneToOne: false
-            referencedRelation: "superadmin_school_stats"
-            referencedColumns: ["school_id"]
-          },
         ]
       }
       daily_activity_stats: {
@@ -521,7 +493,6 @@ export type Database = {
           peak_hour: number | null
           school_id: string
           total_active_students: number
-          total_active_teachers: number | null
           updated_at: string
         }
         Insert: {
@@ -534,7 +505,6 @@ export type Database = {
           peak_hour?: number | null
           school_id: string
           total_active_students?: number
-          total_active_teachers?: number | null
           updated_at?: string
         }
         Update: {
@@ -547,7 +517,6 @@ export type Database = {
           peak_hour?: number | null
           school_id?: string
           total_active_students?: number
-          total_active_teachers?: number | null
           updated_at?: string
         }
         Relationships: []
@@ -559,7 +528,7 @@ export type Database = {
           created_at: string
           document_id: string
           id: string
-          ip_address: unknown
+          ip_address: unknown | null
           user_agent: string | null
           user_id: string
         }
@@ -569,7 +538,7 @@ export type Database = {
           created_at?: string
           document_id: string
           id?: string
-          ip_address?: unknown
+          ip_address?: unknown | null
           user_agent?: string | null
           user_id: string
         }
@@ -579,7 +548,7 @@ export type Database = {
           created_at?: string
           document_id?: string
           id?: string
-          ip_address?: unknown
+          ip_address?: unknown | null
           user_agent?: string | null
           user_id?: string
         }
@@ -767,13 +736,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "schools"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "drive_folders_school_id_fkey"
-            columns: ["school_id"]
-            isOneToOne: false
-            referencedRelation: "superadmin_school_stats"
-            referencedColumns: ["school_id"]
           },
           {
             foreignKeyName: "drive_folders_student_id_fkey"
@@ -981,13 +943,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "exam_attempts_school_id_fkey"
-            columns: ["school_id"]
-            isOneToOne: false
-            referencedRelation: "superadmin_school_stats"
-            referencedColumns: ["school_id"]
-          },
-          {
             foreignKeyName: "exam_attempts_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
@@ -1160,13 +1115,6 @@ export type Database = {
             referencedRelation: "schools"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "exams_school_id_fkey"
-            columns: ["school_id"]
-            isOneToOne: false
-            referencedRelation: "superadmin_school_stats"
-            referencedColumns: ["school_id"]
-          },
         ]
       }
       files: {
@@ -1233,13 +1181,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "schools"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "files_school_id_fkey"
-            columns: ["school_id"]
-            isOneToOne: false
-            referencedRelation: "superadmin_school_stats"
-            referencedColumns: ["school_id"]
           },
         ]
       }
@@ -1386,13 +1327,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "schools"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "google_documents_school_id_fkey"
-            columns: ["school_id"]
-            isOneToOne: false
-            referencedRelation: "superadmin_school_stats"
-            referencedColumns: ["school_id"]
           },
         ]
       }
@@ -3169,7 +3103,6 @@ export type Database = {
           content: string | null
           created_at: string
           id: string
-          lessons_count: number | null
           order_index: number
           section_id: string
           title: string
@@ -3179,7 +3112,6 @@ export type Database = {
           content?: string | null
           created_at?: string
           id?: string
-          lessons_count?: number | null
           order_index?: number
           section_id: string
           title: string
@@ -3189,7 +3121,6 @@ export type Database = {
           content?: string | null
           created_at?: string
           id?: string
-          lessons_count?: number | null
           order_index?: number
           section_id?: string
           title?: string
@@ -4484,13 +4415,6 @@ export type Database = {
             referencedRelation: "schools"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "profiles_school_id_fkey"
-            columns: ["school_id"]
-            isOneToOne: false
-            referencedRelation: "superadmin_school_stats"
-            referencedColumns: ["school_id"]
-          },
         ]
       }
       project_submissions: {
@@ -4765,13 +4689,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "schools"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_school_packages_school_id"
-            columns: ["school_id"]
-            isOneToOne: false
-            referencedRelation: "superadmin_school_stats"
-            referencedColumns: ["school_id"]
           },
         ]
       }
@@ -5216,13 +5133,6 @@ export type Database = {
             referencedRelation: "schools"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "students_school_id_fkey"
-            columns: ["school_id"]
-            isOneToOne: false
-            referencedRelation: "superadmin_school_stats"
-            referencedColumns: ["school_id"]
-          },
         ]
       }
       system_audio_files: {
@@ -5418,13 +5328,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "schools"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "teacher_custom_questions_school_id_fkey"
-            columns: ["school_id"]
-            isOneToOne: false
-            referencedRelation: "superadmin_school_stats"
-            referencedColumns: ["school_id"]
           },
           {
             foreignKeyName: "teacher_custom_questions_teacher_id_fkey"
@@ -5702,49 +5605,6 @@ export type Database = {
       }
     }
     Views: {
-      grade11_content_stats: {
-        Row: {
-          total_lessons: number | null
-          total_media: number | null
-          total_sections: number | null
-          total_topics: number | null
-          total_videos: number | null
-        }
-        Relationships: []
-      }
-      grade11_student_content_summary: {
-        Row: {
-          grade_level: string | null
-          total_documents: number | null
-          total_lessons: number | null
-          total_media: number | null
-          total_videos: number | null
-        }
-        Relationships: []
-      }
-      student_current_streaks: {
-        Row: {
-          current_streak: number | null
-          student_id: string | null
-        }
-        Relationships: []
-      }
-      superadmin_school_stats: {
-        Row: {
-          avg_student_points: number | null
-          city: string | null
-          last_refreshed: string | null
-          package_name: string | null
-          school_id: string | null
-          school_name: string | null
-          student_teacher_ratio: number | null
-          total_classes: number | null
-          total_points: number | null
-          total_students: number | null
-          total_teachers: number | null
-        }
-        Relationships: []
-      }
       teacher_assigned_grades: {
         Row: {
           grade_level_id: string | null
@@ -5759,13 +5619,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "schools"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "classes_school_id_fkey"
-            columns: ["school_id"]
-            isOneToOne: false
-            referencedRelation: "superadmin_school_stats"
-            referencedColumns: ["school_id"]
           },
         ]
       }
@@ -5793,10 +5646,6 @@ export type Database = {
         Args: { target_date: string; target_school_id: string }
         Returns: undefined
       }
-      calculate_daily_stats_for_superadmin: {
-        Args: { p_date?: string; p_school_id: string }
-        Returns: undefined
-      }
       calculate_student_title: {
         Args: { user_points: number }
         Returns: string
@@ -5819,8 +5668,14 @@ export type Database = {
         }
         Returns: boolean
       }
-      cleanup_expired_pins: { Args: never; Returns: undefined }
-      cleanup_expired_quiz_sessions: { Args: never; Returns: undefined }
+      cleanup_expired_pins: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      cleanup_expired_quiz_sessions: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       generate_exam_questions: {
         Args: { p_exam_id: string; p_student_id: string }
         Returns: Json
@@ -5858,14 +5713,26 @@ export type Database = {
         Args: { school_uuid: string }
         Returns: string[]
       }
-      get_current_user_id: { Args: never; Returns: string }
-      get_current_user_role_safe: { Args: never; Returns: string }
-      get_current_user_school_id: { Args: never; Returns: string }
+      get_current_user_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      get_current_user_role_safe: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      get_current_user_school_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_exam_question_for_student: {
         Args: { question_id: string }
         Returns: Json
       }
-      get_exam_results: { Args: { p_attempt_id: string }; Returns: Json }
+      get_exam_results: {
+        Args: { p_attempt_id: string }
+        Returns: Json
+      }
       get_exam_with_questions: {
         Args: { p_exam_id: string; p_student_id: string }
         Returns: Json
@@ -5873,17 +5740,6 @@ export type Database = {
       get_school_active_package: {
         Args: { school_uuid: string }
         Returns: Json
-      }
-      get_school_activity_trends: {
-        Args: { p_days?: number; p_school_id?: string }
-        Returns: {
-          avg_session_duration: number
-          date: string
-          peak_hour: number
-          school_name: string
-          total_active_students: number
-          total_active_teachers: number
-        }[]
       }
       get_school_content_settings: {
         Args: { school_uuid: string }
@@ -5906,7 +5762,7 @@ export type Database = {
         Returns: number
       }
       get_students_for_school_admin: {
-        Args: never
+        Args: Record<PropertyKey, never>
         Returns: {
           created_at_utc: string
           email: string
@@ -5918,26 +5774,13 @@ export type Database = {
         }[]
       }
       get_students_for_teacher: {
-        Args: never
+        Args: Record<PropertyKey, never>
         Returns: {
           created_at_utc: string
           full_name: string
           id: string
           school_id: string
           username: string
-        }[]
-      }
-      get_superadmin_overview_stats: {
-        Args: never
-        Returns: {
-          avg_student_teacher_ratio: number
-          last_updated: string
-          schools_with_activity: number
-          total_classes: number
-          total_points: number
-          total_schools: number
-          total_students: number
-          total_teachers: number
         }[]
       }
       get_teacher_assigned_grade_levels: {
@@ -5980,10 +5823,13 @@ export type Database = {
         }[]
       }
       get_user_role: {
-        Args: never
+        Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
       }
-      get_user_school_id: { Args: never; Returns: string }
+      get_user_school_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       has_celebrated_badge: {
         Args: { p_badge_id: string; p_student_id: string }
         Returns: boolean
@@ -6008,13 +5854,18 @@ export type Database = {
         Args: { p_attempt_id: string }
         Returns: Json
       }
-      recalculate_grade11_student_points: { Args: never; Returns: undefined }
+      recalculate_grade11_student_points: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       record_badge_celebration: {
         Args: { p_badge_id: string; p_student_id: string }
         Returns: undefined
       }
-      refresh_superadmin_view: { Args: never; Returns: undefined }
-      submit_exam_attempt: { Args: { p_attempt_id: string }; Returns: Json }
+      submit_exam_attempt: {
+        Args: { p_attempt_id: string }
+        Returns: Json
+      }
       unlock_next_games: {
         Args: { p_completed_game_id: string; p_player_id: string }
         Returns: undefined
@@ -6035,8 +5886,14 @@ export type Database = {
         }
         Returns: undefined
       }
-      validate_email_format: { Args: { email_input: string }; Returns: boolean }
-      validate_phone_format: { Args: { phone_input: string }; Returns: boolean }
+      validate_email_format: {
+        Args: { email_input: string }
+        Returns: boolean
+      }
+      validate_phone_format: {
+        Args: { phone_input: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "superadmin" | "school_admin" | "teacher" | "student" | "parent"
