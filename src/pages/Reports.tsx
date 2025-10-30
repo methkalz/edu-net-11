@@ -2,8 +2,9 @@
  * صفحة التقارير - تصميم مينيماليست حديث مع رسوم بيانية فعلية
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useTeacherPresence } from '@/hooks/useTeacherPresence';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -19,7 +20,9 @@ import {
   Filter,
   ArrowUp,
   ArrowDown,
-  Minus
+  Minus,
+  Shield,
+  GraduationCap
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -42,6 +45,7 @@ import AppFooter from '@/components/shared/AppFooter';
 
 const Reports = () => {
   const { userProfile } = useAuth();
+  const { onlineTeachers, loading: teacherLoading } = useTeacherPresence();
   
   const [stats, setStats] = useState({
     totalUsers: 0,
@@ -53,6 +57,17 @@ const Reports = () => {
   });
   
   const [loading, setLoading] = useState(true);
+
+  // فصل المعلمين عن المدراء
+  const onlineRegularTeachers = useMemo(
+    () => onlineTeachers.filter(t => t.role === 'teacher'),
+    [onlineTeachers]
+  );
+
+  const onlineSchoolAdmins = useMemo(
+    () => onlineTeachers.filter(t => t.role === 'school_admin'),
+    [onlineTeachers]
+  );
 
   // بيانات الرسوم البيانية
   const weeklyData = [
@@ -113,7 +128,7 @@ const Reports = () => {
   }, [userProfile]);
 
   // مكون الإحصائية المبسطة
-  const StatCard = ({ title, value, change, icon: Icon, trend = 'up' }) => {
+  const StatCard = ({ title, value, change, icon: Icon, trend = 'up', color = 'blue' }) => {
     const getTrendIcon = () => {
       if (trend === 'up') return <ArrowUp className="h-3 w-3 text-green-500" />;
       if (trend === 'down') return <ArrowDown className="h-3 w-3 text-red-500" />;
@@ -126,6 +141,13 @@ const Reports = () => {
       return 'text-gray-600';
     };
 
+    const colorClasses = {
+      blue: 'bg-blue-50 text-blue-600',
+      green: 'bg-green-50 text-green-600',
+      purple: 'bg-purple-50 text-purple-600',
+      orange: 'bg-orange-50 text-orange-600',
+    };
+
     return (
       <Card className="border-0 shadow-sm hover:shadow-md transition-shadow bg-white">
         <CardContent className="p-6">
@@ -135,8 +157,8 @@ const Reports = () => {
               <p className="text-2xl font-bold text-gray-900">{value}</p>
             </div>
             <div className="flex flex-col items-center gap-2">
-              <div className="p-3 bg-blue-50 rounded-lg">
-                <Icon className="h-5 w-5 text-blue-600" />
+              <div className={`p-3 rounded-lg ${colorClasses[color]}`}>
+                <Icon className="h-5 w-5" />
               </div>
               <div className={`flex items-center gap-1 text-xs ${getTrendColor()}`}>
                 {getTrendIcon()}
@@ -149,7 +171,7 @@ const Reports = () => {
     );
   };
 
-  if (loading) {
+  if (loading || teacherLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center space-y-4">
@@ -186,20 +208,38 @@ const Reports = () => {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
           <StatCard
             title="إجمالي المستخدمين"
             value={stats.totalUsers.toLocaleString()}
             change="+12%"
             icon={Users}
             trend="up"
+            color="blue"
           />
           <StatCard
-            title="المستخدمين النشطين"
+            title="الطلاب النشطين"
             value={stats.activeUsers.toLocaleString()}
             change="+8%"
-            icon={Activity}
+            icon={GraduationCap}
             trend="up"
+            color="blue"
+          />
+          <StatCard
+            title="المعلمين النشطين"
+            value={onlineRegularTeachers.length}
+            change={onlineRegularTeachers.length > 0 ? '+5%' : '0%'}
+            icon={Users}
+            trend={onlineRegularTeachers.length > 0 ? 'up' : 'neutral'}
+            color="green"
+          />
+          <StatCard
+            title="المدراء النشطين"
+            value={onlineSchoolAdmins.length}
+            change={onlineSchoolAdmins.length > 0 ? '+2%' : '0%'}
+            icon={Shield}
+            trend={onlineSchoolAdmins.length > 0 ? 'up' : 'neutral'}
+            color="purple"
           />
           <StatCard
             title="المحتوى التعليمي"
@@ -207,6 +247,7 @@ const Reports = () => {
             change="+15%"
             icon={BookOpen}
             trend="up"
+            color="orange"
           />
           <StatCard
             title="متوسط الدرجات"
@@ -214,6 +255,7 @@ const Reports = () => {
             change="+2%"
             icon={Star}
             trend="up"
+            color="blue"
           />
         </div>
 
