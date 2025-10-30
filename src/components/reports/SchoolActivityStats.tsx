@@ -94,7 +94,7 @@ export const SchoolActivityStats: FC<SchoolActivityStatsProps> = ({ teachers }) 
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-sm truncate">{school.schoolName}</p>
                       <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="secondary" className="text-xs backdrop-blur-sm bg-background/50 border-border/30 rounded-lg">
+                        <Badge variant="secondary" className="text-xs backdrop-blur-sm bg-muted text-muted-foreground border-border/30 rounded-lg">
                           {school.totalTeachers} معلم
                         </Badge>
                         {school.onlineTeachers > 0 && (
@@ -154,7 +154,7 @@ export const SchoolActivityStats: FC<SchoolActivityStatsProps> = ({ teachers }) 
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-sm truncate">{school.schoolName}</p>
                       <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="secondary" className="text-xs backdrop-blur-sm bg-background/50 border-border/30 rounded-lg">
+                        <Badge variant="secondary" className="text-xs backdrop-blur-sm bg-muted text-muted-foreground border-border/30 rounded-lg">
                           {school.totalTeachers} معلم
                         </Badge>
                         {school.onlineTeachers > 0 && (
