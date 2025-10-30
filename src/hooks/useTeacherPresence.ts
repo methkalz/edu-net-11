@@ -66,6 +66,15 @@ export const useTeacherPresence = () => {
       
       const formattedData: TeacherPresenceData[] = presenceData.map((item: any) => {
         const profile = profilesMap.get(item.user_id);
+        
+        // حساب الثواني منذ آخر تواجد
+        const lastSeenDate = new Date(item.last_seen_at);
+        const now = new Date();
+        const secondsSinceLastSeen = (now.getTime() - lastSeenDate.getTime()) / 1000;
+        
+        // نعتبره متواجد إذا: is_online === true أو last_seen_at خلال آخر 120 ثانية
+        const isActuallyOnline = item.is_online || secondsSinceLastSeen < 120;
+        
         return {
           id: item.id,
           user_id: item.user_id,
@@ -73,7 +82,7 @@ export const useTeacherPresence = () => {
           role: item.role,
           full_name: profile?.full_name || 'Unknown',
           email: profile?.email || 'Unknown',
-          is_online: item.is_online,
+          is_online: isActuallyOnline,
           last_seen_at: item.last_seen_at,
           current_page: item.current_page,
           total_time_minutes: item.total_time_minutes || 0,
@@ -83,7 +92,13 @@ export const useTeacherPresence = () => {
       });
 
       setTeachers(formattedData);
-      console.log(`✅ Fetched ${formattedData.length} teacher presence records (${formattedData.filter(t => t.is_online).length} online)`);
+      const onlineCount = formattedData.filter(t => t.is_online).length;
+      console.log(`✅ Fetched ${formattedData.length} teacher presence records (${onlineCount} online)`);
+      formattedData.forEach(t => {
+        if (t.is_online) {
+          console.log(`🟢 ${t.full_name} (${t.role}) - Online (last seen: ${t.last_seen_at})`);
+        }
+      });
 
     } catch (err) {
       console.error('❌ Unexpected error:', err);
