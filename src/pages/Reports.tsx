@@ -66,16 +66,16 @@ const Reports = () => {
   const [teacherDialogOpen, setTeacherDialogOpen] = useState(false);
   const [studentDialogOpen, setStudentDialogOpen] = useState(false);
 
-  // بيانات الرسوم البيانية
-  const weeklyData = [
-    { day: 'السبت', users: 120, content: 45, engagement: 78 },
-    { day: 'الأحد', users: 132, content: 52, engagement: 82 },
-    { day: 'الاثنين', users: 145, content: 38, engagement: 75 },
-    { day: 'الثلاثاء', users: 158, content: 61, engagement: 88 },
-    { day: 'الأربعاء', users: 167, content: 55, engagement: 85 },
-    { day: 'الخميس', users: 178, content: 48, engagement: 90 },
-    { day: 'الجمعة', users: 156, content: 42, engagement: 83 }
-  ];
+  // بيانات النشاط الأسبوعي الفعلية
+  const [weeklyData, setWeeklyData] = useState([
+    { day: 'السبت', students: 0, teachers: 0, admins: 0, total: 0 },
+    { day: 'الأحد', students: 0, teachers: 0, admins: 0, total: 0 },
+    { day: 'الاثنين', students: 0, teachers: 0, admins: 0, total: 0 },
+    { day: 'الثلاثاء', students: 0, teachers: 0, admins: 0, total: 0 },
+    { day: 'الأربعاء', students: 0, teachers: 0, admins: 0, total: 0 },
+    { day: 'الخميس', students: 0, teachers: 0, admins: 0, total: 0 },
+    { day: 'الجمعة', students: 0, teachers: 0, admins: 0, total: 0 }
+  ]);
 
   const contentDistribution = [
     { name: 'الفيديوهات', value: 35, color: '#3B82F6' },
@@ -171,6 +171,66 @@ const Reports = () => {
     };
     
     fetchActiveUsers();
+  }, []);
+
+  // جلب بيانات النشاط الأسبوعي الفعلية
+  useEffect(() => {
+    const fetchWeeklyActivity = async () => {
+      try {
+        const daysOfWeek = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
+        const today = new Date();
+        const weekData = [];
+
+        for (let i = 6; i >= 0; i--) {
+          const date = new Date(today);
+          date.setDate(date.getDate() - i);
+          const dayStart = new Date(date.setHours(0, 0, 0, 0));
+          const dayEnd = new Date(date.setHours(23, 59, 59, 999));
+          
+          // جلب نشاط الطلاب
+          const { data: students } = await supabase
+            .from('student_presence')
+            .select('student_id')
+            .gte('last_seen_at', dayStart.toISOString())
+            .lte('last_seen_at', dayEnd.toISOString());
+
+          // جلب نشاط المعلمين
+          const { data: teachersData } = await supabase
+            .from('teacher_presence')
+            .select('user_id, role')
+            .eq('role', 'teacher')
+            .gte('last_seen_at', dayStart.toISOString())
+            .lte('last_seen_at', dayEnd.toISOString());
+
+          // جلب نشاط المدراء
+          const { data: adminsData } = await supabase
+            .from('teacher_presence')
+            .select('user_id, role')
+            .eq('role', 'school_admin')
+            .gte('last_seen_at', dayStart.toISOString())
+            .lte('last_seen_at', dayEnd.toISOString());
+
+          const studentsCount = new Set(students?.map(s => s.student_id) || []).size;
+          const teachersCount = new Set(teachersData?.map(t => t.user_id) || []).size;
+          const adminsCount = new Set(adminsData?.map(a => a.user_id) || []).size;
+
+          weekData.push({
+            day: daysOfWeek[date.getDay()],
+            students: studentsCount,
+            teachers: teachersCount,
+            admins: adminsCount,
+            total: studentsCount + teachersCount + adminsCount
+          });
+        }
+
+        setWeeklyData(weekData);
+        console.log('✅ Weekly activity data:', weekData);
+      } catch (error) {
+        console.error('خطأ في جلب بيانات النشاط الأسبوعي:', error);
+      }
+    };
+
+    fetchWeeklyActivity();
   }, []);
 
   // مكون الإحصائية المبسطة
@@ -319,7 +379,7 @@ const Reports = () => {
             <CardHeader className="pb-4">
               <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                 <BarChart3 className="h-5 w-5 text-blue-600" />
-                النشاط الأسبوعي
+                النشاط الأسبوعي (طلاب، معلمين، مدراء)
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -343,7 +403,10 @@ const Reports = () => {
                       boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                     }}
                   />
-                  <Bar dataKey="users" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                  <Legend />
+                  <Bar dataKey="students" fill="#3b82f6" radius={[4, 4, 0, 0]} name="الطلاب" />
+                  <Bar dataKey="teachers" fill="#10b981" radius={[4, 4, 0, 0]} name="المعلمين" />
+                  <Bar dataKey="admins" fill="#8b5cf6" radius={[4, 4, 0, 0]} name="المدراء" />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -431,19 +494,27 @@ const Reports = () => {
                 <Legend />
                 <Line 
                   type="monotone" 
-                  dataKey="users" 
+                  dataKey="students" 
                   stroke="#3b82f6" 
                   strokeWidth={3}
                   dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
-                  name="المستخدمين"
+                  name="الطلاب"
                 />
                 <Line 
                   type="monotone" 
-                  dataKey="engagement" 
+                  dataKey="teachers" 
                   stroke="#10b981" 
                   strokeWidth={3}
                   dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
-                  name="معدل التفاعل"
+                  name="المعلمين"
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="admins" 
+                  stroke="#8b5cf6" 
+                  strokeWidth={3}
+                  dot={{ fill: '#8b5cf6', strokeWidth: 2, r: 4 }}
+                  name="المدراء"
                 />
               </LineChart>
             </ResponsiveContainer>
