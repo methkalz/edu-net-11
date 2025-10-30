@@ -11,17 +11,32 @@ interface TeacherActivityStatsProps {
 export const TeacherActivityStats: FC<TeacherActivityStatsProps> = ({ teachers }) => {
   console.log('📊 TeacherActivityStats - Total teachers:', teachers.length);
   
+  // المتواجدين الآن فقط
   const onlineNow = teachers.filter(t => t.is_online).length;
   console.log('✅ Online now:', onlineNow);
   
-  const last24Hours = teachers.filter(t => isWithinLast24Hours(t.last_seen_at)).length;
-  console.log('🕐 Last 24 hours:', last24Hours);
+  // آخر 24 ساعة: يجب أن يكون لديهم last_login_at خلال آخر 24 ساعة
+  const last24Hours = teachers.filter(t => {
+    // نستخدم last_login_at بدلاً من last_seen_at للدقة
+    const loginDate = t.last_login_at;
+    if (!loginDate) return false; // لم يسجل دخول أبداً
+    return isWithinLast24Hours(loginDate);
+  }).length;
+  console.log('🕐 Last 24 hours (based on login):', last24Hours);
   
-  const last30Days = teachers.filter(t => isWithinLast30Days(t.last_seen_at)).length;
-  console.log('📅 Last 30 days:', last30Days);
+  // آخر 30 يوم: يجب أن يكون لديهم last_login_at خلال آخر 30 يوم
+  const last30Days = teachers.filter(t => {
+    // نستخدم last_login_at بدلاً من last_seen_at للدقة
+    const loginDate = t.last_login_at;
+    if (!loginDate) return false; // لم يسجل دخول أبداً
+    return isWithinLast30Days(loginDate);
+  }).length;
+  console.log('📅 Last 30 days (based on login):', last30Days);
   
-  const avgTime = calculateAverageTime(teachers.map(t => t.total_time_minutes));
-  console.log('⏱️ Average time:', avgTime, 'minutes');
+  // متوسط الوقت فقط للمعلمين النشطين (الذين لديهم login_count > 0)
+  const activeTeachers = teachers.filter(t => t.login_count > 0);
+  const avgTime = calculateAverageTime(activeTeachers.map(t => t.total_time_minutes));
+  console.log('⏱️ Average time (active teachers only):', avgTime, 'minutes');
   
   const totalTeachers = teachers.length;
   const onlinePercentage = totalTeachers > 0 ? Math.round((onlineNow / totalTeachers) * 100) : 0;

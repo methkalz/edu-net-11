@@ -48,10 +48,18 @@ export const TeacherActivityDialog: FC<TeacherActivityDialogProps> = ({
         filtered = filtered.filter(t => t.is_online);
         break;
       case 'last24h':
-        filtered = filtered.filter(t => isWithinLast24Hours(t.last_seen_at));
+        // نستخدم last_login_at للدقة - فقط من سجل دخول فعلياً
+        filtered = filtered.filter(t => {
+          if (!t.last_login_at) return false;
+          return isWithinLast24Hours(t.last_login_at);
+        });
         break;
       case 'last30d':
-        filtered = filtered.filter(t => isWithinLast30Days(t.last_seen_at));
+        // نستخدم last_login_at للدقة - فقط من سجل دخول فعلياً
+        filtered = filtered.filter(t => {
+          if (!t.last_login_at) return false;
+          return isWithinLast30Days(t.last_login_at);
+        });
         break;
       case 'all':
       default:
@@ -183,10 +191,10 @@ export const TeacherActivityDialog: FC<TeacherActivityDialogProps> = ({
                 المتواجدين الآن ({teachers.filter(t => t.is_online).length})
               </TabsTrigger>
               <TabsTrigger value="last24h">
-                آخر 24 ساعة ({teachers.filter(t => isWithinLast24Hours(t.last_seen_at)).length})
+                آخر 24 ساعة ({teachers.filter(t => t.last_login_at && isWithinLast24Hours(t.last_login_at)).length})
               </TabsTrigger>
               <TabsTrigger value="last30d">
-                آخر 30 يوم ({teachers.filter(t => isWithinLast30Days(t.last_seen_at)).length})
+                آخر 30 يوم ({teachers.filter(t => t.last_login_at && isWithinLast30Days(t.last_login_at)).length})
               </TabsTrigger>
               <TabsTrigger value="all">
                 الكل ({teachers.length})
