@@ -76,27 +76,33 @@ export interface Grade11Video {
   updated_at: string;
 }
 
-// Fetch functions with optimized Nested Joins (single query instead of N+1)
-const fetchGrade11Sections = async (): Promise<Grade11SectionWithTopics[]> => {
+// ⚡ Phase 1: Fetch Structure Only (Sections + Topics - Lightweight)
+const fetchGrade11Structure = async (): Promise<Grade11SectionWithTopics[]> => {
   try {
-    // ⚡ Optimized: Single query with nested joins instead of multiple queries
     const { data, error } = await supabase
       .from('grade11_sections')
       .select(`
-        *,
+        id,
+        title,
+        description,
+        order_index,
+        created_at,
+        updated_at,
         topics:grade11_topics(
-          *,
-          lessons:grade11_lessons(
-            *,
-            media:grade11_lesson_media(*)
-          )
+          id,
+          section_id,
+          title,
+          content,
+          order_index,
+          created_at,
+          updated_at
         )
       `)
       .order('order_index');
 
     if (error) {
-      console.error('Sections fetch error:', error);
-      logger.error('Error fetching Grade 11 content for student', error as Error);
+      console.error('Structure fetch error:', error);
+      logger.error('Error fetching Grade 11 structure', error as Error);
       throw error;
     }
 
@@ -104,29 +110,57 @@ const fetchGrade11Sections = async (): Promise<Grade11SectionWithTopics[]> => {
       return [];
     }
 
-    // Sort nested relations by order_index (Supabase doesn't support ORDER BY in nested selects yet)
+    // Sort topics by order_index and initialize empty lessons array
     return data.map(section => ({
       ...section,
       topics: (section.topics || [])
         .sort((a, b) => a.order_index - b.order_index)
         .map(topic => ({
           ...topic,
-          lessons: (topic.lessons || [])
-            .sort((a, b) => a.order_index - b.order_index)
-            .map(lesson => ({
-              ...lesson,
-              media: (lesson.media || [])
-                .sort((a, b) => a.order_index - b.order_index)
-                .map(media => ({
-                  ...media,
-                  metadata: media.metadata as Record<string, any> | null
-                }))
-            }))
+          lessons: [] // Will be loaded on-demand
         }))
     }));
   } catch (error) {
-    console.error('Complete error in fetchSections:', error);
-    logger.error('Error fetching Grade 11 content for student', error as Error);
+    console.error('Error in fetchStructure:', error);
+    logger.error('Error fetching Grade 11 structure', error as Error);
+    throw error;
+  }
+};
+
+// ⚡ Phase 2: Fetch Topic Lessons (On-Demand Lazy Load)
+export const fetchTopicLessons = async (topicId: string): Promise<Grade11LessonWithMedia[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('grade11_lessons')
+      .select(`
+        id,
+        topic_id,
+        title,
+        content,
+        order_index,
+        created_at,
+        updated_at,
+        media:grade11_lesson_media(*)
+      `)
+      .eq('topic_id', topicId)
+      .order('order_index');
+
+    if (error) {
+      console.error('Lessons fetch error:', error);
+      throw error;
+    }
+
+    return (data || []).map(lesson => ({
+      ...lesson,
+      media: (lesson.media || [])
+        .sort((a: any, b: any) => a.order_index - b.order_index)
+        .map((media: any) => ({
+          ...media,
+          metadata: media.metadata as Record<string, any> | null
+        }))
+    }));
+  } catch (error) {
+    console.error('Error fetching topic lessons:', error);
     throw error;
   }
 };
@@ -152,8 +186,8 @@ const fetchGrade11Videos = async (): Promise<Grade11Video[]> => {
   }
 };
 
-export const useStudentGrade11Content = () => {
-  // Sections query
+export const useStudentGrade11Content = (options?: { enabled?: boolean }) => {
+  // Structure query (lightweight - only sections + topics)
   const {
     data: sections = [],
     isLoading: sectionsLoading,
@@ -161,9 +195,10 @@ export const useStudentGrade11Content = () => {
     refetch: refetchSections
   } = useQuery({
     queryKey: QUERY_KEYS.GRADE_CONTENT.GRADE_11_SECTIONS(),
-    queryFn: fetchGrade11Sections,
-    staleTime: CACHE_TIMES.LONG, // Cache for 1 hour - content doesn't change often
-    gcTime: CACHE_TIMES.VERY_LONG, // Keep in cache for 24 hours
+    queryFn: fetchGrade11Structure,
+    enabled: options?.enabled !== false,
+    staleTime: CACHE_TIMES.LONG,
+    gcTime: CACHE_TIMES.VERY_LONG,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     refetchOnMount: false,

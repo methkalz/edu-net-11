@@ -42,6 +42,7 @@ import { UserTitleBadge } from '@/components/shared/UserTitleBadge';
 import { useStudentTeacher } from '@/hooks/useStudentTeacher';
 import { useStudentGameStats } from '@/hooks/useStudentGameStats';
 import { useGrade12Projects } from '@/hooks/useGrade12Projects';
+import { useStudentGrade11Content } from '@/hooks/useStudentGrade11Content';
 
 const StudentDashboard: React.FC = () => {
   const { user, userProfile } = useAuth();
@@ -51,6 +52,11 @@ const StudentDashboard: React.FC = () => {
   const { refetch: refetchGameStats } = useStudentGameStats();
   const { projects } = useGrade12Projects();
   const [activeTab, setActiveTab] = useState<string>('overview');
+  
+  // ⚡ Phase 1: Parallel Fetch - Pre-load Grade 11 content
+  const { sections: grade11Sections, videos: grade11Videos } = useStudentGrade11Content({
+    enabled: assignedGrade === '11'
+  });
   
   // نظام تتبع الأوسمة والاحتفال
   const { 
@@ -255,11 +261,12 @@ const StudentDashboard: React.FC = () => {
           </div>
 
           <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Stats Section */}
-              <div className="lg:col-span-2 space-y-6">
-                <StudentStats />
-              </div>
+            {activeTab === 'overview' && (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Stats Section */}
+                <div className="lg:col-span-2 space-y-6">
+                  <StudentStats />
+                </div>
 
               {/* Quick Actions */}
               <div className="space-y-4">
@@ -353,30 +360,31 @@ const StudentDashboard: React.FC = () => {
                 </Card>
               </div>
             </div>
+            )}
           </TabsContent>
 
-            <TabsContent value="content">
-              <StudentGradeContent />
-            </TabsContent>
+          <TabsContent value="content">
+            {activeTab === 'content' && <StudentGradeContent />}
+          </TabsContent>
 
-            {hasFinalProjectTab && (
-              <TabsContent value="finalProject">
-                <StudentGradeContent defaultTab="project" />
-              </TabsContent>
-            )}
-
-            <TabsContent value="exams">
-              <StudentExamsSection />
+          {hasFinalProjectTab && (
+            <TabsContent value="finalProject">
+              {activeTab === 'finalProject' && <StudentGradeContent defaultTab="project" />}
             </TabsContent>
+          )}
+
+          <TabsContent value="exams">
+            {activeTab === 'exams' && <StudentExamsSection />}
+          </TabsContent>
 
           {hasGamesTab && (
             <TabsContent value="games">
-              <StudentGameSection />
+              {activeTab === 'games' && <StudentGameSection />}
             </TabsContent>
           )}
 
           <TabsContent value="profile">
-            <StudentProfile />
+            {activeTab === 'profile' && <StudentProfile />}
           </TabsContent>
         </Tabs>
       </section>

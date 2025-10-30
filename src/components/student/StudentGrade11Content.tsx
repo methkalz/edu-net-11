@@ -1,18 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStudentGrade11Content } from '@/hooks/useStudentGrade11Content';
+import { useTopicLessons } from '@/hooks/useTopicLessons';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { BookOpen, ChevronDown, ChevronRight, Search, FolderOpen, PlayCircle, Clock, Star, FileText, BookMarked, Target, Trophy, Video, Calendar, FileCheck } from 'lucide-react';
+import { BookOpen, ChevronDown, ChevronRight, Search, FolderOpen, PlayCircle, Clock, Star, FileText, BookMarked, Target, Trophy, Video, Calendar, FileCheck, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import Grade11LessonContentDisplay from '../content/Grade11LessonContentDisplay';
 import { Grade11VideoViewer } from '@/components/content/Grade11VideoViewer';
 import { useStudentProgress } from '@/hooks/useStudentProgress';
 import { useVideoInfoCards } from '@/hooks/useVideoInfoCards';
 import VideoInfoCard from '../content/VideoInfoCard';
+import type { Grade11LessonWithMedia } from '@/hooks/useStudentGrade11Content';
 
 export const StudentGrade11Content: React.FC = () => {
   const {
@@ -26,20 +28,43 @@ export const StudentGrade11Content: React.FC = () => {
   const { cards, loading: cardsLoading } = useVideoInfoCards('11');
   const [openSections, setOpenSections] = useState<string[]>([]);
   const [openTopics, setOpenTopics] = useState<string[]>([]);
+  const [loadedTopics, setLoadedTopics] = useState<Record<string, Grade11LessonWithMedia[]>>({});
+  const [currentTopicId, setCurrentTopicId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLesson, setSelectedLesson] = useState<any>(null);
   const [selectedVideo, setSelectedVideo] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('lessons');
   const stats = getContentStats();
 
+  // ⚡ Lazy load lessons when topic is opened
+  const { data: topicLessons, isLoading: topicLessonsLoading } = useTopicLessons(currentTopicId);
+
+  // Store loaded lessons in state
+  useEffect(() => {
+    if (topicLessons && currentTopicId) {
+      setLoadedTopics(prev => ({
+        ...prev,
+        [currentTopicId]: topicLessons
+      }));
+    }
+  }, [topicLessons, currentTopicId]);
+
   // Toggle section open/close
   const toggleSection = (sectionId: string) => {
     setOpenSections(prev => prev.includes(sectionId) ? prev.filter(id => id !== sectionId) : [...prev, sectionId]);
   };
 
-  // Toggle topic open/close
+  // Toggle topic open/close with lazy loading
   const toggleTopic = (topicId: string) => {
-    setOpenTopics(prev => prev.includes(topicId) ? prev.filter(id => id !== topicId) : [...prev, topicId]);
+    const isOpening = !openTopics.includes(topicId);
+    setOpenTopics(prev => 
+      prev.includes(topicId) ? prev.filter(id => id !== topicId) : [...prev, topicId]
+    );
+    
+    // Lazy load lessons when opening topic
+    if (isOpening && !loadedTopics[topicId]) {
+      setCurrentTopicId(topicId);
+    }
   };
 
   // Filter sections based on search
@@ -251,8 +276,14 @@ export const StudentGrade11Content: React.FC = () => {
 
                               <CollapsibleContent>
                                 <CardContent className="pt-0 px-6 pb-6">
-                                  <div className="space-y-3">
-                                    {topic.lessons.map(lesson => <div key={lesson.id} className="flex items-center justify-between p-5 bg-gradient-to-br from-purple-50/50 to-purple-100/30 rounded-2xl border border-purple-200/60 hover:bg-purple-50/80 transition-colors cursor-pointer group" onClick={async () => {
+                                  {topicLessonsLoading && currentTopicId === topic.id ? (
+                                    <div className="flex items-center justify-center py-8">
+                                      <Loader2 className="w-6 h-6 animate-spin text-purple-600" />
+                                      <span className="mr-3 text-sm text-slate-600">جاري تحميل الدروس...</span>
+                                    </div>
+                                  ) : (
+                                    <div className="space-y-3">
+                                      {(loadedTopics[topic.id] || []).map(lesson => <div key={lesson.id} className="flex items-center justify-between p-5 bg-gradient-to-br from-purple-50/50 to-purple-100/30 rounded-2xl border border-purple-200/60 hover:bg-purple-50/80 transition-colors cursor-pointer group" onClick={async () => {
                                         setSelectedLesson(lesson);
                                         // تسجيل إكمال الدرس فوراً
                                         try {
@@ -280,7 +311,8 @@ export const StudentGrade11Content: React.FC = () => {
                                           عرض
                                         </Button>
                                       </div>)}
-                                  </div>
+                                    </div>
+                                  )}
                                 </CardContent>
                               </CollapsibleContent>
                             </Collapsible>
