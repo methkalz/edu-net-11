@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useStudentGrade11Content } from '@/hooks/useStudentGrade11Content';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -44,7 +44,8 @@ export const StudentGrade11Content: React.FC = () => {
   const [topicLessons, setTopicLessons] = useState<Map<string, any[]>>(new Map());
   const [loadingTopics, setLoadingTopics] = useState<Set<string>>(new Set());
   
-  const stats = getContentStats();
+  // ⚡ استخدام useMemo للإحصائيات (تقليل Re-renders)
+  const stats = useMemo(() => getContentStats(), [getContentStats]);
 
   // ⚡ Prefetch مواضيع القسم الأول عند التحميل
   React.useEffect(() => {
@@ -71,8 +72,8 @@ export const StudentGrade11Content: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [structure?.length, loading]);
 
-  // ⚡ Toggle section open/close مع lazy loading للمواضيع
-  const toggleSection = async (sectionId: string) => {
+  // ⚡ Toggle section مع useCallback (تقليل Re-renders)
+  const toggleSection = useCallback(async (sectionId: string) => {
     const isOpening = !openSections.includes(sectionId);
     setOpenSections(prev => 
       prev.includes(sectionId) ? prev.filter(id => id !== sectionId) : [...prev, sectionId]
@@ -96,10 +97,10 @@ export const StudentGrade11Content: React.FC = () => {
         });
       }
     }
-  };
+  }, [openSections, sectionTopics, loadingSections, fetchSectionTopics]);
 
-  // ⚡ Toggle topic open/close مع lazy loading للدروس
-  const toggleTopic = async (topicId: string) => {
+  // ⚡ Toggle topic مع useCallback (تقليل Re-renders)
+  const toggleTopic = useCallback(async (topicId: string) => {
     const isOpening = !openTopics.includes(topicId);
     setOpenTopics(prev => 
       prev.includes(topicId) ? prev.filter(id => id !== topicId) : [...prev, topicId]
@@ -123,10 +124,10 @@ export const StudentGrade11Content: React.FC = () => {
         });
       }
     }
-  };
+  }, [openTopics, topicLessons, loadingTopics, fetchTopicLessons]);
 
-  // ⚡ تحميل محتوى الدرس الكامل عند النقر عليه
-  const handleLessonClick = async (lessonId: string) => {
+  // ⚡ Handle lesson click مع useCallback (تقليل Re-renders)
+  const handleLessonClick = useCallback(async (lessonId: string) => {
     try {
       const lessonContent = await fetchLessonContent(lessonId);
       if (lessonContent) {
@@ -140,26 +141,37 @@ export const StudentGrade11Content: React.FC = () => {
       console.error('Error loading lesson content:', error);
       toast.error('فشل تحميل محتوى الدرس');
     }
-  };
+  }, [fetchLessonContent, updateProgress, logActivity]);
 
-  // Filter structure based on search
-  const filteredSections = (structure || []).filter(section => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return section.title.toLowerCase().includes(query) || 
-           section.description?.toLowerCase().includes(query) || 
-           section.topics?.some((topic: any) => 
-             topic.title.toLowerCase().includes(query) || 
-             topic.content?.toLowerCase().includes(query)
-           );
-  });
+  // ⚡ Filter structure مع useMemo (تقليل Re-renders)
+  const filteredSections = useMemo(() => {
+    return (structure || []).filter(section => {
+      if (!searchQuery) return true;
+      const query = searchQuery.toLowerCase();
+      
+      // البحث في عنوان القسم
+      if (section.title.toLowerCase().includes(query)) return true;
+      if (section.description?.toLowerCase().includes(query)) return true;
+      
+      // البحث في المواضيع المحملة
+      const topics = sectionTopics.get(section.id) || [];
+      return topics.some((topic: any) => 
+        topic.title.toLowerCase().includes(query) || 
+        topic.content?.toLowerCase().includes(query)
+      );
+    });
+  }, [structure, searchQuery, sectionTopics]);
 
-  // Filter videos based on search
-  const filteredVideos = (videos || []).filter(video => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return video.title.toLowerCase().includes(query) || video.description?.toLowerCase().includes(query) || video.category.toLowerCase().includes(query);
-  });
+  // ⚡ Filter videos مع useMemo (تقليل Re-renders)
+  const filteredVideos = useMemo(() => {
+    return (videos || []).filter(video => {
+      if (!searchQuery) return true;
+      const query = searchQuery.toLowerCase();
+      return video.title.toLowerCase().includes(query) || 
+             video.description?.toLowerCase().includes(query) || 
+             video.category.toLowerCase().includes(query);
+    });
+  }, [videos, searchQuery]);
   if (loading) {
     return <div className="space-y-8 max-w-7xl mx-auto">
         <div className="text-center space-y-3">

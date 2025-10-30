@@ -5608,6 +5608,16 @@ export type Database = {
       }
     }
     Views: {
+      grade11_content_stats: {
+        Row: {
+          total_lessons: number | null
+          total_media: number | null
+          total_sections: number | null
+          total_topics: number | null
+          total_videos: number | null
+        }
+        Relationships: []
+      }
       teacher_assigned_grades: {
         Row: {
           grade_level_id: string | null

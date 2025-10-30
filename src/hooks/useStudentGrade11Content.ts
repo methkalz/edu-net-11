@@ -263,7 +263,7 @@ export const useStudentGrade11Content = () => {
     retry: 1
   });
 
-  // Videos query - أخف وأسرع
+  // ⚡ Parallel Loading: Videos query بدون enabled (تحميل متزامن مع Structure)
   const {
     data: videos = [],
     isLoading: videosLoading,
@@ -276,38 +276,63 @@ export const useStudentGrade11Content = () => {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     refetchOnMount: false,
-    retry: 1,
-    enabled: !!structure.length // تحميل Videos بعد Structure
+    retry: 1
+    // ⚡ حذفنا enabled للتحميل المتزامن
   });
 
-  // ⚡ المرحلة 1: لا نحمل جميع الدروس مسبقاً، فقط Structure + Videos
-  const loading = structureLoading || videosLoading;
+  // ⚡ جلب الإحصائيات من View (سريع جداً ~10ms)
+  const {
+    data: stats,
+    isLoading: statsLoading
+  } = useQuery({
+    queryKey: ['grade11_content_stats'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('grade11_content_stats')
+        .select('*')
+        .single();
+      
+      if (error) throw error;
+      return data as {
+        total_sections: number;
+        total_topics: number;
+        total_lessons: number;
+        total_media: number;
+        total_videos: number;
+      };
+    },
+    staleTime: CACHE_TIMES.VERY_LONG,
+    gcTime: CACHE_TIMES.VERY_LONG,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
+    retry: 1
+  });
+
+  // ⚡ Loading state يشمل الإحصائيات
+  const loading = structureLoading || videosLoading || statsLoading;
   const error = structureError?.message || videosError?.message || null;
 
-  // Get statistics for student dashboard
+  // ⚡ Get statistics من View (سريع جداً)
   const getContentStats = () => {
-    const structureArray = structure as any[];
-    const videosArray = videos as Grade11Video[];
-    
-    const totalSections = structureArray.length;
-    const totalTopics = structureArray.reduce((acc, section) => 
-      acc + (section.topics?.length || 0), 0
-    );
-    // حساب الدروس من lessons_count
-    const totalLessons = structureArray.reduce((acc, section) => 
-      acc + (section.topics || []).reduce((topicAcc: number, topic: any) => 
-        topicAcc + (topic.lessons_count || 0), 0
-      ), 0
-    );
-    const totalMedia = 0; // سنحسبه لاحقاً عند تحميل الدروس
-    const totalVideos = videosArray.length;
+    // استخدام الإحصائيات من View (أسرع وأدق)
+    if (stats) {
+      return {
+        totalSections: stats.total_sections,
+        totalTopics: stats.total_topics,
+        totalLessons: stats.total_lessons,
+        totalMedia: stats.total_media,
+        totalVideos: stats.total_videos,
+      };
+    }
 
+    // Fallback: حساب يدوي في حال لم يتم تحميل stats بعد
     return {
-      totalSections,
-      totalTopics,
-      totalLessons,
-      totalMedia,
-      totalVideos
+      totalSections: (structure as any[]).length,
+      totalTopics: 0,
+      totalLessons: 0,
+      totalMedia: 0,
+      totalVideos: (videos as Grade11Video[]).length,
     };
   };
 
