@@ -330,44 +330,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return { error: { message: "Regular user access blocked from superadmin auth" } as any };
         }
 
-        // Record successful login timestamp and increment count (when columns are available)
+
+        // Record successful login timestamp and increment count
         try {
           const now = new Date().toISOString();
           
-          // Attempt to update login tracking - will work once columns are added
-          // This uses a raw SQL query to handle missing columns gracefully
+          // Get current login_count
+          const { data: currentProfile } = await supabase
+            .from('profiles')
+            .select('login_count')
+            .eq('user_id', data.user.id)
+            .single();
+          
+          // Update login tracking
           const { error: loginUpdateError } = await supabase
             .from('profiles')
-            .select('user_id')  // Safe query first
-            .eq('user_id', data.user.id)
-            .limit(1);
+            .update({
+              last_login_at: now,
+              login_count: (currentProfile?.login_count || 0) + 1
+            })
+            .eq('user_id', data.user.id);
 
-          // If basic query works, we can proceed with login tracking
-          if (!loginUpdateError) {
-            // Log the login event via audit system (this always works)
-            setTimeout(async () => {
-              try {
-                const { auditLogger, AUDIT_ACTIONS, AUDIT_ENTITIES } = await import('@/lib/audit');
-                await auditLogger.log({
-                  action: AUDIT_ACTIONS.USER_LOGIN,
-                  entity: AUDIT_ENTITIES.USER,
-                  entity_id: data.user.id,
-                  actor_user_id: data.user.id,
-                  payload_json: {
-                    timestamp: now,
-                    method: 'password_login'
-                  }
-                });
-                
-                logInfo('Login event logged successfully', { 
-                  userId: data.user.id, 
-                  timestamp: now
-                });
-              } catch (auditError) {
-                logError('Error logging audit entry for login', auditError as Error);
-              }
-            }, 0);
+          if (loginUpdateError) {
+            logError('Error updating login tracking', loginUpdateError);
           }
+
+          // Log the login event via audit system
+          setTimeout(async () => {
+            try {
+              const { auditLogger, AUDIT_ACTIONS, AUDIT_ENTITIES } = await import('@/lib/audit');
+              await auditLogger.log({
+                action: AUDIT_ACTIONS.USER_LOGIN,
+                entity: AUDIT_ENTITIES.USER,
+                entity_id: data.user.id,
+                actor_user_id: data.user.id,
+                payload_json: {
+                  timestamp: now,
+                  method: 'password_login',
+                  login_count: (currentProfile?.login_count || 0) + 1
+                }
+              });
+              
+              logInfo('Login event logged successfully', { 
+                userId: data.user.id, 
+                timestamp: now
+              });
+            } catch (auditError) {
+              logError('Error logging audit entry for login', auditError as Error);
+            }
+          }, 0);
         } catch (loginTrackingError) {
           // Don't fail the login if tracking fails, just log the error
           logError('Error with login tracking setup', loginTrackingError as Error);

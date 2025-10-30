@@ -120,7 +120,9 @@ export const useImpersonation = () => {
         updated_at: '',
         phone: null,
         theme: 'light',
-        font_size: 'medium'
+        font_size: 'medium',
+        last_login_at: null,
+        login_count: 0
       };
     }
     return null;
