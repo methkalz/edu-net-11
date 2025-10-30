@@ -1,10 +1,9 @@
-import { useQuery, useQueries } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
 import { QUERY_KEYS, CACHE_TIMES } from '@/lib/query-keys';
 import { PerformanceMonitor } from '@/lib/performance-monitor';
-import React from 'react';
 
 export interface Grade11Section {
   id: string;
@@ -140,6 +139,41 @@ export const fetchTopicLessons = async (topicId: string): Promise<any[]> => {
   });
 };
 
+// ⚡ المرحلة 4ب: جلب دروس عدة مواضيع في طلب واحد (Batch Query)
+export const fetchLessonsForTopics = async (topicIds: string[]): Promise<Record<string, any[]>> => {
+  return PerformanceMonitor.measure('fetchLessonsForTopics-batch', async () => {
+    try {
+      const { data, error } = await supabase
+        .from('grade11_lessons')
+        .select(`
+          id, title, order_index, topic_id,
+          media_count:grade11_lesson_media(count)
+        `)
+        .in('topic_id', topicIds)
+        .order('order_index');
+
+      if (error) {
+        logger.error('Error fetching lessons for topics batch', error as Error);
+        throw error;
+      }
+
+      // تجميع النتائج حسب topic_id
+      const grouped: Record<string, any[]> = {};
+      (data || []).forEach(lesson => {
+        if (!grouped[lesson.topic_id]) {
+          grouped[lesson.topic_id] = [];
+        }
+        grouped[lesson.topic_id].push(lesson);
+      });
+
+      return grouped;
+    } catch (error) {
+      logger.error('Error fetching lessons for topics batch', error as Error);
+      throw error;
+    }
+  });
+};
+
 // ⚡ المرحلة 3: جلب محتوى درس كامل مع الوسائط عند فتحه
 export const fetchLessonContent = async (lessonId: string): Promise<Grade11LessonWithMedia | null> => {
   return PerformanceMonitor.measure(`fetchLessonContent-${lessonId}`, async () => {
@@ -232,26 +266,8 @@ export const useStudentGrade11Content = () => {
     enabled: !!structure.length // تحميل Videos بعد Structure
   });
 
-  // ⚡ تحميل جميع دروس المواضيع بشكل متوازي
-  const allTopicIds = React.useMemo(() => {
-    return (structure as any[]).flatMap(section => 
-      (section.topics || []).map((topic: any) => topic.id)
-    );
-  }, [structure]);
-
-  const lessonQueries = useQueries({
-    queries: allTopicIds.map(topicId => ({
-      queryKey: ['grade11-lessons', topicId],
-      queryFn: () => fetchTopicLessons(topicId),
-      staleTime: CACHE_TIMES.VERY_LONG,
-      gcTime: CACHE_TIMES.VERY_LONG,
-      retry: 1,
-      enabled: !!structure.length,
-    })),
-  });
-
-  const isLoadingLessons = lessonQueries.some(q => q.isLoading);
-  const loading = structureLoading || videosLoading || isLoadingLessons;
+  // ⚡ المرحلة 1: لا نحمل جميع الدروس مسبقاً، فقط Structure + Videos
+  const loading = structureLoading || videosLoading;
   const error = structureError?.message || videosError?.message || null;
 
   // Get statistics for student dashboard
@@ -294,6 +310,7 @@ export const useStudentGrade11Content = () => {
     refetch,
     // تصدير دوال التحميل الإضافية
     fetchTopicLessons,
-    fetchLessonContent
+    fetchLessonContent,
+    fetchLessonsForTopics // ⚡ دالة جديدة لجلب دروس متعددة دفعة واحدة
   };
 };
