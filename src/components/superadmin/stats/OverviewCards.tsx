@@ -9,6 +9,7 @@ interface OverviewStats {
   avg_student_teacher_ratio: number;
   total_points: number;
   last_updated: string;
+  schools_with_activity?: number;
 }
 
 interface Props {
@@ -22,6 +23,7 @@ export const OverviewCards = ({ stats }: Props) => {
     {
       title: 'إجمالي المدارس',
       value: stats.total_schools.toLocaleString('ar-SA'),
+      subtitle: `${stats.schools_with_activity || 0} مدرسة نشطة`,
       icon: School,
       gradient: 'from-blue-500 to-cyan-500',
     },
@@ -40,8 +42,9 @@ export const OverviewCards = ({ stats }: Props) => {
       gradient: 'from-orange-500 to-red-500',
     },
     {
-      title: 'إجمالي النقاط',
-      value: stats.total_points.toLocaleString('ar-SA'),
+      title: 'الصفوف الدراسية',
+      value: stats.total_classes.toLocaleString('ar-SA'),
+      subtitle: 'إجمالي الصفوف',
       icon: Trophy,
       gradient: 'from-green-500 to-emerald-500',
     },

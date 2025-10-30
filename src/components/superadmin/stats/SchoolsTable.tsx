@@ -57,7 +57,7 @@ export const SchoolsTable = ({ schools }: Props) => {
                 <th className="text-right py-3 font-semibold">المعلمين</th>
                 <th className="text-right py-3 font-semibold">الصفوف</th>
                 <th className="text-right py-3 font-semibold">النسبة</th>
-                <th className="text-right py-3 font-semibold">النقاط</th>
+                <th className="text-right py-3 font-semibold">الحالة</th>
               </tr>
             </thead>
             <tbody>
@@ -79,8 +79,16 @@ export const SchoolsTable = ({ schools }: Props) => {
                       {school.student_teacher_ratio}:1
                     </Badge>
                   </td>
-                  <td className="py-3 font-semibold">
-                    {school.total_points?.toLocaleString('ar-SA') || 0}
+                  <td className="py-3">
+                    {school.total_students > 0 ? (
+                      <Badge variant="default" className="bg-green-500">
+                        نشطة
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary">
+                        غير نشطة
+                      </Badge>
+                    )}
                   </td>
                 </tr>
               ))}
