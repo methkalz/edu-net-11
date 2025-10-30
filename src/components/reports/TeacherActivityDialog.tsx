@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { useTeacherPresence, TeacherPresenceData } from '@/hooks/useTeacherPresence';
 import { TeacherActivityStats } from './TeacherActivityStats';
 import { TeacherActivityTable } from './TeacherActivityTable';
+import { SchoolActivityStats } from './SchoolActivityStats';
 import { isWithinLast24Hours, isWithinLast30Days } from '@/lib/dateUtils';
 import { Search, Download, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -38,6 +39,20 @@ export const TeacherActivityDialog: FC<TeacherActivityDialogProps> = ({
   const [activeTab, setActiveTab] = useState<TabValue>('online');
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<'all' | 'teacher' | 'school_admin'>('all');
+  const [schoolFilter, setSchoolFilter] = useState<string>('all');
+
+  // استخراج قائمة المدارس الفريدة
+  const schools = useMemo(() => {
+    const uniqueSchools = new Map<string, string>();
+    teachers.forEach(t => {
+      if (!uniqueSchools.has(t.school_id)) {
+        uniqueSchools.set(t.school_id, t.school_name);
+      }
+    });
+    return Array.from(uniqueSchools.entries())
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+  }, [teachers]);
 
   const filteredTeachers = useMemo(() => {
     let filtered = teachers;
@@ -71,6 +86,11 @@ export const TeacherActivityDialog: FC<TeacherActivityDialogProps> = ({
       filtered = filtered.filter(t => t.role === roleFilter);
     }
 
+    // تصفية حسب المدرسة
+    if (schoolFilter !== 'all') {
+      filtered = filtered.filter(t => t.school_id === schoolFilter);
+    }
+
     // تصفية حسب البحث
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
@@ -82,16 +102,17 @@ export const TeacherActivityDialog: FC<TeacherActivityDialogProps> = ({
     }
 
     return filtered;
-  }, [teachers, activeTab, searchQuery, roleFilter]);
+  }, [teachers, activeTab, searchQuery, roleFilter, schoolFilter]);
 
   const handleExport = () => {
     try {
       const csvContent = [
-        ['الاسم', 'البريد الإلكتروني', 'الدور', 'الحالة', 'آخر تواجد', 'إجمالي الوقت (دقيقة)', 'عدد التسجيلات'].join(','),
+        ['الاسم', 'البريد الإلكتروني', 'المدرسة', 'الدور', 'الحالة', 'آخر تواجد', 'إجمالي الوقت (دقيقة)', 'عدد التسجيلات'].join(','),
         ...filteredTeachers.map(t =>
           [
             t.full_name,
             t.email,
+            t.school_name,
             t.role === 'teacher' ? 'معلم' : 'مدير مدرسة',
             t.is_online ? 'متصل' : 'غير متصل',
             t.last_seen_at,
@@ -159,7 +180,10 @@ export const TeacherActivityDialog: FC<TeacherActivityDialogProps> = ({
 
         <div className="space-y-6 py-4">
           {/* الإحصائيات العامة */}
-          <TeacherActivityStats teachers={teachers} />
+          <TeacherActivityStats teachers={schoolFilter === 'all' ? teachers : filteredTeachers} />
+
+          {/* إحصائيات المدارس */}
+          <SchoolActivityStats teachers={teachers} />
 
           {/* الفلاتر والبحث */}
           <div className="flex flex-col md:flex-row gap-4">
@@ -172,6 +196,19 @@ export const TeacherActivityDialog: FC<TeacherActivityDialogProps> = ({
                 className="pr-10"
               />
             </div>
+            <Select value={schoolFilter} onValueChange={setSchoolFilter}>
+              <SelectTrigger className="w-full md:w-[200px]">
+                <SelectValue placeholder="المدرسة" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">جميع المدارس</SelectItem>
+                {schools.map(school => (
+                  <SelectItem key={school.id} value={school.id}>
+                    {school.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Select value={roleFilter} onValueChange={(value: any) => setRoleFilter(value)}>
               <SelectTrigger className="w-full md:w-[200px]">
                 <SelectValue placeholder="الدور" />

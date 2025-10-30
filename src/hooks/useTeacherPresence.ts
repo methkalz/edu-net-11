@@ -5,6 +5,7 @@ export interface TeacherPresenceData {
   id: string;
   user_id: string;
   school_id: string;
+  school_name: string;
   role: 'teacher' | 'school_admin';
   full_name: string;
   email: string;
@@ -61,8 +62,22 @@ export const useTeacherPresence = () => {
         return;
       }
 
+      // جلب بيانات المدارس
+      const schoolIds = [...new Set(presenceData.map(p => p.school_id))];
+      const { data: schoolsData, error: schoolsError } = await supabase
+        .from('schools')
+        .select('id, name')
+        .in('id', schoolIds);
+
+      if (schoolsError) {
+        console.error('❌ Error fetching schools:', schoolsError);
+        setError(schoolsError.message);
+        return;
+      }
+
       // دمج البيانات
       const profilesMap = new Map(profilesData?.map(p => [p.user_id, p]) || []);
+      const schoolsMap = new Map(schoolsData?.map(s => [s.id, s.name]) || []);
       
       const formattedData: TeacherPresenceData[] = presenceData.map((item: any) => {
         const profile = profilesMap.get(item.user_id);
@@ -79,6 +94,7 @@ export const useTeacherPresence = () => {
           id: item.id,
           user_id: item.user_id,
           school_id: item.school_id,
+          school_name: schoolsMap.get(item.school_id) || 'Unknown',
           role: item.role,
           full_name: profile?.full_name || 'Unknown',
           email: profile?.email || 'Unknown',
