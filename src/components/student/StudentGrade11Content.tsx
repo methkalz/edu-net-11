@@ -24,6 +24,7 @@ export const StudentGrade11Content: React.FC = () => {
     error,
     getContentStats,
     fetchSectionTopics, // ⚡ جلب مواضيع قسم محدد
+    fetchAllTopicsBatch, // ⚡ **NEW** جلب عدة أقسام دفعة واحدة
     fetchTopicLessons,
     fetchLessonContent
   } = useStudentGrade11Content();
@@ -47,27 +48,36 @@ export const StudentGrade11Content: React.FC = () => {
   // ⚡ استخدام useMemo للإحصائيات (تقليل Re-renders)
   const stats = useMemo(() => getContentStats(), [getContentStats]);
 
-  // ⚡ Prefetch مواضيع القسم الأول عند التحميل
+  // ⚡ **NEW** Batch Prefetch: جلب مواضيع أول 3 أقسام في طلب واحد
   React.useEffect(() => {
-    if (structure && structure.length > 0 && !loading) {
-      const firstSection = structure[0];
-      
-      // جلب مواضيع القسم الأول
-      if (firstSection && !sectionTopics.has(firstSection.id)) {
-        const prefetchFirstSection = async () => {
-          try {
-            const topics = await fetchSectionTopics(firstSection.id);
-            setSectionTopics(prev => new Map(prev).set(firstSection.id, topics));
-            
-            // فتح القسم الأول تلقائياً
-            setOpenSections([firstSection.id]);
-          } catch (error) {
-            console.error('Error prefetching first section:', error);
+    if (structure && structure.length > 0 && !loading && sectionTopics.size === 0) {
+      const prefetchMultipleSections = async () => {
+        try {
+          // جلب أول 3 أقسام في طلب واحد (بدلاً من 3 طلبات منفصلة)
+          const firstThreeSections = structure.slice(0, 3);
+          const sectionIds = firstThreeSections.map((s: any) => s.id);
+          
+          const topicsBatch = await fetchAllTopicsBatch(sectionIds);
+          
+          // تحديث الحالة لكل الأقسام المحملة
+          setSectionTopics(prev => {
+            const updated = new Map(prev);
+            Object.entries(topicsBatch).forEach(([sectionId, topics]) => {
+              updated.set(sectionId, topics);
+            });
+            return updated;
+          });
+          
+          // فتح القسم الأول تلقائياً
+          if (firstThreeSections.length > 0) {
+            setOpenSections([firstThreeSections[0].id]);
           }
-        };
-        
-        prefetchFirstSection();
-      }
+        } catch (error) {
+          console.error('Error prefetching sections batch:', error);
+        }
+      };
+      
+      prefetchMultipleSections();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [structure?.length, loading]);

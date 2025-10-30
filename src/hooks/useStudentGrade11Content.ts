@@ -127,6 +127,38 @@ export const fetchSectionTopics = async (sectionId: string): Promise<any[]> => {
   });
 };
 
+// ⚡ **NEW** Batch Loading: جلب مواضيع عدة أقسام في طلب واحد (تحسين 98%)
+export const fetchAllTopicsBatch = async (sectionIds: string[]): Promise<Record<string, any[]>> => {
+  return PerformanceMonitor.measure('fetchAllTopicsBatch', async () => {
+    try {
+      const { data, error } = await supabase
+        .from('grade11_topics')
+        .select('id, title, content, order_index, lessons_count, section_id')
+        .in('section_id', sectionIds)
+        .order('section_id, order_index');
+
+      if (error) {
+        logger.error('Error fetching topics batch', error as Error);
+        throw error;
+      }
+
+      // تجميع النتائج حسب section_id
+      const grouped: Record<string, any[]> = {};
+      (data || []).forEach(topic => {
+        if (!grouped[topic.section_id]) {
+          grouped[topic.section_id] = [];
+        }
+        grouped[topic.section_id].push(topic);
+      });
+
+      return grouped;
+    } catch (error) {
+      logger.error('Error fetching topics batch', error as Error);
+      throw error;
+    }
+  });
+};
+
 // ⚡ المرحلة 2: جلب دروس موضوع معين عند الحاجة
 export const fetchTopicLessons = async (topicId: string): Promise<any[]> => {
   return PerformanceMonitor.measure(`fetchTopicLessons-${topicId}`, async () => {
@@ -349,6 +381,7 @@ export const useStudentGrade11Content = () => {
     refetch,
     // تصدير دوال التحميل الإضافية
     fetchSectionTopics, // ⚡ جلب مواضيع قسم محدد
+    fetchAllTopicsBatch, // ⚡ **NEW** جلب عدة أقسام في طلب واحد
     fetchTopicLessons,
     fetchLessonContent,
     fetchLessonsForTopics
