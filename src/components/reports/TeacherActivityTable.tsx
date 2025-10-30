@@ -111,12 +111,12 @@ export const TeacherActivityTable: FC<TeacherActivityTableProps> = ({ teachers }
               {/* الحالة */}
               <div className="col-span-2 flex justify-center">
                 {teacher.is_online ? (
-                  <Badge className="backdrop-blur-sm bg-emerald-500/20 text-emerald-700 border-emerald-500/30 hover:bg-emerald-500/30 rounded-xl">
+                  <Badge className="backdrop-blur-sm bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/30 rounded-xl">
                     <Wifi className="h-3 w-3 ml-1" />
                     متصل
                   </Badge>
                 ) : (
-                  <Badge variant="secondary" className="backdrop-blur-sm bg-muted/30 border-muted/30 rounded-xl">
+                  <Badge variant="secondary" className="backdrop-blur-sm bg-muted text-muted-foreground border-muted/30 rounded-xl">
                     <WifiOff className="h-3 w-3 ml-1" />
                     غير متصل
                   </Badge>
