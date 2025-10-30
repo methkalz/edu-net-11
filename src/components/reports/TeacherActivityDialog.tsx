@@ -1,4 +1,4 @@
-import { FC, useState, useMemo, useEffect } from 'react';
+import { FC, useState, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -25,7 +25,6 @@ import {
 interface TeacherActivityDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  initialRoleFilter?: 'all' | 'teacher' | 'school_admin'; // 🆕 فلتر مبدئي بناءً على المربع المضغوط
 }
 
 type TabValue = 'online' | 'last24h' | 'last30d' | 'all';
@@ -33,22 +32,12 @@ type TabValue = 'online' | 'last24h' | 'last30d' | 'all';
 export const TeacherActivityDialog: FC<TeacherActivityDialogProps> = ({
   open,
   onOpenChange,
-  initialRoleFilter = 'all' // القيمة الافتراضية
 }) => {
   const { teachers, loading, refetch } = useTeacherPresence();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<TabValue>('online');
   const [searchQuery, setSearchQuery] = useState('');
-  const [roleFilter, setRoleFilter] = useState<'all' | 'teacher' | 'school_admin'>(initialRoleFilter);
-
-  // إعادة تعيين الفلتر عند فتح النافذة بناءً على المربع المضغوط
-  useEffect(() => {
-    if (open) {
-      setRoleFilter(initialRoleFilter);
-      setSearchQuery('');
-      setActiveTab('all');
-    }
-  }, [open, initialRoleFilter]);
+  const [roleFilter, setRoleFilter] = useState<'all' | 'teacher' | 'school_admin'>('all');
 
   const filteredTeachers = useMemo(() => {
     let filtered = teachers;
@@ -139,19 +128,12 @@ export const TeacherActivityDialog: FC<TeacherActivityDialogProps> = ({
     });
   };
 
-  // عنوان النافذة بناءً على الفلتر المفعّل
-  const getDialogTitle = () => {
-    if (roleFilter === 'teacher') return 'إحصائيات المعلمين';
-    if (roleFilter === 'school_admin') return 'إحصائيات المدراء';
-    return 'إحصائيات المعلمين والمدراء';
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold flex items-center justify-between">
-            <span>{getDialogTitle()}</span>
+            <span>إحصائيات المعلمين والمدراء</span>
             <div className="flex gap-2">
               <Button
                 variant="outline"

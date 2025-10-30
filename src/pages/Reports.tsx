@@ -63,7 +63,6 @@ const Reports = () => {
     activeSchoolAdmins: 0
   });
   const [teacherDialogOpen, setTeacherDialogOpen] = useState(false);
-  const [dialogRoleFilter, setDialogRoleFilter] = useState<'all' | 'teacher' | 'school_admin'>('all');
 
   // بيانات الرسوم البيانية
   const weeklyData = [
@@ -268,13 +267,7 @@ const Reports = () => {
             trend="up"
             color="blue"
           />
-          <div 
-            onClick={() => {
-              setDialogRoleFilter('teacher');
-              setTeacherDialogOpen(true);
-            }} 
-            className="cursor-pointer"
-          >
+          <div onClick={() => setTeacherDialogOpen(true)} className="cursor-pointer">
             <StatCard
               title="المعلمين النشطين"
               value={activeUsersStats.activeTeachers}
@@ -284,22 +277,14 @@ const Reports = () => {
               color="green"
             />
           </div>
-          <div 
-            onClick={() => {
-              setDialogRoleFilter('school_admin');
-              setTeacherDialogOpen(true);
-            }} 
-            className="cursor-pointer"
-          >
-            <StatCard
-              title="المدراء النشطين"
-              value={activeUsersStats.activeSchoolAdmins}
-              change={activeUsersStats.activeSchoolAdmins > 0 ? '+2%' : '0%'}
-              icon={Shield}
-              trend={activeUsersStats.activeSchoolAdmins > 0 ? 'up' : 'neutral'}
-              color="purple"
-            />
-          </div>
+          <StatCard
+            title="المدراء النشطين"
+            value={activeUsersStats.activeSchoolAdmins}
+            change={activeUsersStats.activeSchoolAdmins > 0 ? '+2%' : '0%'}
+            icon={Shield}
+            trend={activeUsersStats.activeSchoolAdmins > 0 ? 'up' : 'neutral'}
+            color="purple"
+          />
           <StatCard
             title="المحتوى التعليمي"
             value={stats.totalContent.toLocaleString()}
@@ -501,8 +486,7 @@ const Reports = () => {
       
       <TeacherActivityDialog 
         open={teacherDialogOpen} 
-        onOpenChange={setTeacherDialogOpen}
-        initialRoleFilter={dialogRoleFilter}
+        onOpenChange={setTeacherDialogOpen} 
       />
     </div>
   );
