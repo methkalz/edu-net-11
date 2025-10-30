@@ -60,16 +60,109 @@ const mapToContentItem = (item: any, contentType: 'video' | 'document' | 'projec
   };
 };
 
+// ⚡ Parallel fetching for Grade 11 (optimized)
+const fetchGrade11ContentParallel = async (userId?: string) => {
+  const [videosResult, docsResult, lessonsResult] = await Promise.all([
+    supabase
+      .from('grade11_videos')
+      .select('id, title, description, video_url, thumbnail_url, duration, category, is_visible, is_active, order_index, created_at')
+      .eq('is_active', true)
+      .eq('is_visible', true)
+      .order('order_index', { ascending: true }),
+    
+    supabase
+      .from('grade11_documents')
+      .select('id, title, description, file_path, category, is_visible, is_active, order_index, created_at')
+      .eq('is_active', true)
+      .eq('is_visible', true)
+      .eq('grade_level', '11')
+      .order('order_index', { ascending: true }),
+    
+    supabase
+      .from('grade11_lessons')
+      .select(`
+        id, title, content, is_active, order_index, created_at,
+        topic:grade11_topics(
+          id, title,
+          section:grade11_sections(id, title)
+        ),
+        media:grade11_lesson_media(
+          id, media_type, file_path, file_name, order_index
+        )
+      `)
+      .eq('is_active', true)
+      .order('order_index', { ascending: true })
+  ]);
+
+  const videos = videosResult.data?.map(item => mapToContentItem(item, 'video', '11')) || [];
+  const documents = docsResult.data?.map(item => mapToContentItem(item, 'document', '11')) || [];
+  const lessons = lessonsResult.data?.map((item: any) => {
+    const mapped = mapToContentItem(item, 'lesson', '11');
+    mapped.content = item.content || '';
+    mapped.topic = item.topic;
+    mapped.media = item.media || [];
+    return mapped;
+  }) || [];
+
+  // Get progress data if userId exists
+  if (userId) {
+    const allItems = [...videos, ...documents, ...lessons];
+    const allContentIds = allItems.map(item => item.id);
+
+    if (allContentIds.length > 0) {
+      try {
+        const { data: progressData } = await supabase
+          .from('student_progress')
+          .select('content_id, content_type, progress_percentage, completed_at, points_earned, time_spent_minutes')
+          .eq('student_id', userId)
+          .in('content_id', allContentIds);
+
+        if (progressData) {
+          const progressMap = new Map();
+          progressData.forEach((p: any) => {
+            progressMap.set(`${p.content_id}-${p.content_type}`, {
+              progress_percentage: p.progress_percentage,
+              completed_at: p.completed_at,
+              points_earned: p.points_earned,
+              time_spent_minutes: p.time_spent_minutes
+            });
+          });
+
+          [videos, documents, lessons].forEach(itemArray => {
+            itemArray.forEach(item => {
+              const progressKey = `${item.id}-${item.content_type}`;
+              if (progressMap.has(progressKey)) {
+                item.progress = progressMap.get(progressKey);
+              }
+            });
+          });
+        }
+      } catch (err) {
+        logger.warn('Could not fetch progress data', { error: err });
+      }
+    }
+  }
+
+  logger.info(`Grade 11 parallel fetch: ${videos.length} videos, ${documents.length} documents, ${lessons.length} lessons`);
+  
+  return { videos, documents, lessons };
+};
+
 const fetchContentForGrade = async (grade: string, userId?: string): Promise<GradeContent> => {
+  // ⚡ Use parallel fetching for Grade 11
+  if (grade === '11') {
+    const { videos, documents, lessons } = await fetchGrade11ContentParallel(userId);
+    return { grade: '11', videos, documents, projects: [], lessons };
+  }
+
+  // Original sequential logic for other grades
   let videos: StudentContentItem[] = [];
   let documents: StudentContentItem[] = [];
   let projects: StudentContentItem[] = [];
   let lessons: StudentContentItem[] = [];
 
   try {
-    // Fetch videos using specific table based on grade
-    const videoTable = grade === '10' ? 'grade10_videos' : 
-                      grade === '11' ? 'grade11_videos' : 'grade12_videos';
+    const videoTable = grade === '10' ? 'grade10_videos' : 'grade12_videos';
     
     console.log(`[DEBUG] Fetching videos for grade ${grade} from table: ${videoTable}`);
     
@@ -84,7 +177,6 @@ const fetchContentForGrade = async (grade: string, userId?: string): Promise<Gra
       .eq('is_visible', true)
       .order('order_index', { ascending: true });
 
-    // Only add grade_level filter for grade10 videos (grade11 and grade12 don't always have this column properly set)
     if (grade === '10') {
       videoQuery = videoQuery.eq('grade_level', grade);
     }
@@ -93,42 +185,30 @@ const fetchContentForGrade = async (grade: string, userId?: string): Promise<Gra
     
     console.log(`[DEBUG] Grade ${grade} videos from DB:`, videoData);
     console.log(`[DEBUG] Videos error:`, videoError);
-    console.log(`[DEBUG] Query table: ${videoTable}, Active: true, Visible: true`);
     
     if (!videoError && videoData) {
       videos = videoData.map((item: any) => mapToContentItem(item, 'video', grade));
       console.log(`[DEBUG] Mapped videos for grade ${grade}:`, videos);
-      console.log(`[DEBUG] First video sample for grade ${grade}:`, videos[0]);
     }
     
     if (videoError) {
       logger.error(`Error fetching ${videoTable}:`, videoError);
-      console.error(`[ERROR] Failed to fetch videos from ${videoTable}:`, videoError);
     } else {
-      logger.info(`Found ${videos.length} videos for grade ${grade} from ${videoTable}`);
-      console.log(`[SUCCESS] Found ${videos.length} videos for grade ${grade} from ${videoTable}`);
+      logger.info(`Found ${videos.length} videos for grade ${grade}`);
     }
   } catch (err) {
     logger.warn('Could not fetch videos', { error: err });
-    console.error('[ERROR] Exception while fetching videos:', err);
   }
 
   try {
-    // Fetch documents for grades 10 and 11
-    if (grade === '10' || grade === '11') {
-      const docTable = grade === '10' ? 'grade10_documents' : 'grade11_documents';
-      
-      let docQuery = (supabase as any)
-        .from(docTable)
+    if (grade === '10') {
+      const { data: docData, error: docError } = await (supabase as any)
+        .from('grade10_documents')
         .select('id, title, description, file_path, category, is_visible, is_active, order_index, created_at')
         .eq('is_active', true)
         .eq('is_visible', true)
+        .eq('grade_level', grade)
         .order('order_index', { ascending: true });
-
-      // Add grade_level filter for documents (they have this column)
-      docQuery = docQuery.eq('grade_level', grade);
-      
-      const { data: docData, error: docError } = await docQuery;
       
       if (!docError && docData) {
         documents = docData.map((item: any) => mapToContentItem(item, 'document', grade));
@@ -141,7 +221,6 @@ const fetchContentForGrade = async (grade: string, userId?: string): Promise<Gra
   }
 
   try {
-    // Fetch projects for grade 10
     if (grade === '10' && userId) {
       const { data: projectData, error: projectError } = await (supabase as any)
         .from('grade10_mini_projects')
@@ -158,9 +237,7 @@ const fetchContentForGrade = async (grade: string, userId?: string): Promise<Gra
   }
 
   try {
-    // Fetch lessons based on grade
     if (grade === '10') {
-      // Fetch grade 10 lessons
       const { data: lessonData, error: lessonError } = await (supabase as any)
         .from('grade10_lessons')
         .select(`
@@ -190,38 +267,6 @@ const fetchContentForGrade = async (grade: string, userId?: string): Promise<Gra
         logger.error('Error fetching grade 10 lessons:', lessonError);
       } else {
         logger.info(`Found ${lessons.length} lessons for grade ${grade}`);
-      }
-    } else if (grade === '11') {
-      // Fetch grade 11 lessons with hierarchical structure
-      const { data: lessonData, error: lessonError } = await (supabase as any)
-        .from('grade11_lessons')
-        .select(`
-          id, title, content, is_active, order_index, created_at,
-          topic:grade11_topics(
-            id, title,
-            section:grade11_sections(id, title)
-          ),
-          media:grade11_lesson_media(
-            id, media_type, file_path, file_name, order_index
-          )
-        `)
-        .eq('is_active', true)
-        .order('order_index', { ascending: true });
-
-      if (!lessonError && lessonData) {
-        lessons = lessonData.map((item: any) => {
-          const mappedItem = mapToContentItem(item, 'lesson', grade);
-          mappedItem.content = item.content || '';
-          mappedItem.topic = item.topic;
-          mappedItem.media = item.media || [];
-          return mappedItem;
-        });
-      }
-
-      if (lessonError) {
-        logger.error('Error fetching grade 11 lessons:', lessonError);
-      } else {
-        logger.info(`Found ${lessons.length} lessons for grade ${grade} with hierarchical data`);
       }
     }
     
@@ -253,7 +298,6 @@ const fetchContentForGrade = async (grade: string, userId?: string): Promise<Gra
           });
         });
 
-        // Add progress to items
         [videos, documents, projects, lessons].forEach(itemArray => {
           itemArray.forEach(item => {
             const progressKey = `${item.id}-${item.content_type}`;
@@ -292,8 +336,8 @@ export const useStudentContent = () => {
     queryKey: QUERY_KEYS.STUDENT.CONTENT(user?.id || '', assignedGrade || ''),
     queryFn: () => fetchContentForGrade(assignedGrade!, user?.id),
     enabled: Boolean(user && userProfile?.role === 'student' && assignedGrade && !gradeLoading),
-    staleTime: CACHE_TIMES.MEDIUM, // Cache for 15 minutes
-    gcTime: CACHE_TIMES.LONG, // Keep in cache for 1 hour
+    staleTime: CACHE_TIMES.LONG, // ⚡ 1 hour cache
+    gcTime: CACHE_TIMES.VERY_LONG, // ⚡ 2 hours
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     refetchOnMount: false,

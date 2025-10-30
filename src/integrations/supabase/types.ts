@@ -5618,6 +5618,16 @@ export type Database = {
         }
         Relationships: []
       }
+      grade11_student_content_summary: {
+        Row: {
+          grade_level: string | null
+          total_documents: number | null
+          total_lessons: number | null
+          total_media: number | null
+          total_videos: number | null
+        }
+        Relationships: []
+      }
       teacher_assigned_grades: {
         Row: {
           grade_level_id: string | null

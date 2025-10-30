@@ -213,4 +213,15 @@ const Grade11CollapsibleSection: React.FC<Grade11CollapsibleSectionProps> = ({
   );
 };
 
-export default Grade11CollapsibleSection;
+// ⚡ React.memo with custom comparison
+export default React.memo(
+  Grade11CollapsibleSection,
+  (prevProps, nextProps) => {
+    return (
+      prevProps.section.id === nextProps.section.id &&
+      prevProps.isDragged === nextProps.isDragged &&
+      prevProps.section.topics?.length === nextProps.section.topics?.length &&
+      prevProps.section.updated_at === nextProps.section.updated_at
+    );
+  }
+);
