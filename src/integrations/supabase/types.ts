@@ -528,7 +528,7 @@ export type Database = {
           created_at: string
           document_id: string
           id: string
-          ip_address: unknown
+          ip_address: unknown | null
           user_agent: string | null
           user_id: string
         }
@@ -538,7 +538,7 @@ export type Database = {
           created_at?: string
           document_id: string
           id?: string
-          ip_address?: unknown
+          ip_address?: unknown | null
           user_agent?: string | null
           user_id: string
         }
@@ -548,7 +548,7 @@ export type Database = {
           created_at?: string
           document_id?: string
           id?: string
-          ip_address?: unknown
+          ip_address?: unknown | null
           user_agent?: string | null
           user_id?: string
         }
@@ -3103,7 +3103,6 @@ export type Database = {
           content: string | null
           created_at: string
           id: string
-          lessons_count: number | null
           order_index: number
           section_id: string
           title: string
@@ -3113,7 +3112,6 @@ export type Database = {
           content?: string | null
           created_at?: string
           id?: string
-          lessons_count?: number | null
           order_index?: number
           section_id: string
           title: string
@@ -3123,7 +3121,6 @@ export type Database = {
           content?: string | null
           created_at?: string
           id?: string
-          lessons_count?: number | null
           order_index?: number
           section_id?: string
           title?: string
@@ -5608,33 +5605,6 @@ export type Database = {
       }
     }
     Views: {
-      grade11_content_stats: {
-        Row: {
-          total_lessons: number | null
-          total_media: number | null
-          total_sections: number | null
-          total_topics: number | null
-          total_videos: number | null
-        }
-        Relationships: []
-      }
-      grade11_student_content_summary: {
-        Row: {
-          grade_level: string | null
-          total_documents: number | null
-          total_lessons: number | null
-          total_media: number | null
-          total_videos: number | null
-        }
-        Relationships: []
-      }
-      student_current_streaks: {
-        Row: {
-          current_streak: number | null
-          student_id: string | null
-        }
-        Relationships: []
-      }
       teacher_assigned_grades: {
         Row: {
           grade_level_id: string | null
@@ -5698,8 +5668,14 @@ export type Database = {
         }
         Returns: boolean
       }
-      cleanup_expired_pins: { Args: never; Returns: undefined }
-      cleanup_expired_quiz_sessions: { Args: never; Returns: undefined }
+      cleanup_expired_pins: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      cleanup_expired_quiz_sessions: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       generate_exam_questions: {
         Args: { p_exam_id: string; p_student_id: string }
         Returns: Json
@@ -5737,14 +5713,26 @@ export type Database = {
         Args: { school_uuid: string }
         Returns: string[]
       }
-      get_current_user_id: { Args: never; Returns: string }
-      get_current_user_role_safe: { Args: never; Returns: string }
-      get_current_user_school_id: { Args: never; Returns: string }
+      get_current_user_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      get_current_user_role_safe: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      get_current_user_school_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_exam_question_for_student: {
         Args: { question_id: string }
         Returns: Json
       }
-      get_exam_results: { Args: { p_attempt_id: string }; Returns: Json }
+      get_exam_results: {
+        Args: { p_attempt_id: string }
+        Returns: Json
+      }
       get_exam_with_questions: {
         Args: { p_exam_id: string; p_student_id: string }
         Returns: Json
@@ -5774,7 +5762,7 @@ export type Database = {
         Returns: number
       }
       get_students_for_school_admin: {
-        Args: never
+        Args: Record<PropertyKey, never>
         Returns: {
           created_at_utc: string
           email: string
@@ -5786,7 +5774,7 @@ export type Database = {
         }[]
       }
       get_students_for_teacher: {
-        Args: never
+        Args: Record<PropertyKey, never>
         Returns: {
           created_at_utc: string
           full_name: string
@@ -5835,10 +5823,13 @@ export type Database = {
         }[]
       }
       get_user_role: {
-        Args: never
+        Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
       }
-      get_user_school_id: { Args: never; Returns: string }
+      get_user_school_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       has_celebrated_badge: {
         Args: { p_badge_id: string; p_student_id: string }
         Returns: boolean
@@ -5863,12 +5854,18 @@ export type Database = {
         Args: { p_attempt_id: string }
         Returns: Json
       }
-      recalculate_grade11_student_points: { Args: never; Returns: undefined }
+      recalculate_grade11_student_points: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       record_badge_celebration: {
         Args: { p_badge_id: string; p_student_id: string }
         Returns: undefined
       }
-      submit_exam_attempt: { Args: { p_attempt_id: string }; Returns: Json }
+      submit_exam_attempt: {
+        Args: { p_attempt_id: string }
+        Returns: Json
+      }
       unlock_next_games: {
         Args: { p_completed_game_id: string; p_player_id: string }
         Returns: undefined
@@ -5889,8 +5886,14 @@ export type Database = {
         }
         Returns: undefined
       }
-      validate_email_format: { Args: { email_input: string }; Returns: boolean }
-      validate_phone_format: { Args: { phone_input: string }; Returns: boolean }
+      validate_email_format: {
+        Args: { email_input: string }
+        Returns: boolean
+      }
+      validate_phone_format: {
+        Args: { phone_input: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "superadmin" | "school_admin" | "teacher" | "student" | "parent"

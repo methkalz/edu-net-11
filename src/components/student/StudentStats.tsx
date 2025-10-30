@@ -1,6 +1,9 @@
 import React from 'react';
 import { useStudentProgress } from '@/hooks/useStudentProgress';
-import { useStudentStatsOptimized } from '@/hooks/useStudentStatsOptimized';
+import { useStudentContent } from '@/hooks/useStudentContent';
+import { useStudentAssignedGrade } from '@/hooks/useStudentAssignedGrade';
+import { useStudentGameStats } from '@/hooks/useStudentGameStats';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -23,17 +26,40 @@ import {
 } from 'lucide-react';
 
 export const StudentStats: React.FC = () => {
-  const { achievements } = useStudentProgress();
+  const { stats, achievements, loading } = useStudentProgress();
+  const { getProgressPercentage, getTotalContentCount, getCompletedContentCount, gradeContent } = useStudentContent();
+  const { assignedGrade } = useStudentAssignedGrade();
+  const { stats: gameStats } = useStudentGameStats();
   
-  // ✅ استخدام Hook المحسن مع Parallel Queries
-  const { 
-    stats, 
-    gradeContent, 
-    gameStats, 
-    totalGameStages, 
-    loading, 
-    assignedGrade 
-  } = useStudentStatsOptimized();
+  // حساب العدد الكلي لمراحل الألعاب حسب الصف
+  const [totalGameStages, setTotalGameStages] = React.useState(0);
+  
+  React.useEffect(() => {
+    const fetchTotalGameStages = async () => {
+      if (assignedGrade === '10') {
+        // للصف العاشر: حساب عدد الدروس التي لها أسئلة في لعبة المعرفة
+        const { count } = await supabase
+          .from('grade10_game_questions')
+          .select('lesson_id', { count: 'exact', head: true });
+        
+        // عدد الدروس الفريدة
+        const { data } = await supabase
+          .from('grade10_game_questions')
+          .select('lesson_id');
+        
+        const uniqueLessons = new Set(data?.map(q => q.lesson_id) || []);
+        setTotalGameStages(uniqueLessons.size);
+      } else {
+        // للصف الحادي عشر: pair_matching_games
+        const { count } = await supabase
+          .from('pair_matching_games')
+          .select('*', { count: 'exact', head: true })
+          .eq('is_active', true);
+        setTotalGameStages(count || 0);
+      }
+    };
+    fetchTotalGameStages();
+  }, [assignedGrade]);
 
   if (loading) {
     return (
@@ -50,15 +76,12 @@ export const StudentStats: React.FC = () => {
     );
   }
 
-  // ✅ حساب محسّن من البيانات المحملة
-  const totalContent = gradeContent.videos.length + gradeContent.lessons.length + gradeContent.projects.length;
-  const completedContent = gradeContent.videos.filter(v => v.progress?.progress_percentage === 100).length +
-                          gradeContent.lessons.filter(l => l.progress?.progress_percentage === 100).length +
-                          gradeContent.projects.filter(p => p.progress?.progress_percentage === 100).length;
+  const progressPercentage = getProgressPercentage();
+  const totalContent = getTotalContentCount();
+  const completedContent = getCompletedContentCount();
   
-  const progressPercentage = totalContent > 0 ? Math.round((completedContent / totalContent) * 100) : 0;
-  
-  const completedLessons = gradeContent.lessons.filter(lesson => 
+  // حساب الدروس المكتملة فقط (وليس كل المحتوى)
+  const completedLessons = (gradeContent?.lessons || []).filter(lesson => 
     lesson.progress?.progress_percentage === 100
   ).length;
   
