@@ -298,7 +298,10 @@ const Reports = () => {
 
   // جلب توزيع المستخدمين حسب آخر تسجيل دخول
   useEffect(() => {
-    const fetchUsersDistribution = async () => {
+    // انتظر حتى يتم تحميل البيانات من الـ hooks
+    if (studentLoading || teacherLoading) return;
+
+    const calculateDistribution = () => {
       try {
         const now = new Date();
         const sevenDaysAgo = new Date(now);
@@ -306,57 +309,17 @@ const Reports = () => {
         const thirtyDaysAgo = new Date(now);
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-        // جلب جميع الطلاب
-        const { data: studentsData, error: studentsError } = await supabase
-          .from('students')
-          .select('student_id, created_at');
-
-        if (studentsError) {
-          console.error('Error fetching students:', studentsError);
-          return;
-        }
-
-        // جلب بيانات حضور الطلاب
-        const { data: presenceData, error: presenceError } = await supabase
-          .from('student_presence')
-          .select('student_id, last_seen_at');
-
-        if (presenceError) {
-          console.error('Error fetching student presence:', presenceError);
-        }
-
-        // جلب جميع المعلمين والمدراء
-        const { data: profilesData, error: profilesError } = await supabase
-          .from('profiles')
-          .select('user_id, role, last_login_at, created_at')
-          .in('role', ['teacher', 'school_admin']);
-
-        if (profilesError) {
-          console.error('Error fetching profiles:', profilesError);
-          return;
-        }
-
         let last7Days = 0;
         let last30Days = 0;
         let moreThan30 = 0;
         let never = 0;
 
-        // معالجة الطلاب
-        const studentPresenceMap = new Map();
-        presenceData?.forEach((p: any) => {
-          const existing = studentPresenceMap.get(p.student_id);
-          if (!existing || new Date(p.last_seen_at) > new Date(existing.last_seen_at)) {
-            studentPresenceMap.set(p.student_id, p);
-          }
-        });
-
-        studentsData?.forEach((student: any) => {
-          const presence = studentPresenceMap.get(student.student_id);
-          
-          if (!presence || !presence.last_seen_at) {
+        // معالجة الطلاب من hook
+        allStudentsData.forEach((student: any) => {
+          if (!student.last_seen_at) {
             never++;
           } else {
-            const lastSeen = new Date(presence.last_seen_at);
+            const lastSeen = new Date(student.last_seen_at);
             if (lastSeen >= sevenDaysAgo) {
               last7Days++;
             } else if (lastSeen >= thirtyDaysAgo) {
@@ -367,12 +330,12 @@ const Reports = () => {
           }
         });
 
-        // معالجة المعلمين والمدراء
-        profilesData?.forEach((profile: any) => {
-          if (!profile.last_login_at) {
+        // معالجة المعلمين والمدراء من hook
+        teachers.forEach((teacher: any) => {
+          if (!teacher.last_login_at) {
             never++;
           } else {
-            const lastLogin = new Date(profile.last_login_at);
+            const lastLogin = new Date(teacher.last_login_at);
             if (lastLogin >= sevenDaysAgo) {
               last7Days++;
             } else if (lastLogin >= thirtyDaysAgo) {
@@ -412,14 +375,22 @@ const Reports = () => {
           }
         ]);
 
-        console.log('✅ Users distribution:', { last7Days, last30Days, moreThan30, never, total });
+        console.log('✅ Users distribution:', { 
+          last7Days, 
+          last30Days, 
+          moreThan30, 
+          never, 
+          total,
+          studentsCount: allStudentsData.length,
+          teachersCount: teachers.length
+        });
       } catch (error) {
-        console.error('خطأ في جلب توزيع المستخدمين:', error);
+        console.error('خطأ في حساب توزيع المستخدمين:', error);
       }
     };
 
-    fetchUsersDistribution();
-  }, []);
+    calculateDistribution();
+  }, [allStudentsData, teachers, studentLoading, teacherLoading]);
 
   // مكون الإحصائية المبسطة
   const StatCard = ({ title, value, change, icon: Icon, trend = 'up', color = 'blue' }) => {
