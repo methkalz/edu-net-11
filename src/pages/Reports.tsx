@@ -177,51 +177,64 @@ const Reports = () => {
   useEffect(() => {
     const fetchWeeklyActivity = async () => {
       try {
-        const daysOfWeek = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
         const today = new Date();
-        const weekData = [];
-
+        
+        // جلب بيانات آخر 7 أيام بالتوازي
+        const promises = [];
+        const days = [];
+        
         for (let i = 6; i >= 0; i--) {
           const date = new Date(today);
           date.setDate(date.getDate() - i);
           const dayStart = new Date(date.setHours(0, 0, 0, 0));
           const dayEnd = new Date(date.setHours(23, 59, 59, 999));
           
-          // جلب نشاط الطلاب
-          const { data: students } = await supabase
-            .from('student_presence')
-            .select('student_id')
-            .gte('last_seen_at', dayStart.toISOString())
-            .lte('last_seen_at', dayEnd.toISOString());
+          // حفظ التاريخ
+          days.push(new Date(date));
+          
+          // جلب كل البيانات بالتوازي
+          promises.push(
+            Promise.all([
+              supabase
+                .from('student_presence')
+                .select('student_id')
+                .gte('last_seen_at', dayStart.toISOString())
+                .lte('last_seen_at', dayEnd.toISOString()),
+              supabase
+                .from('teacher_presence')
+                .select('user_id, role')
+                .eq('role', 'teacher')
+                .gte('last_seen_at', dayStart.toISOString())
+                .lte('last_seen_at', dayEnd.toISOString()),
+              supabase
+                .from('teacher_presence')
+                .select('user_id, role')
+                .eq('role', 'school_admin')
+                .gte('last_seen_at', dayStart.toISOString())
+                .lte('last_seen_at', dayEnd.toISOString())
+            ])
+          );
+        }
 
-          // جلب نشاط المعلمين
-          const { data: teachersData } = await supabase
-            .from('teacher_presence')
-            .select('user_id, role')
-            .eq('role', 'teacher')
-            .gte('last_seen_at', dayStart.toISOString())
-            .lte('last_seen_at', dayEnd.toISOString());
-
-          // جلب نشاط المدراء
-          const { data: adminsData } = await supabase
-            .from('teacher_presence')
-            .select('user_id, role')
-            .eq('role', 'school_admin')
-            .gte('last_seen_at', dayStart.toISOString())
-            .lte('last_seen_at', dayEnd.toISOString());
-
-          const studentsCount = new Set(students?.map(s => s.student_id) || []).size;
-          const teachersCount = new Set(teachersData?.map(t => t.user_id) || []).size;
-          const adminsCount = new Set(adminsData?.map(a => a.user_id) || []).size;
-
-          weekData.push({
-            day: daysOfWeek[date.getDay()],
+        const results = await Promise.all(promises);
+        
+        // أسماء أيام الأسبوع بالعربية (الأحد = 0)
+        const dayNames = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+        
+        const weekData = results.map((result, index) => {
+          const [studentsRes, teachersRes, adminsRes] = result;
+          const studentsCount = new Set(studentsRes.data?.map(s => s.student_id) || []).size;
+          const teachersCount = new Set(teachersRes.data?.map(t => t.user_id) || []).size;
+          const adminsCount = new Set(adminsRes.data?.map(a => a.user_id) || []).size;
+          
+          return {
+            day: dayNames[days[index].getDay()],
             students: studentsCount,
             teachers: teachersCount,
             admins: adminsCount,
             total: studentsCount + teachersCount + adminsCount
-          });
-        }
+          };
+        });
 
         setWeeklyData(weekData);
         console.log('✅ Weekly activity data:', weekData);
