@@ -177,17 +177,37 @@ const Reports = () => {
   useEffect(() => {
     const fetchWeeklyActivity = async () => {
       try {
-        const today = new Date();
+        // جلب كل بيانات الطلاب والمعلمين باستخدام نفس RPC functions التي تعمل
+        const [studentsData, teachersData] = await Promise.all([
+          supabase.rpc('get_active_students_for_reports'),
+          supabase.from('teacher_presence').select('user_id, role, last_seen_at')
+        ]);
+
+        if (studentsData.error) {
+          console.error('❌ Error fetching students:', studentsData.error);
+        }
+        if (teachersData.error) {
+          console.error('❌ Error fetching teachers:', teachersData.error);
+        }
+
+        const allStudents = studentsData.data || [];
+        const allTeachers = teachersData.data || [];
+
+        console.log('📦 Fetched data:', {
+          students: allStudents.length,
+          teachers: allTeachers.length
+        });
+
+        // أسماء أيام الأسبوع بالعربية (الأحد = 0)
+        const dayNames = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
         
-        // جلب بيانات آخر 7 أيام بالتوازي
-        const promises = [];
-        const days = [];
+        // بناء بيانات آخر 7 أيام
+        const weekData = [];
         
         for (let i = 6; i >= 0; i--) {
           const date = new Date();
           date.setUTCDate(date.getUTCDate() - i);
           
-          // استخدام UTC بدلاً من local time
           const dayStart = new Date(Date.UTC(
             date.getUTCFullYear(),
             date.getUTCMonth(),
@@ -195,72 +215,59 @@ const Reports = () => {
             0, 0, 0, 0
           ));
           
-          // حساب بداية اليوم التالي بدلاً من نهاية اليوم
           const nextDayStart = new Date(Date.UTC(
             date.getUTCFullYear(),
             date.getUTCMonth(),
-            date.getUTCDate() + 1,  // اليوم التالي
+            date.getUTCDate() + 1,
             0, 0, 0, 0
           ));
-          
-          console.log('📅 Fetching data for:', {
-            day: date.getUTCDay(),
-            start: dayStart.toISOString(),
-            end: nextDayStart.toISOString()
-          });
-          
-          // حفظ التاريخ
-          days.push(new Date(date));
-          
-          // جلب كل البيانات بالتوازي
-          promises.push(
-            Promise.all([
-              supabase
-                .from('student_presence')
-                .select('student_id')
-                .gte('last_seen_at', dayStart.toISOString())
-                .lt('last_seen_at', nextDayStart.toISOString()),
-              supabase
-                .from('teacher_presence')
-                .select('user_id, role')
-                .eq('role', 'teacher')
-                .gte('last_seen_at', dayStart.toISOString())
-                .lt('last_seen_at', nextDayStart.toISOString()),
-              supabase
-                .from('teacher_presence')
-                .select('user_id, role')
-                .eq('role', 'school_admin')
-                .gte('last_seen_at', dayStart.toISOString())
-                .lt('last_seen_at', nextDayStart.toISOString())
-            ])
-          );
-        }
 
-        const results = await Promise.all(promises);
-        
-        // أسماء أيام الأسبوع بالعربية (الأحد = 0)
-        const dayNames = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
-        
-        const weekData = results.map((result, index) => {
-          const [studentsRes, teachersRes, adminsRes] = result;
-          const studentsCount = new Set(studentsRes.data?.map(s => s.student_id) || []).size;
-          const teachersCount = new Set(teachersRes.data?.map(t => t.user_id) || []).size;
-          const adminsCount = new Set(adminsRes.data?.map(a => a.user_id) || []).size;
+          // فلترة الطلاب لهذا اليوم
+          const dayStudents = new Set(
+            allStudents
+              .filter((s: any) => {
+                const lastSeen = new Date(s.last_seen_at);
+                return lastSeen >= dayStart && lastSeen < nextDayStart;
+              })
+              .map((s: any) => s.student_id)
+          );
+
+          // فلترة المعلمين لهذا اليوم
+          const dayTeachers = new Set(
+            allTeachers
+              .filter((t: any) => {
+                const lastSeen = new Date(t.last_seen_at);
+                return lastSeen >= dayStart && lastSeen < nextDayStart && t.role === 'teacher';
+              })
+              .map((t: any) => t.user_id)
+          );
+
+          // فلترة المدراء لهذا اليوم
+          const dayAdmins = new Set(
+            allTeachers
+              .filter((t: any) => {
+                const lastSeen = new Date(t.last_seen_at);
+                return lastSeen >= dayStart && lastSeen < nextDayStart && t.role === 'school_admin';
+              })
+              .map((t: any) => t.user_id)
+          );
+
+          const dayName = dayNames[date.getUTCDay()];
           
-          console.log(`📊 Day ${dayNames[days[index].getUTCDay()]}:`, {
-            students: studentsCount,
-            teachers: teachersCount,
-            admins: adminsCount
+          console.log(`📊 ${dayName}:`, {
+            students: dayStudents.size,
+            teachers: dayTeachers.size,
+            admins: dayAdmins.size
           });
-          
-          return {
-            day: dayNames[days[index].getUTCDay()],
-            students: studentsCount,
-            teachers: teachersCount,
-            admins: adminsCount,
-            total: studentsCount + teachersCount + adminsCount
-          };
-        });
+
+          weekData.push({
+            day: dayName,
+            students: dayStudents.size,
+            teachers: dayTeachers.size,
+            admins: dayAdmins.size,
+            total: dayStudents.size + dayTeachers.size + dayAdmins.size
+          });
+        }
 
         setWeeklyData(weekData);
         console.log('✅ Weekly activity data:', weekData);
