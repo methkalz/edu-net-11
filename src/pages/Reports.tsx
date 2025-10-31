@@ -5,6 +5,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTeacherPresence } from '@/hooks/useTeacherPresence';
+import { useStudentPresenceForReports } from '@/hooks/useStudentPresenceForReports';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -48,6 +49,7 @@ import { StudentActivityDialog } from '@/components/reports/StudentActivityDialo
 const Reports = () => {
   const { userProfile } = useAuth();
   const { teachers, loading: teacherLoading } = useTeacherPresence();
+  const { students: allStudentsData, loading: studentLoading } = useStudentPresenceForReports();
   
   const [stats, setStats] = useState({
     totalUsers: 0,
@@ -177,25 +179,10 @@ const Reports = () => {
   useEffect(() => {
     const fetchWeeklyActivity = async () => {
       try {
-        // جلب كل بيانات الطلاب والمعلمين باستخدام نفس RPC functions التي تعمل
-        const [studentsData, teachersData] = await Promise.all([
-          supabase.rpc('get_active_students_for_reports'),
-          supabase.from('teacher_presence').select('user_id, role, last_seen_at')
-        ]);
-
-        if (studentsData.error) {
-          console.error('❌ Error fetching students:', studentsData.error);
-        }
-        if (teachersData.error) {
-          console.error('❌ Error fetching teachers:', teachersData.error);
-        }
-
-        const allStudents = studentsData.data || [];
-        const allTeachers = teachersData.data || [];
-
-        console.log('📦 Fetched data:', {
-          students: allStudents.length,
-          teachers: allTeachers.length
+        // استخدام البيانات من hooks بدلاً من الاستعلام المباشر
+        console.log('📦 Using data from hooks:', {
+          students: allStudentsData.length,
+          teachers: teachers.length
         });
 
         // أسماء أيام الأسبوع بالعربية (الأحد = 0)
@@ -224,7 +211,7 @@ const Reports = () => {
 
           // فلترة الطلاب لهذا اليوم
           const dayStudents = new Set(
-            allStudents
+            allStudentsData
               .filter((s: any) => {
                 const lastSeen = new Date(s.last_seen_at);
                 return lastSeen >= dayStart && lastSeen < nextDayStart;
@@ -234,7 +221,7 @@ const Reports = () => {
 
           // فلترة المعلمين لهذا اليوم
           const dayTeachers = new Set(
-            allTeachers
+            teachers
               .filter((t: any) => {
                 const lastSeen = new Date(t.last_seen_at);
                 return lastSeen >= dayStart && lastSeen < nextDayStart && t.role === 'teacher';
@@ -244,7 +231,7 @@ const Reports = () => {
 
           // فلترة المدراء لهذا اليوم
           const dayAdmins = new Set(
-            allTeachers
+            teachers
               .filter((t: any) => {
                 const lastSeen = new Date(t.last_seen_at);
                 return lastSeen >= dayStart && lastSeen < nextDayStart && t.role === 'school_admin';
@@ -276,8 +263,11 @@ const Reports = () => {
       }
     };
 
-    fetchWeeklyActivity();
-  }, []);
+    // انتظر حتى يتم تحميل البيانات من hooks
+    if (!studentLoading && !teacherLoading) {
+      fetchWeeklyActivity();
+    }
+  }, [allStudentsData, teachers, studentLoading, teacherLoading]);
 
   // مكون الإحصائية المبسطة
   const StatCard = ({ title, value, change, icon: Icon, trend = 'up', color = 'blue' }) => {
