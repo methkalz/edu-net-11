@@ -184,10 +184,29 @@ const Reports = () => {
         const days = [];
         
         for (let i = 6; i >= 0; i--) {
-          const date = new Date(today);
-          date.setDate(date.getDate() - i);
-          const dayStart = new Date(date.setHours(0, 0, 0, 0));
-          const dayEnd = new Date(date.setHours(23, 59, 59, 999));
+          const date = new Date();
+          date.setUTCDate(date.getUTCDate() - i);
+          
+          // استخدام UTC بدلاً من local time
+          const dayStart = new Date(Date.UTC(
+            date.getUTCFullYear(),
+            date.getUTCMonth(),
+            date.getUTCDate(),
+            0, 0, 0, 0
+          ));
+          
+          const dayEnd = new Date(Date.UTC(
+            date.getUTCFullYear(),
+            date.getUTCMonth(),
+            date.getUTCDate(),
+            23, 59, 59, 999
+          ));
+          
+          console.log('📅 Fetching data for:', {
+            day: date.getUTCDay(),
+            start: dayStart.toISOString(),
+            end: dayEnd.toISOString()
+          });
           
           // حفظ التاريخ
           days.push(new Date(date));
@@ -227,8 +246,14 @@ const Reports = () => {
           const teachersCount = new Set(teachersRes.data?.map(t => t.user_id) || []).size;
           const adminsCount = new Set(adminsRes.data?.map(a => a.user_id) || []).size;
           
+          console.log(`📊 Day ${dayNames[days[index].getUTCDay()]}:`, {
+            students: studentsCount,
+            teachers: teachersCount,
+            admins: adminsCount
+          });
+          
           return {
-            day: dayNames[days[index].getDay()],
+            day: dayNames[days[index].getUTCDay()],
             students: studentsCount,
             teachers: teachersCount,
             admins: adminsCount,
