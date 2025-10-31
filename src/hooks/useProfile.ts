@@ -2,11 +2,18 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Profile {
-  id: string;
   user_id: string;
   role: string;
   full_name?: string;
   avatar_url?: string;
+  email?: string;
+  display_title?: string;
+  is_primary_admin?: boolean;
+  level?: number;
+  login_count?: number;
+  last_login_at?: string;
+  created_at?: string;
+  font_size?: string;
 }
 
 export const useProfile = () => {
