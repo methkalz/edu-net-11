@@ -1,14 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, CheckCircle2, XCircle, Play, FileText, Shield } from 'lucide-react';
+import { Loader2, CheckCircle2, XCircle, Play, FileText } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import ModernHeader from '@/components/shared/ModernHeader';
-import { useProfile } from '@/hooks/useProfile';
 
 interface BatchInfo {
   batchNumber: number;
@@ -24,29 +22,15 @@ interface BatchInfo {
  * تسمح للمدراء بتوليد بطاقات وأسئلة اللعبة باستخدام الذكاء الاصطناعي
  */
 const Grade11GameContentGenerator: React.FC = () => {
-  const navigate = useNavigate();
-  const { profile, loading: profileLoading } = useProfile();
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
   const [batches, setBatches] = useState<BatchInfo[]>([]);
   const [sections, setSections] = useState<any[]>([]);
 
-  // التحقق من صلاحيات الوصول
-  useEffect(() => {
-    if (!profileLoading && profile) {
-      if (profile.role !== 'superadmin' && profile.role !== 'school_admin') {
-        toast.error('غير مصرح لك بالوصول لهذه الصفحة');
-        navigate('/dashboard');
-      }
-    }
-  }, [profile, profileLoading, navigate]);
-
   // جلب الأقسام عند التحميل
-  useEffect(() => {
-    if (profile?.role === 'superadmin' || profile?.role === 'school_admin') {
-      fetchSections();
-    }
-  }, [profile]);
+  React.useEffect(() => {
+    fetchSections();
+  }, []);
 
   const fetchSections = async () => {
     const { data, error } = await supabase
@@ -183,38 +167,6 @@ const Grade11GameContentGenerator: React.FC = () => {
       </Badge>
     );
   };
-
-  // عرض شاشة تحميل أثناء التحقق من الصلاحيات
-  if (profileLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto text-purple-600" />
-          <p className="mt-2 text-muted-foreground">جاري التحقق من الصلاحيات...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // منع الوصول لغير المصرح لهم
-  if (!profile || (profile.role !== 'superadmin' && profile.role !== 'school_admin')) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50 flex items-center justify-center">
-        <Card className="max-w-md">
-          <CardContent className="pt-6 text-center">
-            <Shield className="w-16 h-16 mx-auto text-red-500 mb-4" />
-            <h2 className="text-xl font-bold mb-2">غير مصرح</h2>
-            <p className="text-muted-foreground mb-4">
-              هذه الصفحة متاحة فقط للمشرفين
-            </p>
-            <Button onClick={() => navigate('/dashboard')}>
-              العودة للوحة التحكم
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50" dir="rtl">
