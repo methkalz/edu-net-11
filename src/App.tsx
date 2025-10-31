@@ -59,7 +59,6 @@ const Grade10ProjectEditorPage = React.lazy(() => import('@/pages/Grade10Project
 const Grade10ProjectsManagement = React.lazy(() => import('@/pages/Grade10ProjectsManagement'));
 const LandingPage = React.lazy(() => import('@/pages/LandingPage'));
 const KnowledgeAdventurePage = React.lazy(() => import('@/pages/KnowledgeAdventurePage'));
-const Grade11GameContentGenerator = React.lazy(() => import('@/pages/Grade11GameContentGenerator'));
 const StudentTrackingPage = React.lazy(() => import('@/pages/teacher/StudentTracking'));
 const BadgeTestPage = React.lazy(() => import('@/pages/BadgeTestPage'));
 const LazyGoogleDocsManagement = React.lazy(() => import('@/components/google-docs/GoogleDocsManagement'));
@@ -192,18 +191,12 @@ const App = () => {
                  {/* Game routes */}
                <Route path="/pair-matching/:gameId?" element={<LazyPairMatchingPage />} />
                <Route path="/knowledge-adventure" element={
-                  <Suspense fallback={<PageLoading message="جاري تحميل مغامرة المعرفة..." />}>
-                    <KnowledgeAdventurePage />
-                  </Suspense>
-                } />
-                
-                <Route path="/grade11-content-generator" element={
-                  <Suspense fallback={<PageLoading message="جاري تحميل مولّد المحتوى..." />}>
-                    <Grade11GameContentGenerator />
-                  </Suspense>
-                } />
+                 <Suspense fallback={<PageLoading message="جاري تحميل مغامرة المعرفة..." />}>
+                   <KnowledgeAdventurePage />
+                 </Suspense>
+               } />
               
-                {/* Question management for interactive games */}
+               {/* Question management for interactive games */}
                 <Route path="/question-management" element={<LazyTest />} />
                 
                 {/* Reports dashboard route */}
