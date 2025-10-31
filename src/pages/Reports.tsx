@@ -195,17 +195,18 @@ const Reports = () => {
             0, 0, 0, 0
           ));
           
-          const dayEnd = new Date(Date.UTC(
+          // حساب بداية اليوم التالي بدلاً من نهاية اليوم
+          const nextDayStart = new Date(Date.UTC(
             date.getUTCFullYear(),
             date.getUTCMonth(),
-            date.getUTCDate(),
-            23, 59, 59, 999
+            date.getUTCDate() + 1,  // اليوم التالي
+            0, 0, 0, 0
           ));
           
           console.log('📅 Fetching data for:', {
             day: date.getUTCDay(),
             start: dayStart.toISOString(),
-            end: dayEnd.toISOString()
+            end: nextDayStart.toISOString()
           });
           
           // حفظ التاريخ
@@ -218,19 +219,19 @@ const Reports = () => {
                 .from('student_presence')
                 .select('student_id')
                 .gte('last_seen_at', dayStart.toISOString())
-                .lte('last_seen_at', dayEnd.toISOString()),
+                .lt('last_seen_at', nextDayStart.toISOString()),
               supabase
                 .from('teacher_presence')
                 .select('user_id, role')
                 .eq('role', 'teacher')
                 .gte('last_seen_at', dayStart.toISOString())
-                .lte('last_seen_at', dayEnd.toISOString()),
+                .lt('last_seen_at', nextDayStart.toISOString()),
               supabase
                 .from('teacher_presence')
                 .select('user_id, role')
                 .eq('role', 'school_admin')
                 .gte('last_seen_at', dayStart.toISOString())
-                .lte('last_seen_at', dayEnd.toISOString())
+                .lt('last_seen_at', nextDayStart.toISOString())
             ])
           );
         }
