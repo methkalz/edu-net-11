@@ -43,6 +43,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import BackButton from '@/components/shared/BackButton';
 import AppFooter from '@/components/shared/AppFooter';
+import ModernHeader from '@/components/shared/ModernHeader';
 import { TeacherActivityDialog } from '@/components/reports/TeacherActivityDialog';
 import { StudentActivityDialog } from '@/components/reports/StudentActivityDialog';
 
@@ -449,18 +450,12 @@ const Reports = () => {
 
   return (
     <div className="min-h-screen bg-gray-50" dir="rtl">
+      <ModernHeader 
+        title="التقارير والإحصائيات - نظرة شاملة على نشاطات المدارس"
+        showBackButton={true}
+      />
+      
       <div className="max-w-7xl mx-auto p-6 space-y-8">
-        
-        {/* Header */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border-0">
-          <BackButton />
-          <div className="mt-4 flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">التقارير والإحصائيات</h1>
-              <p className="text-gray-600 mt-1">نظرة شاملة على نشاطات المدارس</p>
-            </div>
-          </div>
-        </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
