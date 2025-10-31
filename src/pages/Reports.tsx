@@ -67,6 +67,12 @@ const Reports = () => {
   });
   const [teacherDialogOpen, setTeacherDialogOpen] = useState(false);
   const [studentDialogOpen, setStudentDialogOpen] = useState(false);
+  const [usersDistribution, setUsersDistribution] = useState([
+    { name: 'آخر 7 أيام', value: 0, color: '#10B981' },
+    { name: 'آخر 30 يوم', value: 0, color: '#3B82F6' },
+    { name: 'أكثر من 30 يوم', value: 0, color: '#F59E0B' },
+    { name: 'لم يسجلوا دخول', value: 0, color: '#EF4444' }
+  ]);
 
   // بيانات النشاط الأسبوعي الفعلية
   const [weeklyData, setWeeklyData] = useState([
@@ -290,6 +296,81 @@ const Reports = () => {
     }
   }, [allStudentsData, studentLoading]);
 
+  // جلب توزيع المستخدمين حسب النشاط
+  useEffect(() => {
+    const fetchUsersDistribution = async () => {
+      try {
+        const now = new Date();
+        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+        // جلب الطلاب مع آخر نشاط
+        const { data: students } = await supabase
+          .from('students')
+          .select(`
+            id,
+            user_id,
+            student_presence(last_seen_at)
+          `);
+
+        // جلب المعلمين والمدراء
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, role, last_login_at')
+          .in('role', ['teacher', 'school_admin']);
+
+        let last7Days = 0;
+        let last30Days = 0;
+        let moreThan30 = 0;
+        let never = 0;
+
+        // تصنيف الطلاب
+        students?.forEach((student: any) => {
+          const presence = student.student_presence?.[0];
+          if (!presence?.last_seen_at) {
+            never++;
+          } else {
+            const lastSeen = new Date(presence.last_seen_at);
+            if (lastSeen >= sevenDaysAgo) {
+              last7Days++;
+            } else if (lastSeen >= thirtyDaysAgo) {
+              last30Days++;
+            } else {
+              moreThan30++;
+            }
+          }
+        });
+
+        // تصنيف المعلمين والمدراء
+        profiles?.forEach((profile: any) => {
+          if (!profile.last_login_at) {
+            never++;
+          } else {
+            const lastLogin = new Date(profile.last_login_at);
+            if (lastLogin >= sevenDaysAgo) {
+              last7Days++;
+            } else if (lastLogin >= thirtyDaysAgo) {
+              last30Days++;
+            } else {
+              moreThan30++;
+            }
+          }
+        });
+
+        setUsersDistribution([
+          { name: 'آخر 7 أيام', value: last7Days, color: '#10B981' },
+          { name: 'آخر 30 يوم', value: last30Days, color: '#3B82F6' },
+          { name: 'أكثر من 30 يوم', value: moreThan30, color: '#F59E0B' },
+          { name: 'لم يسجلوا دخول', value: never, color: '#EF4444' }
+        ]);
+      } catch (error) {
+        console.error('خطأ في جلب توزيع المستخدمين:', error);
+      }
+    };
+
+    fetchUsersDistribution();
+  }, []);
+
   // مكون الإحصائية المبسطة
   const StatCard = ({ title, value, change, icon: Icon, trend = 'up', color = 'blue' }) => {
     const getTrendIcon = () => {
@@ -372,14 +453,54 @@ const Reports = () => {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard
-            title="إجمالي المستخدمين"
-            value={stats.totalUsers.toLocaleString()}
-            change="+12%"
-            icon={Users}
-            trend="up"
-            color="blue"
-          />
+          <Card className="border-0 shadow-sm bg-white">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">
+                توزيع المستخدمين حسب النشاط
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={200}>
+                <PieChart>
+                  <Pie
+                    data={usersDistribution}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={80}
+                    paddingAngle={2}
+                    dataKey="value"
+                    label={(entry) => {
+                      const total = usersDistribution.reduce((sum, item) => sum + item.value, 0);
+                      const percentage = total > 0 ? ((entry.value / total) * 100).toFixed(0) : 0;
+                      return `${entry.value} (${percentage}%)`;
+                    }}
+                    labelLine={false}
+                  >
+                    {usersDistribution.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'white',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+                {usersDistribution.map((item, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
+                    <span className="text-gray-600">{item.name}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
           <div onClick={() => setStudentDialogOpen(true)} className="cursor-pointer">
             <StatCard
               title="الطلاب النشطين"
