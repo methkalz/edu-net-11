@@ -67,6 +67,12 @@ const Reports = () => {
   });
   const [teacherDialogOpen, setTeacherDialogOpen] = useState(false);
   const [studentDialogOpen, setStudentDialogOpen] = useState(false);
+  const [usersDistribution, setUsersDistribution] = useState([
+    { name: 'آخر أسبوع', value: 0, color: '#10B981', percentage: 0 },
+    { name: 'آخر 30 يوم', value: 0, color: '#3B82F6', percentage: 0 },
+    { name: 'أكثر من 30 يوم', value: 0, color: '#F59E0B', percentage: 0 },
+    { name: 'لم يسجلوا أبداً', value: 0, color: '#EF4444', percentage: 0 }
+  ]);
 
   // بيانات النشاط الأسبوعي الفعلية
   const [weeklyData, setWeeklyData] = useState([
@@ -290,6 +296,131 @@ const Reports = () => {
     }
   }, [allStudentsData, studentLoading]);
 
+  // جلب توزيع المستخدمين حسب آخر تسجيل دخول
+  useEffect(() => {
+    const fetchUsersDistribution = async () => {
+      try {
+        const now = new Date();
+        const sevenDaysAgo = new Date(now);
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const thirtyDaysAgo = new Date(now);
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+        // جلب جميع الطلاب
+        const { data: studentsData, error: studentsError } = await supabase
+          .from('students')
+          .select('student_id, created_at');
+
+        if (studentsError) {
+          console.error('Error fetching students:', studentsError);
+          return;
+        }
+
+        // جلب بيانات حضور الطلاب
+        const { data: presenceData, error: presenceError } = await supabase
+          .from('student_presence')
+          .select('student_id, last_seen_at');
+
+        if (presenceError) {
+          console.error('Error fetching student presence:', presenceError);
+        }
+
+        // جلب جميع المعلمين والمدراء
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('user_id, role, last_login_at, created_at')
+          .in('role', ['teacher', 'school_admin']);
+
+        if (profilesError) {
+          console.error('Error fetching profiles:', profilesError);
+          return;
+        }
+
+        let last7Days = 0;
+        let last30Days = 0;
+        let moreThan30 = 0;
+        let never = 0;
+
+        // معالجة الطلاب
+        const studentPresenceMap = new Map();
+        presenceData?.forEach((p: any) => {
+          const existing = studentPresenceMap.get(p.student_id);
+          if (!existing || new Date(p.last_seen_at) > new Date(existing.last_seen_at)) {
+            studentPresenceMap.set(p.student_id, p);
+          }
+        });
+
+        studentsData?.forEach((student: any) => {
+          const presence = studentPresenceMap.get(student.student_id);
+          
+          if (!presence || !presence.last_seen_at) {
+            never++;
+          } else {
+            const lastSeen = new Date(presence.last_seen_at);
+            if (lastSeen >= sevenDaysAgo) {
+              last7Days++;
+            } else if (lastSeen >= thirtyDaysAgo) {
+              last30Days++;
+            } else {
+              moreThan30++;
+            }
+          }
+        });
+
+        // معالجة المعلمين والمدراء
+        profilesData?.forEach((profile: any) => {
+          if (!profile.last_login_at) {
+            never++;
+          } else {
+            const lastLogin = new Date(profile.last_login_at);
+            if (lastLogin >= sevenDaysAgo) {
+              last7Days++;
+            } else if (lastLogin >= thirtyDaysAgo) {
+              last30Days++;
+            } else {
+              moreThan30++;
+            }
+          }
+        });
+
+        const total = last7Days + last30Days + moreThan30 + never;
+
+        setUsersDistribution([
+          { 
+            name: 'آخر أسبوع', 
+            value: last7Days, 
+            color: '#10B981',
+            percentage: total > 0 ? Math.round((last7Days / total) * 100) : 0
+          },
+          { 
+            name: 'آخر 30 يوم', 
+            value: last30Days, 
+            color: '#3B82F6',
+            percentage: total > 0 ? Math.round((last30Days / total) * 100) : 0
+          },
+          { 
+            name: 'أكثر من 30 يوم', 
+            value: moreThan30, 
+            color: '#F59E0B',
+            percentage: total > 0 ? Math.round((moreThan30 / total) * 100) : 0
+          },
+          { 
+            name: 'لم يسجلوا أبداً', 
+            value: never, 
+            color: '#EF4444',
+            percentage: total > 0 ? Math.round((never / total) * 100) : 0
+          }
+        ]);
+
+        console.log('✅ Users distribution:', { last7Days, last30Days, moreThan30, never, total });
+      } catch (error) {
+        console.error('خطأ في جلب توزيع المستخدمين:', error);
+      }
+    };
+
+    fetchUsersDistribution();
+  }, []);
+
   // مكون الإحصائية المبسطة
   const StatCard = ({ title, value, change, icon: Icon, trend = 'up', color = 'blue' }) => {
     const getTrendIcon = () => {
@@ -453,19 +584,19 @@ const Reports = () => {
             </CardContent>
           </Card>
 
-          {/* Content Distribution */}
+          {/* Users Distribution by Activity */}
           <Card className="border-0 shadow-sm bg-white">
             <CardHeader className="pb-4">
               <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-blue-600" />
-                توزيع المحتوى
+                <Users className="h-5 w-5 text-blue-600" />
+                توزيع المستخدمين حسب النشاط
               </CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
-                    data={contentDistribution}
+                    data={usersDistribution}
                     cx="50%"
                     cy="50%"
                     innerRadius={60}
@@ -473,7 +604,7 @@ const Reports = () => {
                     paddingAngle={5}
                     dataKey="value"
                   >
-                    {contentDistribution.map((entry, index) => (
+                    {usersDistribution.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
@@ -484,18 +615,24 @@ const Reports = () => {
                       borderRadius: '8px',
                       boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                     }}
+                    formatter={(value: any, name: any, props: any) => [
+                      `${value} مستخدم (${props.payload.percentage}%)`,
+                      name
+                    ]}
                   />
                 </PieChart>
               </ResponsiveContainer>
               <div className="mt-4 grid grid-cols-2 gap-3">
-                {contentDistribution.map((item, index) => (
+                {usersDistribution.map((item, index) => (
                   <div key={index} className="flex items-center gap-2">
                     <div 
                       className="w-3 h-3 rounded-full" 
                       style={{ backgroundColor: item.color }}
                     ></div>
                     <span className="text-sm text-gray-600">{item.name}</span>
-                    <span className="text-sm font-medium text-gray-900">{item.value}</span>
+                    <span className="text-sm font-medium text-gray-900">
+                      {item.value} ({item.percentage}%)
+                    </span>
                   </div>
                 ))}
               </div>
