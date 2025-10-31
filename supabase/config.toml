@@ -14,6 +14,3 @@ verify_jwt = false
 
 [functions.track-login]
 verify_jwt = false
-
-[functions.generate-grade11-game-content]
-verify_jwt = false
