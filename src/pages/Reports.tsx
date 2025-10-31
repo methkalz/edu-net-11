@@ -371,7 +371,7 @@ const Reports = () => {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard
             title="إجمالي المستخدمين"
             value={stats.totalUsers.toLocaleString()}
@@ -410,22 +410,6 @@ const Reports = () => {
               color="purple"
             />
           </div>
-          <StatCard
-            title="المحتوى التعليمي"
-            value={stats.totalContent.toLocaleString()}
-            change="+15%"
-            icon={BookOpen}
-            trend="up"
-            color="orange"
-          />
-          <StatCard
-            title="متوسط الدرجات"
-            value={`${stats.averageScore}%`}
-            change="+2%"
-            icon={Star}
-            trend="up"
-            color="blue"
-          />
         </div>
 
         {/* Charts Section */}
