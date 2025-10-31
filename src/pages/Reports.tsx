@@ -457,17 +457,7 @@ const Reports = () => {
           <div className="mt-4 flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">التقارير والإحصائيات</h1>
-              <p className="text-gray-600 mt-1">نظرة شاملة على أداء المنصة</p>
-            </div>
-            <div className="flex gap-3">
-              <Button variant="outline" size="sm" className="gap-2">
-                <Filter className="h-4 w-4" />
-                تصفية
-              </Button>
-              <Button size="sm" className="gap-2 bg-blue-600 hover:bg-blue-700">
-                <Download className="h-4 w-4" />
-                تصدير
-              </Button>
+              <p className="text-gray-600 mt-1">نظرة شاملة على نشاطات المدارس</p>
             </div>
           </div>
         </div>
