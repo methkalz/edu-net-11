@@ -185,6 +185,13 @@ const Reports = () => {
           teachers: teachers.length
         });
 
+        // طباعة عينة من بيانات المعلمين للتحقق
+        console.log('👨‍🏫 Sample teacher data:', teachers.slice(0, 3).map(t => ({
+          name: t.full_name,
+          role: t.role,
+          last_seen: t.last_seen_at
+        })));
+
         // أسماء أيام الأسبوع بالعربية (الأحد = 0)
         const dayNames = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
         
@@ -209,43 +216,53 @@ const Reports = () => {
             0, 0, 0, 0
           ));
 
-          // فلترة الطلاب لهذا اليوم
-          const dayStudents = new Set(
-            allStudentsData
-              .filter((s: any) => {
-                const lastSeen = new Date(s.last_seen_at);
-                return lastSeen >= dayStart && lastSeen < nextDayStart;
-              })
-              .map((s: any) => s.student_id)
-          );
-
-          // فلترة المعلمين لهذا اليوم
-          const dayTeachers = new Set(
-            teachers
-              .filter((t: any) => {
-                const lastSeen = new Date(t.last_seen_at);
-                return lastSeen >= dayStart && lastSeen < nextDayStart && t.role === 'teacher';
-              })
-              .map((t: any) => t.user_id)
-          );
-
-          // فلترة المدراء لهذا اليوم
-          const dayAdmins = new Set(
-            teachers
-              .filter((t: any) => {
-                const lastSeen = new Date(t.last_seen_at);
-                return lastSeen >= dayStart && lastSeen < nextDayStart && t.role === 'school_admin';
-              })
-              .map((t: any) => t.user_id)
-          );
-
           const dayName = dayNames[date.getUTCDay()];
           
-          console.log(`📊 ${dayName}:`, {
-            students: dayStudents.size,
-            teachers: dayTeachers.size,
-            admins: dayAdmins.size
+          console.log(`\n📅 Processing ${dayName}:`, {
+            start: dayStart.toISOString(),
+            end: nextDayStart.toISOString()
           });
+
+          // فلترة الطلاب لهذا اليوم
+          const studentsInDay = allStudentsData.filter((s: any) => {
+            const lastSeen = new Date(s.last_seen_at);
+            const inRange = lastSeen >= dayStart && lastSeen < nextDayStart;
+            return inRange;
+          });
+          
+          const dayStudents = new Set(studentsInDay.map((s: any) => s.student_id));
+          
+          console.log(`  👨‍🎓 Students: ${dayStudents.size} unique (${studentsInDay.length} records)`);
+
+          // فلترة المعلمين لهذا اليوم
+          const teachersInDay = teachers.filter((t: any) => {
+            const lastSeen = new Date(t.last_seen_at);
+            const inRange = lastSeen >= dayStart && lastSeen < nextDayStart;
+            const isTeacher = t.role === 'teacher';
+            return inRange && isTeacher;
+          });
+          
+          const dayTeachers = new Set(teachersInDay.map((t: any) => t.user_id));
+          
+          console.log(`  👨‍🏫 Teachers: ${dayTeachers.size} unique (${teachersInDay.length} records)`);
+          if (teachersInDay.length > 0) {
+            console.log('    Names:', teachersInDay.slice(0, 5).map((t: any) => t.full_name));
+          }
+
+          // فلترة المدراء لهذا اليوم
+          const adminsInDay = teachers.filter((t: any) => {
+            const lastSeen = new Date(t.last_seen_at);
+            const inRange = lastSeen >= dayStart && lastSeen < nextDayStart;
+            const isAdmin = t.role === 'school_admin';
+            return inRange && isAdmin;
+          });
+          
+          const dayAdmins = new Set(adminsInDay.map((t: any) => t.user_id));
+          
+          console.log(`  👔 Admins: ${dayAdmins.size} unique (${adminsInDay.length} records)`);
+          if (adminsInDay.length > 0) {
+            console.log('    Names:', adminsInDay.slice(0, 5).map((t: any) => t.full_name));
+          }
 
           weekData.push({
             day: dayName,
@@ -257,7 +274,7 @@ const Reports = () => {
         }
 
         setWeeklyData(weekData);
-        console.log('✅ Weekly activity data:', weekData);
+        console.log('\n✅ Final weekly activity data:', weekData);
       } catch (error) {
         console.error('خطأ في جلب بيانات النشاط الأسبوعي:', error);
       }
