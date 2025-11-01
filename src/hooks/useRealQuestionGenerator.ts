@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { grade11NetworkingQuestions, questionsMetadata } from '@/data/grade11NetworkingQuestions';
 
 export interface RealQuestion {
   id: string;
@@ -145,41 +144,90 @@ export const useRealQuestionGenerator = () => {
   const addRealQuestions = async () => {
     try {
       setLoading(true);
-      toast.info(`جاري إضافة ${questionsMetadata.totalQuestions} سؤال من ${questionsMetadata.totalCards} بطاقة...`);
-      
-      let successCount = 0;
-      let errorCount = 0;
-      
-      for (const question of grade11NetworkingQuestions) {
+
+      const realNetworkingQuestions = [
+        {
+          question_text: "ما هو البروتوكول المستخدم لتخصيص عناوين IP تلقائياً؟",
+          choices: ["DHCP", "DNS", "HTTP", "FTP"],
+          correct_answer: "DHCP",
+          category: "بروتوكولات الشبكة",
+          explanation: "DHCP (Dynamic Host Configuration Protocol) يُستخدم لتخصيص عناوين IP تلقائياً للأجهزة في الشبكة"
+        },
+        {
+          question_text: "أي طبقة من طبقات OSI مسؤولة عن التوجيه (Routing)؟",
+          choices: ["الطبقة الثالثة - طبقة الشبكة", "الطبقة الثانية - طبقة وصلة البيانات", "الطبقة الرابعة - طبقة النقل", "الطبقة الخامسة - طبقة الجلسة"],
+          correct_answer: "الطبقة الثالثة - طبقة الشبكة",
+          category: "نموذج OSI",
+          explanation: "طبقة الشبكة (Layer 3) مسؤولة عن التوجيه واختيار أفضل مسار للبيانات"
+        },
+        {
+          question_text: "ما هو الفرق الرئيسي بين Switch و Hub؟",
+          choices: ["Switch يعمل في طبقة وصلة البيانات، Hub يعمل في الطبقة الفيزيائية", "Switch أسرع فقط", "لا يوجد فرق", "Hub أكثر أماناً"],
+          correct_answer: "Switch يعمل في طبقة وصلة البيانات، Hub يعمل في الطبقة الفيزيائية",
+          category: "أجهزة الشبكة",
+          explanation: "Switch ذكي ويعمل في طبقة وصلة البيانات ويتعرف على عناوين MAC، بينما Hub بسيط ويعمل في الطبقة الفيزيائية"
+        },
+        {
+          question_text: "كم عدد البتات في عنوان IPv4؟",
+          choices: ["32 بت", "64 بت", "128 بت", "16 بت"],
+          correct_answer: "32 بت",
+          category: "عناوين IP",
+          explanation: "عنوان IPv4 يتكون من 32 بت مقسمة إلى 4 مجموعات كل مجموعة 8 بت"
+        },
+        {
+          question_text: "ما هو المنفذ الافتراضي لبروتوكول HTTP؟",
+          choices: ["80", "443", "21", "25"],
+          correct_answer: "80",
+          category: "بروتوكولات التطبيق",
+          explanation: "المنفذ 80 هو المنفذ الافتراضي لبروتوكول HTTP، بينما 443 لـ HTTPS"
+        },
+        {
+          question_text: "ما هي فائدة قناع الشبكة الفرعية (Subnet Mask)؟",
+          choices: ["تحديد جزء الشبكة وجزء المضيف في عنوان IP", "تشفير البيانات", "تسريع الاتصال", "حماية من الفيروسات"],
+          correct_answer: "تحديد جزء الشبكة وجزء المضيف في عنوان IP",
+          category: "الشبكات الفرعية",
+          explanation: "قناع الشبكة الفرعية يساعد في تقسيم عنوان IP إلى جزأين: جزء الشبكة وجزء المضيف"
+        },
+        {
+          question_text: "أي من البروتوكولات التالية يعمل بدون اتصال (Connectionless)؟",
+          choices: ["UDP", "TCP", "SMTP", "FTP"],
+          correct_answer: "UDP",
+          category: "بروتوكولات النقل",
+          explanation: "UDP بروتوكول بسيط وسريع لا يتطلب إنشاء اتصال قبل إرسال البيانات، على عكس TCP"
+        },
+        {
+          question_text: "ما هو VLAN؟",
+          choices: ["شبكة محلية افتراضية", "نوع من الكابلات", "بروتوكول أمان", "جهاز شبكة"],
+          correct_answer: "شبكة محلية افتراضية",
+          category: "تقنيات الشبكة المتقدمة",
+          explanation: "VLAN (Virtual Local Area Network) تسمح بتقسيم الشبكة الفيزيائية إلى عدة شبكات منطقية منفصلة"
+        }
+      ];
+
+      for (const question of realNetworkingQuestions) {
         const { error } = await supabase
           .from('grade11_game_questions')
           .insert([{
-            section_id: question.section_id,
-            topic_id: question.topic_id,
-            lesson_id: question.lesson_id,
             question_text: question.question_text,
-            question_type: 'multiple_choice',
             choices: question.choices,
             correct_answer: question.correct_answer,
-            explanation: question.explanation,
-            difficulty_level: question.difficulty_level,
-            points: 10
+            lesson_id: null, // يمكن ربطها بدروس لاحقاً
+            difficulty: determineDifficulty({
+              question_text: question.question_text,
+              choices: question.choices
+            }),
+            category: question.category,
+            explanation: question.explanation
           }]);
 
         if (error) {
           console.error('Error adding question:', error);
-          errorCount++;
-        } else {
-          successCount++;
+          toast.error(`خطأ في إضافة السؤال: ${question.question_text.substring(0, 30)}...`);
         }
       }
 
-      toast.success(`تم إضافة ${successCount} سؤال بنجاح! 🎉\n${questionsMetadata.totalCards} بطاقة جاهزة للعب!`);
-      if (errorCount > 0) {
-        toast.warning(`فشل إضافة ${errorCount} سؤال ⚠️`);
-      }
-      
-      await fetchQuestions();
+      toast.success(`تم إضافة ${realNetworkingQuestions.length} سؤال جديد بنجاح`);
+      await fetchQuestions(); // تحديث القائمة
       
     } catch (error) {
       console.error('Error adding real questions:', error);

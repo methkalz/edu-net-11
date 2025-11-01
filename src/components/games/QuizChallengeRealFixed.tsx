@@ -162,27 +162,20 @@ const QuizChallengeRealFixed: React.FC<QuizChallengeRealProps> = ({
       
       // Find the selected choice text based on choice ID (A, B, C, D)
       const selectedChoiceIndex = choiceId.charCodeAt(0) - 65; // Convert A,B,C,D to 0,1,2,3
-      const rawChoice = currentQuestion.choices[selectedChoiceIndex];
-      const selectedChoiceText = typeof rawChoice === 'string' 
-        ? rawChoice 
-        : (typeof rawChoice === 'object' && rawChoice !== null ? rawChoice.text || String(rawChoice) : choiceId);
+      const selectedChoiceText = currentQuestion.choices[selectedChoiceIndex] || choiceId;
       
-      // التحقق من صحة الإجابة - قارن النص الفعلي وليس choiceId
-      const isCorrect = selectedChoiceText === currentQuestion.correct_answer;
+      // التحقق من صحة الإجابة
+      const isCorrect = choiceId === currentQuestion.correct_answer;
       
-      // Use the answerQuestion method with the actual choice text
-      await answerQuestion(selectedChoiceText);
+      // Use the answerQuestion method with the choice ID
+      await answerQuestion(choiceId);
       
       // Prepare choice data for logging
       const selectedChoiceData = { id: choiceId, text: selectedChoiceText };
-      const correctChoiceIndex = currentQuestion.choices.findIndex(choice => {
-        const choiceText = typeof choice === 'string' 
-          ? choice 
-          : (typeof choice === 'object' && choice !== null ? choice.text || String(choice) : '');
-        return choiceText === currentQuestion.correct_answer;
-      });
-      const correctChoiceId = correctChoiceIndex >= 0 ? String.fromCharCode(65 + correctChoiceIndex) : '';
-      const correctChoiceData = { id: correctChoiceId, text: currentQuestion.correct_answer };
+      const correctChoiceData = currentQuestion.choices.find((choice, idx) => {
+        const choiceData = extractChoiceData(choice, idx);
+        return choiceData.id === currentQuestion.correct_answer;
+      }) || { id: currentQuestion.correct_answer, text: currentQuestion.correct_answer };
       
       // تسجيل الإجابة مع البيانات المحسنة
       logAnswer(
@@ -191,7 +184,7 @@ const QuizChallengeRealFixed: React.FC<QuizChallengeRealProps> = ({
           ...currentQuestion,
           choices: currentQuestion.choices.map((choice, idx) => extractChoiceData(choice, idx))
         }, 
-        selectedChoiceText, 
+        choiceId, 
         isCorrect, 
         Math.floor(timeSpent / 1000)
       );
@@ -213,7 +206,7 @@ const QuizChallengeRealFixed: React.FC<QuizChallengeRealProps> = ({
         
         logUserAction('incorrect_answer_given', {
           questionId: currentQuestion.id,
-          givenAnswer: selectedChoiceText,
+          givenAnswer: choiceId,
           givenAnswerText: selectedChoiceData.text,
           correctAnswer: currentQuestion.correct_answer,
           correctAnswerText: correctChoiceData.text,

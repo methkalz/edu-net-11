@@ -29,13 +29,11 @@ const KnowledgeAdventureRealContent: React.FC = () => {
   const { showCelebration, celebrationBadge, closeCelebration } = useBadgeProgress(playerStats?.totalXP);
 
   const { 
-    topics,
     lessons, 
     progress, 
     achievements, 
     loading, 
     updateProgress, 
-    isTopicUnlocked,
     isLessonUnlocked, 
     getTotalStats 
   } = useGrade11Game();
@@ -53,7 +51,7 @@ const KnowledgeAdventureRealContent: React.FC = () => {
     completionTime?: number;
   }) => {
     if (selectedLesson) {
-      handleTopicComplete(
+      handleLessonComplete(
         selectedLesson,
         results.finalScore,
         results.maxScore,
@@ -63,8 +61,8 @@ const KnowledgeAdventureRealContent: React.FC = () => {
     }
   };
 
-  const handleTopicComplete = async (
-    topicId: string, 
+  const handleLessonComplete = async (
+    lessonId: string, 
     score: number, 
     maxScore: number, 
     completionTime?: number, 
@@ -72,15 +70,15 @@ const KnowledgeAdventureRealContent: React.FC = () => {
   ) => {
     try {
       // التأكد من صحة البيانات قبل الإرسال
-      if (!topicId || score < 0 || maxScore <= 0) {
-        throw new Error('Invalid topic completion data');
+      if (!lessonId || score < 0 || maxScore <= 0) {
+        throw new Error('Invalid lesson completion data');
       }
 
-      await updateProgress(topicId, score, maxScore, completionTime, mistakesCount);
+      await updateProgress(lessonId, score, maxScore, completionTime, mistakesCount);
       
       // استخدام نظام المكافآت الذكي الجديد
       const rewardData = {
-        lessonId: topicId,
+        lessonId,
         score,
         maxScore,
         completionTime,
@@ -127,15 +125,15 @@ const KnowledgeAdventureRealContent: React.FC = () => {
 
       // إذا نجح الطالب، انتظر قليلاً ثم عُد للخريطة تلقائياً
       if (percentage >= 70) {
-        logger.info('Student passed quiz, auto-returning to map', { topicId, score, percentage });
+        logger.info('Student passed quiz, auto-returning to map', { lessonId, score, percentage });
         setTimeout(() => {
           setSelectedLesson(null);
           toast({
-            title: '🔓 تم فتح الموضوع التالي!',
-            description: 'يمكنك الآن المتابعة للموضوع التالي في رحلتك التعليمية',
+            title: '🔓 تم فتح الدرس التالي!',
+            description: 'يمكنك الآن المتابعة للدرس التالي في رحلتك التعليمية',
             duration: 5000
           });
-        }, 3000);
+        }, 3000); // انتظار 3 ثواني قبل العودة التلقائية
       }
 
     } catch (error: any) {
@@ -238,7 +236,7 @@ const KnowledgeAdventureRealContent: React.FC = () => {
               <div className="text-right">
                 <div className="text-sm font-medium">{playerStats.totalXP} نقطة خبرة</div>
                 <div className="text-xs text-muted-foreground">
-                  {getTotalStats().completedLessons} / {topics.length} موضوع مكتمل
+                  {getTotalStats().completedLessons} / {lessons.length} درس مكتمل
                 </div>
               </div>
               
@@ -257,7 +255,7 @@ const KnowledgeAdventureRealContent: React.FC = () => {
           <TabsList className="grid grid-cols-4 w-full max-w-2xl mx-auto">
             <TabsTrigger value="map" className="flex items-center gap-2">
               <Map className="h-4 w-4" />
-              خريطة المواضيع
+              خريطة الدروس
             </TabsTrigger>
             <TabsTrigger value="achievements" className="flex items-center gap-2">
               <Trophy className="h-4 w-4" />
@@ -285,10 +283,10 @@ const KnowledgeAdventureRealContent: React.FC = () => {
                 />
               ) : (
                 <GameMapReal
-                  topics={topics}
+                  lessons={lessons}
                   progress={progress}
-                  isTopicUnlocked={isTopicUnlocked}
-                  onSelectTopic={setSelectedLesson}
+                  isLessonUnlocked={isLessonUnlocked}
+                  onSelectLesson={setSelectedLesson}
                 />
               )}
             </GameErrorBoundary>
@@ -329,7 +327,7 @@ const KnowledgeAdventureRealContent: React.FC = () => {
                     </div>
                     <div className="text-center">
                       <div className="text-2xl font-bold text-green-500">{getTotalStats().completedLessons}</div>
-                      <div className="text-sm text-muted-foreground">مواضيع مكتملة</div>
+                      <div className="text-sm text-muted-foreground">دروس مكتملة</div>
                     </div>
                     <div className="text-center">
                       <div className="text-2xl font-bold text-orange-500">{playerStats.streakDays}</div>
@@ -339,46 +337,44 @@ const KnowledgeAdventureRealContent: React.FC = () => {
                   
                   <div>
                     <div className="flex justify-between text-sm mb-2">
-                      <span>تقدم إكمال المواضيع</span>
-                      <span>{Math.round((getTotalStats().completedLessons / topics.length) * 100)}%</span>
+                      <span>تقدم إكمال الدروس</span>
+                      <span>{Math.round((getTotalStats().completedLessons / lessons.length) * 100)}%</span>
                     </div>
-                    <Progress value={(getTotalStats().completedLessons / topics.length) * 100} />
+                    <Progress value={(getTotalStats().completedLessons / lessons.length) * 100} />
                   </div>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader>
-                  <CardTitle>تفاصيل المواضيع</CardTitle>
+                  <CardTitle>تفاصيل الدروس</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {topics.map((topic, index) => {
-                      const topicProgress = progress[topic.id];
-                      const unlocked = isTopicUnlocked(index);
+                    {lessons.map((lesson, index) => {
+                      const lessonProgress = progress[lesson.id];
+                      const unlocked = isLessonUnlocked(index);
                       
                       return (
                         <div 
-                          key={topic.id}
+                          key={lesson.id}
                           className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
                         >
                           <div className="flex-1">
-                            <div className="font-medium">{topic.title}</div>
-                            <div className="text-sm text-muted-foreground">
-                              {topic.section_title} • {topic.lessons.length} دروس • {topic.totalQuestions} أسئلة
-                            </div>
+                            <div className="font-medium">{lesson.title}</div>
+                            <div className="text-sm text-muted-foreground">{lesson.section_title}</div>
                           </div>
                           
                           <div className="flex items-center gap-2">
-                            {topicProgress?.completed_at && (
+                            {lessonProgress?.completed_at && (
                               <Badge variant="default" className="bg-green-500">
-                                مكتمل {topicProgress.score}/{topicProgress.max_score}
+                                مكتمل {lessonProgress.score}/{lessonProgress.max_score}
                               </Badge>
                             )}
                             {!unlocked && (
                               <Badge variant="outline">مقفل</Badge>
                             )}
-                            {unlocked && !topicProgress?.completed_at && (
+                            {unlocked && !lessonProgress?.completed_at && (
                               <Badge variant="secondary">متاح</Badge>
                             )}
                           </div>
