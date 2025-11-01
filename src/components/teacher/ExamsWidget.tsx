@@ -265,7 +265,27 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
   });
 
   // جلب الأقسام المتاحة من بنك الأسئلة (بعد تعريف form)
-  const selectedGradeLevel = form.watch('grade_levels')?.[0];
+  const selectedGradeLevel = React.useMemo(() => {
+    const selectionType = form.watch('selection_type');
+    
+    // إذا اختار "كل الصف"
+    if (selectionType === 'all_grade') {
+      return form.watch('grade_levels')?.[0];
+    }
+    
+    // إذا اختار "صفوف محددة"
+    if (selectionType === 'specific_classes') {
+      const targetClasses = form.watch('target_classes');
+      if (!targetClasses || targetClasses.length === 0) return undefined;
+      
+      // نستخرج grade_level من أول صف محدد
+      const firstClassId = targetClasses[0];
+      const firstClass = availableClasses?.find((cls: any) => cls.id === firstClassId);
+      return firstClass?.grade_levels?.code;
+    }
+    
+    return undefined;
+  }, [form.watch('selection_type'), form.watch('grade_levels'), form.watch('target_classes'), availableClasses]);
   const { data: availableSections, isLoading: sectionsLoading } = useQuery({
     queryKey: ['question-sections', selectedGradeLevel],
     queryFn: async () => {
