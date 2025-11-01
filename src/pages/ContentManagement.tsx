@@ -92,7 +92,7 @@ const ContentManagement: React.FC = () => {
                             اختبار TinyMCE
                           </h3>
                           <span className="text-sm text-purple-600 font-medium">
-                            تجريبي - للسوبر أدمن فقط
+                            تجريبي : حاليا يظهر لـ يونس عمارنة فقط
                           </span>
                         </div>
                       </div>
