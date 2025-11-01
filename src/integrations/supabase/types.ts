@@ -3164,6 +3164,62 @@ export type Database = {
         }
         Relationships: []
       }
+      grade11_topic_progress: {
+        Row: {
+          attempts: number | null
+          best_time: number | null
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          last_attempt_at: string | null
+          max_score: number
+          mistakes_count: number | null
+          score: number | null
+          topic_id: string
+          unlocked: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          attempts?: number | null
+          best_time?: number | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          last_attempt_at?: string | null
+          max_score: number
+          mistakes_count?: number | null
+          score?: number | null
+          topic_id: string
+          unlocked?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          attempts?: number | null
+          best_time?: number | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          last_attempt_at?: string | null
+          max_score?: number
+          mistakes_count?: number | null
+          score?: number | null
+          topic_id?: string
+          unlocked?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grade11_topic_progress_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "grade11_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       grade11_topics: {
         Row: {
           content: string | null
