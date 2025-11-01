@@ -138,7 +138,7 @@ export function useShuffledQuizSession() {
     
     // العثور على الإجابة الصحيحة الجديدة
     const correctChoiceIndex = shuffledChoices.findIndex(
-      choice => choice.originalId === question.correct_answer
+      choice => choice.text === question.correct_answer
     );
     const newCorrectAnswer = String.fromCharCode(65 + correctChoiceIndex);
     
