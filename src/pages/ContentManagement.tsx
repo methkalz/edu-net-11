@@ -1,9 +1,10 @@
 import React from 'react';
-import { Settings, Shield, FileText } from 'lucide-react';
+import { Settings, Shield, FileText, FileEdit } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AppHeader from '@/components/shared/AppHeader';
 import AppFooter from '@/components/shared/AppFooter';
 import GradeCards from '@/components/content/GradeCards';
+import TinyMCETestBlock from '@/components/content/TinyMCETestBlock';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -73,6 +74,27 @@ const ContentManagement: React.FC = () => {
                 <p className="text-muted-foreground text-lg">
                   إنشاء وإدارة مستندات Google Docs للطلاب مع إمكانية المشاركة والتحرير المباشر
                 </p>
+              </CardContent>
+            </Card>
+
+            {/* TinyMCE Test Block */}
+            <Card className="border-2 border-purple-200 bg-purple-50/50">
+              <CardContent className="p-8">
+                <div className="flex items-center gap-4 mb-6">
+                  <FileEdit className="h-10 w-10 text-purple-600" />
+                  <div>
+                    <h3 className="text-2xl font-bold text-purple-900">
+                      اختبار TinyMCE
+                    </h3>
+                    <span className="text-sm text-purple-600 font-medium">
+                      تجريبي - للسوبر أدمن فقط
+                    </span>
+                  </div>
+                </div>
+                <p className="text-muted-foreground text-lg mb-6">
+                  محرر نصوص متقدم للاختبار والتجربة مع إمكانية المعاينة المباشرة
+                </p>
+                <TinyMCETestBlock />
               </CardContent>
             </Card>
 
