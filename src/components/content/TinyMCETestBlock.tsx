@@ -43,7 +43,7 @@ const TinyMCETestBlock: React.FC = () => {
     <div className="space-y-4">
       <div className="rounded-lg border border-border overflow-hidden">
         <Editor
-          apiKey="no-api-key"
+          apiKey="zl84avh3o5gxv5dhx2ldgjnqi72r040qo5ixdj8hpehffbht"
           value={content}
           onEditorChange={handleEditorChange}
           init={{
@@ -64,7 +64,7 @@ const TinyMCETestBlock: React.FC = () => {
               'table | code preview fullscreen | help',
             content_style:
               'body { font-family: Cairo, Arial, sans-serif; font-size: 16px; direction: rtl; text-align: right; padding: 10px; }',
-            language_url: 'https://cdn.tiny.cloud/1/no-api-key/tinymce/6/langs/ar.js',
+            language_url: 'https://cdn.tiny.cloud/1/zl84avh3o5gxv5dhx2ldgjnqi72r040qo5ixdj8hpehffbht/tinymce/6/langs/ar.js',
           }}
         />
       </div>
