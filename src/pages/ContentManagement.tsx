@@ -1,5 +1,5 @@
-import React from 'react';
-import { Settings, Shield, FileText, FileEdit } from 'lucide-react';
+import React, { useState } from 'react';
+import { Settings, Shield, FileText, FileEdit, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AppHeader from '@/components/shared/AppHeader';
 import AppFooter from '@/components/shared/AppFooter';
@@ -7,10 +7,12 @@ import GradeCards from '@/components/content/GradeCards';
 import TinyMCETestBlock from '@/components/content/TinyMCETestBlock';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
+import * as Collapsible from '@radix-ui/react-collapsible';
 
 const ContentManagement: React.FC = () => {
   const { userProfile } = useAuth();
   const navigate = useNavigate();
+  const [isTinyMCEOpen, setIsTinyMCEOpen] = useState(false);
 
   // هذه الصفحة مخصصة للسوبر آدمن فقط
   if (userProfile?.role !== 'superadmin') {
@@ -79,23 +81,37 @@ const ContentManagement: React.FC = () => {
 
             {/* TinyMCE Test Block */}
             <Card className="border-2 border-purple-200 bg-purple-50/50">
-              <CardContent className="p-8">
-                <div className="flex items-center gap-4 mb-6">
-                  <FileEdit className="h-10 w-10 text-purple-600" />
-                  <div>
-                    <h3 className="text-2xl font-bold text-purple-900">
-                      اختبار TinyMCE
-                    </h3>
-                    <span className="text-sm text-purple-600 font-medium">
-                      تجريبي - للسوبر أدمن فقط
-                    </span>
-                  </div>
-                </div>
-                <p className="text-muted-foreground text-lg mb-6">
-                  محرر نصوص متقدم للاختبار والتجربة مع إمكانية المعاينة المباشرة
-                </p>
-                <TinyMCETestBlock />
-              </CardContent>
+              <Collapsible.Root open={isTinyMCEOpen} onOpenChange={setIsTinyMCEOpen}>
+                <CardContent className="p-8">
+                  <Collapsible.Trigger className="w-full">
+                    <div className="flex items-center justify-between gap-4 mb-6 cursor-pointer group">
+                      <div className="flex items-center gap-4">
+                        <FileEdit className="h-10 w-10 text-purple-600 transition-transform group-hover:scale-110" />
+                        <div className="text-right">
+                          <h3 className="text-2xl font-bold text-purple-900">
+                            اختبار TinyMCE
+                          </h3>
+                          <span className="text-sm text-purple-600 font-medium">
+                            تجريبي - للسوبر أدمن فقط
+                          </span>
+                        </div>
+                      </div>
+                      <ChevronDown 
+                        className={`h-6 w-6 text-purple-600 transition-transform duration-300 ${
+                          isTinyMCEOpen ? 'rotate-180' : ''
+                        }`}
+                      />
+                    </div>
+                  </Collapsible.Trigger>
+                  
+                  <Collapsible.Content className="overflow-hidden data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
+                    <p className="text-muted-foreground text-lg mb-6">
+                      محرر نصوص متقدم للاختبار والتجربة مع إمكانية المعاينة المباشرة
+                    </p>
+                    <TinyMCETestBlock />
+                  </Collapsible.Content>
+                </CardContent>
+              </Collapsible.Root>
             </Card>
 
             {/* Grade Cards */}
