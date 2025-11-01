@@ -18,31 +18,44 @@ export interface GameQuestion {
   explanation?: string;
   difficulty_level: 'easy' | 'medium' | 'hard';
   points: number;
-  time_limit?: number; // وقت محدد للسؤال بالثواني
+  time_limit?: number;
 }
 
 export interface GameLesson {
   id: string;
   title: string;
   content?: string;
-  topic_id: string;
-  topic_title: string;
-  section_id: string;
-  section_title: string;
   order_index: number;
   questions: GameQuestion[];
 }
 
+export interface GameTopic {
+  id: string;
+  title: string;
+  section_id: string;
+  section_title: string;
+  order_index: number;
+  lessons: GameLesson[];
+  questions: GameQuestion[];
+  totalQuestions: number;
+}
+
+export interface Grade11LessonWithMedia {
+  id: string;
+  title: string;
+  content?: string;
+}
+
 export interface PlayerProgress {
-  lesson_id: string;
+  topic_id: string;
   score: number;
   max_score: number;
   attempts: number;
   unlocked: boolean;
   completed_at?: string;
-  best_time?: number; // أفضل وقت بالثواني
+  best_time?: number;
   last_attempt_at?: string;
-  mistakes_count?: number; // عدد الأخطاء
+  mistakes_count?: number;
 }
 
 export interface Achievement {
@@ -53,7 +66,7 @@ export interface Achievement {
 }
 
 export const useGrade11Game = () => {
-  const [lessons, setLessons] = useState<GameLesson[]>([]);
+  const [topics, setTopics] = useState<GameTopic[]>([]);
   const [progress, setProgress] = useState<Record<string, PlayerProgress>>({});
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,80 +77,65 @@ export const useGrade11Game = () => {
   const questionGenerator = useSmartQuestionGenerator();
   const advancedScoring = useAdvancedScoring();
 
-  // دمج الأسئلة المولدة مع الأسئلة التقليدية
-  const [enhancedLessons, setEnhancedLessons] = useState<GameLesson[]>([]);
-
-  // Fetch lessons with questions
-  const fetchLessonsWithQuestions = async () => {
+  // Fetch topics with their lessons and questions
+  const fetchTopicsWithLessons = async () => {
     try {
       setLoading(true);
       
-      // Get lessons with section and topic info
-      const { data: lessonsData, error: lessonsError } = await supabase
-        .from('grade11_lessons')
+      // Step 1: Get topics with section info
+      const { data: topicsData, error: topicsError } = await supabase
+        .from('grade11_topics')
         .select(`
           id,
           title,
-          content,
           order_index,
-          topic_id,
-          grade11_topics!inner (
+          section_id,
+          grade11_sections!inner (
             id,
             title,
-            section_id,
-            order_index,
-            grade11_sections!inner (
-              id,
-              title,
-              order_index
-            )
+            order_index
           )
         `)
-        .order('order_index', { ascending: true })
-        .order('created_at', { ascending: true });
+        .order('order_index', { ascending: true });
+
+      if (topicsError) throw topicsError;
+
+      // Step 2: Get all lessons
+      const { data: lessonsData, error: lessonsError } = await supabase
+        .from('grade11_lessons')
+        .select('id, title, content, order_index, topic_id')
+        .order('order_index', { ascending: true });
 
       if (lessonsError) throw lessonsError;
 
-      // Get questions for each lesson
-      const lessonsWithQuestions: GameLesson[] = [];
-      
-      // جلب جميع الأسئلة مرة واحدة
+      // Step 3: Get all questions
       const { data: allQuestionsData, error: questionsError } = await supabase
         .from('grade11_game_questions')
         .select('*');
 
       if (questionsError) throw questionsError;
 
-      // تجميع الأسئلة حسب lesson_id
-      const questionsByLesson: Record<string, any[]> = {};
+      // Step 4: Process and validate questions
+      const validQuestions: GameQuestion[] = [];
       (allQuestionsData || []).forEach(question => {
-        if (!questionsByLesson[question.lesson_id]) {
-          questionsByLesson[question.lesson_id] = [];
-        }
-        // التحقق من سلامة البيانات وتطهيرها
         try {
           let parsedChoices = [];
           
           if (Array.isArray(question.choices)) {
-            // إذا كانت البيانات array، تحقق من تنسيقها
             parsedChoices = question.choices;
           } else if (typeof question.choices === 'string') {
-            // إذا كانت string، حاول تحويلها لـ JSON
             parsedChoices = JSON.parse(question.choices);
           }
 
-          // التأكد من أن الخيارات بالتنسيق الصحيح {id, text}
           const validatedChoices = parsedChoices.map((choice: any, index: number) => {
             if (typeof choice === 'object' && choice.id && choice.text) {
-              return choice; // التنسيق صحيح
+              return choice;
             } else if (typeof choice === 'string') {
-              // تحويل النص البسيط إلى التنسيق الصحيح
               return {
-                id: String.fromCharCode(65 + index), // A, B, C, D
+                id: String.fromCharCode(65 + index),
                 text: choice
               };
             } else {
-              // تنسيق غير مفهوم
               return {
                 id: String.fromCharCode(65 + index),
                 text: String(choice)
@@ -145,49 +143,82 @@ export const useGrade11Game = () => {
             }
           });
 
-          // التأكد من وجود choices صالحة
           if (validatedChoices.length < 2) {
-            logger.warn(`Question ${question.id} has invalid choices`, { choices: validatedChoices });
-            return; // تخطي هذا السؤال
+            logger.warn(`Question ${question.id} has invalid choices`);
+            return;
           }
 
-          questionsByLesson[question.lesson_id].push({
+          validQuestions.push({
             ...question,
             choices: validatedChoices,
             difficulty_level: question.difficulty_level as 'easy' | 'medium' | 'hard',
-            time_limit: 60 // وقت افتراضي 60 ثانية
+            question_type: question.question_type as 'multiple_choice' | 'true_false' | 'fill_blank',
+            time_limit: 60
           });
         } catch (error) {
           logger.error(`Error parsing question ${question.id}`, error as Error);
-          // تخطي السؤال المعطوب
         }
       });
 
-      // إنشاء قائمة الدروس مع الأسئلة
-      for (const lesson of lessonsData || []) {
-        // إظهار الدروس التي لديها أسئلة فقط
+      // Step 5: Group questions by lesson_id
+      const questionsByLesson: Record<string, GameQuestion[]> = {};
+      validQuestions.forEach(question => {
+        if (!questionsByLesson[question.lesson_id]) {
+          questionsByLesson[question.lesson_id] = [];
+        }
+        questionsByLesson[question.lesson_id].push(question);
+      });
+
+      // Step 6: Group lessons by topic_id
+      const lessonsByTopic: Record<string, GameLesson[]> = {};
+      (lessonsData || []).forEach(lesson => {
         const lessonQuestions = questionsByLesson[lesson.id] || [];
         if (lessonQuestions.length > 0) {
-          lessonsWithQuestions.push({
+          if (!lessonsByTopic[lesson.topic_id]) {
+            lessonsByTopic[lesson.topic_id] = [];
+          }
+          lessonsByTopic[lesson.topic_id].push({
             id: lesson.id,
             title: lesson.title,
             content: lesson.content,
-            topic_id: lesson.topic_id,
-            topic_title: lesson.grade11_topics.title,
-            section_id: lesson.grade11_topics.section_id,
-            section_title: lesson.grade11_topics.grade11_sections.title,
             order_index: lesson.order_index,
             questions: lessonQuestions
           });
         }
+      });
+
+      // Step 7: Build topics with all their data
+      const topicsWithLessons: GameTopic[] = [];
+      for (const topic of topicsData || []) {
+        const topicLessons = lessonsByTopic[topic.id] || [];
+        
+        // Collect all questions from all lessons in this topic
+        const allTopicQuestions: GameQuestion[] = [];
+        topicLessons.forEach(lesson => {
+          allTopicQuestions.push(...lesson.questions);
+        });
+
+        // Only include topics that have questions
+        if (allTopicQuestions.length > 0) {
+          topicsWithLessons.push({
+            id: topic.id,
+            title: topic.title,
+            section_id: topic.section_id,
+            section_title: topic.grade11_sections.title,
+            order_index: topic.order_index,
+            lessons: topicLessons,
+            questions: allTopicQuestions,
+            totalQuestions: allTopicQuestions.length
+          });
+        }
       }
 
-      setLessons(lessonsWithQuestions);
+      setTopics(topicsWithLessons);
     } catch (error) {
-      logger.error('Error fetching lessons', error as Error);
+      logger.error('Error fetching topics', error as Error);
       toast({
         title: 'خطأ',
-        description: 'حدث خطأ في تحميل الدروس',
+        description: 'حدث خطأ في تحميل المحتوى',
         variant: 'destructive'
       });
     } finally {
@@ -195,24 +226,27 @@ export const useGrade11Game = () => {
     }
   };
 
-  // Fetch player progress
+  // Fetch player progress for topics
   const fetchProgress = async () => {
     try {
       const { data, error } = await supabase
-        .from('grade11_game_progress')
+        .from('grade11_topic_progress')
         .select('*');
 
       if (error) throw error;
 
       const progressMap: Record<string, PlayerProgress> = {};
       data?.forEach(item => {
-        progressMap[item.lesson_id] = {
-          lesson_id: item.lesson_id,
+        progressMap[item.topic_id] = {
+          topic_id: item.topic_id,
           score: item.score,
           max_score: item.max_score,
           attempts: item.attempts,
           unlocked: item.unlocked,
-          completed_at: item.completed_at
+          completed_at: item.completed_at,
+          best_time: item.best_time,
+          last_attempt_at: item.last_attempt_at,
+          mistakes_count: item.mistakes_count
         };
       });
 
@@ -239,7 +273,7 @@ export const useGrade11Game = () => {
 
 // معالجة محسّنة لتحديث التقدم مع retry mechanism
   const updateProgress = async (
-    lessonId: string, 
+    topicId: string, 
     score: number, 
     maxScore: number, 
     completionTime?: number,
@@ -253,41 +287,46 @@ export const useGrade11Game = () => {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('User not authenticated');
 
-        // جلب التقدم الحالي من قاعدة البيانات للتأكد من البيانات الحديثة
+        // جلب التقدم الحالي من قاعدة البيانات
         const { data: existingProgress } = await supabase
-          .from('grade11_game_progress')
+          .from('grade11_topic_progress')
           .select('*')
           .eq('user_id', user.id)
-          .eq('lesson_id', lessonId)
+          .eq('topic_id', topicId)
           .maybeSingle();
 
         const currentAttempts = existingProgress?.attempts || 0;
         const currentBestScore = existingProgress?.score || 0;
         const bestScore = Math.max(currentBestScore, score);
+        const currentBestTime = existingProgress?.best_time;
+        const bestTime = completionTime && (!currentBestTime || completionTime < currentBestTime) 
+          ? completionTime 
+          : currentBestTime;
         const newAttempts = currentAttempts + 1;
         
         const progressData = {
           user_id: user.id,
-          lesson_id: lessonId,
+          topic_id: topicId,
           score: bestScore,
           max_score: maxScore,
           attempts: newAttempts,
           unlocked: true,
-          completed_at: score >= (maxScore * 0.7) ? new Date().toISOString() : null
+          completed_at: score >= (maxScore * 0.7) ? new Date().toISOString() : null,
+          best_time: bestTime,
+          last_attempt_at: new Date().toISOString(),
+          mistakes_count: mistakesCount || 0
         };
 
         let result;
         if (existingProgress) {
-          // إذا كان السجل موجود، استخدم UPDATE
           result = await supabase
-            .from('grade11_game_progress')
+            .from('grade11_topic_progress')
             .update(progressData)
             .eq('user_id', user.id)
-            .eq('lesson_id', lessonId);
+            .eq('topic_id', topicId);
         } else {
-          // إذا لم يكن موجود، استخدم INSERT
           result = await supabase
-            .from('grade11_game_progress')
+            .from('grade11_topic_progress')
             .insert(progressData);
         }
 
@@ -295,48 +334,44 @@ export const useGrade11Game = () => {
 
         // Update local state
         const newProgressData: PlayerProgress = {
-          lesson_id: lessonId,
+          topic_id: topicId,
           score: bestScore,
           max_score: maxScore,
           attempts: newAttempts,
           unlocked: true,
           completed_at: score >= (maxScore * 0.7) ? new Date().toISOString() : undefined,
-          best_time: completionTime,
+          best_time: bestTime,
           last_attempt_at: new Date().toISOString(),
           mistakes_count: mistakesCount || 0
         };
 
         setProgress(prev => ({
           ...prev,
-          [lessonId]: newProgressData
+          [topicId]: newProgressData
         }));
 
         // Check for achievements
-        await checkAchievements(lessonId, score, maxScore, completionTime, mistakesCount);
+        await checkAchievements(topicId, score, maxScore, completionTime, mistakesCount);
 
-        // Auto-unlock next lesson if current is completed
+        // Auto-unlock next topic if current is completed
         if (score >= (maxScore * 0.7)) {
-          unlockNextLesson(lessonId);
+          unlockNextTopic(topicId);
         }
 
-        // نجح التحديث، اخرج من الـ loop
         return;
 
       } catch (error: any) {
         lastError = error;
         logger.warn(`Progress update attempt ${attempt} failed`, error);
         
-        // إذا كانت هذه المحاولة الأخيرة، أو إذا كان الخطأ ليس مؤقتاً
         if (attempt === maxRetries || (error.code !== '23505' && !error.message?.includes('conflict'))) {
           break;
         }
         
-        // انتظر قبل المحاولة التالية
         await new Promise(resolve => setTimeout(resolve, attempt * 500));
       }
     }
 
-    // إذا فشلت جميع المحاولات
     logger.error('Failed to save progress to database after all retries', lastError);
     
     toast({
@@ -345,13 +380,12 @@ export const useGrade11Game = () => {
       variant: 'destructive'
     });
     
-    // لا نحفظ التقدم محلياً - نطلب من المستخدم المحاولة مرة أخرى
     throw lastError;
   };
 
   // Enhanced achievements system
   const checkAchievements = async (
-    lessonId: string, 
+    topicId: string, 
     score: number, 
     maxScore: number, 
     completionTime?: number,
@@ -361,19 +395,19 @@ export const useGrade11Game = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const completedLessons = Object.values(progress).filter(p => p.completed_at).length;
+      const completedTopics = Object.values(progress).filter(p => p.completed_at).length;
       const perfectScore = score === maxScore;
-      const fastCompletion = completionTime && completionTime < 120; // أقل من دقيقتين
+      const fastCompletion = completionTime && completionTime < 120;
       const noMistakes = mistakesCount === 0;
       
       const newAchievements = [];
 
-      // First lesson completed
-      if (completedLessons === 0) {
+      // First topic completed
+      if (completedTopics === 0) {
         newAchievements.push({
           user_id: user.id,
-          achievement_type: 'first_lesson',
-          achievement_data: { lesson_id: lessonId, timestamp: new Date().toISOString() }
+          achievement_type: 'first_topic',
+          achievement_data: { topic_id: topicId, timestamp: new Date().toISOString() }
         });
       }
 
@@ -383,7 +417,7 @@ export const useGrade11Game = () => {
           user_id: user.id,
           achievement_type: 'perfect_score',
           achievement_data: { 
-            lesson_id: lessonId, 
+            topic_id: topicId, 
             score, 
             max_score: maxScore,
             timestamp: new Date().toISOString()
@@ -397,7 +431,7 @@ export const useGrade11Game = () => {
           user_id: user.id,
           achievement_type: 'speed_demon',
           achievement_data: { 
-            lesson_id: lessonId, 
+            topic_id: topicId, 
             time: completionTime,
             timestamp: new Date().toISOString()
           }
@@ -410,20 +444,20 @@ export const useGrade11Game = () => {
           user_id: user.id,
           achievement_type: 'flawless',
           achievement_data: { 
-            lesson_id: lessonId,
+            topic_id: topicId,
             timestamp: new Date().toISOString()
           }
         });
       }
 
       // Milestone achievements
-      const milestones = [3, 5, 10, 15, 20];
-      if (milestones.includes(completedLessons + 1)) {
+      const milestones = [3, 5, 10];
+      if (milestones.includes(completedTopics + 1)) {
         newAchievements.push({
           user_id: user.id,
-          achievement_type: `milestone_${completedLessons + 1}`,
+          achievement_type: `milestone_${completedTopics + 1}`,
           achievement_data: { 
-            lessons_count: completedLessons + 1,
+            topics_count: completedTopics + 1,
             timestamp: new Date().toISOString()
           }
         });
@@ -465,53 +499,50 @@ export const useGrade11Game = () => {
 
   const getAchievementDescription = (type: string) => {
     const descriptions = {
-      'first_lesson': 'أكملت درسك الأول! 🎓',
+      'first_topic': 'أكملت موضوعك الأول! 🎓',
       'perfect_score': 'حصلت على الدرجة الكاملة! ⭐',
       'speed_demon': 'إكمال سريع ومثالي! ⚡',
       'flawless': 'إكمال بلا أخطاء! 💎',
-      'milestone_3': 'أكملت 3 دروس! 🥉',
-      'milestone_5': 'أكملت 5 دروس! 🥈',
-      'milestone_10': 'أكملت 10 دروس! 🥇',
-      'milestone_15': 'أكملت 15 درس! 👑',
-      'milestone_20': 'خبير الشبكات! 🌟',
+      'milestone_3': 'أكملت 3 مواضيع! 🥉',
+      'milestone_5': 'أكملت 5 مواضيع! 🥈',
+      'milestone_10': 'أكملت 10 مواضيع! 🥇',
       'network_expert': 'خبير في الشبكات! 🔥',
       'week_streak': 'أسبوع من التعلم المتواصل! 📚'
     };
     return descriptions[type as keyof typeof descriptions] || 'إنجاز جديد! 🎉';
   };
 
-  // Auto-unlock next lesson
-  const unlockNextLesson = (currentLessonId: string) => {
-    const currentIndex = lessons.findIndex(l => l.id === currentLessonId);
-    if (currentIndex !== -1 && currentIndex < lessons.length - 1) {
-      const nextLesson = lessons[currentIndex + 1];
-      if (nextLesson && !progress[nextLesson.id]?.unlocked) {
-        // Auto unlock logic could be added here
-        logger.info(`Next lesson ${nextLesson.id} should be unlocked`);
+  // Auto-unlock next topic
+  const unlockNextTopic = (currentTopicId: string) => {
+    const currentIndex = topics.findIndex(t => t.id === currentTopicId);
+    if (currentIndex !== -1 && currentIndex < topics.length - 1) {
+      const nextTopic = topics[currentIndex + 1];
+      if (nextTopic && !progress[nextTopic.id]?.unlocked) {
+        logger.info(`Next topic ${nextTopic.id} should be unlocked`);
       }
     }
   };
 
-  // Check if lesson is unlocked
-  const isLessonUnlocked = (lessonIndex: number) => {
-    if (lessonIndex === 0) return true; // First lesson always unlocked
+  // Check if topic is unlocked
+  const isTopicUnlocked = (topicIndex: number) => {
+    if (topicIndex === 0) return true; // First topic always unlocked
     
-    const previousLesson = lessons[lessonIndex - 1];
-    if (!previousLesson) return false;
+    const previousTopic = topics[topicIndex - 1];
+    if (!previousTopic) return false;
     
-    const previousProgress = progress[previousLesson.id];
+    const previousProgress = progress[previousTopic.id];
     return previousProgress?.completed_at != null;
   };
 
   // Get total stats
   const getTotalStats = () => {
-    const completedLessons = Object.values(progress).filter(p => p.completed_at).length;
+    const completedTopics = Object.values(progress).filter(p => p.completed_at).length;
     const totalXP = Object.values(progress).reduce((sum, p) => sum + p.score, 0);
     const level = Math.floor(totalXP / 100) + 1;
     
     return {
-      completedLessons,
-      totalLessons: lessons.length,
+      completedLessons: completedTopics,
+      totalLessons: topics.length,
       totalXP,
       level,
       achievements: achievements.length
@@ -519,21 +550,23 @@ export const useGrade11Game = () => {
   };
 
   useEffect(() => {
-    fetchLessonsWithQuestions();
+    fetchTopicsWithLessons();
     fetchProgress();
     fetchAchievements();
   }, []);
 
   return {
-    lessons,
+    topics,
+    lessons: topics, // for backward compatibility
     progress,
     achievements,
     loading,
     updateProgress,
-    isLessonUnlocked,
+    isTopicUnlocked,
+    isLessonUnlocked: isTopicUnlocked, // for backward compatibility
     getTotalStats,
     refetch: () => {
-      fetchLessonsWithQuestions();
+      fetchTopicsWithLessons();
       fetchProgress();
       fetchAchievements();
     }
