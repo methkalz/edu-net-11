@@ -6,6 +6,9 @@ import { AvailableExam } from "@/types/exam";
 import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow, isPast, isFuture } from "date-fns";
 import { ar } from "date-fns/locale";
+import { useState } from "react";
+import { StudentExamResultsDialog } from "./StudentExamResultsDialog";
+import { useAuth } from "@/hooks/useAuth";
 
 interface StudentExamCardProps {
   exam: AvailableExam;
@@ -13,6 +16,8 @@ interface StudentExamCardProps {
 
 export const StudentExamCard = ({ exam }: StudentExamCardProps) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [showResults, setShowResults] = useState(false);
 
   const getExamStatus = () => {
     if (exam.can_start && !isPast(new Date(exam.end_datetime))) {
@@ -37,8 +42,7 @@ export const StudentExamCard = ({ exam }: StudentExamCardProps) => {
   };
 
   const handleViewResults = () => {
-    // يمكن تحسينه لجلب آخر محاولة
-    navigate(`/student/exams`);
+    setShowResults(true);
   };
 
   return (
@@ -132,6 +136,16 @@ export const StudentExamCard = ({ exam }: StudentExamCardProps) => {
           )}
         </div>
       </CardContent>
+
+      {/* نافذة عرض النتائج */}
+      {user && (
+        <StudentExamResultsDialog
+          open={showResults}
+          onOpenChange={setShowResults}
+          examId={exam.id}
+          studentUserId={user.id}
+        />
+      )}
     </Card>
   );
 };
