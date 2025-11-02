@@ -28,38 +28,46 @@ const PDFComparisonPage = () => {
     <div className="container mx-auto py-6 px-4 max-w-7xl">
       {/* Header */}
       <div className="mb-6">
-        <div className="flex items-center gap-2 mb-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/dashboard')}
-          >
-            <ArrowRight className="h-4 w-4 rotate-180 ml-2" />
-            العودة للوحة التحكم
-          </Button>
-        </div>
-        
-        <div className="flex items-start gap-4">
-          <div className="p-3 bg-primary/10 rounded-lg">
-            <FileSearch className="h-8 w-8 text-primary" />
-          </div>
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold mb-2">مقارنة المشاريع PDF</h1>
-            <p className="text-muted-foreground">
-              قارن مشاريع الطلاب مع المستودع للتأكد من الأصالة والكشف عن التشابه
-            </p>
-          </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate('/dashboard')}
+          className="mb-4"
+        >
+          <ArrowRight className="h-4 w-4 rotate-180 ml-2" />
+          العودة للوحة التحكم
+        </Button>
+
+        <div className="relative overflow-hidden">
+          {/* Background Pattern */}
+          <div className="absolute inset-0 creative-background opacity-40" />
+          
+          <Card className="relative border-0 shadow-lg backdrop-blur-md bg-gradient-to-br from-primary/20 via-primary/10 to-background/50">
+            <CardContent className="p-8">
+              <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+                {/* Content Section */}
+                <div className="flex-1 space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      <div className="p-5 rounded-xl backdrop-blur-sm border border-white/20 bg-white/10">
+                        <FileSearch className="w-8 h-8 text-primary" />
+                      </div>
+                      <div>
+                        <h1 className="text-xl font-bold text-foreground">
+                          مقارنة المشاريع PDF
+                        </h1>
+                        <p className="text-base text-muted-foreground">
+                          قارن مشاريع الطلاب مع المستودع للتأكد من الأصالة والكشف عن التشابه
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
-
-      {/* Alert للتوضيح */}
-      <Alert className="mb-6">
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          <strong>كيفية الاستخدام:</strong> اختر الصف الدراسي أولاً، ثم ارفع ملف أو عدة ملفات PDF للمقارنة مع المستودع. 
-          سيقوم النظام بتحليل النصوص واكتشاف التشابه باستخدام خوارزميات متقدمة.
-        </AlertDescription>
-      </Alert>
 
       {/* Grade Level Selection */}
       <Card className="mb-6">
