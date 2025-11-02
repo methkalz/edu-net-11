@@ -10,9 +10,16 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/table';
-import { RefreshCw, FileText, AlertTriangle, AlertCircle, CheckCircle } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { RefreshCw, FileText, AlertTriangle, AlertCircle, CheckCircle, Eye, Clock, TrendingUp } from 'lucide-react';
 import { usePDFComparison, type GradeLevel, type ComparisonResult } from '@/hooks/usePDFComparison';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
@@ -24,6 +31,8 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
   const { getComparisonHistory } = usePDFComparison();
   const [history, setHistory] = useState<ComparisonResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedComparison, setSelectedComparison] = useState<ComparisonResult | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const loadHistory = async () => {
     setIsLoading(true);
@@ -55,6 +64,11 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
     };
     const statusConfig = config[status as keyof typeof config] || config.safe;
     return <Badge variant={statusConfig.variant}>{statusConfig.label}</Badge>;
+  };
+
+  const handleViewDetails = (comparison: ComparisonResult) => {
+    setSelectedComparison(comparison);
+    setIsDialogOpen(true);
   };
 
   return (
@@ -152,7 +166,13 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
                       })}
                     </TableCell>
                     <TableCell className="text-center">
-                      <Button variant="outline" size="sm" className="hover:bg-primary hover:text-primary-foreground transition-all">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="hover:bg-primary hover:text-primary-foreground transition-all"
+                        onClick={() => handleViewDetails(item)}
+                      >
+                        <Eye className="h-4 w-4 ml-1" />
                         عرض
                       </Button>
                     </TableCell>
@@ -163,6 +183,184 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
           </div>
         )}
       </CardContent>
+
+      {/* Dialog for viewing comparison details */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <FileText className="h-5 w-5 text-primary" />
+              </div>
+              تفاصيل المقارنة
+            </DialogTitle>
+            <DialogDescription>
+              معلومات مفصلة عن عملية المقارنة
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedComparison && (
+            <div className="space-y-6 mt-4">
+              {/* File info and status */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card className="border-0 bg-gradient-to-br from-primary/10 to-primary/5">
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 rounded-lg bg-primary/10">
+                        <FileText className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm text-muted-foreground mb-1">اسم الملف</p>
+                        <p className="font-semibold text-foreground break-words">
+                          {selectedComparison.compared_file_name}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-0 bg-gradient-to-br from-primary/10 to-primary/5">
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 rounded-lg bg-primary/10">
+                        {getStatusIcon(selectedComparison.status)}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm text-muted-foreground mb-1">حالة المقارنة</p>
+                        <div className="flex items-center gap-2">
+                          {getStatusBadge(selectedComparison.status)}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Statistics */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="p-4 border rounded-lg bg-gradient-to-br from-red-500/10 to-red-500/5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <TrendingUp className="h-4 w-4 text-red-600" />
+                    <p className="text-xs text-muted-foreground">أعلى تشابه</p>
+                  </div>
+                  <p className={cn(
+                    "text-2xl font-bold",
+                    selectedComparison.max_similarity_score >= 70 ? 'text-red-600' :
+                    selectedComparison.max_similarity_score >= 50 ? 'text-yellow-600' :
+                    'text-green-600'
+                  )}>
+                    {selectedComparison.max_similarity_score.toFixed(1)}%
+                  </p>
+                </div>
+
+                <div className="p-4 border rounded-lg bg-gradient-to-br from-blue-500/10 to-blue-500/5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <TrendingUp className="h-4 w-4 text-blue-600" />
+                    <p className="text-xs text-muted-foreground">متوسط التشابه</p>
+                  </div>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {selectedComparison.avg_similarity_score.toFixed(1)}%
+                  </p>
+                </div>
+
+                <div className="p-4 border rounded-lg bg-gradient-to-br from-purple-500/10 to-purple-500/5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <FileText className="h-4 w-4 text-purple-600" />
+                    <p className="text-xs text-muted-foreground">إجمالي التطابقات</p>
+                  </div>
+                  <p className="text-2xl font-bold text-purple-600">
+                    {selectedComparison.total_matches_found}
+                  </p>
+                </div>
+
+                <div className="p-4 border rounded-lg bg-gradient-to-br from-orange-500/10 to-orange-500/5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <AlertTriangle className="h-4 w-4 text-orange-600" />
+                    <p className="text-xs text-muted-foreground">تطابقات مشبوهة</p>
+                  </div>
+                  <p className="text-2xl font-bold text-orange-600">
+                    {selectedComparison.high_risk_matches}
+                  </p>
+                </div>
+              </div>
+
+              {/* Similar files list */}
+              {selectedComparison.matches && selectedComparison.matches.length > 0 && (
+                <Card className="border-0 bg-card/50">
+                  <CardHeader>
+                    <CardTitle className="text-base">الملفات المشابهة</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {selectedComparison.matches.slice(0, 10).map((match, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                        >
+                          <div className="flex items-center gap-3 flex-1">
+                            <div className={cn(
+                              "p-2 rounded-lg",
+                              match.similarity_score >= 70 ? "bg-red-500/10" :
+                              match.similarity_score >= 50 ? "bg-yellow-500/10" :
+                              "bg-green-500/10"
+                            )}>
+                              <FileText className={cn(
+                                "h-4 w-4",
+                                match.similarity_score >= 70 ? "text-red-600" :
+                                match.similarity_score >= 50 ? "text-yellow-600" :
+                                "text-green-600"
+                              )} />
+                            </div>
+                            <span className="text-sm font-medium truncate">
+                              {match.matched_file_name}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            {match.flagged && (
+                              <Badge variant="destructive" className="text-xs">
+                                مشبوه
+                              </Badge>
+                            )}
+                            <span className={cn(
+                              "text-sm font-bold",
+                              match.similarity_score >= 70 ? "text-red-600" :
+                              match.similarity_score >= 50 ? "text-yellow-600" :
+                              "text-green-600"
+                            )}>
+                              {match.similarity_score.toFixed(1)}%
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Processing time and date */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex items-center gap-3 p-4 border rounded-lg bg-muted/30">
+                  <Clock className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">وقت المعالجة</p>
+                    <p className="font-medium">{(selectedComparison.processing_time_ms / 1000).toFixed(2)} ثانية</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 p-4 border rounded-lg bg-muted/30">
+                  <Clock className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">تاريخ المقارنة</p>
+                    <p className="font-medium">
+                      {format(new Date(selectedComparison.created_at), 'dd/MM/yyyy - hh:mm a', { locale: ar })}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };
