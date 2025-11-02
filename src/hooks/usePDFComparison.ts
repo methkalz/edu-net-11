@@ -222,21 +222,29 @@ export const usePDFComparison = () => {
         },
       });
 
-      if (error) throw error;
-      
-      // التعامل مع حالة الملف المكرر (409)
-      if (!data?.success) {
-        const errorMsg = data?.error || 'Failed to add to repository';
+      // التعامل مع خطأ 409 (الملف موجود بالفعل)
+      if (error) {
+        // التحقق من response body للحصول على التفاصيل
+        const responseText = await error.context?.body?.text();
+        let errorData;
+        try {
+          errorData = responseText ? JSON.parse(responseText) : null;
+        } catch {}
         
-        // إذا كان الملف موجود بالفعل
-        if (errorMsg.includes('already exists') || errorMsg.includes('identical content')) {
+        // إذا كان الخطأ بسبب ملف مكرر
+        if (errorData?.error?.includes('already exists') || 
+            errorData?.error?.includes('identical content')) {
           toast.warning('هذا الملف موجود بالفعل في المستودع', {
             description: 'تم العثور على نفس المحتوى في المستودع'
           });
           return false;
         }
         
-        throw new Error(errorMsg);
+        throw error;
+      }
+      
+      if (!data?.success) {
+        throw new Error(data?.error || 'Failed to add to repository');
       }
 
       toast.success('تمت إضافة الملف للمستودع بنجاح');
@@ -244,10 +252,16 @@ export const usePDFComparison = () => {
     } catch (error: any) {
       console.error('Add to repository error:', error);
       
-      // عدم عرض خطأ إذا كان الملف مكرر (تم معالجته أعلاه)
-      if (!error.message?.includes('already exists') && !error.message?.includes('identical content')) {
-        toast.error('فشلت الإضافة: ' + error.message);
+      // التحقق من رسالة الخطأ لتحديد إذا كان ملف مكرر
+      const errorMessage = error.message || '';
+      if (errorMessage.includes('already exists') || 
+          errorMessage.includes('identical content') ||
+          errorMessage.includes('409')) {
+        // تم معالجته أعلاه، لا داعي لعرض رسالة خطأ
+        return false;
       }
+      
+      toast.error('فشلت الإضافة للمستودع');
       return false;
     } finally {
       setIsLoading(false);
