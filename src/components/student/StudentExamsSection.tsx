@@ -42,6 +42,7 @@ export const StudentExamsSection = () => {
   
   const availableExams = exams.filter(
     exam => exam.can_start && 
+            exam.attempts_remaining > 0 &&
             (!exam.end_datetime || !isPast(new Date(exam.end_datetime))) && 
             (!exam.start_datetime || !isFuture(new Date(exam.start_datetime)))
   );
@@ -49,12 +50,14 @@ export const StudentExamsSection = () => {
   const upcomingExams = exams.filter(
     exam => exam.start_datetime && 
             isFuture(new Date(exam.start_datetime)) && 
-            exam.attempts_remaining > 0
+            exam.attempts_remaining > 0 &&
+            (!exam.end_datetime || !isPast(new Date(exam.end_datetime)))
   );
   
   const completedExams = exams.filter(
     exam => exam.attempts_used >= exam.max_attempts || 
-            (exam.end_datetime && isPast(new Date(exam.end_datetime)))
+            (exam.end_datetime && isPast(new Date(exam.end_datetime))) ||
+            (!exam.can_start && !(exam.start_datetime && isFuture(new Date(exam.start_datetime))))
   );
 
   return (
