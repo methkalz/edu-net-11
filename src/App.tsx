@@ -171,6 +171,10 @@ const App = () => {
                   path="/teacher/student-tracking" 
                   element={<Suspense fallback={<PageLoading message="جاري تحميل تتبع الطلاب..." />}><StudentTrackingPage /></Suspense>} 
                 />
+                <Route 
+                  path="/teacher/pdf-comparison" 
+                  element={<Suspense fallback={<PageLoading message="جاري تحميل مقارنة المشاريع..." />}>{React.createElement(React.lazy(() => import('@/pages/TeacherPDFComparisonPage')))}</Suspense>} 
+                />
                 
                 {/* PDF Comparison routes */}
                 <Route 

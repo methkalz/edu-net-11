@@ -38,7 +38,8 @@ import {
   Rocket,
   FolderOpen,
   ChevronDown,
-  Trophy
+  Trophy,
+  FileSearch
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -472,6 +473,7 @@ const TeacherDashboard: React.FC = () => {
     { name: 'إدارة الصفوف', icon: School, path: '/school-classes', color: 'orange' },
     { name: 'إدارة الطلاب', icon: Users, path: '/students', color: 'blue' },
     { name: 'تتبع تقدم الطلاب', icon: Activity, path: '/teacher/student-tracking', color: 'green' },
+    { name: 'مقارنة المشاريع PDF', icon: FileSearch, path: '/teacher/pdf-comparison', color: 'red' },
     { name: 'التقويم والأحداث', icon: Calendar, path: '/calendar-management', color: 'purple' }
   ];
 
