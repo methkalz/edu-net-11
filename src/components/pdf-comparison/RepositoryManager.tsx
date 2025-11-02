@@ -103,7 +103,7 @@ const RepositoryManager = ({ gradeLevel }: RepositoryManagerProps) => {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              {(stats?.totalFiles || 0).toLocaleString('ar-SA')}
+              {stats?.totalFiles || 0}
             </div>
           </CardContent>
         </Card>
@@ -114,7 +114,7 @@ const RepositoryManager = ({ gradeLevel }: RepositoryManagerProps) => {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              {(stats?.totalWords || 0).toLocaleString('ar-SA')}
+              {stats?.totalWords?.toLocaleString('ar-EG') || 0}
             </div>
           </CardContent>
         </Card>
@@ -204,7 +204,7 @@ const RepositoryManager = ({ gradeLevel }: RepositoryManagerProps) => {
                         {file.file_name}
                       </TableCell>
                       <TableCell className="text-center">
-                        {(file.word_count || 0).toLocaleString('ar-SA')}
+                        {file.word_count?.toLocaleString('ar-EG') || '-'}
                       </TableCell>
                       <TableCell className="text-center">
                         {(file.file_size / 1024 / 1024).toFixed(2)} MB
