@@ -20,16 +20,16 @@ export const StudentExamCard = ({ exam }: StudentExamCardProps) => {
   const [showResults, setShowResults] = useState(false);
 
   const getExamStatus = () => {
-    if (exam.can_start && !isPast(new Date(exam.end_datetime))) {
+    if (exam.can_start && exam.end_datetime && !isPast(new Date(exam.end_datetime))) {
       return { label: "متاح الآن", variant: "default" as const, color: "text-primary" };
     }
     if (exam.attempts_used >= exam.max_attempts) {
       return { label: "مكتمل", variant: "secondary" as const, color: "text-muted-foreground" };
     }
-    if (isPast(new Date(exam.end_datetime))) {
+    if (exam.end_datetime && isPast(new Date(exam.end_datetime))) {
       return { label: "منتهي", variant: "destructive" as const, color: "text-destructive" };
     }
-    if (isFuture(new Date(exam.start_datetime))) {
+    if (exam.start_datetime && isFuture(new Date(exam.start_datetime))) {
       return { label: "قريباً", variant: "outline" as const, color: "text-accent-foreground" };
     }
     return { label: "غير متاح", variant: "outline" as const, color: "text-muted-foreground" };
@@ -86,7 +86,7 @@ export const StudentExamCard = ({ exam }: StudentExamCardProps) => {
 
         {/* الوقت */}
         <div className="space-y-1 text-sm">
-          {exam.can_start && !isPast(new Date(exam.end_datetime)) && (
+          {exam.can_start && exam.end_datetime && !isPast(new Date(exam.end_datetime)) && (
             <div className="flex items-center gap-2 text-primary">
               <Calendar className="h-4 w-4" />
               <span>
@@ -97,7 +97,7 @@ export const StudentExamCard = ({ exam }: StudentExamCardProps) => {
               </span>
             </div>
           )}
-          {isFuture(new Date(exam.start_datetime)) && (
+          {exam.start_datetime && isFuture(new Date(exam.start_datetime)) && (
             <div className="flex items-center gap-2 text-accent-foreground">
               <Calendar className="h-4 w-4" />
               <span>
@@ -112,7 +112,7 @@ export const StudentExamCard = ({ exam }: StudentExamCardProps) => {
 
         {/* الأزرار */}
         <div className="flex gap-2">
-          {exam.can_start && !isPast(new Date(exam.end_datetime)) ? (
+          {exam.can_start && (!exam.end_datetime || !isPast(new Date(exam.end_datetime))) ? (
             <Button 
               onClick={handleStartExam} 
               className="w-full"
