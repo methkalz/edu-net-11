@@ -223,13 +223,31 @@ export const usePDFComparison = () => {
       });
 
       if (error) throw error;
-      if (!data?.success) throw new Error(data?.error || 'Failed to add to repository');
+      
+      // التعامل مع حالة الملف المكرر (409)
+      if (!data?.success) {
+        const errorMsg = data?.error || 'Failed to add to repository';
+        
+        // إذا كان الملف موجود بالفعل
+        if (errorMsg.includes('already exists') || errorMsg.includes('identical content')) {
+          toast.warning('هذا الملف موجود بالفعل في المستودع', {
+            description: 'تم العثور على نفس المحتوى في المستودع'
+          });
+          return false;
+        }
+        
+        throw new Error(errorMsg);
+      }
 
       toast.success('تمت إضافة الملف للمستودع بنجاح');
       return true;
     } catch (error: any) {
       console.error('Add to repository error:', error);
-      toast.error('فشلت الإضافة: ' + error.message);
+      
+      // عدم عرض خطأ إذا كان الملف مكرر (تم معالجته أعلاه)
+      if (!error.message?.includes('already exists') && !error.message?.includes('identical content')) {
+        toast.error('فشلت الإضافة: ' + error.message);
+      }
       return false;
     } finally {
       setIsLoading(false);
