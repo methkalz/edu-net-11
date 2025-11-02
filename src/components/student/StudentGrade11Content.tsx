@@ -17,6 +17,13 @@ import VideoInfoCard from '../content/VideoInfoCard';
 import type { Grade11LessonWithMedia } from '@/hooks/useStudentGrade11Content';
 import { useDebouncedCallback } from 'use-debounce';
 
+// Helper function to strip HTML tags from content
+const stripHtml = (html: string): string => {
+  const tmp = document.createElement('DIV');
+  tmp.innerHTML = html;
+  return tmp.textContent || tmp.innerText || '';
+};
+
 // ⚡ Memoized Lesson Card Component
 const LessonCard = React.memo<{
   lesson: Grade11LessonWithMedia;
@@ -36,7 +43,7 @@ const LessonCard = React.memo<{
         </h5>
         {lesson.content && (
           <p className="text-xs text-slate-500 mt-1 line-clamp-1">
-            {lesson.content.substring(0, 80)}...
+            {stripHtml(lesson.content).substring(0, 80)}...
           </p>
         )}
       </div>
