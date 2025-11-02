@@ -480,8 +480,7 @@ const Dashboard = () => {
       { name: 'إدارة التقويم والمناسبات', icon: CalendarIcon, path: '/calendar-management' }
     ] : []),
     ...(userProfile?.role === 'superadmin' || userProfile?.role === 'teacher' || userProfile?.role === 'school_admin' ? [
-      { name: 'مقارنة مشاريع الصف 12', icon: FileText, path: '/pdf-comparison/12' },
-      { name: 'مقارنة مشاريع الصف 10', icon: FileText, path: '/pdf-comparison/10' }
+      { name: 'مقارنة المشاريع PDF', icon: FileText, path: '/pdf-comparison' }
     ] : [])
   ];
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,12 +12,10 @@ import { useAuth } from '@/hooks/useAuth';
 import type { GradeLevel } from '@/hooks/usePDFComparison';
 
 const PDFComparisonPage = () => {
-  const { grade } = useParams<{ grade: '10' | '12' }>();
   const navigate = useNavigate();
   const { userProfile } = useAuth();
   const [activeTab, setActiveTab] = useState('compare');
-
-  const gradeLevel: GradeLevel = grade as GradeLevel || '12';
+  const [gradeLevel, setGradeLevel] = useState<GradeLevel>('12');
 
   useEffect(() => {
     // التحقق من صلاحية الوصول
@@ -25,14 +23,6 @@ const PDFComparisonPage = () => {
       navigate('/dashboard');
     }
   }, [userProfile, navigate]);
-
-  const pageTitle = gradeLevel === '12' 
-    ? 'مقارنة مشاريع الصف الثاني عشر' 
-    : 'مقارنة ميني بروجكت الصف العاشر';
-
-  const pageDescription = gradeLevel === '12'
-    ? 'قارن مشاريع الطلاب النهائية مع المستودع للتأكد من الأصالة'
-    : 'قارن مشاريع الميني بروجكت مع المستودع للكشف عن التشابه';
 
   return (
     <div className="container mx-auto py-6 px-4 max-w-7xl">
@@ -54,8 +44,10 @@ const PDFComparisonPage = () => {
             <FileSearch className="h-8 w-8 text-primary" />
           </div>
           <div className="flex-1">
-            <h1 className="text-3xl font-bold mb-2">{pageTitle}</h1>
-            <p className="text-muted-foreground">{pageDescription}</p>
+            <h1 className="text-3xl font-bold mb-2">مقارنة المشاريع PDF</h1>
+            <p className="text-muted-foreground">
+              قارن مشاريع الطلاب مع المستودع للتأكد من الأصالة والكشف عن التشابه
+            </p>
           </div>
         </div>
       </div>
@@ -64,10 +56,30 @@ const PDFComparisonPage = () => {
       <Alert className="mb-6">
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          <strong>كيفية الاستخدام:</strong> ارفع ملف أو عدة ملفات PDF للمقارنة مع المستودع. 
+          <strong>كيفية الاستخدام:</strong> اختر الصف الدراسي أولاً، ثم ارفع ملف أو عدة ملفات PDF للمقارنة مع المستودع. 
           سيقوم النظام بتحليل النصوص واكتشاف التشابه باستخدام خوارزميات متقدمة.
         </AlertDescription>
       </Alert>
+
+      {/* Grade Level Selection */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>اختيار الصف الدراسي</CardTitle>
+          <CardDescription>حدد الصف الذي تريد مقارنة مشاريعه</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={gradeLevel} onValueChange={(value) => setGradeLevel(value as GradeLevel)}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="12">
+                مشاريع نهاية - الصف الثاني عشر
+              </TabsTrigger>
+              <TabsTrigger value="10">
+                ميني بروجكت - الصف العاشر
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </CardContent>
+      </Card>
 
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
