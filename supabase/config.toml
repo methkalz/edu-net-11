@@ -14,3 +14,12 @@ verify_jwt = false
 
 [functions.track-login]
 verify_jwt = false
+
+[functions.pdf-extract-text]
+verify_jwt = true
+
+[functions.pdf-compare]
+verify_jwt = true
+
+[functions.pdf-add-to-repository]
+verify_jwt = true

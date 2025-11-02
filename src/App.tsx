@@ -166,11 +166,17 @@ const App = () => {
                    element={<Suspense fallback={<PageLoading message="جاري تحميل إدارة المشاريع المصغرة..." />}><Grade10ProjectsManagement /></Suspense>} 
                  />
                
-               {/* Teacher routes */}
-               <Route 
-                 path="/teacher/student-tracking" 
-                 element={<Suspense fallback={<PageLoading message="جاري تحميل تتبع الطلاب..." />}><StudentTrackingPage /></Suspense>} 
-               />
+                {/* Teacher routes */}
+                <Route 
+                  path="/teacher/student-tracking" 
+                  element={<Suspense fallback={<PageLoading message="جاري تحميل تتبع الطلاب..." />}><StudentTrackingPage /></Suspense>} 
+                />
+                
+                {/* PDF Comparison routes */}
+                <Route 
+                  path="/pdf-comparison/:grade" 
+                  element={<Suspense fallback={<PageLoading message="جاري تحميل مقارنة ملفات PDF..." />}>{React.createElement(React.lazy(() => import('@/pages/PDFComparisonPage')))}</Suspense>} 
+                />
                
                {/* Student Exam routes */}
                <Route 
