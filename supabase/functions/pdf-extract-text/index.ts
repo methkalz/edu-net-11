@@ -1,6 +1,7 @@
 import { serve } from 'https://deno.land/std@0.208.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
+import * as pdfjsLib from 'https://esm.sh/pdfjs-dist@3.11.174/build/pdf.min.js';
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -85,33 +86,29 @@ serve(async (req) => {
   }
 });
 
-// استخراج النص من PDF (نسخة مبسطة)
+// استخراج النص من PDF باستخدام pdfjs
 async function extractTextFromPDF(pdfBytes: Uint8Array): Promise<string> {
   try {
-    // تحويل إلى نص
-    const decoder = new TextDecoder('utf-8', { fatal: false });
-    let rawText = decoder.decode(pdfBytes);
-
-    // استخراج النص بين علامات stream و endstream
-    const textMatches = rawText.match(/BT\s+(.*?)\s+ET/gs);
-    if (!textMatches) {
-      // محاولة بديلة: البحث عن أي نص قابل للقراءة
-      const readableText = rawText.replace(/[^\x20-\x7E\u0600-\u06FF\s]/g, ' ');
-      return readableText;
+    // تحميل المستند
+    const loadingTask = pdfjsLib.getDocument({ data: pdfBytes });
+    const pdfDocument = await loadingTask.promise;
+    
+    let fullText = '';
+    
+    // استخراج النص من كل صفحة
+    for (let pageNum = 1; pageNum <= pdfDocument.numPages; pageNum++) {
+      const page = await pdfDocument.getPage(pageNum);
+      const textContent = await page.getTextContent();
+      
+      // تجميع النص من العناصر
+      const pageText = textContent.items
+        .map((item: any) => item.str || '')
+        .join(' ');
+      
+      fullText += pageText + '\n';
     }
-
-    let extractedText = '';
-    for (const match of textMatches) {
-      // استخراج النص من بين الأقواس
-      const textParts = match.match(/\((.*?)\)/g);
-      if (textParts) {
-        for (const part of textParts) {
-          extractedText += part.replace(/[()]/g, '') + ' ';
-        }
-      }
-    }
-
-    return extractedText || rawText.replace(/[^\x20-\x7E\u0600-\u06FF\s]/g, ' ');
+    
+    return fullText;
   } catch (error) {
     console.error('PDF extraction error:', error);
     throw new Error('Failed to extract text from PDF');
