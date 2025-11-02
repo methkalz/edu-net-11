@@ -52,28 +52,7 @@ serve(async (req) => {
 
     const { text, hash, wordCount } = await extractResponse.json();
 
-    // 2. فحص إذا كان الملف موجود بالفعل
-    const { data: existing } = await supabase
-      .from('pdf_comparison_repository')
-      .select('id')
-      .eq('text_hash', hash)
-      .single();
-
-    if (existing) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'File with identical content already exists in repository',
-          existingId: existing.id,
-        }),
-        {
-          status: 409,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
-    }
-
-    // 3. نسخ الملف إلى bucket المستودع المناسب
+    // 2. نسخ الملف إلى bucket المستودع المناسب
     const targetBucket = gradeLevel === '12' 
       ? 'pdf-comparison-grade12' 
       : 'pdf-comparison-grade10';
