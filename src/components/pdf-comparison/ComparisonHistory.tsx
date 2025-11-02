@@ -58,11 +58,16 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
   };
 
   return (
-    <Card>
+    <Card className="border-0 bg-card/50 backdrop-blur-sm hover:shadow-lg transition-all duration-300">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle>سجل المقارنات</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <FileText className="h-5 w-5 text-primary" />
+              </div>
+              سجل المقارنات
+            </CardTitle>
             <CardDescription>
               عرض جميع عمليات المقارنة السابقة
               {gradeLevel && ` للصف ${gradeLevel === '12' ? 'الثاني عشر' : 'العاشر'}`}
@@ -105,7 +110,7 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
               </TableHeader>
               <TableBody>
                 {history.map((item) => (
-                  <TableRow key={item.id}>
+                  <TableRow key={item.id} className="hover:bg-muted/50 transition-colors">
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <FileText className="h-4 w-4 text-muted-foreground" />
@@ -146,8 +151,8 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
                         locale: ar,
                       })}
                     </TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="sm">
+                    <TableCell className="text-center">
+                      <Button variant="outline" size="sm" className="hover:bg-primary hover:text-primary-foreground transition-all">
                         عرض
                       </Button>
                     </TableCell>

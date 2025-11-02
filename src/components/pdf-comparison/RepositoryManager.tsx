@@ -96,36 +96,51 @@ const RepositoryManager = ({ gradeLevel }: RepositoryManagerProps) => {
   return (
     <div className="space-y-6">
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription>إجمالي الملفات</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">
-              {stats?.totalFiles || 0}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent backdrop-blur-sm hover:shadow-xl transition-all duration-300">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-50" />
+          <CardContent className="p-6 relative">
+            <div className="flex flex-col items-center text-center space-y-3">
+              <div className="p-3 rounded-xl bg-primary/10 backdrop-blur-sm">
+                <Database className="h-7 w-7 text-primary" />
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground font-medium">إجمالي الملفات</p>
+                <p className="text-3xl font-bold bg-gradient-to-br from-primary to-primary/70 bg-clip-text text-transparent">
+                  {stats?.totalFiles || 0}
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription>الحجم الإجمالي</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">
-              {((stats?.totalSize || 0) / 1024 / 1024).toFixed(1)} MB
+        <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-green-500/10 via-green-500/5 to-transparent backdrop-blur-sm hover:shadow-xl transition-all duration-300">
+          <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent opacity-50" />
+          <CardContent className="p-6 relative">
+            <div className="flex flex-col items-center text-center space-y-3">
+              <div className="p-3 rounded-xl bg-green-500/10 backdrop-blur-sm">
+                <Database className="h-7 w-7 text-green-500" />
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground font-medium">الحجم الإجمالي</p>
+                <p className="text-3xl font-bold bg-gradient-to-br from-green-500 to-green-400 bg-clip-text text-transparent">
+                  {((stats?.totalSize || 0) / 1024 / 1024).toFixed(1)} MB
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
       {/* Files Table */}
-      <Card>
+      <Card className="border-0 bg-card/50 backdrop-blur-sm hover:shadow-lg transition-all duration-300">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>ملفات المستودع</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Database className="h-5 w-5 text-primary" />
+                ملفات المستودع
+              </CardTitle>
               <CardDescription>
                 الملفات المستخدمة كمرجع في عملية المقارنة
               </CardDescription>

@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Upload, FileText, X, Loader2 } from 'lucide-react';
 import { usePDFComparison, type GradeLevel, type ComparisonResult } from '@/hooks/usePDFComparison';
 import ComparisonResultCard from './ComparisonResultCard';
@@ -99,23 +99,23 @@ const ComparisonUploadZone = ({ gradeLevel }: ComparisonUploadZoneProps) => {
   return (
     <div className="space-y-6">
       {/* Dropzone */}
-      <div
-        {...getRootProps()}
-        className={`
-          border-2 border-dashed rounded-lg p-12 text-center cursor-pointer
-          transition-colors duration-200
-          ${isDragActive 
-            ? 'border-primary bg-primary/5' 
-            : 'border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50'
-          }
-          ${isComparing ? 'pointer-events-none opacity-50' : ''}
-        `}
+      <Card className={`
+        relative overflow-hidden border-2 border-dashed rounded-xl cursor-pointer
+        transition-all duration-300
+        ${isDragActive 
+          ? 'border-primary bg-gradient-to-br from-primary/10 to-primary/5 shadow-lg scale-[1.02]' 
+          : 'border-muted-foreground/25 hover:border-primary/50 bg-gradient-to-br from-muted/30 to-background hover:shadow-xl'
+        }
+        ${isComparing ? 'pointer-events-none opacity-50' : ''}
+      `}
+      {...getRootProps()}
       >
-        <input {...getInputProps()} />
-        <div className="flex flex-col items-center gap-4">
-          <div className="p-4 bg-primary/10 rounded-full">
-            <Upload className="h-8 w-8 text-primary" />
-          </div>
+        <CardContent className="p-12">
+          <input {...getInputProps()} />
+          <div className="flex flex-col items-center gap-4">
+            <div className="p-4 bg-gradient-to-br from-primary/20 to-primary/10 rounded-full backdrop-blur-sm shadow-lg">
+              <Upload className="h-8 w-8 text-primary" />
+            </div>
           
           {isDragActive ? (
             <p className="text-lg font-medium">أفلت الملفات هنا...</p>
@@ -134,16 +134,23 @@ const ComparisonUploadZone = ({ gradeLevel }: ComparisonUploadZoneProps) => {
               </Button>
             </>
           )}
-        </div>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Files List */}
       {files.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">
-              الملفات المحددة ({files.length})
-            </h3>
+        <Card className="border-0 bg-card/50 backdrop-blur-sm">
+          <CardContent className="p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <FileText className="h-5 w-5 text-primary" />
+                </div>
+                <h3 className="text-lg font-semibold">
+                  الملفات المحددة ({files.length})
+                </h3>
+              </div>
             <div className="flex gap-2">
               <Button
                 onClick={handleClear}
@@ -170,9 +177,9 @@ const ComparisonUploadZone = ({ gradeLevel }: ComparisonUploadZoneProps) => {
             </div>
           </div>
 
-          <div className="space-y-3">
-            {files.map((fileWithResult, index) => (
-              <Card key={index} className="p-4">
+            <div className="space-y-3">
+              {files.map((fileWithResult, index) => (
+                <Card key={index} className="p-4 border bg-background/50 hover:shadow-md transition-all duration-300">
                 <div className="space-y-3">
                   {/* File Info */}
                   <div className="flex items-start justify-between gap-3">
@@ -222,9 +229,10 @@ const ComparisonUploadZone = ({ gradeLevel }: ComparisonUploadZoneProps) => {
                   )}
                 </div>
               </Card>
-            ))}
-          </div>
-        </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

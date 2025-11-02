@@ -50,11 +50,17 @@ const ComparisonResultCard = ({ result }: ComparisonResultCardProps) => {
   const Icon = config.icon;
 
   return (
-    <Card className={cn('border-2', config.bgColor)}>
+    <Card className={cn('border-0 bg-gradient-to-br backdrop-blur-sm shadow-lg', config.bgColor)}>
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Icon className={cn('h-6 w-6', config.color)} />
+            <div className={cn('p-2 rounded-lg backdrop-blur-sm', 
+              result.status === 'flagged' ? 'bg-red-600/20' :
+              result.status === 'warning' ? 'bg-yellow-600/20' :
+              'bg-green-600/20'
+            )}>
+              <Icon className={cn('h-6 w-6', config.color)} />
+            </div>
             <div>
               <CardTitle className="text-base">نتيجة المقارنة</CardTitle>
               <Badge variant={config.badgeVariant} className="mt-1">
@@ -64,10 +70,15 @@ const ComparisonResultCard = ({ result }: ComparisonResultCardProps) => {
           </div>
 
           <div className="text-left">
-            <div className="text-3xl font-bold">
+            <div className={cn(
+              'text-3xl font-bold bg-gradient-to-br bg-clip-text text-transparent',
+              result.status === 'flagged' ? 'from-red-600 to-red-400' :
+              result.status === 'warning' ? 'from-yellow-600 to-yellow-400' :
+              'from-green-600 to-green-400'
+            )}>
               {result.max_similarity_score.toFixed(1)}%
             </div>
-            <div className="text-xs text-muted-foreground">
+            <div className="text-xs text-muted-foreground font-medium">
               أعلى نسبة تشابه
             </div>
           </div>
@@ -76,27 +87,35 @@ const ComparisonResultCard = ({ result }: ComparisonResultCardProps) => {
 
       <CardContent className="space-y-4">
         {/* Statistics */}
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <span className="text-muted-foreground">إجمالي التطابقات:</span>
-            <span className="font-medium mr-2">{result.total_matches_found}</span>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="p-3 rounded-lg bg-background/50 border">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">إجمالي التطابقات</span>
+              <span className="text-lg font-bold text-primary">{result.total_matches_found}</span>
+            </div>
           </div>
-          <div>
-            <span className="text-muted-foreground">تطابقات مشبوهة:</span>
-            <span className={cn(
-              "font-medium mr-2",
-              result.high_risk_matches > 0 ? 'text-red-600' : 'text-green-600'
-            )}>
-              {result.high_risk_matches}
-            </span>
+          <div className="p-3 rounded-lg bg-background/50 border">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">تطابقات مشبوهة</span>
+              <span className={cn(
+                "text-lg font-bold",
+                result.high_risk_matches > 0 ? 'text-red-600' : 'text-green-600'
+              )}>
+                {result.high_risk_matches}
+              </span>
+            </div>
           </div>
-          <div>
-            <span className="text-muted-foreground">متوسط التشابه:</span>
-            <span className="font-medium mr-2">{result.avg_similarity_score.toFixed(1)}%</span>
+          <div className="p-3 rounded-lg bg-background/50 border">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">متوسط التشابه</span>
+              <span className="text-lg font-bold text-yellow-600">{result.avg_similarity_score.toFixed(1)}%</span>
+            </div>
           </div>
-          <div>
-            <span className="text-muted-foreground">وقت المعالجة:</span>
-            <span className="font-medium mr-2">{(result.processing_time_ms / 1000).toFixed(1)}ث</span>
+          <div className="p-3 rounded-lg bg-background/50 border">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">وقت المعالجة</span>
+              <span className="text-lg font-bold text-purple-600">{(result.processing_time_ms / 1000).toFixed(1)}ث</span>
+            </div>
           </div>
         </div>
 
@@ -108,7 +127,7 @@ const ComparisonResultCard = ({ result }: ComparisonResultCardProps) => {
               {result.matches.slice(0, 10).map((match, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center justify-between p-3 bg-background rounded-lg border"
+                  className="flex items-center justify-between p-3 bg-background/80 rounded-lg border hover:shadow-md transition-all duration-200"
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
@@ -142,11 +161,13 @@ const ComparisonResultCard = ({ result }: ComparisonResultCardProps) => {
             )}
           </div>
         ) : (
-          <div className="text-center py-6 text-green-600 bg-green-50 rounded-lg">
-            <CheckCircle className="h-12 w-12 mx-auto mb-2" />
-            <p className="font-medium">لم يتم العثور على تشابه مع الملفات المخزنة</p>
-            <p className="text-sm text-muted-foreground mt-1">
-              هذا المشروع يبدو أصلياً
+          <div className="text-center py-8 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/20 dark:to-green-900/10 rounded-xl border-2 border-green-200 dark:border-green-800">
+            <div className="p-3 rounded-full bg-green-500/10 w-fit mx-auto mb-3">
+              <CheckCircle className="h-12 w-12 text-green-600" />
+            </div>
+            <p className="font-bold text-green-700 dark:text-green-400 text-lg">لم يتم العثور على تشابه مع الملفات المخزنة</p>
+            <p className="text-sm text-green-600 dark:text-green-500 mt-2">
+              هذا المشروع يبدو أصلياً ✓
             </p>
           </div>
         )}
