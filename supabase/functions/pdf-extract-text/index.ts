@@ -1,7 +1,8 @@
 import { serve } from 'https://deno.land/std@0.208.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
-import * as pdfjsLib from 'https://esm.sh/pdfjs-dist@3.11.174/build/pdf.min.js';
+// @deno-types="npm:@types/pdf-parse@1.1.4"
+import pdf from 'npm:pdf-parse@1.1.1';
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -86,29 +87,16 @@ serve(async (req) => {
   }
 });
 
-// استخراج النص من PDF باستخدام pdfjs
+// استخراج النص من PDF باستخدام pdf-parse
 async function extractTextFromPDF(pdfBytes: Uint8Array): Promise<string> {
   try {
-    // تحميل المستند
-    const loadingTask = pdfjsLib.getDocument({ data: pdfBytes });
-    const pdfDocument = await loadingTask.promise;
+    // تحويل Uint8Array إلى Buffer
+    const buffer = Buffer.from(pdfBytes);
     
-    let fullText = '';
+    // استخراج النص
+    const data = await pdf(buffer);
     
-    // استخراج النص من كل صفحة
-    for (let pageNum = 1; pageNum <= pdfDocument.numPages; pageNum++) {
-      const page = await pdfDocument.getPage(pageNum);
-      const textContent = await page.getTextContent();
-      
-      // تجميع النص من العناصر
-      const pageText = textContent.items
-        .map((item: any) => item.str || '')
-        .join(' ');
-      
-      fullText += pageText + '\n';
-    }
-    
-    return fullText;
+    return data.text;
   } catch (error) {
     console.error('PDF extraction error:', error);
     throw new Error('Failed to extract text from PDF');
