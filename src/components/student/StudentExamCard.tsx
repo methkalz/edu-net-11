@@ -126,6 +126,7 @@ export const StudentExamCard = ({ exam }: StudentExamCardProps) => {
               variant="outline" 
               className="w-full"
               size="sm"
+              disabled
             >
               عرض النتائج
             </Button>
