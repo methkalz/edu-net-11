@@ -100,56 +100,36 @@ const ComparisonUploadZone = ({ gradeLevel }: ComparisonUploadZoneProps) => {
     <div className="space-y-6">
       {/* Dropzone */}
       <Card className={`
-        relative overflow-hidden border-2 border-dashed rounded-2xl cursor-pointer
-        transition-all duration-500 group
+        relative overflow-hidden border-2 border-dashed rounded-xl cursor-pointer
+        transition-all duration-300
         ${isDragActive 
-          ? 'border-primary bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 shadow-2xl scale-[1.02]' 
-          : 'border-muted-foreground/30 hover:border-primary/60 bg-gradient-to-br from-card via-card/95 to-card/90 hover:shadow-xl'
+          ? 'border-primary bg-gradient-to-br from-primary/10 to-primary/5 shadow-lg scale-[1.02]' 
+          : 'border-muted-foreground/25 hover:border-primary/50 bg-gradient-to-br from-muted/30 to-background hover:shadow-xl'
         }
         ${isComparing ? 'pointer-events-none opacity-50' : ''}
       `}
       {...getRootProps()}
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-        <div className="absolute -top-20 -right-20 w-40 h-40 bg-primary/10 rounded-full blur-3xl group-hover:blur-2xl transition-all duration-500" />
-        <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-accent/10 rounded-full blur-3xl group-hover:blur-2xl transition-all duration-500" />
-        
-        <CardContent className="p-16 relative z-10">
+        <CardContent className="p-12">
           <input {...getInputProps()} />
-          <div className="flex flex-col items-center gap-6">
-            <div className="relative group-hover:scale-110 transition-transform duration-500">
-              <div className="absolute inset-0 bg-gradient-to-r from-primary to-accent rounded-full blur-xl opacity-50 group-hover:opacity-75 transition-opacity" />
-              <div className="relative p-6 bg-gradient-to-br from-primary/20 via-primary/15 to-primary/10 rounded-full backdrop-blur-sm shadow-lg">
-                <Upload className={`h-10 w-10 text-primary transition-transform duration-500 ${isDragActive ? 'scale-125' : ''}`} />
-              </div>
+          <div className="flex flex-col items-center gap-4">
+            <div className="p-4 bg-gradient-to-br from-primary/20 to-primary/10 rounded-full backdrop-blur-sm shadow-lg">
+              <Upload className="h-8 w-8 text-primary" />
             </div>
           
           {isDragActive ? (
-            <div className="text-center space-y-2 animate-pulse">
-              <p className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                أفلت الملفات هنا
-              </p>
-              <p className="text-muted-foreground">جاهز لاستقبال ملفات PDF</p>
-            </div>
+            <p className="text-lg font-medium">أفلت الملفات هنا...</p>
           ) : (
             <>
-              <div className="text-center space-y-3">
-                <p className="text-xl font-bold text-foreground">
+              <div>
+                <p className="text-lg font-medium mb-1">
                   اسحب وأفلت ملفات PDF هنا
                 </p>
-                <p className="text-sm text-muted-foreground max-w-md">
-                  قم برفع ملف واحد أو عدة ملفات للمقارنة مع المستودع
-                  <br />
-                  <span className="text-xs">(حد أقصى 50MB لكل ملف)</span>
+                <p className="text-sm text-muted-foreground">
+                  أو انقر للاختيار من جهازك (حد أقصى 50MB لكل ملف)
                 </p>
               </div>
-              <Button 
-                type="button" 
-                variant="outline" 
-                size="lg"
-                className="gap-2 hover:bg-primary hover:text-primary-foreground transition-all duration-300 shadow-md hover:shadow-lg"
-              >
-                <Upload className="h-4 w-4" />
+              <Button type="button" variant="outline">
                 اختيار الملفات
               </Button>
             </>
@@ -160,41 +140,30 @@ const ComparisonUploadZone = ({ gradeLevel }: ComparisonUploadZoneProps) => {
 
       {/* Files List */}
       {files.length > 0 && (
-        <Card className="border-0 bg-gradient-to-br from-card via-card/98 to-card/95 backdrop-blur-sm shadow-xl">
-          <CardContent className="p-6 space-y-6">
-            <div className="flex items-center justify-between pb-4 border-b border-border/50">
-              <div className="flex items-center gap-4">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary to-accent rounded-xl blur opacity-50" />
-                  <div className="relative p-3 rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 backdrop-blur-sm">
-                    <FileText className="h-6 w-6 text-primary" />
-                  </div>
+        <Card className="border-0 bg-card/50 backdrop-blur-sm">
+          <CardContent className="p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <FileText className="h-5 w-5 text-primary" />
                 </div>
-                <div>
-                  <h3 className="text-xl font-bold text-foreground">
-                    الملفات المحددة
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    {files.length} {files.length === 1 ? 'ملف' : 'ملفات'} جاهز للمقارنة
-                  </p>
-                </div>
+                <h3 className="text-lg font-semibold">
+                  الملفات المحددة ({files.length})
+                </h3>
               </div>
-            <div className="flex gap-3">
+            <div className="flex gap-2">
               <Button
                 onClick={handleClear}
                 variant="outline"
-                size="default"
+                size="sm"
                 disabled={isComparing}
-                className="hover:bg-destructive hover:text-destructive-foreground transition-all"
               >
-                <X className="h-4 w-4 ml-2" />
                 مسح الكل
               </Button>
               <Button
                 onClick={handleCompareAll}
                 disabled={isComparing || files.every(f => f.status === 'completed')}
-                size="default"
-                className="bg-gradient-to-r from-primary to-primary/90 hover:shadow-lg transition-all"
+                size="sm"
               >
                 {isComparing ? (
                   <>
@@ -202,83 +171,64 @@ const ComparisonUploadZone = ({ gradeLevel }: ComparisonUploadZoneProps) => {
                     جارٍ المقارنة...
                   </>
                 ) : (
-                  <>
-                    <Upload className="h-4 w-4 ml-2" />
-                    بدء المقارنة
-                  </>
+                  'بدء المقارنة'
                 )}
               </Button>
             </div>
           </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               {files.map((fileWithResult, index) => (
-                <Card 
-                  key={index} 
-                  className="relative overflow-hidden border-0 bg-gradient-to-br from-background via-background/95 to-background/90 hover:shadow-lg transition-all duration-300 group"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                  
-                  <CardContent className="p-5 relative z-10">
-                    <div className="space-y-4">
-                      {/* File Info */}
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex items-center gap-4 flex-1 min-w-0">
-                          <div className="p-3 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 backdrop-blur-sm">
-                            <FileText className="h-5 w-5 text-primary" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold truncate text-foreground">
-                              {fileWithResult.file.name}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              {(fileWithResult.file.size / 1024 / 1024).toFixed(2)} MB
-                            </p>
-                          </div>
-                        </div>
-                        
-                        {fileWithResult.status === 'pending' && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeFile(index)}
-                            disabled={isComparing}
-                            className="hover:bg-destructive/10 hover:text-destructive"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        )}
+                <Card key={index} className="p-4 border bg-background/50 hover:shadow-md transition-all duration-300">
+                <div className="space-y-3">
+                  {/* File Info */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">
+                          {fileWithResult.file.name}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {(fileWithResult.file.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
                       </div>
-
-                      {/* Progress Bar */}
-                      {fileWithResult.status === 'processing' && (
-                        <div className="space-y-3 p-4 rounded-xl bg-gradient-to-br from-primary/5 to-transparent">
-                          <Progress value={fileWithResult.progress} className="h-2" />
-                          <div className="flex items-center justify-center gap-2">
-                            <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                            <p className="text-sm font-medium text-foreground">
-                              جارٍ المعالجة... {fileWithResult.progress}%
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Result */}
-                      {fileWithResult.status === 'completed' && fileWithResult.result && (
-                        <div className="animate-fade-in">
-                          <ComparisonResultCard result={fileWithResult.result} />
-                        </div>
-                      )}
-
-                      {fileWithResult.status === 'error' && (
-                        <div className="text-sm text-destructive-foreground text-center p-4 bg-gradient-to-br from-destructive/10 to-destructive/5 rounded-xl border border-destructive/20">
-                          <p className="font-medium">⚠️ فشلت المقارنة لهذا الملف</p>
-                          <p className="text-xs mt-1 text-muted-foreground">يرجى المحاولة مرة أخرى</p>
-                        </div>
-                      )}
                     </div>
-                  </CardContent>
-                </Card>
+                    
+                    {fileWithResult.status === 'pending' && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeFile(index)}
+                        disabled={isComparing}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Progress Bar */}
+                  {fileWithResult.status === 'processing' && (
+                    <div className="space-y-2">
+                      <Progress value={fileWithResult.progress} />
+                      <p className="text-xs text-muted-foreground text-center">
+                        جارٍ المعالجة... {fileWithResult.progress}%
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Result */}
+                  {fileWithResult.status === 'completed' && fileWithResult.result && (
+                    <ComparisonResultCard result={fileWithResult.result} />
+                  )}
+
+                  {fileWithResult.status === 'error' && (
+                    <div className="text-sm text-red-600 text-center p-2 bg-red-50 rounded">
+                      فشلت المقارنة لهذا الملف
+                    </div>
+                  )}
+                </div>
+              </Card>
               ))}
             </div>
           </CardContent>
