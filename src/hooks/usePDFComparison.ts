@@ -207,42 +207,46 @@ export const usePDFComparison = () => {
         ? 'grade12_final_project' 
         : 'grade10_mini_project';
 
-      const { data, error } = await supabase.functions.invoke('pdf-add-to-repository', {
-        body: {
-          fileName: file.name,
-          filePath,
-          fileSize: file.size,
-          gradeLevel,
-          projectType,
-          sourceProjectId,
-          sourceProjectType,
-          userId: userProfile?.user_id,
-          schoolId: userProfile?.school_id,
-          bucket: 'pdf-comparison-temp',
-        },
-      });
-
-      // التعامل مع خطأ 409 (الملف موجود بالفعل)
-      if (error) {
-        // التحقق من response body للحصول على التفاصيل
-        const responseText = await error.context?.body?.text();
-        let errorData;
-        try {
-          errorData = responseText ? JSON.parse(responseText) : null;
-        } catch {}
-        
-        // إذا كان الخطأ بسبب ملف مكرر
-        if (errorData?.error?.includes('already exists') || 
-            errorData?.error?.includes('identical content')) {
-          toast.warning('هذا الملف موجود بالفعل في المستودع', {
-            description: 'تم العثور على نفس المحتوى في المستودع'
-          });
-          return false;
+      // استخدام fetch مباشرة للتعامل مع status codes بشكل أفضل
+      const session = await supabase.auth.getSession();
+      const response = await fetch(
+        `https://swlwhjnwycvjdhgclwlx.supabase.co/functions/v1/pdf-add-to-repository`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.data.session?.access_token}`,
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN3bHdoam53eWN2amRoZ2Nsd2x4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUzMDU4MzgsImV4cCI6MjA3MDg4MTgzOH0.whMWEn_UIrxBa2QbK1leY9QTr1jeTnkUUn3g50fAKus',
+          },
+          body: JSON.stringify({
+            fileName: file.name,
+            filePath,
+            fileSize: file.size,
+            gradeLevel,
+            projectType,
+            sourceProjectId,
+            sourceProjectType,
+            userId: userProfile?.user_id,
+            schoolId: userProfile?.school_id,
+            bucket: 'pdf-comparison-temp',
+          }),
         }
-        
-        throw error;
+      );
+
+      const data = await response.json();
+
+      // التعامل مع حالة الملف المكرر (409)
+      if (response.status === 409) {
+        toast.warning('هذا الملف موجود بالفعل في المستودع', {
+          description: 'تم العثور على نفس المحتوى في المستودع'
+        });
+        return false;
       }
-      
+
+      if (!response.ok) {
+        throw new Error(data?.error || 'Failed to add to repository');
+      }
+
       if (!data?.success) {
         throw new Error(data?.error || 'Failed to add to repository');
       }
@@ -251,16 +255,6 @@ export const usePDFComparison = () => {
       return true;
     } catch (error: any) {
       console.error('Add to repository error:', error);
-      
-      // التحقق من رسالة الخطأ لتحديد إذا كان ملف مكرر
-      const errorMessage = error.message || '';
-      if (errorMessage.includes('already exists') || 
-          errorMessage.includes('identical content') ||
-          errorMessage.includes('409')) {
-        // تم معالجته أعلاه، لا داعي لعرض رسالة خطأ
-        return false;
-      }
-      
       toast.error('فشلت الإضافة للمستودع');
       return false;
     } finally {
