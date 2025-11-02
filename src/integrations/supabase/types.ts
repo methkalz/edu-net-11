@@ -5919,23 +5919,30 @@ export type Database = {
       get_available_exams: {
         Args: { p_student_id: string }
         Returns: {
+          allow_review: boolean
           attempts_remaining: number
           attempts_used: number
           can_start: boolean
+          created_at: string
+          created_by: string
           description: string
           duration_minutes: number
-          end_date: string
-          exam_status: string
+          end_datetime: string
+          grade_levels: string[]
           id: string
           max_attempts: number
           passing_percentage: number
+          school_id: string
+          show_results_immediately: boolean
           shuffle_choices: boolean
           shuffle_questions: boolean
-          start_date: string
-          status: string
+          start_datetime: string
+          status: Database["public"]["Enums"]["exam_status"]
+          target_classes: string[]
           title: string
           total_points: number
           total_questions: number
+          updated_at: string
         }[]
       }
       get_available_grade_levels: {
