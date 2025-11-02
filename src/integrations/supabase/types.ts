@@ -4275,6 +4275,221 @@ export type Database = {
           },
         ]
       }
+      pdf_comparison_audit_log: {
+        Row: {
+          action_type: string
+          comparison_result_id: string | null
+          created_at: string | null
+          details: Json | null
+          id: string
+          ip_address: unknown
+          performed_by: string
+          user_agent: string | null
+        }
+        Insert: {
+          action_type: string
+          comparison_result_id?: string | null
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          ip_address?: unknown
+          performed_by: string
+          user_agent?: string | null
+        }
+        Update: {
+          action_type?: string
+          comparison_result_id?: string | null
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          ip_address?: unknown
+          performed_by?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pdf_comparison_audit_log_comparison_result_id_fkey"
+            columns: ["comparison_result_id"]
+            isOneToOne: false
+            referencedRelation: "pdf_comparison_results"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pdf_comparison_repository: {
+        Row: {
+          created_at: string | null
+          extracted_text: string | null
+          file_name: string
+          file_path: string
+          file_size: number | null
+          grade_level: string
+          id: string
+          language_detected: string | null
+          metadata: Json | null
+          project_type: string
+          school_id: string | null
+          source_project_id: string | null
+          source_project_type: string | null
+          text_embeddings: Json | null
+          text_hash: string | null
+          tfidf_vector: Json | null
+          updated_at: string | null
+          uploaded_by: string
+          word_count: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          extracted_text?: string | null
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          grade_level: string
+          id?: string
+          language_detected?: string | null
+          metadata?: Json | null
+          project_type: string
+          school_id?: string | null
+          source_project_id?: string | null
+          source_project_type?: string | null
+          text_embeddings?: Json | null
+          text_hash?: string | null
+          tfidf_vector?: Json | null
+          updated_at?: string | null
+          uploaded_by: string
+          word_count?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          extracted_text?: string | null
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          grade_level?: string
+          id?: string
+          language_detected?: string | null
+          metadata?: Json | null
+          project_type?: string
+          school_id?: string | null
+          source_project_id?: string | null
+          source_project_type?: string | null
+          text_embeddings?: Json | null
+          text_hash?: string | null
+          tfidf_vector?: Json | null
+          updated_at?: string | null
+          uploaded_by?: string
+          word_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pdf_comparison_repository_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pdf_comparison_repository_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "superadmin_school_stats"
+            referencedColumns: ["school_id"]
+          },
+        ]
+      }
+      pdf_comparison_results: {
+        Row: {
+          algorithm_used: string | null
+          avg_similarity_score: number | null
+          compared_extracted_text: string | null
+          compared_file_hash: string | null
+          compared_file_name: string
+          compared_file_path: string
+          comparison_type: string
+          created_at: string | null
+          grade_level: string
+          high_risk_matches: number | null
+          id: string
+          matches: Json
+          max_similarity_score: number | null
+          processing_time_ms: number | null
+          requested_by: string
+          review_notes: string | null
+          review_required: boolean | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          school_id: string | null
+          status: string | null
+          total_matches_found: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          algorithm_used?: string | null
+          avg_similarity_score?: number | null
+          compared_extracted_text?: string | null
+          compared_file_hash?: string | null
+          compared_file_name: string
+          compared_file_path: string
+          comparison_type: string
+          created_at?: string | null
+          grade_level: string
+          high_risk_matches?: number | null
+          id?: string
+          matches?: Json
+          max_similarity_score?: number | null
+          processing_time_ms?: number | null
+          requested_by: string
+          review_notes?: string | null
+          review_required?: boolean | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          school_id?: string | null
+          status?: string | null
+          total_matches_found?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          algorithm_used?: string | null
+          avg_similarity_score?: number | null
+          compared_extracted_text?: string | null
+          compared_file_hash?: string | null
+          compared_file_name?: string
+          compared_file_path?: string
+          comparison_type?: string
+          created_at?: string | null
+          grade_level?: string
+          high_risk_matches?: number | null
+          id?: string
+          matches?: Json
+          max_similarity_score?: number | null
+          processing_time_ms?: number | null
+          requested_by?: string
+          review_notes?: string | null
+          review_required?: boolean | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          school_id?: string | null
+          status?: string | null
+          total_matches_found?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pdf_comparison_results_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pdf_comparison_results_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "superadmin_school_stats"
+            referencedColumns: ["school_id"]
+          },
+        ]
+      }
       player_game_progress: {
         Row: {
           best_score: number | null
