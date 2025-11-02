@@ -1,8 +1,6 @@
 import { serve } from 'https://deno.land/std@0.208.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
-// @deno-types="npm:@types/pdf-parse@1.1.4"
-import pdf from 'npm:pdf-parse@1.1.1';
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -87,16 +85,33 @@ serve(async (req) => {
   }
 });
 
-// استخراج النص من PDF باستخدام pdf-parse
+// استخراج النص من PDF (نسخة مبسطة)
 async function extractTextFromPDF(pdfBytes: Uint8Array): Promise<string> {
   try {
-    // تحويل Uint8Array إلى Buffer
-    const buffer = Buffer.from(pdfBytes);
-    
-    // استخراج النص
-    const data = await pdf(buffer);
-    
-    return data.text;
+    // تحويل إلى نص
+    const decoder = new TextDecoder('utf-8', { fatal: false });
+    let rawText = decoder.decode(pdfBytes);
+
+    // استخراج النص بين علامات stream و endstream
+    const textMatches = rawText.match(/BT\s+(.*?)\s+ET/gs);
+    if (!textMatches) {
+      // محاولة بديلة: البحث عن أي نص قابل للقراءة
+      const readableText = rawText.replace(/[^\x20-\x7E\u0600-\u06FF\s]/g, ' ');
+      return readableText;
+    }
+
+    let extractedText = '';
+    for (const match of textMatches) {
+      // استخراج النص من بين الأقواس
+      const textParts = match.match(/\((.*?)\)/g);
+      if (textParts) {
+        for (const part of textParts) {
+          extractedText += part.replace(/[()]/g, '') + ' ';
+        }
+      }
+    }
+
+    return extractedText || rawText.replace(/[^\x20-\x7E\u0600-\u06FF\s]/g, ' ');
   } catch (error) {
     console.error('PDF extraction error:', error);
     throw new Error('Failed to extract text from PDF');
