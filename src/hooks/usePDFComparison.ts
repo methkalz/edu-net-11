@@ -291,14 +291,52 @@ export const usePDFComparison = () => {
   // حذف ملف من المستودع (للسوبر آدمن فقط)
   const deleteFromRepository = async (fileId: string): Promise<boolean> => {
     try {
-      const { error } = await supabase
+      // 1. جلب معلومات الملف قبل حذفه للتسجيل
+      const { data: fileData, error: fetchError } = await supabase
+        .from('pdf_comparison_repository')
+        .select('file_name, grade_level, project_type, word_count, file_size, uploaded_by')
+        .eq('id', fileId)
+        .single();
+
+      if (fetchError) {
+        console.error('Fetch file error:', fetchError);
+        throw new Error('فشل جلب معلومات الملف');
+      }
+
+      // 2. حذف الملف
+      const { error: deleteError } = await supabase
         .from('pdf_comparison_repository')
         .delete()
         .eq('id', fileId);
 
-      if (error) throw error;
+      if (deleteError) throw deleteError;
 
-      toast.success('تم حذف الملف من المستودع');
+      // 3. تسجيل الحدث في سجل الأحداث
+      try {
+        await supabase
+          .from('pdf_comparison_audit_log')
+          .insert({
+            action_type: 'repository_file_deleted',
+            performed_by: userProfile?.user_id || 'unknown',
+            details: {
+              file_id: fileId,
+              file_name: fileData.file_name,
+              grade_level: fileData.grade_level,
+              project_type: fileData.project_type,
+              word_count: fileData.word_count,
+              file_size: fileData.file_size,
+              original_uploader: fileData.uploaded_by,
+              deleted_at: new Date().toISOString(),
+            },
+          });
+      } catch (auditError) {
+        // لا نفشل العملية إذا فشل التسجيل
+        console.error('Audit log error:', auditError);
+      }
+
+      toast.success('تم حذف الملف من المستودع', {
+        description: `الملف: ${fileData.file_name}`,
+      });
       return true;
     } catch (error: any) {
       console.error('Delete error:', error);
