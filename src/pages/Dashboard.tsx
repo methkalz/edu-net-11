@@ -478,6 +478,10 @@ const Dashboard = () => {
       { name: 'إدارة الباقات', icon: Package, path: '/package-management' },
       { name: 'إدارة السنوات الدراسية', icon: Calendar, path: '/academic-years' },
       { name: 'إدارة التقويم والمناسبات', icon: CalendarIcon, path: '/calendar-management' }
+    ] : []),
+    ...(userProfile?.role === 'superadmin' || userProfile?.role === 'teacher' || userProfile?.role === 'school_admin' ? [
+      { name: 'مقارنة مشاريع الصف 12', icon: FileText, path: '/pdf-comparison/12' },
+      { name: 'مقارنة مشاريع الصف 10', icon: FileText, path: '/pdf-comparison/10' }
     ] : [])
   ];
 
