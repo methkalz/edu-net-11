@@ -96,7 +96,7 @@ const RepositoryManager = ({ gradeLevel }: RepositoryManagerProps) => {
   return (
     <div className="space-y-6">
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
           <CardHeader className="pb-3">
             <CardDescription>إجمالي الملفات</CardDescription>
@@ -104,17 +104,6 @@ const RepositoryManager = ({ gradeLevel }: RepositoryManagerProps) => {
           <CardContent>
             <div className="text-3xl font-bold">
               {stats?.totalFiles || 0}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription>إجمالي الكلمات</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">
-              {stats?.totalWords?.toLocaleString('en-US') || 0}
             </div>
           </CardContent>
         </Card>
@@ -189,7 +178,6 @@ const RepositoryManager = ({ gradeLevel }: RepositoryManagerProps) => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>اسم الملف</TableHead>
-                    <TableHead className="text-center">عدد الكلمات</TableHead>
                     <TableHead className="text-center">الحجم</TableHead>
                     <TableHead className="text-center">تاريخ الإضافة</TableHead>
                     {isSuperAdmin && (
@@ -202,9 +190,6 @@ const RepositoryManager = ({ gradeLevel }: RepositoryManagerProps) => {
                     <TableRow key={file.id}>
                       <TableCell className="font-medium max-w-[300px] truncate">
                         {file.file_name}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {file.word_count?.toLocaleString('en-US') || '-'}
                       </TableCell>
                       <TableCell className="text-center">
                         {(file.file_size / 1024 / 1024).toFixed(2)} MB
