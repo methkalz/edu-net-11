@@ -195,12 +195,15 @@ export const usePDFComparison = () => {
     gradeLevel: GradeLevel,
     sourceProjectId?: string
   ): Promise<boolean> => {
+    setIsLoading(true);
+    
     try {
-      setIsLoading(true);
-
       // رفع الملف أولاً
       const filePath = await uploadFile(file, gradeLevel);
-      if (!filePath) throw new Error('Failed to upload file');
+      if (!filePath) {
+        toast.error('فشل رفع الملف');
+        return false;
+      }
 
       const projectType: ProjectType = gradeLevel === '12' ? 'final_project' : 'mini_project';
       const sourceProjectType = gradeLevel === '12' 
@@ -209,53 +212,76 @@ export const usePDFComparison = () => {
 
       // استخدام fetch مباشرة للتعامل مع status codes بشكل أفضل
       const session = await supabase.auth.getSession();
-      const response = await fetch(
-        `https://swlwhjnwycvjdhgclwlx.supabase.co/functions/v1/pdf-add-to-repository`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.data.session?.access_token}`,
-            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN3bHdoam53eWN2amRoZ2Nsd2x4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUzMDU4MzgsImV4cCI6MjA3MDg4MTgzOH0.whMWEn_UIrxBa2QbK1leY9QTr1jeTnkUUn3g50fAKus',
-          },
-          body: JSON.stringify({
-            fileName: file.name,
-            filePath,
-            fileSize: file.size,
-            gradeLevel,
-            projectType,
-            sourceProjectId,
-            sourceProjectType,
-            userId: userProfile?.user_id,
-            schoolId: userProfile?.school_id,
-            bucket: 'pdf-comparison-temp',
-          }),
-        }
-      );
+      
+      let response;
+      try {
+        response = await fetch(
+          `https://swlwhjnwycvjdhgclwlx.supabase.co/functions/v1/pdf-add-to-repository`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.data.session?.access_token}`,
+              'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN3bHdoam53eWN2amRoZ2Nsd2x4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUzMDU4MzgsImV4cCI6MjA3MDg4MTgzOH0.whMWEn_UIrxBa2QbK1leY9QTr1jeTnkUUn3g50fAKus',
+            },
+            body: JSON.stringify({
+              fileName: file.name,
+              filePath,
+              fileSize: file.size,
+              gradeLevel,
+              projectType,
+              sourceProjectId,
+              sourceProjectType,
+              userId: userProfile?.user_id,
+              schoolId: userProfile?.school_id,
+              bucket: 'pdf-comparison-temp',
+            }),
+          }
+        );
+      } catch (fetchError) {
+        console.error('Fetch error:', fetchError);
+        toast.error('فشل الاتصال بالخادم');
+        return false;
+      }
 
-      const data = await response.json();
+      // قراءة الاستجابة
+      let data;
+      try {
+        data = await response.json();
+      } catch (jsonError) {
+        console.error('JSON parse error:', jsonError);
+        toast.error('خطأ في معالجة الاستجابة');
+        return false;
+      }
 
-      // التعامل مع حالة الملف المكرر (409)
+      // التعامل مع حالة الملف المكرر (409) - أولاً قبل أي شيء
       if (response.status === 409) {
-        toast.warning('هذا الملف موجود بالفعل في المستودع', {
-          description: 'تم العثور على نفس المحتوى في المستودع'
+        console.log('File already exists in repository (409)');
+        toast('هذا الملف موجود بالفعل في المستودع', {
+          description: 'تم العثور على نفس المحتوى مسبقاً'
         });
         return false;
       }
 
+      // التحقق من الأخطاء الأخرى
       if (!response.ok) {
-        throw new Error(data?.error || 'Failed to add to repository');
+        console.error('Response not ok:', response.status, data);
+        toast.error(data?.error || 'فشلت الإضافة للمستودع');
+        return false;
       }
 
       if (!data?.success) {
-        throw new Error(data?.error || 'Failed to add to repository');
+        console.error('Operation failed:', data);
+        toast.error(data?.error || 'فشلت الإضافة للمستودع');
+        return false;
       }
 
       toast.success('تمت إضافة الملف للمستودع بنجاح');
       return true;
+      
     } catch (error: any) {
       console.error('Add to repository error:', error);
-      toast.error('فشلت الإضافة للمستودع');
+      toast.error('حدث خطأ غير متوقع');
       return false;
     } finally {
       setIsLoading(false);

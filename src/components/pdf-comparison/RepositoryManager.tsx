@@ -79,13 +79,18 @@ const RepositoryManager = ({ gradeLevel }: RepositoryManagerProps) => {
       return;
     }
 
-    const success = await addToRepository(file, gradeLevel);
-    if (success) {
-      loadData();
+    try {
+      const success = await addToRepository(file, gradeLevel);
+      if (success) {
+        await loadData();
+      }
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      toast.error('حدث خطأ أثناء رفع الملف');
+    } finally {
+      // إعادة تعيين input
+      event.target.value = '';
     }
-    
-    // إعادة تعيين input
-    event.target.value = '';
   };
 
   return (
