@@ -72,63 +72,82 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
   };
 
   return (
-    <Card className="border-0 bg-card/50 backdrop-blur-sm hover:shadow-lg transition-all duration-300">
-      <CardHeader>
+    <Card className="relative border-0 bg-gradient-to-br from-card via-card/98 to-card/95 backdrop-blur-sm shadow-xl hover:shadow-2xl transition-all duration-500">
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 opacity-50" />
+      
+      <CardHeader className="relative z-10">
         <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <FileText className="h-5 w-5 text-primary" />
+          <div className="flex items-center gap-4">
+            <div className="relative group">
+              <div className="absolute inset-0 bg-gradient-to-r from-primary to-accent rounded-xl blur opacity-50 group-hover:opacity-75 transition-opacity" />
+              <div className="relative p-3 rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 backdrop-blur-sm">
+                <FileText className="h-6 w-6 text-primary" />
               </div>
-              سجل المقارنات
-            </CardTitle>
-            <CardDescription>
-              عرض جميع عمليات المقارنة السابقة
-              {gradeLevel && ` للصف ${gradeLevel === '12' ? 'الثاني عشر' : 'العاشر'}`}
-            </CardDescription>
+            </div>
+            <div>
+              <CardTitle className="text-xl font-bold flex items-center gap-2">
+                سجل المقارنات
+              </CardTitle>
+              <CardDescription className="mt-1 text-base">
+                عرض جميع عمليات المقارنة السابقة
+                {gradeLevel && ` للصف ${gradeLevel === '12' ? 'الثاني عشر' : 'العاشر'}`}
+              </CardDescription>
+            </div>
           </div>
           <Button
             variant="outline"
-            size="sm"
+            size="default"
             onClick={loadHistory}
             disabled={isLoading}
+            className="gap-2 hover:bg-primary hover:text-primary-foreground transition-all duration-300"
           >
-            <RefreshCw className={cn('h-4 w-4 ml-2', isLoading && 'animate-spin')} />
+            <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
             تحديث
           </Button>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="relative z-10">
         {isLoading ? (
-          <div className="text-center py-12">
-            <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-3 text-muted-foreground" />
-            <p className="text-muted-foreground">جارٍ تحميل السجل...</p>
+          <div className="text-center py-20">
+            <div className="relative mx-auto w-16 h-16 mb-4">
+              <div className="absolute inset-0 border-4 border-primary/20 rounded-full" />
+              <RefreshCw className="h-16 w-16 animate-spin text-primary" />
+            </div>
+            <p className="text-lg font-medium text-muted-foreground">جارٍ تحميل السجل...</p>
           </div>
         ) : history.length === 0 ? (
-          <div className="text-center py-12">
-            <FileText className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
-            <p className="text-muted-foreground">لا توجد مقارنات سابقة</p>
+          <div className="text-center py-20 bg-gradient-to-br from-muted/30 to-muted/10 rounded-2xl border-2 border-dashed border-muted-foreground/20">
+            <div className="p-4 rounded-full bg-muted/50 w-fit mx-auto mb-4">
+              <FileText className="h-16 w-16 text-muted-foreground/50" />
+            </div>
+            <p className="text-lg font-medium text-muted-foreground">لا توجد مقارنات سابقة</p>
+            <p className="text-sm text-muted-foreground/70 mt-2">قم برفع ملف للبدء</p>
           </div>
         ) : (
-          <div className="border rounded-lg">
+          <div className="border border-border/50 rounded-xl overflow-hidden bg-background/50">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>اسم الملف</TableHead>
-                  <TableHead className="text-center">الحالة</TableHead>
-                  <TableHead className="text-center">أعلى تشابه</TableHead>
-                  <TableHead className="text-center">عدد التطابقات</TableHead>
-                  <TableHead className="text-center">التاريخ</TableHead>
-                  <TableHead className="text-center">إجراءات</TableHead>
+                <TableRow className="bg-gradient-to-r from-muted/50 to-muted/30 hover:bg-muted/50">
+                  <TableHead className="font-bold">اسم الملف</TableHead>
+                  <TableHead className="text-center font-bold">الحالة</TableHead>
+                  <TableHead className="text-center font-bold">أعلى تشابه</TableHead>
+                  <TableHead className="text-center font-bold">عدد التطابقات</TableHead>
+                  <TableHead className="text-center font-bold">التاريخ</TableHead>
+                  <TableHead className="text-center font-bold">إجراءات</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {history.map((item) => (
-                  <TableRow key={item.id} className="hover:bg-muted/50 transition-colors">
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <FileText className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium truncate max-w-[300px]">
+                  <TableRow 
+                    key={item.id} 
+                    className="hover:bg-gradient-to-r hover:from-primary/5 hover:to-transparent transition-all duration-300 group"
+                  >
+                    <TableCell className="py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 group-hover:shadow-md transition-all">
+                          <FileText className="h-4 w-4 text-primary" />
+                        </div>
+                        <span className="font-medium truncate max-w-[300px] group-hover:text-primary transition-colors">
                           {item.compared_file_name}
                         </span>
                       </div>
@@ -140,20 +159,22 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
                       </div>
                     </TableCell>
                     <TableCell className="text-center">
-                      <span className={cn(
-                        'font-bold',
-                        item.max_similarity_score >= 70 ? 'text-red-600' :
-                        item.max_similarity_score >= 50 ? 'text-yellow-600' :
-                        'text-green-600'
-                      )}>
-                        {item.max_similarity_score.toFixed(1)}%
-                      </span>
+                      <div className="inline-flex items-center justify-center px-3 py-1.5 rounded-lg bg-gradient-to-br from-background to-muted/30">
+                        <span className={cn(
+                          'text-lg font-bold',
+                          item.max_similarity_score >= 70 ? 'text-red-600' :
+                          item.max_similarity_score >= 50 ? 'text-yellow-600' :
+                          'text-green-600'
+                        )}>
+                          {item.max_similarity_score.toFixed(1)}%
+                        </span>
+                      </div>
                     </TableCell>
                     <TableCell className="text-center">
-                      <div>
-                        <span className="font-medium">{item.total_matches_found}</span>
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="font-semibold text-lg">{item.total_matches_found}</span>
                         {item.high_risk_matches > 0 && (
-                          <Badge variant="destructive" className="mr-2 text-xs">
+                          <Badge variant="destructive" className="text-xs px-2 py-0.5">
                             {item.high_risk_matches} مشبوه
                           </Badge>
                         )}
@@ -169,10 +190,10 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="hover:bg-primary hover:text-primary-foreground transition-all"
+                        className="gap-2 hover:bg-gradient-to-r hover:from-primary hover:to-primary/90 hover:text-primary-foreground hover:shadow-lg transition-all duration-300"
                         onClick={() => handleViewDetails(item)}
                       >
-                        <Eye className="h-4 w-4 ml-1" />
+                        <Eye className="h-4 w-4" />
                         عرض
                       </Button>
                     </TableCell>
@@ -186,15 +207,18 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
 
       {/* Dialog for viewing comparison details */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" dir="rtl">
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto custom-scrollbar" dir="rtl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-xl">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <FileText className="h-5 w-5 text-primary" />
+            <DialogTitle className="flex items-center gap-3 text-2xl">
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-primary to-accent rounded-xl blur opacity-50" />
+                <div className="relative p-3 rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 backdrop-blur-sm">
+                  <FileText className="h-6 w-6 text-primary" />
+                </div>
               </div>
               تفاصيل المقارنة
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-base">
               معلومات مفصلة عن عملية المقارنة
             </DialogDescription>
           </DialogHeader>
