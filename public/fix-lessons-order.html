@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إعادة ترتيب الدروس - الصف الحادي عشر</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.2/dist/umd/supabase.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        .info-box {
+            background: #f0f9ff;
+            border-left: 4px solid #3b82f6;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .info-box h3 {
+            color: #1e40af;
+            margin-bottom: 10px;
+        }
+        .info-box ul {
+            color: #475569;
+            padding-right: 20px;
+            line-height: 1.8;
+        }
+        .warning-box {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .warning-box strong {
+            color: #b45309;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 16px 40px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-bottom: 20px;
+        }
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+        button:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+        #status {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 12px;
+            display: none;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        .success {
+            background: #d1fae5;
+            color: #065f46;
+            border-left: 4px solid #10b981;
+        }
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+        }
+        .loading {
+            background: #e0e7ff;
+            color: #3730a3;
+            border-left: 4px solid #6366f1;
+        }
+        .progress {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 إعادة ترتيب دروس الصف الحادي عشر</h1>
+        <p class="subtitle">أداة تلقائية لإصلاح ترقيم الدروس</p>
+        
+        <div class="info-box">
+            <h3>📋 ماذا ستفعل هذه الأداة؟</h3>
+            <ul>
+                <li>إعادة ترقيم جميع الدروس بالتسلسل (1, 2, 3...)</li>
+                <li>الحفاظ على الترتيب الحالي للدروس كما هو</li>
+                <li>إصلاح القيم المتكررة والخاطئة في order_index</li>
+                <li>تحديث 277 درس تلقائياً</li>
+            </ul>
+        </div>
+
+        <div class="warning-box">
+            <strong>⚠️ تحذير:</strong> هذه العملية ستحدث تغييرات في قاعدة البيانات. تأكد من عمل نسخة احتياطية أولاً.
+        </div>
+
+        <button id="fixBtn" onclick="fixLessonsOrder()">
+            بدء إعادة الترتيب
+        </button>
+
+        <div id="status"></div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://swlwhjnwycvjdhgclwlx.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN3bHdoam53eWN2amRoZ2Nsd2x4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUzMDU4MzgsImV4cCI6MjA3MDg4MTgzOH0.whMWEn_UIrxBa2QbK1leY9QTr1jeTnkUUn3g50fAKus';
+        
+        const { createClient } = supabase;
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        function showStatus(message, type = 'loading') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = type;
+            statusDiv.innerHTML = message;
+            statusDiv.style.display = 'block';
+        }
+
+        async function fixLessonsOrder() {
+            const btn = document.getElementById('fixBtn');
+            btn.disabled = true;
+            
+            try {
+                showStatus('⏳ جاري جلب جميع الدروس من قاعدة البيانات...', 'loading');
+                
+                // جلب جميع الدروس النشطة مرتبة حسب الترتيب الحالي
+                const { data: lessons, error: fetchError } = await supabaseClient
+                    .from('grade11_lessons')
+                    .select('id, topic_id, order_index, created_at')
+                    .eq('is_active', true)
+                    .order('topic_id')
+                    .order('order_index')
+                    .order('created_at');
+
+                if (fetchError) throw fetchError;
+
+                showStatus(`✅ تم جلب ${lessons.length} درس<br>⏳ جاري إعادة ترقيم الدروس...`, 'loading');
+
+                // تجميع الدروس حسب الموضوع وإعادة ترقيمها
+                const topicLessons = {};
+                lessons.forEach(lesson => {
+                    if (!topicLessons[lesson.topic_id]) {
+                        topicLessons[lesson.topic_id] = [];
+                    }
+                    topicLessons[lesson.topic_id].push(lesson);
+                });
+
+                // إعادة ترقيم وتحديث كل درس
+                let updatedCount = 0;
+                let totalLessons = lessons.length;
+
+                for (const topicId in topicLessons) {
+                    const lessonsInTopic = topicLessons[topicId];
+                    
+                    for (let i = 0; i < lessonsInTopic.length; i++) {
+                        const lesson = lessonsInTopic[i];
+                        const newOrder = i + 1;
+                        
+                        // تحديث فقط إذا كان الترتيب مختلف
+                        if (lesson.order_index !== newOrder) {
+                            const { error: updateError } = await supabaseClient
+                                .from('grade11_lessons')
+                                .update({ order_index: newOrder })
+                                .eq('id', lesson.id);
+
+                            if (updateError) {
+                                console.error('خطأ في تحديث الدرس:', lesson.id, updateError);
+                            } else {
+                                updatedCount++;
+                            }
+                        }
+                        
+                        // تحديث التقدم
+                        const processed = Object.values(topicLessons)
+                            .flat()
+                            .indexOf(lesson) + 1;
+                        
+                        if (processed % 10 === 0 || processed === totalLessons) {
+                            showStatus(
+                                `⏳ جاري المعالجة...<br>` +
+                                `<div class="progress">تم معالجة ${processed} من ${totalLessons} درس (${Math.round(processed/totalLessons*100)}%)</div>`,
+                                'loading'
+                            );
+                        }
+                    }
+                }
+
+                showStatus(
+                    `✅ <strong>تم إعادة الترتيب بنجاح!</strong><br><br>` +
+                    `📊 الإحصائيات:<br>` +
+                    `• عدد الدروس المعالجة: ${totalLessons}<br>` +
+                    `• عدد الدروس المحدثة: ${updatedCount}<br>` +
+                    `• عدد المواضيع: ${Object.keys(topicLessons).length}<br><br>` +
+                    `🎉 يمكنك الآن العودة إلى صفحة إدارة المحتوى وستجد الترتيب صحيحاً!`,
+                    'success'
+                );
+
+                btn.textContent = 'تم بنجاح ✓';
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showStatus(
+                    `❌ <strong>حدث خطأ:</strong><br>${error.message}<br><br>` +
+                    `يرجى المحاولة مرة أخرى أو الاتصال بالدعم الفني.`,
+                    'error'
+                );
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

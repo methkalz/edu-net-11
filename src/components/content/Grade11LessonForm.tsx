@@ -31,20 +31,40 @@ const Grade11LessonForm: React.FC<Grade11LessonFormProps> = ({
     topic_id: topicId,
     title: '',
     content: '',
-    order_index: 0
+    order_index: 1
   });
 
+  // حساب آخر order_index تلقائياً عند إضافة درس جديد
   useEffect(() => {
-    if (lesson) {
-      setFormData({
-        topic_id: lesson.topic_id,
-        title: lesson.title,
-        content: lesson.content || '',
-        order_index: lesson.order_index
-      });
-    } else if (topicId) {
-      setFormData(prev => ({ ...prev, topic_id: topicId }));
-    }
+    const fetchNextOrder = async () => {
+      if (lesson) {
+        setFormData({
+          topic_id: lesson.topic_id,
+          title: lesson.title,
+          content: lesson.content || '',
+          order_index: lesson.order_index
+        });
+      } else if (topicId) {
+        try {
+          const { supabase } = await import('@/integrations/supabase/client');
+          const { data } = await supabase
+            .from('grade11_lessons')
+            .select('order_index')
+            .eq('topic_id', topicId)
+            .eq('is_active', true)
+            .order('order_index', { ascending: false })
+            .limit(1)
+            .single();
+          
+          const nextOrder = data ? data.order_index + 1 : 1;
+          setFormData(prev => ({ ...prev, topic_id: topicId, order_index: nextOrder }));
+        } catch {
+          setFormData(prev => ({ ...prev, topic_id: topicId, order_index: 1 }));
+        }
+      }
+    };
+    
+    fetchNextOrder();
   }, [lesson, topicId]);
 
   const handleSubmit = (e: React.FormEvent) => {

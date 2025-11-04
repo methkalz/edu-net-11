@@ -24,20 +24,39 @@ const Grade11TopicForm: React.FC<Grade11TopicFormProps> = ({
     section_id: sectionId || '',
     title: '',
     content: '',
-    order_index: 0
+    order_index: 1
   });
 
+  // حساب آخر order_index تلقائياً عند إضافة موضوع جديد
   useEffect(() => {
-    if (topic) {
-      setFormData({
-        section_id: topic.section_id,
-        title: topic.title,
-        content: topic.content || '',
-        order_index: topic.order_index
-      });
-    } else if (sectionId) {
-      setFormData(prev => ({ ...prev, section_id: sectionId }));
-    }
+    const fetchNextOrder = async () => {
+      if (topic) {
+        setFormData({
+          section_id: topic.section_id,
+          title: topic.title,
+          content: topic.content || '',
+          order_index: topic.order_index
+        });
+      } else if (sectionId) {
+        try {
+          const { supabase } = await import('@/integrations/supabase/client');
+          const { data } = await supabase
+            .from('grade11_topics')
+            .select('order_index')
+            .eq('section_id', sectionId)
+            .order('order_index', { ascending: false })
+            .limit(1)
+            .single();
+          
+          const nextOrder = data ? data.order_index + 1 : 1;
+          setFormData(prev => ({ ...prev, section_id: sectionId, order_index: nextOrder }));
+        } catch {
+          setFormData(prev => ({ ...prev, section_id: sectionId, order_index: 1 }));
+        }
+      }
+    };
+    
+    fetchNextOrder();
   }, [topic, sectionId]);
 
   const handleSubmit = (e: React.FormEvent) => {

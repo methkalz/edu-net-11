@@ -20,17 +20,37 @@ const Grade11SectionForm: React.FC<Grade11SectionFormProps> = ({
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    order_index: 0
+    order_index: 1
   });
 
+  // حساب آخر order_index تلقائياً عند إضافة قسم جديد
   useEffect(() => {
-    if (section) {
-      setFormData({
-        title: section.title,
-        description: section.description || '',
-        order_index: section.order_index
-      });
-    }
+    const fetchNextOrder = async () => {
+      if (section) {
+        setFormData({
+          title: section.title,
+          description: section.description || '',
+          order_index: section.order_index
+        });
+      } else {
+        try {
+          const { supabase } = await import('@/integrations/supabase/client');
+          const { data } = await supabase
+            .from('grade11_sections')
+            .select('order_index')
+            .order('order_index', { ascending: false })
+            .limit(1)
+            .single();
+          
+          const nextOrder = data ? data.order_index + 1 : 1;
+          setFormData(prev => ({ ...prev, order_index: nextOrder }));
+        } catch {
+          setFormData(prev => ({ ...prev, order_index: 1 }));
+        }
+      }
+    };
+    
+    fetchNextOrder();
   }, [section]);
 
   const handleSubmit = (e: React.FormEvent) => {
