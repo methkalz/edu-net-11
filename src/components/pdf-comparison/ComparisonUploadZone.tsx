@@ -7,6 +7,8 @@ import { Upload, FileText, X, Loader2 } from 'lucide-react';
 import { usePDFComparison, type GradeLevel, type ComparisonResult } from '@/hooks/usePDFComparison';
 import ComparisonResultCard from './ComparisonResultCard';
 import { toast } from 'sonner';
+import { DevErrorDisplay } from '@/components/error/DevErrorDisplay';
+import { handleError } from '@/lib/error-handling';
 
 interface ComparisonUploadZoneProps {
   gradeLevel: GradeLevel;
@@ -17,12 +19,19 @@ interface FileWithResult {
   result?: ComparisonResult | null;
   progress: number;
   status: 'pending' | 'processing' | 'completed' | 'error';
+  error?: {
+    message: string;
+    code?: string;
+    details?: Record<string, unknown>;
+    phase?: 'upload' | 'extraction' | 'comparison';
+  };
 }
 
 const ComparisonUploadZone = ({ gradeLevel }: ComparisonUploadZoneProps) => {
   const { compareFile, isLoading } = usePDFComparison();
   const [files, setFiles] = useState<FileWithResult[]>([]);
   const [isComparing, setIsComparing] = useState(false);
+  const [globalError, setGlobalError] = useState<Error | null>(null);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const newFiles: FileWithResult[] = acceptedFiles.map(file => ({
@@ -75,16 +84,46 @@ const ComparisonUploadZone = ({ gradeLevel }: ComparisonUploadZoneProps) => {
           }
         );
 
-        setFiles(prev => prev.map((f, idx) => 
-          idx === i 
-            ? { ...f, result, status: 'completed' as const, progress: 100 } 
-            : f
-        ));
+        if (result.success) {
+          setFiles(prev => prev.map((f, idx) => 
+            idx === i 
+              ? { ...f, result: result.data, status: 'completed' as const, progress: 100 } 
+              : f
+          ));
+        } else {
+          throw new Error(result.error || 'فشلت المقارنة');
+        }
       } catch (error) {
-        console.error('Comparison error:', error);
+        const appError = handleError(error, {
+          context: 'ComparisonUploadZone.handleCompareAll',
+          fileName: fileWithResult.file.name,
+          fileSize: fileWithResult.file.size,
+          gradeLevel,
+          fileIndex: i
+        });
+
+        console.error('❌ [PDF Comparison] Detailed error:', {
+          fileName: fileWithResult.file.name,
+          fileSize: fileWithResult.file.size,
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+          timestamp: new Date().toISOString()
+        });
+
         setFiles(prev => prev.map((f, idx) => 
-          idx === i ? { ...f, status: 'error' as const } : f
+          idx === i ? { 
+            ...f, 
+            status: 'error' as const,
+            error: {
+              message: error instanceof Error ? error.message : 'خطأ غير معروف',
+              code: appError.code,
+              details: appError.details,
+              phase: 'comparison'
+            }
+          } : f
         ));
+        
+        setGlobalError(error instanceof Error ? error : new Error(String(error)));
       }
     }
 
@@ -98,6 +137,18 @@ const ComparisonUploadZone = ({ gradeLevel }: ComparisonUploadZoneProps) => {
 
   return (
     <div className="space-y-6">
+      {/* Development Error Display */}
+      {import.meta.env.DEV && globalError && (
+        <DevErrorDisplay 
+          error={globalError}
+          context={{
+            component: 'ComparisonUploadZone',
+            gradeLevel,
+            filesCount: files.length,
+            isComparing
+          }}
+        />
+      )}
       {/* Dropzone */}
       <Card className={`
         relative overflow-hidden border-2 border-dashed rounded-2xl cursor-pointer
@@ -271,9 +322,35 @@ const ComparisonUploadZone = ({ gradeLevel }: ComparisonUploadZoneProps) => {
                       )}
 
                       {fileWithResult.status === 'error' && (
-                        <div className="text-sm text-destructive-foreground text-center p-4 bg-gradient-to-br from-destructive/10 to-destructive/5 rounded-xl border border-destructive/20">
-                          <p className="font-medium">⚠️ فشلت المقارنة لهذا الملف</p>
-                          <p className="text-xs mt-1 text-muted-foreground">يرجى المحاولة مرة أخرى</p>
+                        <div className="space-y-3">
+                          <div className="text-sm text-destructive-foreground text-center p-4 bg-gradient-to-br from-destructive/10 to-destructive/5 rounded-xl border border-destructive/20">
+                            <p className="font-medium">⚠️ فشلت المقارنة لهذا الملف</p>
+                            <p className="text-xs mt-1 text-muted-foreground">
+                              {fileWithResult.error?.message || 'يرجى المحاولة مرة أخرى'}
+                            </p>
+                            {import.meta.env.DEV && fileWithResult.error && (
+                              <div className="mt-3 text-right">
+                                <details className="text-xs">
+                                  <summary className="cursor-pointer font-medium hover:text-destructive">
+                                    تفاصيل الخطأ (بيئة التطوير)
+                                  </summary>
+                                  <div className="mt-2 p-3 bg-background/50 rounded-lg space-y-2">
+                                    {fileWithResult.error.code && (
+                                      <p><strong>رمز الخطأ:</strong> {fileWithResult.error.code}</p>
+                                    )}
+                                    {fileWithResult.error.phase && (
+                                      <p><strong>مرحلة الخطأ:</strong> {fileWithResult.error.phase}</p>
+                                    )}
+                                    {fileWithResult.error.details && (
+                                      <pre className="text-[10px] overflow-auto max-h-32">
+                                        {JSON.stringify(fileWithResult.error.details, null, 2)}
+                                      </pre>
+                                    )}
+                                  </div>
+                                </details>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>

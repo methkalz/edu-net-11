@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from './useAuth';
+import { handleError } from '@/lib/error-handling';
 
 export type GradeLevel = '10' | '12';
 export type ProjectType = 'mini_project' | 'final_project';
@@ -53,6 +54,14 @@ export const usePDFComparison = () => {
   const uploadFile = async (file: File, gradeLevel: GradeLevel): Promise<string | null> => {
     try {
       setIsLoading(true);
+      
+      console.log('📤 [PDF Upload] Starting upload:', {
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+        gradeLevel
+      });
+      
       const fileName = `${Date.now()}_${file.name}`;
       
       const { data, error } = await supabase.storage
@@ -61,12 +70,26 @@ export const usePDFComparison = () => {
           contentType: 'application/pdf',
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ [PDF Upload] Storage error:', error);
+        handleError(error, {
+          fileName: file.name,
+          fileSize: file.size,
+          bucket: 'pdf-comparison-temp'
+        });
+        throw error;
+      }
 
+      console.log('✅ [PDF Upload] Upload successful:', data.path);
       setUploadProgress(100);
       return data.path;
+      
     } catch (error: any) {
-      console.error('Upload error:', error);
+      console.error('❌ [PDF Upload] Fatal error:', {
+        fileName: file.name,
+        error: error.message,
+        stack: error.stack
+      });
       toast.error('فشل رفع الملف: ' + error.message);
       return null;
     } finally {
@@ -80,18 +103,36 @@ export const usePDFComparison = () => {
     file: File,
     gradeLevel: GradeLevel,
     onProgress?: (progress: number) => void
-  ): Promise<ComparisonResult | null> => {
+  ): Promise<{ success: boolean; data?: ComparisonResult; error?: string; phase?: string }> => {
+    let currentPhase = 'initialization';
+    
     try {
       setIsLoading(true);
       onProgress?.(10);
 
+      console.log('🔵 [PDF Comparison] Starting comparison:', {
+        fileName: file.name,
+        fileSize: file.size,
+        gradeLevel,
+        timestamp: new Date().toISOString()
+      });
+
       // 1. رفع الملف
-      const filePath = await uploadFile(file, gradeLevel);
-      if (!filePath) throw new Error('Failed to upload file');
+      currentPhase = 'upload';
+      console.log('📤 [PDF Comparison] Phase: Upload');
       
+      const filePath = await uploadFile(file, gradeLevel);
+      if (!filePath) {
+        throw new Error('Failed to upload file - no file path returned');
+      }
+      
+      console.log('✅ [PDF Comparison] Upload successful:', filePath);
       onProgress?.(30);
 
       // 2. استخراج النص
+      currentPhase = 'extraction';
+      console.log('📄 [PDF Comparison] Phase: Text extraction');
+      
       const { data: extractData, error: extractError } = await supabase.functions.invoke(
         'pdf-extract-text',
         {
@@ -102,12 +143,32 @@ export const usePDFComparison = () => {
         }
       );
 
-      if (extractError) throw extractError;
-      if (!extractData?.success) throw new Error(extractData?.error || 'Extraction failed');
+      if (extractError) {
+        console.error('❌ [PDF Comparison] Extraction error:', extractError);
+        handleError(extractError, {
+          phase: 'extraction',
+          fileName: file.name,
+          filePath
+        });
+        throw extractError;
+      }
+      
+      if (!extractData?.success) {
+        const errorMsg = extractData?.error || 'Extraction failed';
+        console.error('❌ [PDF Comparison] Extraction failed:', errorMsg);
+        throw new Error(errorMsg);
+      }
 
+      console.log('✅ [PDF Comparison] Extraction successful:', {
+        textLength: extractData.text?.length,
+        hash: extractData.hash
+      });
       onProgress?.(60);
 
       // 3. المقارنة
+      currentPhase = 'comparison';
+      console.log('🔍 [PDF Comparison] Phase: Comparison');
+      
       const projectType: ProjectType = gradeLevel === '12' ? 'final_project' : 'mini_project';
       
       const { data: compareData, error: compareError } = await supabase.functions.invoke(
@@ -126,17 +187,55 @@ export const usePDFComparison = () => {
         }
       );
 
-      if (compareError) throw compareError;
-      if (!compareData?.success) throw new Error(compareData?.error || 'Comparison failed');
+      if (compareError) {
+        console.error('❌ [PDF Comparison] Comparison error:', compareError);
+        handleError(compareError, {
+          phase: 'comparison',
+          fileName: file.name,
+          filePath,
+          gradeLevel,
+          projectType
+        });
+        throw compareError;
+      }
+      
+      if (!compareData?.success) {
+        const errorMsg = compareData?.error || 'Comparison failed';
+        console.error('❌ [PDF Comparison] Comparison failed:', errorMsg);
+        throw new Error(errorMsg);
+      }
 
+      console.log('✅ [PDF Comparison] Comparison successful:', {
+        status: compareData.result?.status,
+        matchesFound: compareData.result?.total_matches_found
+      });
       onProgress?.(100);
 
       toast.success('تمت المقارنة بنجاح');
-      return compareData.result;
+      return { success: true, data: compareData.result };
+      
     } catch (error: any) {
-      console.error('Comparison error:', error);
+      console.error('❌ [PDF Comparison] Fatal error:', {
+        phase: currentPhase,
+        fileName: file.name,
+        error: error.message,
+        stack: error.stack,
+        timestamp: new Date().toISOString()
+      });
+      
+      const appError = handleError(error, {
+        phase: currentPhase,
+        fileName: file.name,
+        fileSize: file.size,
+        gradeLevel
+      });
+      
       toast.error('فشلت المقارنة: ' + error.message);
-      return null;
+      return { 
+        success: false, 
+        error: error.message || 'حدث خطأ غير معروف',
+        phase: currentPhase
+      };
     } finally {
       setIsLoading(false);
     }
