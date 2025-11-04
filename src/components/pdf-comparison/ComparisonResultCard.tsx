@@ -98,96 +98,143 @@ const ComparisonResultCard = ({ result }: ComparisonResultCardProps) => {
       </CardHeader>
 
       <CardContent className="space-y-6 relative z-10">
-        {/* Statistics */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="relative overflow-hidden p-4 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 hover:shadow-lg transition-all duration-300">
-            <div className="absolute top-0 right-0 w-20 h-20 bg-primary/10 rounded-full blur-2xl" />
-            <div className="relative">
-              <span className="text-xs text-muted-foreground font-medium block mb-1">إجمالي التطابقات</span>
-              <span className="text-2xl font-bold text-primary">{result.total_matches_found}</span>
-            </div>
-          </div>
+        {/* Statistics Summary */}
+        <div className="relative overflow-hidden p-6 rounded-2xl bg-gradient-to-br from-background via-background/98 to-background/95 border shadow-lg">
+          <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.02]" />
+          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl" />
           
-          <div className="relative overflow-hidden p-4 rounded-xl bg-gradient-to-br from-red-500/10 to-red-500/5 border border-red-500/20 hover:shadow-lg transition-all duration-300">
-            <div className="absolute top-0 right-0 w-20 h-20 bg-red-500/10 rounded-full blur-2xl" />
-            <div className="relative">
-              <span className="text-xs text-muted-foreground font-medium block mb-1">تطابقات مشبوهة</span>
-              <span className={cn(
+          <div className="relative grid grid-cols-3 gap-6">
+            {/* Total Compared */}
+            <div className="text-center">
+              <div className="inline-flex p-2 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 mb-2">
+                <FileText className="h-5 w-5 text-primary" />
+              </div>
+              <div className="text-2xl font-bold text-foreground">{result.total_files_compared || result.total_matches_found}</div>
+              <div className="text-xs text-muted-foreground font-medium mt-1">إجمالي الملفات المفحوصة</div>
+            </div>
+            
+            {/* Matches Found */}
+            <div className="text-center border-x border-border/50">
+              <div className="inline-flex p-2 rounded-xl bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 mb-2">
+                <AlertCircle className="h-5 w-5 text-yellow-600" />
+              </div>
+              <div className="text-2xl font-bold text-yellow-600">{result.total_matches_found}</div>
+              <div className="text-xs text-muted-foreground font-medium mt-1">عدد التطابقات المكتشفة</div>
+            </div>
+            
+            {/* High Risk */}
+            <div className="text-center">
+              <div className="inline-flex p-2 rounded-xl bg-gradient-to-br from-red-500/10 to-red-500/5 mb-2">
+                <AlertTriangle className="h-5 w-5 text-red-600" />
+              </div>
+              <div className={cn(
                 "text-2xl font-bold",
                 result.high_risk_matches > 0 ? 'text-red-600' : 'text-green-600'
               )}>
                 {result.high_risk_matches}
-              </span>
-            </div>
-          </div>
-          
-          <div className="relative overflow-hidden p-4 rounded-xl bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 border border-yellow-500/20 hover:shadow-lg transition-all duration-300">
-            <div className="absolute top-0 right-0 w-20 h-20 bg-yellow-500/10 rounded-full blur-2xl" />
-            <div className="relative">
-              <span className="text-xs text-muted-foreground font-medium block mb-1">متوسط التشابه</span>
-              <span className="text-2xl font-bold text-yellow-600">{result.avg_similarity_score.toFixed(1)}%</span>
-            </div>
-          </div>
-          
-          <div className="relative overflow-hidden p-4 rounded-xl bg-gradient-to-br from-purple-500/10 to-purple-500/5 border border-purple-500/20 hover:shadow-lg transition-all duration-300">
-            <div className="absolute top-0 right-0 w-20 h-20 bg-purple-500/10 rounded-full blur-2xl" />
-            <div className="relative">
-              <span className="text-xs text-muted-foreground font-medium block mb-1">وقت المعالجة</span>
-              <span className="text-2xl font-bold text-purple-600">{(result.processing_time_ms / 1000).toFixed(1)}ث</span>
+              </div>
+              <div className="text-xs text-muted-foreground font-medium mt-1">تطابقات عالية الخطورة</div>
             </div>
           </div>
         </div>
 
-        {/* Matches List */}
+        {/* Top 5 Matches */}
         {result.matches && result.matches.length > 0 ? (
           <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent" />
-              <h4 className="font-semibold text-sm text-muted-foreground px-3">الملفات المتشابهة</h4>
-              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent" />
+                <h4 className="font-bold text-base text-foreground px-3 flex items-center gap-2">
+                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold">
+                    {Math.min(5, result.matches.length)}
+                  </span>
+                  أعلى التطابقات المكتشفة
+                </h4>
+                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent" />
+              </div>
             </div>
             
-            <div className="space-y-3 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
-              {result.matches.slice(0, 10).map((match, idx) => (
+            <div className="space-y-3">
+              {result.matches.map((match, idx) => (
                 <div
                   key={idx}
-                  className="relative overflow-hidden flex items-center justify-between p-4 bg-gradient-to-br from-background via-background/95 to-background/90 rounded-xl border hover:shadow-lg transition-all duration-300 group"
+                  className="relative overflow-hidden group"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                  
-                  <div className="flex items-center gap-3 flex-1 min-w-0 relative z-10">
-                    <div className="p-2 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5">
-                      <FileText className="h-4 w-4 text-primary" />
-                    </div>
-                    <span className="text-sm font-medium truncate">{match.matched_file_name}</span>
-                  </div>
-                  
-                  <div className="flex items-center gap-4 flex-shrink-0 relative z-10">
-                    <Progress 
-                      value={match.similarity_score} 
-                      className="w-28 h-2" 
-                    />
-                    <span className={cn(
-                      "font-bold text-sm w-16 text-left",
-                      match.flagged ? 'text-red-600' : 'text-muted-foreground'
+                  <div className="flex items-start gap-4 p-5 bg-gradient-to-br from-background via-background/98 to-background/95 rounded-2xl border hover:shadow-xl transition-all duration-300">
+                    {/* Rank Badge */}
+                    <div className={cn(
+                      "flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg shadow-md",
+                      idx === 0 && match.similarity_score >= 70 
+                        ? "bg-gradient-to-br from-red-600 to-red-500 text-white"
+                        : idx === 0
+                        ? "bg-gradient-to-br from-primary to-primary/80 text-primary-foreground"
+                        : "bg-gradient-to-br from-muted to-muted/80 text-muted-foreground"
                     )}>
-                      {match.similarity_score.toFixed(1)}%
-                    </span>
-                    {match.flagged && (
-                      <Badge variant="destructive" className="text-xs px-2 py-1">
-                        مشبوه
-                      </Badge>
-                    )}
+                      {idx + 1}
+                    </div>
+                    
+                    <div className="flex-1 min-w-0 space-y-3">
+                      {/* File Name */}
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-primary flex-shrink-0" />
+                        <span className="text-sm font-semibold text-foreground truncate">
+                          {match.matched_file_name}
+                        </span>
+                      </div>
+                      
+                      {/* Similarity Bar */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-muted-foreground font-medium">نسبة التشابه</span>
+                          <span className={cn(
+                            "font-bold text-base",
+                            match.flagged ? 'text-red-600' : 
+                            match.similarity_score >= 50 ? 'text-yellow-600' :
+                            'text-green-600'
+                          )}>
+                            {(match.similarity_score * 100).toFixed(1)}%
+                          </span>
+                        </div>
+                        <div className="relative h-3 bg-muted/30 rounded-full overflow-hidden">
+                          <div 
+                            className={cn(
+                              "h-full rounded-full transition-all duration-500",
+                              match.flagged 
+                                ? "bg-gradient-to-r from-red-600 to-red-500"
+                                : match.similarity_score >= 0.5
+                                ? "bg-gradient-to-r from-yellow-600 to-yellow-500"
+                                : "bg-gradient-to-r from-green-600 to-green-500"
+                            )}
+                            style={{ width: `${match.similarity_score * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                      
+                      {/* Method Info */}
+                      <div className="flex items-center gap-3 text-xs">
+                        {match.cosine_score !== undefined && (
+                          <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-500/10 text-blue-700 dark:text-blue-400">
+                            <span className="font-medium">Cosine:</span>
+                            <span className="font-bold">{(match.cosine_score * 100).toFixed(0)}%</span>
+                          </div>
+                        )}
+                        {match.jaccard_score !== undefined && (
+                          <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-purple-500/10 text-purple-700 dark:text-purple-400">
+                            <span className="font-medium">Jaccard:</span>
+                            <span className="font-bold">{(match.jaccard_score * 100).toFixed(0)}%</span>
+                          </div>
+                        )}
+                        {match.flagged && (
+                          <Badge variant="destructive" className="text-xs px-2 py-0.5 font-bold">
+                            ⚠️ يحتاج مراجعة
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
-            
-            {result.matches.length > 10 && (
-              <p className="text-xs text-muted-foreground text-center py-2 px-4 bg-muted/30 rounded-lg">
-                و {result.matches.length - 10} ملفات أخرى...
-              </p>
-            )}
           </div>
         ) : (
           <div className="relative overflow-hidden text-center py-12 bg-gradient-to-br from-green-50 via-green-100/80 to-green-50 dark:from-green-950/30 dark:via-green-900/20 dark:to-green-950/10 rounded-2xl border-2 border-green-200 dark:border-green-800 shadow-xl">

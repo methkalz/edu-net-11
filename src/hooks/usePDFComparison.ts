@@ -27,6 +27,7 @@ export interface ComparisonResult {
   max_similarity_score: number;
   avg_similarity_score: number;
   total_matches_found: number;
+  total_files_compared?: number;
   high_risk_matches: number;
   status: 'safe' | 'warning' | 'flagged';
   review_required: boolean;

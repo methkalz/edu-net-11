@@ -190,8 +190,15 @@ serve(async (req) => {
       }
     }
 
-    // 4. ترتيب النتائج
+    // 4. ترتيب النتائج وأخذ أعلى 5 فقط
     comparisons.sort((a, b) => b.similarity_score - a.similarity_score);
+    
+    const totalFilesCompared = repositoryFiles.length;
+    const totalMatchesFound = comparisons.length;
+    const highRiskCount = comparisons.filter(m => m.flagged).length;
+    
+    // الاحتفاظ بأعلى 5 تطابقات فقط للحفظ في قاعدة البيانات
+    const top5Matches = comparisons.slice(0, 5);
 
     const maxScore = comparisons.length > 0 
       ? Math.max(...comparisons.map(m => m.similarity_score)) 
@@ -200,15 +207,15 @@ serve(async (req) => {
     const avgScore = comparisons.length > 0
       ? comparisons.reduce((sum, m) => sum + m.similarity_score, 0) / comparisons.length
       : 0;
-
-    const highRiskCount = comparisons.filter(m => m.flagged).length;
+    
+    console.log(`📊 Results: ${totalMatchesFound} matches found, showing top ${top5Matches.length}`);
 
     // 5. تحديد الحالة
     let status = 'safe';
     if (maxScore >= 0.70) status = 'flagged';
     else if (maxScore >= 0.50) status = 'warning';
 
-    // 6. حفظ النتيجة
+    // 6. حفظ النتيجة (أعلى 5 تطابقات فقط)
     const result = {
       compared_file_name: fileName,
       compared_file_path: filePath,
@@ -216,17 +223,18 @@ serve(async (req) => {
       compared_extracted_text: fileText,
       grade_level: gradeLevel,
       comparison_type: comparisonType,
-      matches: comparisons,
+      matches: top5Matches,
       max_similarity_score: maxScore,
       avg_similarity_score: Math.round(avgScore * 100) / 100,
-      total_matches_found: comparisons.length,
+      total_matches_found: totalMatchesFound,
+      total_files_compared: totalFilesCompared,
       high_risk_matches: highRiskCount,
       status,
       review_required: status === 'flagged',
       requested_by: userId,
       school_id: schoolId,
       processing_time_ms: Date.now() - startTime,
-      algorithm_used: 'tfidf_cosine_jaccard',
+      algorithm_used: 'optimized_hybrid',
     };
 
     const { data: savedResult, error: saveError } = await supabase
