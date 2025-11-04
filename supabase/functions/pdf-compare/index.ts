@@ -29,46 +29,9 @@ serve(async (req) => {
       comparisonType,
       userId,
       schoolId,
-      wordCount,
     } = await req.json();
 
-    console.log(`[COMPARE] Starting - File: ${fileName} (Grade ${gradeLevel}), Words: ${wordCount || 'unknown'}`);
-    
-    // فحص عدد الكلمات
-    const MAX_WORD_COUNT = 100000;
-    const WARN_WORD_COUNT = 50000;
-    
-    if (wordCount && wordCount > MAX_WORD_COUNT) {
-      console.error(`[COMPARE] Text too long: ${wordCount} words`);
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: {
-            code: 'TEXT_TOO_LONG',
-            message: 'الملف يحتوي على نص طويل جداً للمقارنة',
-            message_en: 'Text too long for comparison',
-            details: {
-              wordCount,
-              maxAllowed: MAX_WORD_COUNT,
-              fileName,
-            },
-            suggestions: [
-              `قلل عدد الكلمات إلى أقل من ${MAX_WORD_COUNT.toLocaleString('ar-SA')}`,
-              'قسّم المشروع إلى ملفات أصغر',
-              'احذف الأجزاء غير الضرورية',
-            ]
-          }
-        }),
-        {
-          status: 413,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
-    }
-    
-    if (wordCount && wordCount > WARN_WORD_COUNT) {
-      console.log(`[COMPARE] Warning: Large text (${wordCount} words) - may take longer`);
-    }
+    console.log(`Starting comparison for ${fileName} (Grade ${gradeLevel})`);
 
     // 1. فحص التطابق التام (Hash comparison)
     const { data: exactMatch } = await supabase
@@ -79,7 +42,7 @@ serve(async (req) => {
       .single();
 
     if (exactMatch) {
-      console.log(`[COMPARE] ⚠️ Exact match found! File: ${exactMatch.file_name}`);
+      console.log('Exact match found!');
       
       const result = {
         compared_file_name: fileName,
@@ -132,7 +95,7 @@ serve(async (req) => {
       throw new Error(`Repository fetch error: ${repoError.message}`);
     }
 
-    console.log(`[COMPARE] Repository has ${repositoryFiles?.length || 0} files`);
+    console.log(`Comparing against ${repositoryFiles?.length || 0} repository files`);
 
     if (!repositoryFiles || repositoryFiles.length === 0) {
       // لا توجد ملفات للمقارنة
@@ -163,17 +126,10 @@ serve(async (req) => {
     }
 
     // 3. حساب التشابه مع كل ملف
-    console.log(`[COMPARE] Starting similarity calculations...`);
     const comparisons = [];
-    let processed = 0;
 
     for (const refFile of repositoryFiles) {
       if (!refFile.extracted_text) continue;
-      
-      processed++;
-      if (processed % 5 === 0) {
-        console.log(`[COMPARE] Progress: ${processed}/${repositoryFiles.length} files processed`);
-      }
 
       // حساب Cosine Similarity بناءً على TF-IDF
       const cosineSim = calculateCosineSimilarity(fileText, refFile.extracted_text);
@@ -185,7 +141,6 @@ serve(async (req) => {
       const finalScore = (cosineSim * 0.7 + jaccardSim * 0.3);
 
       if (finalScore > 0.30) {
-        console.log(`[COMPARE] Match found: ${refFile.file_name} - Similarity: ${(finalScore * 100).toFixed(1)}%`);
         comparisons.push({
           matched_file_id: refFile.id,
           matched_file_name: refFile.file_name,
@@ -197,8 +152,6 @@ serve(async (req) => {
         });
       }
     }
-    
-    console.log(`[COMPARE] Similarity calculations completed - ${comparisons.length} potential matches found`);
 
     // 4. ترتيب النتائج
     comparisons.sort((a, b) => b.similarity_score - a.similarity_score);
@@ -263,8 +216,7 @@ serve(async (req) => {
       },
     });
 
-    const totalTime = Date.now() - startTime;
-    console.log(`[COMPARE] ✅ Completed - Status: ${status}, Matches: ${comparisons.length}, Time: ${totalTime}ms`);
+    console.log(`Comparison completed in ${Date.now() - startTime}ms - Status: ${status}`);
 
     return new Response(
       JSON.stringify({ success: true, result: savedResult }),
@@ -273,52 +225,11 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error('[COMPARE] ❌ Error:', error);
-    
-    // التعرف على أخطاء Timeout/CPU
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    
-    if (errorMessage.includes('CPU') || errorMessage.includes('timeout') || errorMessage.includes('WORKER')) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: {
-            code: 'CPU_LIMIT_EXCEEDED',
-            message: 'الملف يتطلب وقت معالجة طويل جداً',
-            message_en: 'File requires too much processing time',
-            details: {
-              error: errorMessage,
-            },
-            suggestions: [
-              'قلل حجم الملف إلى أقل من 15MB',
-              'تأكد من أن الملف لا يحتوي على صور كثيرة',
-              'حاول تقسيم المشروع إلى ملفات أصغر',
-            ]
-          }
-        }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
-    }
-    
+    console.error('Error in pdf-compare function:', error);
     return new Response(
       JSON.stringify({
         success: false,
-        error: {
-          code: 'COMPARISON_FAILED',
-          message: 'فشلت عملية المقارنة',
-          message_en: 'Comparison operation failed',
-          details: {
-            error: errorMessage,
-          },
-          suggestions: [
-            'حاول مرة أخرى',
-            'تأكد من صلاحية الملف',
-            'إذا استمر الخطأ، تواصل مع الدعم الفني',
-          ]
-        }
+        error: error instanceof Error ? error.message : String(error),
       }),
       {
         status: 500,

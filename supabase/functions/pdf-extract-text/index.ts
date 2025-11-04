@@ -8,8 +8,6 @@ serve(async (req) => {
   }
 
   try {
-    const startTime = Date.now();
-    
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       throw new Error('Missing authorization header');
@@ -24,183 +22,38 @@ serve(async (req) => {
     const { filePath, bucket } = await req.json();
 
     if (!filePath || !bucket) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: {
-            code: 'MISSING_PARAMETERS',
-            message: 'معلومات الملف غير مكتملة',
-            message_en: 'Missing required parameters',
-            details: { filePath, bucket },
-          }
-        }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+      throw new Error('Missing required parameters: filePath and bucket');
     }
 
-    console.log(`[EXTRACT] Starting - File: ${bucket}/${filePath}`);
+    console.log(`Extracting text from: ${bucket}/${filePath}`);
 
     // تحميل الملف من Storage
-    console.log(`[EXTRACT] Downloading file...`);
     const { data: fileData, error: downloadError } = await supabase.storage
       .from(bucket)
       .download(filePath);
 
     if (downloadError) {
-      console.error('[EXTRACT] Download error:', downloadError);
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: {
-            code: 'DOWNLOAD_FAILED',
-            message: 'فشل تحميل الملف من التخزين',
-            message_en: 'Failed to download file',
-            details: { error: downloadError.message },
-          }
-        }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+      console.error('Download error:', downloadError);
+      throw new Error(`Failed to download file: ${downloadError.message}`);
     }
 
     // تحويل Blob إلى ArrayBuffer
     const arrayBuffer = await fileData.arrayBuffer();
     const uint8Array = new Uint8Array(arrayBuffer);
-    const fileSizeInMB = (uint8Array.length / 1024 / 1024).toFixed(2);
-    
-    console.log(`[EXTRACT] File downloaded - Size: ${fileSizeInMB}MB`);
-    
-    // فحص حجم الملف
-    const MAX_FILE_SIZE = 30 * 1024 * 1024; // 30MB
-    if (uint8Array.length > MAX_FILE_SIZE) {
-      console.error(`[EXTRACT] File too large: ${fileSizeInMB}MB`);
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: {
-            code: 'FILE_TOO_LARGE',
-            message: 'الملف كبير جداً للمعالجة',
-            message_en: 'File too large to process',
-            details: {
-              fileSize: uint8Array.length,
-              maxAllowed: MAX_FILE_SIZE,
-              fileSizeMB: parseFloat(fileSizeInMB),
-            },
-            suggestions: [
-              'قلل حجم الملف إلى أقل من 30MB',
-              'حاول ضغط الملف',
-              'قسّم المشروع إلى ملفات أصغر',
-            ]
-          }
-        }),
-        {
-          status: 413,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
-    }
 
-    // استخراج النص من PDF
-    console.log(`[EXTRACT] Extracting text...`);
-    const extractionStart = Date.now();
-    
-    let extractionResult;
-    try {
-      extractionResult = await extractTextFromPDF(uint8Array);
-      console.log(`[EXTRACT] Extraction method: ${extractionResult.extractionMethod}`);
-      console.log(`[EXTRACT] Pages: ${extractionResult.pageCount}`);
-    } catch (error) {
-      console.error('[EXTRACT] Extraction failed:', error);
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: {
-            code: 'EXTRACTION_FAILED',
-            message: 'فشل استخراج النص من الملف',
-            message_en: 'Failed to extract text from PDF',
-            details: { 
-              error: error instanceof Error ? error.message : String(error),
-              fileSize: uint8Array.length,
-            },
-            suggestions: [
-              'تأكد من أن الملف صالح وليس معطوباً',
-              'الملف قد يكون محمياً أو مشفراً',
-              'حاول تصدير الملف مرة أخرى',
-            ]
-          }
-        }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
-    }
+    // استخراج النص من PDF (نسخة بسيطة - في الإنتاج نستخدم مكتبة متقدمة)
+    const extractedText = await extractTextFromPDF(uint8Array);
 
     // تنظيف النص
-    const cleanedText = cleanText(extractionResult.text);
-    const extractionTime = Date.now() - extractionStart;
-
-    // حساب عدد الكلمات
-    const wordCount = countWords(cleanedText);
-    
-    // التحقق من صحة النص المستخرج
-    const validation = validateExtractedText(cleanedText, wordCount);
-    
-    console.log(`[EXTRACT] Word count: ${wordCount.toLocaleString()}`);
-    console.log(`[EXTRACT] Character count: ${cleanedText.length.toLocaleString()}`);
-    console.log(`[EXTRACT] Average word length: ${(cleanedText.length / wordCount).toFixed(2)}`);
-    console.log(`[EXTRACT] First 200 chars: ${cleanedText.substring(0, 200)}`);
-
-    // إذا فشل التحقق
-    if (!validation.valid) {
-      console.error('[EXTRACT] Validation failed:', validation.error || validation.warning);
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: {
-            code: 'INVALID_TEXT',
-            message: validation.error || validation.warning || 'النص المستخرج غير صحيح',
-            message_en: 'Invalid extracted text',
-            details: {
-              wordCount,
-              charCount: cleanedText.length,
-              pageCount: extractionResult.pageCount,
-              avgWordLength: (cleanedText.length / wordCount).toFixed(2),
-            },
-            suggestions: [
-              'تأكد من أن الملف يحتوي على نص وليس صور فقط',
-              'إذا كان الملف scanned، استخدم برنامج OCR لتحويله لنص',
-              'جرب تصدير الملف من جديد كـ PDF نصي'
-            ]
-          }
-        }),
-        {
-          status: 422,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
-    }
+    const cleanedText = cleanText(extractedText);
 
     // حساب hash
     const textHash = await calculateHash(cleanedText);
 
-    console.log(`[EXTRACT] Completed - Words: ${wordCount.toLocaleString()}, Time: ${extractionTime}ms, Hash: ${textHash.substring(0, 8)}...`);
-    
-    // تحذيرات للملفات الكبيرة
-    const warnings = [];
-    if (validation.warning) {
-      warnings.push(validation.warning);
-    }
-    if (wordCount > 100000) {
-      warnings.push('الملف يحتوي على أكثر من 100,000 كلمة - قد تفشل المقارنة');
-    } else if (wordCount > 50000) {
-      warnings.push('الملف يحتوي على نص كبير - قد يستغرق وقتاً أطول');
-    }
+    // حساب عدد الكلمات
+    const wordCount = countWords(cleanedText);
+
+    console.log(`Extracted ${wordCount} words, hash: ${textHash.substring(0, 8)}...`);
 
     return new Response(
       JSON.stringify({
@@ -208,17 +61,8 @@ serve(async (req) => {
         text: cleanedText,
         hash: textHash,
         wordCount,
-        warnings: warnings.length > 0 ? warnings : undefined,
         metadata: {
-          fileName: filePath,
           fileSize: uint8Array.length,
-          fileSizeMB: parseFloat(fileSizeInMB),
-          pageCount: extractionResult.pageCount,
-          charCount: cleanedText.length,
-          avgWordLength: (cleanedText.length / wordCount).toFixed(2),
-          extractionMethod: extractionResult.extractionMethod,
-          extractionTime,
-          processingTime: Date.now() - startTime,
           extractedAt: new Date().toISOString(),
         },
       }),
@@ -227,23 +71,11 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error('[EXTRACT] Unexpected error:', error);
+    console.error('Error in pdf-extract-text function:', error);
     return new Response(
       JSON.stringify({
         success: false,
-        error: {
-          code: 'UNKNOWN_ERROR',
-          message: 'حدث خطأ غير متوقع أثناء معالجة الملف',
-          message_en: 'Unexpected error during processing',
-          details: {
-            error: error instanceof Error ? error.message : String(error),
-          },
-          suggestions: [
-            'حاول مرة أخرى',
-            'تأكد من أن الملف صالح',
-            'إذا استمر الخطأ، تواصل مع الدعم الفني',
-          ]
-        }
+        error: error instanceof Error ? error.message : String(error),
       }),
       {
         status: 500,
@@ -253,103 +85,44 @@ serve(async (req) => {
   }
 });
 
-// استخراج النص من PDF - متوازن بين الدقة وعدم فقدان النص
-async function extractTextFromPDF(pdfBytes: Uint8Array): Promise<{
-  text: string;
-  pageCount: number;
-  extractionMethod: string;
-}> {
+// استخراج النص من PDF (نسخة مبسطة)
+async function extractTextFromPDF(pdfBytes: Uint8Array): Promise<string> {
   try {
-    console.log('[EXTRACT] Starting PDF text extraction...');
-    
-    // تحويل إلى نص بترميز UTF-8
-    const decoder = new TextDecoder('utf-8', { fatal: false, ignoreBOM: true });
-    const rawText = decoder.decode(pdfBytes);
-    
-    // تقدير عدد الصفحات
-    const pageMatches = rawText.match(/\/Type\s*\/Page[^s]/g);
-    const pageCount = pageMatches ? pageMatches.length : 1;
-    
-    console.log(`[EXTRACT] Estimated pages: ${pageCount}`);
-    
-    // استخراج كل النص من BT...ET blocks
-    const textObjectMatches = rawText.match(/BT\s+([\s\S]*?)\s+ET/g);
-    
-    if (!textObjectMatches || textObjectMatches.length === 0) {
-      throw new Error('No text objects found in PDF');
+    // تحويل إلى نص
+    const decoder = new TextDecoder('utf-8', { fatal: false });
+    let rawText = decoder.decode(pdfBytes);
+
+    // استخراج النص بين علامات stream و endstream
+    const textMatches = rawText.match(/BT\s+(.*?)\s+ET/gs);
+    if (!textMatches) {
+      // محاولة بديلة: البحث عن أي نص قابل للقراءة
+      const readableText = rawText.replace(/[^\x20-\x7E\u0600-\u06FF\s]/g, ' ');
+      return readableText;
     }
-    
-    console.log(`[EXTRACT] Found ${textObjectMatches.length} text objects`);
-    
-    const allTextParts: string[] = [];
-    
-    for (const textBlock of textObjectMatches) {
-      // استخراج النص من () فقط (النص الحقيقي)
-      const matches = textBlock.match(/\(([^)]*)\)/g);
-      
-      if (matches) {
-        for (const match of matches) {
-          let text = match.slice(1, -1); // إزالة الأقواس
-          
-          // فك ترميز PDF escape sequences
-          text = text
-            .replace(/\\n/g, '\n')
-            .replace(/\\r/g, ' ')
-            .replace(/\\t/g, ' ')
-            .replace(/\\\(/g, '(')
-            .replace(/\\\)/g, ')')
-            .replace(/\\\\/g, '\\')
-            .replace(/\\'/g, "'");
-          
-          // إضافة فقط إذا كان فيه محتوى
-          if (text.trim().length > 0) {
-            allTextParts.push(text);
-          }
+
+    let extractedText = '';
+    for (const match of textMatches) {
+      // استخراج النص من بين الأقواس
+      const textParts = match.match(/\((.*?)\)/g);
+      if (textParts) {
+        for (const part of textParts) {
+          extractedText += part.replace(/[()]/g, '') + ' ';
         }
       }
     }
-    
-    console.log(`[EXTRACT] Extracted ${allTextParts.length} text parts`);
-    
-    // دمج كل النصوص
-    let extractedText = allTextParts.join(' ');
-    
-    // تنظيف أساسي فقط
-    extractedText = extractedText
-      .replace(/\s+/g, ' ') // توحيد المسافات
-      .trim();
-    
-    console.log(`[EXTRACT] Total text length: ${extractedText.length} characters`);
-    console.log(`[EXTRACT] First 300 chars: ${extractedText.substring(0, 300)}`);
-    
-    // فحص بسيط: هل يوجد نص؟
-    if (extractedText.length < 20) {
-      throw new Error('Very little text extracted - PDF may contain only images');
-    }
-    
-    return {
-      text: extractedText,
-      pageCount,
-      extractionMethod: 'simple-bt-et'
-    };
-    
+
+    return extractedText || rawText.replace(/[^\x20-\x7E\u0600-\u06FF\s]/g, ' ');
   } catch (error) {
-    console.error('[EXTRACT] PDF extraction error:', error);
-    throw new Error(`Failed to extract text from PDF: ${error instanceof Error ? error.message : String(error)}`);
+    console.error('PDF extraction error:', error);
+    throw new Error('Failed to extract text from PDF');
   }
 }
 
-// تنظيف النص - دعم متعدد اللغات (عربي، عبري، إنجليزي)
+// تنظيف النص
 function cleanText(text: string): string {
   return text
-    // توحيد المسافات
-    .replace(/\s+/g, ' ')
-    // إزالة الرموز غير المرغوبة مع الحفاظ على:
-    // - العربية: \u0600-\u06FF
-    // - العبرية: \u0590-\u05FF
-    // - الإنجليزية والأرقام: \w
-    // - علامات الترقيم: .,!?;:()\-
-    .replace(/[^\w\s\u0600-\u06FF\u0590-\u05FF.,!?;:()\-]/g, '')
+    .replace(/\s+/g, ' ') // توحيد المسافات
+    .replace(/[^\w\s\u0600-\u06FF.,!?;:()\-]/g, '') // إزالة الرموز غير المرغوبة
     .trim();
 }
 
@@ -362,47 +135,7 @@ async function calculateHash(text: string): Promise<string> {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// حساب عدد الكلمات - بسيط ودقيق
+// حساب عدد الكلمات
 function countWords(text: string): number {
-  // استخراج الكلمات من جميع اللغات
-  const words = text.match(/[\u0600-\u06FF\u0750-\u077F\u0590-\u05FFa-zA-Z]+/g);
-  return words ? words.length : 0;
-}
-
-// التحقق من صحة النص المستخرج
-function validateExtractedText(text: string, wordCount: number): {
-  valid: boolean;
-  warning?: string;
-  error?: string;
-} {
-  const totalChars = text.length;
-  
-  // إذا كان النص فارغاً أو قصيراً جداً
-  if (wordCount === 0 || totalChars < 10) {
-    return {
-      valid: false,
-      error: 'لم يتم استخراج أي نص من الملف. قد يكون الملف عبارة عن صور فقط (Scanned PDF).'
-    };
-  }
-  
-  // حساب متوسط طول الكلمة
-  const avgWordLength = totalChars / wordCount;
-  
-  // إذا كان متوسط طول الكلمة غير طبيعي (قصير جداً)
-  if (avgWordLength < 2) {
-    return {
-      valid: false,
-      error: 'النص المستخرج غير صحيح. قد يكون الملف تالفاً أو مشفراً.'
-    };
-  }
-  
-  // إذا كان متوسط طول الكلمة طويل جداً
-  if (avgWordLength > 20) {
-    return {
-      valid: false,
-      warning: 'النص المستخرج قد يحتوي على بيانات غير صحيحة. متوسط طول الكلمة غير طبيعي.'
-    };
-  }
-  
-  return { valid: true };
+  return text.split(/\s+/).filter(word => word.length > 0).length;
 }
