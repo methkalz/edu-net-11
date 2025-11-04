@@ -253,7 +253,7 @@ serve(async (req) => {
   }
 });
 
-// استخراج النص من PDF - محسّن لتجاهل بيانات الصور
+// استخراج النص من PDF - متوازن بين الدقة وعدم فقدان النص
 async function extractTextFromPDF(pdfBytes: Uint8Array): Promise<{
   text: string;
   pageCount: number;
@@ -266,106 +266,71 @@ async function extractTextFromPDF(pdfBytes: Uint8Array): Promise<{
     const decoder = new TextDecoder('utf-8', { fatal: false, ignoreBOM: true });
     const rawText = decoder.decode(pdfBytes);
     
-    // تقدير عدد الصفحات من PDF structure
+    // تقدير عدد الصفحات
     const pageMatches = rawText.match(/\/Type\s*\/Page[^s]/g);
     const pageCount = pageMatches ? pageMatches.length : 1;
     
     console.log(`[EXTRACT] Estimated pages: ${pageCount}`);
     
-    let extractedText = '';
-    let textFragments: string[] = [];
-    
-    // Method 1: استخراج النص من BT...ET blocks (Text objects فقط)
+    // استخراج كل النص من BT...ET blocks
     const textObjectMatches = rawText.match(/BT\s+([\s\S]*?)\s+ET/g);
     
-    if (textObjectMatches && textObjectMatches.length > 0) {
-      console.log(`[EXTRACT] Found ${textObjectMatches.length} text objects`);
-      
-      for (const textBlock of textObjectMatches) {
-        // تجاهل blocks التي تحتوي على image markers
-        if (textBlock.includes('/Image') || textBlock.includes('/XObject') || 
-            textBlock.includes('stream') || textBlock.includes('endstream')) {
-          continue;
-        }
-        
-        // استخراج النص من بين الأقواس () فقط
-        const textInParentheses = textBlock.match(/\(([^)]*)\)/g);
-        
-        if (textInParentheses) {
-          for (const match of textInParentheses) {
-            const text = match.slice(1, -1); // إزالة الأقواس
-            
-            // تجاهل النص إذا كان يحتوي على binary data
-            if (text.includes('\x00') || /[\x01-\x08\x0B-\x1F\x7F-\xFF]{10,}/.test(text)) {
-              continue;
-            }
-            
-            // فك ترميز escape sequences
-            const decoded = text
-              .replace(/\\n/g, '\n')
-              .replace(/\\r/g, '\r')
-              .replace(/\\t/g, '\t')
-              .replace(/\\\(/g, '(')
-              .replace(/\\\)/g, ')')
-              .replace(/\\\\/g, '\\');
-            
-            // فقط إضافة النص إذا كان يحتوي على أحرف حقيقية
-            const hasRealText = /[\u0590-\u05FF\u0600-\u06FF\u0750-\u077Fa-zA-Z0-9]{2,}/.test(decoded);
-            if (hasRealText) {
-              textFragments.push(decoded);
-            }
-          }
-        }
-      }
-      
-      extractedText = textFragments.join(' ');
-      console.log(`[EXTRACT] Extracted ${textFragments.length} text fragments`);
+    if (!textObjectMatches || textObjectMatches.length === 0) {
+      throw new Error('No text objects found in PDF');
     }
     
-    // Method 2: استخراج النص من TJ arrays (طريقة بديلة)
-    if (extractedText.length < 100) {
-      console.log('[EXTRACT] Using TJ array extraction method');
+    console.log(`[EXTRACT] Found ${textObjectMatches.length} text objects`);
+    
+    const allTextParts: string[] = [];
+    
+    for (const textBlock of textObjectMatches) {
+      // استخراج النص من () فقط (النص الحقيقي)
+      const matches = textBlock.match(/\(([^)]*)\)/g);
       
-      const tjMatches = rawText.match(/TJ\s*$/gm);
-      if (tjMatches) {
-        const tjBlocks = rawText.match(/\[([\s\S]*?)\]\s*TJ/g);
-        if (tjBlocks) {
-          for (const block of tjBlocks) {
-            const texts = block.match(/\(([^)]*)\)/g);
-            if (texts) {
-              for (const text of texts) {
-                const clean = text.slice(1, -1);
-                const hasRealText = /[\u0590-\u05FF\u0600-\u06FF\u0750-\u077Fa-zA-Z0-9]{2,}/.test(clean);
-                if (hasRealText && !clean.includes('\x00')) {
-                  textFragments.push(clean);
-                }
-              }
-            }
+      if (matches) {
+        for (const match of matches) {
+          let text = match.slice(1, -1); // إزالة الأقواس
+          
+          // فك ترميز PDF escape sequences
+          text = text
+            .replace(/\\n/g, '\n')
+            .replace(/\\r/g, ' ')
+            .replace(/\\t/g, ' ')
+            .replace(/\\\(/g, '(')
+            .replace(/\\\)/g, ')')
+            .replace(/\\\\/g, '\\')
+            .replace(/\\'/g, "'");
+          
+          // إضافة فقط إذا كان فيه محتوى
+          if (text.trim().length > 0) {
+            allTextParts.push(text);
           }
-          extractedText = textFragments.join(' ');
         }
       }
     }
     
-    console.log(`[EXTRACT] Raw extracted length: ${extractedText.length} characters`);
+    console.log(`[EXTRACT] Extracted ${allTextParts.length} text parts`);
     
-    // تنظيف نهائي: إزالة أي رموز غير مرغوبة متبقية
+    // دمج كل النصوص
+    let extractedText = allTextParts.join(' ');
+    
+    // تنظيف أساسي فقط
     extractedText = extractedText
-      .replace(/[\x00-\x1F\x7F-\x9F]/g, ' ') // إزالة control characters
       .replace(/\s+/g, ' ') // توحيد المسافات
       .trim();
     
-    console.log(`[EXTRACT] Cleaned length: ${extractedText.length} characters`);
+    console.log(`[EXTRACT] Total text length: ${extractedText.length} characters`);
+    console.log(`[EXTRACT] First 300 chars: ${extractedText.substring(0, 300)}`);
     
-    // إذا لم نجد نص كافٍ، نعتبرها PDF فيه صور فقط أو محمي
-    if (extractedText.length < 50) {
-      throw new Error('No readable text found - PDF may contain only images or is protected');
+    // فحص بسيط: هل يوجد نص؟
+    if (extractedText.length < 20) {
+      throw new Error('Very little text extracted - PDF may contain only images');
     }
     
     return {
       text: extractedText,
       pageCount,
-      extractionMethod: 'enhanced-regex-v2'
+      extractionMethod: 'simple-bt-et'
     };
     
   } catch (error) {
@@ -397,24 +362,11 @@ async function calculateHash(text: string): Promise<string> {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// حساب عدد الكلمات - دعم متعدد اللغات مع فلترة محسّنة
+// حساب عدد الكلمات - بسيط ودقيق
 function countWords(text: string): number {
-  // استخراج الكلمات التي تحتوي على أحرف حقيقية فقط:
-  // \u0600-\u06FF: Arabic (عربي)
-  // \u0750-\u077F: Arabic Supplement
-  // \u0590-\u05FF: Hebrew (עברית)
-  // a-zA-Z: English letters
+  // استخراج الكلمات من جميع اللغات
   const words = text.match(/[\u0600-\u06FF\u0750-\u077F\u0590-\u05FFa-zA-Z]+/g);
-  
-  if (!words) return 0;
-  
-  // فلترة إضافية: فقط الكلمات التي طولها >= 2 حرف
-  const validWords = words.filter(word => {
-    // التأكد من أن الكلمة تحتوي على أحرف حقيقية وليست رموز فقط
-    return word.length >= 2 && /[\u0600-\u06FF\u0750-\u077F\u0590-\u05FFa-zA-Z]{2,}/.test(word);
-  });
-  
-  return validWords.length;
+  return words ? words.length : 0;
 }
 
 // التحقق من صحة النص المستخرج
