@@ -32,6 +32,14 @@ serve(async (req) => {
     } = await req.json();
 
     console.log(`Starting comparison for ${fileName} (Grade ${gradeLevel})`);
+    
+    // فحص حجم النص
+    const wordCount = fileText.split(/\s+/).length;
+    console.log(`File contains ${wordCount} words`);
+    
+    if (wordCount > 500000) {
+      throw new Error(`File too large: ${wordCount} words. Maximum 500,000 words allowed.`);
+    }
 
     // 1. فحص التطابق التام (Hash comparison)
     const { data: exactMatch } = await supabase
@@ -125,31 +133,60 @@ serve(async (req) => {
       });
     }
 
+    // 3. تحضير النص الأصلي (sampling للملفات الكبيرة)
+    const processedFileText = preprocessText(fileText, wordCount);
+    console.log(`Processed text ready for comparison`);
+    
     // 3. حساب التشابه مع كل ملف
     const comparisons = [];
+    const maxComparisonTime = 25000; // 25 ثانية كحد أقصى
+    const comparisonStartTime = Date.now();
 
     for (const refFile of repositoryFiles) {
+      // فحص الوقت
+      if (Date.now() - comparisonStartTime > maxComparisonTime) {
+        console.warn('⚠️ Comparison timeout reached, stopping early');
+        break;
+      }
+      
       if (!refFile.extracted_text) continue;
 
-      // حساب Cosine Similarity بناءً على TF-IDF
-      const cosineSim = calculateCosineSimilarity(fileText, refFile.extracted_text);
+      try {
+        // تحضير النص المرجعي
+        const refWordCount = refFile.extracted_text.split(/\s+/).length;
+        const processedRefText = preprocessText(refFile.extracted_text, refWordCount);
+        
+        // حساب Cosine Similarity بناءً على TF-IDF المحسن
+        const cosineSim = calculateOptimizedCosineSimilarity(
+          processedFileText.normalized,
+          processedRefText.normalized,
+          processedFileText.words,
+          processedRefText.words
+        );
 
-      // حساب Jaccard Similarity
-      const jaccardSim = calculateJaccardSimilarity(fileText, refFile.extracted_text);
+        // حساب Jaccard Similarity المحسن
+        const jaccardSim = calculateOptimizedJaccardSimilarity(
+          processedFileText.wordSet,
+          processedRefText.wordSet
+        );
 
-      // النتيجة النهائية (وزن Cosine 70% و Jaccard 30%)
-      const finalScore = (cosineSim * 0.7 + jaccardSim * 0.3);
+        // النتيجة النهائية (وزن Cosine 70% و Jaccard 30%)
+        const finalScore = (cosineSim * 0.7 + jaccardSim * 0.3);
 
-      if (finalScore > 0.30) {
-        comparisons.push({
-          matched_file_id: refFile.id,
-          matched_file_name: refFile.file_name,
-          similarity_score: Math.round(finalScore * 100) / 100,
-          similarity_method: 'hybrid_tfidf_jaccard',
-          cosine_score: Math.round(cosineSim * 100) / 100,
-          jaccard_score: Math.round(jaccardSim * 100) / 100,
-          flagged: finalScore >= 0.70,
-        });
+        if (finalScore > 0.30) {
+          comparisons.push({
+            matched_file_id: refFile.id,
+            matched_file_name: refFile.file_name,
+            similarity_score: Math.round(finalScore * 100) / 100,
+            similarity_method: 'optimized_hybrid',
+            cosine_score: Math.round(cosineSim * 100) / 100,
+            jaccard_score: Math.round(jaccardSim * 100) / 100,
+            flagged: finalScore >= 0.70,
+          });
+        }
+      } catch (compError) {
+        console.error(`Error comparing with ${refFile.file_name}:`, compError);
+        continue;
       }
     }
 
@@ -239,45 +276,94 @@ serve(async (req) => {
   }
 });
 
-// حساب TF-IDF + Cosine Similarity
-function calculateCosineSimilarity(text1: string, text2: string): number {
-  const words1 = normalizeArabicText(text1).split(/\s+/).filter(w => w.length > 2);
-  const words2 = normalizeArabicText(text2).split(/\s+/).filter(w => w.length > 2);
-
-  // بناء قاموس الكلمات
-  const vocabulary = new Set([...words1, ...words2]);
+// تحضير النص للمعالجة
+function preprocessText(text: string, wordCount: number) {
+  const normalized = normalizeArabicText(text);
+  let words = normalized.split(/\s+/).filter(w => w.length > 2);
   
-  // حساب TF-IDF vectors
-  const vector1 = Array.from(vocabulary).map(word => {
-    const tf = words1.filter(w => w === word).length / words1.length;
-    const idf = Math.log(2 / (1 + [words1, words2].filter(arr => arr.includes(word)).length));
-    return tf * idf;
-  });
-
-  const vector2 = Array.from(vocabulary).map(word => {
-    const tf = words2.filter(w => w === word).length / words2.length;
-    const idf = Math.log(2 / (1 + [words1, words2].filter(arr => arr.includes(word)).length));
-    return tf * idf;
-  });
-
-  // Cosine Similarity
-  const dotProduct = vector1.reduce((sum, val, i) => sum + val * vector2[i], 0);
-  const magnitude1 = Math.sqrt(vector1.reduce((sum, val) => sum + val * val, 0));
-  const magnitude2 = Math.sqrt(vector2.reduce((sum, val) => sum + val * val, 0));
-
-  if (magnitude1 === 0 || magnitude2 === 0) return 0;
-  return dotProduct / (magnitude1 * magnitude2);
+  // استخدام sampling للملفات الكبيرة جداً
+  const maxWords = 50000;
+  if (words.length > maxWords) {
+    console.log(`⚠️ Large file detected (${words.length} words). Sampling to ${maxWords} words.`);
+    
+    // أخذ عينة موزعة بشكل متساوي من النص
+    const step = Math.floor(words.length / maxWords);
+    words = words.filter((_, i) => i % step === 0).slice(0, maxWords);
+  }
+  
+  const wordSet = new Set(words);
+  
+  return { normalized, words, wordSet };
 }
 
-// حساب Jaccard Similarity
-function calculateJaccardSimilarity(text1: string, text2: string): number {
-  const words1 = new Set(normalizeArabicText(text1).split(/\s+/).filter(w => w.length > 2));
-  const words2 = new Set(normalizeArabicText(text2).split(/\s+/).filter(w => w.length > 2));
+// حساب TF-IDF + Cosine Similarity المحسن
+function calculateOptimizedCosineSimilarity(
+  text1: string, 
+  text2: string,
+  words1: string[],
+  words2: string[]
+): number {
+  // بناء frequency maps بدلاً من arrays
+  const freq1 = new Map<string, number>();
+  const freq2 = new Map<string, number>();
+  
+  for (const word of words1) {
+    freq1.set(word, (freq1.get(word) || 0) + 1);
+  }
+  
+  for (const word of words2) {
+    freq2.set(word, (freq2.get(word) || 0) + 1);
+  }
+  
+  // استخدام الكلمات المشتركة فقط
+  const commonWords = new Set([...freq1.keys()].filter(w => freq2.has(w)));
+  
+  if (commonWords.size === 0) return 0;
+  
+  let dotProduct = 0;
+  let mag1 = 0;
+  let mag2 = 0;
+  
+  // حساب باستخدام الكلمات المشتركة فقط
+  for (const word of commonWords) {
+    const tf1 = (freq1.get(word) || 0) / words1.length;
+    const tf2 = (freq2.get(word) || 0) / words2.length;
+    
+    // IDF مبسط
+    const idf = Math.log(2 / (1 + (freq1.has(word) ? 1 : 0) + (freq2.has(word) ? 1 : 0)));
+    
+    const tfidf1 = tf1 * idf;
+    const tfidf2 = tf2 * idf;
+    
+    dotProduct += tfidf1 * tfidf2;
+    mag1 += tfidf1 * tfidf1;
+    mag2 += tfidf2 * tfidf2;
+  }
+  
+  mag1 = Math.sqrt(mag1);
+  mag2 = Math.sqrt(mag2);
+  
+  if (mag1 === 0 || mag2 === 0) return 0;
+  return dotProduct / (mag1 * mag2);
+}
 
-  const intersection = new Set([...words1].filter(x => words2.has(x)));
-  const union = new Set([...words1, ...words2]);
-
-  return union.size === 0 ? 0 : intersection.size / union.size;
+// حساب Jaccard Similarity المحسن
+function calculateOptimizedJaccardSimilarity(set1: Set<string>, set2: Set<string>): number {
+  if (set1.size === 0 && set2.size === 0) return 0;
+  
+  // حساب التقاطع
+  let intersectionSize = 0;
+  const smallerSet = set1.size < set2.size ? set1 : set2;
+  const largerSet = set1.size < set2.size ? set2 : set1;
+  
+  for (const word of smallerSet) {
+    if (largerSet.has(word)) intersectionSize++;
+  }
+  
+  // حساب الاتحاد
+  const unionSize = set1.size + set2.size - intersectionSize;
+  
+  return unionSize === 0 ? 0 : intersectionSize / unionSize;
 }
 
 // تطبيع النص العربي
