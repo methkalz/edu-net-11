@@ -84,8 +84,8 @@ export const useStudentPresenceForReports = () => {
   useEffect(() => {
     fetchStudentPresence();
 
-    // تحديث دوري كل دقيقة
-    const interval = setInterval(fetchStudentPresence, 60 * 1000);
+    // تحديث دوري كل 5 دقائق
+    const interval = setInterval(fetchStudentPresence, 300 * 1000);
 
     // الاستماع للتحديثات الفورية
     const channel = supabase

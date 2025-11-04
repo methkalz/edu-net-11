@@ -127,8 +127,8 @@ export const useTeacherPresence = () => {
   useEffect(() => {
     fetchTeacherPresence();
 
-    // تحديث دوري كل دقيقة
-    const interval = setInterval(fetchTeacherPresence, 60 * 1000);
+    // تحديث دوري كل 5 دقائق
+    const interval = setInterval(fetchTeacherPresence, 300 * 1000);
 
     // الاستماع للتحديثات الفورية
     const channel = supabase
