@@ -305,47 +305,52 @@
         </div>
     </div>
 
-    <script>
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.2/+esm';
+        
         const SUPABASE_URL = 'https://swlwhjnwycvjdhgclwlx.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN3bHdoam53eWN2amRoZ2Nsd2x4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUzMDU4MzgsImV4cCI6MjA3MDg4MTgzOH0.whMWEn_UIrxBa2QbK1leY9QTr1jeTnkUUn3g50fAKus';
+        
+        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
         async function loadData() {
             try {
+                console.log('بدء تحميل البيانات...');
+                
                 // جلب الأقسام
-                const sectionsResponse = await fetch(`${SUPABASE_URL}/rest/v1/grade11_sections?select=*&order=created_at.asc,order_index.asc`, {
-                    headers: {
-                        'apikey': SUPABASE_KEY,
-                        'Authorization': `Bearer ${SUPABASE_KEY}`
-                    }
-                });
+                const { data: sections, error: sectionsError } = await supabase
+                    .from('grade11_sections')
+                    .select('*')
+                    .order('created_at', { ascending: true })
+                    .order('order_index', { ascending: true });
+                
+                if (sectionsError) throw sectionsError;
+                console.log('تم جلب الأقسام:', sections?.length);
 
                 // جلب المواضيع
-                const topicsResponse = await fetch(`${SUPABASE_URL}/rest/v1/grade11_topics?select=*&order=created_at.asc,order_index.asc`, {
-                    headers: {
-                        'apikey': SUPABASE_KEY,
-                        'Authorization': `Bearer ${SUPABASE_KEY}`
-                    }
-                });
+                const { data: topics, error: topicsError } = await supabase
+                    .from('grade11_topics')
+                    .select('*')
+                    .order('created_at', { ascending: true })
+                    .order('order_index', { ascending: true });
+                
+                if (topicsError) throw topicsError;
+                console.log('تم جلب المواضيع:', topics?.length);
 
-                // جلب الدروس
-                const lessonsResponse = await fetch(`${SUPABASE_URL}/rest/v1/grade11_lessons?select=*&is_active=eq.true&order=created_at.asc,order_index.asc`, {
-                    headers: {
-                        'apikey': SUPABASE_KEY,
-                        'Authorization': `Bearer ${SUPABASE_KEY}`
-                    }
-                });
-
-                if (!sectionsResponse.ok || !topicsResponse.ok || !lessonsResponse.ok) {
-                    throw new Error('فشل تحميل البيانات');
-                }
-
-                const sections = await sectionsResponse.json();
-                const topics = await topicsResponse.json();
-                const lessons = await lessonsResponse.json();
+                // جلب الدروس النشطة فقط
+                const { data: lessons, error: lessonsError } = await supabase
+                    .from('grade11_lessons')
+                    .select('*')
+                    .eq('is_active', true)
+                    .order('created_at', { ascending: true })
+                    .order('order_index', { ascending: true });
+                
+                if (lessonsError) throw lessonsError;
+                console.log('تم جلب الدروس:', lessons?.length);
 
                 return organizeData(sections, topics, lessons);
             } catch (error) {
-                console.error('Error:', error);
+                console.error('خطأ في تحميل البيانات:', error);
                 document.getElementById('loading').innerHTML = `
                     <div style="color: #dc2626; padding: 30px; background: #fee2e2; border-radius: 12px;">
                         <h3>❌ حدث خطأ أثناء تحميل البيانات</h3>
