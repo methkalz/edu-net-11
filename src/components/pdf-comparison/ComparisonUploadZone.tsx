@@ -3,10 +3,12 @@ import { useDropzone } from 'react-dropzone';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
-import { Upload, FileText, X, Loader2 } from 'lucide-react';
+import { Upload, FileText, X, Loader2, AlertTriangle } from 'lucide-react';
 import { usePDFComparison, type GradeLevel, type ComparisonResult } from '@/hooks/usePDFComparison';
 import ComparisonResultCard from './ComparisonResultCard';
+import ErrorDetailsCard from './ErrorDetailsCard';
 import { toast } from 'sonner';
+import { PDFComparisonError, checkFileSize, formatFileSize } from '@/types/pdf-comparison-errors';
 
 interface ComparisonUploadZoneProps {
   gradeLevel: GradeLevel;
@@ -17,6 +19,8 @@ interface FileWithResult {
   result?: ComparisonResult | null;
   progress: number;
   status: 'pending' | 'processing' | 'completed' | 'error';
+  error?: PDFComparisonError;
+  warning?: string;
 }
 
 const ComparisonUploadZone = ({ gradeLevel }: ComparisonUploadZoneProps) => {
@@ -25,12 +29,26 @@ const ComparisonUploadZone = ({ gradeLevel }: ComparisonUploadZoneProps) => {
   const [isComparing, setIsComparing] = useState(false);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    const newFiles: FileWithResult[] = acceptedFiles.map(file => ({
-      file,
-      progress: 0,
-      status: 'pending' as const,
-    }));
-    setFiles(prev => [...prev, ...newFiles]);
+    const newFiles: FileWithResult[] = acceptedFiles.map(file => {
+      // فحص حجم الملف مباشرة
+      const sizeCheck = checkFileSize(file);
+      
+      if (!sizeCheck.valid) {
+        toast.error(sizeCheck.error || 'الملف كبير جداً');
+        return null;
+      }
+      
+      return {
+        file,
+        progress: 0,
+        status: 'pending' as const,
+        warning: sizeCheck.warning,
+      };
+    }).filter(Boolean) as FileWithResult[];
+    
+    if (newFiles.length > 0) {
+      setFiles(prev => [...prev, ...newFiles]);
+    }
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -77,13 +95,20 @@ const ComparisonUploadZone = ({ gradeLevel }: ComparisonUploadZoneProps) => {
 
         setFiles(prev => prev.map((f, idx) => 
           idx === i 
-            ? { ...f, result, status: 'completed' as const, progress: 100 } 
+            ? { ...f, result, status: 'completed' as const, progress: 100, error: undefined } 
             : f
         ));
       } catch (error) {
         console.error('Comparison error:', error);
+        
+        const pdfError = error instanceof PDFComparisonError 
+          ? error 
+          : PDFComparisonError.fromResponse(error);
+        
         setFiles(prev => prev.map((f, idx) => 
-          idx === i ? { ...f, status: 'error' as const } : f
+          idx === i 
+            ? { ...f, status: 'error' as const, error: pdfError } 
+            : f
         ));
       }
     }
@@ -227,13 +252,19 @@ const ComparisonUploadZone = ({ gradeLevel }: ComparisonUploadZoneProps) => {
                           <div className="p-3 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 backdrop-blur-sm">
                             <FileText className="h-5 w-5 text-primary" />
                           </div>
-                          <div className="flex-1 min-w-0">
+                           <div className="flex-1 min-w-0">
                             <p className="font-semibold truncate text-foreground">
                               {fileWithResult.file.name}
                             </p>
-                            <p className="text-sm text-muted-foreground">
-                              {(fileWithResult.file.size / 1024 / 1024).toFixed(2)} MB
-                            </p>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <span>{formatFileSize(fileWithResult.file.size)}</span>
+                              {fileWithResult.warning && (
+                                <div className="flex items-center gap-1 text-yellow-600 dark:text-yellow-500">
+                                  <AlertTriangle className="h-3 w-3" />
+                                  <span className="text-xs">ملف كبير</span>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
                         
@@ -257,7 +288,11 @@ const ComparisonUploadZone = ({ gradeLevel }: ComparisonUploadZoneProps) => {
                           <div className="flex items-center justify-center gap-2">
                             <Loader2 className="h-4 w-4 animate-spin text-primary" />
                             <p className="text-sm font-medium text-foreground">
-                              جارٍ المعالجة... {fileWithResult.progress}%
+                              {fileWithResult.progress < 30 && 'جارٍ رفع الملف...'}
+                              {fileWithResult.progress >= 30 && fileWithResult.progress < 60 && 'جارٍ استخراج النص...'}
+                              {fileWithResult.progress >= 60 && 'جارٍ المقارنة مع المستودع...'}
+                              {' '}
+                              {fileWithResult.progress}%
                             </p>
                           </div>
                         </div>
@@ -270,11 +305,46 @@ const ComparisonUploadZone = ({ gradeLevel }: ComparisonUploadZoneProps) => {
                         </div>
                       )}
 
-                      {fileWithResult.status === 'error' && (
-                        <div className="text-sm text-destructive-foreground text-center p-4 bg-gradient-to-br from-destructive/10 to-destructive/5 rounded-xl border border-destructive/20">
-                          <p className="font-medium">⚠️ فشلت المقارنة لهذا الملف</p>
-                          <p className="text-xs mt-1 text-muted-foreground">يرجى المحاولة مرة أخرى</p>
-                        </div>
+                      {fileWithResult.status === 'error' && fileWithResult.error && (
+                        <ErrorDetailsCard 
+                          error={fileWithResult.error}
+                          onRetry={async () => {
+                            // إعادة المحاولة
+                            setFiles(prev => prev.map((f, idx) => 
+                              idx === index 
+                                ? { ...f, status: 'processing' as const, progress: 0, error: undefined } 
+                                : f
+                            ));
+                            
+                            try {
+                              const result = await compareFile(
+                                fileWithResult.file,
+                                gradeLevel,
+                                (progress) => {
+                                  setFiles(prev => prev.map((f, idx) => 
+                                    idx === index ? { ...f, progress } : f
+                                  ));
+                                }
+                              );
+                              
+                              setFiles(prev => prev.map((f, idx) => 
+                                idx === index 
+                                  ? { ...f, result, status: 'completed' as const, progress: 100 } 
+                                  : f
+                              ));
+                            } catch (error) {
+                              const pdfError = error instanceof PDFComparisonError 
+                                ? error 
+                                : PDFComparisonError.fromResponse(error);
+                              
+                              setFiles(prev => prev.map((f, idx) => 
+                                idx === index 
+                                  ? { ...f, status: 'error' as const, error: pdfError } 
+                                  : f
+                              ));
+                            }
+                          }}
+                        />
                       )}
                     </div>
                   </CardContent>
