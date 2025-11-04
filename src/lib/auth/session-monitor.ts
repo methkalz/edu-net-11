@@ -62,17 +62,19 @@ class SessionMonitor {
         return;
       }
 
-      // فحص انتهاء صلاحية الجلسة
+      // فحص انتهاء صلاحية الجلسة مع هامش أمان (buffer) لتجنب إغلاق مبكر
       const expiresAt = session.expires_at ? session.expires_at * 1000 : 0;
+      const bufferTime = 60000; // هامش دقيقة واحدة قبل انتهاء الصلاحية
       
-      if (expiresAt && expiresAt < now) {
-        console.log('Session expired, handling automatic cleanup');
+      // فقط قم بتسجيل الخروج إذا انتهت الجلسة فعلاً ومر على ذلك أكثر من دقيقة
+      if (expiresAt && (now - expiresAt) > bufferTime) {
+        console.log('Session expired beyond buffer, handling automatic cleanup');
         await this.handleExpiredSession();
       }
 
     } catch (error) {
       console.warn('Session validation error:', error);
-      await this.handleInvalidSession();
+      // لا تقم بتسجيل الخروج فوراً في حالة خطأ - قد يكون مجرد مشكلة شبكة مؤقتة
     }
   }
 
