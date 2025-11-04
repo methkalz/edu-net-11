@@ -4420,6 +4420,7 @@ export type Database = {
           reviewed_by: string | null
           school_id: string | null
           status: string | null
+          total_files_compared: number | null
           total_matches_found: number | null
           updated_at: string | null
         }
@@ -4445,6 +4446,7 @@ export type Database = {
           reviewed_by?: string | null
           school_id?: string | null
           status?: string | null
+          total_files_compared?: number | null
           total_matches_found?: number | null
           updated_at?: string | null
         }
@@ -4470,6 +4472,7 @@ export type Database = {
           reviewed_by?: string | null
           school_id?: string | null
           status?: string | null
+          total_files_compared?: number | null
           total_matches_found?: number | null
           updated_at?: string | null
         }
