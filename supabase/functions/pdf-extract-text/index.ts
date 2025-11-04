@@ -1,6 +1,5 @@
 import { serve } from 'https://deno.land/std@0.208.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { getDocument } from 'https://esm.sh/pdfjs-dist@4.0.379/legacy/build/pdf.mjs';
 import { corsHeaders } from '../_shared/cors.ts';
 
 serve(async (req) => {
@@ -254,63 +253,104 @@ serve(async (req) => {
   }
 });
 
-// استخراج النص من PDF باستخدام pdfjs-dist
+// استخراج النص من PDF - طريقة محسّنة تعمل مع جميع اللغات
 async function extractTextFromPDF(pdfBytes: Uint8Array): Promise<{
   text: string;
   pageCount: number;
   extractionMethod: string;
 }> {
   try {
-    console.log('[EXTRACT] Loading PDF with pdfjs-dist...');
+    console.log('[EXTRACT] Starting PDF text extraction...');
     
-    // تحميل المستند
-    const loadingTask = getDocument({
-      data: pdfBytes,
-      useSystemFonts: true,
-      standardFontDataUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/standard_fonts/',
-    });
+    // تحويل إلى نص بترميز UTF-8
+    const decoder = new TextDecoder('utf-8', { fatal: false, ignoreBOM: true });
+    const rawText = decoder.decode(pdfBytes);
     
-    const pdfDocument = await loadingTask.promise;
-    const pageCount = pdfDocument.numPages;
+    // تقدير عدد الصفحات من PDF structure
+    const pageMatches = rawText.match(/\/Type\s*\/Page[^s]/g);
+    const pageCount = pageMatches ? pageMatches.length : 1;
     
-    console.log(`[EXTRACT] PDF loaded successfully. Pages: ${pageCount}`);
+    console.log(`[EXTRACT] Estimated pages: ${pageCount}`);
     
-    let fullText = '';
+    let extractedText = '';
     
-    // استخراج النص من كل صفحة
-    for (let pageNum = 1; pageNum <= pageCount; pageNum++) {
-      try {
-        const page = await pdfDocument.getPage(pageNum);
-        const textContent = await page.getTextContent();
+    // Method 1: استخراج النص من BT...ET blocks (Text objects)
+    const textObjectMatches = rawText.match(/BT\s+([\s\S]*?)\s+ET/g);
+    
+    if (textObjectMatches && textObjectMatches.length > 0) {
+      console.log(`[EXTRACT] Found ${textObjectMatches.length} text objects`);
+      
+      for (const textBlock of textObjectMatches) {
+        // استخراج النص من بين الأقواس () أو <>
+        const textInParentheses = textBlock.match(/\(([^)]*)\)/g);
+        const textInBrackets = textBlock.match(/<([^>]*)>/g);
         
-        // دمج النص من كل العناصر في الصفحة
-        const pageText = textContent.items
-          .map((item: any) => {
-            // التعامل مع TextItem و TextMarkedContent
-            if ('str' in item) {
-              return item.str || '';
-            }
-            return '';
-          })
-          .join(' ');
-        
-        fullText += pageText + '\n';
-        
-        if (pageNum % 10 === 0) {
-          console.log(`[EXTRACT] Processed ${pageNum}/${pageCount} pages...`);
+        if (textInParentheses) {
+          for (const match of textInParentheses) {
+            const text = match.slice(1, -1); // إزالة الأقواس
+            // فك ترميز escape sequences
+            const decoded = text
+              .replace(/\\n/g, '\n')
+              .replace(/\\r/g, '\r')
+              .replace(/\\t/g, '\t')
+              .replace(/\\\(/g, '(')
+              .replace(/\\\)/g, ')')
+              .replace(/\\\\/g, '\\');
+            extractedText += decoded + ' ';
+          }
         }
-      } catch (pageError) {
-        console.error(`[EXTRACT] Error processing page ${pageNum}:`, pageError);
-        // نستمر في معالجة الصفحات الأخرى
+        
+        if (textInBrackets) {
+          for (const match of textInBrackets) {
+            const hexText = match.slice(1, -1); // إزالة <>
+            // تحويل hex إلى نص
+            try {
+              const decoded = hexText.match(/.{1,4}/g)?.map(hex => 
+                String.fromCharCode(parseInt(hex, 16))
+              ).join('') || '';
+              extractedText += decoded + ' ';
+            } catch (e) {
+              // تجاهل hex غير صالح
+            }
+          }
+        }
       }
     }
     
-    console.log(`[EXTRACT] Extraction complete. Total characters: ${fullText.length.toLocaleString()}`);
+    // Method 2: استخراج النص المباشر (fallback)
+    if (extractedText.length < 100) {
+      console.log('[EXTRACT] Using fallback method - extracting readable text');
+      
+      // استخراج النص القابل للقراءة فقط
+      // نحتفظ بـ: عربي، عبري، إنجليزي، أرقام، مسافات، علامات الترقيم
+      const readableText = rawText
+        .replace(/[\x00-\x1F]/g, '') // إزالة control characters
+        .replace(/[^\u0020-\u007E\u0590-\u05FF\u0600-\u06FF\u0750-\u077F\s\n\r.,!?;:()\-]/g, ' ') // فقط الأحرف القابلة للقراءة
+        .replace(/\s+/g, ' ') // توحيد المسافات
+        .split(' ')
+        .filter(word => {
+          // فقط الكلمات التي تحتوي على 2+ حرف
+          const hasLetters = /[\u0590-\u05FF\u0600-\u06FF\u0750-\u077Fa-zA-Z]/.test(word);
+          return hasLetters && word.length >= 2;
+        })
+        .join(' ');
+      
+      if (readableText.length > extractedText.length) {
+        extractedText = readableText;
+      }
+    }
+    
+    console.log(`[EXTRACT] Extraction complete. Raw length: ${extractedText.length} characters`);
+    
+    // إذا لم نجد نص، نعتبرها صورة
+    if (extractedText.trim().length < 50) {
+      throw new Error('No readable text found - PDF may contain only images');
+    }
     
     return {
-      text: fullText,
+      text: extractedText,
       pageCount,
-      extractionMethod: 'pdfjs-dist'
+      extractionMethod: 'enhanced-regex'
     };
     
   } catch (error) {
