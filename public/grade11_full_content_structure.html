@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>هيكل محتوى الصف الحادي عشر الكامل - 17 قسم</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 30px;
+            border-bottom: 3px solid #667eea;
+        }
+        h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 15px;
+        }
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 12px;
+            text-align: center;
+            min-width: 150px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            display: block;
+        }
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        .loading {
+            text-align: center;
+            padding: 60px;
+            font-size: 1.5em;
+            color: #667eea;
+        }
+        .section {
+            border: 3px solid #667eea;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+            background: linear-gradient(to bottom, #f8f9ff 0%, #ffffff 100%);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e7ff;
+        }
+        .section-title {
+            color: #1e40af;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+        .section-meta {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        .badge {
+            background: #667eea;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        .topic {
+            border-right: 4px solid #10b981;
+            padding: 20px;
+            margin: 20px 0 20px 30px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .topic-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .topic-title {
+            color: #065f46;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        .lesson {
+            padding: 12px 20px;
+            margin: 10px 0 10px 50px;
+            background: linear-gradient(to left, #fef3c7 0%, #fef9e7 100%);
+            border-radius: 8px;
+            border-right: 3px solid #f59e0b;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+        .lesson:hover {
+            transform: translateX(-5px);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+        }
+        .lesson-title {
+            color: #92400e;
+            font-weight: 500;
+        }
+        .lesson-meta {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            font-size: 0.85em;
+        }
+        .id-badge {
+            background: #f3f4f6;
+            color: #6b7280;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.75em;
+        }
+        .order-badge {
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+        .date-badge {
+            background: #f3e8ff;
+            color: #7c3aed;
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            padding: 20px;
+            background: #f8f9ff;
+            border-radius: 12px;
+        }
+        .filter-input {
+            flex: 1;
+            min-width: 250px;
+            padding: 12px 18px;
+            border: 2px solid #e0e7ff;
+            border-radius: 8px;
+            font-size: 1em;
+            font-family: inherit;
+        }
+        .filter-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .problem-box {
+            background: #fee2e2;
+            border: 2px solid #dc2626;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 30px 0;
+        }
+        .problem-box h3 {
+            color: #991b1b;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        .problem-list {
+            list-style: none;
+            padding-right: 20px;
+        }
+        .problem-list li {
+            padding: 8px 0;
+            padding-right: 25px;
+            position: relative;
+        }
+        .problem-list li:before {
+            content: "⚠️";
+            position: absolute;
+            right: 0;
+        }
+        .solution-box {
+            background: #d1fae5;
+            border: 2px solid #10b981;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 30px 0;
+        }
+        .solution-box h3 {
+            color: #065f46;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .container {
+                box-shadow: none;
+            }
+            .filters {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 هيكل محتوى الصف الحادي عشر الكامل</h1>
+            <p style="color: #6b7280; font-size: 1.1em; margin-top: 10px;">
+                مرتب حسب تاريخ الإنشاء | مع أرقام Order Index الفعلية
+            </p>
+            
+            <div class="stats" id="stats">
+                <div class="stat-card">
+                    <span class="stat-number">17</span>
+                    <span class="stat-label">قسم</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number">74</span>
+                    <span class="stat-label">موضوع</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number">277</span>
+                    <span class="stat-label">درس نشط</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="filters">
+            <input 
+                type="text" 
+                id="searchInput" 
+                class="filter-input" 
+                placeholder="🔍 ابحث في العناوين، المواضيع، أو الدروس..."
+            >
+            <input 
+                type="text" 
+                id="idSearch" 
+                class="filter-input" 
+                placeholder="🔢 ابحث بـ ID..."
+            >
+        </div>
+
+        <div class="loading" id="loading">
+            ⏳ جاري تحميل البيانات من قاعدة البيانات...
+        </div>
+
+        <div id="content" style="display: none;"></div>
+
+        <div class="problem-box">
+            <h3>⚠️ المشاكل المكتشفة في order_index</h3>
+            <ul class="problem-list">
+                <li>معظم الدروس تشترك في نفس تاريخ الإنشاء، مما يصعب الترتيب الدقيق</li>
+                <li>قيم order_index غير متسلسلة (توجد فجوات كبيرة)</li>
+                <li>العديد من الدروس الحديثة لها order_index = 0</li>
+                <li>بعض الدروس لها قيم order_index مرتفعة جداً (100، 101، 514، 515)</li>
+            </ul>
+        </div>
+
+        <div class="solution-box">
+            <h3>🔧 الحل المقترح</h3>
+            <ol style="padding-right: 25px;">
+                <li><strong>إعادة ترقيم قاعدة البيانات:</strong> تشغيل SQL script لإعادة ترقيم جميع العناصر بشكل متسلسل (0, 1, 2...)</li>
+                <li><strong>تعديل الكود:</strong> تحديث Grade11LessonForm.tsx لحساب order_index تلقائياً</li>
+                <li><strong>فرز ثانوي:</strong> إضافة فرز بـ created_at في حال تساوي order_index</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://swlwhjnwycvjdhgclwlx.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN3bHdoam53eWN2amRoZ2Nsd2x4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUzMDU4MzgsImV4cCI6MjA3MDg4MTgzOH0.whMWEn_UIrxBa2QbK1leY9QTr1jeTnkUUn3g50fAKus';
+
+        async function loadData() {
+            try {
+                // جلب الأقسام
+                const sectionsResponse = await fetch(`${SUPABASE_URL}/rest/v1/grade11_sections?select=*&order=created_at.asc,order_index.asc`, {
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`
+                    }
+                });
+
+                // جلب المواضيع
+                const topicsResponse = await fetch(`${SUPABASE_URL}/rest/v1/grade11_topics?select=*&order=created_at.asc,order_index.asc`, {
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`
+                    }
+                });
+
+                // جلب الدروس
+                const lessonsResponse = await fetch(`${SUPABASE_URL}/rest/v1/grade11_lessons?select=*&is_active=eq.true&order=created_at.asc,order_index.asc`, {
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`
+                    }
+                });
+
+                if (!sectionsResponse.ok || !topicsResponse.ok || !lessonsResponse.ok) {
+                    throw new Error('فشل تحميل البيانات');
+                }
+
+                const sections = await sectionsResponse.json();
+                const topics = await topicsResponse.json();
+                const lessons = await lessonsResponse.json();
+
+                return organizeData(sections, topics, lessons);
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('loading').innerHTML = `
+                    <div style="color: #dc2626; padding: 30px; background: #fee2e2; border-radius: 12px;">
+                        <h3>❌ حدث خطأ أثناء تحميل البيانات</h3>
+                        <p style="margin-top: 15px; font-size: 0.9em;">يرجى التحقق من الاتصال بقاعدة البيانات</p>
+                        <p style="margin-top: 10px; font-size: 0.85em; color: #991b1b;">${error.message}</p>
+                    </div>
+                `;
+                return null;
+            }
+        }
+
+        function organizeData(sections, topics, lessons) {
+            return sections.map(section => ({
+                id: section.id,
+                title: section.title,
+                order: section.order_index,
+                created_at: section.created_at,
+                topics: topics
+                    .filter(topic => topic.section_id === section.id)
+                    .map(topic => ({
+                        id: topic.id,
+                        title: topic.title,
+                        order: topic.order_index,
+                        created_at: topic.created_at,
+                        lessons: lessons
+                            .filter(lesson => lesson.topic_id === topic.id)
+                            .map(lesson => ({
+                                id: lesson.id,
+                                title: lesson.title,
+                                order: lesson.order_index,
+                                created_at: lesson.created_at
+                            }))
+                    }))
+            }));
+        }
+
+
+        function formatDate(dateString) {
+            if (!dateString) return 'غير محدد';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('ar-EG');
+        }
+
+        function renderContent(sections) {
+            if (!sections || sections.length === 0) return;
+
+            let html = '';
+            let sectionNumber = 1;
+
+            sections.forEach(section => {
+                const topics = section.topics || [];
+                const totalLessons = topics.reduce((sum, topic) => sum + (topic.lessons?.length || 0), 0);
+
+                html += `
+                    <div class="section">
+                        <div class="section-header">
+                            <div>
+                                <div class="section-title">
+                                    ${sectionNumber}. ${section.title}
+                                </div>
+                                <div style="margin-top: 8px; font-size: 0.85em; color: #6b7280;">
+                                    <span class="id-badge">${section.id}</span>
+                                </div>
+                            </div>
+                            <div class="section-meta">
+                                <span class="badge">ترتيب: ${section.order}</span>
+                                <span class="badge">${topics.length} مواضيع</span>
+                                <span class="badge">${totalLessons} درس</span>
+                                <span class="date-badge">${formatDate(section.created_at)}</span>
+                            </div>
+                        </div>
+                `;
+
+                let topicNumber = 1;
+                topics.forEach(topic => {
+                    html += `
+                        <div class="topic">
+                            <div class="topic-header">
+                                <div>
+                                    <div class="topic-title">
+                                        ${sectionNumber}.${topicNumber} ${topic.title}
+                                    </div>
+                                    <div style="margin-top: 8px; font-size: 0.85em;">
+                                        <span class="id-badge">${topic.id}</span>
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 8px;">
+                                    <span class="order-badge">ترتيب: ${topic.order}</span>
+                                    <span class="badge">${topic.lessons.length} درس</span>
+                                    <span class="date-badge">${formatDate(topic.created_at)}</span>
+                                </div>
+                            </div>
+                    `;
+
+                    topic.lessons.forEach((lesson, lessonIndex) => {
+                        html += `
+                            <div class="lesson">
+                                <div class="lesson-title">
+                                    ${sectionNumber}.${topicNumber}.${lessonIndex + 1} ${lesson.title}
+                                </div>
+                                <div class="lesson-meta">
+                                    <span class="id-badge">${lesson.id}</span>
+                                    <span class="order-badge">ترتيب: ${lesson.order}</span>
+                                    <span class="date-badge">${formatDate(lesson.created_at)}</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    html += `</div>`;
+                    topicNumber++;
+                });
+
+                html += `</div>`;
+                sectionNumber++;
+            });
+
+            document.getElementById('content').innerHTML = html;
+            document.getElementById('content').style.display = 'block';
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        // البحث والتصفية
+        function setupFilters() {
+            const searchInput = document.getElementById('searchInput');
+            const idSearch = document.getElementById('idSearch');
+
+            function filterContent() {
+                const searchTerm = searchInput.value.toLowerCase();
+                const idTerm = idSearch.value.toLowerCase();
+
+                const sections = document.querySelectorAll('.section');
+                sections.forEach(section => {
+                    const text = section.textContent.toLowerCase();
+                    const matchesSearch = !searchTerm || text.includes(searchTerm);
+                    const matchesId = !idTerm || text.includes(idTerm);
+                    
+                    section.style.display = (matchesSearch && matchesId) ? 'block' : 'none';
+                });
+            }
+
+            searchInput.addEventListener('input', filterContent);
+            idSearch.addEventListener('input', filterContent);
+        }
+
+        // تحميل البيانات عند فتح الصفحة
+        loadData().then(sections => {
+            if (sections) {
+                renderContent(sections);
+                setupFilters();
+            }
+        });
+    </script>
+</body>
+</html>
