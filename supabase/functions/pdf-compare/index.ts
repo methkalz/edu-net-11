@@ -1,6 +1,7 @@
 import { serve } from 'https://deno.land/std@0.208.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
+import fuzzball from 'https://esm.sh/fuzzball@2.2.2';
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -22,6 +23,7 @@ serve(async (req) => {
 
     const {
       fileText,
+      filePages,
       fileHash,
       fileName,
       filePath,
@@ -156,32 +158,60 @@ serve(async (req) => {
         const refWordCount = refFile.extracted_text.split(/\s+/).length;
         const processedRefText = preprocessText(refFile.extracted_text, refWordCount);
         
-        // حساب Cosine Similarity بناءً على TF-IDF المحسن
-        const cosineSim = calculateOptimizedCosineSimilarity(
-          processedFileText.normalized,
-          processedRefText.normalized,
-          processedFileText.words,
-          processedRefText.words
-        );
-
-        // حساب Jaccard Similarity المحسن
-        const jaccardSim = calculateOptimizedJaccardSimilarity(
+        // 1. Fuzzy Similarity
+        const fuzzySim = fuzzball.ratio(processedFileText.normalized, processedRefText.normalized) / 100;
+        
+        // 2. Jaccard Similarity
+        const jaccardSim = calculateJaccardSimilarity(
           processedFileText.wordSet,
           processedRefText.wordSet
         );
+        
+        // 3. Sequence Similarity
+        const sequenceSim = calculateSequenceSimilarity(
+          processedFileText.words,
+          processedRefText.words
+        );
+        
+        // 4. Structural Similarity
+        const structuralSim = calculateStructuralSimilarity(
+          processedFileText.normalized,
+          processedRefText.normalized
+        );
+        
+        // Overall Score (وزن مخصص)
+        const overallScore = (
+          fuzzySim * 0.35 +
+          jaccardSim * 0.25 +
+          sequenceSim * 0.25 +
+          structuralSim * 0.15
+        );
 
-        // النتيجة النهائية (وزن Cosine 70% و Jaccard 30%)
-        const finalScore = (cosineSim * 0.7 + jaccardSim * 0.3);
+        // إيجاد القطع المتشابهة (إذا كان التشابه عالي)
+        let matchedSegments = [];
+        let coveragePercentage = 0;
+        
+        if (overallScore >= 0.50 && filePages && filePages.length > 0) {
+          // استخراج صفحات الملف المرجعي
+          const refPages = refFile.pages_data || [{ pageNumber: 1, text: refFile.extracted_text }];
+          
+          matchedSegments = findSimilarSegments(filePages, refPages, 0.70);
+          coveragePercentage = calculateCoveragePercentage(matchedSegments, wordCount);
+        }
 
-        if (finalScore > 0.30) {
+        if (overallScore > 0.30) {
           comparisons.push({
             matched_file_id: refFile.id,
             matched_file_name: refFile.file_name,
-            similarity_score: Math.round(finalScore * 100) / 100,
-            similarity_method: 'optimized_hybrid',
-            cosine_score: Math.round(cosineSim * 100) / 100,
+            similarity_score: Math.round(overallScore * 100) / 100,
+            similarity_method: 'advanced_multi_algorithm',
+            fuzzy_score: Math.round(fuzzySim * 100) / 100,
             jaccard_score: Math.round(jaccardSim * 100) / 100,
-            flagged: finalScore >= 0.70,
+            sequence_score: Math.round(sequenceSim * 100) / 100,
+            structural_score: Math.round(structuralSim * 100) / 100,
+            coverage_percentage: Math.round(coveragePercentage * 100) / 100,
+            matched_segments: matchedSegments.slice(0, 20),
+            flagged: overallScore >= 0.70,
           });
         }
       } catch (compError) {
@@ -304,62 +334,19 @@ function preprocessText(text: string, wordCount: number) {
   return { normalized, words, wordSet };
 }
 
-// حساب TF-IDF + Cosine Similarity المحسن
-function calculateOptimizedCosineSimilarity(
-  text1: string, 
-  text2: string,
-  words1: string[],
-  words2: string[]
-): number {
-  // بناء frequency maps بدلاً من arrays
-  const freq1 = new Map<string, number>();
-  const freq2 = new Map<string, number>();
-  
-  for (const word of words1) {
-    freq1.set(word, (freq1.get(word) || 0) + 1);
-  }
-  
-  for (const word of words2) {
-    freq2.set(word, (freq2.get(word) || 0) + 1);
-  }
-  
-  // استخدام الكلمات المشتركة فقط
-  const commonWords = new Set([...freq1.keys()].filter(w => freq2.has(w)));
-  
-  if (commonWords.size === 0) return 0;
-  
-  let dotProduct = 0;
-  let mag1 = 0;
-  let mag2 = 0;
-  
-  // حساب باستخدام الكلمات المشتركة فقط
-  for (const word of commonWords) {
-    const tf1 = (freq1.get(word) || 0) / words1.length;
-    const tf2 = (freq2.get(word) || 0) / words2.length;
-    
-    // IDF مبسط
-    const idf = Math.log(2 / (1 + (freq1.has(word) ? 1 : 0) + (freq2.has(word) ? 1 : 0)));
-    
-    const tfidf1 = tf1 * idf;
-    const tfidf2 = tf2 * idf;
-    
-    dotProduct += tfidf1 * tfidf2;
-    mag1 += tfidf1 * tfidf1;
-    mag2 += tfidf2 * tfidf2;
-  }
-  
-  mag1 = Math.sqrt(mag1);
-  mag2 = Math.sqrt(mag2);
-  
-  if (mag1 === 0 || mag2 === 0) return 0;
-  return dotProduct / (mag1 * mag2);
+// واجهة للقطع المتشابهة
+interface SimilarSegment {
+  text1: string;
+  text2: string;
+  page1: number;
+  page2: number;
+  similarity: number;
 }
 
-// حساب Jaccard Similarity المحسن
-function calculateOptimizedJaccardSimilarity(set1: Set<string>, set2: Set<string>): number {
+// 2. Jaccard Similarity
+function calculateJaccardSimilarity(set1: Set<string>, set2: Set<string>): number {
   if (set1.size === 0 && set2.size === 0) return 0;
   
-  // حساب التقاطع
   let intersectionSize = 0;
   const smallerSet = set1.size < set2.size ? set1 : set2;
   const largerSet = set1.size < set2.size ? set2 : set1;
@@ -368,10 +355,114 @@ function calculateOptimizedJaccardSimilarity(set1: Set<string>, set2: Set<string
     if (largerSet.has(word)) intersectionSize++;
   }
   
-  // حساب الاتحاد
   const unionSize = set1.size + set2.size - intersectionSize;
-  
   return unionSize === 0 ? 0 : intersectionSize / unionSize;
+}
+
+// 3. Sequence Similarity (التشابه التسلسلي)
+function calculateSequenceSimilarity(words1: string[], words2: string[]): number {
+  let totalMatchedLength = 0;
+  const minLength = Math.min(words1.length, words2.length);
+  
+  if (minLength === 0) return 0;
+  
+  // Sliding Window: 3-10 كلمات
+  for (let windowSize = 10; windowSize >= 3; windowSize--) {
+    const phrases1 = generatePhrases(words1, windowSize);
+    const phrases2 = generatePhrases(words2, windowSize);
+    
+    for (const phrase of phrases1) {
+      if (phrases2.has(phrase)) {
+        totalMatchedLength += windowSize;
+      }
+    }
+  }
+  
+  return totalMatchedLength / minLength;
+}
+
+function generatePhrases(words: string[], size: number): Set<string> {
+  const phrases = new Set<string>();
+  for (let i = 0; i <= words.length - size; i++) {
+    phrases.add(words.slice(i, i + size).join(' '));
+  }
+  return phrases;
+}
+
+// 4. Structural Similarity (التشابه الهيكلي)
+function calculateStructuralSimilarity(text1: string, text2: string): number {
+  const sentences1 = text1.split(/[.؟!،؛]+/).filter(s => s.trim().length > 0);
+  const sentences2 = text2.split(/[.؟!،؛]+/).filter(s => s.trim().length > 0);
+  
+  if (sentences1.length === 0 || sentences2.length === 0) return 0;
+  
+  const paragraphs1 = text1.split(/\n\n+/).length;
+  const paragraphs2 = text2.split(/\n\n+/).length;
+  
+  const avgSentenceLength1 = sentences1.reduce((sum, s) => sum + s.split(/\s+/).length, 0) / sentences1.length;
+  const avgSentenceLength2 = sentences2.reduce((sum, s) => sum + s.split(/\s+/).length, 0) / sentences2.length;
+  
+  const sentenceLengthSim = 1 - Math.abs(avgSentenceLength1 - avgSentenceLength2) / Math.max(avgSentenceLength1, avgSentenceLength2);
+  const paragraphSim = 1 - Math.abs(paragraphs1 - paragraphs2) / Math.max(paragraphs1, paragraphs2);
+  const sentenceCountSim = 1 - Math.abs(sentences1.length - sentences2.length) / Math.max(sentences1.length, sentences2.length);
+  
+  return (sentenceLengthSim + paragraphSim + sentenceCountSim) / 3;
+}
+
+// إيجاد القطع المتشابهة
+function findSimilarSegments(
+  pages1: Array<{ pageNumber: number; text: string }>,
+  pages2: Array<{ pageNumber: number; text: string }>,
+  threshold: number = 0.70
+): SimilarSegment[] {
+  const segments: SimilarSegment[] = [];
+  
+  // تقسيم كل صفحة إلى جمل
+  const sentences1 = pages1.flatMap(({ text, pageNumber }) => 
+    text.split(/[.؟!،؛]+/)
+      .filter(s => s.trim().length > 10)
+      .map(s => ({ text: s.trim(), page: pageNumber }))
+  );
+  
+  const sentences2 = pages2.flatMap(({ text, pageNumber }) => 
+    text.split(/[.؟!،؛]+/)
+      .filter(s => s.trim().length > 10)
+      .map(s => ({ text: s.trim(), page: pageNumber }))
+  );
+  
+  // مقارنة كل جملة بكل جملة أخرى
+  for (let i = 0; i < sentences1.length; i++) {
+    for (let j = 0; j < sentences2.length; j++) {
+      const similarity = fuzzball.ratio(sentences1[i].text, sentences2[j].text) / 100;
+      
+      if (similarity > threshold) {
+        segments.push({
+          text1: sentences1[i].text,
+          text2: sentences2[j].text,
+          page1: sentences1[i].page,
+          page2: sentences2[j].page,
+          similarity,
+        });
+      }
+    }
+  }
+  
+  // ترتيب حسب التشابه
+  return segments.sort((a, b) => b.similarity - a.similarity);
+}
+
+// حساب نسبة التغطية
+function calculateCoveragePercentage(
+  segments: SimilarSegment[],
+  totalWords: number
+): number {
+  if (totalWords === 0) return 0;
+  
+  const coveredWords = segments.reduce((sum, segment) => {
+    return sum + segment.text1.split(/\s+/).length;
+  }, 0);
+  
+  return coveredWords / totalWords;
 }
 
 // تطبيع النص العربي

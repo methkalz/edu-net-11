@@ -165,6 +165,7 @@ export const usePDFComparison = () => {
 
       console.log('✅ [PDF Comparison] Extraction successful:', {
         textLength: extractData.text?.length,
+        totalPages: extractData.pages?.length,
         hash: extractData.hash
       });
       onProgress?.(60);
@@ -180,6 +181,7 @@ export const usePDFComparison = () => {
         {
           body: {
             fileText: extractData.text,
+            filePages: extractData.pages,
             fileHash: extractData.hash,
             fileName: file.name,
             filePath,

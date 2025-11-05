@@ -42,28 +42,27 @@ serve(async (req) => {
     const arrayBuffer = await fileData.arrayBuffer();
     const uint8Array = new Uint8Array(arrayBuffer);
 
-    // استخراج النص من PDF (نسخة بسيطة - في الإنتاج نستخدم مكتبة متقدمة)
-    const extractedText = await extractTextFromPDF(uint8Array);
-
-    // تنظيف النص
-    const cleanedText = cleanText(extractedText);
+    // استخراج النص مع أرقام الصفحات
+    const { fullText, pages } = await extractTextFromPDF(uint8Array);
 
     // حساب hash
-    const textHash = await calculateHash(cleanedText);
+    const textHash = await calculateHash(fullText);
 
-    // حساب عدد الكلمات
-    const wordCount = countWords(cleanedText);
+    // حساب عدد الكلمات الإجمالي
+    const wordCount = countWords(fullText);
 
-    console.log(`Extracted ${wordCount} words from ${extractedText.length} characters, hash: ${textHash.substring(0, 8)}...`);
-    console.log(`First 200 chars of cleaned text: ${cleanedText.substring(0, 200)}`);
+    console.log(`Extracted ${wordCount} words from ${pages.length} pages, hash: ${textHash.substring(0, 8)}...`);
+    console.log(`First 200 chars: ${fullText.substring(0, 200)}`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        text: cleanedText,
+        text: fullText,
+        pages,
         hash: textHash,
         wordCount,
         metadata: {
+          totalPages: pages.length,
           fileSize: uint8Array.length,
           extractedAt: new Date().toISOString(),
         },
@@ -87,12 +86,18 @@ serve(async (req) => {
   }
 });
 
-// استخراج النص من PDF باستخدام PDF.js
-async function extractTextFromPDF(pdfBytes: Uint8Array): Promise<string> {
+// واجهة لتمثيل صفحة مستخرجة
+interface ExtractedPage {
+  pageNumber: number;
+  text: string;
+  wordCount: number;
+}
+
+// استخراج النص من PDF مع حفظ رقم كل صفحة
+async function extractTextFromPDF(pdfBytes: Uint8Array): Promise<{ fullText: string; pages: ExtractedPage[] }> {
   try {
     console.log(`Starting PDF text extraction, file size: ${pdfBytes.length} bytes`);
     
-    // تحميل ملف PDF
     const loadingTask = pdfjsLib.getDocument({
       data: pdfBytes,
       useSystemFonts: true,
@@ -104,17 +109,15 @@ async function extractTextFromPDF(pdfBytes: Uint8Array): Promise<string> {
     console.log(`PDF loaded successfully, total pages: ${numPages}`);
     
     let fullText = '';
+    const pages: ExtractedPage[] = [];
     
-    // استخراج النص من كل صفحة
     for (let pageNum = 1; pageNum <= numPages; pageNum++) {
       try {
         const page = await pdf.getPage(pageNum);
         const textContent = await page.getTextContent();
         
-        // تجميع النص من كل عنصر في الصفحة
         const pageText = textContent.items
           .map((item: any) => {
-            // التحقق من وجود النص
             if (item.str && typeof item.str === 'string') {
               return item.str;
             }
@@ -124,32 +127,38 @@ async function extractTextFromPDF(pdfBytes: Uint8Array): Promise<string> {
           .join(' ');
         
         if (pageText.trim().length > 0) {
-          fullText += pageText + '\n';
-          console.log(`Page ${pageNum}: extracted ${pageText.length} characters`);
+          const cleanedPageText = cleanText(pageText);
+          const pageWordCount = countWords(cleanedPageText);
+          
+          pages.push({
+            pageNumber: pageNum,
+            text: cleanedPageText,
+            wordCount: pageWordCount,
+          });
+          
+          fullText += cleanedPageText + '\n';
+          console.log(`Page ${pageNum}: extracted ${cleanedPageText.length} characters, ${pageWordCount} words`);
         }
       } catch (pageError) {
         console.error(`Error extracting text from page ${pageNum}:`, pageError);
-        // نستمر في الصفحات الأخرى
       }
     }
     
     if (!fullText || fullText.trim().length === 0) {
       console.warn('No readable text found in PDF after processing all pages');
-      return '';
+      return { fullText: '', pages: [] };
     }
     
-    console.log(`Total extracted text length: ${fullText.length} characters`);
-    return fullText;
+    console.log(`Total extracted: ${fullText.length} characters across ${pages.length} pages`);
+    return { fullText, pages };
   } catch (error) {
     console.error('PDF extraction error:', error);
     
-    // Fallback: محاولة استخراج بسيط من البايتات
     try {
       console.log('Attempting fallback text extraction method...');
       const decoder = new TextDecoder('utf-8', { fatal: false });
       const rawText = decoder.decode(pdfBytes);
       
-      // البحث عن نصوص بين أقواس في PDF
       const textMatches = rawText.match(/\(([^)]+)\)/g);
       if (textMatches && textMatches.length > 0) {
         const extractedText = textMatches
@@ -159,7 +168,11 @@ async function extractTextFromPDF(pdfBytes: Uint8Array): Promise<string> {
         
         if (extractedText.trim().length > 0) {
           console.log(`Fallback extraction successful: ${extractedText.length} characters`);
-          return extractedText;
+          const cleaned = cleanText(extractedText);
+          return { 
+            fullText: cleaned, 
+            pages: [{ pageNumber: 1, text: cleaned, wordCount: countWords(cleaned) }] 
+          };
         }
       }
     } catch (fallbackError) {
