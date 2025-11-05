@@ -10,13 +10,11 @@ import { useAuth } from '@/hooks/useAuth';
 import ModernHeader from '@/components/shared/ModernHeader';
 import type { GradeLevel } from '@/hooks/usePDFComparison';
 
-type ExtendedGradeLevel = GradeLevel | 'all';
-
 const TeacherPDFComparisonPage = () => {
   const navigate = useNavigate();
   const { userProfile } = useAuth();
   const [activeTab, setActiveTab] = useState('compare');
-  const [gradeLevel, setGradeLevel] = useState<ExtendedGradeLevel>('all');
+  const [gradeLevel, setGradeLevel] = useState<GradeLevel>('12');
 
   useEffect(() => {
     // التحقق من صلاحية الوصول - المعلمون فقط
@@ -39,13 +37,6 @@ const TeacherPDFComparisonPage = () => {
           <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-center">
             {/* Grade Selection */}
             <div className="flex gap-2 flex-wrap">
-              <Button
-                variant={gradeLevel === 'all' ? 'default' : 'outline'}
-                onClick={() => setGradeLevel('all')}
-                className="min-w-24"
-              >
-                الكل
-              </Button>
               <Button
                 variant={gradeLevel === '12' ? 'default' : 'outline'}
                 onClick={() => setGradeLevel('12')}
@@ -89,8 +80,8 @@ const TeacherPDFComparisonPage = () => {
 
         {/* Content Area */}
         <div className="space-y-4">
-          {activeTab === 'compare' && <ComparisonUploadZone gradeLevel={gradeLevel === 'all' ? undefined : gradeLevel} />}
-          {activeTab === 'history' && <ComparisonHistory gradeLevel={gradeLevel === 'all' ? undefined : gradeLevel} />}
+          {activeTab === 'compare' && <ComparisonUploadZone gradeLevel={gradeLevel} />}
+          {activeTab === 'history' && <ComparisonHistory gradeLevel={gradeLevel} />}
         </div>
       </div>
     </div>
