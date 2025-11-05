@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileSearch, History, Upload, Sparkles } from 'lucide-react';
 import ComparisonUploadZone from '@/components/pdf-comparison/ComparisonUploadZone';
@@ -23,65 +23,82 @@ const TeacherPDFComparisonPage = () => {
   }, [userProfile, navigate]);
 
   return (
-    <div className="min-h-screen bg-background" style={{ direction: 'rtl' }}>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5" style={{ direction: 'rtl' }}>
       <ModernHeader 
         title="نظام الكشف عن التشابه"
         showBackButton={true}
         backPath="/dashboard"
       />
       
-      <div className="container mx-auto px-4 py-6 space-y-4">
-        {/* Grade Level Selection */}
-        <Card className="border-0 bg-card/50 backdrop-blur-sm">
-          <CardContent className="p-4">
-            <Tabs value={gradeLevel} onValueChange={(value) => setGradeLevel(value as GradeLevel)}>
-              <TabsList className="grid w-full grid-cols-2 bg-muted/40">
-                <TabsTrigger 
-                  value="12"
-                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+      <div className="container mx-auto px-6 py-8 space-y-6">
+        {/* Grade Level & Main Tabs - Combined Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Grade Level Selection */}
+          <Card className="border border-border/50 bg-card/80 backdrop-blur-sm hover:shadow-lg transition-all duration-300">
+            <CardContent className="p-4">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setGradeLevel('12')}
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all duration-300 ${
+                    gradeLevel === '12'
+                      ? 'bg-primary text-primary-foreground shadow-md'
+                      : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:shadow-sm'
+                  }`}
                 >
-                  <FileSearch className="h-4 w-4 ml-2" />
-                  مشاريع نهاية - الصف 12
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="10"
-                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                  <FileSearch className="h-4 w-4" />
+                  <span>مشاريع نهاية - الصف 12</span>
+                </button>
+                <button
+                  onClick={() => setGradeLevel('10')}
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all duration-300 ${
+                    gradeLevel === '10'
+                      ? 'bg-primary text-primary-foreground shadow-md'
+                      : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:shadow-sm'
+                  }`}
                 >
-                  <FileSearch className="h-4 w-4 ml-2" />
-                  ميني بروجكت - الصف 10
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </CardContent>
-        </Card>
+                  <FileSearch className="h-4 w-4" />
+                  <span>ميني بروجكت - الصف 10</span>
+                </button>
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* Main Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-2 bg-muted/40">
-            <TabsTrigger 
-              value="compare" 
-              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-            >
-              <Upload className="h-4 w-4 ml-2" />
-              مقارنة جديدة
-            </TabsTrigger>
-            <TabsTrigger 
-              value="history" 
-              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-            >
-              <History className="h-4 w-4 ml-2" />
-              سجل المقارنات
-            </TabsTrigger>
-          </TabsList>
+          {/* Main Tabs */}
+          <Card className="border border-border/50 bg-card/80 backdrop-blur-sm hover:shadow-lg transition-all duration-300">
+            <CardContent className="p-4">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setActiveTab('compare')}
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all duration-300 ${
+                    activeTab === 'compare'
+                      ? 'bg-primary text-primary-foreground shadow-md'
+                      : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:shadow-sm'
+                  }`}
+                >
+                  <Upload className="h-4 w-4" />
+                  <span>مقارنة جديدة</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab('history')}
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all duration-300 ${
+                    activeTab === 'history'
+                      ? 'bg-primary text-primary-foreground shadow-md'
+                      : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:shadow-sm'
+                  }`}
+                >
+                  <History className="h-4 w-4" />
+                  <span>سجل المقارنات</span>
+                </button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-          <TabsContent value="compare" className="space-y-4">
-            <ComparisonUploadZone gradeLevel={gradeLevel} />
-          </TabsContent>
-
-          <TabsContent value="history">
-            <ComparisonHistory gradeLevel={gradeLevel} />
-          </TabsContent>
-        </Tabs>
+        {/* Content Area */}
+        <div className="space-y-4">
+          {activeTab === 'compare' && <ComparisonUploadZone gradeLevel={gradeLevel} />}
+          {activeTab === 'history' && <ComparisonHistory gradeLevel={gradeLevel} />}
+        </div>
       </div>
     </div>
   );

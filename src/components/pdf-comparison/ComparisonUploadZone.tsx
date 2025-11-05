@@ -152,18 +152,18 @@ const ComparisonUploadZone = ({ gradeLevel }: ComparisonUploadZoneProps) => {
       
       {/* Files List */}
       {files.length > 0 && (
-        <Card className="border-0 bg-card/50 backdrop-blur-sm">
-          <CardContent className="p-4 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b">
+        <Card className="border border-border/50 bg-card/80 backdrop-blur-sm hover:shadow-lg transition-all duration-300">
+          <CardContent className="p-6 space-y-4">
+            <div className="flex items-center justify-between pb-4 border-b border-border/50">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <FileText className="h-4 w-4 text-primary" />
+                <div className="p-3 rounded-xl bg-primary/10 backdrop-blur-sm">
+                  <FileText className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-semibold">
+                  <h3 className="font-semibold text-foreground">
                     الملفات المحددة
                   </h3>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-sm text-muted-foreground">
                     {files.length} {files.length === 1 ? 'ملف' : 'ملفات'}
                   </p>
                 </div>
@@ -174,6 +174,7 @@ const ComparisonUploadZone = ({ gradeLevel }: ComparisonUploadZoneProps) => {
                   variant="outline"
                   size="sm"
                   disabled={isComparing}
+                  className="hover:shadow-sm transition-all duration-200"
                 >
                   <X className="h-4 w-4 ml-2" />
                   مسح
@@ -182,6 +183,7 @@ const ComparisonUploadZone = ({ gradeLevel }: ComparisonUploadZoneProps) => {
                   onClick={handleCompareAll}
                   disabled={isComparing || files.every(f => f.status === 'completed')}
                   size="sm"
+                  className="shadow-md hover:shadow-lg transition-all duration-200"
                 >
                   {isComparing ? (
                     <>

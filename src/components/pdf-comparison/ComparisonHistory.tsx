@@ -72,18 +72,18 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
   };
 
   return (
-    <Card className="border-0 bg-card/50 backdrop-blur-sm">
-      <CardHeader>
+    <Card className="border border-border/50 bg-card/80 backdrop-blur-sm hover:shadow-lg transition-all duration-300">
+      <CardHeader className="border-b border-border/50 bg-gradient-to-r from-card to-card/50">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <FileText className="h-4 w-4 text-primary" />
+            <div className="p-3 rounded-xl bg-primary/10 backdrop-blur-sm">
+              <FileText className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <CardTitle className="text-lg font-semibold">
+              <CardTitle className="text-xl font-semibold text-foreground">
                 سجل المقارنات
               </CardTitle>
-              <CardDescription className="text-sm">
+              <CardDescription className="text-sm mt-1">
                 {gradeLevel && `الصف ${gradeLevel === '12' ? '12' : '10'}`}
               </CardDescription>
             </div>
@@ -93,39 +93,40 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
             size="sm"
             onClick={loadHistory}
             disabled={isLoading}
+            className="hover:shadow-sm transition-all duration-200"
           >
             <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
           </Button>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-6">
         {isLoading ? (
-          <div className="text-center py-12">
-            <RefreshCw className="h-8 w-8 animate-spin text-primary mx-auto mb-3" />
+          <div className="text-center py-16">
+            <RefreshCw className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
             <p className="text-sm text-muted-foreground">جارٍ التحميل...</p>
           </div>
         ) : history.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed rounded-lg">
-            <FileText className="h-12 w-12 text-muted-foreground/50 mb-3" />
+          <div className="flex flex-col items-center justify-center py-16 border-2 border-dashed border-border/50 rounded-xl bg-muted/20">
+            <FileText className="h-12 w-12 text-muted-foreground/50 mb-4" />
             <p className="text-sm font-medium text-muted-foreground">لا توجد مقارنات سابقة</p>
           </div>
         ) : (
-          <div className="border rounded-lg overflow-hidden">
+          <div className="border border-border/50 rounded-xl overflow-hidden">
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/40">
-                  <TableHead>اسم الملف</TableHead>
-                  <TableHead className="text-center">المعلم</TableHead>
-                  <TableHead className="text-center">الحالة</TableHead>
-                  <TableHead className="text-center">التشابه</TableHead>
-                  <TableHead className="text-center">التطابقات</TableHead>
-                  <TableHead className="text-center">التاريخ</TableHead>
-                  <TableHead className="text-center">عرض</TableHead>
+                <TableRow className="bg-muted/30 border-b border-border/50">
+                  <TableHead className="font-semibold">اسم الملف</TableHead>
+                  <TableHead className="text-center font-semibold">المعلم</TableHead>
+                  <TableHead className="text-center font-semibold">الحالة</TableHead>
+                  <TableHead className="text-center font-semibold">التشابه</TableHead>
+                  <TableHead className="text-center font-semibold">التطابقات</TableHead>
+                  <TableHead className="text-center font-semibold">التاريخ</TableHead>
+                  <TableHead className="text-center font-semibold">عرض</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {history.map((item) => (
-                  <TableRow key={item.id} className="hover:bg-muted/20">
+                  <TableRow key={item.id} className="hover:bg-muted/30 transition-colors duration-200 border-b border-border/30 last:border-0">
                     <TableCell className="py-3">
                       <div className="flex items-center gap-2">
                         <FileText className="h-4 w-4 text-primary" />
