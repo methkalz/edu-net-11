@@ -250,13 +250,7 @@ export const usePDFComparison = () => {
     try {
       let query = supabase
         .from('pdf_comparison_results')
-        .select(`
-          *,
-          profiles:requested_by (
-            full_name,
-            role
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -268,12 +262,32 @@ export const usePDFComparison = () => {
 
       if (error) throw error;
       
+      // جلب بيانات المعلمين
+      const userIds = [...new Set((data || []).map((item: any) => item.requested_by).filter(Boolean))];
+      
+      let teacherNames: Record<string, { full_name: string; role: string }> = {};
+      
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, full_name, role')
+          .in('user_id', userIds);
+        
+        if (profiles) {
+          profiles.forEach((profile: any) => {
+            teacherNames[profile.user_id] = {
+              full_name: profile.full_name,
+              role: profile.role
+            };
+          });
+        }
+      }
+      
       // تحويل البيانات لإضافة اسم المعلم
       const results = (data || []).map((item: any) => ({
         ...item,
-        teacher_name: item.profiles?.full_name || 'غير معروف',
-        teacher_role: item.profiles?.role || 'unknown',
-        profiles: undefined // إزالة الكائن المدمج
+        teacher_name: teacherNames[item.requested_by]?.full_name || 'غير معروف',
+        teacher_role: teacherNames[item.requested_by]?.role || 'unknown'
       }));
       
       return results as unknown as ComparisonResult[];
