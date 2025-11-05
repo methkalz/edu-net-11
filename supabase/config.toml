@@ -23,3 +23,6 @@ verify_jwt = true
 
 [functions.pdf-add-to-repository]
 verify_jwt = true
+
+[functions.migrate-repository-texts]
+verify_jwt = true

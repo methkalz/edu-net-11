@@ -165,13 +165,15 @@ export const usePDFComparison = () => {
 
       console.log('✅ [PDF Comparison] Extraction successful:', {
         textLength: extractData.text?.length,
-        hash: extractData.hash
+        normalizedLength: extractData.normalizedText?.length,
+        hash: extractData.hash,
+        simhash: extractData.simhash?.substring(0, 16)
       });
       onProgress?.(60);
 
       // 3. المقارنة
       currentPhase = 'comparison';
-      console.log('🔍 [PDF Comparison] Phase: Comparison');
+      console.log('🔍 [PDF Comparison] Phase: Comparison (Hybrid 2024)');
       
       const projectType: ProjectType = gradeLevel === '12' ? 'final_project' : 'mini_project';
       
@@ -179,7 +181,9 @@ export const usePDFComparison = () => {
         'pdf-compare',
         {
           body: {
-            fileText: extractData.text,
+            fileText: extractData.cleanedText || extractData.text,
+            normalizedText: extractData.normalizedText,
+            simhash: extractData.simhash,
             fileHash: extractData.hash,
             fileName: file.name,
             filePath,
