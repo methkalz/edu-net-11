@@ -49,17 +49,15 @@ const TeacherPDFComparisonPage = () => {
               <Button
                 variant={gradeLevel === '12' ? 'default' : 'outline'}
                 onClick={() => setGradeLevel('12')}
-                className="min-w-32 gap-2"
+                className="min-w-32"
               >
-                <GraduationCap className="h-4 w-4" />
                 الصف 12
               </Button>
               <Button
                 variant={gradeLevel === '10' ? 'default' : 'outline'}
                 onClick={() => setGradeLevel('10')}
-                className="min-w-32 gap-2"
+                className="min-w-32"
               >
-                <BookOpen className="h-4 w-4" />
                 الصف 10
               </Button>
             </div>
