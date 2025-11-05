@@ -31,7 +31,7 @@ serve(async (req) => {
       bucket,
     } = await req.json();
 
-    console.log(`📥 Adding ${fileName} to repository (Grade ${gradeLevel})`);
+    console.log(`Adding ${fileName} to repository (Grade ${gradeLevel})`);
 
     // 1. استخراج النص من الملف
     const extractResponse = await fetch(
@@ -50,23 +50,14 @@ serve(async (req) => {
       throw new Error('Failed to extract text from PDF');
     }
 
-    const extractData = await extractResponse.json();
-    const { 
-      cleanedText, 
-      normalizedText, 
-      hash, 
-      simhash, 
-      wordCount, 
-      ngrams3 
-    } = extractData;
-
-    console.log(`✅ Text extracted: ${wordCount} words, simhash: ${simhash?.substring(0, 16)}...`);
+    const { text, hash, wordCount } = await extractResponse.json();
 
     // 2. نسخ الملف إلى bucket المستودع المناسب
     const targetBucket = gradeLevel === '12' 
       ? 'pdf-comparison-grade12' 
       : 'pdf-comparison-grade10';
 
+    // تحميل الملف من الـ bucket المؤقت
     const { data: fileData, error: downloadError } = await supabase.storage
       .from(bucket)
       .download(filePath);
@@ -75,6 +66,7 @@ serve(async (req) => {
       throw new Error(`Failed to download file: ${downloadError.message}`);
     }
 
+    // رفع إلى bucket المستودع
     const newFileName = `${Date.now()}_${hash.substring(0, 8)}_${fileName}`;
     const { error: uploadError } = await supabase.storage
       .from(targetBucket)
@@ -87,9 +79,7 @@ serve(async (req) => {
       throw new Error(`Failed to upload to repository: ${uploadError.message}`);
     }
 
-    console.log(`📤 File uploaded to ${targetBucket}/${newFileName}`);
-
-    // 3. إضافة إلى جدول المستودع مع البيانات المُحسّنة
+    // 4. إضافة إلى جدول المستودع
     const { data: repositoryEntry, error: insertError } = await supabase
       .from('pdf_comparison_repository')
       .insert({
@@ -98,11 +88,8 @@ serve(async (req) => {
         file_size: fileSize,
         grade_level: gradeLevel,
         project_type: projectType,
-        extracted_text: cleanedText, // النص النظيف
-        normalized_text: normalizedText, // النص المُطبّع للمقارنة
+        extracted_text: text,
         text_hash: hash,
-        simhash_value: simhash, // Simhash للكشف السريع
-        ngrams_3: ngrams3, // N-grams للبحث
         word_count: wordCount,
         language_detected: 'ar',
         uploaded_by: userId,
@@ -113,22 +100,21 @@ serve(async (req) => {
           original_path: filePath,
           original_bucket: bucket,
           added_at: new Date().toISOString(),
-          extraction_version: 'v2024_hybrid',
         },
       })
       .select()
       .single();
 
     if (insertError) {
-      console.error('❌ Insert error:', insertError);
+      console.error('Insert error:', insertError);
       
-      // حذف الملف المرفوع في حالة فشل الإدراج
+      // محاولة حذف الملف المرفوع في حالة فشل الإدراج
       await supabase.storage.from(targetBucket).remove([newFileName]);
       
       throw new Error(`Failed to add to repository: ${insertError.message}`);
     }
 
-    // 4. تسجيل في audit log
+    // 5. تسجيل في audit log
     await supabase.from('pdf_comparison_audit_log').insert({
       action_type: 'add_to_repository',
       performed_by: userId,
@@ -138,17 +124,15 @@ serve(async (req) => {
         projectType,
         wordCount,
         repositoryId: repositoryEntry.id,
-        hasSimhash: !!simhash,
-        hasNgrams: !!ngrams3,
       },
     });
 
-    // 5. حذف الملف من bucket المؤقت
+    // 6. حذف الملف من bucket المؤقت (اختياري)
     if (bucket === 'pdf-comparison-temp') {
       await supabase.storage.from(bucket).remove([filePath]);
     }
 
-    console.log(`✅ Successfully added ${fileName} to repository`);
+    console.log(`Successfully added ${fileName} to repository`);
 
     return new Response(
       JSON.stringify({
@@ -161,7 +145,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error('❌ Error in pdf-add-to-repository function:', error);
+    console.error('Error in pdf-add-to-repository function:', error);
     return new Response(
       JSON.stringify({
         success: false,

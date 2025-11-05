@@ -26,7 +26,7 @@ serve(async (req) => {
       throw new Error('Missing required parameters: filePath and bucket');
     }
 
-    console.log(`📄 Extracting text from: ${bucket}/${filePath}`);
+    console.log(`Extracting text from: ${bucket}/${filePath}`);
 
     // تحميل الملف من Storage
     const { data: fileData, error: downloadError } = await supabase.storage
@@ -40,60 +40,40 @@ serve(async (req) => {
 
     // تحويل Blob إلى ArrayBuffer
     const arrayBuffer = await fileData.arrayBuffer();
-    const pdfBytes = new Uint8Array(arrayBuffer);
-    console.log(`📦 PDF size: ${pdfBytes.length} bytes`);
+    const uint8Array = new Uint8Array(arrayBuffer);
 
-    // استخراج النص من PDF
-    const rawText = await extractTextFromPDF(pdfBytes);
-    console.log(`✅ Raw text extracted: ${rawText.length} characters`);
+    // استخراج النص من PDF (نسخة بسيطة - في الإنتاج نستخدم مكتبة متقدمة)
+    const extractedText = await extractTextFromPDF(uint8Array);
 
-    // تنظيف النص (المرحلة الأولى)
-    const cleanedText = cleanText(rawText);
-    console.log(`🧹 Cleaned text: ${cleanedText.length} characters`);
+    // تنظيف النص
+    const cleanedText = cleanText(extractedText);
 
-    // تطبيع النص العربي (المرحلة الثانية)
-    const normalizedText = advancedArabicNormalization(cleanedText);
-    console.log(`🔤 Normalized text: ${normalizedText.length} characters`);
+    // حساب hash
+    const textHash = await calculateHash(cleanedText);
 
-    // حساب Hash على النص المُطبّع
-    const textHash = await calculateHash(normalizedText);
-    
-    // حساب Simhash للكشف السريع
-    const simhashValue = simhash(normalizedText);
-    
     // حساب عدد الكلمات
     const wordCount = countWords(cleanedText);
-    
-    // توليد N-Grams (3-character)
-    const ngrams3 = Array.from(generateNGrams(normalizedText, 3)).slice(0, 10000);
-    
-    console.log(`📊 Stats: ${wordCount} words, hash: ${textHash.substring(0, 16)}...`);
-    console.log(`First 200 chars: ${cleanedText.substring(0, 200)}`);
+
+    console.log(`Extracted ${wordCount} words from ${extractedText.length} characters, hash: ${textHash.substring(0, 8)}...`);
+    console.log(`First 200 chars of cleaned text: ${cleanedText.substring(0, 200)}`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        rawText: rawText.substring(0, 5000), // للأرشفة فقط (5000 حرف)
-        cleanedText, // النص النظيف للتخزين
-        normalizedText, // النص المُطبّع للمقارنة
-        text: cleanedText, // للتوافق مع الكود القديم
+        text: cleanedText,
         hash: textHash,
-        simhash: simhashValue.toString(),
         wordCount,
-        ngrams3, // N-grams للبحث السريع
         metadata: {
-          extraction_method: 'pdfjs-dist-v4',
-          text_length: cleanedText.length,
-          normalized_length: normalizedText.length,
+          fileSize: uint8Array.length,
           extractedAt: new Date().toISOString(),
-        }
+        },
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
   } catch (error) {
-    console.error('❌ Error in pdf-extract-text:', error);
+    console.error('Error in pdf-extract-text function:', error);
     return new Response(
       JSON.stringify({
         success: false,
@@ -144,59 +124,57 @@ async function extractTextFromPDF(pdfBytes: Uint8Array): Promise<string> {
           .join(' ');
         
         if (pageText.trim().length > 0) {
-          fullText += pageText + '\n\n';
-          if (pageNum % 10 === 0) {
-            console.log(`  ✓ Processed ${pageNum}/${numPages} pages`);
-          }
+          fullText += pageText + '\n';
+          console.log(`Page ${pageNum}: extracted ${pageText.length} characters`);
         }
       } catch (pageError) {
-        console.warn(`⚠️ Error on page ${pageNum}:`, pageError);
-        continue;
+        console.error(`Error extracting text from page ${pageNum}:`, pageError);
+        // نستمر في الصفحات الأخرى
       }
     }
     
     if (!fullText || fullText.trim().length === 0) {
-      console.warn('⚠️ Primary extraction returned empty, trying fallback...');
-      return extractTextFallback(pdfBytes);
+      console.warn('No readable text found in PDF after processing all pages');
+      return '';
     }
     
     console.log(`Total extracted text length: ${fullText.length} characters`);
     return fullText;
   } catch (error) {
-    console.error('❌ PDF.js extraction failed:', error);
-    return extractTextFallback(pdfBytes);
-  }
-}
-
-// Fallback: استخراج نص بسيط من البايتات
-function extractTextFallback(pdfBytes: Uint8Array): string {
-  console.log('🔄 Using fallback text extraction...');
-  
-  try {
-    const decoder = new TextDecoder('utf-8', { fatal: false });
-    const rawText = decoder.decode(pdfBytes);
+    console.error('PDF extraction error:', error);
     
-    const textMatches = rawText.match(/\(([^)]+)\)/g);
-    if (textMatches && textMatches.length > 0) {
-      const extractedText = textMatches
-        .map(match => match.slice(1, -1))
-        .filter(text => text.length > 2)
-        .join(' ');
+    // Fallback: محاولة استخراج بسيط من البايتات
+    try {
+      console.log('Attempting fallback text extraction method...');
+      const decoder = new TextDecoder('utf-8', { fatal: false });
+      const rawText = decoder.decode(pdfBytes);
       
-      if (extractedText.trim().length > 0) {
-        console.log(`Fallback extraction successful: ${extractedText.length} characters`);
-        return extractedText;
+      // البحث عن نصوص بين أقواس في PDF
+      const textMatches = rawText.match(/\(([^)]+)\)/g);
+      if (textMatches && textMatches.length > 0) {
+        const extractedText = textMatches
+          .map(match => match.slice(1, -1))
+          .filter(text => text.length > 2)
+          .join(' ');
+        
+        if (extractedText.trim().length > 0) {
+          console.log(`Fallback extraction successful: ${extractedText.length} characters`);
+          return extractedText;
+        }
       }
+    } catch (fallbackError) {
+      console.error('Fallback extraction also failed:', fallbackError);
     }
-  } catch (fallbackError) {
-    console.error('Fallback extraction also failed:', fallbackError);
+    
+    throw new Error('Failed to extract text from PDF');
   }
-  
-  return '';
 }
 
-// تنظيف النص - المرحلة الأولى
+// تنظيف النص (محسّن للنصوص العربية والإنجليزية)
 function cleanText(text: string): string {
+  console.log(`Starting text cleaning, original length: ${text.length}`);
+  
+  // قائمة بالكلمات التقنية الشائعة التي يجب إزالتها
   const technicalKeywords = [
     'obj', 'endobj', 'stream', 'endstream',
     'Type', 'Font', 'Catalog', 'Pages', 'Page',
@@ -206,117 +184,59 @@ function cleanText(text: string): string {
     'FirstChar', 'LastChar', 'Widths', 'FontDescriptor'
   ];
   
-  return text
-    // تطبيع نهايات الأسطر
-    .replace(/\r\n/g, '\n')
+  // تنظيف أولي
+  let cleaned = text
+    .replace(/\r\n/g, '\n') // توحيد نهايات الأسطر
     .replace(/\r/g, '\n')
-    // إزالة أحرف غير مرئية وخاصة
-    .replace(/[\u0000-\u001F\u007F-\u009F]/g, ' ')
-    .replace(/\u200B/g, '')
-    .replace(/\uFEFF/g, '')
-    // توحيد المسافات
-    .replace(/\t/g, ' ')
-    .replace(/[ ]{2,}/g, ' ')
-    .replace(/\n{3,}/g, '\n\n')
+    .replace(/\t/g, ' ') // تحويل tabs إلى مسافات
+    .replace(/\s+/g, ' ') // توحيد المسافات المتعددة
+    .replace(/\\[nrt]/g, ' ') // إزالة escape characters
+    .trim();
+  
+  // إزالة الرموز غير المرغوبة مع الحفاظ على العربية والإنجليزية
+  cleaned = cleaned.replace(/[^\w\s\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF.,!?;:()\-]/g, '');
+  
+  // تطبيع الحروف العربية
+  cleaned = cleaned
+    .replace(/[أإآ]/g, 'ا') // توحيد الألف
+    .replace(/ى/g, 'ي') // توحيد الياء
+    .replace(/ة/g, 'ه') // توحيد التاء المربوطة
+    .replace(/[\u064B-\u065F]/g, ''); // إزالة التشكيل
+  
+  // تقسيم إلى كلمات وتصفية
+  const words = cleaned.split(/\s+/);
+  const filteredWords = words.filter(word => {
+    // إزالة الكلمات الفارغة
+    if (!word || word.length === 0) return false;
+    
     // إزالة الكلمات التقنية
-    .replace(/\b(obj|endobj|stream|endstream|xref|trailer|startxref)\b/gi, '')
-    // تقسيم وتصفية
-    .split(/\s+/)
-    .filter(word => {
-      if (!word || word.length < 2) return false;
-      if (technicalKeywords.includes(word)) return false;
-      if (word.startsWith('/')) return false;
-      if (/^\d+$/.test(word)) return false;
-      return true;
-    })
-    .join(' ')
-    .trim();
+    if (technicalKeywords.includes(word)) return false;
+    
+    // إزالة الكلمات القصيرة جداً (أقل من حرفين)
+    if (word.length < 2) return false;
+    
+    // إزالة الكلمات التي تبدأ بـ /
+    if (word.startsWith('/')) return false;
+    
+    // إزالة الكلمات التي هي أرقام فقط
+    if (/^\d+$/.test(word)) return false;
+    
+    return true;
+  });
+  
+  const result = filteredWords.join(' ');
+  console.log(`Text cleaning complete, cleaned length: ${result.length}, words: ${filteredWords.length}`);
+  
+  return result;
 }
 
-// تطبيع متقدم للنص العربي - المرحلة الثانية
-function advancedArabicNormalization(text: string): string {
-  return text
-    .toLowerCase()
-    // إزالة التشكيل الكامل
-    .replace(/[\u064B-\u065F\u0670\u0640]/g, '')
-    // توحيد الألف بجميع أشكالها
-    .replace(/[آأإٱ]/g, 'ا')
-    // توحيد الهمزة
-    .replace(/[ؤئ]/g, 'ء')
-    // توحيد الياء
-    .replace(/[ىي]/g, 'ي')
-    // توحيد التاء المربوطة والهاء
-    .replace(/ة/g, 'ه')
-    // إزالة الكشيدة
-    .replace(/ـ/g, '')
-    // توحيد الأرقام العربية والهندية إلى ASCII
-    .replace(/[٠-٩]/g, (d) => String.fromCharCode(d.charCodeAt(0) - 1632 + 48))
-    .replace(/[۰-۹]/g, (d) => String.fromCharCode(d.charCodeAt(0) - 1776 + 48))
-    // إزالة الرموز والأحرف الخاصة
-    .replace(/[^\u0600-\u06FFa-zA-Z0-9\s]/g, ' ')
-    // توحيد المسافات
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-// حساب SHA-256 Hash
+// حساب SHA-256 hash
 async function calculateHash(text: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(text);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-// حساب Simhash (للكشف السريع عن التطابق التام/شبه التام)
-function simhash(text: string): bigint {
-  const words = text.split(/\s+/).filter(w => w.length > 2);
-  const vector = new Array(64).fill(0);
-  
-  for (const word of words) {
-    const hash = hashString(word);
-    for (let i = 0; i < 64; i++) {
-      if (hash & (1n << BigInt(i))) {
-        vector[i]++;
-      } else {
-        vector[i]--;
-      }
-    }
-  }
-  
-  let result = 0n;
-  for (let i = 0; i < 64; i++) {
-    if (vector[i] > 0) {
-      result |= (1n << BigInt(i));
-    }
-  }
-  
-  return result;
-}
-
-// FNV-1a Hash للنصوص
-function hashString(str: string): bigint {
-  const FNV_PRIME = 0x100000001b3n;
-  let hash = 0xcbf29ce484222325n;
-  
-  for (let i = 0; i < str.length; i++) {
-    hash ^= BigInt(str.charCodeAt(i));
-    hash = BigInt.asUintN(64, hash * FNV_PRIME);
-  }
-  
-  return hash;
-}
-
-// توليد Character N-Grams
-function generateNGrams(text: string, n: number = 3): Set<string> {
-  const ngrams = new Set<string>();
-  const normalized = text.replace(/\s+/g, '');
-  
-  for (let i = 0; i <= normalized.length - n; i++) {
-    ngrams.add(normalized.substring(i, i + n));
-  }
-  
-  return ngrams;
 }
 
 // حساب عدد الكلمات
