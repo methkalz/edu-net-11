@@ -139,12 +139,16 @@ serve(async (req) => {
     const processedFileText = preprocessText(fileText, wordCount);
     console.log(`Processed text ready for comparison`);
     
-    // 3. حساب التشابه مع كل ملف
+    // 3. حساب التشابه مع كل ملف (حد أقصى 10 ملفات)
     const comparisons = [];
-    const maxComparisonTime = 25000; // 25 ثانية كحد أقصى
+    const maxComparisonTime = 20000; // 20 ثانية
+    const maxFilesToCompare = 10; // حد أقصى 10 ملفات
     const comparisonStartTime = Date.now();
 
-    for (const refFile of repositoryFiles) {
+    const filesToCompare = repositoryFiles.slice(0, maxFilesToCompare);
+    console.log(`Comparing against ${filesToCompare.length} files (limited from ${repositoryFiles.length})`);
+
+    for (const refFile of filesToCompare) {
       // فحص الوقت
       if (Date.now() - comparisonStartTime > maxComparisonTime) {
         console.warn('⚠️ Comparison timeout reached, stopping early');
@@ -158,8 +162,12 @@ serve(async (req) => {
         const refWordCount = refFile.extracted_text.split(/\s+/).length;
         const processedRefText = preprocessText(refFile.extracted_text, refWordCount);
         
-        // 1. Fuzzy Similarity
-        const fuzzySim = fuzzball.ratio(processedFileText.normalized, processedRefText.normalized) / 100;
+        // 1. Fuzzy Similarity (مبسط - أخذ عينة فقط)
+        const sampleSize = Math.min(5000, processedFileText.normalized.length);
+        const fuzzySim = fuzzball.ratio(
+          processedFileText.normalized.substring(0, sampleSize),
+          processedRefText.normalized.substring(0, sampleSize)
+        ) / 100;
         
         // 2. Jaccard Similarity
         const jaccardSim = calculateJaccardSimilarity(
@@ -167,10 +175,10 @@ serve(async (req) => {
           processedRefText.wordSet
         );
         
-        // 3. Sequence Similarity
+        // 3. Sequence Similarity (مبسط - نوافذ أصغر فقط)
         const sequenceSim = calculateSequenceSimilarity(
-          processedFileText.words,
-          processedRefText.words
+          processedFileText.words.slice(0, 1000),
+          processedRefText.words.slice(0, 1000)
         );
         
         // 4. Structural Similarity
@@ -179,25 +187,13 @@ serve(async (req) => {
           processedRefText.normalized
         );
         
-        // Overall Score (وزن مخصص)
+        // Overall Score
         const overallScore = (
           fuzzySim * 0.35 +
           jaccardSim * 0.25 +
           sequenceSim * 0.25 +
           structuralSim * 0.15
         );
-
-        // إيجاد القطع المتشابهة (إذا كان التشابه عالي)
-        let matchedSegments = [];
-        let coveragePercentage = 0;
-        
-        if (overallScore >= 0.50 && filePages && filePages.length > 0) {
-          // استخراج صفحات الملف المرجعي
-          const refPages = refFile.pages_data || [{ pageNumber: 1, text: refFile.extracted_text }];
-          
-          matchedSegments = findSimilarSegments(filePages, refPages, 0.70);
-          coveragePercentage = calculateCoveragePercentage(matchedSegments, wordCount);
-        }
 
         if (overallScore > 0.30) {
           comparisons.push({
@@ -209,8 +205,6 @@ serve(async (req) => {
             jaccard_score: Math.round(jaccardSim * 100) / 100,
             sequence_score: Math.round(sequenceSim * 100) / 100,
             structural_score: Math.round(structuralSim * 100) / 100,
-            coverage_percentage: Math.round(coveragePercentage * 100) / 100,
-            matched_segments: matchedSegments.slice(0, 20),
             flagged: overallScore >= 0.70,
           });
         }
@@ -359,15 +353,15 @@ function calculateJaccardSimilarity(set1: Set<string>, set2: Set<string>): numbe
   return unionSize === 0 ? 0 : intersectionSize / unionSize;
 }
 
-// 3. Sequence Similarity (التشابه التسلسلي)
+// 3. Sequence Similarity (محسّن للأداء)
 function calculateSequenceSimilarity(words1: string[], words2: string[]): number {
-  let totalMatchedLength = 0;
   const minLength = Math.min(words1.length, words2.length);
-  
   if (minLength === 0) return 0;
   
-  // Sliding Window: 3-10 كلمات
-  for (let windowSize = 10; windowSize >= 3; windowSize--) {
+  let totalMatchedLength = 0;
+  
+  // فقط نوافذ صغيرة (3-5 كلمات) لتقليل العمليات
+  for (let windowSize = 5; windowSize >= 3; windowSize--) {
     const phrases1 = generatePhrases(words1, windowSize);
     const phrases2 = generatePhrases(words2, windowSize);
     
@@ -378,7 +372,7 @@ function calculateSequenceSimilarity(words1: string[], words2: string[]): number
     }
   }
   
-  return totalMatchedLength / minLength;
+  return Math.min(1, totalMatchedLength / minLength);
 }
 
 function generatePhrases(words: string[], size: number): Set<string> {
@@ -409,61 +403,8 @@ function calculateStructuralSimilarity(text1: string, text2: string): number {
   return (sentenceLengthSim + paragraphSim + sentenceCountSim) / 3;
 }
 
-// إيجاد القطع المتشابهة
-function findSimilarSegments(
-  pages1: Array<{ pageNumber: number; text: string }>,
-  pages2: Array<{ pageNumber: number; text: string }>,
-  threshold: number = 0.70
-): SimilarSegment[] {
-  const segments: SimilarSegment[] = [];
-  
-  // تقسيم كل صفحة إلى جمل
-  const sentences1 = pages1.flatMap(({ text, pageNumber }) => 
-    text.split(/[.؟!،؛]+/)
-      .filter(s => s.trim().length > 10)
-      .map(s => ({ text: s.trim(), page: pageNumber }))
-  );
-  
-  const sentences2 = pages2.flatMap(({ text, pageNumber }) => 
-    text.split(/[.؟!،؛]+/)
-      .filter(s => s.trim().length > 10)
-      .map(s => ({ text: s.trim(), page: pageNumber }))
-  );
-  
-  // مقارنة كل جملة بكل جملة أخرى
-  for (let i = 0; i < sentences1.length; i++) {
-    for (let j = 0; j < sentences2.length; j++) {
-      const similarity = fuzzball.ratio(sentences1[i].text, sentences2[j].text) / 100;
-      
-      if (similarity > threshold) {
-        segments.push({
-          text1: sentences1[i].text,
-          text2: sentences2[j].text,
-          page1: sentences1[i].page,
-          page2: sentences2[j].page,
-          similarity,
-        });
-      }
-    }
-  }
-  
-  // ترتيب حسب التشابه
-  return segments.sort((a, b) => b.similarity - a.similarity);
-}
-
-// حساب نسبة التغطية
-function calculateCoveragePercentage(
-  segments: SimilarSegment[],
-  totalWords: number
-): number {
-  if (totalWords === 0) return 0;
-  
-  const coveredWords = segments.reduce((sum, segment) => {
-    return sum + segment.text1.split(/\s+/).length;
-  }, 0);
-  
-  return coveredWords / totalWords;
-}
+// إزالة findSimilarSegments و calculateCoveragePercentage لتوفير الموارد
+// يمكن إضافتهم لاحقاً بعد تحسين الأداء
 
 // تطبيع النص العربي
 function normalizeArabicText(text: string): string {
