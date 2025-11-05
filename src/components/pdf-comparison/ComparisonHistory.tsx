@@ -116,8 +116,8 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
             <p className="text-lg font-medium text-muted-foreground">جارٍ تحميل السجل...</p>
           </div>
         ) : history.length === 0 ? (
-          <div className="text-center py-20 bg-gradient-to-br from-muted/30 to-muted/10 rounded-2xl border-2 border-dashed border-muted-foreground/20">
-            <div className="p-4 rounded-full bg-muted/50 w-fit mx-auto mb-4">
+          <div className="flex flex-col items-center justify-center py-20 bg-gradient-to-br from-muted/30 to-muted/10 rounded-2xl border-2 border-dashed border-muted-foreground/20">
+            <div className="p-4 rounded-full bg-muted/50 w-fit mb-4">
               <FileText className="h-16 w-16 text-muted-foreground/50" />
             </div>
             <p className="text-lg font-medium text-muted-foreground">لا توجد مقارنات سابقة</p>
