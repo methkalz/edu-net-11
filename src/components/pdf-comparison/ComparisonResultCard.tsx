@@ -242,14 +242,14 @@ const ComparisonResultCard = ({ result }: ComparisonResultCardProps) => {
             <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/10 rounded-full blur-3xl" />
             <div className="absolute bottom-0 left-0 w-32 h-32 bg-green-500/10 rounded-full blur-3xl" />
             
-            <div className="relative z-10">
+            <div className="relative z-10 flex flex-col items-center justify-center">
               <div className="p-4 rounded-full bg-gradient-to-br from-green-500/20 to-green-500/10 w-fit mx-auto mb-4 shadow-lg">
                 <CheckCircle className="h-14 w-14 text-green-600" />
               </div>
-              <p className="font-bold text-green-700 dark:text-green-400 text-xl mb-2">
+              <p className="font-bold text-green-700 dark:text-green-400 text-xl mb-2 text-center">
                 لم يتم العثور على تشابه مع الملفات المخزنة
               </p>
-              <p className="text-sm text-green-600 dark:text-green-500 font-medium">
+              <p className="text-sm text-green-600 dark:text-green-500 font-medium text-center">
                 هذا المشروع يبدو أصلياً ✓
               </p>
             </div>
