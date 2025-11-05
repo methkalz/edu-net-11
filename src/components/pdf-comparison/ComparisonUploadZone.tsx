@@ -149,66 +149,7 @@ const ComparisonUploadZone = ({ gradeLevel }: ComparisonUploadZoneProps) => {
           }}
         />
       )}
-      {/* Dropzone */}
-      <Card className={`
-        relative overflow-hidden border-2 border-dashed rounded-2xl cursor-pointer
-        transition-all duration-500 group
-        ${isDragActive 
-          ? 'border-primary bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 shadow-2xl scale-[1.02]' 
-          : 'border-muted-foreground/30 hover:border-primary/60 bg-gradient-to-br from-card via-card/95 to-card/90 hover:shadow-xl'
-        }
-        ${isComparing ? 'pointer-events-none opacity-50' : ''}
-      `}
-      {...getRootProps()}
-      >
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-        <div className="absolute -top-20 -right-20 w-40 h-40 bg-primary/10 rounded-full blur-3xl group-hover:blur-2xl transition-all duration-500" />
-        <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-accent/10 rounded-full blur-3xl group-hover:blur-2xl transition-all duration-500" />
-        
-        <CardContent className="p-16 relative z-10">
-          <input {...getInputProps()} />
-          <div className="flex flex-col items-center gap-6">
-            <div className="relative group-hover:scale-110 transition-transform duration-500">
-              <div className="absolute inset-0 bg-gradient-to-r from-primary to-accent rounded-full blur-xl opacity-50 group-hover:opacity-75 transition-opacity" />
-              <div className="relative p-6 bg-gradient-to-br from-primary/20 via-primary/15 to-primary/10 rounded-full backdrop-blur-sm shadow-lg">
-                <Upload className={`h-10 w-10 text-primary transition-transform duration-500 ${isDragActive ? 'scale-125' : ''}`} />
-              </div>
-            </div>
-          
-          {isDragActive ? (
-            <div className="text-center space-y-2 animate-pulse">
-              <p className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                أفلت الملفات هنا
-              </p>
-              <p className="text-muted-foreground">جاهز لاستقبال ملفات PDF</p>
-            </div>
-          ) : (
-            <>
-              <div className="text-center space-y-3">
-                <p className="text-xl font-bold text-foreground">
-                  اسحب وأفلت ملفات PDF هنا
-                </p>
-                <p className="text-sm text-muted-foreground max-w-md">
-                  قم برفع ملف واحد أو عدة ملفات للمقارنة مع المستودع
-                  <br />
-                  <span className="text-xs">(حد أقصى 50MB لكل ملف)</span>
-                </p>
-              </div>
-              <Button 
-                type="button" 
-                variant="outline" 
-                size="lg"
-                className="gap-2 hover:bg-primary hover:text-primary-foreground transition-all duration-300 shadow-md hover:shadow-lg"
-              >
-                <Upload className="h-4 w-4" />
-                اختيار الملفات
-              </Button>
-            </>
-          )}
-          </div>
-        </CardContent>
-      </Card>
-
+      
       {/* Files List */}
       {files.length > 0 && (
         <Card className="border-0 bg-gradient-to-br from-card via-card/98 to-card/95 backdrop-blur-sm shadow-xl">
@@ -361,6 +302,66 @@ const ComparisonUploadZone = ({ gradeLevel }: ComparisonUploadZoneProps) => {
           </CardContent>
         </Card>
       )}
+
+      {/* Dropzone */}
+      <Card className={`
+        relative overflow-hidden border-2 border-dashed rounded-2xl cursor-pointer
+        transition-all duration-500 group
+        ${isDragActive 
+          ? 'border-primary bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 shadow-2xl scale-[1.02]' 
+          : 'border-muted-foreground/30 hover:border-primary/60 bg-gradient-to-br from-card via-card/95 to-card/90 hover:shadow-xl'
+        }
+        ${isComparing ? 'pointer-events-none opacity-50' : ''}
+      `}
+      {...getRootProps()}
+      >
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        <div className="absolute -top-20 -right-20 w-40 h-40 bg-primary/10 rounded-full blur-3xl group-hover:blur-2xl transition-all duration-500" />
+        <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-accent/10 rounded-full blur-3xl group-hover:blur-2xl transition-all duration-500" />
+        
+        <CardContent className="p-16 relative z-10">
+          <input {...getInputProps()} />
+          <div className="flex flex-col items-center gap-6">
+            <div className="relative group-hover:scale-110 transition-transform duration-500">
+              <div className="absolute inset-0 bg-gradient-to-r from-primary to-accent rounded-full blur-xl opacity-50 group-hover:opacity-75 transition-opacity" />
+              <div className="relative p-6 bg-gradient-to-br from-primary/20 via-primary/15 to-primary/10 rounded-full backdrop-blur-sm shadow-lg">
+                <Upload className={`h-10 w-10 text-primary transition-transform duration-500 ${isDragActive ? 'scale-125' : ''}`} />
+              </div>
+            </div>
+          
+          {isDragActive ? (
+            <div className="text-center space-y-2 animate-pulse">
+              <p className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                أفلت الملفات هنا
+              </p>
+              <p className="text-muted-foreground">جاهز لاستقبال ملفات PDF</p>
+            </div>
+          ) : (
+            <>
+              <div className="text-center space-y-3">
+                <p className="text-xl font-bold text-foreground">
+                  اسحب وأفلت ملفات PDF هنا
+                </p>
+                <p className="text-sm text-muted-foreground max-w-md">
+                  قم برفع ملف واحد أو عدة ملفات للمقارنة مع المستودع
+                  <br />
+                  <span className="text-xs">(حد أقصى 50MB لكل ملف)</span>
+                </p>
+              </div>
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="lg"
+                className="gap-2 hover:bg-primary hover:text-primary-foreground transition-all duration-300 shadow-md hover:shadow-lg"
+              >
+                <Upload className="h-4 w-4" />
+                اختيار الملفات
+              </Button>
+            </>
+          )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
