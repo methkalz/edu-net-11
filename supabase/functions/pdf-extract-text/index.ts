@@ -1,6 +1,7 @@
 import { serve } from 'https://deno.land/std@0.208.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
+import * as pdfjsLib from 'npm:pdfjs-dist@4.0.379/legacy/build/pdf.mjs';
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -86,49 +87,93 @@ serve(async (req) => {
   }
 });
 
-// استخراج النص من PDF (محسّن لتجاهل البيانات الوصفية)
+// استخراج النص من PDF باستخدام PDF.js
 async function extractTextFromPDF(pdfBytes: Uint8Array): Promise<string> {
   try {
-    const decoder = new TextDecoder('utf-8', { fatal: false });
-    let rawText = decoder.decode(pdfBytes);
-
-    // 1. البحث عن كتل النص فقط بين BT و ET
-    const textMatches = rawText.match(/BT\s+(.*?)\s+ET/gs);
+    console.log(`Starting PDF text extraction, file size: ${pdfBytes.length} bytes`);
     
-    let extractedText = '';
+    // تحميل ملف PDF
+    const loadingTask = pdfjsLib.getDocument({
+      data: pdfBytes,
+      useSystemFonts: true,
+      standardFontDataUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/standard_fonts/',
+    });
     
-    if (textMatches && textMatches.length > 0) {
-      // 2. استخراج النص من داخل الأقواس فقط
-      for (const match of textMatches) {
-        const textParts = match.match(/\(([^)]*)\)/g);
-        if (textParts) {
-          for (const part of textParts) {
-            // إزالة الأقواس واستخراج النص الفعلي فقط
-            const text = part.slice(1, -1);
-            // تجاهل النصوص التقنية القصيرة جداً
-            if (text.length > 2) {
-              extractedText += text + ' ';
+    const pdf = await loadingTask.promise;
+    const numPages = pdf.numPages;
+    console.log(`PDF loaded successfully, total pages: ${numPages}`);
+    
+    let fullText = '';
+    
+    // استخراج النص من كل صفحة
+    for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+      try {
+        const page = await pdf.getPage(pageNum);
+        const textContent = await page.getTextContent();
+        
+        // تجميع النص من كل عنصر في الصفحة
+        const pageText = textContent.items
+          .map((item: any) => {
+            // التحقق من وجود النص
+            if (item.str && typeof item.str === 'string') {
+              return item.str;
             }
-          }
+            return '';
+          })
+          .filter((text: string) => text.trim().length > 0)
+          .join(' ');
+        
+        if (pageText.trim().length > 0) {
+          fullText += pageText + '\n';
+          console.log(`Page ${pageNum}: extracted ${pageText.length} characters`);
         }
+      } catch (pageError) {
+        console.error(`Error extracting text from page ${pageNum}:`, pageError);
+        // نستمر في الصفحات الأخرى
       }
     }
     
-    // 3. إذا لم نجد أي نص، نرجع نص فارغ بدلاً من استخراج الهياكل
-    if (!extractedText || extractedText.trim().length === 0) {
-      console.warn('No readable text found in PDF');
+    if (!fullText || fullText.trim().length === 0) {
+      console.warn('No readable text found in PDF after processing all pages');
       return '';
     }
     
-    return extractedText;
+    console.log(`Total extracted text length: ${fullText.length} characters`);
+    return fullText;
   } catch (error) {
     console.error('PDF extraction error:', error);
+    
+    // Fallback: محاولة استخراج بسيط من البايتات
+    try {
+      console.log('Attempting fallback text extraction method...');
+      const decoder = new TextDecoder('utf-8', { fatal: false });
+      const rawText = decoder.decode(pdfBytes);
+      
+      // البحث عن نصوص بين أقواس في PDF
+      const textMatches = rawText.match(/\(([^)]+)\)/g);
+      if (textMatches && textMatches.length > 0) {
+        const extractedText = textMatches
+          .map(match => match.slice(1, -1))
+          .filter(text => text.length > 2)
+          .join(' ');
+        
+        if (extractedText.trim().length > 0) {
+          console.log(`Fallback extraction successful: ${extractedText.length} characters`);
+          return extractedText;
+        }
+      }
+    } catch (fallbackError) {
+      console.error('Fallback extraction also failed:', fallbackError);
+    }
+    
     throw new Error('Failed to extract text from PDF');
   }
 }
 
-// تنظيف النص (محسّن لإزالة الكلمات التقنية)
+// تنظيف النص (محسّن للنصوص العربية والإنجليزية)
 function cleanText(text: string): string {
+  console.log(`Starting text cleaning, original length: ${text.length}`);
+  
   // قائمة بالكلمات التقنية الشائعة التي يجب إزالتها
   const technicalKeywords = [
     'obj', 'endobj', 'stream', 'endstream',
@@ -139,25 +184,50 @@ function cleanText(text: string): string {
     'FirstChar', 'LastChar', 'Widths', 'FontDescriptor'
   ];
   
+  // تنظيف أولي
   let cleaned = text
-    .replace(/\s+/g, ' ') // توحيد المسافات
+    .replace(/\r\n/g, '\n') // توحيد نهايات الأسطر
+    .replace(/\r/g, '\n')
+    .replace(/\t/g, ' ') // تحويل tabs إلى مسافات
+    .replace(/\s+/g, ' ') // توحيد المسافات المتعددة
     .replace(/\\[nrt]/g, ' ') // إزالة escape characters
-    .replace(/[^\w\s\u0600-\u06FF.,!?;:()\-]/g, '') // إزالة الرموز غير المرغوبة
     .trim();
   
-  // إزالة الكلمات التقنية
+  // إزالة الرموز غير المرغوبة مع الحفاظ على العربية والإنجليزية
+  cleaned = cleaned.replace(/[^\w\s\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF.,!?;:()\-]/g, '');
+  
+  // تطبيع الحروف العربية
+  cleaned = cleaned
+    .replace(/[أإآ]/g, 'ا') // توحيد الألف
+    .replace(/ى/g, 'ي') // توحيد الياء
+    .replace(/ة/g, 'ه') // توحيد التاء المربوطة
+    .replace(/[\u064B-\u065F]/g, ''); // إزالة التشكيل
+  
+  // تقسيم إلى كلمات وتصفية
   const words = cleaned.split(/\s+/);
   const filteredWords = words.filter(word => {
+    // إزالة الكلمات الفارغة
+    if (!word || word.length === 0) return false;
+    
     // إزالة الكلمات التقنية
     if (technicalKeywords.includes(word)) return false;
-    // إزالة الكلمات القصيرة جداً (حرف واحد أو حرفين)
-    if (word.length <= 2) return false;
+    
+    // إزالة الكلمات القصيرة جداً (أقل من حرفين)
+    if (word.length < 2) return false;
+    
     // إزالة الكلمات التي تبدأ بـ /
     if (word.startsWith('/')) return false;
+    
+    // إزالة الكلمات التي هي أرقام فقط
+    if (/^\d+$/.test(word)) return false;
+    
     return true;
   });
   
-  return filteredWords.join(' ');
+  const result = filteredWords.join(' ');
+  console.log(`Text cleaning complete, cleaned length: ${result.length}, words: ${filteredWords.length}`);
+  
+  return result;
 }
 
 // حساب SHA-256 hash
