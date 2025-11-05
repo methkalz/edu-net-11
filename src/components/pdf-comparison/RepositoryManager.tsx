@@ -9,6 +9,7 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/table';
+import { Progress } from '@/components/ui/progress';
 import { RefreshCw, Trash2, Database, Upload } from 'lucide-react';
 import { usePDFComparison, type GradeLevel, type RepositoryFile } from '@/hooks/usePDFComparison';
 import { formatDistanceToNow } from 'date-fns';
@@ -27,13 +28,16 @@ const RepositoryManager = ({ gradeLevel }: RepositoryManagerProps) => {
     getRepositoryFiles, 
     deleteFromRepository, 
     getRepositoryStats,
-    addToRepository 
+    addToRepository,
+    uploadProgress
   } = usePDFComparison();
   
   const [files, setFiles] = useState<RepositoryFile[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadingFileName, setUploadingFileName] = useState<string>('');
 
   const isSuperAdmin = userProfile?.role === 'superadmin';
 
@@ -79,22 +83,54 @@ const RepositoryManager = ({ gradeLevel }: RepositoryManagerProps) => {
       return;
     }
 
+    setIsUploading(true);
+    setUploadingFileName(file.name);
+
     try {
       const success = await addToRepository(file, gradeLevel);
       if (success) {
         await loadData();
+        toast.success('تم رفع الملف بنجاح');
       }
     } catch (error) {
       console.error('Error uploading file:', error);
       toast.error('حدث خطأ أثناء رفع الملف');
     } finally {
-      // إعادة تعيين input
+      setIsUploading(false);
+      setUploadingFileName('');
       event.target.value = '';
     }
   };
 
   return (
     <div className="space-y-6">
+      {/* Upload Progress Bar */}
+      {isUploading && (
+        <Card className="border-0 bg-gradient-to-r from-primary/10 to-primary/5 backdrop-blur-sm">
+          <CardContent className="p-6">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Upload className="h-5 w-5 text-primary animate-pulse" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm">جاري رفع الملف...</p>
+                    <p className="text-xs text-muted-foreground truncate max-w-[300px]">
+                      {uploadingFileName}
+                    </p>
+                  </div>
+                </div>
+                <span className="text-sm font-medium text-primary">
+                  {uploadProgress}%
+                </span>
+              </div>
+              <Progress value={uploadProgress} className="h-2" />
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent backdrop-blur-sm hover:shadow-xl transition-all duration-300">
@@ -159,9 +195,10 @@ const RepositoryManager = ({ gradeLevel }: RepositoryManagerProps) => {
               <Button
                 size="sm"
                 onClick={() => document.getElementById('repository-upload')?.click()}
+                disabled={isUploading}
               >
-                <Upload className="h-4 w-4 ml-2" />
-                إضافة ملف
+                <Upload className={cn('h-4 w-4 ml-2', isUploading && 'animate-pulse')} />
+                {isUploading ? 'جاري الرفع...' : 'إضافة ملف'}
               </Button>
               <input
                 id="repository-upload"
