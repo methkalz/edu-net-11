@@ -237,13 +237,11 @@ const ComparisonResultCard = ({ result }: ComparisonResultCardProps) => {
             </div>
           </div>
         ) : (
-          <div className="relative overflow-hidden text-center py-12 bg-gradient-to-br from-green-50 via-green-100/80 to-green-50 dark:from-green-950/30 dark:via-green-900/20 dark:to-green-950/10 rounded-2xl border-2 border-green-200 dark:border-green-800 shadow-xl">
-            <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-5" />
+          <div className="relative overflow-hidden text-center py-12 bg-gradient-to-br from-green-50 via-green-100/80 to-green-50 dark:from-green-950/30 dark:via-green-900/20 dark:to-green-950/10 rounded-2xl shadow-lg">
             <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/10 rounded-full blur-3xl" />
-            <div className="absolute bottom-0 left-0 w-32 h-32 bg-green-500/10 rounded-full blur-3xl" />
             
             <div className="relative z-10 flex flex-col items-center justify-center">
-              <div className="p-4 rounded-full bg-gradient-to-br from-green-500/20 to-green-500/10 w-fit mx-auto mb-4 shadow-lg">
+              <div className="p-4 rounded-full bg-gradient-to-br from-green-500/10 to-green-500/5 w-fit mx-auto mb-4">
                 <CheckCircle className="h-14 w-14 text-green-600" />
               </div>
               <p className="font-bold text-green-700 dark:text-green-400 text-xl mb-2 text-center">
