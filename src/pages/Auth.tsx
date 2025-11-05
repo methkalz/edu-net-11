@@ -77,39 +77,22 @@ const Auth = () => {
   const handleRetry = () => {
     handleLogin({ preventDefault: () => {} } as React.FormEvent);
   };
-  return <div className="min-h-screen creative-background flex items-center justify-center p-6" dir="rtl">
-      {/* Advanced Background Effects */}
-      <div className="absolute inset-0 overflow-hidden">
-        {/* Floating Light Orbs */}
-        <div className="light-orbs">
-          <div className="orb orb-1"></div>
-          <div className="orb orb-2"></div>
-          <div className="orb orb-3"></div>
-          <div className="orb orb-4"></div>
-          <div className="orb orb-5"></div>
-        </div>
+  return (
+    <div className="min-h-screen relative flex items-center justify-center p-6 overflow-hidden" dir="rtl">
+      {/* Modern Minimalist Animated Background */}
+      <div className="absolute inset-0">
+        {/* Gradient Mesh Base */}
+        <div className="absolute inset-0 minimal-mesh"></div>
         
-        {/* Security Icons Background */}
-        <div className="absolute inset-0 opacity-[0.02]">
-          <div className="absolute top-20 right-20 animate-float">
-            <Shield className="h-8 w-8 text-primary" />
-          </div>
-          <div className="absolute top-40 left-32 animate-float" style={{
-          animationDelay: '2s'
-        }}>
-            <Lock className="h-6 w-6 text-secondary" />
-          </div>
-          <div className="absolute bottom-32 right-40 animate-float" style={{
-          animationDelay: '4s'
-        }}>
-            <Users className="h-7 w-7 text-primary" />
-          </div>
-          <div className="absolute bottom-20 left-20 animate-float" style={{
-          animationDelay: '6s'
-        }}>
-            <GraduationCap className="h-8 w-8 text-secondary" />
-          </div>
-        </div>
+        {/* Animated Grid Overlay */}
+        <div className="absolute inset-0 animated-grid opacity-40"></div>
+        
+        {/* Subtle Floating Dots */}
+        <div className="absolute inset-0 floating-dots opacity-30"></div>
+        
+        {/* Decorative gradient blobs */}
+        <div className="absolute top-20 right-20 w-96 h-96 bg-primary/5 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-20 left-20 w-80 h-80 bg-secondary/4 rounded-full blur-3xl"></div>
       </div>
 
       {/* Main Login Card */}
@@ -226,6 +209,7 @@ const Auth = () => {
           </div>
         </CardContent>
       </Card>
-    </div>;
+    </div>
+  );
 };
 export default Auth;
