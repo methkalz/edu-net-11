@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from './useAuth';
 import { handleError } from '@/lib/error-handling';
+import { createSafeStoragePath } from '@/utils/fileNameSanitizer';
 
 export type GradeLevel = '10' | '12';
 export type ProjectType = 'mini_project' | 'final_project';
@@ -66,11 +67,11 @@ export const usePDFComparison = () => {
         gradeLevel
       });
       
-      const fileName = `${Date.now()}_${file.name}`;
+      const safeFileName = createSafeStoragePath(file.name);
       
       const { data, error } = await supabase.storage
         .from('pdf-comparison-temp')
-        .upload(fileName, file, {
+        .upload(safeFileName, file, {
           contentType: 'application/pdf',
         });
 
