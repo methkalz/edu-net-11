@@ -129,6 +129,7 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
               <TableHeader>
                 <TableRow className="bg-gradient-to-r from-muted/50 to-muted/30 hover:bg-muted/50">
                   <TableHead className="font-bold">اسم الملف</TableHead>
+                  <TableHead className="text-center font-bold">المعلم</TableHead>
                   <TableHead className="text-center font-bold">الحالة</TableHead>
                   <TableHead className="text-center font-bold">أعلى تشابه</TableHead>
                   <TableHead className="text-center font-bold">عدد التطابقات</TableHead>
@@ -150,6 +151,13 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
                         <span className="font-medium truncate max-w-[300px] group-hover:text-primary transition-colors">
                           {item.compared_file_name}
                         </span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <Badge variant="outline" className="font-medium">
+                          {item.teacher_name || 'غير معروف'}
+                        </Badge>
                       </div>
                     </TableCell>
                     <TableCell>

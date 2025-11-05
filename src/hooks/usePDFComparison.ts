@@ -33,6 +33,9 @@ export interface ComparisonResult {
   review_required: boolean;
   processing_time_ms: number;
   created_at: string;
+  requested_by?: string;
+  teacher_name?: string;
+  teacher_role?: string;
 }
 
 export interface RepositoryFile {
@@ -247,7 +250,13 @@ export const usePDFComparison = () => {
     try {
       let query = supabase
         .from('pdf_comparison_results')
-        .select('*')
+        .select(`
+          *,
+          profiles:requested_by (
+            full_name,
+            role
+          )
+        `)
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -258,7 +267,16 @@ export const usePDFComparison = () => {
       const { data, error } = await query;
 
       if (error) throw error;
-      return (data || []) as unknown as ComparisonResult[];
+      
+      // تحويل البيانات لإضافة اسم المعلم
+      const results = (data || []).map((item: any) => ({
+        ...item,
+        teacher_name: item.profiles?.full_name || 'غير معروف',
+        teacher_role: item.profiles?.role || 'unknown',
+        profiles: undefined // إزالة الكائن المدمج
+      }));
+      
+      return results as unknown as ComparisonResult[];
     } catch (error: any) {
       console.error('History fetch error:', error);
       toast.error('فشل جلب السجل');
