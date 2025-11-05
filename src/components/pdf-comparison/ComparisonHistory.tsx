@@ -170,11 +170,11 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
                       <div className="inline-flex items-center justify-center px-3 py-1.5 rounded-lg bg-gradient-to-br from-background to-muted/30">
                         <span className={cn(
                           'text-lg font-bold',
-                          item.max_similarity_score >= 70 ? 'text-red-600' :
-                          item.max_similarity_score >= 50 ? 'text-yellow-600' :
+                          item.max_similarity_score >= 0.70 ? 'text-red-600' :
+                          item.max_similarity_score >= 0.50 ? 'text-yellow-600' :
                           'text-green-600'
                         )}>
-                          {item.max_similarity_score.toFixed(1)}%
+                          {(item.max_similarity_score * 100).toFixed(1)}%
                         </span>
                       </div>
                     </TableCell>
@@ -277,11 +277,11 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
                   </div>
                   <p className={cn(
                     "text-2xl font-bold",
-                    selectedComparison.max_similarity_score >= 70 ? 'text-red-600' :
-                    selectedComparison.max_similarity_score >= 50 ? 'text-yellow-600' :
+                    selectedComparison.max_similarity_score >= 0.70 ? 'text-red-600' :
+                    selectedComparison.max_similarity_score >= 0.50 ? 'text-yellow-600' :
                     'text-green-600'
                   )}>
-                    {selectedComparison.max_similarity_score.toFixed(1)}%
+                    {(selectedComparison.max_similarity_score * 100).toFixed(1)}%
                   </p>
                 </div>
 
@@ -291,7 +291,7 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
                     <p className="text-xs text-muted-foreground">متوسط التشابه</p>
                   </div>
                   <p className="text-2xl font-bold text-blue-600">
-                    {selectedComparison.avg_similarity_score.toFixed(1)}%
+                    {(selectedComparison.avg_similarity_score * 100).toFixed(1)}%
                   </p>
                 </div>
 
@@ -332,14 +332,14 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
                           <div className="flex items-center gap-3 flex-1">
                             <div className={cn(
                               "p-2 rounded-lg",
-                              match.similarity_score >= 70 ? "bg-red-500/10" :
-                              match.similarity_score >= 50 ? "bg-yellow-500/10" :
+                              match.similarity_score >= 0.70 ? "bg-red-500/10" :
+                              match.similarity_score >= 0.50 ? "bg-yellow-500/10" :
                               "bg-green-500/10"
                             )}>
                               <FileText className={cn(
                                 "h-4 w-4",
-                                match.similarity_score >= 70 ? "text-red-600" :
-                                match.similarity_score >= 50 ? "text-yellow-600" :
+                                match.similarity_score >= 0.70 ? "text-red-600" :
+                                match.similarity_score >= 0.50 ? "text-yellow-600" :
                                 "text-green-600"
                               )} />
                             </div>
@@ -355,11 +355,11 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
                             )}
                             <span className={cn(
                               "text-sm font-bold",
-                              match.similarity_score >= 70 ? "text-red-600" :
-                              match.similarity_score >= 50 ? "text-yellow-600" :
+                              match.similarity_score >= 0.70 ? "text-red-600" :
+                              match.similarity_score >= 0.50 ? "text-yellow-600" :
                               "text-green-600"
                             )}>
-                              {match.similarity_score.toFixed(1)}%
+                              {(match.similarity_score * 100).toFixed(1)}%
                             </span>
                           </div>
                         </div>
