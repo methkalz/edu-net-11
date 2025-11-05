@@ -61,12 +61,12 @@ serve(async (req) => {
         matches: [{
           matched_file_id: exactMatch.id,
           matched_file_name: exactMatch.file_name,
-          similarity_score: 100,
+          similarity_score: 1.0,
           similarity_method: 'hash_exact_match',
           flagged: true,
         }],
-        max_similarity_score: 100,
-        avg_similarity_score: 100,
+        max_similarity_score: 1.0,
+        avg_similarity_score: 1.0,
         total_matches_found: 1,
         high_risk_matches: 1,
         status: 'flagged',
@@ -84,7 +84,7 @@ serve(async (req) => {
       await supabase.from('pdf_comparison_audit_log').insert({
         action_type: 'compare',
         performed_by: userId,
-        details: { fileName, matchType: 'exact_hash', similarity: 100 },
+        details: { fileName, matchType: 'exact_hash', similarity: 1.0 },
       });
 
       return new Response(JSON.stringify({ success: true, result }), {

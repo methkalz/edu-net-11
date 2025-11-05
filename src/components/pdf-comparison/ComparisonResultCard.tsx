@@ -88,7 +88,7 @@ const ComparisonResultCard = ({ result }: ComparisonResultCardProps) => {
               result.status === 'warning' ? 'from-yellow-600 via-yellow-500 to-yellow-400' :
               'from-green-600 via-green-500 to-green-400'
             )}>
-              {result.max_similarity_score.toFixed(1)}%
+              {((result.max_similarity_score > 1 ? result.max_similarity_score : result.max_similarity_score * 100)).toFixed(1)}%
             </div>
             <div className="text-xs text-muted-foreground font-semibold mt-1">
               أعلى نسبة تشابه
@@ -189,10 +189,10 @@ const ComparisonResultCard = ({ result }: ComparisonResultCardProps) => {
                           <span className={cn(
                             "font-bold text-base",
                             match.flagged ? 'text-red-600' : 
-                            match.similarity_score >= 50 ? 'text-yellow-600' :
+                            match.similarity_score >= 0.5 ? 'text-yellow-600' :
                             'text-green-600'
                           )}>
-                            {(match.similarity_score * 100).toFixed(1)}%
+                            {((match.similarity_score > 1 ? match.similarity_score : match.similarity_score * 100)).toFixed(1)}%
                           </span>
                         </div>
                         <div className="relative h-3 bg-muted/30 rounded-full overflow-hidden">
@@ -205,7 +205,7 @@ const ComparisonResultCard = ({ result }: ComparisonResultCardProps) => {
                                 ? "bg-gradient-to-r from-yellow-600 to-yellow-500"
                                 : "bg-gradient-to-r from-green-600 to-green-500"
                             )}
-                            style={{ width: `${match.similarity_score * 100}%` }}
+                            style={{ width: `${(match.similarity_score > 1 ? match.similarity_score : match.similarity_score * 100)}%` }}
                           />
                         </div>
                       </div>
@@ -215,13 +215,13 @@ const ComparisonResultCard = ({ result }: ComparisonResultCardProps) => {
                         {match.cosine_score !== undefined && (
                           <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-500/10 text-blue-700 dark:text-blue-400">
                             <span className="font-medium">Cosine:</span>
-                            <span className="font-bold">{(match.cosine_score * 100).toFixed(0)}%</span>
+                            <span className="font-bold">{((match.cosine_score > 1 ? match.cosine_score : match.cosine_score * 100)).toFixed(0)}%</span>
                           </div>
                         )}
                         {match.jaccard_score !== undefined && (
                           <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-purple-500/10 text-purple-700 dark:text-purple-400">
                             <span className="font-medium">Jaccard:</span>
-                            <span className="font-bold">{(match.jaccard_score * 100).toFixed(0)}%</span>
+                            <span className="font-bold">{((match.jaccard_score > 1 ? match.jaccard_score : match.jaccard_score * 100)).toFixed(0)}%</span>
                           </div>
                         )}
                         {match.flagged && (
