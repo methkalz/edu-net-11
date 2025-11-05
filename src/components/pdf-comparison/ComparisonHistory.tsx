@@ -72,123 +72,100 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
   };
 
   return (
-    <Card className="relative border-0 bg-gradient-to-br from-card via-card/98 to-card/95 backdrop-blur-sm shadow-xl hover:shadow-2xl transition-all duration-500">
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 opacity-50" />
-      
-      <CardHeader className="relative z-10">
+    <Card className="border-0 bg-card/50 backdrop-blur-sm">
+      <CardHeader>
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="relative group">
-              <div className="absolute inset-0 bg-gradient-to-r from-primary to-accent rounded-xl blur opacity-50 group-hover:opacity-75 transition-opacity" />
-              <div className="relative p-3 rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 backdrop-blur-sm">
-                <FileText className="h-6 w-6 text-primary" />
-              </div>
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <FileText className="h-4 w-4 text-primary" />
             </div>
             <div>
-              <CardTitle className="text-xl font-bold flex items-center gap-2">
+              <CardTitle className="text-lg font-semibold">
                 سجل المقارنات
               </CardTitle>
-              <CardDescription className="mt-1 text-base">
-                عرض جميع عمليات المقارنة السابقة
-                {gradeLevel && ` للصف ${gradeLevel === '12' ? 'الثاني عشر' : 'العاشر'}`}
+              <CardDescription className="text-sm">
+                {gradeLevel && `الصف ${gradeLevel === '12' ? '12' : '10'}`}
               </CardDescription>
             </div>
           </div>
           <Button
             variant="outline"
-            size="default"
+            size="sm"
             onClick={loadHistory}
             disabled={isLoading}
-            className="gap-2 hover:bg-primary hover:text-primary-foreground transition-all duration-300"
           >
             <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
-            تحديث
           </Button>
         </div>
       </CardHeader>
-      <CardContent className="relative z-10">
+      <CardContent>
         {isLoading ? (
-          <div className="text-center py-20">
-            <div className="relative mx-auto w-16 h-16 mb-4">
-              <div className="absolute inset-0 border-4 border-primary/20 rounded-full" />
-              <RefreshCw className="h-16 w-16 animate-spin text-primary" />
-            </div>
-            <p className="text-lg font-medium text-muted-foreground">جارٍ تحميل السجل...</p>
+          <div className="text-center py-12">
+            <RefreshCw className="h-8 w-8 animate-spin text-primary mx-auto mb-3" />
+            <p className="text-sm text-muted-foreground">جارٍ التحميل...</p>
           </div>
         ) : history.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 bg-gradient-to-br from-muted/30 to-muted/10 rounded-2xl border-2 border-dashed border-muted-foreground/20">
-            <div className="p-4 rounded-full bg-muted/50 w-fit mb-4">
-              <FileText className="h-16 w-16 text-muted-foreground/50" />
-            </div>
-            <p className="text-lg font-medium text-muted-foreground">لا توجد مقارنات سابقة</p>
-            <p className="text-sm text-muted-foreground/70 mt-2">قم برفع ملف للبدء</p>
+          <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed rounded-lg">
+            <FileText className="h-12 w-12 text-muted-foreground/50 mb-3" />
+            <p className="text-sm font-medium text-muted-foreground">لا توجد مقارنات سابقة</p>
           </div>
         ) : (
-          <div className="border border-border/50 rounded-xl overflow-hidden bg-background/50">
+          <div className="border rounded-lg overflow-hidden">
             <Table>
               <TableHeader>
-                <TableRow className="bg-gradient-to-r from-muted/50 to-muted/30 hover:bg-muted/50">
-                  <TableHead className="font-bold">اسم الملف</TableHead>
-                  <TableHead className="text-center font-bold">المعلم</TableHead>
-                  <TableHead className="text-center font-bold">الحالة</TableHead>
-                  <TableHead className="text-center font-bold">أعلى تشابه</TableHead>
-                  <TableHead className="text-center font-bold">عدد التطابقات</TableHead>
-                  <TableHead className="text-center font-bold">التاريخ</TableHead>
-                  <TableHead className="text-center font-bold">إجراءات</TableHead>
+                <TableRow className="bg-muted/40">
+                  <TableHead>اسم الملف</TableHead>
+                  <TableHead className="text-center">المعلم</TableHead>
+                  <TableHead className="text-center">الحالة</TableHead>
+                  <TableHead className="text-center">التشابه</TableHead>
+                  <TableHead className="text-center">التطابقات</TableHead>
+                  <TableHead className="text-center">التاريخ</TableHead>
+                  <TableHead className="text-center">عرض</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {history.map((item) => (
-                  <TableRow 
-                    key={item.id} 
-                    className="hover:bg-gradient-to-r hover:from-primary/5 hover:to-transparent transition-all duration-300 group"
-                  >
-                    <TableCell className="py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 group-hover:shadow-md transition-all">
-                          <FileText className="h-4 w-4 text-primary" />
-                        </div>
-                        <span className="font-medium truncate max-w-[300px] group-hover:text-primary transition-colors">
+                  <TableRow key={item.id} className="hover:bg-muted/20">
+                    <TableCell className="py-3">
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-primary" />
+                        <span className="text-sm font-medium truncate max-w-[250px]">
                           {item.compared_file_name}
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <Badge variant="outline" className="font-medium">
-                          {item.teacher_name || 'غير معروف'}
-                        </Badge>
-                      </div>
+                    <TableCell className="text-center text-sm">
+                      <Badge variant="outline" className="text-xs">
+                        {item.teacher_name || 'غير معروف'}
+                      </Badge>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center justify-center gap-2">
+                      <div className="flex items-center justify-center gap-1.5">
                         {getStatusIcon(item.status)}
                         {getStatusBadge(item.status)}
                       </div>
                     </TableCell>
                     <TableCell className="text-center">
-                      <div className="inline-flex items-center justify-center px-3 py-1.5 rounded-lg bg-gradient-to-br from-background to-muted/30">
-                        <span className={cn(
-                          'text-lg font-bold',
-                          item.max_similarity_score >= 0.70 ? 'text-red-600' :
-                          item.max_similarity_score >= 0.50 ? 'text-yellow-600' :
-                          'text-green-600'
-                        )}>
-                          {(item.max_similarity_score * 100).toFixed(1)}%
-                        </span>
-                      </div>
+                      <span className={cn(
+                        'text-sm font-bold',
+                        item.max_similarity_score >= 0.70 ? 'text-red-600' :
+                        item.max_similarity_score >= 0.50 ? 'text-yellow-600' :
+                        'text-green-600'
+                      )}>
+                        {(item.max_similarity_score * 100).toFixed(1)}%
+                      </span>
                     </TableCell>
                     <TableCell className="text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <span className="font-semibold text-lg">{item.total_matches_found}</span>
+                      <div className="flex items-center justify-center gap-1.5">
+                        <span className="text-sm font-semibold">{item.total_matches_found}</span>
                         {item.high_risk_matches > 0 && (
-                          <Badge variant="destructive" className="text-xs px-2 py-0.5">
-                            {item.high_risk_matches} مشبوه
+                          <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+                            {item.high_risk_matches}
                           </Badge>
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="text-center text-sm text-muted-foreground">
+                    <TableCell className="text-center text-xs text-muted-foreground">
                       {formatDistanceToNow(new Date(item.created_at), {
                         addSuffix: true,
                         locale: ar,
@@ -196,13 +173,11 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
                     </TableCell>
                     <TableCell className="text-center">
                       <Button 
-                        variant="outline" 
+                        variant="ghost" 
                         size="sm" 
-                        className="gap-2 hover:bg-gradient-to-r hover:from-primary hover:to-primary/90 hover:text-primary-foreground hover:shadow-lg transition-all duration-300"
                         onClick={() => handleViewDetails(item)}
                       >
                         <Eye className="h-4 w-4" />
-                        عرض
                       </Button>
                     </TableCell>
                   </TableRow>

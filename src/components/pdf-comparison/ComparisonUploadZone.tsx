@@ -136,7 +136,7 @@ const ComparisonUploadZone = ({ gradeLevel }: ComparisonUploadZoneProps) => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Development Error Display */}
       {import.meta.env.DEV && globalError && (
         <DevErrorDisplay 
@@ -152,78 +152,71 @@ const ComparisonUploadZone = ({ gradeLevel }: ComparisonUploadZoneProps) => {
       
       {/* Files List */}
       {files.length > 0 && (
-        <Card className="border-0 bg-gradient-to-br from-card via-card/98 to-card/95 backdrop-blur-sm shadow-xl">
-          <CardContent className="p-6 space-y-6">
-            <div className="flex items-center justify-between pb-4 border-b border-border/50">
-              <div className="flex items-center gap-4">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary to-accent rounded-xl blur opacity-50" />
-                  <div className="relative p-3 rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 backdrop-blur-sm">
-                    <FileText className="h-6 w-6 text-primary" />
-                  </div>
+        <Card className="border-0 bg-card/50 backdrop-blur-sm">
+          <CardContent className="p-4 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <FileText className="h-4 w-4 text-primary" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-foreground">
+                  <h3 className="font-semibold">
                     الملفات المحددة
                   </h3>
-                  <p className="text-sm text-muted-foreground">
-                    {files.length} {files.length === 1 ? 'ملف' : 'ملفات'} جاهز للمقارنة
+                  <p className="text-xs text-muted-foreground">
+                    {files.length} {files.length === 1 ? 'ملف' : 'ملفات'}
                   </p>
                 </div>
               </div>
-            <div className="flex gap-3">
-              <Button
-                onClick={handleClear}
-                variant="outline"
-                size="default"
-                disabled={isComparing}
-                className="hover:bg-destructive hover:text-destructive-foreground transition-all"
-              >
-                <X className="h-4 w-4 ml-2" />
-                مسح الكل
-              </Button>
-              <Button
-                onClick={handleCompareAll}
-                disabled={isComparing || files.every(f => f.status === 'completed')}
-                size="default"
-                className="bg-gradient-to-r from-primary to-primary/90 hover:shadow-lg transition-all"
-              >
-                {isComparing ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin ml-2" />
-                    جارٍ المقارنة...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="h-4 w-4 ml-2" />
-                    بدء المقارنة
-                  </>
-                )}
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleClear}
+                  variant="outline"
+                  size="sm"
+                  disabled={isComparing}
+                >
+                  <X className="h-4 w-4 ml-2" />
+                  مسح
+                </Button>
+                <Button
+                  onClick={handleCompareAll}
+                  disabled={isComparing || files.every(f => f.status === 'completed')}
+                  size="sm"
+                >
+                  {isComparing ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin ml-2" />
+                      جارٍ المقارنة...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-4 w-4 ml-2" />
+                      بدء المقارنة
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
-          </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               {files.map((fileWithResult, index) => (
                 <Card 
                   key={index} 
-                  className="relative overflow-hidden border-0 bg-gradient-to-br from-background via-background/95 to-background/90 hover:shadow-lg transition-all duration-300 group"
+                  className="border bg-background/50"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                  
-                  <CardContent className="p-5 relative z-10">
-                    <div className="space-y-4">
+                  <CardContent className="p-4">
+                    <div className="space-y-3">
                       {/* File Info */}
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex items-center gap-4 flex-1 min-w-0">
-                          <div className="p-3 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 backdrop-blur-sm">
-                            <FileText className="h-5 w-5 text-primary" />
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div className="p-2 rounded-lg bg-primary/10">
+                            <FileText className="h-4 w-4 text-primary" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-semibold truncate text-foreground">
+                            <p className="font-medium truncate text-sm">
                               {fileWithResult.file.name}
                             </p>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-xs text-muted-foreground">
                               {(fileWithResult.file.size / 1024 / 1024).toFixed(2)} MB
                             </p>
                           </div>
@@ -235,7 +228,6 @@ const ComparisonUploadZone = ({ gradeLevel }: ComparisonUploadZoneProps) => {
                             size="sm"
                             onClick={() => removeFile(index)}
                             disabled={isComparing}
-                            className="hover:bg-destructive/10 hover:text-destructive"
                           >
                             <X className="h-4 w-4" />
                           </Button>
@@ -244,11 +236,11 @@ const ComparisonUploadZone = ({ gradeLevel }: ComparisonUploadZoneProps) => {
 
                       {/* Progress Bar */}
                       {fileWithResult.status === 'processing' && (
-                        <div className="space-y-3 p-4 rounded-xl bg-gradient-to-br from-primary/5 to-transparent">
-                          <Progress value={fileWithResult.progress} className="h-2" />
+                        <div className="space-y-2">
+                          <Progress value={fileWithResult.progress} className="h-1.5" />
                           <div className="flex items-center justify-center gap-2">
-                            <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                            <p className="text-sm font-medium text-foreground">
+                            <Loader2 className="h-3 w-3 animate-spin text-primary" />
+                            <p className="text-xs text-muted-foreground">
                               جارٍ المعالجة... {fileWithResult.progress}%
                             </p>
                           </div>
@@ -257,41 +249,17 @@ const ComparisonUploadZone = ({ gradeLevel }: ComparisonUploadZoneProps) => {
 
                       {/* Result */}
                       {fileWithResult.status === 'completed' && fileWithResult.result && (
-                        <div className="animate-fade-in">
+                        <div>
                           <ComparisonResultCard result={fileWithResult.result} />
                         </div>
                       )}
 
                       {fileWithResult.status === 'error' && (
-                        <div className="space-y-3">
-                          <div className="text-sm text-destructive-foreground text-center p-4 bg-gradient-to-br from-destructive/10 to-destructive/5 rounded-xl border border-destructive/20">
-                            <p className="font-medium">⚠️ فشلت المقارنة لهذا الملف</p>
-                            <p className="text-xs mt-1 text-muted-foreground">
-                              {fileWithResult.error?.message || 'يرجى المحاولة مرة أخرى'}
-                            </p>
-                            {import.meta.env.DEV && fileWithResult.error && (
-                              <div className="mt-3 text-right">
-                                <details className="text-xs">
-                                  <summary className="cursor-pointer font-medium hover:text-destructive">
-                                    تفاصيل الخطأ (بيئة التطوير)
-                                  </summary>
-                                  <div className="mt-2 p-3 bg-background/50 rounded-lg space-y-2">
-                                    {fileWithResult.error.code && (
-                                      <p><strong>رمز الخطأ:</strong> {fileWithResult.error.code}</p>
-                                    )}
-                                    {fileWithResult.error.phase && (
-                                      <p><strong>مرحلة الخطأ:</strong> {fileWithResult.error.phase}</p>
-                                    )}
-                                    {fileWithResult.error.details && (
-                                      <pre className="text-[10px] overflow-auto max-h-32">
-                                        {JSON.stringify(fileWithResult.error.details, null, 2)}
-                                      </pre>
-                                    )}
-                                  </div>
-                                </details>
-                              </div>
-                            )}
-                          </div>
+                        <div className="text-xs text-destructive text-center p-3 bg-destructive/10 rounded-lg border border-destructive/20">
+                          <p className="font-medium">⚠️ فشلت المقارنة</p>
+                          <p className="text-[10px] mt-1 text-muted-foreground">
+                            {fileWithResult.error?.message || 'يرجى المحاولة مرة أخرى'}
+                          </p>
                         </div>
                       )}
                     </div>
@@ -305,60 +273,51 @@ const ComparisonUploadZone = ({ gradeLevel }: ComparisonUploadZoneProps) => {
 
       {/* Dropzone */}
       <Card className={`
-        relative overflow-hidden border-2 border-dashed rounded-2xl cursor-pointer
-        transition-all duration-500 group
+        border-2 border-dashed cursor-pointer transition-all
         ${isDragActive 
-          ? 'border-primary bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 shadow-2xl scale-[1.02]' 
-          : 'border-muted-foreground/30 hover:border-primary/60 bg-gradient-to-br from-card via-card/95 to-card/90 hover:shadow-xl'
+          ? 'border-primary bg-primary/5' 
+          : 'border-muted-foreground/30 hover:border-primary/60'
         }
         ${isComparing ? 'pointer-events-none opacity-50' : ''}
       `}
       {...getRootProps()}
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-        <div className="absolute -top-20 -right-20 w-40 h-40 bg-primary/10 rounded-full blur-3xl group-hover:blur-2xl transition-all duration-500" />
-        <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-accent/10 rounded-full blur-3xl group-hover:blur-2xl transition-all duration-500" />
-        
-        <CardContent className="p-16 relative z-10">
+        <CardContent className="p-12">
           <input {...getInputProps()} />
-          <div className="flex flex-col items-center gap-6">
-            <div className="relative group-hover:scale-110 transition-transform duration-500">
-              <div className="absolute inset-0 bg-gradient-to-r from-primary to-accent rounded-full blur-xl opacity-50 group-hover:opacity-75 transition-opacity" />
-              <div className="relative p-6 bg-gradient-to-br from-primary/20 via-primary/15 to-primary/10 rounded-full backdrop-blur-sm shadow-lg">
-                <Upload className={`h-10 w-10 text-primary transition-transform duration-500 ${isDragActive ? 'scale-125' : ''}`} />
-              </div>
+          <div className="flex flex-col items-center gap-4">
+            <div className="p-4 bg-primary/10 rounded-full">
+              <Upload className="h-8 w-8 text-primary" />
             </div>
           
-          {isDragActive ? (
-            <div className="text-center space-y-2 animate-pulse">
-              <p className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                أفلت الملفات هنا
-              </p>
-              <p className="text-muted-foreground">جاهز لاستقبال ملفات PDF</p>
-            </div>
-          ) : (
-            <>
-              <div className="text-center space-y-3">
-                <p className="text-xl font-bold text-foreground">
-                  اسحب وأفلت ملفات PDF هنا
+            {isDragActive ? (
+              <div className="text-center space-y-1">
+                <p className="font-semibold text-primary">
+                  أفلت الملفات هنا
                 </p>
-                <p className="text-sm text-muted-foreground max-w-md">
-                  قم برفع ملف واحد أو عدة ملفات للمقارنة مع المستودع
-                  <br />
-                  <span className="text-xs">(حد أقصى 50MB لكل ملف)</span>
-                </p>
+                <p className="text-sm text-muted-foreground">جاهز لاستقبال ملفات PDF</p>
               </div>
-              <Button 
-                type="button" 
-                variant="outline" 
-                size="lg"
-                className="gap-2 hover:bg-primary hover:text-primary-foreground transition-all duration-300 shadow-md hover:shadow-lg"
-              >
-                <Upload className="h-4 w-4" />
-                اختيار الملفات
-              </Button>
-            </>
-          )}
+            ) : (
+              <>
+                <div className="text-center space-y-2">
+                  <p className="font-semibold">
+                    اسحب وأفلت ملفات PDF هنا
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    أو انقر لاختيار الملفات
+                    <br />
+                    <span className="text-xs">(حد أقصى 50MB)</span>
+                  </p>
+                </div>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm"
+                >
+                  <Upload className="h-4 w-4 ml-2" />
+                  اختيار الملفات
+                </Button>
+              </>
+            )}
           </div>
         </CardContent>
       </Card>
