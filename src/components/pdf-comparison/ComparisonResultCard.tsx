@@ -105,7 +105,7 @@ const ComparisonResultCard = ({ result }: ComparisonResultCardProps) => {
           
           <div className="relative grid grid-cols-3 gap-6">
             {/* Total Compared */}
-            <div className="text-center">
+            <div className="flex flex-col items-center justify-center text-center">
               <div className="inline-flex p-2 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 mb-2">
                 <FileText className="h-5 w-5 text-primary" />
               </div>
@@ -114,7 +114,7 @@ const ComparisonResultCard = ({ result }: ComparisonResultCardProps) => {
             </div>
             
             {/* Matches Found */}
-            <div className="text-center border-x border-border/50">
+            <div className="flex flex-col items-center justify-center text-center border-x border-border/50">
               <div className="inline-flex p-2 rounded-xl bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 mb-2">
                 <AlertCircle className="h-5 w-5 text-yellow-600" />
               </div>
@@ -123,7 +123,7 @@ const ComparisonResultCard = ({ result }: ComparisonResultCardProps) => {
             </div>
             
             {/* High Risk */}
-            <div className="text-center">
+            <div className="flex flex-col items-center justify-center text-center">
               <div className="inline-flex p-2 rounded-xl bg-gradient-to-br from-red-500/10 to-red-500/5 mb-2">
                 <AlertTriangle className="h-5 w-5 text-red-600" />
               </div>
