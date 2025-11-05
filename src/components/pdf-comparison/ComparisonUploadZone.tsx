@@ -304,7 +304,7 @@ const ComparisonUploadZone = ({ gradeLevel }: ComparisonUploadZoneProps) => {
                   <p className="font-semibold">
                     اسحب وأفلت ملفات PDF هنا
                   </p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-muted-foreground text-center">
                     أو انقر لاختيار الملفات
                     <br />
                     <span className="text-xs">(حد أقصى 50MB)</span>
