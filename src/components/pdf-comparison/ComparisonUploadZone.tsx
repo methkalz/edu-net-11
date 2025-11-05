@@ -300,7 +300,7 @@ const ComparisonUploadZone = ({ gradeLevel }: ComparisonUploadZoneProps) => {
               </div>
             ) : (
               <>
-                <div className="text-center space-y-2">
+                <div className="flex flex-col items-center justify-center text-center space-y-2">
                   <p className="font-semibold">
                     اسحب وأفلت ملفات PDF هنا
                   </p>
