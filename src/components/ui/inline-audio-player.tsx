@@ -25,6 +25,7 @@ export const InlineAudioPlayer: React.FC<InlineAudioPlayerProps> = ({
   const [playbackRate, setPlaybackRate] = useState(1);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isHovering, setIsHovering] = useState(false);
 
   // Load saved settings from localStorage
   useEffect(() => {
@@ -140,6 +141,8 @@ export const InlineAudioPlayer: React.FC<InlineAudioPlayerProps> = ({
 
   return (
     <div
+      onMouseEnter={() => setIsHovering(true)}
+      onMouseLeave={() => setIsHovering(false)}
       className={cn(
         "flex items-center gap-2 bg-card/50 backdrop-blur-sm rounded-xl px-3 py-2 border border-border/50 shadow-md hover:shadow-lg transition-all duration-300",
         className
@@ -172,22 +175,24 @@ export const InlineAudioPlayer: React.FC<InlineAudioPlayerProps> = ({
       </TooltipProvider>
 
       {/* Progress Bar - Hidden on very small screens */}
-      {isPlaying && (
-        <div className="hidden sm:flex items-center gap-2 min-w-[120px] flex-1 animate-fade-in">
-          <Slider
-            value={[currentTime]}
-            max={duration || 100}
-            step={0.1}
-            onValueChange={handleSeek}
-            className="flex-1 cursor-pointer hover:opacity-100 transition-opacity"
-            disabled={isLoading}
-          />
+      {(isPlaying || isHovering) && (
+        <div className="hidden sm:flex items-center gap-2 min-w-[120px] flex-1 overflow-hidden">
+          <div className="w-full animate-in slide-in-from-left duration-200">
+            <Slider
+              value={[currentTime]}
+              max={duration || 100}
+              step={0.1}
+              onValueChange={handleSeek}
+              className="flex-1 cursor-pointer hover:opacity-100 transition-opacity"
+              disabled={isLoading}
+            />
+          </div>
         </div>
       )}
 
       {/* Time Display */}
-      {isPlaying && (
-        <span className="text-xs text-muted-foreground whitespace-nowrap font-medium tabular-nums animate-fade-in">
+      {(isPlaying || isHovering) && (
+        <span className="text-xs text-muted-foreground whitespace-nowrap font-medium tabular-nums animate-in slide-in-from-right duration-200">
           <span className="sm:hidden">{formatTime(currentTime)}</span>
           <span className="hidden sm:inline">
             {formatTime(currentTime)} / {formatTime(duration)}
