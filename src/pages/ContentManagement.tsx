@@ -129,7 +129,7 @@ const ContentManagement: React.FC = () => {
                             اختبار قراءة النصوص بالصوت
                           </h3>
                           <span className="text-sm text-green-600 font-medium">
-                            تجريبي: Web Speech API - مجانية 100%
+                            تجريبي: Web Speech API
                           </span>
                         </div>
                       </div>
