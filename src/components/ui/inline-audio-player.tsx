@@ -259,7 +259,7 @@ export const InlineAudioPlayer: React.FC<InlineAudioPlayerProps> = ({
                         : "bg-accent/50 hover:bg-accent text-foreground hover:scale-105"
                     )}
                   >
-                    <span className="text-sm">
+                    <span className="text-xs">
                       {speed.label}
                     </span>
                   </button>
