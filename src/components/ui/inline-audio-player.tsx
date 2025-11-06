@@ -141,7 +141,7 @@ export const InlineAudioPlayer: React.FC<InlineAudioPlayerProps> = ({
   return (
     <div
       className={cn(
-        "flex items-center gap-2 sm:gap-3 bg-orange-50/50 rounded-full px-3 sm:px-4 py-2 border border-orange-200/50 shadow-sm",
+        "flex items-center gap-3 sm:gap-4 bg-card/50 backdrop-blur-sm rounded-2xl px-4 sm:px-5 py-3 border border-border/50 shadow-lg hover:shadow-xl transition-all duration-300",
         className
       )}
     >
@@ -156,12 +156,12 @@ export const InlineAudioPlayer: React.FC<InlineAudioPlayerProps> = ({
               onClick={togglePlay}
               disabled={isLoading}
               size="icon"
-              className="h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-orange-500 hover:bg-orange-600 text-white shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50"
+              className="h-11 w-11 sm:h-12 sm:w-12 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isPlaying ? (
-                <Pause className="h-4 w-4 sm:h-5 sm:w-5" />
+                <Pause className="h-5 w-5 sm:h-6 sm:w-6" />
               ) : (
-                <Play className="h-4 w-4 sm:h-5 sm:w-5 mr-0.5" />
+                <Play className="h-5 w-5 sm:h-6 sm:w-6 ml-0.5" />
               )}
             </Button>
           </TooltipTrigger>
@@ -172,19 +172,19 @@ export const InlineAudioPlayer: React.FC<InlineAudioPlayerProps> = ({
       </TooltipProvider>
 
       {/* Progress Bar - Hidden on very small screens */}
-      <div className="hidden sm:flex items-center gap-2 min-w-[150px] md:min-w-[200px] flex-1">
+      <div className="hidden sm:flex items-center gap-3 min-w-[180px] md:min-w-[240px] flex-1">
         <Slider
           value={[currentTime]}
           max={duration || 100}
           step={0.1}
           onValueChange={handleSeek}
-          className="flex-1 cursor-pointer"
+          className="flex-1 cursor-pointer hover:opacity-100 transition-opacity"
           disabled={isLoading}
         />
       </div>
 
       {/* Time Display */}
-      <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap font-medium">
+      <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap font-semibold tabular-nums">
         <span className="sm:hidden">{formatTime(currentTime)}</span>
         <span className="hidden sm:inline">
           {formatTime(currentTime)} / {formatTime(duration)}
@@ -197,12 +197,12 @@ export const InlineAudioPlayer: React.FC<InlineAudioPlayerProps> = ({
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 rounded-full hover:bg-accent text-muted-foreground hover:text-foreground"
+            className="h-9 w-9 rounded-full hover:bg-accent/80 text-muted-foreground hover:text-foreground transition-all duration-200 hover:scale-105"
           >
-            <Settings className="h-4 w-4" />
+            <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-72 p-6 animate-in fade-in-0 zoom-in-95 duration-200" align="end">
+        <PopoverContent className="w-72 p-6 animate-in fade-in-0 zoom-in-95 duration-200 shadow-xl border-border/50" align="end">
           <div className="space-y-6">
             {/* Volume Section */}
             <div className="space-y-3">
@@ -220,7 +220,7 @@ export const InlineAudioPlayer: React.FC<InlineAudioPlayerProps> = ({
                 max={100}
                 step={1}
                 onValueChange={handleVolumeChange}
-                className="flex-1"
+                className="flex-1 hover:opacity-100 transition-opacity"
               />
             </div>
 
@@ -244,13 +244,13 @@ export const InlineAudioPlayer: React.FC<InlineAudioPlayerProps> = ({
                     key={speed.value}
                     onClick={() => handleSpeedChange(speed.value.toString())}
                     className={cn(
-                      "flex items-center justify-center p-3 rounded-lg transition-all duration-200",
+                      "flex items-center justify-center p-3 rounded-xl transition-all duration-200 font-medium",
                       playbackRate === speed.value
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "bg-accent/50 hover:bg-accent text-foreground"
+                        ? "bg-primary text-primary-foreground shadow-md scale-105"
+                        : "bg-accent/50 hover:bg-accent text-foreground hover:scale-105"
                     )}
                   >
-                    <span className="text-sm font-medium">
+                    <span className="text-sm">
                       {speed.label}
                     </span>
                   </button>
