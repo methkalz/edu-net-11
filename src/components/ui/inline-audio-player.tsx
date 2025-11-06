@@ -141,7 +141,7 @@ export const InlineAudioPlayer: React.FC<InlineAudioPlayerProps> = ({
   return (
     <div
       className={cn(
-        "flex items-center gap-3 sm:gap-4 bg-card/50 backdrop-blur-sm rounded-2xl px-4 sm:px-5 py-3 border border-border/50 shadow-lg hover:shadow-xl transition-all duration-300",
+        "flex items-center gap-2 bg-card/50 backdrop-blur-sm rounded-xl px-3 py-2 border border-border/50 shadow-md hover:shadow-lg transition-all duration-300",
         className
       )}
     >
@@ -156,12 +156,12 @@ export const InlineAudioPlayer: React.FC<InlineAudioPlayerProps> = ({
               onClick={togglePlay}
               disabled={isLoading}
               size="icon"
-              className="h-11 w-11 sm:h-12 sm:w-12 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="h-8 w-8 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isPlaying ? (
-                <Pause className="h-5 w-5 sm:h-6 sm:w-6" />
+                <Pause className="h-4 w-4" />
               ) : (
-                <Play className="h-5 w-5 sm:h-6 sm:w-6 ml-0.5" />
+                <Play className="h-4 w-4 ml-0.5" />
               )}
             </Button>
           </TooltipTrigger>
@@ -172,7 +172,7 @@ export const InlineAudioPlayer: React.FC<InlineAudioPlayerProps> = ({
       </TooltipProvider>
 
       {/* Progress Bar - Hidden on very small screens */}
-      <div className="hidden sm:flex items-center gap-3 min-w-[180px] md:min-w-[240px] flex-1">
+      <div className="hidden sm:flex items-center gap-2 min-w-[120px] flex-1">
         <Slider
           value={[currentTime]}
           max={duration || 100}
@@ -184,7 +184,7 @@ export const InlineAudioPlayer: React.FC<InlineAudioPlayerProps> = ({
       </div>
 
       {/* Time Display */}
-      <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap font-semibold tabular-nums">
+      <span className="text-xs text-muted-foreground whitespace-nowrap font-medium tabular-nums">
         <span className="sm:hidden">{formatTime(currentTime)}</span>
         <span className="hidden sm:inline">
           {formatTime(currentTime)} / {formatTime(duration)}
@@ -197,9 +197,9 @@ export const InlineAudioPlayer: React.FC<InlineAudioPlayerProps> = ({
           <Button
             variant="ghost"
             size="icon"
-            className="h-9 w-9 rounded-full hover:bg-accent/80 text-muted-foreground hover:text-foreground transition-all duration-200 hover:scale-105"
+            className="h-7 w-7 rounded-full hover:bg-accent/80 text-muted-foreground hover:text-foreground transition-all duration-200 hover:scale-105"
           >
-            <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
+            <Settings className="h-4 w-4" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-72 p-6 animate-in fade-in-0 zoom-in-95 duration-200 shadow-xl border-border/50" align="end">
