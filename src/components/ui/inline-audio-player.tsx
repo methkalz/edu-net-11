@@ -172,24 +172,28 @@ export const InlineAudioPlayer: React.FC<InlineAudioPlayerProps> = ({
       </TooltipProvider>
 
       {/* Progress Bar - Hidden on very small screens */}
-      <div className="hidden sm:flex items-center gap-2 min-w-[120px] flex-1">
-        <Slider
-          value={[currentTime]}
-          max={duration || 100}
-          step={0.1}
-          onValueChange={handleSeek}
-          className="flex-1 cursor-pointer hover:opacity-100 transition-opacity"
-          disabled={isLoading}
-        />
-      </div>
+      {isPlaying && (
+        <div className="hidden sm:flex items-center gap-2 min-w-[120px] flex-1 animate-fade-in">
+          <Slider
+            value={[currentTime]}
+            max={duration || 100}
+            step={0.1}
+            onValueChange={handleSeek}
+            className="flex-1 cursor-pointer hover:opacity-100 transition-opacity"
+            disabled={isLoading}
+          />
+        </div>
+      )}
 
       {/* Time Display */}
-      <span className="text-xs text-muted-foreground whitespace-nowrap font-medium tabular-nums">
-        <span className="sm:hidden">{formatTime(currentTime)}</span>
-        <span className="hidden sm:inline">
-          {formatTime(currentTime)} / {formatTime(duration)}
+      {isPlaying && (
+        <span className="text-xs text-muted-foreground whitespace-nowrap font-medium tabular-nums animate-fade-in">
+          <span className="sm:hidden">{formatTime(currentTime)}</span>
+          <span className="hidden sm:inline">
+            {formatTime(currentTime)} / {formatTime(duration)}
+          </span>
         </span>
-      </span>
+      )}
 
       {/* Settings Popover */}
       <Popover open={settingsOpen} onOpenChange={setSettingsOpen}>
