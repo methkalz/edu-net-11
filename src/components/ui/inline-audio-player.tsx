@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Pause, Settings, Volume2, Zap } from 'lucide-react';
+import { Play, Pause, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -197,36 +197,24 @@ export const InlineAudioPlayer: React.FC<InlineAudioPlayerProps> = ({
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 rounded-full hover:bg-orange-100 text-orange-600 hover:text-orange-700"
+            className="h-8 w-8 rounded-full hover:bg-accent text-muted-foreground hover:text-foreground"
           >
             <Settings className="h-4 w-4" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-80 p-0 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200" align="end">
-          {/* Header */}
-          <div className="px-4 py-3 border-b bg-gradient-to-r from-orange-50 to-orange-100/50">
-            <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-              <Settings className="h-4 w-4 text-orange-600" />
-              إعدادات التشغيل
-            </h4>
-          </div>
-
-          {/* Content */}
-          <div className="p-4 space-y-5">
+        <PopoverContent className="w-72 p-6 animate-in fade-in-0 zoom-in-95 duration-200" align="end">
+          <div className="space-y-6">
             {/* Volume Section */}
             <div className="space-y-3">
-              {/* Label + Value Preview */}
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium flex items-center gap-2 text-foreground">
-                  <Volume2 className="h-4 w-4 text-orange-600" />
+              <div className="flex items-center justify-between mb-3">
+                <label className="text-sm font-medium text-foreground">
                   مستوى الصوت
                 </label>
-                <span className="text-sm font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md min-w-[45px] text-center">
+                <span className="text-xs font-medium text-muted-foreground">
                   {Math.round(volume * 100)}%
                 </span>
               </div>
 
-              {/* Slider */}
               <Slider
                 value={[volume * 100]}
                 max={100}
@@ -234,94 +222,43 @@ export const InlineAudioPlayer: React.FC<InlineAudioPlayerProps> = ({
                 onValueChange={handleVolumeChange}
                 className="flex-1"
               />
-
-              {/* Quick presets */}
-              <div className="flex gap-1.5 pt-1">
-                {[0, 50, 75, 100].map(preset => (
-                  <button
-                    key={preset}
-                    onClick={() => setVolume(preset / 100)}
-                    className={cn(
-                      "flex-1 text-xs py-1 rounded-md transition-all duration-200",
-                      Math.round(volume * 100) === preset
-                        ? "bg-orange-600 text-white font-medium shadow-sm"
-                        : "bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    {preset}%
-                  </button>
-                ))}
-              </div>
             </div>
+
+            {/* Divider */}
+            <div className="border-t" />
 
             {/* Speed Section */}
             <div className="space-y-3">
-              {/* Divider */}
-              <div className="border-t pt-5" />
+              <label className="text-sm font-medium text-foreground block mb-3">
+                سرعة التشغيل
+              </label>
 
-              {/* Label + Current Speed */}
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium flex items-center gap-2 text-foreground">
-                  <Zap className="h-4 w-4 text-orange-600" />
-                  سرعة التشغيل
-                </label>
-                <span className="text-sm font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md">
-                  {playbackRate}x
-                </span>
-              </div>
-
-              {/* Grid of Speed Options */}
-              <div className="grid grid-cols-3 gap-2">
+              {/* 3 Speed Options */}
+              <div className="grid grid-cols-3 gap-3">
                 {[
-                  { value: 0.5, label: '0.5x', desc: 'بطيء' },
-                  { value: 0.75, label: '0.75x', desc: '' },
-                  { value: 1, label: '1x', desc: 'عادي' },
-                  { value: 1.25, label: '1.25x', desc: '' },
-                  { value: 1.5, label: '1.5x', desc: 'سريع' },
-                  { value: 2, label: '2x', desc: 'أسرع' },
+                  { value: 0.75, label: 'بطيء', speed: '0.75x' },
+                  { value: 1, label: 'عادي', speed: '1x' },
+                  { value: 1.5, label: 'سريع', speed: '1.5x' },
                 ].map(speed => (
                   <button
                     key={speed.value}
                     onClick={() => handleSpeedChange(speed.value.toString())}
                     className={cn(
-                      "relative p-2.5 rounded-lg border-2 transition-all duration-200 text-center group transform hover:scale-105 active:scale-95",
+                      "flex flex-col items-center gap-1.5 p-3 rounded-lg transition-all duration-200",
                       playbackRate === speed.value
-                        ? "border-orange-500 bg-orange-50 shadow-sm ring-2 ring-orange-500 ring-offset-2"
-                        : "border-border hover:border-orange-300 hover:bg-orange-50/50"
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "bg-accent/50 hover:bg-accent text-foreground"
                     )}
                   >
-                    <div className="flex flex-col items-center gap-0.5">
-                      <span className={cn(
-                        "text-sm font-bold",
-                        playbackRate === speed.value
-                          ? "text-orange-600"
-                          : "text-foreground group-hover:text-orange-600"
-                      )}>
-                        {speed.label}
-                      </span>
-                      {speed.desc && (
-                        <span className="text-[10px] text-muted-foreground">
-                          {speed.desc}
-                        </span>
-                      )}
-                    </div>
-                    
-                    {/* Checkmark for selected */}
-                    {playbackRate === speed.value && (
-                      <div className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-orange-600 flex items-center justify-center shadow-md">
-                        <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                    )}
+                    <span className="text-base font-semibold">
+                      {speed.speed}
+                    </span>
+                    <span className="text-xs">
+                      {speed.label}
+                    </span>
                   </button>
                 ))}
               </div>
-
-              {/* Helper text */}
-              <p className="text-xs text-muted-foreground text-center pt-1">
-                اختر السرعة المناسبة للاستماع
-              </p>
             </div>
           </div>
         </PopoverContent>
