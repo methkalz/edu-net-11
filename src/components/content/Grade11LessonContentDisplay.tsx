@@ -1,10 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Image, Video, FileText, Maximize2, Minimize2, ExternalLink, Code, Settings, Music } from 'lucide-react';
+import { Play, Image, Video, FileText, Maximize2, Minimize2, ExternalLink, Code, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { AudioPlayer } from '@/components/ui/audio-player';
+import { InlineAudioPlayer } from '@/components/ui/inline-audio-player';
 import Lottie from 'lottie-react';
 import { Grade11LessonWithMedia, Grade11LessonMedia } from '@/hooks/useGrade11Content';
 import { useSharedLottieSettings } from '@/hooks/useSharedLottieSettings';
@@ -31,7 +30,6 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
   const { updateLottieMedia } = useEditLottieMedia();
   const [previewMedia, setPreviewMedia] = useState<any>(null);
   const [editingLottie, setEditingLottie] = useState<any>(null);
-  const [audioPopoverOpen, setAudioPopoverOpen] = useState(false);
   const { lottieSettings } = useSharedLottieSettings();
 
   // تحديث previewMedia عند تحديث lesson.media
@@ -383,7 +381,7 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
     <div className="space-y-8 w-full max-w-none">
       {/* Lesson Content */}
       <div className="prose max-w-none w-full">
-        <div className="flex items-start justify-between gap-4 mb-6">
+        <div className="flex items-center gap-4 mb-6 flex-wrap">
           {/* العنوان */}
           {!hideTitle && (
             <h4 className="font-bold text-2xl text-foreground leading-relaxed flex-1">
@@ -391,48 +389,13 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
             </h4>
           )}
           
-          {/* أيقونة الصوت - تظهر فقط إذا كان هناك ملف صوتي */}
+          {/* المشغل الصوتي المباشر - يظهر فقط إذا كان هناك ملف صوتي */}
           {audioMedia.length > 0 && (
-            <Popover open={audioPopoverOpen} onOpenChange={setAudioPopoverOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-12 w-12 rounded-full bg-orange-50 hover:bg-orange-100 border-2 border-orange-200 shadow-md hover:shadow-lg transition-all duration-300"
-                  title="استمع للدرس"
-                >
-                  <Music className="h-6 w-6 text-orange-600" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent 
-                side="left" 
-                align="start"
-                className="w-96 p-4"
-              >
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Music className="h-5 w-5 text-orange-600" />
-                    <h4 className="font-semibold text-sm">
-                      استمع للدرس
-                    </h4>
-                  </div>
-                  
-                  {/* عرض جميع الملفات الصوتية */}
-                  {audioMedia.map((audio, index) => (
-                    <div key={audio.id} className="space-y-2">
-                      <AudioPlayer
-                        src={audio.file_path}
-                        title={audio.file_name}
-                        className="bg-transparent border-0 shadow-none p-0"
-                      />
-                      {index < audioMedia.length - 1 && (
-                        <div className="border-t border-border/30 my-2" />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </PopoverContent>
-            </Popover>
+            <InlineAudioPlayer
+              src={audioMedia[0].file_path}
+              title={audioMedia[0].file_name}
+              className="shrink-0"
+            />
           )}
         </div>
         
