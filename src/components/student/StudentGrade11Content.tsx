@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { BookOpen, ChevronDown, ChevronRight, Search, FolderOpen, PlayCircle, Clock, Star, FileText, BookMarked, Target, Trophy, Video, Calendar, FileCheck, Loader2 } from 'lucide-react';
+import { BookOpen, ChevronDown, ChevronRight, Search, FolderOpen, PlayCircle, Clock, Star, FileText, BookMarked, Target, Trophy, Video, Calendar, FileCheck, Loader2, Music } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import Grade11LessonContentDisplay from '../content/Grade11LessonContentDisplay';
 import { Grade11VideoViewer } from '@/components/content/Grade11VideoViewer';
@@ -53,6 +53,12 @@ const LessonCard = React.memo<{
         <Badge variant="secondary" className="text-xs px-2 py-1 bg-purple-100/60 text-purple-600 border-purple-200">
           <PlayCircle className="w-3 h-3 ml-1" />
           {lesson.media.length}
+        </Badge>
+      )}
+      {lesson.media && lesson.media.some(m => m.media_type === 'audio') && (
+        <Badge variant="secondary" className="text-xs px-2 py-1 bg-orange-100/60 text-orange-600 border-orange-200">
+          <Music className="w-3 h-3 ml-1" />
+          صوتي
         </Badge>
       )}
       <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-purple-600 transition-colors" />

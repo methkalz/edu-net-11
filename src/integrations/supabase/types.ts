@@ -6360,7 +6360,7 @@ export type Database = {
       attempt_status: "in_progress" | "submitted" | "auto_submitted" | "expired"
       exam_status: "draft" | "scheduled" | "active" | "ended" | "archived"
       file_kind: "pkt" | "pdf" | "image" | "video" | "document"
-      media_type: "video" | "lottie" | "image" | "code"
+      media_type: "video" | "lottie" | "image" | "code" | "audio"
       plugin_status: "enabled" | "disabled" | "in_development" | "coming_soon"
       question_difficulty: "easy" | "medium" | "hard"
       question_type: "multiple_choice" | "true_false" | "short_answer" | "essay"
@@ -6496,7 +6496,7 @@ export const Constants = {
       attempt_status: ["in_progress", "submitted", "auto_submitted", "expired"],
       exam_status: ["draft", "scheduled", "active", "ended", "archived"],
       file_kind: ["pkt", "pdf", "image", "video", "document"],
-      media_type: ["video", "lottie", "image", "code"],
+      media_type: ["video", "lottie", "image", "code", "audio"],
       plugin_status: ["enabled", "disabled", "in_development", "coming_soon"],
       question_difficulty: ["easy", "medium", "hard"],
       question_type: ["multiple_choice", "true_false", "short_answer", "essay"],

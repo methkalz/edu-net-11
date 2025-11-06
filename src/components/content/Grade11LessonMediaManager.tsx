@@ -15,7 +15,8 @@ import {
   Globe,
   HardDrive,
   Code,
-  Settings
+  Settings,
+  Music
 } from 'lucide-react';
 import { Grade11LessonMedia } from '@/hooks/useGrade11Content';
 import { useAuth } from '@/hooks/useAuth';
@@ -28,6 +29,7 @@ import LessonCodeForm from './LessonCodeForm';
 import { LottieEditForm } from './LottieEditForm';
 import CodeEditForm from './CodeEditForm';
 import MediaPreview from './MediaPreview';
+import { LessonAudioForm } from './LessonAudioForm';
 import { logger } from '@/lib/logger';
 
 interface Grade11LessonMediaManagerProps {
@@ -62,6 +64,7 @@ const Grade11LessonMediaManager: React.FC<Grade11LessonMediaManagerProps> = ({
   const [showImageForm, setShowImageForm] = useState(false);
   const [showLottieForm, setShowLottieForm] = useState(false);
   const [showCodeForm, setShowCodeForm] = useState(false);
+  const [showAudioForm, setShowAudioForm] = useState(false);
   const [previewMedia, setPreviewMedia] = useState<Grade11LessonMedia | null>(null);
   const [editingLottie, setEditingLottie] = useState<Grade11LessonMedia | null>(null);
   const [editingCode, setEditingCode] = useState<Grade11LessonMedia | null>(null);
@@ -111,15 +114,17 @@ const Grade11LessonMediaManager: React.FC<Grade11LessonMediaManagerProps> = ({
     if (type === 'image') return <Image className="h-4 w-4" />;
     if (type === 'lottie') return <Play className="h-4 w-4" />;
     if (type === 'code') return <Code className="h-4 w-4" />;
+    if (type === 'audio') return <Music className="h-5 w-5 text-orange-500" />;
     return <Upload className="h-4 w-4" />;
   };
 
   const getMediaTypeBadge = (type: string) => {
     const typeMap = {
-      video: { label: 'فيديو', color: 'bg-blue-100 text-blue-800' },
-      image: { label: 'صورة', color: 'bg-green-100 text-green-800' },
-      lottie: { label: 'لوتي', color: 'bg-purple-100 text-purple-800' },
-      code: { label: 'كود', color: 'bg-orange-100 text-orange-800' }
+      video: { label: 'فيديو', color: 'bg-blue-100 text-blue-800 border-blue-300' },
+      image: { label: 'صورة', color: 'bg-green-100 text-green-800 border-green-300' },
+      lottie: { label: 'لوتي', color: 'bg-purple-100 text-purple-800 border-purple-300' },
+      code: { label: 'كود', color: 'bg-yellow-100 text-yellow-800 border-yellow-300' },
+      audio: { label: 'صوت', color: 'bg-orange-100 text-orange-800 border-orange-300' }
     };
     
     const config = typeMap[type as keyof typeof typeMap] || { label: type, color: 'bg-gray-100 text-gray-800' };
@@ -183,7 +188,7 @@ const Grade11LessonMediaManager: React.FC<Grade11LessonMediaManagerProps> = ({
     }
   };
 
-  const handleAddMedia = async (mediaData: any, type: 'video' | 'image' | 'lottie' | 'code') => {
+  const handleAddMedia = async (mediaData: any, type: 'video' | 'image' | 'lottie' | 'code' | 'audio') => {
     if (!lessonId || !onAddMedia) return;
 
     try {
@@ -191,6 +196,8 @@ const Grade11LessonMediaManager: React.FC<Grade11LessonMediaManagerProps> = ({
       let filePath = '';
       if (type === 'code') {
         filePath = mediaData.file_path;
+      } else if (type === 'audio') {
+        filePath = mediaData.media_url || mediaData.file_path;
       } else {
         filePath = mediaData.file_path || mediaData.video_url || mediaData.image_url;
       }
@@ -205,10 +212,10 @@ const Grade11LessonMediaManager: React.FC<Grade11LessonMediaManagerProps> = ({
         lesson_id: lessonId,
         media_type: type,
         file_path: filePath,
-        file_name: mediaData.title || mediaData.file_name || 'بدون اسم',
+        file_name: mediaData.media_title || mediaData.title || mediaData.file_name || 'بدون اسم',
         metadata: {
           ...mediaData,
-          source_type: mediaData.source_type || 'upload'
+          source_type: mediaData.media_source || mediaData.source_type || 'upload'
         },
         order_index: media.length
       };
@@ -220,6 +227,7 @@ const Grade11LessonMediaManager: React.FC<Grade11LessonMediaManagerProps> = ({
       setShowImageForm(false);
       setShowLottieForm(false);
       setShowCodeForm(false);
+      setShowAudioForm(false);
       
     } catch (error) {
       logger.error('Error adding media', error as Error);
@@ -237,7 +245,7 @@ const Grade11LessonMediaManager: React.FC<Grade11LessonMediaManagerProps> = ({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             <Button
               variant="outline"
               onClick={() => setShowVideoForm(true)}
@@ -272,6 +280,15 @@ const Grade11LessonMediaManager: React.FC<Grade11LessonMediaManagerProps> = ({
             >
               <Code className="h-6 w-6" />
               <span className="text-sm">كود</span>
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={() => setShowAudioForm(true)}
+              className="flex flex-col items-center gap-2 h-20"
+            >
+              <Music className="h-6 w-6" />
+              <span className="text-sm">ملف صوتي</span>
             </Button>
           </div>
         </CardContent>
@@ -403,6 +420,13 @@ const Grade11LessonMediaManager: React.FC<Grade11LessonMediaManagerProps> = ({
           isOpen={showCodeForm}
           onClose={() => setShowCodeForm(false)}
           onSubmit={(data) => handleAddMedia(data, 'code')}
+        />
+      )}
+
+      {showAudioForm && (
+        <LessonAudioForm
+          onSave={(data) => handleAddMedia(data, 'audio')}
+          onCancel={() => setShowAudioForm(false)}
         />
       )}
 

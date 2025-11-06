@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronRight, Lightbulb, Edit2, Trash2, Plus, BookOpen, Clock, GripVertical, Eye } from 'lucide-react';
+import { ChevronDown, ChevronRight, Lightbulb, Edit2, Trash2, Plus, BookOpen, Clock, GripVertical, Eye, Music } from 'lucide-react';
 import Grade11LessonContentDisplay from './Grade11LessonContentDisplay';
 import LessonPreviewModal from './LessonPreviewModal';
 import { Button } from '@/components/ui/button';
@@ -242,6 +242,12 @@ const Grade11CollapsibleTopic: React.FC<Grade11CollapsibleTopicProps> = ({
                     <div className="flex items-center justify-between text-xs text-muted-foreground mt-3 pt-2 border-t border-emerald-200">
                       <div className="flex items-center gap-3">
                         <span>{lesson.media?.length || 0} ملف وسائط</span>
+                        {lesson.media && lesson.media.some(m => m.media_type === 'audio') && (
+                          <Badge variant="secondary" className="text-xs px-2 py-1 bg-orange-100/60 text-orange-600 border-orange-200">
+                            <Music className="w-3 h-3 ml-1" />
+                            صوتي
+                          </Badge>
+                        )}
                       </div>
                       <span>تم الإنشاء: {new Date(lesson.created_at).toLocaleDateString('en-GB')}</span>
                     </div>

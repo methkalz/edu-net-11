@@ -37,7 +37,7 @@ export interface Grade11Lesson {
 export interface Grade11LessonMedia {
   id: string;
   lesson_id: string;
-  media_type: 'video' | 'lottie' | 'image' | 'code';
+  media_type: 'video' | 'lottie' | 'image' | 'code' | 'audio';
   file_path: string;
   file_name: string;
   metadata: Record<string, any> | null;

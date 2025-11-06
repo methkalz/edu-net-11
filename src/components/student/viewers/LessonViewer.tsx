@@ -5,8 +5,9 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent } from '@/components/ui/card';
-import { BookOpen, X, CheckCircle, Play, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { BookOpen, X, CheckCircle, Play, Clock, ChevronLeft, ChevronRight, Music } from 'lucide-react';
 import { toast } from 'sonner';
+import { AudioPlayer } from '@/components/ui/audio-player';
 
 interface LessonViewerProps {
   isOpen: boolean;
@@ -167,6 +168,31 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
         </DialogHeader>
 
         <div className="px-6 pb-6 space-y-4">
+          {/* Audio Player */}
+          {lesson.media && lesson.media.some(m => m.media_type === 'audio') && (
+            <Card className="bg-gradient-to-r from-orange-50 to-amber-50 border-orange-200">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <Music className="h-5 w-5 text-orange-600" />
+                  <h3 className="font-semibold text-orange-900">
+                    استمع للدرس
+                  </h3>
+                </div>
+                {lesson.media
+                  .filter(m => m.media_type === 'audio')
+                  .sort((a, b) => a.order_index - b.order_index)
+                  .map((audio) => (
+                    <AudioPlayer
+                      key={audio.id}
+                      src={audio.media_url}
+                      title={audio.media_title}
+                      className="mb-2 last:mb-0"
+                    />
+                  ))}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Video if available */}
           {lesson.video_url && (
             <div className="bg-black rounded-lg overflow-hidden">

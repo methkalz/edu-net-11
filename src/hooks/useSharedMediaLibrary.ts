@@ -7,7 +7,7 @@ export interface SharedMediaFile {
   id: string;
   file_name: string;
   file_path: string;
-  media_type: 'video' | 'image' | 'lottie' | 'code';
+  media_type: 'video' | 'image' | 'lottie' | 'code' | 'audio';
   metadata?: any;
   created_at: string;
   updated_at: string;
@@ -18,7 +18,7 @@ export interface SharedMediaFile {
 }
 
 export interface MediaLibraryFilters {
-  mediaType?: 'video' | 'image' | 'lottie' | 'code';
+  mediaType?: 'video' | 'image' | 'lottie' | 'code' | 'audio';
   search?: string;
   dateFrom?: string;
   dateTo?: string;
