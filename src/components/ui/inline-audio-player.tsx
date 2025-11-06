@@ -244,16 +244,13 @@ export const InlineAudioPlayer: React.FC<InlineAudioPlayerProps> = ({
                     key={speed.value}
                     onClick={() => handleSpeedChange(speed.value.toString())}
                     className={cn(
-                      "flex flex-col items-center gap-0.5 p-2 rounded-lg transition-all duration-200",
+                      "flex items-center justify-center p-3 rounded-lg transition-all duration-200",
                       playbackRate === speed.value
                         ? "bg-primary text-primary-foreground shadow-sm"
                         : "bg-accent/50 hover:bg-accent text-foreground"
                     )}
                   >
-                    <span className="text-sm font-semibold">
-                      {speed.speed}
-                    </span>
-                    <span className="text-[10px]">
+                    <span className="text-sm font-medium">
                       {speed.label}
                     </span>
                   </button>
