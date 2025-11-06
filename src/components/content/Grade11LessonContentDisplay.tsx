@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Image, Video, FileText, Maximize2, Minimize2, ExternalLink, Code, Settings } from 'lucide-react';
+import { Play, Image, Video, FileText, Maximize2, Minimize2, ExternalLink, Code, Settings, Music } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { AudioPlayer } from '@/components/ui/audio-player';
 import Lottie from 'lottie-react';
 import { Grade11LessonWithMedia, Grade11LessonMedia } from '@/hooks/useGrade11Content';
 import { useSharedLottieSettings } from '@/hooks/useSharedLottieSettings';
@@ -29,6 +31,7 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
   const { updateLottieMedia } = useEditLottieMedia();
   const [previewMedia, setPreviewMedia] = useState<any>(null);
   const [editingLottie, setEditingLottie] = useState<any>(null);
+  const [audioPopoverOpen, setAudioPopoverOpen] = useState(false);
   const { lottieSettings } = useSharedLottieSettings();
 
   // تحديث previewMedia عند تحديث lesson.media
@@ -333,10 +336,11 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
     );
   };
 
-  // Sort media by order_index and separate videos from other media
+  // Sort media by order_index and separate videos, audio, and other media
   const sortedMedia = lesson.media?.sort((a, b) => a.order_index - b.order_index) || [];
   const videoMedia = sortedMedia.filter(m => m.media_type === 'video');
-  const otherMedia = sortedMedia.filter(m => m.media_type !== 'video');
+  const audioMedia = sortedMedia.filter(m => m.media_type === 'audio');
+  const otherMedia = sortedMedia.filter(m => m.media_type !== 'video' && m.media_type !== 'audio');
 
   // Lottie Display Component with speed control
   const LottieDisplay = ({ animationData, loop, speed }: { animationData: any, loop: boolean, speed: number }) => {
@@ -379,9 +383,59 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
     <div className="space-y-8 w-full max-w-none">
       {/* Lesson Content */}
       <div className="prose max-w-none w-full">
-        {!hideTitle && (
-          <h4 className="font-bold text-2xl mb-6 text-foreground leading-relaxed">{lesson.title}</h4>
-        )}
+        <div className="flex items-start justify-between gap-4 mb-6">
+          {/* العنوان */}
+          {!hideTitle && (
+            <h4 className="font-bold text-2xl text-foreground leading-relaxed flex-1">
+              {lesson.title}
+            </h4>
+          )}
+          
+          {/* أيقونة الصوت - تظهر فقط إذا كان هناك ملف صوتي */}
+          {audioMedia.length > 0 && (
+            <Popover open={audioPopoverOpen} onOpenChange={setAudioPopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-12 w-12 rounded-full bg-orange-50 hover:bg-orange-100 border-2 border-orange-200 shadow-md hover:shadow-lg transition-all duration-300"
+                  title="استمع للدرس"
+                >
+                  <Music className="h-6 w-6 text-orange-600" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent 
+                side="left" 
+                align="start"
+                className="w-96 p-4"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Music className="h-5 w-5 text-orange-600" />
+                    <h4 className="font-semibold text-sm">
+                      استمع للدرس
+                    </h4>
+                  </div>
+                  
+                  {/* عرض جميع الملفات الصوتية */}
+                  {audioMedia.map((audio, index) => (
+                    <div key={audio.id} className="space-y-2">
+                      <AudioPlayer
+                        src={audio.file_path}
+                        title={audio.file_name}
+                        className="bg-transparent border-0 shadow-none p-0"
+                      />
+                      {index < audioMedia.length - 1 && (
+                        <div className="border-t border-border/30 my-2" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+          )}
+        </div>
+        
         {lesson.content && (
           <div 
             className="lesson-content text-xl text-foreground/90 leading-9 break-words max-w-full p-8 bg-gradient-to-r from-muted/30 to-muted/20 rounded-3xl border-2 border-border/30 shadow-sm prose prose-lg max-w-none [&_p]:min-h-[1.5em] [&_p]:mb-2"
