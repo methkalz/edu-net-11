@@ -1,21 +1,55 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { 
   AlertTriangle, 
   AlertCircle, 
   CheckCircle, 
   FileText,
   Users,
-  Database
+  Database,
+  Download,
+  Loader2
 } from 'lucide-react';
-import type { ComparisonResult } from '@/hooks/usePDFComparison';
+import type { ComparisonResult, MatchedSegment } from '@/hooks/usePDFComparison';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface BatchComparisonResultProps {
   result: ComparisonResult;
 }
 
 const BatchComparisonResult = ({ result }: BatchComparisonResultProps) => {
+  const [allSegments, setAllSegments] = useState<MatchedSegment[] | null>(null);
+  const [loadingSegments, setLoadingSegments] = useState(false);
+  const [showingAllSegments, setShowingAllSegments] = useState(false);
+
+  const loadAllSegments = async () => {
+    setLoadingSegments(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('pdf-get-all-segments', {
+        body: { comparisonId: result.id },
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        setAllSegments(data.segments || []);
+        setShowingAllSegments(true);
+        toast.success(`تم تحميل ${data.segments?.length || 0} تشابه`);
+      } else {
+        throw new Error(data?.error || 'فشل تحميل التشابهات');
+      }
+    } catch (error) {
+      console.error('Error loading all segments:', error);
+      toast.error('فشل تحميل جميع التشابهات');
+    } finally {
+      setLoadingSegments(false);
+    }
+  };
+
   const getStatusConfig = () => {
     switch (result.status) {
       case 'flagged':
@@ -228,6 +262,103 @@ const BatchComparisonResult = ({ result }: BatchComparisonResultProps) => {
             <p className="text-xs text-green-600 dark:text-green-500">
               هذا المشروع يبدو أصلياً ✓
             </p>
+          </div>
+        )}
+
+        {/* Matched Segments Section */}
+        {result.segments_count && result.segments_count > 0 && (
+          <div className="mt-6 space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b">
+              <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-primary" />
+                <h4 className="font-bold text-sm">الجمل المتشابهة</h4>
+                <Badge variant="outline">
+                  {result.segments_count} جملة
+                </Badge>
+              </div>
+
+              {/* زر تحميل كل الـ segments */}
+              {result.segments_file_path && !showingAllSegments && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={loadAllSegments}
+                  disabled={loadingSegments}
+                  className="text-xs"
+                >
+                  {loadingSegments ? (
+                    <>
+                      <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                      جاري التحميل...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-3 w-3 mr-2" />
+                      عرض الكل ({result.segments_count})
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+
+            {/* عرض الـ segments */}
+            <div className="space-y-2 max-h-96 overflow-y-auto">
+              {(showingAllSegments && allSegments ? allSegments : result.top_matched_segments || [])
+                .map((segment, idx) => (
+                  <div
+                    key={idx}
+                    className="p-3 bg-background/50 rounded-lg border hover:shadow-md transition-all"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className={cn(
+                        "flex-shrink-0 w-6 h-6 rounded-lg flex items-center justify-center font-bold text-xs",
+                        segment.similarity >= 80
+                          ? "bg-destructive/20 text-destructive"
+                          : segment.similarity >= 60
+                          ? "bg-yellow-500/20 text-yellow-600"
+                          : "bg-primary/20 text-primary"
+                      )}>
+                        {idx + 1}
+                      </div>
+                      
+                      <div className="flex-1 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-semibold text-muted-foreground">
+                            تشابه: {segment.similarity}%
+                          </span>
+                          {segment.source_page && (
+                            <Badge variant="outline" className="text-[10px]">
+                              ص {segment.source_page}
+                            </Badge>
+                          )}
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="space-y-1">
+                            <div className="text-[10px] font-bold text-blue-600">النص الأصلي:</div>
+                            <p className="text-xs text-muted-foreground line-clamp-2">
+                              {segment.source_text}
+                            </p>
+                          </div>
+                          <div className="space-y-1">
+                            <div className="text-[10px] font-bold text-purple-600">النص المطابق:</div>
+                            <p className="text-xs text-muted-foreground line-clamp-2">
+                              {segment.matched_text}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+            </div>
+
+            {/* مؤشر عند عرض أول 20 فقط */}
+            {!showingAllSegments && result.segments_count > 20 && (
+              <div className="text-center text-xs text-muted-foreground">
+                عرض أول 20 تشابه. اضغط "عرض الكل" لرؤية الـ {result.segments_count} تشابه كاملة.
+              </div>
+            )}
           </div>
         )}
       </CardContent>

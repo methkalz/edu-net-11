@@ -4429,7 +4429,12 @@ export type Database = {
           reviewed_at: string | null
           reviewed_by: string | null
           school_id: string | null
+          segments_count: number | null
+          segments_file_path: string | null
+          segments_processed_at: string | null
+          segments_processing_status: string | null
           status: string | null
+          top_matched_segments: Json | null
           total_files_compared: number | null
           total_matches_found: number | null
           updated_at: string | null
@@ -4465,7 +4470,12 @@ export type Database = {
           reviewed_at?: string | null
           reviewed_by?: string | null
           school_id?: string | null
+          segments_count?: number | null
+          segments_file_path?: string | null
+          segments_processed_at?: string | null
+          segments_processing_status?: string | null
           status?: string | null
+          top_matched_segments?: Json | null
           total_files_compared?: number | null
           total_matches_found?: number | null
           updated_at?: string | null
@@ -4501,7 +4511,12 @@ export type Database = {
           reviewed_at?: string | null
           reviewed_by?: string | null
           school_id?: string | null
+          segments_count?: number | null
+          segments_file_path?: string | null
+          segments_processed_at?: string | null
+          segments_processing_status?: string | null
           status?: string | null
+          top_matched_segments?: Json | null
           total_files_compared?: number | null
           total_matches_found?: number | null
           updated_at?: string | null
@@ -4527,6 +4542,65 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "superadmin_school_stats"
             referencedColumns: ["school_id"]
+          },
+        ]
+      }
+      pdf_matched_segments: {
+        Row: {
+          batch_number: number | null
+          comparison_result_id: string | null
+          created_at: string | null
+          id: string
+          matched_file_id: string | null
+          matched_file_name: string
+          matched_page: number | null
+          matched_position: number | null
+          matched_text: string
+          similarity: number
+          source_page: number | null
+          source_position: number | null
+          source_text: string
+          updated_at: string | null
+        }
+        Insert: {
+          batch_number?: number | null
+          comparison_result_id?: string | null
+          created_at?: string | null
+          id?: string
+          matched_file_id?: string | null
+          matched_file_name: string
+          matched_page?: number | null
+          matched_position?: number | null
+          matched_text: string
+          similarity: number
+          source_page?: number | null
+          source_position?: number | null
+          source_text: string
+          updated_at?: string | null
+        }
+        Update: {
+          batch_number?: number | null
+          comparison_result_id?: string | null
+          created_at?: string | null
+          id?: string
+          matched_file_id?: string | null
+          matched_file_name?: string
+          matched_page?: number | null
+          matched_position?: number | null
+          matched_text?: string
+          similarity?: number
+          source_page?: number | null
+          source_position?: number | null
+          source_text?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pdf_matched_segments_comparison_result_id_fkey"
+            columns: ["comparison_result_id"]
+            isOneToOne: false
+            referencedRelation: "pdf_comparison_results"
+            referencedColumns: ["id"]
           },
         ]
       }

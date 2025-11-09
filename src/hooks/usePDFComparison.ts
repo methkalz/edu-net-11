@@ -64,6 +64,12 @@ export interface ComparisonResult {
   teacher_role?: string;
   added_to_repository?: boolean;
   repository_file_id?: string;
+  
+  // Hybrid approach للـ segments
+  top_matched_segments?: MatchedSegment[];
+  segments_file_path?: string;
+  segments_count?: number;
+  segments_processing_status?: string;
 }
 
 export interface RepositoryFile {

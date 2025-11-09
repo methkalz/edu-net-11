@@ -348,6 +348,64 @@ serve(async (req) => {
         comparison_type: comparisonType,
         comparison_source: comparisonSource,
         
+        // جمع كل matched segments من المقارنة الداخلية والمستودع
+        const allMatchedSegments = [];
+        
+        // إضافة segments من المقارنة الداخلية
+        for (const match of internalMatches) {
+          if (match.matched_segments && match.matched_segments.length > 0) {
+            allMatchedSegments.push(...match.matched_segments.map((seg: MatchedSegment) => ({
+              ...seg,
+              matched_file_id: null,
+              matched_file_name: match.matched_file_name,
+              source_type: 'internal',
+            })));
+          }
+        }
+        
+        // إضافة segments من المستودع
+        for (const match of repositoryMatches) {
+          if (match.matched_segments && match.matched_segments.length > 0) {
+            allMatchedSegments.push(...match.matched_segments.map((seg: MatchedSegment) => ({
+              ...seg,
+              matched_file_id: match.matched_file_id,
+              matched_file_name: match.matched_file_name,
+              source_type: 'repository',
+            })));
+          }
+        }
+        
+        // ترتيب حسب التشابه
+        allMatchedSegments.sort((a, b) => b.similarity - a.similarity);
+        
+        // أول 20 segment
+        const topSegments = allMatchedSegments.slice(0, 20);
+        
+        // معالجة Storage إذا كان هناك أكثر من 20
+        let segmentsFilePath = null;
+        if (allMatchedSegments.length > 20) {
+          const comparisonId = crypto.randomUUID();
+          const fileName = `segments/${comparisonId}.json`;
+          
+          try {
+            const { error: uploadError } = await supabase.storage
+              .from('pdf-comparison-data')
+              .upload(fileName, JSON.stringify(allMatchedSegments), {
+                contentType: 'application/json',
+                upsert: true,
+              });
+            
+            if (!uploadError) {
+              segmentsFilePath = fileName;
+              console.log(`📁 Uploaded ${allMatchedSegments.length} segments to ${fileName}`);
+            } else {
+              console.error('❌ Failed to upload segments:', uploadError);
+            }
+          } catch (uploadErr) {
+            console.error('❌ Exception uploading segments:', uploadErr);
+          }
+        }
+        
         // المقارنة الداخلية
         internal_matches: internalMatches.slice(0, 5),
         internal_max_similarity: internalMaxSim,
@@ -365,6 +423,12 @@ serve(async (req) => {
         high_risk_matches: internalHighRisk + repoHighRisk,
         status,
         review_required: status === 'flagged',
+        
+        // Hybrid approach: أول 20 في JSONB، الباقي في Storage
+        top_matched_segments: topSegments,
+        segments_file_path: segmentsFilePath,
+        segments_count: allMatchedSegments.length,
+        segments_processing_status: 'completed',
         
         added_to_repository: true,
         repository_file_id: repositoryFileIds.get(file.fileHash),
