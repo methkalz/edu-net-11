@@ -283,17 +283,13 @@ serve(async (req) => {
       
       // تصنيف محسّن مع مستويات متدرجة
       let status = 'safe';
-      let severity = 'low';
       
       if (overallMaxSim >= 0.70) {
         status = 'flagged';
-        severity = 'high'; // 70%+ احتمال عالي للانتحال
       } else if (overallMaxSim >= 0.40) {
         status = 'warning';
-        severity = 'medium'; // 40-69% يحتاج مراجعة دقيقة
       } else if (overallMaxSim >= 0.20) {
         status = 'review';
-        severity = 'low'; // 20-39% تشابه ملحوظ
       }
       
       console.log(`📊 Comparison Summary for ${file.fileName}:`, {
@@ -301,7 +297,6 @@ serve(async (req) => {
         repositoryMatches: repositoryMatches.length,
         maxSimilarity: Math.round(overallMaxSim * 100) + '%',
         status,
-        severity,
         addedToRepo: repositoryFileIds.has(file.fileHash),
         repoId: repositoryFileIds.get(file.fileHash),
       });
@@ -347,29 +342,52 @@ serve(async (req) => {
         algorithm_used: 'batch_comparison',
       };
 
-      const { data: savedResult } = await supabase
-        .from('pdf_comparison_results')
-        .insert(result)
-        .select()
-        .single();
+      // ✅ محاولة الحفظ مع معالجة الأخطاء
+      try {
+        const { data: savedResult, error: saveError } = await supabase
+          .from('pdf_comparison_results')
+          .insert(result)
+          .select()
+          .single();
 
-      if (savedResult) {
-        results.push(savedResult);
-        
-        // تسجيل في audit log
-        await supabase.from('pdf_comparison_audit_log').insert({
-          comparison_result_id: savedResult.id,
-          action_type: 'batch_compare',
-          performed_by: userId,
-          details: {
-            fileName: file.fileName,
-            batchId,
-            internalMatches: internalMatches.length,
-            repositoryMatches: repositoryMatches.length,
-            maxSimilarity: overallMaxSim,
-            status,
-          },
-        });
+        if (saveError) {
+          console.error(`❌ Failed to save result for ${file.fileName}:`, saveError);
+          // ✅ إضافة النتيجة حتى لو فشل الحفظ
+          results.push({
+            ...result,
+            id: crypto.randomUUID(), // توليد ID مؤقت
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            _error: saveError.message, // وضع علامة على الخطأ
+          } as any);
+        } else if (savedResult) {
+          results.push(savedResult);
+          
+          // تسجيل في audit log
+          await supabase.from('pdf_comparison_audit_log').insert({
+            comparison_result_id: savedResult.id,
+            action_type: 'batch_compare',
+            performed_by: userId,
+            details: {
+              fileName: file.fileName,
+              batchId,
+              internalMatches: internalMatches.length,
+              repositoryMatches: repositoryMatches.length,
+              maxSimilarity: overallMaxSim,
+              status,
+            },
+          });
+        }
+      } catch (error) {
+        console.error(`❌ Exception saving result for ${file.fileName}:`, error);
+        // ✅ إضافة النتيجة حتى في حالة exception
+        results.push({
+          ...result,
+          id: crypto.randomUUID(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          _error: error instanceof Error ? error.message : String(error),
+        } as any);
       }
     }
 

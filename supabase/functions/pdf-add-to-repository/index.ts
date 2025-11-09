@@ -36,6 +36,16 @@ serve(async (req) => {
       pageCount: providedPageCount,
     } = await req.json();
 
+    // ✅ حماية: تصحيح sourceProjectType إذا كان خاطئاً أو غير محدد
+    let correctedSourceProjectType = sourceProjectType;
+    if (!sourceProjectType || sourceProjectType === 'final_project' || sourceProjectType === 'mini_project') {
+      correctedSourceProjectType = gradeLevel === '10' 
+        ? 'grade10_mini_project' 
+        : 'grade12_final_project';
+      
+      console.log(`⚠️ Correcting sourceProjectType from '${sourceProjectType}' to '${correctedSourceProjectType}'`);
+    }
+
     console.log(`Adding ${fileName} to repository (Grade ${gradeLevel})`);
 
     // 1. استخراج النص من الملف (فقط إذا لم يكن موجوداً)
@@ -109,7 +119,7 @@ serve(async (req) => {
         uploaded_by: userId,
         school_id: schoolId,
         source_project_id: sourceProjectId,
-        source_project_type: sourceProjectType,
+        source_project_type: correctedSourceProjectType,
         metadata: {
           original_path: filePath,
           original_bucket: bucket,
@@ -120,12 +130,42 @@ serve(async (req) => {
       .single();
 
     if (insertError) {
-      console.error('Insert error:', insertError);
-      
-      // محاولة حذف الملف المرفوع في حالة فشل الإدراج
-      await supabase.storage.from(targetBucket).remove([newFileName]);
-      
-      throw new Error(`Failed to add to repository: ${insertError.message}`);
+      // ✅ معالجة حالة الملف المكرر (Duplicate Key)
+      if (insertError.code === '23505') {
+        console.log(`ℹ️ File already exists in repository, fetching existing entry`);
+        
+        // جلب السجل الموجود
+        const { data: existingEntry, error: fetchError } = await supabase
+          .from('pdf_comparison_repository')
+          .select('*')
+          .eq('text_hash', hash)
+          .eq('grade_level', gradeLevel)
+          .eq('project_type', projectType)
+          .single();
+        
+        if (fetchError) {
+          console.error('Insert error:', insertError);
+          await supabase.storage.from(targetBucket).remove([newFileName]);
+          throw new Error(`Failed to add to repository: ${insertError.message}`);
+        }
+        
+        // إرجاع السجل الموجود
+        return new Response(
+          JSON.stringify({
+            success: true,
+            message: 'File already exists in repository',
+            data: existingEntry,
+            isDuplicate: true,
+          }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      } else {
+        console.error('Insert error:', insertError);
+        await supabase.storage.from(targetBucket).remove([newFileName]);
+        throw new Error(`Failed to add to repository: ${insertError.message}`);
+      }
     }
 
     // 5. تسجيل في audit log
