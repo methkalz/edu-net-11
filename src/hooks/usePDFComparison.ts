@@ -128,28 +128,27 @@ export const usePDFComparison = () => {
 
         console.log(`📄 Extracted text from ${file.name}:`, {
           success: extractResult?.success,
-          hasData: !!extractResult?.data,
-          hasText: !!extractResult?.data?.text,
-          textLength: extractResult?.data?.text?.length,
-          hash: extractResult?.data?.hash,
-          pages: extractResult?.data?.pageCount,
+          hasText: !!extractResult?.text,
+          textLength: extractResult?.text?.length,
+          hash: extractResult?.hash,
+          pages: extractResult?.pageCount,
         });
 
         if (extractError || !extractResult?.success) {
           throw new Error(extractResult?.error || 'فشل استخراج النص');
         }
 
-        // ✅ تحقق إضافي من وجود data
-        if (!extractResult.data || !extractResult.data.text) {
+        // ✅ تحقق إضافي من وجود text
+        if (!extractResult.text) {
           throw new Error(`فشل استخراج النص من الملف: ${file.name} - البيانات غير مكتملة`);
         }
 
         filesData.push({
           fileName: file.name,
           filePath,
-          fileText: extractResult.data.text,
-          fileHash: extractResult.data.hash,
-          filePages: extractResult.data.pageCount,
+          fileText: extractResult.text,
+          fileHash: extractResult.hash,
+          filePages: extractResult.pageCount,
         });
         
         onProgress?.(i, 60, 'extraction_complete');
