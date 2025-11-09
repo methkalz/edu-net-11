@@ -63,7 +63,7 @@ serve(async (req) => {
             gradeLevel,
             projectType: comparisonType,
             sourceProjectId: null,
-            sourceProjectType: comparisonType,
+            sourceProjectType: gradeLevel === '10' ? 'grade10_mini_project' : 'grade12_final_project',
             userId,
             schoolId,
             // تمرير البيانات المستخرجة مسبقاً
@@ -80,10 +80,19 @@ serve(async (req) => {
           newlyAddedIds.add(repoId); // تتبع الملفات المضافة حديثاً
           console.log(`✅ Added ${file.fileName} to repository (ID: ${repoId})`);
         } else if (addResult.error) {
-          console.error(`❌ Failed to add ${file.fileName} to repository:`, addResult.error);
+          console.error(`❌ Failed to add ${file.fileName} to repository:`, {
+            error: addResult.error,
+            gradeLevel,
+            projectType: comparisonType,
+            sourceProjectType: gradeLevel === '10' ? 'grade10_mini_project' : 'grade12_final_project',
+          });
         }
       } catch (error) {
-        console.error(`❌ Error adding ${file.fileName} to repository:`, error);
+        console.error(`❌ Error adding ${file.fileName} to repository:`, {
+          error,
+          fileName: file.fileName,
+          gradeLevel,
+        });
       }
     }
 
@@ -118,8 +127,8 @@ serve(async (req) => {
 
           const similarity = calculateSimilarity(text1, text2);
 
-          // ✅ إصلاح 6: خفض العتبة من 0.30 إلى 0.25
-          if (similarity > 0.25) {
+          // خفض العتبة من 0.25 إلى 0.20
+          if (similarity > 0.20) {
             file1Comparisons.push({
               matched_file_name: file2.fileName,
               similarity_score: Math.round(similarity * 100) / 100,
@@ -228,7 +237,7 @@ serve(async (req) => {
             });
           }
 
-          if (similarity > 0.25) {
+          if (similarity > 0.20) {
             repositoryMatches.push({
               matched_file_id: repoFile.id,
               matched_file_name: repoFile.file_name,
@@ -272,9 +281,30 @@ serve(async (req) => {
 
       const overallMaxSim = Math.max(internalMaxSim, repoMaxSim);
       
+      // تصنيف محسّن مع مستويات متدرجة
       let status = 'safe';
-      if (overallMaxSim >= 0.70) status = 'flagged';
-      else if (overallMaxSim >= 0.50) status = 'warning';
+      let severity = 'low';
+      
+      if (overallMaxSim >= 0.70) {
+        status = 'flagged';
+        severity = 'high'; // 70%+ احتمال عالي للانتحال
+      } else if (overallMaxSim >= 0.40) {
+        status = 'warning';
+        severity = 'medium'; // 40-69% يحتاج مراجعة دقيقة
+      } else if (overallMaxSim >= 0.20) {
+        status = 'review';
+        severity = 'low'; // 20-39% تشابه ملحوظ
+      }
+      
+      console.log(`📊 Comparison Summary for ${file.fileName}:`, {
+        internalMatches: internalMatches.length,
+        repositoryMatches: repositoryMatches.length,
+        maxSimilarity: Math.round(overallMaxSim * 100) + '%',
+        status,
+        severity,
+        addedToRepo: repositoryFileIds.has(file.fileHash),
+        repoId: repositoryFileIds.get(file.fileHash),
+      });
 
       const comparisonSource = 
         internalMatches.length > 0 && repositoryMatches.length > 0 ? 'both' :
