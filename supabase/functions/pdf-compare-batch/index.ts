@@ -49,29 +49,38 @@ serve(async (req) => {
     // الخطوة 1: إضافة جميع الملفات للمستودع أولاً
     console.log('📤 Step 1: Adding all files to repository...');
     const repositoryFileIds: Map<string, string> = new Map();
+    const newlyAddedIds: Set<string> = new Set(); // تتبع الملفات المضافة حديثاً
     
     for (const file of files) {
       try {
         // إضافة للمستودع
         const addResult = await supabase.functions.invoke('pdf-add-to-repository', {
           body: {
-            tempFilePath: file.filePath,
+            filePath: file.filePath, // تصحيح: استخدام filePath بدلاً من tempFilePath
             fileName: file.fileName,
-            extractedText: file.fileText,
-            textHash: file.fileHash,
-            pageCount: file.filePages,
+            bucket: 'pdf-comparison-temp',
             fileSize: 0,
             gradeLevel,
             projectType: comparisonType,
-            uploadedBy: userId,
+            sourceProjectId: null,
+            sourceProjectType: comparisonType,
+            userId,
             schoolId,
-            deleteTemp: false, // نحتفظ بالملف المؤقت للمقارنة
+            // تمرير البيانات المستخرجة مسبقاً
+            extractedText: file.fileText,
+            textHash: file.fileHash,
+            wordCount: file.fileText.split(/\s+/).length,
+            pageCount: file.filePages,
           },
         });
 
         if (addResult.data?.success && addResult.data?.data?.id) {
-          repositoryFileIds.set(file.fileHash, addResult.data.data.id);
-          console.log(`✅ Added ${file.fileName} to repository`);
+          const repoId = addResult.data.data.id;
+          repositoryFileIds.set(file.fileHash, repoId);
+          newlyAddedIds.add(repoId); // تتبع الملفات المضافة حديثاً
+          console.log(`✅ Added ${file.fileName} to repository (ID: ${repoId})`);
+        } else if (addResult.error) {
+          console.error(`❌ Failed to add ${file.fileName} to repository:`, addResult.error);
         }
       } catch (error) {
         console.error(`❌ Error adding ${file.fileName} to repository:`, error);
@@ -126,13 +135,16 @@ serve(async (req) => {
       }
     }
 
-    // الخطوة 3: المقارنة مع المستودع (باستثناء الملفات المرفوعة)
+    // الخطوة 3: المقارنة مع المستودع
     console.log('🗄️ Step 3: Repository comparison...');
     
-    // جلب ملفات المستودع (باستثناء الملفات المرفوعة حالياً)
     const uploadedHashes = files.map((f: FileToCompare) => f.fileHash);
     
-    // ✅ إصلاح 1: جلب جميع ملفات المستودع ثم الفلترة يدوياً
+    console.log(`📤 Uploaded files hashes:`, uploadedHashes.map(h => 
+      `${h.substring(0, 12)}...${h.substring(h.length - 8)}`
+    ));
+    
+    // جلب جميع ملفات المستودع بدون فلترة
     const { data: allRepositoryFiles, error: repoError } = await supabase
       .from('pdf_comparison_repository')
       .select('*')
@@ -144,26 +156,22 @@ serve(async (req) => {
       console.error('❌ Error fetching repository files:', repoError);
     }
 
-    // فلترة الملفات المرفوعة حالياً يدوياً (أكثر أماناً)
-    const repositoryFiles = allRepositoryFiles?.filter(
-      rf => !uploadedHashes.includes(rf.text_hash)
-    ) || [];
+    // عدم فلترة ملفات المستودع - المقارنة مع الجميع لاكتشاف المطابقات
+    const repositoryFiles = allRepositoryFiles || [];
 
-    console.log(`📚 Repository query results:`, {
-      total: allRepositoryFiles?.length || 0,
-      afterFilter: repositoryFiles.length,
+    console.log(`📚 Repository files for comparison:`, {
+      total: repositoryFiles.length,
       gradeLevel,
       comparisonType,
-      excludedHashes: uploadedHashes.length,
     });
 
-    // عرض عينة من الملفات
     if (repositoryFiles.length > 0) {
       console.log(`📄 Sample repository files:`, 
-        repositoryFiles.slice(0, 3).map(f => ({
+        repositoryFiles.slice(0, 5).map(f => ({
           name: f.file_name,
-          hash: f.text_hash?.substring(0, 10) + '...',
+          hash: `${f.text_hash?.substring(0, 12)}...${f.text_hash?.substring(f.text_hash.length - 8)}`,
           textLength: f.extracted_text?.length || 0,
+          createdAt: f.created_at,
         }))
       );
     }
@@ -171,19 +179,19 @@ serve(async (req) => {
     // الخطوة 4: مقارنة كل ملف مع المستودع وحفظ النتائج
     for (const file of files) {
       const internalMatches = internalComparisons.get(file.fileHash) || [];
-      const repositoryMatches = [];
+      let repositoryMatches = [];
 
       // مقارنة مع ملفات المستودع
       if (repositoryFiles && repositoryFiles.length > 0) {
         const text1 = preprocessText(file.fileText, file.fileText.split(/\s+/).length);
 
-        // ✅ إصلاح 5: فحص تطابق Hash مباشر مع المستودع
+        // فحص تطابق Hash مباشر مع المستودع أولاً
         const exactHashMatch = repositoryFiles.find(rf => rf.text_hash === file.fileHash);
         if (exactHashMatch) {
           console.log(`🎯 EXACT HASH MATCH found in repository!`, {
             uploadedFile: file.fileName,
             matchedFile: exactHashMatch.file_name,
-            hash: file.fileHash.substring(0, 10) + '...',
+            hash: `${file.fileHash.substring(0, 12)}...`,
           });
           
           repositoryMatches.push({
@@ -193,10 +201,14 @@ serve(async (req) => {
             similarity_method: 'hash_exact_match',
             flagged: true,
           });
-        } else {
-          // ✅ إصلاح 2: إزالة حد الـ 10 ملفات - مقارنة مع جميع ملفات المستودع
-          for (const repoFile of repositoryFiles) {
+        }
+
+        // مقارنة مع جميع ملفات المستودع
+        for (const repoFile of repositoryFiles) {
           if (!repoFile.extracted_text) continue;
+
+          // تخطي المقارنة النصية إذا كان هناك مطابقة hash بالفعل
+          if (repoFile.text_hash === file.fileHash) continue;
 
           const text2 = preprocessText(
             repoFile.extracted_text,
@@ -205,17 +217,18 @@ serve(async (req) => {
 
           const similarity = calculateSimilarity(text1, text2);
 
-          // ✅ إصلاح 6: خفض العتبة من 0.30 إلى 0.25 + إضافة logging
+          if (similarity > 0.20) {
+            console.log(`🔍 Match detected:`, {
+              uploadedFile: file.fileName,
+              uploadedHash: `${file.fileHash.substring(0, 12)}...`,
+              repoFile: repoFile.file_name,
+              repoHash: `${repoFile.text_hash?.substring(0, 12)}...`,
+              similarity: Math.round(similarity * 100) / 100,
+              isExactHash: file.fileHash === repoFile.text_hash,
+            });
+          }
+
           if (similarity > 0.25) {
-            // ✅ إصلاح 4: إضافة logging للمطابقات
-            if (similarity > 0.20) {
-              console.log(`🔍 Match found: ${file.fileName} vs ${repoFile.file_name}`, {
-                similarity: Math.round(similarity * 100) / 100,
-                jaccard: calculateJaccard(text1.wordSet, text2.wordSet),
-                repoFileHash: repoFile.text_hash?.substring(0, 10) + '...',
-              });
-            }
-            
             repositoryMatches.push({
               matched_file_id: repoFile.id,
               matched_file_name: repoFile.file_name,
@@ -223,12 +236,28 @@ serve(async (req) => {
               similarity_method: 'text_comparison',
               flagged: similarity >= 0.70,
             });
+
+            console.log(
+              `✅ Repository match: ${file.fileName} vs ${repoFile.file_name} = ${Math.round(similarity * 100)}%`
+            );
           }
         }
 
         repositoryMatches.sort((a, b) => b.similarity_score - a.similarity_score);
-        } // نهاية else الخاص بفحص Hash
       }
+
+      // فلترة الملفات المضافة حديثاً من النتائج النهائية
+      const filteredRepoMatches = repositoryMatches.filter(
+        m => !newlyAddedIds.has(m.matched_file_id)
+      );
+
+      console.log(`🔍 Repository matches for ${file.fileName}:`, {
+        beforeFilter: repositoryMatches.length,
+        afterFilter: filteredRepoMatches.length,
+      });
+
+      // استخدام النتائج المفلترة
+      repositoryMatches = filteredRepoMatches;
 
       // حساب الإحصائيات
       const internalMaxSim = internalMatches.length > 0

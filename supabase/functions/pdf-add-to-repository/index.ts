@@ -29,28 +29,42 @@ serve(async (req) => {
       userId,
       schoolId,
       bucket,
+      // معاملات اختيارية للنص المستخرج مسبقاً
+      extractedText,
+      textHash,
+      wordCount: providedWordCount,
+      pageCount: providedPageCount,
     } = await req.json();
 
     console.log(`Adding ${fileName} to repository (Grade ${gradeLevel})`);
 
-    // 1. استخراج النص من الملف
-    const extractResponse = await fetch(
-      `${Deno.env.get('SUPABASE_URL')}/functions/v1/pdf-extract-text`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': authHeader,
-        },
-        body: JSON.stringify({ filePath, bucket }),
+    // 1. استخراج النص من الملف (فقط إذا لم يكن موجوداً)
+    let text, hash, wordCount, pageCount;
+
+    if (extractedText && textHash) {
+      // استخدام البيانات المستخرجة مسبقاً
+      console.log(`✅ Using pre-extracted data for ${fileName}`);
+      text = extractedText;
+      hash = textHash;
+      wordCount = providedWordCount;
+      pageCount = providedPageCount;
+    } else {
+      // استخراج النص إذا لم يكن موجوداً
+      console.log(`🔄 Extracting text from ${fileName}`);
+      
+      const { data, error: extractError } = await supabase.functions.invoke('pdf-extract-text', {
+        body: { filePath, bucket }
+      });
+
+      if (extractError || !data?.success) {
+        throw new Error(data?.error || 'Failed to extract text from PDF');
       }
-    );
 
-    if (!extractResponse.ok) {
-      throw new Error('Failed to extract text from PDF');
+      text = data.text;
+      hash = data.hash;
+      wordCount = data.wordCount;
+      pageCount = data.pageCount;
     }
-
-    const { text, hash, wordCount } = await extractResponse.json();
 
     // 2. نسخ الملف إلى bucket المستودع المناسب
     const targetBucket = gradeLevel === '12' 
