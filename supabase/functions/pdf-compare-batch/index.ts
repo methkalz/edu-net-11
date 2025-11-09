@@ -1,7 +1,13 @@
 import { serve } from 'https://deno.land/std@0.208.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
-import * as fuzzball from 'https://esm.sh/fuzzball@2.2.2';
+import { 
+  extractMatchingSegments, 
+  preprocessText, 
+  calculateSimilarity,
+  type ExtractedPage,
+  type MatchedSegment 
+} from './_helpers.ts';
 
 interface FileToCompare {
   fileName: string;
@@ -125,6 +131,7 @@ serve(async (req) => {
               similarity_score: 1.0,
               similarity_method: 'hash_exact_match',
               flagged: true,
+              matched_segments: [],
             });
             continue;
           }
@@ -137,11 +144,18 @@ serve(async (req) => {
 
           // خفض العتبة من 0.25 إلى 0.20
           if (similarity > 0.20) {
+            // استخراج الجمل المتشابهة
+            const matchedSegments = extractMatchingSegments(
+              file1.fileText,
+              file2.fileText
+            );
+            
             file1Comparisons.push({
               matched_file_name: file2.fileName,
               similarity_score: Math.round(similarity * 100) / 100,
               similarity_method: 'text_comparison',
               flagged: similarity >= 0.70,
+              matched_segments: matchedSegments,
             });
           }
         }
@@ -246,12 +260,19 @@ serve(async (req) => {
           }
 
           if (similarity > 0.20) {
+            // استخراج الجمل المتشابهة
+            const matchedSegments = extractMatchingSegments(
+              file.fileText,
+              repoFile.extracted_text
+            );
+            
             repositoryMatches.push({
               matched_file_id: repoFile.id,
               matched_file_name: repoFile.file_name,
               similarity_score: Math.round(similarity * 100) / 100,
               similarity_method: 'text_comparison',
               flagged: similarity >= 0.70,
+              matched_segments: matchedSegments,
             });
 
             console.log(
@@ -430,77 +451,3 @@ serve(async (req) => {
     );
   }
 });
-
-// Helper functions
-function preprocessText(text: string, wordCount: number) {
-  const normalized = normalizeArabicText(text);
-  let words = normalized.split(/\s+/).filter(w => w.length > 2);
-  
-  const maxWords = 50000;
-  if (words.length > maxWords) {
-    const step = Math.floor(words.length / maxWords);
-    words = words.filter((_, i) => i % step === 0).slice(0, maxWords);
-  }
-  
-  const wordSet = new Set(words);
-  return { normalized, words, wordSet };
-}
-
-function normalizeArabicText(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[ًٌٍَُِّْ]/g, '')
-    .replace(/[آإأٱ]/g, 'ا')
-    .replace(/ة/g, 'ه')
-    .replace(/ى/g, 'ي')
-    .replace(/[^\w\s\u0600-\u06FF]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function calculateSimilarity(text1: any, text2: any): number {
-  // ✅ إصلاح 3: تحسين دالة calculateSimilarity
-  
-  // 1. Jaccard Similarity (للكلمات المشتركة)
-  const jaccard = calculateJaccard(text1.wordSet, text2.wordSet);
-  
-  // 2. Fuzzy Similarity (عينة أكبر من 5000 إلى 15000)
-  const sampleSize = Math.min(
-    15000,
-    Math.min(text1.normalized.length, text2.normalized.length)
-  );
-  
-  const sample1 = text1.normalized.substring(0, sampleSize);
-  const sample2 = text2.normalized.substring(0, sampleSize);
-  
-  const fuzzy = fuzzball.ratio(sample1, sample2) / 100;
-  
-  // 3. حساب تشابه الجمل (Sentence-level similarity)
-  const sentences1 = text1.normalized.split(/[.!?؟]/);
-  const sentences2 = text2.normalized.split(/[.!?؟]/);
-  
-  let sentenceSimilarity = 0;
-  if (sentences1.length > 0 && sentences2.length > 0) {
-    const sentenceSet1 = new Set(sentences1.filter((s: string) => s.trim().length > 10));
-    const sentenceSet2 = new Set(sentences2.filter((s: string) => s.trim().length > 10));
-    sentenceSimilarity = calculateJaccard(sentenceSet1, sentenceSet2);
-  }
-  
-  // 4. وزن متوازن: Jaccard: 40%, Fuzzy: 40%, Sentence: 20%
-  return (jaccard * 0.4 + fuzzy * 0.4 + sentenceSimilarity * 0.2);
-}
-
-function calculateJaccard(set1: Set<string>, set2: Set<string>): number {
-  if (set1.size === 0 && set2.size === 0) return 0;
-  
-  let intersectionSize = 0;
-  const smallerSet = set1.size < set2.size ? set1 : set2;
-  const largerSet = set1.size < set2.size ? set2 : set1;
-  
-  for (const word of smallerSet) {
-    if (largerSet.has(word)) intersectionSize++;
-  }
-  
-  const unionSize = set1.size + set2.size - intersectionSize;
-  return unionSize === 0 ? 0 : intersectionSize / unionSize;
-}

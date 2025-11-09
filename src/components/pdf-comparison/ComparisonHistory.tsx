@@ -17,11 +17,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { RefreshCw, FileText, AlertTriangle, AlertCircle, CheckCircle, Eye, Clock, TrendingUp } from 'lucide-react';
-import { usePDFComparison, type GradeLevel, type ComparisonResult } from '@/hooks/usePDFComparison';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { RefreshCw, FileText, AlertTriangle, AlertCircle, CheckCircle, Eye, Clock, TrendingUp, Target, BookOpen, ArrowRight, ChevronDown, ChevronUp } from 'lucide-react';
+import { usePDFComparison, type GradeLevel, type ComparisonResult, type ComparisonMatch } from '@/hooks/usePDFComparison';
 import { formatDistanceToNow, format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { AIAnalysisSection } from './AIAnalysisSection';
 
 interface ComparisonHistoryProps {
   gradeLevel?: GradeLevel;
@@ -33,6 +35,8 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedComparison, setSelectedComparison] = useState<ComparisonResult | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedMatch, setSelectedMatch] = useState<ComparisonMatch | null>(null);
+  const [isMatchDetailOpen, setIsMatchDetailOpen] = useState(false);
 
   const loadHistory = async () => {
     setIsLoading(true);
@@ -69,6 +73,23 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
   const handleViewDetails = (comparison: ComparisonResult) => {
     setSelectedComparison(comparison);
     setIsDialogOpen(true);
+    setSelectedMatch(null);
+    setIsMatchDetailOpen(false);
+  };
+
+  const handleMatchClick = (match: ComparisonMatch) => {
+    setSelectedMatch(match);
+    setIsMatchDetailOpen(true);
+  };
+
+  const getUniquePages = (segments: ComparisonMatch['matched_segments']) => {
+    if (!segments) return [];
+    const pages = new Set<number>();
+    segments.forEach(seg => {
+      pages.add(seg.source_page);
+      pages.add(seg.matched_page);
+    });
+    return Array.from(pages).sort((a, b) => a - b);
   };
 
   return (
@@ -311,43 +332,166 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
                   <CardContent>
                     <div className="space-y-2">
                       {selectedComparison.matches.slice(0, 10).map((match, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-                        >
-                          <div className="flex items-center gap-3 flex-1">
-                            <div className={cn(
-                              "p-2 rounded-lg",
-                              match.similarity_score >= 0.70 ? "bg-red-500/10" :
-                              match.similarity_score >= 0.50 ? "bg-yellow-500/10" :
-                              "bg-green-500/10"
-                            )}>
-                              <FileText className={cn(
-                                "h-4 w-4",
+                        <div key={index}>
+                          <div
+                            className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
+                            onClick={() => handleMatchClick(match)}
+                          >
+                            <div className="flex items-center gap-3 flex-1">
+                              <div className={cn(
+                                "p-2 rounded-lg",
+                                match.similarity_score >= 0.70 ? "bg-red-500/10" :
+                                match.similarity_score >= 0.50 ? "bg-yellow-500/10" :
+                                "bg-green-500/10"
+                              )}>
+                                <FileText className={cn(
+                                  "h-4 w-4",
+                                  match.similarity_score >= 0.70 ? "text-red-600" :
+                                  match.similarity_score >= 0.50 ? "text-yellow-600" :
+                                  "text-green-600"
+                                )} />
+                              </div>
+                              <span className="text-sm font-medium truncate">
+                                {match.matched_file_name}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              {match.flagged && (
+                                <Badge variant="destructive" className="text-xs">
+                                  مشبوه
+                                </Badge>
+                              )}
+                              <span className={cn(
+                                "text-sm font-bold",
                                 match.similarity_score >= 0.70 ? "text-red-600" :
                                 match.similarity_score >= 0.50 ? "text-yellow-600" :
                                 "text-green-600"
-                              )} />
+                              )}>
+                                {(match.similarity_score * 100).toFixed(1)}%
+                              </span>
+                              {selectedMatch?.matched_file_name === match.matched_file_name && isMatchDetailOpen ? (
+                                <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                              ) : (
+                                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                              )}
                             </div>
-                            <span className="text-sm font-medium truncate">
-                              {match.matched_file_name}
-                            </span>
                           </div>
-                          <div className="flex items-center gap-3">
-                            {match.flagged && (
-                              <Badge variant="destructive" className="text-xs">
-                                مشبوه
-                              </Badge>
-                            )}
-                            <span className={cn(
-                              "text-sm font-bold",
-                              match.similarity_score >= 0.70 ? "text-red-600" :
-                              match.similarity_score >= 0.50 ? "text-yellow-600" :
-                              "text-green-600"
-                            )}>
-                              {(match.similarity_score * 100).toFixed(1)}%
-                            </span>
-                          </div>
+
+                          {/* Match Detail Section */}
+                          <Collapsible open={selectedMatch?.matched_file_name === match.matched_file_name && isMatchDetailOpen}>
+                            <CollapsibleContent>
+                              {selectedMatch && selectedMatch.matched_file_name === match.matched_file_name && (
+                                <Card className="mt-2 border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
+                                  <CardHeader>
+                                    <CardTitle className="flex items-center gap-3 text-lg">
+                                      <Target className="h-5 w-5 text-primary" />
+                                      تفاصيل التشابه مع: {selectedMatch.matched_file_name}
+                                    </CardTitle>
+                                  </CardHeader>
+                                  
+                                  <CardContent className="space-y-6">
+                                    {/* إحصائيات سريعة */}
+                                    <div className="grid grid-cols-3 gap-4">
+                                      <div className="p-4 border rounded-lg bg-gradient-to-br from-blue-500/10 to-blue-500/5">
+                                        <div className="flex items-center gap-2 mb-2">
+                                          <TrendingUp className="h-4 w-4 text-blue-600" />
+                                          <p className="text-xs text-muted-foreground">نسبة التشابه</p>
+                                        </div>
+                                        <p className="text-2xl font-bold text-blue-600">
+                                          {(selectedMatch.similarity_score * 100).toFixed(1)}%
+                                        </p>
+                                      </div>
+                                      <div className="p-4 border rounded-lg bg-gradient-to-br from-purple-500/10 to-purple-500/5">
+                                        <div className="flex items-center gap-2 mb-2">
+                                          <FileText className="h-4 w-4 text-purple-600" />
+                                          <p className="text-xs text-muted-foreground">الجمل المتشابهة</p>
+                                        </div>
+                                        <p className="text-2xl font-bold text-purple-600">
+                                          {selectedMatch.matched_segments?.length || 0}
+                                        </p>
+                                      </div>
+                                      <div className="p-4 border rounded-lg bg-gradient-to-br from-orange-500/10 to-orange-500/5">
+                                        <div className="flex items-center gap-2 mb-2">
+                                          <BookOpen className="h-4 w-4 text-orange-600" />
+                                          <p className="text-xs text-muted-foreground">الصفحات المتأثرة</p>
+                                        </div>
+                                        <p className="text-2xl font-bold text-orange-600">
+                                          {getUniquePages(selectedMatch.matched_segments).length}
+                                        </p>
+                                      </div>
+                                    </div>
+
+                                    {/* جدول الجمل المتشابهة */}
+                                    {selectedMatch.matched_segments && selectedMatch.matched_segments.length > 0 && (
+                                      <div>
+                                        <h4 className="font-semibold mb-3 flex items-center gap-2 text-foreground">
+                                          <Target className="h-4 w-4" />
+                                          الجمل المتشابهة
+                                        </h4>
+                                        
+                                        <div className="border rounded-lg overflow-hidden">
+                                          <Table>
+                                            <TableHeader>
+                                              <TableRow className="bg-muted/30">
+                                                <TableHead className="font-semibold">النص الأصلي</TableHead>
+                                                <TableHead className="font-semibold">النص المطابق</TableHead>
+                                                <TableHead className="text-center font-semibold">الصفحة</TableHead>
+                                                <TableHead className="text-center font-semibold">التشابه</TableHead>
+                                              </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                              {selectedMatch.matched_segments.map((segment, idx) => (
+                                                <TableRow key={idx} className="hover:bg-muted/50">
+                                                  <TableCell className="max-w-md">
+                                                    <div className="text-sm bg-blue-50 dark:bg-blue-950/30 p-3 rounded border-r-4 border-blue-500">
+                                                      {segment.source_text}
+                                                      <span className="text-xs text-muted-foreground block mt-1">
+                                                        صفحة {segment.source_page}
+                                                      </span>
+                                                    </div>
+                                                  </TableCell>
+                                                  <TableCell className="max-w-md">
+                                                    <div className="text-sm bg-orange-50 dark:bg-orange-950/30 p-3 rounded border-r-4 border-orange-500">
+                                                      {segment.matched_text}
+                                                      <span className="text-xs text-muted-foreground block mt-1">
+                                                        صفحة {segment.matched_page}
+                                                      </span>
+                                                    </div>
+                                                  </TableCell>
+                                                  <TableCell className="text-center">
+                                                    <div className="flex items-center gap-1 justify-center">
+                                                      <Badge variant="outline" className="text-xs">
+                                                        {segment.source_page}
+                                                      </Badge>
+                                                      <ArrowRight className="h-3 w-3 text-muted-foreground" />
+                                                      <Badge variant="outline" className="text-xs">
+                                                        {segment.matched_page}
+                                                      </Badge>
+                                                    </div>
+                                                  </TableCell>
+                                                  <TableCell className="text-center">
+                                                    <Badge 
+                                                      variant={segment.similarity > 0.9 ? "destructive" : "secondary"}
+                                                      className="font-bold"
+                                                    >
+                                                      {(segment.similarity * 100).toFixed(0)}%
+                                                    </Badge>
+                                                  </TableCell>
+                                                </TableRow>
+                                              ))}
+                                            </TableBody>
+                                          </Table>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* التحليل الأولي بالذكاء الاصطناعي */}
+                                    <AIAnalysisSection match={selectedMatch} />
+                                  </CardContent>
+                                </Card>
+                              )}
+                            </CollapsibleContent>
+                          </Collapsible>
                         </div>
                       ))}
                     </div>

@@ -8,6 +8,16 @@ import { createSafeStoragePath } from '@/utils/fileNameSanitizer';
 export type GradeLevel = '10' | '12';
 export type ProjectType = 'mini_project' | 'final_project';
 
+export interface MatchedSegment {
+  source_text: string;
+  matched_text: string;
+  similarity: number;
+  source_page: number;
+  matched_page: number;
+  source_position: number;
+  matched_position: number;
+}
+
 export interface ComparisonMatch {
   matched_file_id: string;
   matched_file_name: string;
@@ -16,6 +26,7 @@ export interface ComparisonMatch {
   cosine_score?: number;
   jaccard_score?: number;
   flagged: boolean;
+  matched_segments?: MatchedSegment[];
 }
 
 export interface ComparisonResult {
