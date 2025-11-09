@@ -4431,6 +4431,7 @@ export type Database = {
           school_id: string | null
           segments_count: number | null
           segments_file_path: string | null
+          segments_metadata: Json | null
           segments_processed_at: string | null
           segments_processing_status: string | null
           status: string | null
@@ -4472,6 +4473,7 @@ export type Database = {
           school_id?: string | null
           segments_count?: number | null
           segments_file_path?: string | null
+          segments_metadata?: Json | null
           segments_processed_at?: string | null
           segments_processing_status?: string | null
           status?: string | null
@@ -4513,6 +4515,7 @@ export type Database = {
           school_id?: string | null
           segments_count?: number | null
           segments_file_path?: string | null
+          segments_metadata?: Json | null
           segments_processed_at?: string | null
           segments_processing_status?: string | null
           status?: string | null
