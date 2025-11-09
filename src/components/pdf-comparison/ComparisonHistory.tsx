@@ -360,7 +360,7 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
                   <div>
                     <p className="text-xs text-muted-foreground">تاريخ المقارنة</p>
                     <p className="font-medium">
-                      {format(new Date(selectedComparison.created_at), 'dd/MM/yyyy - hh:mm a', { locale: ar })}
+                      {format(new Date(selectedComparison.created_at), 'dd/MM/yyyy - HH:mm', { locale: ar })}
                     </p>
                   </div>
                 </div>
