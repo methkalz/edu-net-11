@@ -73,8 +73,16 @@ export function extractMatchingSegments(
   const sentences1 = extractSentencesWithPages(text1, pages1);
   const sentences2 = extractSentencesWithPages(text2, pages2);
   
-  for (const sent1 of sentences1) {
-    for (const sent2 of sentences2) {
+  // تحسين الأداء: أخذ عينة من الجمل فقط
+  const maxSentences = 50;
+  const sample1 = sentences1.slice(0, maxSentences);
+  const sample2 = sentences2.slice(0, maxSentences);
+  
+  for (const sent1 of sample1) {
+    for (const sent2 of sample2) {
+      // التوقف إذا وصلنا لـ 20 segment
+      if (segments.length >= 20) break;
+      
       const similarity = fuzzball.ratio(
         normalizeArabicText(sent1.text),
         normalizeArabicText(sent2.text)
@@ -92,6 +100,7 @@ export function extractMatchingSegments(
         });
       }
     }
+    if (segments.length >= 20) break;
   }
   
   return segments.sort((a, b) => b.similarity - a.similarity).slice(0, 20);

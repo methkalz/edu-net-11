@@ -144,11 +144,11 @@ serve(async (req) => {
 
           // خفض العتبة من 0.25 إلى 0.20
           if (similarity > 0.20) {
-            // استخراج الجمل المتشابهة
-            const matchedSegments = extractMatchingSegments(
+            // استخراج الجمل المتشابهة فقط للتشابه العالي
+            const matchedSegments = similarity >= 0.40 ? extractMatchingSegments(
               file1.fileText,
               file2.fileText
-            );
+            ) : [];
             
             file1Comparisons.push({
               matched_file_name: file2.fileName,
@@ -260,11 +260,11 @@ serve(async (req) => {
           }
 
           if (similarity > 0.20) {
-            // استخراج الجمل المتشابهة
-            const matchedSegments = extractMatchingSegments(
+            // استخراج الجمل المتشابهة فقط للتشابه العالي
+            const matchedSegments = similarity >= 0.40 ? extractMatchingSegments(
               file.fileText,
               repoFile.extracted_text
-            );
+            ) : [];
             
             repositoryMatches.push({
               matched_file_id: repoFile.id,
