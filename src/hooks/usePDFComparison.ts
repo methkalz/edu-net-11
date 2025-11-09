@@ -24,6 +24,20 @@ export interface ComparisonResult {
   compared_file_path: string;
   grade_level: GradeLevel;
   comparison_type: ProjectType;
+  comparison_source?: 'internal' | 'repository' | 'both';
+  batch_id?: string;
+  
+  // المقارنة الداخلية
+  internal_matches?: ComparisonMatch[];
+  internal_max_similarity?: number;
+  internal_high_risk_count?: number;
+  
+  // المقارنة مع المستودع
+  repository_matches?: ComparisonMatch[];
+  repository_max_similarity?: number;
+  repository_high_risk_count?: number;
+  
+  // الحقول الأصلية
   matches: ComparisonMatch[];
   max_similarity_score: number;
   avg_similarity_score: number;
@@ -37,6 +51,8 @@ export interface ComparisonResult {
   requested_by?: string;
   teacher_name?: string;
   teacher_role?: string;
+  added_to_repository?: boolean;
+  repository_file_id?: string;
 }
 
 export interface RepositoryFile {
@@ -54,6 +70,99 @@ export const usePDFComparison = () => {
   const { userProfile } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+
+  /**
+   * مقارنة ملفات متعددة (batch comparison)
+   * - إضافة جميع الملفات للمستودع
+   * - مقارنة داخلية بين الملفات المرفوعة
+   * - مقارنة مع المستودع
+   */
+  const compareBatchFiles = async (
+    files: File[],
+    gradeLevel: GradeLevel,
+    onProgress?: (fileIndex: number, progress: number, phase: string) => void
+  ): Promise<{
+    success: boolean;
+    results?: ComparisonResult[];
+    batchId?: string;
+    error?: string;
+  }> => {
+    try {
+      console.log(`🚀 Starting batch comparison for ${files.length} files`);
+      
+      // الخطوة 1: رفع واستخراج النص من جميع الملفات
+      const filesData = [];
+      
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        onProgress?.(i, 10, 'upload');
+        
+        // رفع الملف
+        const filePath = await uploadFile(file, gradeLevel);
+        if (!filePath) {
+          throw new Error(`فشل رفع الملف: ${file.name}`);
+        }
+        
+        onProgress?.(i, 40, 'extraction');
+        
+        // استخراج النص
+        const { data: extractResult, error: extractError } = await supabase.functions.invoke(
+          'pdf-extract-text',
+          {
+            body: { filePath },
+          }
+        );
+
+        if (extractError || !extractResult?.success) {
+          throw new Error(extractResult?.error || 'فشل استخراج النص');
+        }
+
+        filesData.push({
+          fileName: file.name,
+          filePath,
+          fileText: extractResult.data.text,
+          fileHash: extractResult.data.hash,
+          filePages: extractResult.data.pageCount,
+        });
+        
+        onProgress?.(i, 60, 'extraction_complete');
+      }
+
+      // الخطوة 2: المقارنة الشاملة (internal + repository)
+      onProgress?.(0, 70, 'comparison');
+      
+      const { data: batchResult, error: batchError } = await supabase.functions.invoke(
+        'pdf-compare-batch',
+        {
+          body: {
+            files: filesData,
+            gradeLevel,
+            comparisonType: gradeLevel === '10' ? 'mini_project' : 'final_project',
+            userId: userProfile?.user_id,
+            schoolId: userProfile?.school_id,
+          },
+        }
+      );
+
+      if (batchError || !batchResult?.success) {
+        throw new Error(batchResult?.error || 'فشلت المقارنة الشاملة');
+      }
+
+      onProgress?.(files.length - 1, 100, 'completed');
+
+      return {
+        success: true,
+        results: batchResult.results,
+        batchId: batchResult.batchId,
+      };
+    } catch (error) {
+      console.error('❌ Batch comparison error:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'خطأ غير معروف',
+      };
+    }
+  };
 
   // رفع ملف PDF
   const uploadFile = async (file: File, gradeLevel: GradeLevel): Promise<string | null> => {
@@ -474,6 +583,7 @@ export const usePDFComparison = () => {
     uploadProgress,
     uploadFile,
     compareFile,
+    compareBatchFiles,
     getComparisonHistory,
     getRepositoryFiles,
     addToRepository,

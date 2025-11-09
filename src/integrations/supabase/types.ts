@@ -4399,20 +4399,30 @@ export type Database = {
       }
       pdf_comparison_results: {
         Row: {
+          added_to_repository: boolean | null
           algorithm_used: string | null
           avg_similarity_score: number | null
+          batch_id: string | null
           compared_extracted_text: string | null
           compared_file_hash: string | null
           compared_file_name: string
           compared_file_path: string
+          comparison_source: string | null
           comparison_type: string
           created_at: string | null
           grade_level: string
           high_risk_matches: number | null
           id: string
+          internal_high_risk_count: number | null
+          internal_matches: Json | null
+          internal_max_similarity: number | null
           matches: Json
           max_similarity_score: number | null
           processing_time_ms: number | null
+          repository_file_id: string | null
+          repository_high_risk_count: number | null
+          repository_matches: Json | null
+          repository_max_similarity: number | null
           requested_by: string
           review_notes: string | null
           review_required: boolean | null
@@ -4425,20 +4435,30 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          added_to_repository?: boolean | null
           algorithm_used?: string | null
           avg_similarity_score?: number | null
+          batch_id?: string | null
           compared_extracted_text?: string | null
           compared_file_hash?: string | null
           compared_file_name: string
           compared_file_path: string
+          comparison_source?: string | null
           comparison_type: string
           created_at?: string | null
           grade_level: string
           high_risk_matches?: number | null
           id?: string
+          internal_high_risk_count?: number | null
+          internal_matches?: Json | null
+          internal_max_similarity?: number | null
           matches?: Json
           max_similarity_score?: number | null
           processing_time_ms?: number | null
+          repository_file_id?: string | null
+          repository_high_risk_count?: number | null
+          repository_matches?: Json | null
+          repository_max_similarity?: number | null
           requested_by: string
           review_notes?: string | null
           review_required?: boolean | null
@@ -4451,20 +4471,30 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          added_to_repository?: boolean | null
           algorithm_used?: string | null
           avg_similarity_score?: number | null
+          batch_id?: string | null
           compared_extracted_text?: string | null
           compared_file_hash?: string | null
           compared_file_name?: string
           compared_file_path?: string
+          comparison_source?: string | null
           comparison_type?: string
           created_at?: string | null
           grade_level?: string
           high_risk_matches?: number | null
           id?: string
+          internal_high_risk_count?: number | null
+          internal_matches?: Json | null
+          internal_max_similarity?: number | null
           matches?: Json
           max_similarity_score?: number | null
           processing_time_ms?: number | null
+          repository_file_id?: string | null
+          repository_high_risk_count?: number | null
+          repository_matches?: Json | null
+          repository_max_similarity?: number | null
           requested_by?: string
           review_notes?: string | null
           review_required?: boolean | null
@@ -4477,6 +4507,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "pdf_comparison_results_repository_file_id_fkey"
+            columns: ["repository_file_id"]
+            isOneToOne: false
+            referencedRelation: "pdf_comparison_repository"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "pdf_comparison_results_school_id_fkey"
             columns: ["school_id"]

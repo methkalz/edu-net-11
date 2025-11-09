@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Upload, FileText, X, Loader2 } from 'lucide-react';
 import { usePDFComparison, type GradeLevel, type ComparisonResult } from '@/hooks/usePDFComparison';
 import ComparisonResultCard from './ComparisonResultCard';
+import BatchComparisonResult from './BatchComparisonResult';
 import { toast } from 'sonner';
 import { DevErrorDisplay } from '@/components/error/DevErrorDisplay';
 import { handleError } from '@/lib/error-handling';
@@ -28,7 +29,7 @@ interface FileWithResult {
 }
 
 const ComparisonUploadZone = ({ gradeLevel }: ComparisonUploadZoneProps) => {
-  const { compareFile, isLoading } = usePDFComparison();
+  const { compareFile, compareBatchFiles, isLoading } = usePDFComparison();
   const [files, setFiles] = useState<FileWithResult[]>([]);
   const [isComparing, setIsComparing] = useState(false);
   const [globalError, setGlobalError] = useState<Error | null>(null);
@@ -63,14 +64,12 @@ const ComparisonUploadZone = ({ gradeLevel }: ComparisonUploadZoneProps) => {
 
     setIsComparing(true);
 
-    for (let i = 0; i < files.length; i++) {
-      const fileWithResult = files[i];
+    // إذا كان ملف واحد فقط، استخدم المقارنة العادية
+    if (files.length === 1) {
+      const fileWithResult = files[0];
       
-      if (fileWithResult.status === 'completed') continue;
-
-      // تحديث الحالة إلى "processing"
       setFiles(prev => prev.map((f, idx) => 
-        idx === i ? { ...f, status: 'processing' as const, progress: 0 } : f
+        idx === 0 ? { ...f, status: 'processing' as const, progress: 0 } : f
       ));
 
       try {
@@ -79,17 +78,18 @@ const ComparisonUploadZone = ({ gradeLevel }: ComparisonUploadZoneProps) => {
           gradeLevel,
           (progress) => {
             setFiles(prev => prev.map((f, idx) => 
-              idx === i ? { ...f, progress } : f
+              idx === 0 ? { ...f, progress } : f
             ));
           }
         );
 
         if (result.success) {
           setFiles(prev => prev.map((f, idx) => 
-            idx === i 
+            idx === 0 
               ? { ...f, result: result.data, status: 'completed' as const, progress: 100 } 
               : f
           ));
+          toast.success('اكتملت المقارنة بنجاح');
         } else {
           throw new Error(result.error || 'فشلت المقارنة');
         }
@@ -97,27 +97,16 @@ const ComparisonUploadZone = ({ gradeLevel }: ComparisonUploadZoneProps) => {
         const appError = handleError(error, {
           context: 'ComparisonUploadZone.handleCompareAll',
           fileName: fileWithResult.file.name,
-          fileSize: fileWithResult.file.size,
           gradeLevel,
-          fileIndex: i
-        });
-
-        console.error('❌ [PDF Comparison] Detailed error:', {
-          fileName: fileWithResult.file.name,
-          fileSize: fileWithResult.file.size,
-          error: error instanceof Error ? error.message : String(error),
-          stack: error instanceof Error ? error.stack : undefined,
-          timestamp: new Date().toISOString()
         });
 
         setFiles(prev => prev.map((f, idx) => 
-          idx === i ? { 
+          idx === 0 ? { 
             ...f, 
             status: 'error' as const,
             error: {
               message: error instanceof Error ? error.message : 'خطأ غير معروف',
               code: appError.code,
-              details: appError.details,
               phase: 'comparison'
             }
           } : f
@@ -125,10 +114,59 @@ const ComparisonUploadZone = ({ gradeLevel }: ComparisonUploadZoneProps) => {
         
         setGlobalError(error instanceof Error ? error : new Error(String(error)));
       }
+    } else {
+      // ملفات متعددة: استخدم المقارنة الشاملة (batch)
+      try {
+        // تحديث جميع الملفات إلى حالة processing
+        setFiles(prev => prev.map(f => ({ ...f, status: 'processing' as const, progress: 0 })));
+
+        const filesToCompare = files.map(f => f.file);
+        
+        const result = await compareBatchFiles(
+          filesToCompare,
+          gradeLevel,
+          (fileIndex, progress, phase) => {
+            setFiles(prev => prev.map((f, idx) => 
+              idx === fileIndex ? { ...f, progress } : f
+            ));
+          }
+        );
+
+        if (result.success && result.results) {
+          // تحديث النتائج لكل ملف
+          setFiles(prev => prev.map((f, idx) => ({
+            ...f,
+            result: result.results?.[idx],
+            status: 'completed' as const,
+            progress: 100,
+          })));
+          
+          toast.success(`اكتملت المقارنة لـ ${files.length} ملفات بنجاح`);
+        } else {
+          throw new Error(result.error || 'فشلت المقارنة الشاملة');
+        }
+      } catch (error) {
+        const appError = handleError(error, {
+          context: 'ComparisonUploadZone.handleCompareAll.batch',
+          filesCount: files.length,
+          gradeLevel,
+        });
+
+        setFiles(prev => prev.map(f => ({ 
+          ...f, 
+          status: 'error' as const,
+          error: {
+            message: error instanceof Error ? error.message : 'خطأ غير معروف',
+            code: appError.code,
+            phase: 'comparison'
+          }
+        })));
+        
+        setGlobalError(error instanceof Error ? error : new Error(String(error)));
+      }
     }
 
     setIsComparing(false);
-    toast.success('اكتملت المقارنة لجميع الملفات');
   };
 
   const handleClear = () => {
@@ -252,7 +290,12 @@ const ComparisonUploadZone = ({ gradeLevel }: ComparisonUploadZoneProps) => {
                       {/* Result */}
                       {fileWithResult.status === 'completed' && fileWithResult.result && (
                         <div>
-                          <ComparisonResultCard result={fileWithResult.result} />
+                          {fileWithResult.result.comparison_source === 'both' || 
+                           fileWithResult.result.comparison_source === 'internal' ? (
+                            <BatchComparisonResult result={fileWithResult.result} />
+                          ) : (
+                            <ComparisonResultCard result={fileWithResult.result} />
+                          )}
                         </div>
                       )}
 
