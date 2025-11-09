@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -21,10 +21,49 @@ interface BatchComparisonResultProps {
   result: ComparisonResult;
 }
 
-const BatchComparisonResult = ({ result }: BatchComparisonResultProps) => {
+const BatchComparisonResult = ({ result: initialResult }: BatchComparisonResultProps) => {
+  const [result, setResult] = useState(initialResult);
   const [allSegments, setAllSegments] = useState<MatchedSegment[] | null>(null);
   const [loadingSegments, setLoadingSegments] = useState(false);
   const [showingAllSegments, setShowingAllSegments] = useState(false);
+  const [isComparingRepository, setIsComparingRepository] = useState(
+    initialResult.comparison_source === 'internal'
+  );
+
+  // Realtime subscription to listen for updates
+  useEffect(() => {
+    if (!result.id) return;
+
+    const channel = supabase
+      .channel(`comparison-${result.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'pdf_comparison_results',
+          filter: `id=eq.${result.id}`,
+        },
+        (payload) => {
+          console.log('📡 Received update:', payload);
+          const updatedResult = payload.new as ComparisonResult;
+          
+          // Update the result
+          setResult(updatedResult);
+          
+          // Check if repository comparison is complete
+          if (updatedResult.comparison_source === 'both' && isComparingRepository) {
+            setIsComparingRepository(false);
+            toast.success('اكتملت المقارنة مع المستودع');
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [result.id, isComparingRepository]);
 
   const loadAllSegments = async () => {
     setLoadingSegments(true);
@@ -48,6 +87,28 @@ const BatchComparisonResult = ({ result }: BatchComparisonResultProps) => {
     } finally {
       setLoadingSegments(false);
     }
+  };
+
+  const exportSegments = () => {
+    const segments = allSegments || result.top_matched_segments || [];
+    const exportData = segments.map((seg, idx) => ({
+      '#': idx + 1,
+      'النص المصدر': seg.source_text,
+      'النص المطابق': seg.matched_text,
+      'نسبة التشابه': `${(seg.similarity * 100).toFixed(1)}%`,
+      'صفحة المصدر': seg.source_page,
+      'صفحة المطابقة': seg.matched_page,
+      'اسم الملف': seg.matched_file_name || 'غير محدد',
+    }));
+
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `comparison-segments-${result.id}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('تم تصدير النتائج');
   };
 
   const getStatusConfig = () => {
@@ -178,9 +239,17 @@ const BatchComparisonResult = ({ result }: BatchComparisonResultProps) => {
             </div>
             <div>
               <CardTitle className="text-sm font-bold">نتيجة المقارنة</CardTitle>
-              <Badge variant={config.badgeVariant} className="mt-1 text-xs">
-                {config.label}
-              </Badge>
+              <div className="flex items-center gap-2 mt-1">
+                <Badge variant={config.badgeVariant} className="text-xs">
+                  {config.label}
+                </Badge>
+                {isComparingRepository && (
+                  <Badge variant="secondary" className="text-xs animate-pulse">
+                    <Loader2 className="h-3 w-3 ml-1 animate-spin" />
+                    جاري المقارنة مع المستودع...
+                  </Badge>
+                )}
+              </div>
             </div>
           </div>
 
@@ -265,16 +334,111 @@ const BatchComparisonResult = ({ result }: BatchComparisonResultProps) => {
           </div>
         )}
 
-        {/* Matched Segments Section - مؤقتاً معطل حتى يتم تحسين الأداء */}
-        {result.segments_count && result.segments_count > 0 && false && (
+        {/* Matched Segments Section */}
+        {((result.top_matched_segments && result.top_matched_segments.length > 0) || showingAllSegments) && (
           <div className="mt-6 space-y-4">
-            <div className="p-4 bg-muted/50 rounded-lg text-center">
-              <p className="text-sm text-muted-foreground">
-                ⚡ استخراج الجمل المتشابهة متاح قريباً
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                ({result.segments_count} تطابق محتمل)
-              </p>
+            <div className="flex items-center justify-between pb-2 border-b">
+              <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-primary" />
+                <h4 className="font-bold text-sm">الجمل والعبارات المتشابهة</h4>
+                <Badge variant="outline">
+                  {showingAllSegments ? allSegments?.length : result.top_matched_segments?.length || 0}
+                </Badge>
+              </div>
+              
+              <div className="flex gap-2">
+                {!showingAllSegments && result.segments_count && result.segments_count > 20 && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={loadAllSegments}
+                    disabled={loadingSegments}
+                  >
+                    {loadingSegments ? (
+                      <>
+                        <Loader2 className="h-3 w-3 ml-2 animate-spin" />
+                        جاري التحميل...
+                      </>
+                    ) : (
+                      <>تحميل الكل ({result.segments_count})</>
+                    )}
+                  </Button>
+                )}
+                
+                {(allSegments || result.top_matched_segments) && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={exportSegments}
+                  >
+                    <Download className="h-3 w-3 ml-2" />
+                    تصدير
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-3 max-h-[600px] overflow-y-auto">
+              {(showingAllSegments ? allSegments : result.top_matched_segments)?.map((segment, idx) => (
+                <Card key={idx} className="p-4 hover:shadow-md transition-shadow">
+                  <div className="flex items-start gap-3">
+                    <div className={cn(
+                      "flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs",
+                      segment.similarity >= 0.8 
+                        ? "bg-destructive/20 text-destructive"
+                        : segment.similarity >= 0.65
+                        ? "bg-yellow-500/20 text-yellow-600"
+                        : "bg-green-500/20 text-green-600"
+                    )}>
+                      {idx + 1}
+                    </div>
+
+                    <div className="flex-1 space-y-3">
+                      {/* Similarity Score */}
+                      <div className="flex items-center justify-between">
+                        <Badge variant={
+                          segment.similarity >= 0.8 ? "destructive" :
+                          segment.similarity >= 0.65 ? "secondary" : "outline"
+                        }>
+                          تشابه: {(segment.similarity * 100).toFixed(1)}%
+                        </Badge>
+                        
+                        {segment.matched_file_name && (
+                          <span className="text-xs text-muted-foreground">
+                            📄 {segment.matched_file_name}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Source Text */}
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span className="font-semibold">النص المصدر</span>
+                          <Badge variant="outline" className="text-[10px]">
+                            صفحة {segment.source_page}
+                          </Badge>
+                        </div>
+                        <p className="text-sm bg-blue-50 dark:bg-blue-950/20 p-3 rounded border-r-2 border-blue-500">
+                          {segment.source_text}
+                        </p>
+                      </div>
+
+                      {/* Matched Text */}
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span className="font-semibold">النص المطابق</span>
+                          <Badge variant="outline" className="text-[10px]">
+                            صفحة {segment.matched_page}
+                          </Badge>
+                        </div>
+                        <p className="text-sm bg-purple-50 dark:bg-purple-950/20 p-3 rounded border-r-2 border-purple-500">
+                          {segment.matched_text}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              ))}
             </div>
           </div>
         )}

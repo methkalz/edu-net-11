@@ -16,6 +16,8 @@ export interface MatchedSegment {
   matched_page: number;
   source_position: number;
   matched_position: number;
+  matched_file_name?: string;
+  source_type?: string;
 }
 
 export interface ComparisonMatch {

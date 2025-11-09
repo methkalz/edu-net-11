@@ -1,6 +1,113 @@
 import { serve } from 'https://deno.land/std@0.208.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
+import * as fuzzball from 'https://esm.sh/fuzzball@2.2.2';
+
+interface ExtractedPage {
+  page_number: number;
+  text: string;
+  word_count: number;
+}
+
+interface ExtractedSentence {
+  text: string;
+  page: number;
+  position: number;
+}
+
+interface MatchedSegment {
+  source_text: string;
+  matched_text: string;
+  similarity: number;
+  source_page: number;
+  matched_page: number;
+  source_position: number;
+  matched_position: number;
+  matched_file_name?: string;
+  source_type?: string;
+}
+
+function normalizeArabicText(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[ًٌٍَُِّْ]/g, '')
+    .replace(/[آإأٱ]/g, 'ا')
+    .replace(/ة/g, 'ه')
+    .replace(/ى/g, 'ي')
+    .replace(/[^\w\s\u0600-\u06FF]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function extractSentencesWithPages(text: string, pages?: ExtractedPage[]): ExtractedSentence[] {
+  const sentences: ExtractedSentence[] = [];
+  
+  if (pages && pages.length > 0) {
+    pages.forEach((page) => {
+      const pageSentences = page.text.split(/[.!?؟\n]+/).filter(s => s.trim().length > 20);
+      pageSentences.forEach((sentence, idx) => {
+        sentences.push({
+          text: sentence.trim(),
+          page: page.page_number,
+          position: idx,
+        });
+      });
+    });
+  } else {
+    const allSentences = text.split(/[.!?؟\n]+/).filter(s => s.trim().length > 20);
+    allSentences.forEach((sentence, idx) => {
+      sentences.push({
+        text: sentence.trim(),
+        page: Math.floor(idx / 10) + 1,
+        position: idx % 10,
+      });
+    });
+  }
+  
+  return sentences;
+}
+
+function extractMatchingSegments(
+  text1: string,
+  text2: string,
+  pages1?: ExtractedPage[],
+  pages2?: ExtractedPage[]
+): MatchedSegment[] {
+  const segments: MatchedSegment[] = [];
+  
+  const sentences1 = extractSentencesWithPages(text1, pages1);
+  const sentences2 = extractSentencesWithPages(text2, pages2);
+  
+  const maxSentences = 100;
+  const sample1 = sentences1.slice(0, maxSentences);
+  const sample2 = sentences2.slice(0, maxSentences);
+  
+  for (const sent1 of sample1) {
+    for (const sent2 of sample2) {
+      if (segments.length >= 50) break;
+      
+      const similarity = fuzzball.ratio(
+        normalizeArabicText(sent1.text),
+        normalizeArabicText(sent2.text)
+      ) / 100;
+      
+      if (similarity > 0.60) {
+        segments.push({
+          source_text: sent1.text.substring(0, 500),
+          matched_text: sent2.text.substring(0, 500),
+          similarity: Math.round(similarity * 100) / 100,
+          source_page: sent1.page,
+          matched_page: sent2.page,
+          source_position: sent1.position,
+          matched_position: sent2.position,
+        });
+      }
+    }
+    if (segments.length >= 50) break;
+  }
+  
+  return segments.sort((a, b) => b.similarity - a.similarity);
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -36,7 +143,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    // 1. جلب بيانات المقارنة + metadata
+    // 1. Fetch comparison data
     const { data: comparison, error: comparisonError } = await serviceSupabase
       .from('pdf_comparison_results')
       .select('compared_file_path, segments_metadata, segments_processing_status, top_matched_segments, segments_file_path')
@@ -47,7 +154,7 @@ serve(async (req) => {
       throw new Error('Comparison not found');
     }
 
-    // 2. إذا كانت segments معالجة بالفعل، أرجعها من Storage
+    // 2. If segments already processed, return from Storage
     if (comparison.segments_processing_status === 'completed' && comparison.segments_file_path) {
       const { data: fileData } = await serviceSupabase.storage
         .from('pdf-comparison-data')
@@ -63,7 +170,7 @@ serve(async (req) => {
       }
     }
 
-    // 3. استخراج segments on-demand
+    // 3. Extract segments on-demand
     console.log('⚡ Extracting segments on-demand...');
     
     if (!comparison.segments_metadata) {
@@ -76,53 +183,85 @@ serve(async (req) => {
     }
 
     const metadata = comparison.segments_metadata as any;
-    const allSegments = [];
+    const allSegments: MatchedSegment[] = [];
 
-    // جلب النص الأصلي
-    const { data: fileData } = await serviceSupabase.storage
-      .from('pdf-comparison-temp')
-      .download(comparison.compared_file_path);
-    
-    if (!fileData) {
-      throw new Error('Original file not found');
+    // Get original file text
+    const { data: extractResponse } = await serviceSupabase.functions.invoke('pdf-extract-text', {
+      body: {
+        filePath: comparison.compared_file_path,
+        bucket: 'pdf-comparison-temp'
+      }
+    });
+
+    if (!extractResponse?.fullText) {
+      throw new Error('Failed to extract original text');
     }
 
-    // استخدام pdf.js لاستخراج النص (مبسط - يجب استدعاء pdf-extract-text)
-    const originalText = await fileData.text(); // مؤقت
+    const originalText = extractResponse.fullText;
+    const originalPages = extractResponse.pages as ExtractedPage[];
 
-    // معالجة المقارنات الداخلية
+    // Process internal file pairs
     for (const pair of metadata.internal_file_pairs || []) {
-      // هنا نحتاج جلب النص من الملف الآخر وعمل extractMatchingSegments
-      // لتبسيط الكود، نضيف placeholder
-      const segments = []; // extractMatchingSegments(text1, text2)
-      allSegments.push(...segments.map(s => ({
-        ...s,
-        matched_file_name: pair.file2_name,
-        source_type: 'internal',
-      })));
-    }
-
-    // معالجة مقارنات المستودع
-    for (const match of metadata.repository_matches || []) {
-      const { data: repoFile } = await serviceSupabase
-        .from('pdf_comparison_repository')
-        .select('extracted_text, file_name')
-        .eq('id', match.repo_file_id)
-        .single();
+      console.log(`Processing internal pair: ${pair.file2_name}`);
       
-      if (repoFile) {
-        // هنا نستخدم originalText + repoFile.extracted_text
-        // const segments = extractMatchingSegments(originalText, repoFile.extracted_text);
-        // allSegments.push(...segments);
+      const { data: pairExtract } = await serviceSupabase.functions.invoke('pdf-extract-text', {
+        body: {
+          filePath: pair.file2_path,
+          bucket: 'pdf-comparison-temp'
+        }
+      });
+
+      if (pairExtract?.fullText) {
+        const segments = extractMatchingSegments(
+          originalText,
+          pairExtract.fullText,
+          originalPages,
+          pairExtract.pages
+        );
+        
+        allSegments.push(...segments.map(s => ({
+          ...s,
+          matched_file_name: pair.file2_name,
+          source_type: 'internal',
+        })));
       }
     }
 
-    // 4. حفظ في Storage للمرات القادمة
-    if (allSegments.length > 0) {
+    // Process repository matches
+    for (const match of metadata.repository_matches || []) {
+      console.log(`Processing repository match: ${match.repo_file_id}`);
+      
+      const { data: repoFile } = await serviceSupabase
+        .from('pdf_comparison_repository')
+        .select('extracted_text, file_name, extracted_pages')
+        .eq('id', match.repo_file_id)
+        .single();
+      
+      if (repoFile?.extracted_text) {
+        const segments = extractMatchingSegments(
+          originalText,
+          repoFile.extracted_text,
+          originalPages,
+          repoFile.extracted_pages
+        );
+        
+        allSegments.push(...segments.map(s => ({
+          ...s,
+          matched_file_name: repoFile.file_name,
+          source_type: 'repository',
+        })));
+      }
+    }
+
+    // Sort by similarity and limit
+    const sortedSegments = allSegments.sort((a, b) => b.similarity - a.similarity).slice(0, 100);
+
+    // 4. Save to Storage for future use
+    if (sortedSegments.length > 0) {
       const fileName = `segments/${comparisonId}.json`;
       await serviceSupabase.storage
         .from('pdf-comparison-data')
-        .upload(fileName, JSON.stringify(allSegments), {
+        .upload(fileName, JSON.stringify(sortedSegments), {
           contentType: 'application/json',
           upsert: true,
         });
@@ -132,18 +271,18 @@ serve(async (req) => {
         .update({
           segments_file_path: fileName,
           segments_processing_status: 'completed',
-          top_matched_segments: allSegments.slice(0, 20),
+          segments_count: sortedSegments.length,
         })
         .eq('id', comparisonId);
     }
 
-    console.log(`✅ Extracted ${allSegments.length} segments on-demand`);
+    console.log(`✅ Extracted ${sortedSegments.length} segments on-demand`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        segments: allSegments,
-        totalCount: allSegments.length,
+        segments: sortedSegments,
+        totalCount: sortedSegments.length,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
