@@ -32,7 +32,10 @@ const Grade10LessonsAdmin: React.FC = () => {
     deleteTopic,
     addLesson,
     updateLesson,
-    deleteLesson
+    deleteLesson,
+    addLessonMedia,
+    updateLessonMedia,
+    deleteLessonMedia
   } = useGrade10AdminContent();
 
   // Form states
@@ -425,6 +428,7 @@ const Grade10LessonsAdmin: React.FC = () => {
       {showLessonForm && (
         <Grade10LessonForm
           lesson={editingLesson}
+          lessonMedia={editingLesson?.media || []}
           topicId={selectedTopicId}
           onSave={editingLesson ? 
             (data) => updateLesson(editingLesson.id, data) : 
@@ -436,6 +440,9 @@ const Grade10LessonsAdmin: React.FC = () => {
             setSelectedTopicId('');
           }}
           saving={saving}
+          onAddMedia={addLessonMedia}
+          onDeleteMedia={deleteLessonMedia}
+          onUpdateMedia={updateLessonMedia}
         />
       )}
     </div>

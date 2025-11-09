@@ -3,7 +3,7 @@ import { toast } from '@/hooks/use-toast';
 import { logger } from '@/lib/logger';
 import { Grade11LessonMedia } from './useGrade11Content';
 
-export const useEditCodeMedia = (onSuccess?: () => void) => {
+export const useEditCodeMedia = (onSuccess?: () => void, tableName: 'grade11_lesson_media' | 'grade10_lesson_media' = 'grade11_lesson_media') => {
   const updateCodeMedia = async ({
     mediaId,
     updates
@@ -14,10 +14,11 @@ export const useEditCodeMedia = (onSuccess?: () => void) => {
     try {
       console.log('=== CODE MEDIA UPDATE START ===');
       console.log('Media ID:', mediaId);
+      console.log('Table:', tableName);
       console.log('Updates payload:', JSON.stringify(updates, null, 2));
       
       const { data, error } = await supabase
-        .from('grade11_lesson_media')
+        .from(tableName)
         .update({
           file_name: updates.file_name,
           metadata: updates.metadata

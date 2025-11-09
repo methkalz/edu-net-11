@@ -385,6 +385,72 @@ export const useGrade10AdminContent = () => {
     }
   };
 
+  // Lesson Media operations
+  const addLessonMedia = async (mediaData: Omit<Grade10LessonMedia, 'id' | 'created_at'>) => {
+    try {
+      setSaving(true);
+      const { data, error } = await supabase
+        .from('grade10_lesson_media')
+        .insert([mediaData])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast.success('تم إضافة الوسائط بنجاح');
+      await fetchAllContent();
+      return data;
+    } catch (error) {
+      logger.error('Error adding lesson media', error as Error);
+      toast.error('حدث خطأ في إضافة الوسائط');
+      throw error;
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const updateLessonMedia = async (mediaId: string, updates: Partial<Grade10LessonMedia>) => {
+    try {
+      setSaving(true);
+      const { error } = await supabase
+        .from('grade10_lesson_media')
+        .update(updates)
+        .eq('id', mediaId);
+
+      if (error) throw error;
+
+      toast.success('تم تحديث الوسائط بنجاح');
+      await fetchAllContent();
+    } catch (error) {
+      logger.error('Error updating lesson media', error as Error);
+      toast.error('حدث خطأ في تحديث الوسائط');
+      throw error;
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteLessonMedia = async (id: string) => {
+    try {
+      setSaving(true);
+      const { error } = await supabase
+        .from('grade10_lesson_media')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast.success('تم حذف الوسائط بنجاح');
+      await fetchAllContent();
+    } catch (error) {
+      logger.error('Error deleting lesson media', error as Error);
+      toast.error('حدث خطأ في حذف الوسائط');
+      throw error;
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return {
     sections,
     loading,
@@ -401,6 +467,10 @@ export const useGrade10AdminContent = () => {
     // Lesson operations
     addLesson,
     updateLesson,
-    deleteLesson
+    deleteLesson,
+    // Lesson Media operations
+    addLessonMedia,
+    updateLessonMedia,
+    deleteLessonMedia
   };
 };

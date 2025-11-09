@@ -4,24 +4,35 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Grade10Lesson } from '@/hooks/useGrade10AdminContent';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Grade10Lesson, Grade10LessonMedia } from '@/hooks/useGrade10AdminContent';
 import RichTextEditor from '@/components/content/RichTextEditor';
+import Grade10LessonMediaManager from '@/components/content/Grade10LessonMediaManager';
 
 interface Grade10LessonFormProps {
   lesson?: Grade10Lesson | null;
+  lessonMedia?: Grade10LessonMedia[];
   topicId: string;
   onSave: (data: any) => Promise<any>;
   onCancel: () => void;
   saving: boolean;
+  onAddMedia?: (mediaData: Omit<Grade10LessonMedia, 'id' | 'created_at'>) => Promise<any>;
+  onDeleteMedia?: (mediaId: string) => Promise<void>;
+  onUpdateMedia?: (mediaId: string, updates: Partial<Grade10LessonMedia>) => Promise<void>;
 }
 
 const Grade10LessonForm: React.FC<Grade10LessonFormProps> = ({
   lesson,
+  lessonMedia = [],
   topicId,
   onSave,
   onCancel,
-  saving
+  saving,
+  onAddMedia,
+  onDeleteMedia,
+  onUpdateMedia
 }) => {
+  const [activeTab, setActiveTab] = useState('info');
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -65,6 +76,9 @@ const Grade10LessonForm: React.FC<Grade10LessonFormProps> = ({
     }
   };
 
+  // When lesson is saved, show media tab
+  const showMediaTab = lesson && lesson.id;
+
   return (
     <Dialog open={true} onOpenChange={onCancel}>
       <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto">
@@ -74,7 +88,16 @@ const Grade10LessonForm: React.FC<Grade10LessonFormProps> = ({
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="info">معلومات الدرس</TabsTrigger>
+            <TabsTrigger value="media" disabled={!showMediaTab}>
+              الوسائط {lessonMedia.length > 0 && `(${lessonMedia.length})`}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="info" className="space-y-4 mt-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="title">عنوان الدرس *</Label>
             <Input
@@ -117,15 +140,29 @@ const Grade10LessonForm: React.FC<Grade10LessonFormProps> = ({
             <Label htmlFor="is_active">الدرس نشط</Label>
           </div>
 
-          <div className="flex gap-3 pt-4">
-            <Button type="submit" disabled={saving || !formData.title.trim()}>
-              {saving ? 'جاري الحفظ...' : (lesson ? 'تحديث الدرس' : 'إضافة الدرس')}
-            </Button>
-            <Button type="button" variant="outline" onClick={onCancel}>
-              إلغاء
-            </Button>
-          </div>
-        </form>
+              <div className="flex gap-3 pt-4">
+                <Button type="submit" disabled={saving || !formData.title.trim()}>
+                  {saving ? 'جاري الحفظ...' : (lesson ? 'تحديث الدرس' : 'إضافة الدرس')}
+                </Button>
+                <Button type="button" variant="outline" onClick={onCancel}>
+                  إلغاء
+                </Button>
+              </div>
+            </form>
+          </TabsContent>
+
+          <TabsContent value="media" className="mt-4">
+            {showMediaTab && (
+              <Grade10LessonMediaManager
+                lessonId={lesson?.id}
+                media={lessonMedia}
+                onAddMedia={onAddMedia}
+                onDeleteMedia={onDeleteMedia}
+                onUpdateMedia={onUpdateMedia}
+              />
+            )}
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );
