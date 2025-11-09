@@ -267,7 +267,17 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
                     <p className="text-xs text-muted-foreground">متوسط التشابه</p>
                   </div>
                   <p className="text-2xl font-bold text-blue-600">
-                    {(selectedComparison.avg_similarity_score * 100).toFixed(1)}%
+                    {(() => {
+                      const avgScore = selectedComparison.avg_similarity_score;
+                      if (avgScore !== null && avgScore !== undefined) {
+                        return (avgScore * 100).toFixed(1);
+                      }
+                      // حساب المتوسط من التطابقات
+                      const matches = selectedComparison.matches || [];
+                      if (matches.length === 0) return '0.0';
+                      const sum = matches.reduce((acc, match) => acc + (match.similarity_score || 0), 0);
+                      return ((sum / matches.length) * 100).toFixed(1);
+                    })()}%
                   </p>
                 </div>
 
