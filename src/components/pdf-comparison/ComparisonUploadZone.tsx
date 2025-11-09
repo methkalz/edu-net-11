@@ -132,16 +132,23 @@ const ComparisonUploadZone = ({ gradeLevel }: ComparisonUploadZoneProps) => {
           }
         );
 
-        if (result.success && result.results) {
+        if (result.success && result.results && result.results.length === files.length) {
           // تحديث النتائج لكل ملف
           setFiles(prev => prev.map((f, idx) => ({
             ...f,
-            result: result.results?.[idx],
+            result: result.results![idx],
             status: 'completed' as const,
             progress: 100,
           })));
           
           toast.success(`اكتملت المقارنة لـ ${files.length} ملفات بنجاح`);
+        } else if (result.success && result.results) {
+          // إذا كان عدد النتائج لا يطابق عدد الملفات
+          console.error('Mismatch between files and results:', {
+            filesCount: files.length,
+            resultsCount: result.results.length
+          });
+          throw new Error('عدد النتائج لا يطابق عدد الملفات المرفوعة');
         } else {
           throw new Error(result.error || 'فشلت المقارنة الشاملة');
         }

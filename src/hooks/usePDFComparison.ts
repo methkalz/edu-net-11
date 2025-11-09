@@ -105,6 +105,16 @@ export const usePDFComparison = () => {
         
         onProgress?.(i, 40, 'extraction');
         
+        // التحقق من صحة المعاملات قبل الاستدعاء
+        if (!filePath || filePath.trim() === '') {
+          throw new Error(`مسار الملف غير صالح للملف: ${file.name}`);
+        }
+
+        console.log(`📤 Calling pdf-extract-text for ${file.name} with:`, {
+          filePath,
+          bucket: 'pdf-comparison-temp'
+        });
+        
         // استخراج النص
         const { data: extractResult, error: extractError } = await supabase.functions.invoke(
           'pdf-extract-text',
@@ -116,8 +126,22 @@ export const usePDFComparison = () => {
           }
         );
 
+        console.log(`📄 Extracted text from ${file.name}:`, {
+          success: extractResult?.success,
+          hasData: !!extractResult?.data,
+          hasText: !!extractResult?.data?.text,
+          textLength: extractResult?.data?.text?.length,
+          hash: extractResult?.data?.hash,
+          pages: extractResult?.data?.pageCount,
+        });
+
         if (extractError || !extractResult?.success) {
           throw new Error(extractResult?.error || 'فشل استخراج النص');
+        }
+
+        // ✅ تحقق إضافي من وجود data
+        if (!extractResult.data || !extractResult.data.text) {
+          throw new Error(`فشل استخراج النص من الملف: ${file.name} - البيانات غير مكتملة`);
         }
 
         filesData.push({
