@@ -109,7 +109,10 @@ export const usePDFComparison = () => {
         const { data: extractResult, error: extractError } = await supabase.functions.invoke(
           'pdf-extract-text',
           {
-            body: { filePath },
+            body: { 
+              filePath,
+              bucket: 'pdf-comparison-temp',
+            },
           }
         );
 
