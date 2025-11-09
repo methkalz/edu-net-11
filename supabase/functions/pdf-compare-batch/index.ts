@@ -144,11 +144,8 @@ serve(async (req) => {
 
           // خفض العتبة من 0.25 إلى 0.20
           if (similarity > 0.20) {
-            // استخراج الجمل المتشابهة فقط للتشابه العالي
-            const matchedSegments = similarity >= 0.40 ? extractMatchingSegments(
-              file1.fileText,
-              file2.fileText
-            ) : [];
+            // ⚡ لا نستخرج segments هنا لتوفير CPU time
+            // سيتم استخراجها on-demand عند طلب المستخدم
             
             file1Comparisons.push({
               matched_file_name: file2.fileName,
@@ -260,11 +257,7 @@ serve(async (req) => {
           }
 
           if (similarity > 0.20) {
-            // استخراج الجمل المتشابهة فقط للتشابه العالي
-            const matchedSegments = similarity >= 0.40 ? extractMatchingSegments(
-              file.fileText,
-              repoFile.extracted_text
-            ) : [];
+            // ⚡ لا نستخرج segments هنا لتوفير CPU time
             
             repositoryMatches.push({
               matched_file_id: repoFile.id,
@@ -338,6 +331,25 @@ serve(async (req) => {
         internalMatches.length > 0 ? 'internal' :
         'repository';
 
+      // ⚡ تخزين معلومات لاستخراج segments لاحقاً (on-demand)
+      const segmentsMetadata = {
+        internal_file_pairs: internalMatches
+          .filter(m => m.similarity_score >= 0.40)
+          .map(m => ({
+            file1_hash: file.fileHash,
+            file2_name: m.matched_file_name,
+            similarity: m.similarity_score,
+          })),
+        repository_matches: repositoryMatches
+          .filter(m => m.similarity_score >= 0.40)
+          .map(m => ({
+            file_hash: file.fileHash,
+            repo_file_id: m.matched_file_id,
+            repo_file_name: m.matched_file_name,
+            similarity: m.similarity_score,
+          })),
+      };
+
       // حفظ النتيجة
       const result = {
         batch_id: batchId,
@@ -347,64 +359,6 @@ serve(async (req) => {
         grade_level: gradeLevel,
         comparison_type: comparisonType,
         comparison_source: comparisonSource,
-        
-        // جمع كل matched segments من المقارنة الداخلية والمستودع
-        const allMatchedSegments = [];
-        
-        // إضافة segments من المقارنة الداخلية
-        for (const match of internalMatches) {
-          if (match.matched_segments && match.matched_segments.length > 0) {
-            allMatchedSegments.push(...match.matched_segments.map((seg: MatchedSegment) => ({
-              ...seg,
-              matched_file_id: null,
-              matched_file_name: match.matched_file_name,
-              source_type: 'internal',
-            })));
-          }
-        }
-        
-        // إضافة segments من المستودع
-        for (const match of repositoryMatches) {
-          if (match.matched_segments && match.matched_segments.length > 0) {
-            allMatchedSegments.push(...match.matched_segments.map((seg: MatchedSegment) => ({
-              ...seg,
-              matched_file_id: match.matched_file_id,
-              matched_file_name: match.matched_file_name,
-              source_type: 'repository',
-            })));
-          }
-        }
-        
-        // ترتيب حسب التشابه
-        allMatchedSegments.sort((a, b) => b.similarity - a.similarity);
-        
-        // أول 20 segment
-        const topSegments = allMatchedSegments.slice(0, 20);
-        
-        // معالجة Storage إذا كان هناك أكثر من 20
-        let segmentsFilePath = null;
-        if (allMatchedSegments.length > 20) {
-          const comparisonId = crypto.randomUUID();
-          const fileName = `segments/${comparisonId}.json`;
-          
-          try {
-            const { error: uploadError } = await supabase.storage
-              .from('pdf-comparison-data')
-              .upload(fileName, JSON.stringify(allMatchedSegments), {
-                contentType: 'application/json',
-                upsert: true,
-              });
-            
-            if (!uploadError) {
-              segmentsFilePath = fileName;
-              console.log(`📁 Uploaded ${allMatchedSegments.length} segments to ${fileName}`);
-            } else {
-              console.error('❌ Failed to upload segments:', uploadError);
-            }
-          } catch (uploadErr) {
-            console.error('❌ Exception uploading segments:', uploadErr);
-          }
-        }
         
         // المقارنة الداخلية
         internal_matches: internalMatches.slice(0, 5),
@@ -424,11 +378,10 @@ serve(async (req) => {
         status,
         review_required: status === 'flagged',
         
-        // Hybrid approach: أول 20 في JSONB، الباقي في Storage
-        top_matched_segments: topSegments,
-        segments_file_path: segmentsFilePath,
-        segments_count: allMatchedSegments.length,
-        segments_processing_status: 'completed',
+        // ⚡ Metadata لاستخراج segments on-demand
+        segments_metadata: segmentsMetadata,
+        segments_processing_status: 'pending',
+        segments_count: segmentsMetadata.internal_file_pairs.length + segmentsMetadata.repository_matches.length,
         
         added_to_repository: true,
         repository_file_id: repositoryFileIds.get(file.fileHash),
