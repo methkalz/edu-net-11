@@ -109,7 +109,8 @@ serve(async (req) => {
 
           const similarity = calculateSimilarity(text1, text2);
 
-          if (similarity > 0.30) {
+          // ✅ إصلاح 6: خفض العتبة من 0.30 إلى 0.25
+          if (similarity > 0.25) {
             file1Comparisons.push({
               matched_file_name: file2.fileName,
               similarity_score: Math.round(similarity * 100) / 100,
@@ -131,14 +132,41 @@ serve(async (req) => {
     // جلب ملفات المستودع (باستثناء الملفات المرفوعة حالياً)
     const uploadedHashes = files.map((f: FileToCompare) => f.fileHash);
     
-    const { data: repositoryFiles } = await supabase
+    // ✅ إصلاح 1: جلب جميع ملفات المستودع ثم الفلترة يدوياً
+    const { data: allRepositoryFiles, error: repoError } = await supabase
       .from('pdf_comparison_repository')
       .select('*')
       .eq('grade_level', gradeLevel)
       .eq('project_type', comparisonType)
-      .not('text_hash', 'in', `(${uploadedHashes.join(',')})`);
+      .order('created_at', { ascending: false });
 
-    console.log(`📚 Found ${repositoryFiles?.length || 0} repository files for comparison`);
+    if (repoError) {
+      console.error('❌ Error fetching repository files:', repoError);
+    }
+
+    // فلترة الملفات المرفوعة حالياً يدوياً (أكثر أماناً)
+    const repositoryFiles = allRepositoryFiles?.filter(
+      rf => !uploadedHashes.includes(rf.text_hash)
+    ) || [];
+
+    console.log(`📚 Repository query results:`, {
+      total: allRepositoryFiles?.length || 0,
+      afterFilter: repositoryFiles.length,
+      gradeLevel,
+      comparisonType,
+      excludedHashes: uploadedHashes.length,
+    });
+
+    // عرض عينة من الملفات
+    if (repositoryFiles.length > 0) {
+      console.log(`📄 Sample repository files:`, 
+        repositoryFiles.slice(0, 3).map(f => ({
+          name: f.file_name,
+          hash: f.text_hash?.substring(0, 10) + '...',
+          textLength: f.extracted_text?.length || 0,
+        }))
+      );
+    }
 
     // الخطوة 4: مقارنة كل ملف مع المستودع وحفظ النتائج
     for (const file of files) {
@@ -149,7 +177,25 @@ serve(async (req) => {
       if (repositoryFiles && repositoryFiles.length > 0) {
         const text1 = preprocessText(file.fileText, file.fileText.split(/\s+/).length);
 
-        for (const repoFile of repositoryFiles.slice(0, 10)) {
+        // ✅ إصلاح 5: فحص تطابق Hash مباشر مع المستودع
+        const exactHashMatch = repositoryFiles.find(rf => rf.text_hash === file.fileHash);
+        if (exactHashMatch) {
+          console.log(`🎯 EXACT HASH MATCH found in repository!`, {
+            uploadedFile: file.fileName,
+            matchedFile: exactHashMatch.file_name,
+            hash: file.fileHash.substring(0, 10) + '...',
+          });
+          
+          repositoryMatches.push({
+            matched_file_id: exactHashMatch.id,
+            matched_file_name: exactHashMatch.file_name,
+            similarity_score: 1.0,
+            similarity_method: 'hash_exact_match',
+            flagged: true,
+          });
+        } else {
+          // ✅ إصلاح 2: إزالة حد الـ 10 ملفات - مقارنة مع جميع ملفات المستودع
+          for (const repoFile of repositoryFiles) {
           if (!repoFile.extracted_text) continue;
 
           const text2 = preprocessText(
@@ -159,7 +205,17 @@ serve(async (req) => {
 
           const similarity = calculateSimilarity(text1, text2);
 
-          if (similarity > 0.30) {
+          // ✅ إصلاح 6: خفض العتبة من 0.30 إلى 0.25 + إضافة logging
+          if (similarity > 0.25) {
+            // ✅ إصلاح 4: إضافة logging للمطابقات
+            if (similarity > 0.20) {
+              console.log(`🔍 Match found: ${file.fileName} vs ${repoFile.file_name}`, {
+                similarity: Math.round(similarity * 100) / 100,
+                jaccard: calculateJaccard(text1.wordSet, text2.wordSet),
+                repoFileHash: repoFile.text_hash?.substring(0, 10) + '...',
+              });
+            }
+            
             repositoryMatches.push({
               matched_file_id: repoFile.id,
               matched_file_name: repoFile.file_name,
@@ -171,6 +227,7 @@ serve(async (req) => {
         }
 
         repositoryMatches.sort((a, b) => b.similarity_score - a.similarity_score);
+        } // نهاية else الخاص بفحص Hash
       }
 
       // حساب الإحصائيات
@@ -314,17 +371,35 @@ function normalizeArabicText(text: string): string {
 }
 
 function calculateSimilarity(text1: any, text2: any): number {
-  // Jaccard Similarity
+  // ✅ إصلاح 3: تحسين دالة calculateSimilarity
+  
+  // 1. Jaccard Similarity (للكلمات المشتركة)
   const jaccard = calculateJaccard(text1.wordSet, text2.wordSet);
   
-  // Fuzzy Similarity (عينة)
-  const sampleSize = Math.min(5000, text1.normalized.length);
-  const fuzzy = fuzzball.ratio(
-    text1.normalized.substring(0, sampleSize),
-    text2.normalized.substring(0, sampleSize)
-  ) / 100;
+  // 2. Fuzzy Similarity (عينة أكبر من 5000 إلى 15000)
+  const sampleSize = Math.min(
+    15000,
+    Math.min(text1.normalized.length, text2.normalized.length)
+  );
   
-  return (jaccard * 0.6 + fuzzy * 0.4);
+  const sample1 = text1.normalized.substring(0, sampleSize);
+  const sample2 = text2.normalized.substring(0, sampleSize);
+  
+  const fuzzy = fuzzball.ratio(sample1, sample2) / 100;
+  
+  // 3. حساب تشابه الجمل (Sentence-level similarity)
+  const sentences1 = text1.normalized.split(/[.!?؟]/);
+  const sentences2 = text2.normalized.split(/[.!?؟]/);
+  
+  let sentenceSimilarity = 0;
+  if (sentences1.length > 0 && sentences2.length > 0) {
+    const sentenceSet1 = new Set(sentences1.filter((s: string) => s.trim().length > 10));
+    const sentenceSet2 = new Set(sentences2.filter((s: string) => s.trim().length > 10));
+    sentenceSimilarity = calculateJaccard(sentenceSet1, sentenceSet2);
+  }
+  
+  // 4. وزن متوازن: Jaccard: 40%, Fuzzy: 40%, Sentence: 20%
+  return (jaccard * 0.4 + fuzzy * 0.4 + sentenceSimilarity * 0.2);
 }
 
 function calculateJaccard(set1: Set<string>, set2: Set<string>): number {
