@@ -145,14 +145,12 @@ serve(async (req) => {
           // خفض العتبة من 0.25 إلى 0.20
           if (similarity > 0.20) {
             // ⚡ لا نستخرج segments هنا لتوفير CPU time
-            // سيتم استخراجها on-demand عند طلب المستخدم
             
             file1Comparisons.push({
               matched_file_name: file2.fileName,
               similarity_score: Math.round(similarity * 100) / 100,
               similarity_method: 'text_comparison',
               flagged: similarity >= 0.70,
-              matched_segments: matchedSegments,
             });
           }
         }
@@ -163,194 +161,25 @@ serve(async (req) => {
       }
     }
 
-    // الخطوة 3: المقارنة مع المستودع
-    console.log('🗄️ Step 3: Repository comparison...');
+    // ⚡ الخطوة 3: تخطي المقارنة مع المستودع (ستتم في background)
+    console.log('⚡ Step 3: Skipping repository comparison (will run in background)...');
+
+    // الخطوة 4: حفظ النتائج الداخلية فوراً
+    console.log('💾 Step 4: Saving internal comparison results...');
     
-    const uploadedHashes = files.map((f: FileToCompare) => f.fileHash);
-    
-    console.log(`📤 Uploaded files hashes:`, uploadedHashes.map(h => 
-      `${h.substring(0, 12)}...${h.substring(h.length - 8)}`
-    ));
-    
-    // جلب جميع ملفات المستودع بدون فلترة
-    const { data: allRepositoryFiles, error: repoError } = await supabase
-      .from('pdf_comparison_repository')
-      .select('*')
-      .eq('grade_level', gradeLevel)
-      .eq('project_type', comparisonType)
-      .order('created_at', { ascending: false });
-
-    if (repoError) {
-      console.error('❌ Error fetching repository files:', repoError);
-    }
-
-    // عدم فلترة ملفات المستودع - المقارنة مع الجميع لاكتشاف المطابقات
-    const repositoryFiles = allRepositoryFiles || [];
-
-    console.log(`📚 Repository files for comparison:`, {
-      total: repositoryFiles.length,
-      gradeLevel,
-      comparisonType,
-    });
-
-    if (repositoryFiles.length > 0) {
-      console.log(`📄 Sample repository files:`, 
-        repositoryFiles.slice(0, 5).map(f => ({
-          name: f.file_name,
-          hash: `${f.text_hash?.substring(0, 12)}...${f.text_hash?.substring(f.text_hash.length - 8)}`,
-          textLength: f.extracted_text?.length || 0,
-          createdAt: f.created_at,
-        }))
-      );
-    }
-
-    // الخطوة 4: مقارنة كل ملف مع المستودع وحفظ النتائج
     for (const file of files) {
       const internalMatches = internalComparisons.get(file.fileHash) || [];
-      let repositoryMatches = [];
-
-      // مقارنة مع ملفات المستودع
-      if (repositoryFiles && repositoryFiles.length > 0) {
-        const text1 = preprocessText(file.fileText, file.fileText.split(/\s+/).length);
-
-        // فحص تطابق Hash مباشر مع المستودع أولاً
-        const exactHashMatch = repositoryFiles.find(rf => rf.text_hash === file.fileHash);
-        if (exactHashMatch) {
-          console.log(`🎯 EXACT HASH MATCH found in repository!`, {
-            uploadedFile: file.fileName,
-            matchedFile: exactHashMatch.file_name,
-            hash: `${file.fileHash.substring(0, 12)}...`,
-          });
-          
-          repositoryMatches.push({
-            matched_file_id: exactHashMatch.id,
-            matched_file_name: exactHashMatch.file_name,
-            similarity_score: 1.0,
-            similarity_method: 'hash_exact_match',
-            flagged: true,
-          });
-        }
-
-        // مقارنة مع جميع ملفات المستودع
-        for (const repoFile of repositoryFiles) {
-          if (!repoFile.extracted_text) continue;
-
-          // تخطي المقارنة النصية إذا كان هناك مطابقة hash بالفعل
-          if (repoFile.text_hash === file.fileHash) continue;
-
-          const text2 = preprocessText(
-            repoFile.extracted_text,
-            repoFile.extracted_text.split(/\s+/).length
-          );
-
-          const similarity = calculateSimilarity(text1, text2);
-
-          if (similarity > 0.20) {
-            console.log(`🔍 Match detected:`, {
-              uploadedFile: file.fileName,
-              uploadedHash: `${file.fileHash.substring(0, 12)}...`,
-              repoFile: repoFile.file_name,
-              repoHash: `${repoFile.text_hash?.substring(0, 12)}...`,
-              similarity: Math.round(similarity * 100) / 100,
-              isExactHash: file.fileHash === repoFile.text_hash,
-            });
-          }
-
-          if (similarity > 0.20) {
-            // ⚡ لا نستخرج segments هنا لتوفير CPU time
-            
-            repositoryMatches.push({
-              matched_file_id: repoFile.id,
-              matched_file_name: repoFile.file_name,
-              similarity_score: Math.round(similarity * 100) / 100,
-              similarity_method: 'text_comparison',
-              flagged: similarity >= 0.70,
-              matched_segments: matchedSegments,
-            });
-
-            console.log(
-              `✅ Repository match: ${file.fileName} vs ${repoFile.file_name} = ${Math.round(similarity * 100)}%`
-            );
-          }
-        }
-
-        repositoryMatches.sort((a, b) => b.similarity_score - a.similarity_score);
-      }
-
-      // فلترة الملفات المضافة حديثاً من النتائج النهائية
-      const filteredRepoMatches = repositoryMatches.filter(
-        m => !newlyAddedIds.has(m.matched_file_id)
-      );
-
-      console.log(`🔍 Repository matches for ${file.fileName}:`, {
-        beforeFilter: repositoryMatches.length,
-        afterFilter: filteredRepoMatches.length,
-        newlyAddedIdsCount: newlyAddedIds.size,
-        isFileNewlyAdded: newlyAddedIds.has(repositoryFileIds.get(file.fileHash) || ''),
-        fileRepoId: repositoryFileIds.get(file.fileHash),
-      });
-
-      // استخدام النتائج المفلترة
-      repositoryMatches = filteredRepoMatches;
-
-      // حساب الإحصائيات
+      
+      // حساب الإحصائيات الداخلية فقط
       const internalMaxSim = internalMatches.length > 0
         ? Math.max(...internalMatches.map(m => m.similarity_score))
         : 0;
       const internalHighRisk = internalMatches.filter(m => m.flagged).length;
-
-      const repoMaxSim = repositoryMatches.length > 0
-        ? Math.max(...repositoryMatches.map(m => m.similarity_score))
-        : 0;
-      const repoHighRisk = repositoryMatches.filter(m => m.flagged).length;
-
-      const overallMaxSim = Math.max(internalMaxSim, repoMaxSim);
       
-      // تصنيف محسّن مع مستويات متدرجة
       let status = 'safe';
+      if (internalMaxSim >= 0.70) status = 'flagged';
+      else if (internalMaxSim >= 0.40) status = 'warning';
       
-      if (overallMaxSim >= 0.70) {
-        status = 'flagged';
-      } else if (overallMaxSim >= 0.40) {
-        status = 'warning';
-      } else if (overallMaxSim >= 0.20) {
-        status = 'review';
-      }
-      
-      console.log(`📊 Comparison Summary for ${file.fileName}:`, {
-        internalMatches: internalMatches.length,
-        repositoryMatches: repositoryMatches.length,
-        maxSimilarity: Math.round(overallMaxSim * 100) + '%',
-        status,
-        addedToRepo: repositoryFileIds.has(file.fileHash),
-        repoId: repositoryFileIds.get(file.fileHash),
-      });
-
-      const comparisonSource = 
-        internalMatches.length > 0 && repositoryMatches.length > 0 ? 'both' :
-        internalMatches.length > 0 ? 'internal' :
-        'repository';
-
-      // ⚡ تخزين معلومات لاستخراج segments لاحقاً (on-demand)
-      const segmentsMetadata = {
-        internal_file_pairs: internalMatches
-          .filter(m => m.similarity_score >= 0.40)
-          .map(m => ({
-            file1_hash: file.fileHash,
-            file2_name: m.matched_file_name,
-            similarity: m.similarity_score,
-          })),
-        repository_matches: repositoryMatches
-          .filter(m => m.similarity_score >= 0.40)
-          .map(m => ({
-            file_hash: file.fileHash,
-            repo_file_id: m.matched_file_id,
-            repo_file_name: m.matched_file_name,
-            similarity: m.similarity_score,
-          })),
-      };
-
-      // حفظ النتيجة
       const result = {
         batch_id: batchId,
         compared_file_name: file.fileName,
@@ -358,30 +187,38 @@ serve(async (req) => {
         compared_file_hash: file.fileHash,
         grade_level: gradeLevel,
         comparison_type: comparisonType,
-        comparison_source: comparisonSource,
+        comparison_source: 'internal',
         
         // المقارنة الداخلية
         internal_matches: internalMatches.slice(0, 5),
         internal_max_similarity: internalMaxSim,
         internal_high_risk_count: internalHighRisk,
         
-        // المقارنة مع المستودع
-        repository_matches: repositoryMatches.slice(0, 5),
-        repository_max_similarity: repoMaxSim,
-        repository_high_risk_count: repoHighRisk,
+        // المقارنة مع المستودع - ستتم في background
+        repository_matches: [],
+        repository_max_similarity: 0,
+        repository_high_risk_count: 0,
         
         // الإحصائيات الإجمالية
-        matches: [...internalMatches, ...repositoryMatches].slice(0, 5),
-        max_similarity_score: overallMaxSim,
-        total_matches_found: internalMatches.length + repositoryMatches.length,
-        high_risk_matches: internalHighRisk + repoHighRisk,
+        matches: internalMatches.slice(0, 5),
+        max_similarity_score: internalMaxSim,
+        total_matches_found: internalMatches.length,
+        high_risk_matches: internalHighRisk,
         status,
         review_required: status === 'flagged',
         
         // ⚡ Metadata لاستخراج segments on-demand
-        segments_metadata: segmentsMetadata,
+        segments_metadata: {
+          internal_file_pairs: internalMatches
+            .filter(m => m.similarity_score >= 0.40)
+            .map(m => ({
+              file1_hash: file.fileHash,
+              file2_name: m.matched_file_name,
+              similarity: m.similarity_score,
+            })),
+        },
         segments_processing_status: 'pending',
-        segments_count: segmentsMetadata.internal_file_pairs.length + segmentsMetadata.repository_matches.length,
+        segments_count: 0,
         
         added_to_repository: true,
         repository_file_id: repositoryFileIds.get(file.fileHash),
@@ -421,15 +258,13 @@ serve(async (req) => {
               fileName: file.fileName,
               batchId,
               internalMatches: internalMatches.length,
-              repositoryMatches: repositoryMatches.length,
-              maxSimilarity: overallMaxSim,
+              maxSimilarity: internalMaxSim,
               status,
             },
           });
         }
       } catch (error) {
         console.error(`❌ Exception saving result for ${file.fileName}:`, error);
-        // ✅ إضافة النتيجة حتى في حالة exception
         results.push({
           ...result,
           id: crypto.randomUUID(),
@@ -440,7 +275,98 @@ serve(async (req) => {
       }
     }
 
-    console.log(`✅ Batch comparison completed in ${Date.now() - startTime}ms`);
+    // ⚡ معالجة المستودع في background بعد إرجاع النتائج
+    const backgroundRepositoryComparison = async () => {
+      console.log('🔄 Starting background repository comparison...');
+      
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        
+        try {
+          // جلب نتيجة المقارنة المحفوظة
+          const savedResult = results[i];
+          if (!savedResult?.id) continue;
+
+          // المقارنة مع المستودع في الخلفية
+          const { data: repoFiles } = await supabase
+            .from('pdf_comparison_repository')
+            .select('id, file_name, file_path, text_hash, extracted_text, word_count, grade_level, project_type')
+            .eq('grade_level', gradeLevel)
+            .eq('project_type', comparisonType)
+            .neq('text_hash', file.fileHash)
+            .limit(50);
+
+          if (!repoFiles || repoFiles.length === 0) continue;
+
+          const repositoryMatches = [];
+          const preprocessed1 = preprocessText(file.fileText, 5000);
+
+          for (const repoFile of repoFiles) {
+            const preprocessed2 = preprocessText(repoFile.extracted_text, 5000);
+            const similarity = calculateSimilarity(preprocessed1, preprocessed2);
+            
+            if (similarity > 0.20) {
+              repositoryMatches.push({
+                matched_file_id: repoFile.id,
+                matched_file_name: repoFile.file_name,
+                similarity_score: similarity,
+                similarity_method: 'hybrid',
+                flagged: similarity >= 0.60,
+              });
+            }
+          }
+
+          // تصفية الملفات المضافة حديثاً
+          const filteredMatches = repositoryMatches.filter(
+            m => !newlyAddedIds.has(m.matched_file_id)
+          );
+
+          // تحديث النتيجة في DB
+          if (filteredMatches.length > 0) {
+            const repoMaxSim = Math.max(...filteredMatches.map(m => m.similarity_score));
+            const repoHighRisk = filteredMatches.filter(m => m.flagged).length;
+            
+            // إعادة حساب الـ status الإجمالي
+            const internalMaxSim = savedResult.internal_max_similarity || 0;
+            const overallMaxSim = Math.max(internalMaxSim, repoMaxSim);
+            let newStatus = savedResult.status;
+            if (overallMaxSim >= 0.70) newStatus = 'flagged';
+            else if (overallMaxSim >= 0.40) newStatus = 'warning';
+
+            await supabase
+              .from('pdf_comparison_results')
+              .update({
+                repository_matches: filteredMatches.slice(0, 5),
+                repository_max_similarity: repoMaxSim,
+                repository_high_risk_count: repoHighRisk,
+                comparison_source: 'both',
+                status: newStatus,
+                max_similarity_score: overallMaxSim,
+                total_matches_found: (savedResult.internal_matches?.length || 0) + filteredMatches.length,
+                high_risk_matches: (savedResult.internal_high_risk_count || 0) + repoHighRisk,
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', savedResult.id);
+
+            console.log(`✅ Updated ${file.fileName} with ${filteredMatches.length} repo matches (status: ${newStatus})`);
+          } else {
+            console.log(`ℹ️ No repository matches for ${file.fileName} after filtering`);
+          }
+        } catch (error) {
+          console.error(`❌ Background comparison failed for ${file.fileName}:`, error);
+        }
+      }
+      
+      console.log('✅ Background repository comparison completed');
+    };
+
+    // ⚡ بدء background task لمعالجة المستودع
+    // ملاحظة: Promise سيستمر بعد إرجاع Response
+    backgroundRepositoryComparison().catch(err => 
+      console.error('Background task error:', err)
+    );
+
+    console.log(`⚡ Returning results immediately (${Date.now() - startTime}ms)`);
 
     return new Response(
       JSON.stringify({ 
@@ -449,6 +375,7 @@ serve(async (req) => {
         batchId,
         totalFiles: files.length,
         processingTime: Date.now() - startTime,
+        note: 'Repository comparison running in background',
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
