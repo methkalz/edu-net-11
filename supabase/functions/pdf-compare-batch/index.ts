@@ -360,10 +360,12 @@ serve(async (req) => {
       console.log('✅ Background repository comparison completed');
     };
 
-    // ⚡ بدء background task لمعالجة المستودع
-    // ملاحظة: Promise سيستمر بعد إرجاع Response
-    backgroundRepositoryComparison().catch(err => 
-      console.error('Background task error:', err)
+    // ⚡ بدء background task لمعالجة المستودع باستخدام waitUntil
+    // هذا يضمن بقاء الـ Edge Function حياً حتى يكتمل الـ Promise
+    EdgeRuntime.waitUntil(
+      backgroundRepositoryComparison().catch(err => 
+        console.error('Background task error:', err)
+      )
     );
 
     console.log(`⚡ Returning results immediately (${Date.now() - startTime}ms)`);
