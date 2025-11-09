@@ -76,9 +76,17 @@ serve(async (req) => {
 
         if (addResult.data?.success && addResult.data?.data?.id) {
           const repoId = addResult.data.data.id;
+          const isDuplicate = addResult.data?.isDuplicate || false;
+          
           repositoryFileIds.set(file.fileHash, repoId);
-          newlyAddedIds.add(repoId); // تتبع الملفات المضافة حديثاً
-          console.log(`✅ Added ${file.fileName} to repository (ID: ${repoId})`);
+          
+          // ✅ فقط إضافة الملفات الجديدة فعلاً (ليست مكررة)
+          if (!isDuplicate) {
+            newlyAddedIds.add(repoId);
+            console.log(`✅ Added NEW file ${file.fileName} to repository (ID: ${repoId})`);
+          } else {
+            console.log(`ℹ️ File ${file.fileName} already exists in repository (ID: ${repoId})`);
+          }
         } else if (addResult.error) {
           console.error(`❌ Failed to add ${file.fileName} to repository:`, {
             error: addResult.error,
@@ -263,6 +271,9 @@ serve(async (req) => {
       console.log(`🔍 Repository matches for ${file.fileName}:`, {
         beforeFilter: repositoryMatches.length,
         afterFilter: filteredRepoMatches.length,
+        newlyAddedIdsCount: newlyAddedIds.size,
+        isFileNewlyAdded: newlyAddedIds.has(repositoryFileIds.get(file.fileHash) || ''),
+        fileRepoId: repositoryFileIds.get(file.fileHash),
       });
 
       // استخدام النتائج المفلترة
