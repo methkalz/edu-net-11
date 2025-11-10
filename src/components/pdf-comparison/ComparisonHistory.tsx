@@ -285,20 +285,44 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
                 <div className="p-4 border rounded-lg bg-gradient-to-br from-blue-500/10 to-blue-500/5">
                   <div className="flex items-center gap-2 mb-2">
                     <TrendingUp className="h-4 w-4 text-blue-600" />
-                    <p className="text-xs text-muted-foreground">متوسط التشابه</p>
+                    <p className="text-xs text-muted-foreground">متوسط التشابه الذكي</p>
                   </div>
                   <p className="text-2xl font-bold text-blue-600">
                     {(() => {
-                      const avgScore = selectedComparison.avg_similarity_score;
-                      if (avgScore !== null && avgScore !== undefined) {
-                        return (avgScore * 100).toFixed(1);
-                      }
-                      // حساب المتوسط من التطابقات
-                      const matches = selectedComparison.matches || [];
-                      if (matches.length === 0) return '0.0';
-                      const sum = matches.reduce((acc, match) => acc + (match.similarity_score || 0), 0);
-                      return ((sum / matches.length) * 100).toFixed(1);
+                      // حساب ذكي للمتوسط: يعطي وزن أكبر للمطابقات عالية الخطورة
+                      const internalMatches = selectedComparison.internal_matches || [];
+                      const repoMatches = selectedComparison.repository_matches || [];
+                      const allMatches = [...internalMatches, ...repoMatches];
+                      
+                      if (allMatches.length === 0) return '0.0';
+                      
+                      // حساب متوسط مرجح (weighted average)
+                      let totalWeightedScore = 0;
+                      let totalWeight = 0;
+                      
+                      allMatches.forEach(match => {
+                        const score = match.similarity_score || 0;
+                        // المطابقات عالية الخطورة (>70%) تحصل على وزن 3x
+                        // المطابقات المتوسطة (40-70%) تحصل على وزن 2x
+                        // المطابقات المنخفضة (<40%) تحصل على وزن 1x
+                        let weight = 1;
+                        if (score >= 0.70) weight = 3;
+                        else if (score >= 0.40) weight = 2;
+                        
+                        totalWeightedScore += score * weight;
+                        totalWeight += weight;
+                      });
+                      
+                      const weightedAvg = totalWeight > 0 ? totalWeightedScore / totalWeight : 0;
+                      return (weightedAvg * 100).toFixed(1);
                     })()}%
+                  </p>
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    {(() => {
+                      const internal = selectedComparison.internal_matches?.length || 0;
+                      const repo = selectedComparison.repository_matches?.length || 0;
+                      return `${internal} داخلي · ${repo} مستودع`;
+                    })()}
                   </p>
                 </div>
 
