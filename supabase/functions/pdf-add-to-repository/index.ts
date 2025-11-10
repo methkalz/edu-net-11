@@ -76,7 +76,20 @@ serve(async (req) => {
       pageCount = data.pageCount;
     }
 
-    // 2. نسخ الملف إلى bucket المستودع المناسب
+    // 2. توليد embedding vector للنص
+    console.log(`🔄 Generating embedding vector for ${fileName}`);
+    
+    // استيراد دالة generateEmbedding من _helpers
+    const { generateEmbedding } = await import('../pdf-compare-batch/_helpers.ts');
+    const embedding = generateEmbedding(text, 384);
+    
+    // حساب word_set_size
+    const words = text.split(/\s+/).filter((w: string) => w.length > 2);
+    const wordSetSize = new Set(words).size;
+    
+    console.log(`✅ Embedding generated: ${embedding.length} dimensions, word_set_size: ${wordSetSize}`);
+
+    // 3. نسخ الملف إلى bucket المستودع المناسب
     const targetBucket = gradeLevel === '12' 
       ? 'pdf-comparison-grade12' 
       : 'pdf-comparison-grade10';
@@ -103,7 +116,7 @@ serve(async (req) => {
       throw new Error(`Failed to upload to repository: ${uploadError.message}`);
     }
 
-    // 4. إضافة إلى جدول المستودع
+    // 4. إضافة إلى جدول المستودع مع embedding
     const { data: repositoryEntry, error: insertError } = await supabase
       .from('pdf_comparison_repository')
       .insert({
@@ -115,6 +128,8 @@ serve(async (req) => {
         extracted_text: text,
         text_hash: hash,
         word_count: wordCount,
+        embedding: embedding, // Vector embedding
+        word_set_size: wordSetSize, // Word set size for fast screening
         language_detected: 'ar',
         uploaded_by: userId,
         school_id: schoolId,
@@ -124,6 +139,7 @@ serve(async (req) => {
           original_path: filePath,
           original_bucket: bucket,
           added_at: new Date().toISOString(),
+          embedding_version: 'v1_tfidf_384',
         },
       })
       .select()

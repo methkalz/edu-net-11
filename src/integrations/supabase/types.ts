@@ -4316,9 +4316,67 @@ export type Database = {
           },
         ]
       }
+      pdf_comparison_performance_log: {
+        Row: {
+          created_at: string | null
+          execution_time_ms: number | null
+          file_count: number | null
+          grade_level: string | null
+          id: string
+          match_count: number | null
+          metadata: Json | null
+          operation_type: string
+          performed_by: string | null
+          repository_size: number | null
+          school_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          execution_time_ms?: number | null
+          file_count?: number | null
+          grade_level?: string | null
+          id?: string
+          match_count?: number | null
+          metadata?: Json | null
+          operation_type: string
+          performed_by?: string | null
+          repository_size?: number | null
+          school_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          execution_time_ms?: number | null
+          file_count?: number | null
+          grade_level?: string | null
+          id?: string
+          match_count?: number | null
+          metadata?: Json | null
+          operation_type?: string
+          performed_by?: string | null
+          repository_size?: number | null
+          school_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pdf_comparison_performance_log_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pdf_comparison_performance_log_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "superadmin_school_stats"
+            referencedColumns: ["school_id"]
+          },
+        ]
+      }
       pdf_comparison_repository: {
         Row: {
           created_at: string | null
+          embedding: string | null
           extracted_text: string | null
           file_name: string
           file_path: string
@@ -4331,15 +4389,15 @@ export type Database = {
           school_id: string | null
           source_project_id: string | null
           source_project_type: string | null
-          text_embeddings: Json | null
           text_hash: string | null
-          tfidf_vector: Json | null
           updated_at: string | null
           uploaded_by: string
           word_count: number | null
+          word_set_size: number | null
         }
         Insert: {
           created_at?: string | null
+          embedding?: string | null
           extracted_text?: string | null
           file_name: string
           file_path: string
@@ -4352,15 +4410,15 @@ export type Database = {
           school_id?: string | null
           source_project_id?: string | null
           source_project_type?: string | null
-          text_embeddings?: Json | null
           text_hash?: string | null
-          tfidf_vector?: Json | null
           updated_at?: string | null
           uploaded_by: string
           word_count?: number | null
+          word_set_size?: number | null
         }
         Update: {
           created_at?: string | null
+          embedding?: string | null
           extracted_text?: string | null
           file_name?: string
           file_path?: string
@@ -4373,12 +4431,11 @@ export type Database = {
           school_id?: string | null
           source_project_id?: string | null
           source_project_type?: string | null
-          text_embeddings?: Json | null
           text_hash?: string | null
-          tfidf_vector?: Json | null
           updated_at?: string | null
           uploaded_by?: string
           word_count?: number | null
+          word_set_size?: number | null
         }
         Relationships: [
           {
@@ -6426,6 +6483,48 @@ export type Database = {
       is_teacher_assigned_to_class: {
         Args: { p_class_id: string; p_teacher_id: string }
         Returns: boolean
+      }
+      match_documents_hybrid: {
+        Args: {
+          jaccard_threshold?: number
+          match_count?: number
+          match_threshold?: number
+          p_grade_level?: string
+          p_project_type?: string
+          query_embedding: string
+          query_word_set_size: number
+        }
+        Returns: {
+          file_name: string
+          file_path: string
+          grade_level: string
+          id: string
+          project_type: string
+          school_id: string
+          similarity: number
+          uploaded_by: string
+          word_count: number
+        }[]
+      }
+      match_similar_documents: {
+        Args: {
+          match_count?: number
+          match_threshold?: number
+          p_grade_level?: string
+          p_project_type?: string
+          query_embedding: string
+        }
+        Returns: {
+          file_name: string
+          file_path: string
+          grade_level: string
+          id: string
+          project_type: string
+          school_id: string
+          similarity: number
+          uploaded_by: string
+          word_count: number
+        }[]
       }
       recalculate_exam_attempt: {
         Args: { p_attempt_id: string }

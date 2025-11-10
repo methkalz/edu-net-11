@@ -1,5 +1,71 @@
 import * as fuzzball from 'https://esm.sh/fuzzball@2.2.2';
 
+// ============================================
+// VECTOR EMBEDDING UTILITIES (TF-IDF + Feature Hashing)
+// ============================================
+
+/**
+ * Hash function for feature hashing (dimensionality reduction)
+ * Uses simple string hashing to map words to fixed vector dimensions
+ */
+function hashString(str: string, maxDim: number): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  return Math.abs(hash) % maxDim;
+}
+
+/**
+ * Generate embedding vector from text using TF-IDF + Feature Hashing
+ * This creates a fixed-size 384-dimensional vector for efficient similarity search
+ * 
+ * @param text - Input text (already normalized)
+ * @param targetDim - Target vector dimension (default: 384)
+ * @returns Array of length targetDim representing the text embedding
+ */
+export function generateEmbedding(text: string, targetDim: number = 384): number[] {
+  const normalized = normalizeArabicText(text);
+  const words = normalized.split(/\s+/).filter(w => w.length > 2);
+  
+  if (words.length === 0) {
+    return new Array(targetDim).fill(0);
+  }
+  
+  // Calculate Term Frequency (TF)
+  const termFrequency = new Map<string, number>();
+  for (const word of words) {
+    termFrequency.set(word, (termFrequency.get(word) || 0) + 1);
+  }
+  
+  // Normalize TF
+  const totalWords = words.length;
+  for (const [word, count] of termFrequency.entries()) {
+    termFrequency.set(word, count / totalWords);
+  }
+  
+  // Create fixed-size vector using feature hashing
+  const vector = new Array(targetDim).fill(0);
+  
+  for (const [word, tf] of termFrequency.entries()) {
+    const index = hashString(word, targetDim);
+    // Use TF as weight (could add IDF if we had document frequency data)
+    vector[index] += tf;
+  }
+  
+  // L2 normalization for cosine similarity
+  const magnitude = Math.sqrt(vector.reduce((sum, val) => sum + val * val, 0));
+  if (magnitude > 0) {
+    for (let i = 0; i < vector.length; i++) {
+      vector[i] /= magnitude;
+    }
+  }
+  
+  return vector;
+}
+
 export interface ExtractedPage {
   page_number: number;
   text: string;
@@ -108,16 +174,18 @@ export function extractMatchingSegments(
 
 export function preprocessText(text: string, wordCount: number) {
   const normalized = normalizeArabicText(text);
-  let words = normalized.split(/\s+/).filter(w => w.length > 2);
+  const words = normalized.split(/\s+/).filter(w => w.length > 2);
   
-  const maxWords = 50000;
-  if (words.length > maxWords) {
-    const step = Math.floor(words.length / maxWords);
-    words = words.filter((_, i) => i % step === 0).slice(0, maxWords);
-  }
-  
+  // Process ALL words (no sampling) for accurate comparison
   const wordSet = new Set(words);
-  return { normalized, words, wordSet };
+  
+  return { 
+    normalized, 
+    words, 
+    wordSet,
+    wordCount: words.length,
+    wordSetSize: wordSet.size
+  };
 }
 
 export function calculateSimilarity(text1: any, text2: any): number {
