@@ -46,7 +46,21 @@ const BatchComparisonResult = ({ result: initialResult }: BatchComparisonResultP
 
   // Realtime subscription to listen for updates
   useEffect(() => {
-    if (!result.id) return;
+    // Debug log to confirm useEffect runs
+    if (import.meta.env.DEV) {
+      console.log(`🔍 [Realtime] useEffect triggered for ${result.compared_file_name}`, {
+        hasId: !!result.id,
+        id: result.id,
+        comparison_source: result.comparison_source
+      });
+    }
+
+    if (!result.id) {
+      if (import.meta.env.DEV) {
+        console.warn(`⚠️ [Realtime] Skipping subscription - no result ID for ${result.compared_file_name}`);
+      }
+      return;
+    }
 
     if (import.meta.env.DEV) {
       console.log(`🔔 [Realtime] Setting up subscription for comparison ${result.id}`);
@@ -102,6 +116,10 @@ const BatchComparisonResult = ({ result: initialResult }: BatchComparisonResultP
           console.log(`🔔 [Realtime] Subscription status for ${result.compared_file_name}: ${status}`);
         }
       });
+
+    if (import.meta.env.DEV) {
+      console.log(`✅ [Realtime] Channel created and subscribed for ${result.compared_file_name}`);
+    }
 
     return () => {
       if (import.meta.env.DEV) {
