@@ -152,7 +152,9 @@ serve(async (req) => {
             continue;
           }
 
-          // Cosine similarity calculation using embeddings (fast!)
+          // ✅ حساب التشابه باستخدام معايير متعددة (Hybrid Approach)
+          
+          // 1. Cosine similarity على embeddings
           const emb1 = fileEmbeddings[i].embedding;
           const emb2 = fileEmbeddings[j].embedding;
           
@@ -160,14 +162,58 @@ serve(async (req) => {
           for (let k = 0; k < emb1.length; k++) {
             dotProduct += emb1[k] * emb2[k];
           }
-          const similarity = dotProduct; // Already normalized in generateEmbedding
-
-          // ✅ عرض جميع المقارنات الداخلية بغض النظر عن نسبة التشابه
+          const cosineSim = Math.max(0, Math.min(1, dotProduct)); // تطبيع بين 0-1
+          
+          // 2. Jaccard similarity على الكلمات المفتاحية
+          const keywords1 = new Set(fileEmbeddings[i].keywords);
+          const keywords2 = new Set(fileEmbeddings[j].keywords);
+          
+          let intersection = 0;
+          for (const kw of keywords1) {
+            if (keywords2.has(kw)) intersection++;
+          }
+          const union = keywords1.size + keywords2.size - intersection;
+          const jaccardSim = union > 0 ? intersection / union : 0;
+          
+          // 3. فحص التشابه في الطول (Length similarity penalty)
+          const wordCount1 = fileEmbeddings[i].wordCount;
+          const wordCount2 = fileEmbeddings[j].wordCount;
+          const pageCount1 = fileEmbeddings[i].pageCount;
+          const pageCount2 = fileEmbeddings[j].pageCount;
+          
+          // إذا كان الفرق في عدد الكلمات كبير جداً، خفض التشابه
+          const wordRatio = Math.min(wordCount1, wordCount2) / Math.max(wordCount1, wordCount2);
+          const pageRatio = Math.min(pageCount1, pageCount2) / Math.max(pageCount1, pageCount2);
+          const lengthSimilarity = (wordRatio + pageRatio) / 2;
+          
+          // 4. الوزن الهجين المحسّن
+          // - إذا كان Jaccard منخفض جداً (< 0.15)، فالمستندات مختلفة بغض النظر عن cosine
+          // - إذا كان فرق الطول كبير (< 0.5)، خفض الوزن
+          let finalSimilarity = 0;
+          
+          if (jaccardSim < 0.15) {
+            // تشابه منخفض جداً في الكلمات - اعتماد أقل على cosine
+            finalSimilarity = cosineSim * 0.3 + jaccardSim * 0.6 + lengthSimilarity * 0.1;
+          } else if (lengthSimilarity < 0.5) {
+            // فرق كبير في الطول - تخفيض التشابه
+            finalSimilarity = (cosineSim * 0.4 + jaccardSim * 0.5 + lengthSimilarity * 0.1) * 0.7;
+          } else {
+            // حالة عادية - توازن بين المعايير
+            finalSimilarity = cosineSim * 0.5 + jaccardSim * 0.4 + lengthSimilarity * 0.1;
+          }
+          
+          // ✅ حفظ جميع المقارنات مع التفاصيل
           file1Comparisons.push({
             matched_file_name: file2.fileName,
-            similarity_score: Math.round(similarity * 100) / 100,
-            similarity_method: 'cosine_embedding',
-            flagged: similarity >= 0.70,
+            similarity_score: Math.round(finalSimilarity * 100) / 100,
+            similarity_method: 'hybrid_cosine_jaccard_length',
+            flagged: finalSimilarity >= 0.70,
+            metadata: {
+              cosine: Math.round(cosineSim * 100) / 100,
+              jaccard: Math.round(jaccardSim * 100) / 100,
+              length_similarity: Math.round(lengthSimilarity * 100) / 100,
+              word_count_ratio: Math.round(wordRatio * 100) / 100,
+            }
           });
         }
 
