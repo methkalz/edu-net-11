@@ -34,6 +34,9 @@ const BatchComparisonResult = ({ result: initialResult }: BatchComparisonResultP
   useEffect(() => {
     if (!result.id) return;
 
+    console.log(`🔔 Setting up realtime subscription for comparison ${result.id}`);
+    console.log(`📊 Initial state: comparison_source="${result.comparison_source}", isComparingRepository=${isComparingRepository}`);
+
     const channel = supabase
       .channel(`comparison-${result.id}`)
       .on(
@@ -45,25 +48,35 @@ const BatchComparisonResult = ({ result: initialResult }: BatchComparisonResultP
           filter: `id=eq.${result.id}`,
         },
         (payload) => {
-          console.log('📡 Received update:', payload);
+          console.log('📡 Received realtime update:', {
+            id: payload.new.id,
+            comparison_source: payload.new.comparison_source,
+            repository_matches_count: payload.new.repository_matches?.length || 0,
+            status: payload.new.status
+          });
+          
           const updatedResult = payload.new as ComparisonResult;
           
           // Update the result
           setResult(updatedResult);
           
           // Check if repository comparison is complete
-          if (updatedResult.comparison_source === 'both' && isComparingRepository) {
+          if (updatedResult.comparison_source === 'both') {
+            console.log('✅ Repository comparison completed!');
             setIsComparingRepository(false);
             toast.success('اكتملت المقارنة مع المستودع');
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log(`🔔 Subscription status: ${status}`);
+      });
 
     return () => {
+      console.log(`🔕 Cleaning up subscription for comparison ${result.id}`);
       supabase.removeChannel(channel);
     };
-  }, [result.id, isComparingRepository]);
+  }, [result.id]); // Removed isComparingRepository from dependencies
 
   const loadAllSegments = async () => {
     setLoadingSegments(true);
