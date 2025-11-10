@@ -120,7 +120,7 @@ serve(async (req) => {
     const fileEmbeddings = files.map(file => {
       const preprocessed = preprocessText(file.fileText, file.fileText.split(/\s+/).length);
       return {
-        embedding: generateEmbedding(file.fileText, 384),
+        embedding: generateEmbedding(file.fileText, 1024), // ✅ زيادة من 384 إلى 1024
         keywords: extractTopKeywords(file.fileText, 150),
         wordSetSize: preprocessed.wordSetSize,
         wordCount: preprocessed.wordCount,

@@ -81,7 +81,7 @@ serve(async (req) => {
     
     // استيراد دوال من _shared
     const { generateEmbedding, extractTopKeywords } = await import('../_shared/embeddings.ts');
-    const embedding = generateEmbedding(text, 384);
+    const embedding = generateEmbedding(text, 1024); // ✅ زيادة من 384 إلى 1024
     const topKeywords = extractTopKeywords(text, 150);
     
     // حساب word_set_size
@@ -142,7 +142,7 @@ serve(async (req) => {
           original_path: filePath,
           original_bucket: bucket,
           added_at: new Date().toISOString(),
-          embedding_version: 'v2_tfidf_ngrams_stopwords_384',
+          embedding_version: 'v3_tfidf_ngrams_stopwords_signed_1024', // ✅ تحديث الإصدار
         },
       })
       .select()

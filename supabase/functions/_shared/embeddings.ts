@@ -69,28 +69,30 @@ export function extractTopKeywords(text: string, maxKeywords: number = 150): str
 }
 
 /**
- * Hash function for feature hashing (dimensionality reduction)
- * Uses simple string hashing to map words to fixed vector dimensions
+ * Hash function for feature hashing with sign (Count Sketch algorithm)
+ * Returns both index and sign to reduce hash collision effects
  */
-export function hashString(str: string, maxDim: number): number {
+export function hashStringWithSign(str: string, maxDim: number): { index: number; sign: number } {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
     hash = ((hash << 5) - hash) + char;
     hash = hash & hash; // Convert to 32-bit integer
   }
-  return Math.abs(hash) % maxDim;
+  const index = Math.abs(hash) % maxDim;
+  const sign = (hash & 1) ? 1 : -1; // Random sign based on least significant bit
+  return { index, sign };
 }
 
 /**
- * Generate embedding vector from text using TF-IDF + Feature Hashing + N-grams
+ * Generate embedding vector from text using TF-IDF + Signed Feature Hashing + N-grams + Length Penalty
  * This creates a fixed-size vector for efficient similarity search with pgvector
  * 
  * @param text - Input text (will be normalized)
- * @param targetDim - Target vector dimension (default: 384)
+ * @param targetDim - Target vector dimension (default: 1024, increased from 384 to reduce collisions)
  * @returns Array of length targetDim representing the text embedding
  */
-export function generateEmbedding(text: string, targetDim: number = 384): number[] {
+export function generateEmbedding(text: string, targetDim: number = 1024): number[] {
   const normalized = normalizeArabicText(text);
   const words = normalized.split(/\s+/).filter(w => w.length > 2);
   
@@ -120,13 +122,19 @@ export function generateEmbedding(text: string, targetDim: number = 384): number
     termFrequency.set(ngram, count / totalNGrams);
   }
   
-  // Create fixed-size vector using feature hashing
+  // Create fixed-size vector using signed feature hashing (Count Sketch)
   const vector = new Array(targetDim).fill(0);
   
   for (const [ngram, tf] of termFrequency.entries()) {
-    const index = hashString(ngram, targetDim);
-    // Use TF as weight (could add IDF if we had document frequency data)
-    vector[index] += tf;
+    const { index, sign } = hashStringWithSign(ngram, targetDim);
+    // Use signed addition to reduce collision effects
+    vector[index] += sign * tf;
+  }
+  
+  // Apply document length penalty to reduce bias towards long documents
+  const lengthPenalty = Math.log(1 + filteredWords.length / 1000);
+  for (let i = 0; i < vector.length; i++) {
+    vector[i] /= lengthPenalty;
   }
   
   // L2 normalization for cosine similarity
