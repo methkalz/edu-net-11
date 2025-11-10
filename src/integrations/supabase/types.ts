@@ -4385,6 +4385,7 @@ export type Database = {
           id: string
           language_detected: string | null
           metadata: Json | null
+          page_count: number | null
           project_type: string
           school_id: string | null
           source_project_id: string | null
@@ -4407,6 +4408,7 @@ export type Database = {
           id?: string
           language_detected?: string | null
           metadata?: Json | null
+          page_count?: number | null
           project_type: string
           school_id?: string | null
           source_project_id?: string | null
@@ -4429,6 +4431,7 @@ export type Database = {
           id?: string
           language_detected?: string | null
           metadata?: Json | null
+          page_count?: number | null
           project_type?: string
           school_id?: string | null
           source_project_id?: string | null
