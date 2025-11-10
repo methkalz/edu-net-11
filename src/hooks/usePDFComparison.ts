@@ -596,6 +596,30 @@ export const usePDFComparison = () => {
     }
   };
 
+  // حذف عدة ملفات من المستودع (bulk delete - للسوبر آدمن فقط)
+  const deleteMultipleFromRepository = async (fileIds: string[]): Promise<boolean> => {
+    try {
+      if (fileIds.length === 0) {
+        toast.warning('لم يتم تحديد أي ملفات');
+        return false;
+      }
+
+      const { error } = await supabase
+        .from('pdf_comparison_repository')
+        .delete()
+        .in('id', fileIds);
+
+      if (error) throw error;
+
+      toast.success(`تم حذف ${fileIds.length} ملف من المستودع بنجاح`);
+      return true;
+    } catch (error: any) {
+      console.error('Bulk delete error:', error);
+      toast.error('فشل الحذف: ' + error.message);
+      return false;
+    }
+  };
+
   // إحصائيات المستودع
   const getRepositoryStats = async (gradeLevel?: GradeLevel) => {
     try {
@@ -633,6 +657,7 @@ export const usePDFComparison = () => {
     getRepositoryFiles,
     addToRepository,
     deleteFromRepository,
+    deleteMultipleFromRepository,
     getRepositoryStats,
   };
 };

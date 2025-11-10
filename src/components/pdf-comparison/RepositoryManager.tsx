@@ -10,6 +10,7 @@ import {
   TableRow 
 } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
+import { Checkbox } from '@/components/ui/checkbox';
 import { RefreshCw, Trash2, Database, Upload } from 'lucide-react';
 import { usePDFComparison, type GradeLevel, type RepositoryFile } from '@/hooks/usePDFComparison';
 import { formatDistanceToNow } from 'date-fns';
@@ -26,7 +27,8 @@ const RepositoryManager = ({ gradeLevel }: RepositoryManagerProps) => {
   const { userProfile } = useAuth();
   const { 
     getRepositoryFiles, 
-    deleteFromRepository, 
+    deleteFromRepository,
+    deleteMultipleFromRepository,
     getRepositoryStats,
     addToRepository,
     uploadProgress
@@ -38,6 +40,8 @@ const RepositoryManager = ({ gradeLevel }: RepositoryManagerProps) => {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadingFileName, setUploadingFileName] = useState<string>('');
+  const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const isSuperAdmin = userProfile?.role === 'superadmin';
 
@@ -69,9 +73,58 @@ const RepositoryManager = ({ gradeLevel }: RepositoryManagerProps) => {
     setDeletingId(fileId);
     const success = await deleteFromRepository(fileId);
     if (success) {
+      setSelectedFiles(new Set()); // Clear selection after delete
       loadData();
     }
     setDeletingId(null);
+  };
+
+  // تحديد/إلغاء تحديد ملف
+  const toggleFileSelection = (fileId: string) => {
+    setSelectedFiles(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(fileId)) {
+        newSet.delete(fileId);
+      } else {
+        newSet.add(fileId);
+      }
+      return newSet;
+    });
+  };
+
+  // تحديد الكل
+  const selectAll = () => {
+    setSelectedFiles(new Set(files.map(f => f.id)));
+  };
+
+  // إلغاء تحديد الكل
+  const clearSelection = () => {
+    setSelectedFiles(new Set());
+  };
+
+  // حذف الملفات المحددة
+  const handleBulkDelete = async () => {
+    if (!isSuperAdmin) {
+      toast.error('غير مصرح لك بالحذف');
+      return;
+    }
+
+    if (selectedFiles.size === 0) {
+      toast.warning('لم يتم تحديد أي ملفات');
+      return;
+    }
+
+    if (!confirm(`هل أنت متأكد من حذف ${selectedFiles.size} ملف من المستودع؟\n\nهذا الإجراء لا يمكن التراجع عنه.`)) {
+      return;
+    }
+
+    setIsDeleting(true);
+    const success = await deleteMultipleFromRepository(Array.from(selectedFiles));
+    if (success) {
+      setSelectedFiles(new Set());
+      await loadData();
+    }
+    setIsDeleting(false);
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -178,10 +231,36 @@ const RepositoryManager = ({ gradeLevel }: RepositoryManagerProps) => {
                 ملفات المستودع
               </CardTitle>
               <CardDescription>
-                الملفات المستخدمة كمرجع في عملية المقارنة
+                {selectedFiles.size > 0 
+                  ? `تم تحديد ${selectedFiles.size} من ${files.length} ملف`
+                  : 'الملفات المستخدمة كمرجع في عملية المقارنة'
+                }
               </CardDescription>
             </div>
             <div className="flex gap-2">
+              {isSuperAdmin && selectedFiles.size > 0 && (
+                <>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleBulkDelete}
+                    disabled={isDeleting}
+                  >
+                    <Trash2 className="h-4 w-4 ml-2" />
+                    حذف المحدد ({selectedFiles.size})
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={clearSelection}
+                    disabled={isDeleting}
+                  >
+                    إلغاء التحديد
+                  </Button>
+                </>
+              )}
+              
               <Button
                 variant="outline"
                 size="sm"
@@ -229,6 +308,17 @@ const RepositoryManager = ({ gradeLevel }: RepositoryManagerProps) => {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    {isSuperAdmin && (
+                      <TableHead className="w-12">
+                        <Checkbox
+                          checked={selectedFiles.size === files.length && files.length > 0}
+                          onCheckedChange={(checked) => 
+                            checked ? selectAll() : clearSelection()
+                          }
+                          disabled={isDeleting}
+                        />
+                      </TableHead>
+                    )}
                     <TableHead>اسم الملف</TableHead>
                     <TableHead className="text-center">الحجم</TableHead>
                     <TableHead className="text-center">تاريخ الإضافة</TableHead>
@@ -240,6 +330,15 @@ const RepositoryManager = ({ gradeLevel }: RepositoryManagerProps) => {
                 <TableBody>
                   {files.map((file) => (
                     <TableRow key={file.id}>
+                      {isSuperAdmin && (
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedFiles.has(file.id)}
+                            onCheckedChange={() => toggleFileSelection(file.id)}
+                            disabled={isDeleting}
+                          />
+                        </TableCell>
+                      )}
                       <TableCell className="font-medium max-w-[300px] truncate">
                         {file.file_name}
                       </TableCell>
@@ -258,7 +357,7 @@ const RepositoryManager = ({ gradeLevel }: RepositoryManagerProps) => {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDelete(file.id)}
-                            disabled={deletingId === file.id}
+                            disabled={deletingId === file.id || isDeleting}
                           >
                             <Trash2 className="h-4 w-4 text-red-600" />
                           </Button>
