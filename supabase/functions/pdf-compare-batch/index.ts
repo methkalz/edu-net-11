@@ -293,6 +293,7 @@ serve(async (req) => {
     const backgroundRepositoryComparison = async () => {
       try {
         console.log('🔄 Starting background repository comparison with pgvector...');
+        console.log(`📊 Processing ${files.length} files for repository comparison`);
         const repoStartTime = Date.now();
         
         // معالجة كل ملف على حدة
@@ -305,7 +306,8 @@ serve(async (req) => {
             continue;
           }
           
-          console.log(`🔍 Comparing ${file.fileName} against repository using pgvector...`);
+          console.log(`🔍 [${i+1}/${files.length}] Comparing ${file.fileName} against repository using pgvector...`);
+          console.log(`📋 Result ID: ${savedResult.id}, comparison_source: ${savedResult.comparison_source}`);
           
           // استخدام embedding المولد مسبقاً
           const queryEmbedding = fileEmbeddings[i].embedding;
@@ -338,7 +340,7 @@ serve(async (req) => {
               (m: any) => !newlyAddedIds.has(m.id)
             );
             
-            console.log(`✅ After filtering: ${filteredMatches.length} matches`);
+            console.log(`✅ After filtering: ${filteredMatches.length} matches for ${file.fileName}`);
             
             // تحويل النتائج إلى الصيغة المطلوبة
             const repositoryMatches = filteredMatches.map((match: any) => ({
@@ -361,6 +363,15 @@ serve(async (req) => {
               if (overallMaxSim >= 0.70) newStatus = 'flagged';
               else if (overallMaxSim >= 0.40) newStatus = 'warning';
               
+              console.log(`📤 Updating result for ${file.fileName}:`, {
+                resultId: savedResult.id,
+                repositoryMatches: repositoryMatches.length,
+                repoMaxSim,
+                overallMaxSim,
+                newStatus,
+                comparison_source: 'both'
+              });
+              
               const { error: updateError } = await supabase
                 .from('pdf_comparison_results')
                 .update({
@@ -379,10 +390,28 @@ serve(async (req) => {
               if (updateError) {
                 console.error(`❌ Error updating result for ${file.fileName}:`, updateError);
               } else {
-                console.log(`✅ Updated ${file.fileName} with ${repositoryMatches.length} repo matches (status: ${newStatus})`);
+                console.log(`✅ Successfully updated ${file.fileName} with ${repositoryMatches.length} repo matches (status: ${newStatus})`);
               }
             } else {
               console.log(`ℹ️ No repository matches for ${file.fileName} after filtering`);
+              
+              // تحديث comparison_source إلى 'both' حتى لو لم تكن هناك مطابقات
+              const { error: updateError } = await supabase
+                .from('pdf_comparison_results')
+                .update({
+                  comparison_source: 'both',
+                  repository_matches: [],
+                  repository_max_similarity: 0,
+                  repository_high_risk_count: 0,
+                  updated_at: new Date().toISOString(),
+                })
+                .eq('id', savedResult.id);
+              
+              if (updateError) {
+                console.error(`❌ Error updating result for ${file.fileName}:`, updateError);
+              } else {
+                console.log(`✅ Updated ${file.fileName} to comparison_source='both' (no matches)`);
+              }
             }
           } catch (fileError) {
             console.error(`❌ Error processing ${file.fileName}:`, fileError);
@@ -393,6 +422,7 @@ serve(async (req) => {
         const totalRepoTime = repoEndTime - repoStartTime;
         
         console.log(`✅ Background repository comparison completed in ${totalRepoTime}ms`);
+        console.log(`📊 Summary: Processed ${files.length} files`);
         
         // تسجيل الأداء
         await supabase.from('pdf_comparison_performance_log').insert({

@@ -30,12 +30,32 @@ const BatchComparisonResult = ({ result: initialResult }: BatchComparisonResultP
     initialResult.comparison_source === 'internal'
   );
 
+  // Log initial state in development
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      console.log('🔵 [BatchComparisonResult] Component mounted:', {
+        resultId: result.id,
+        fileName: result.compared_file_name,
+        comparisonSource: result.comparison_source,
+        isComparingRepository: result.comparison_source === 'internal',
+        repositoryMatches: result.repository_matches?.length || 0,
+        internalMatches: result.internal_matches?.length || 0,
+      });
+    }
+  }, []);
+
   // Realtime subscription to listen for updates
   useEffect(() => {
     if (!result.id) return;
 
-    console.log(`🔔 Setting up realtime subscription for comparison ${result.id}`);
-    console.log(`📊 Initial state: comparison_source="${result.comparison_source}", isComparingRepository=${isComparingRepository}`);
+    if (import.meta.env.DEV) {
+      console.log(`🔔 [Realtime] Setting up subscription for comparison ${result.id}`);
+      console.log(`📊 [Realtime] Initial state:`, {
+        comparison_source: result.comparison_source,
+        isComparingRepository,
+        fileName: result.compared_file_name
+      });
+    }
 
     const channel = supabase
       .channel(`comparison-${result.id}`)
@@ -48,12 +68,16 @@ const BatchComparisonResult = ({ result: initialResult }: BatchComparisonResultP
           filter: `id=eq.${result.id}`,
         },
         (payload) => {
-          console.log('📡 Received realtime update:', {
-            id: payload.new.id,
-            comparison_source: payload.new.comparison_source,
-            repository_matches_count: payload.new.repository_matches?.length || 0,
-            status: payload.new.status
-          });
+          if (import.meta.env.DEV) {
+            console.log('📡 [Realtime] Received update:', {
+              resultId: payload.new.id,
+              fileName: payload.new.compared_file_name,
+              comparison_source: payload.new.comparison_source,
+              repository_matches_count: payload.new.repository_matches?.length || 0,
+              status: payload.new.status,
+              max_similarity: payload.new.max_similarity_score
+            });
+          }
           
           const updatedResult = payload.new as ComparisonResult;
           
@@ -62,18 +86,27 @@ const BatchComparisonResult = ({ result: initialResult }: BatchComparisonResultP
           
           // Check if repository comparison is complete
           if (updatedResult.comparison_source === 'both') {
-            console.log('✅ Repository comparison completed!');
+            if (import.meta.env.DEV) {
+              console.log('✅ [Realtime] Repository comparison completed!', {
+                fileName: updatedResult.compared_file_name,
+                repositoryMatches: updatedResult.repository_matches?.length || 0
+              });
+            }
             setIsComparingRepository(false);
-            toast.success('اكتملت المقارنة مع المستودع');
+            toast.success(`اكتملت المقارنة مع المستودع: ${updatedResult.compared_file_name}`);
           }
         }
       )
       .subscribe((status) => {
-        console.log(`🔔 Subscription status: ${status}`);
+        if (import.meta.env.DEV) {
+          console.log(`🔔 [Realtime] Subscription status for ${result.compared_file_name}: ${status}`);
+        }
       });
 
     return () => {
-      console.log(`🔕 Cleaning up subscription for comparison ${result.id}`);
+      if (import.meta.env.DEV) {
+        console.log(`🔕 [Realtime] Cleaning up subscription for ${result.compared_file_name} (${result.id})`);
+      }
       supabase.removeChannel(channel);
     };
   }, [result.id]); // Removed isComparingRepository from dependencies
