@@ -39,9 +39,16 @@ const RepositoryManager = ({ gradeLevel }: RepositoryManagerProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadingFileName, setUploadingFileName] = useState<string>('');
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
   const [isDeleting, setIsDeleting] = useState(false);
+  
+  // Bulk upload states
+  const [uploadQueue, setUploadQueue] = useState<Array<{
+    file: File;
+    status: 'pending' | 'uploading' | 'success' | 'error';
+    progress: number;
+    error?: string;
+  }>>([]);
 
   const isSuperAdmin = userProfile?.role === 'superadmin';
 
@@ -128,57 +135,161 @@ const RepositoryManager = ({ gradeLevel }: RepositoryManagerProps) => {
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+    const selectedFiles = event.target.files;
+    if (!selectedFiles || selectedFiles.length === 0) return;
 
     if (!gradeLevel) {
       toast.error('يرجى تحديد الصف أولاً');
       return;
     }
 
-    setIsUploading(true);
-    setUploadingFileName(file.name);
+    // تحويل FileList إلى Array وإنشاء queue
+    const filesArray = Array.from(selectedFiles);
+    const initialQueue = filesArray.map(file => ({
+      file,
+      status: 'pending' as const,
+      progress: 0,
+    }));
 
-    try {
-      const success = await addToRepository(file, gradeLevel);
-      if (success) {
-        await loadData();
-        toast.success('تم رفع الملف بنجاح');
+    setUploadQueue(initialQueue);
+    setIsUploading(true);
+
+    // رفع الملفات بشكل متتالي
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (let i = 0; i < filesArray.length; i++) {
+      const file = filesArray[i];
+      
+      // تحديث حالة الملف إلى "uploading"
+      setUploadQueue(prev => 
+        prev.map((item, idx) => 
+          idx === i ? { ...item, status: 'uploading' as const, progress: 0 } : item
+        )
+      );
+
+      try {
+        const success = await addToRepository(file, gradeLevel);
+        
+        if (success) {
+          successCount++;
+          setUploadQueue(prev => 
+            prev.map((item, idx) => 
+              idx === i ? { ...item, status: 'success' as const, progress: 100 } : item
+            )
+          );
+        } else {
+          errorCount++;
+          setUploadQueue(prev => 
+            prev.map((item, idx) => 
+              idx === i ? { ...item, status: 'error' as const, error: 'فشل الرفع' } : item
+            )
+          );
+        }
+      } catch (error) {
+        errorCount++;
+        const errorMsg = error instanceof Error ? error.message : 'خطأ غير معروف';
+        setUploadQueue(prev => 
+          prev.map((item, idx) => 
+            idx === i ? { ...item, status: 'error' as const, error: errorMsg } : item
+          )
+        );
       }
-    } catch (error) {
-      console.error('Error uploading file:', error);
-      toast.error('حدث خطأ أثناء رفع الملف');
-    } finally {
-      setIsUploading(false);
-      setUploadingFileName('');
-      event.target.value = '';
+
+      // تحديث progress
+      setUploadQueue(prev => 
+        prev.map((item, idx) => 
+          idx === i ? { ...item, progress: 100 } : item
+        )
+      );
     }
+
+    // إظهار ملخص النتائج
+    if (successCount > 0) {
+      toast.success(`تم رفع ${successCount} من ${filesArray.length} ملف بنجاح`);
+      await loadData();
+    }
+    
+    if (errorCount > 0) {
+      toast.error(`فشل رفع ${errorCount} من ${filesArray.length} ملف`);
+    }
+
+    // تنظيف بعد 3 ثوان
+    setTimeout(() => {
+      setUploadQueue([]);
+      setIsUploading(false);
+    }, 3000);
+
+    event.target.value = '';
   };
 
   return (
     <div className="space-y-6">
-      {/* Upload Progress Bar */}
-      {isUploading && (
+      {/* Bulk Upload Progress */}
+      {uploadQueue.length > 0 && (
         <Card className="border-0 bg-gradient-to-r from-primary/10 to-primary/5 backdrop-blur-sm">
           <CardContent className="p-6">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
                     <Upload className="h-5 w-5 text-primary animate-pulse" />
                   </div>
                   <div>
-                    <p className="font-medium text-sm">جاري رفع الملف...</p>
-                    <p className="text-xs text-muted-foreground truncate max-w-[300px]">
-                      {uploadingFileName}
+                    <p className="font-medium text-sm">جاري رفع الملفات...</p>
+                    <p className="text-xs text-muted-foreground">
+                      {uploadQueue.filter(f => f.status === 'success').length} / {uploadQueue.length} مكتمل
                     </p>
                   </div>
                 </div>
                 <span className="text-sm font-medium text-primary">
-                  {uploadProgress}%
+                  {Math.round((uploadQueue.filter(f => f.status === 'success').length / uploadQueue.length) * 100)}%
                 </span>
               </div>
-              <Progress value={uploadProgress} className="h-2" />
+
+              {/* قائمة الملفات */}
+              <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                {uploadQueue.map((item, index) => (
+                  <div key={index} className="bg-background/50 rounded-lg p-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        {item.status === 'pending' && (
+                          <div className="h-2 w-2 rounded-full bg-muted-foreground animate-pulse" />
+                        )}
+                        {item.status === 'uploading' && (
+                          <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                        )}
+                        {item.status === 'success' && (
+                          <div className="h-2 w-2 rounded-full bg-green-500" />
+                        )}
+                        {item.status === 'error' && (
+                          <div className="h-2 w-2 rounded-full bg-red-500" />
+                        )}
+                        <span className="text-sm truncate flex-1">
+                          {item.file.name}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {(item.file.size / 1024 / 1024).toFixed(2)} MB
+                        </span>
+                      </div>
+                      {item.status === 'success' && (
+                        <span className="text-xs text-green-500 font-medium">✓ مكتمل</span>
+                      )}
+                      {item.status === 'error' && (
+                        <span className="text-xs text-red-500 font-medium">✗ فشل</span>
+                      )}
+                    </div>
+                    
+                    {(item.status === 'uploading' || item.status === 'pending') && (
+                      <Progress value={item.progress} className="h-1" />
+                    )}
+                    
+                    {item.error && (
+                      <p className="text-xs text-red-500 mt-1">{item.error}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -283,6 +394,7 @@ const RepositoryManager = ({ gradeLevel }: RepositoryManagerProps) => {
                 id="repository-upload"
                 type="file"
                 accept="application/pdf"
+                multiple
                 onChange={handleFileUpload}
                 className="hidden"
               />
