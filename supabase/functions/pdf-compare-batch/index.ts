@@ -162,15 +162,13 @@ serve(async (req) => {
           }
           const similarity = dotProduct; // Already normalized in generateEmbedding
 
-          // ✅ رفع threshold من 0.20 إلى 0.40
-          if (similarity > 0.40) {
-            file1Comparisons.push({
-              matched_file_name: file2.fileName,
-              similarity_score: Math.round(similarity * 100) / 100,
-              similarity_method: 'cosine_embedding',
-              flagged: similarity >= 0.70,
-            });
-          }
+          // ✅ عرض جميع المقارنات الداخلية بغض النظر عن نسبة التشابه
+          file1Comparisons.push({
+            matched_file_name: file2.fileName,
+            similarity_score: Math.round(similarity * 100) / 100,
+            similarity_method: 'cosine_embedding',
+            flagged: similarity >= 0.70,
+          });
         }
 
         // ترتيب وأخذ أعلى 5
@@ -329,11 +327,11 @@ serve(async (req) => {
               {
                 query_embedding: queryEmbedding,
                 query_keywords: queryKeywords,
-                match_threshold: 0.40, // ✅ رفع من 0.20 إلى 0.40
+                match_threshold: 0.35, // ✅ عرض ملفات المستودع بتشابه ≥ 35%
                 match_count: 100,
                 p_grade_level: gradeLevel,
                 p_project_type: comparisonType === 'mini_project' ? 'mini_project' : 'final_project',
-                jaccard_threshold: 0.25, // ✅ رفع من 0.10 إلى 0.25
+                jaccard_threshold: 0.20, // ✅ تخفيض للسماح بمزيد من النتائج
                 p_page_count: queryPageCount, // ✅ structural filter
                 p_word_count: queryWordCount  // ✅ structural filter
               }
