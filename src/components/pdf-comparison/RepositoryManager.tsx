@@ -416,62 +416,112 @@ const RepositoryManager = ({ gradeLevel }: RepositoryManagerProps) => {
               </p>
             </div>
           ) : (
-            <div className="border rounded-lg">
+            <div className="rounded-xl border border-border/50 overflow-hidden bg-card/30 backdrop-blur-sm shadow-sm">
               <Table>
                 <TableHeader>
-                  <TableRow>
+                  <TableRow className="bg-muted/50 hover:bg-muted/60 border-b border-border/50">
                     {isSuperAdmin && (
-                      <TableHead className="w-12">
-                        <Checkbox
-                          checked={selectedFiles.size === files.length && files.length > 0}
-                          onCheckedChange={(checked) => 
-                            checked ? selectAll() : clearSelection()
-                          }
-                          disabled={isDeleting}
-                        />
+                      <TableHead className="w-16 py-4">
+                        <div className="flex items-center justify-center">
+                          <Checkbox
+                            checked={selectedFiles.size === files.length && files.length > 0}
+                            onCheckedChange={(checked) => 
+                              checked ? selectAll() : clearSelection()
+                            }
+                            disabled={isDeleting}
+                            className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                          />
+                        </div>
                       </TableHead>
                     )}
-                    <TableHead>اسم الملف</TableHead>
-                    <TableHead className="text-center">الحجم</TableHead>
-                    <TableHead className="text-center">تاريخ الإضافة</TableHead>
+                    <TableHead className="py-4 font-semibold text-foreground">
+                      <div className="flex items-center gap-2">
+                        <Database className="h-4 w-4 text-primary" />
+                        اسم الملف
+                      </div>
+                    </TableHead>
+                    <TableHead className="text-center py-4 font-semibold text-foreground">
+                      <div className="flex items-center justify-center gap-2">
+                        الحجم
+                      </div>
+                    </TableHead>
+                    <TableHead className="text-center py-4 font-semibold text-foreground">
+                      <div className="flex items-center justify-center gap-2">
+                        تاريخ الإضافة
+                      </div>
+                    </TableHead>
                     {isSuperAdmin && (
-                      <TableHead className="text-center">إجراءات</TableHead>
+                      <TableHead className="text-center py-4 font-semibold text-foreground w-24">
+                        إجراءات
+                      </TableHead>
                     )}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {files.map((file) => (
-                    <TableRow key={file.id}>
+                  {files.map((file, index) => (
+                    <TableRow 
+                      key={file.id}
+                      className={cn(
+                        "border-b border-border/30 transition-all duration-200",
+                        "hover:bg-accent/5 hover:shadow-sm",
+                        selectedFiles.has(file.id) && "bg-primary/5 hover:bg-primary/10",
+                        index % 2 === 0 ? "bg-card/50" : "bg-card/30"
+                      )}
+                    >
                       {isSuperAdmin && (
-                        <TableCell>
-                          <Checkbox
-                            checked={selectedFiles.has(file.id)}
-                            onCheckedChange={() => toggleFileSelection(file.id)}
-                            disabled={isDeleting}
-                          />
+                        <TableCell className="py-4">
+                          <div className="flex items-center justify-center">
+                            <Checkbox
+                              checked={selectedFiles.has(file.id)}
+                              onCheckedChange={() => toggleFileSelection(file.id)}
+                              disabled={isDeleting}
+                              className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                            />
+                          </div>
                         </TableCell>
                       )}
-                      <TableCell className="font-medium max-w-[300px] truncate">
-                        {file.file_name}
+                      <TableCell className="py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                            <Database className="h-5 w-5 text-primary" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium text-foreground truncate max-w-[300px]">
+                              {file.file_name}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {file.word_count?.toLocaleString() || 0} كلمة
+                            </p>
+                          </div>
+                        </div>
                       </TableCell>
-                      <TableCell className="text-center">
-                        {(file.file_size / 1024 / 1024).toFixed(2)} MB
+                      <TableCell className="text-center py-4">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-muted/50">
+                          {(file.file_size / 1024 / 1024).toFixed(2)} MB
+                        </span>
                       </TableCell>
-                      <TableCell className="text-center text-sm text-muted-foreground">
-                        {formatDistanceToNow(new Date(file.created_at), {
-                          addSuffix: true,
-                          locale: ar,
-                        })}
+                      <TableCell className="text-center py-4">
+                        <span className="text-sm text-muted-foreground">
+                          {formatDistanceToNow(new Date(file.created_at), {
+                            addSuffix: true,
+                            locale: ar,
+                          })}
+                        </span>
                       </TableCell>
                       {isSuperAdmin && (
-                        <TableCell className="text-center">
+                        <TableCell className="text-center py-4">
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDelete(file.id)}
                             disabled={deletingId === file.id || isDeleting}
+                            className="hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30 transition-colors"
                           >
-                            <Trash2 className="h-4 w-4 text-red-600" />
+                            {deletingId === file.id ? (
+                              <RefreshCw className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
                           </Button>
                         </TableCell>
                       )}
