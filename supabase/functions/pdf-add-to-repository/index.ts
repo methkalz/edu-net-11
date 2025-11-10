@@ -76,18 +76,19 @@ serve(async (req) => {
       pageCount = data.pageCount;
     }
 
-    // 2. توليد embedding vector للنص
-    console.log(`🔄 Generating embedding vector for ${fileName}`);
+    // 2. توليد embedding vector للنص و top keywords
+    console.log(`🔄 Generating embedding vector and keywords for ${fileName}`);
     
-    // استيراد دالة generateEmbedding من _shared
-    const { generateEmbedding } = await import('../_shared/embeddings.ts');
+    // استيراد دوال من _shared
+    const { generateEmbedding, extractTopKeywords } = await import('../_shared/embeddings.ts');
     const embedding = generateEmbedding(text, 384);
+    const topKeywords = extractTopKeywords(text, 150);
     
     // حساب word_set_size
     const words = text.split(/\s+/).filter((w: string) => w.length > 2);
     const wordSetSize = new Set(words).size;
     
-    console.log(`✅ Embedding generated: ${embedding.length} dimensions, word_set_size: ${wordSetSize}`);
+    console.log(`✅ Embedding generated: ${embedding.length} dimensions, ${topKeywords.length} keywords, word_set_size: ${wordSetSize}`);
 
     // 3. نسخ الملف إلى bucket المستودع المناسب
     const targetBucket = gradeLevel === '12' 
@@ -116,7 +117,7 @@ serve(async (req) => {
       throw new Error(`Failed to upload to repository: ${uploadError.message}`);
     }
 
-    // 4. إضافة إلى جدول المستودع مع embedding
+    // 4. إضافة إلى جدول المستودع مع embedding و keywords
     const { data: repositoryEntry, error: insertError } = await supabase
       .from('pdf_comparison_repository')
       .insert({
@@ -128,8 +129,10 @@ serve(async (req) => {
         extracted_text: text,
         text_hash: hash,
         word_count: wordCount,
+        page_count: pageCount,
         embedding: embedding, // Vector embedding
         word_set_size: wordSetSize, // Word set size for fast screening
+        top_keywords: topKeywords, // Top keywords for real Jaccard calculation
         language_detected: 'ar',
         uploaded_by: userId,
         school_id: schoolId,
@@ -139,7 +142,7 @@ serve(async (req) => {
           original_path: filePath,
           original_bucket: bucket,
           added_at: new Date().toISOString(),
-          embedding_version: 'v1_tfidf_384',
+          embedding_version: 'v2_tfidf_ngrams_stopwords_384',
         },
       })
       .select()

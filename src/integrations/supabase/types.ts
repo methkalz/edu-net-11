@@ -4390,6 +4390,7 @@ export type Database = {
           source_project_id: string | null
           source_project_type: string | null
           text_hash: string | null
+          top_keywords: Json | null
           updated_at: string | null
           uploaded_by: string
           word_count: number | null
@@ -4411,6 +4412,7 @@ export type Database = {
           source_project_id?: string | null
           source_project_type?: string | null
           text_hash?: string | null
+          top_keywords?: Json | null
           updated_at?: string | null
           uploaded_by: string
           word_count?: number | null
@@ -4432,6 +4434,7 @@ export type Database = {
           source_project_id?: string | null
           source_project_type?: string | null
           text_hash?: string | null
+          top_keywords?: Json | null
           updated_at?: string | null
           uploaded_by?: string
           word_count?: number | null
@@ -6490,15 +6493,18 @@ export type Database = {
           match_count?: number
           match_threshold?: number
           p_grade_level?: string
+          p_page_count?: number
           p_project_type?: string
+          p_word_count?: number
           query_embedding: string
-          query_word_set_size: number
+          query_keywords: Json
         }
         Returns: {
           file_name: string
           file_path: string
           grade_level: string
           id: string
+          jaccard_similarity: number
           project_type: string
           school_id: string
           similarity: number

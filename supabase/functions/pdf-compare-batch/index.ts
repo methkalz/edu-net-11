@@ -1,7 +1,7 @@
 import { serve } from 'https://deno.land/std@0.208.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
-import { generateEmbedding } from '../_shared/embeddings.ts';
+import { generateEmbedding, extractTopKeywords } from '../_shared/embeddings.ts';
 import { 
   extractMatchingSegments, 
   preprocessText, 
@@ -116,13 +116,19 @@ serve(async (req) => {
     const internalStartTime = Date.now();
     const internalComparisons: Map<string, any[]> = new Map();
     
-    // توليد embeddings للملفات المرفوعة
-    const fileEmbeddings = files.map(file => ({
-      embedding: generateEmbedding(file.fileText, 384),
-      wordSetSize: preprocessText(file.fileText, file.fileText.split(/\s+/).length).wordSetSize
-    }));
+    // توليد embeddings و keywords للملفات المرفوعة
+    const fileEmbeddings = files.map(file => {
+      const preprocessed = preprocessText(file.fileText, file.fileText.split(/\s+/).length);
+      return {
+        embedding: generateEmbedding(file.fileText, 384),
+        keywords: extractTopKeywords(file.fileText, 150),
+        wordSetSize: preprocessed.wordSetSize,
+        wordCount: preprocessed.wordCount,
+        pageCount: file.filePages
+      };
+    });
     
-    console.log(`✅ Generated ${fileEmbeddings.length} embeddings`);
+    console.log(`✅ Generated ${fileEmbeddings.length} embeddings with keywords`);
 
     if (files.length > 1) {
       for (let i = 0; i < files.length; i++) {
@@ -156,7 +162,8 @@ serve(async (req) => {
           }
           const similarity = dotProduct; // Already normalized in generateEmbedding
 
-          if (similarity > 0.20) {
+          // ✅ رفع threshold من 0.20 إلى 0.40
+          if (similarity > 0.40) {
             file1Comparisons.push({
               matched_file_name: file2.fileName,
               similarity_score: Math.round(similarity * 100) / 100,
@@ -309,22 +316,26 @@ serve(async (req) => {
           console.log(`🔍 [${i+1}/${files.length}] Comparing ${file.fileName} against repository using pgvector...`);
           console.log(`📋 Result ID: ${savedResult.id}, comparison_source: ${savedResult.comparison_source}`);
           
-          // استخدام embedding المولد مسبقاً
+          // استخدام embedding و keywords المولدة مسبقاً
           const queryEmbedding = fileEmbeddings[i].embedding;
-          const queryWordSetSize = fileEmbeddings[i].wordSetSize;
+          const queryKeywords = fileEmbeddings[i].keywords;
+          const queryWordCount = fileEmbeddings[i].wordCount;
+          const queryPageCount = fileEmbeddings[i].pageCount;
           
           try {
-            // استدعاء RPC function للبحث المتقدم (Two-phase screening in DB)
+            // ✅ استدعاء الدالة الجديدة مع structural filters و real Jaccard
             const { data: matches, error: rpcError } = await supabase.rpc(
               'match_documents_hybrid',
               {
                 query_embedding: queryEmbedding,
-                query_word_set_size: queryWordSetSize,
-                match_threshold: 0.20,
-                match_count: 100, // جلب المزيد للفلترة
+                query_keywords: queryKeywords,
+                match_threshold: 0.40, // ✅ رفع من 0.20 إلى 0.40
+                match_count: 100,
                 p_grade_level: gradeLevel,
                 p_project_type: comparisonType === 'mini_project' ? 'mini_project' : 'final_project',
-                jaccard_threshold: 0.10
+                jaccard_threshold: 0.25, // ✅ رفع من 0.10 إلى 0.25
+                p_page_count: queryPageCount, // ✅ structural filter
+                p_word_count: queryWordCount  // ✅ structural filter
               }
             );
             
