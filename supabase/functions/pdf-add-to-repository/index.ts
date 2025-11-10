@@ -79,8 +79,8 @@ serve(async (req) => {
     // 2. توليد embedding vector للنص
     console.log(`🔄 Generating embedding vector for ${fileName}`);
     
-    // استيراد دالة generateEmbedding من _helpers
-    const { generateEmbedding } = await import('../pdf-compare-batch/_helpers.ts');
+    // استيراد دالة generateEmbedding من _shared
+    const { generateEmbedding } = await import('../_shared/embeddings.ts');
     const embedding = generateEmbedding(text, 384);
     
     // حساب word_set_size
