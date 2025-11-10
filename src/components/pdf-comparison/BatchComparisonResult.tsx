@@ -62,6 +62,15 @@ const BatchComparisonResult = ({ result: initialResult }: BatchComparisonResultP
       return;
     }
 
+    // Skip if already completed
+    if (result.comparison_source === 'both') {
+      if (import.meta.env.DEV) {
+        console.log(`✅ [Realtime] Comparison already completed for ${result.compared_file_name}`);
+      }
+      setIsComparingRepository(false);
+      return;
+    }
+
     if (import.meta.env.DEV) {
       console.log(`🔔 [Realtime] Setting up subscription for comparison ${result.id}`);
       console.log(`📊 [Realtime] Initial state:`, {
@@ -71,6 +80,7 @@ const BatchComparisonResult = ({ result: initialResult }: BatchComparisonResultP
       });
     }
 
+    // Setup Realtime subscription
     const channel = supabase
       .channel(`comparison-${result.id}`)
       .on(
@@ -89,7 +99,8 @@ const BatchComparisonResult = ({ result: initialResult }: BatchComparisonResultP
               comparison_source: payload.new.comparison_source,
               repository_matches_count: payload.new.repository_matches?.length || 0,
               status: payload.new.status,
-              max_similarity: payload.new.max_similarity_score
+              max_similarity: payload.new.max_similarity_score,
+              timestamp: new Date().toISOString()
             });
           }
           
@@ -103,11 +114,16 @@ const BatchComparisonResult = ({ result: initialResult }: BatchComparisonResultP
             if (import.meta.env.DEV) {
               console.log('✅ [Realtime] Repository comparison completed!', {
                 fileName: updatedResult.compared_file_name,
-                repositoryMatches: updatedResult.repository_matches?.length || 0
+                repositoryMatches: updatedResult.repository_matches?.length || 0,
+                timestamp: new Date().toISOString()
               });
             }
             setIsComparingRepository(false);
-            toast.success(`اكتملت المقارنة مع المستودع: ${updatedResult.compared_file_name}`);
+            
+            // Use setTimeout to avoid setState during render warning
+            setTimeout(() => {
+              toast.success(`اكتملت المقارنة مع المستودع: ${updatedResult.compared_file_name}`);
+            }, 0);
           }
         }
       )
@@ -121,10 +137,41 @@ const BatchComparisonResult = ({ result: initialResult }: BatchComparisonResultP
       console.log(`✅ [Realtime] Channel created and subscribed for ${result.compared_file_name}`);
     }
 
+    // Fallback polling mechanism (in case Realtime update was missed)
+    const pollInterval = setInterval(async () => {
+      if (import.meta.env.DEV) {
+        console.log(`🔄 [Polling] Checking status for ${result.compared_file_name}...`);
+      }
+      
+      const { data: latestResult, error } = await supabase
+        .from('pdf_comparison_results')
+        .select('*')
+        .eq('id', result.id)
+        .single();
+
+      if (!error && latestResult && latestResult.comparison_source === 'both') {
+        if (import.meta.env.DEV) {
+          console.log(`✅ [Polling] Found completed comparison for ${result.compared_file_name}`);
+        }
+        
+        // Update with the latest result
+        setResult(latestResult as any as ComparisonResult);
+        setIsComparingRepository(false);
+        
+        setTimeout(() => {
+          toast.success(`اكتملت المقارنة مع المستودع: ${latestResult.compared_file_name}`);
+        }, 0);
+        
+        clearInterval(pollInterval);
+      }
+    }, 2000); // Poll every 2 seconds
+
+    // Cleanup
     return () => {
       if (import.meta.env.DEV) {
         console.log(`🔕 [Realtime] Cleaning up subscription for ${result.compared_file_name} (${result.id})`);
       }
+      clearInterval(pollInterval);
       supabase.removeChannel(channel);
     };
   }, [result.id]); // Removed isComparingRepository from dependencies
