@@ -42,7 +42,7 @@ export function TimeInput({ value, onChange, placeholder = "اختر الوقت"
   const minutes = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, "0"));
 
   return (
-    <div className={cn("flex items-center gap-2", className)}>
+    <div className={cn("flex flex-row-reverse items-center gap-2", className)}>
       <Clock className="h-4 w-4 text-muted-foreground" />
       <div className="flex flex-row-reverse items-center gap-2 flex-1">
         <Select value={hour} onValueChange={handleHourChange}>
