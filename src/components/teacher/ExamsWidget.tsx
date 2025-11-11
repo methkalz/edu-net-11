@@ -196,6 +196,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
   const [editingExamId, setEditingExamId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [previewExamId, setPreviewExamId] = useState<string | null>(null);
+  const [isExplicitSubmit, setIsExplicitSubmit] = useState(false);
 
   // استخدام hook للمعاينة
   const { data: previewData, isLoading: previewLoading } = useExamPreview(previewExamId);
@@ -235,7 +236,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
 
   const form = useForm<CreateExamFormData>({
     resolver: zodResolver(createExamSchema),
-    mode: 'onChange', // التحقق الفوري من البيانات
+    mode: 'onBlur', // التحقق عند فقدان التركيز - أكثر أماناً
     defaultValues: {
       title: '',
       description: '',
@@ -981,6 +982,15 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
   };
 
   const onSubmit = async (data: CreateExamFormData) => {
+    // ✅ التحقق من أن المعلم نقر على زر الحفظ فعلياً
+    if (!isExplicitSubmit && currentStep === 7) {
+      console.warn('⚠️ Submit triggered without explicit user action in step 7');
+      return; // إيقاف الحفظ التلقائي
+    }
+    
+    // إعادة تعيين flag بعد كل submit
+    setIsExplicitSubmit(false);
+    
     // Clean data for logging
     const cleanData = {
       ...data,
@@ -2859,7 +2869,11 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                         <ArrowLeft className="w-4 h-4 mr-2" />
                       </Button>
                     ) : (
-                      <Button type="submit" disabled={isSubmitting}>
+                      <Button 
+                        type="submit" 
+                        disabled={isSubmitting}
+                        onClick={() => setIsExplicitSubmit(true)}
+                      >
                         {isSubmitting ? 'جاري الحفظ...' : editingExamId ? 'تحديث الامتحان' : 'إنشاء الامتحان'}
                       </Button>
                     )}
