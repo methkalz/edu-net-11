@@ -40,7 +40,7 @@ export const StudentExamsSection = () => {
   const completedExams = exams.filter(exam => exam.attempts_used >= exam.max_attempts || isPast(new Date(exam.end_datetime)));
   return <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold mb-2 text-center px-0 py-[17px]">الامتحانات الإلكترونية</h2>
+        <h2 className="text-2xl font-bold mb-2 text-center mx-0 px-0 my-[4px] py-[2px]">الامتحانات الإلكترونية</h2>
         <p className="text-muted-foreground text-center">
           جميع الامتحانات المجدولة والمتاحة لك
         </p>
