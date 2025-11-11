@@ -44,7 +44,7 @@ export function TimeInput({ value, onChange, placeholder = "اختر الوقت"
   return (
     <div className={cn("flex items-center gap-2", className)}>
       <Clock className="h-4 w-4 text-muted-foreground" />
-      <div className="flex items-center gap-2 flex-1">
+      <div className="flex flex-row-reverse items-center gap-2 flex-1">
         <Select value={hour} onValueChange={handleHourChange}>
           <SelectTrigger className="w-20 h-11">
             <SelectValue placeholder="00" />
