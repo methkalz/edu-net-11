@@ -99,7 +99,7 @@ export function DateTimePicker({
       
       {/* معاينة بالأرقام الإنجليزية */}
       {date && time && (
-        <div className="text-xs text-muted-foreground text-center font-mono" dir="ltr">
+        <div className="text-xs text-muted-foreground text-left font-mono" dir="ltr">
           {formatDateNumeric(date)} - {time}
         </div>
       )}
