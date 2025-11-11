@@ -66,7 +66,7 @@ export const StudentExamsSection = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
+        <TabsList className="grid w-full grid-cols-3 lg:w-[400px] lg:ml-auto">
           <TabsTrigger value="available" className="flex items-center gap-2">
             <Clock className="h-4 w-4" />
             متاحة ({availableExams.length})
