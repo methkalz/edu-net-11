@@ -198,6 +198,13 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
   const [previewExamId, setPreviewExamId] = useState<string | null>(null);
   const [isExplicitSubmit, setIsExplicitSubmit] = useState(false);
 
+  // دالة مساعدة لبداية اليوم الحالي
+  const getStartOfToday = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+  };
+
   // استخدام hook للمعاينة
   const { data: previewData, isLoading: previewLoading } = useExamPreview(previewExamId);
 
@@ -2749,7 +2756,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                                     value={field.value}
                                     onChange={field.onChange}
                                     placeholder="اختر تاريخ ووقت البدء"
-                                    minDate={new Date()}
+                                    minDate={getStartOfToday()}
                                   />
                                 </FormControl>
                                 <FormDescription>متى سيصبح الامتحان متاحاً للطلاب</FormDescription>
@@ -2770,8 +2777,12 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                                     onChange={field.onChange}
                                     placeholder="اختر تاريخ ووقت الانتهاء"
                                     minDate={form.watch('start_datetime') 
-                                      ? new Date(form.watch('start_datetime')!) 
-                                      : new Date()
+                                      ? (() => {
+                                          const startDate = new Date(form.watch('start_datetime')!);
+                                          startDate.setHours(0, 0, 0, 0);
+                                          return startDate;
+                                        })()
+                                      : getStartOfToday()
                                     }
                                   />
                                 </FormControl>
