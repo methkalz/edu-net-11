@@ -58,7 +58,7 @@ export const StudentExamsSection = () => {
 
   return (
     <div className="space-y-6">
-      <div>
+      <div className="text-center">
         <h2 className="text-2xl font-bold mb-2">الامتحانات الإلكترونية</h2>
         <p className="text-muted-foreground">
           جميع الامتحانات المجدولة والمتاحة لك
@@ -66,7 +66,7 @@ export const StudentExamsSection = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 lg:w-[400px] lg:ml-auto">
+        <TabsList className="grid w-full grid-cols-3 lg:w-[400px] lg:mx-auto">
           <TabsTrigger value="available" className="flex items-center gap-2">
             <Clock className="h-4 w-4" />
             متاحة ({availableExams.length})
