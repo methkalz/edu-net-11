@@ -235,6 +235,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
 
   const form = useForm<CreateExamFormData>({
     resolver: zodResolver(createExamSchema),
+    mode: 'onChange', // التحقق الفوري من البيانات
     defaultValues: {
       title: '',
       description: '',
@@ -918,7 +919,17 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         setCurrentStep(prev => prev + 1);
         return true;
       } else if (currentStep === 6) {
+        // التحقق من البيانات الأساسية قبل الانتقال للخطوة 7
+        const basicData = form.getValues();
+        if (!basicData.title || basicData.title.trim() === '') {
+          toast.error('يرجى التأكد من ملء جميع البيانات الأساسية');
+          setCurrentStep(1); // الرجوع للخطوة 1 لملء العنوان
+          return false;
+        }
         setCurrentStep(prev => prev + 1);
+        return true;
+      } else if (currentStep === 7) {
+        // السماح بالبقاء في الخطوة 7 (الخطوة الأخيرة)
         return true;
       } else {
         setCurrentStep(prev => prev + 1);
@@ -926,7 +937,12 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
       }
     } catch (error) {
       console.error('Error in handleNextStep:', error);
-      toast.error('حدث خطأ أثناء التحقق من البيانات');
+      // إضافة تفاصيل أكثر للخطأ
+      if (error instanceof Error) {
+        console.error('Error details:', error.message);
+        console.error('Error stack:', error.stack);
+      }
+      toast.error('حدث خطأ أثناء التحقق من البيانات. يرجى التأكد من ملء جميع الحقول المطلوبة.');
       return false;
     }
   };
@@ -940,10 +956,22 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
     
     // السماح بالانتقال للخطوات التالية إذا كانت البيانات الحالية صحيحة
     if (targetStep > currentStep) {
-      const isValid = await handleNextStep();
-      if (isValid && targetStep > currentStep + 1) {
-        // إذا كان الهدف أكثر من خطوة واحدة، انتقل مباشرة
-        setCurrentStep(targetStep);
+      // التحقق من البيانات الأساسية أولاً
+      const basicData = form.getValues();
+      if (!basicData.title || basicData.title.trim() === '') {
+        toast.error('يرجى ملء عنوان الامتحان في الخطوة الأولى');
+        setCurrentStep(1);
+        return;
+      }
+      
+      // الانتقال خطوة بخطوة للتأكد من صحة البيانات
+      let currentStepTemp = currentStep;
+      while (currentStepTemp < targetStep) {
+        const isValid = await handleNextStep();
+        if (!isValid) {
+          return; // إيقاف الانتقال إذا فشل التحقق
+        }
+        currentStepTemp++;
       }
     }
   };
@@ -985,6 +1013,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
     
     if (currentStep !== 7) {
       console.warn('Submit called from non-final step:', currentStep);
+      toast.warning(`يرجى إكمال جميع الخطوات. أنت حالياً في الخطوة ${currentStep} من 7`);
       if (import.meta.env.DEV) console.groupEnd();
       return;
     }
