@@ -205,6 +205,47 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
     return today;
   };
 
+  const formatDuration = (startDate: string, endDate: string): string => {
+    const start = new Date(startDate).getTime();
+    const end = new Date(endDate).getTime();
+    const diffMs = end - start;
+
+    // حساب الوحدات الزمنية
+    const minutes = Math.floor(diffMs / (1000 * 60));
+    const hours = Math.floor(diffMs / (1000 * 60 * 60));
+    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const months = Math.floor(days / 30);
+
+    // بناء النص بناءً على المدة
+    const parts: string[] = [];
+
+    if (months > 0) {
+      parts.push(`${months} ${months === 1 ? 'شهر' : 'أشهر'}`);
+      const remainingDays = days % 30;
+      if (remainingDays > 0) {
+        parts.push(`${remainingDays} ${remainingDays === 1 ? 'يوم' : 'أيام'}`);
+      }
+    } else if (days > 0) {
+      parts.push(`${days} ${days === 1 ? 'يوم' : 'أيام'}`);
+      const remainingHours = hours % 24;
+      if (remainingHours > 0) {
+        parts.push(`${remainingHours} ${remainingHours === 1 ? 'ساعة' : 'ساعات'}`);
+      }
+    } else if (hours > 0) {
+      parts.push(`${hours} ${hours === 1 ? 'ساعة' : 'ساعات'}`);
+      const remainingMinutes = minutes % 60;
+      if (remainingMinutes > 0) {
+        parts.push(`${remainingMinutes} ${remainingMinutes === 1 ? 'دقيقة' : 'دقائق'}`);
+      }
+    } else if (minutes > 0) {
+      parts.push(`${minutes} ${minutes === 1 ? 'دقيقة' : 'دقائق'}`);
+    } else {
+      return 'أقل من دقيقة';
+    }
+
+    return parts.join(' و ');
+  };
+
   // استخدام hook للمعاينة
   const { data: previewData, isLoading: previewLoading } = useExamPreview(previewExamId);
 
@@ -2812,11 +2853,7 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                               <div className="flex items-center justify-between pt-2 border-t">
                                 <span className="text-muted-foreground">⏱️ المدة:</span>
                                 <span className="font-semibold">
-                                  {Math.ceil(
-                                    (new Date(form.watch('end_datetime')!).getTime() - 
-                                     new Date(form.watch('start_datetime')!).getTime()) 
-                                    / (1000 * 60 * 60 * 24)
-                                  )} يوم
+                                  {formatDuration(form.watch('start_datetime')!, form.watch('end_datetime')!)}
                                 </span>
                               </div>
                             </div>
