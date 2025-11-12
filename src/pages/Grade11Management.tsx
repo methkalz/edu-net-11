@@ -3,7 +3,7 @@ import { BookOpen, GraduationCap, Gamepad2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useBackPath } from '@/hooks/useBackPath';
 import { useSearchParams } from 'react-router-dom';
-import AppHeader from '@/components/shared/AppHeader';
+import ModernHeader from '@/components/shared/ModernHeader';
 import AppFooter from '@/components/shared/AppFooter';
 import Grade11Content from '@/components/content/Grade11Content';
 import Grade11ContentViewer from '@/components/content/Grade11ContentViewer';
@@ -58,26 +58,45 @@ const Grade11Management: React.FC = () => {
   }, [tabFromUrl, canManageContent, isSchoolAdmin]);
   
   return <Grade11ErrorBoundary>
-      <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
-      <AppHeader title="إدارة محتوى الصف الحادي عشر" showBackButton={true} backPath={contentBackPath} showLogout={true} />
+      <div className="min-h-screen bg-gradient-to-br from-background via-primary/[0.02] to-secondary/[0.02]">
+      <ModernHeader title="إدارة محتوى الصف الحادي عشر" showBackButton={true} backPath={contentBackPath} />
       
       <main className="container mx-auto px-6 py-8 flex-1">
         <div className="max-w-7xl mx-auto space-y-8">
-          {/* عنوان الصفحة */}
-          <div className="text-center space-y-4">
-            <div className="flex items-center justify-center gap-6 flex-wrap">
-              
-              
+          {/* Hero Section */}
+          <div className="text-center space-y-6 py-12 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 rounded-3xl border border-primary/10">
+            <div className="flex items-center justify-center gap-4">
+              <div className="p-4 bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl animate-scale-in">
+                <GraduationCap className="h-12 w-12 text-primary" />
+              </div>
+              <h1 className="text-4xl font-bold bg-gradient-to-l from-primary to-secondary bg-clip-text text-transparent">
+                الصف الحادي عشر
+              </h1>
             </div>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              إدارة ذكية ومرنة للمحتوى التعليمي بأسلوب عصري وبسيط
+            </p>
           </div>
           
           {/* التبويبات الرئيسية */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className={canManageContent ? 'grid w-full grid-cols-3' : isSchoolAdmin ? 'grid w-full grid-cols-3' : 'grid w-full grid-cols-2'}>
-              {canManageContent && <TabsTrigger value="manage">إدارة المحتوى</TabsTrigger>}
-              {isSchoolAdmin && <TabsTrigger value="school-view">عرض مدير المدرسة</TabsTrigger>}
-              <TabsTrigger value="view">عرض المحتوى</TabsTrigger>
-              <TabsTrigger value="games">الألعاب التعليمية</TabsTrigger>
+            <TabsList className={`grid w-full gap-2 bg-transparent p-1 ${canManageContent ? 'grid-cols-3' : isSchoolAdmin ? 'grid-cols-3' : 'grid-cols-2'}`}>
+              {canManageContent && <TabsTrigger value="manage" className="data-[state=active]:bg-gradient-to-br data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-white transition-all duration-300 shadow-md data-[state=active]:shadow-lg">
+                <BookOpen className="ml-2 h-5 w-5" />
+                إدارة المحتوى
+              </TabsTrigger>}
+              {isSchoolAdmin && <TabsTrigger value="school-view" className="data-[state=active]:bg-gradient-to-br data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-white transition-all duration-300 shadow-md data-[state=active]:shadow-lg">
+                <BookOpen className="ml-2 h-5 w-5" />
+                عرض مدير المدرسة
+              </TabsTrigger>}
+              <TabsTrigger value="view" className="data-[state=active]:bg-gradient-to-br data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white transition-all duration-300 shadow-md data-[state=active]:shadow-lg">
+                <BookOpen className="ml-2 h-5 w-5" />
+                عرض المحتوى
+              </TabsTrigger>
+              <TabsTrigger value="games" className="data-[state=active]:bg-gradient-to-br data-[state=active]:from-amber-500 data-[state=active]:to-amber-600 data-[state=active]:text-white transition-all duration-300 shadow-md data-[state=active]:shadow-lg">
+                <Gamepad2 className="ml-2 h-5 w-5" />
+                الألعاب التعليمية
+              </TabsTrigger>
             </TabsList>
 
             {canManageContent && (
