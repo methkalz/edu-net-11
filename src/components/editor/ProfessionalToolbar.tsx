@@ -24,7 +24,8 @@ import {
   Users,
   Settings,
   Printer,
-  Presentation
+  Presentation,
+  Code
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -92,6 +93,10 @@ export const ProfessionalToolbar: React.FC<ProfessionalToolbarProps> = ({
   const [gammaUrl, setGammaUrl] = useState('');
   const [gammaTitle, setGammaTitle] = useState('');
   const [gammaUrlError, setGammaUrlError] = useState('');
+  const [showHTMLDialog, setShowHTMLDialog] = useState(false);
+  const [htmlCode, setHtmlCode] = useState('');
+  const [htmlTitle, setHtmlTitle] = useState('محتوى HTML تفاعلي');
+  const [htmlHeight, setHtmlHeight] = useState('400px');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -250,6 +255,53 @@ export const ProfessionalToolbar: React.FC<ProfessionalToolbarProps> = ({
       description: "تم إدراج العرض التقديمي بنجاح",
     });
   }, [editor, gammaUrl, gammaTitle, toast]);
+
+  // HTML validation and insert
+  const validateHTMLCode = (code: string): { isValid: boolean; error?: string } => {
+    if (!code.trim()) {
+      return { isValid: false, error: 'الكود فارغ' };
+    }
+
+    if (code.includes('<script src=') || code.includes('<script src =')) {
+      return { isValid: false, error: 'لا يُسمح بتحميل scripts خارجية لأسباب أمنية' };
+    }
+
+    if (code.toLowerCase().includes('<iframe')) {
+      return { isValid: false, error: 'لا يُسمح بتضمين iframes داخل الكود' };
+    }
+
+    return { isValid: true };
+  };
+
+  const handleHTMLInsert = useCallback(() => {
+    const validation = validateHTMLCode(htmlCode);
+    
+    if (!validation.isValid) {
+      toast({
+        title: "خطأ في التحقق",
+        description: validation.error,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    editor.commands.setHTMLEmbed({
+      htmlContent: htmlCode.trim(),
+      title: htmlTitle || 'محتوى HTML تفاعلي',
+      height: htmlHeight,
+    });
+
+    // Reset and close
+    setHtmlCode('');
+    setHtmlTitle('محتوى HTML تفاعلي');
+    setHtmlHeight('400px');
+    setShowHTMLDialog(false);
+    
+    toast({
+      title: "تم إضافة المحتوى",
+      description: "تم إدراج محتوى HTML بنجاح",
+    });
+  }, [editor, htmlCode, htmlTitle, htmlHeight, toast]);
 
   return (
     <div className="professional-toolbar border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -535,6 +587,15 @@ export const ProfessionalToolbar: React.FC<ProfessionalToolbarProps> = ({
           >
             <Presentation className="h-4 w-4" />
           </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowHTMLDialog(true)}
+            className="p-2"
+            title="إدراج كود HTML تفاعلي"
+          >
+            <Code className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
@@ -607,6 +668,81 @@ export const ProfessionalToolbar: React.FC<ProfessionalToolbarProps> = ({
             </Button>
             <Button onClick={handleGammaInsert}>
               إدراج العرض التقديمي
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog لإدراج كود HTML تفاعلي */}
+      <Dialog open={showHTMLDialog} onOpenChange={setShowHTMLDialog}>
+        <DialogContent className="max-w-5xl h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>إدراج كود HTML تفاعلي</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 grid grid-cols-2 gap-4 overflow-hidden h-[calc(90vh-180px)]">
+            <div className="flex flex-col gap-3">
+              <div>
+                <Label htmlFor="html-title">العنوان</Label>
+                <Input
+                  id="html-title"
+                  value={htmlTitle}
+                  onChange={(e) => setHtmlTitle(e.target.value)}
+                  placeholder="عنوان المحتوى"
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="html-height">الارتفاع</Label>
+                <Select value={htmlHeight} onValueChange={setHtmlHeight}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="300px">صغير (300px)</SelectItem>
+                    <SelectItem value="400px">متوسط (400px)</SelectItem>
+                    <SelectItem value="600px">كبير (600px)</SelectItem>
+                    <SelectItem value="800px">كبير جداً (800px)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex-1 flex flex-col min-h-0">
+                <Label htmlFor="html-code">كود HTML</Label>
+                <textarea
+                  id="html-code"
+                  value={htmlCode}
+                  onChange={(e) => setHtmlCode(e.target.value)}
+                  className="flex-1 mt-1 p-3 border border-border rounded-md font-mono text-sm bg-background resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="أدخل كود HTML هنا..."
+                  dir="ltr"
+                />
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label>معاينة مباشرة</Label>
+              <div className="flex-1 border border-border rounded-md overflow-hidden bg-background">
+                <iframe
+                  srcDoc={htmlCode}
+                  sandbox="allow-scripts allow-forms allow-modals allow-popups"
+                  className="w-full h-full border-0"
+                  title="معاينة مباشرة"
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowHTMLDialog(false);
+                setHtmlCode('');
+                setHtmlTitle('محتوى HTML تفاعلي');
+                setHtmlHeight('400px');
+              }}
+            >
+              إلغاء
+            </Button>
+            <Button onClick={handleHTMLInsert}>
+              إدراج المحتوى
             </Button>
           </DialogFooter>
         </DialogContent>

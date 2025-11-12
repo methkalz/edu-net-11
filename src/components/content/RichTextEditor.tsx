@@ -37,9 +37,11 @@ import {
   AlignJustify,
   ImagePlus,
   Percent,
-  Presentation
+  Presentation,
+  Code
 } from 'lucide-react';
 import { GammaEmbed } from '../editor/extensions/GammaEmbed';
+import { HTMLEmbed } from '../editor/extensions/HTMLEmbed';
 import ImageBubbleMenu from './ImageBubbleMenu';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -94,6 +96,10 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
   const [gammaUrl, setGammaUrl] = useState('');
   const [gammaTitle, setGammaTitle] = useState('');
   const [gammaUrlError, setGammaUrlError] = useState('');
+  const [showHTMLDialog, setShowHTMLDialog] = useState(false);
+  const [htmlCode, setHtmlCode] = useState('');
+  const [htmlTitle, setHtmlTitle] = useState('محتوى HTML تفاعلي');
+  const [htmlHeight, setHtmlHeight] = useState('400px');
   
   const editor = useEditor({
     extensions: [
@@ -163,6 +169,10 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
       Color,
       Underline,
       GammaEmbed.configure({
+        inline: false,
+        HTMLAttributes: {},
+      }),
+      HTMLEmbed.configure({
         inline: false,
         HTMLAttributes: {},
       }),
@@ -391,6 +401,43 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
     }
     setGammaUrlError('');
     return true;
+  };
+
+  const validateHTMLCode = (code: string): { isValid: boolean; error?: string } => {
+    if (!code.trim()) {
+      return { isValid: false, error: 'الكود فارغ' };
+    }
+
+    if (code.includes('<script src=') || code.includes('<script src =')) {
+      return { isValid: false, error: 'لا يُسمح بتحميل scripts خارجية لأسباب أمنية' };
+    }
+
+    if (code.toLowerCase().includes('<iframe')) {
+      return { isValid: false, error: 'لا يُسمح بتضمين iframes داخل الكود' };
+    }
+
+    return { isValid: true };
+  };
+
+  const handleHTMLInsert = () => {
+    const validation = validateHTMLCode(htmlCode);
+    
+    if (!validation.isValid) {
+      toast.error(validation.error || 'خطأ في التحقق من الكود');
+      return;
+    }
+
+    editor.commands.setHTMLEmbed({
+      htmlContent: htmlCode.trim(),
+      title: htmlTitle || 'محتوى HTML تفاعلي',
+      height: htmlHeight,
+    });
+
+    toast.success('تم إضافة محتوى HTML بنجاح');
+    setShowHTMLDialog(false);
+    setHtmlCode('');
+    setHtmlTitle('محتوى HTML تفاعلي');
+    setHtmlHeight('400px');
   };
 
   const handleGammaInsert = () => {
@@ -689,6 +736,18 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
           <span className="text-xs">عرض تقديمي</span>
         </Button>
 
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowHTMLDialog(true)}
+          className="h-8 px-2"
+          title="إدراج كود HTML تفاعلي"
+        >
+          <Code className="h-4 w-4 mr-1" />
+          <span className="text-xs">HTML</span>
+        </Button>
+
         <Separator orientation="vertical" className="h-6 mx-1" />
 
         {/* الصور */}
@@ -920,6 +979,76 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
             <Button onClick={handleGammaInsert}>
               إدراج العرض التقديمي
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog لإدراج كود HTML تفاعلي */}
+      <Dialog open={showHTMLDialog} onOpenChange={setShowHTMLDialog}>
+        <DialogContent className="max-w-5xl h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>إدراج كود HTML تفاعلي</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 grid grid-cols-2 gap-4 overflow-hidden h-[calc(90vh-180px)]">
+            <div className="flex flex-col gap-3">
+              <div>
+                <Label htmlFor="html-title">العنوان</Label>
+                <Input
+                  id="html-title"
+                  value={htmlTitle}
+                  onChange={(e) => setHtmlTitle(e.target.value)}
+                  placeholder="عنوان المحتوى"
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="html-height">الارتفاع</Label>
+                <Select value={htmlHeight} onValueChange={setHtmlHeight}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="300px">صغير (300px)</SelectItem>
+                    <SelectItem value="400px">متوسط (400px)</SelectItem>
+                    <SelectItem value="600px">كبير (600px)</SelectItem>
+                    <SelectItem value="800px">كبير جداً (800px)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex-1 flex flex-col min-h-0">
+                <Label htmlFor="html-code">كود HTML</Label>
+                <textarea
+                  id="html-code"
+                  value={htmlCode}
+                  onChange={(e) => setHtmlCode(e.target.value)}
+                  className="flex-1 mt-1 p-3 border border-border rounded-md font-mono text-sm bg-background resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="أدخل كود HTML هنا..."
+                  dir="ltr"
+                />
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label>معاينة مباشرة</Label>
+              <div className="flex-1 border border-border rounded-md overflow-hidden bg-background">
+                <iframe
+                  srcDoc={htmlCode}
+                  sandbox="allow-scripts allow-forms allow-modals allow-popups"
+                  className="w-full h-full border-0"
+                  title="معاينة مباشرة"
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setShowHTMLDialog(false);
+              setHtmlCode('');
+              setHtmlTitle('محتوى HTML تفاعلي');
+              setHtmlHeight('400px');
+            }}>
+              إلغاء
+            </Button>
+            <Button onClick={handleHTMLInsert}>إدراج المحتوى</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

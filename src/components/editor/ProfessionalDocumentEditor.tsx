@@ -30,6 +30,7 @@ import { CollaborationSystem } from './CollaborationSystem';
 import { AutoSaveSystem } from './AutoSaveSystem';
 import { ViewMode } from './ViewModeToggle';
 import { GammaEmbed } from './extensions/GammaEmbed';
+import { HTMLEmbed } from './extensions/HTMLEmbed';
 
 interface ProfessionalDocumentEditorProps {
   documentId?: string;
@@ -143,6 +144,10 @@ export const ProfessionalDocumentEditor: React.FC<ProfessionalDocumentEditorProp
       closeSingleQuote: "'",
     }),
     GammaEmbed.configure({
+      inline: false,
+      HTMLAttributes: {},
+    }),
+    HTMLEmbed.configure({
       inline: false,
       HTMLAttributes: {},
     }),

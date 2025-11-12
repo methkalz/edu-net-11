@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Grade12ExamPrepSectionWithTopics, Grade12ExamPrepTopicWithLessons, Grade12ExamPrepLessonWithMedia } from '@/hooks/useGrade12ExamPrepAdmin';
 import { Skeleton } from '@/components/ui/skeleton';
 import GammaEmbedWrapper from './GammaEmbedWrapper';
+import HTMLEmbedWrapper from './HTMLEmbedWrapper';
 
 const Grade12ExamPrepViewer: React.FC = () => {
   const [sections, setSections] = useState<Grade12ExamPrepSectionWithTopics[]>([]);
@@ -230,7 +231,10 @@ const Grade12ExamPrepViewer: React.FC = () => {
             <DialogTitle className="text-xl">{selectedLesson?.title}</DialogTitle>
           </DialogHeader>
           {selectedLesson?.content && (
-            <GammaEmbedWrapper content={selectedLesson.content} />
+            <>
+              <HTMLEmbedWrapper content={selectedLesson.content} />
+              <GammaEmbedWrapper content={selectedLesson.content} />
+            </>
           )}
           {selectedLesson?.media && selectedLesson.media.length > 0 && (
             <div className="mt-4 space-y-2">

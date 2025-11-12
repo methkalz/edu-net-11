@@ -14,6 +14,7 @@ import { Grade10LessonWithMedia, Grade10LessonMedia } from '@/hooks/useStudentGr
 import MediaFullscreenView from './MediaFullscreenView';
 import Lottie from 'lottie-react';
 import GammaEmbedWrapper from './GammaEmbedWrapper';
+import HTMLEmbedWrapper from './HTMLEmbedWrapper';
 
 interface Grade10LessonContentDisplayProps {
   lesson: Grade10LessonWithMedia;
@@ -264,7 +265,10 @@ const Grade10LessonContentDisplay: React.FC<Grade10LessonContentDisplayProps> = 
         <div className="space-y-2">
           <h2 className="text-2xl font-bold">{lesson.title}</h2>
           {lesson.content && (
-            <GammaEmbedWrapper content={lesson.content} />
+            <>
+              <HTMLEmbedWrapper content={lesson.content} />
+              <GammaEmbedWrapper content={lesson.content} />
+            </>
           )}
         </div>
       )}

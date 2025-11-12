@@ -15,6 +15,7 @@ import CodeBlock from './CodeBlock';
 import TypewriterCodeBlock from './TypewriterCodeBlock';
 import { logger } from '@/lib/logger';
 import GammaEmbedWrapper from './GammaEmbedWrapper';
+import HTMLEmbedWrapper from './HTMLEmbedWrapper';
 
 interface Grade11LessonContentDisplayProps {
   lesson: Grade11LessonWithMedia;
@@ -401,7 +402,10 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
         </div>
         
         {lesson.content && (
-          <GammaEmbedWrapper content={lesson.content} />
+          <>
+            <HTMLEmbedWrapper content={lesson.content} />
+            <GammaEmbedWrapper content={lesson.content} />
+          </>
         )}
       </div>
 
