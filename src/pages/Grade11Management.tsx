@@ -115,7 +115,7 @@ const Grade11Management: React.FC = () => {
               <Grade11ContentViewer />
             </TabsContent>
 
-            <TabsContent value="games" className="space-y-6">
+            <TabsContent value="games" className="space-y-6 mt-8">
               <GamesSection canManageContent={canManageContent} />
               
               {canManageContent && (
