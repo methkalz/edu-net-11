@@ -384,7 +384,7 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
         <div className="flex items-center gap-4 mb-6 flex-wrap">
           {/* العنوان */}
           {!hideTitle && (
-            <h4 className="font-bold text-2xl text-foreground leading-relaxed flex-1">
+            <h4 className="font-bold text-2xl text-foreground leading-relaxed flex-1 pr-3">
               {lesson.title}
             </h4>
           )}
