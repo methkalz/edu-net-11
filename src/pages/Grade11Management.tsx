@@ -58,26 +58,45 @@ const Grade11Management: React.FC = () => {
   }, [tabFromUrl, canManageContent, isSchoolAdmin]);
   
   return <Grade11ErrorBoundary>
-      <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
+      <div className="min-h-screen bg-gradient-to-br from-background via-primary/[0.015] to-secondary/[0.02]">
       <ModernHeader title="إدارة محتوى الصف الحادي عشر" showBackButton={true} backPath={contentBackPath} />
       
       <main className="container mx-auto px-6 py-8 flex-1">
         <div className="max-w-7xl mx-auto space-y-8">
           {/* عنوان الصفحة */}
-          <div className="text-center space-y-4">
-            <div className="flex items-center justify-center gap-6 flex-wrap">
-              
-              
+          <div className="text-center space-y-6 py-8">
+            <div className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-full border border-primary/20">
+              <GraduationCap className="h-6 w-6 text-primary" />
+              <h2 className="text-xl font-bold text-foreground">الصف الحادي عشر</h2>
             </div>
           </div>
           
           {/* التبويبات الرئيسية */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className={canManageContent ? 'grid w-full grid-cols-3' : isSchoolAdmin ? 'grid w-full grid-cols-3' : 'grid w-full grid-cols-2'}>
-              {canManageContent && <TabsTrigger value="manage">إدارة المحتوى</TabsTrigger>}
-              {isSchoolAdmin && <TabsTrigger value="school-view">عرض مدير المدرسة</TabsTrigger>}
-              <TabsTrigger value="view">عرض المحتوى</TabsTrigger>
-              <TabsTrigger value="games">الألعاب التعليمية</TabsTrigger>
+            <TabsList 
+              variant="primary"
+              className={canManageContent ? 'grid w-full grid-cols-3' : isSchoolAdmin ? 'grid w-full grid-cols-3' : 'grid w-full grid-cols-2'}
+            >
+              {canManageContent && (
+                <TabsTrigger value="manage" variant="primary">
+                  <BookOpen className="h-5 w-5" />
+                  إدارة المحتوى
+                </TabsTrigger>
+              )}
+              {isSchoolAdmin && (
+                <TabsTrigger value="school-view" variant="primary">
+                  <GraduationCap className="h-5 w-5" />
+                  عرض مدير المدرسة
+                </TabsTrigger>
+              )}
+              <TabsTrigger value="view" variant="primary">
+                <BookOpen className="h-5 w-5" />
+                عرض المحتوى
+              </TabsTrigger>
+              <TabsTrigger value="games" variant="primary">
+                <Gamepad2 className="h-5 w-5" />
+                الألعاب التعليمية
+              </TabsTrigger>
             </TabsList>
 
             {canManageContent && (

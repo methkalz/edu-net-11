@@ -365,20 +365,22 @@ const Grade11Content = () => {
       
 
       <Tabs defaultValue="textual" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="textual" className="flex items-center gap-2">
-            <BookOpen className="h-4 w-4" />
-            المضامين النصية
-          </TabsTrigger>
-          <TabsTrigger value="files" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            مكتبة الملفات
-          </TabsTrigger>
-          <TabsTrigger value="videos" className="flex items-center gap-2">
-            <Video className="h-4 w-4" />
-            الفيديوهات التعليمية
-          </TabsTrigger>
-        </TabsList>
+        <div className="bg-gradient-to-br from-muted/10 to-transparent rounded-2xl p-4 mb-6">
+          <TabsList variant="secondary" className="grid w-full grid-cols-3">
+            <TabsTrigger value="textual" variant="secondary">
+              <BookOpen className="h-4 w-4" />
+              المضامين النصية
+            </TabsTrigger>
+            <TabsTrigger value="files" variant="secondary">
+              <FileText className="h-4 w-4" />
+              مكتبة الملفات
+            </TabsTrigger>
+            <TabsTrigger value="videos" variant="secondary">
+              <Video className="h-4 w-4" />
+              الفيديوهات التعليمية
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="textual" className="space-y-6">
           <Grade11ContentControls sectionsCount={statistics.sectionsCount} topicsCount={statistics.topicsCount} lessonsCount={statistics.lessonsCount} searchTerm={searchTerm} onSearchChange={setSearchTerm} onAddSection={() => setShowSectionForm(true)} onExpandAll={handleExpandAll} onCollapseAll={handleCollapseAll} filterType={filterType} onFilterChange={setFilterType} />
