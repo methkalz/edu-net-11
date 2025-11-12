@@ -410,7 +410,7 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
       {/* Videos - Always displayed directly under content */}
       {videoMedia.length > 0 && (
         <div className="space-y-8">
-          <div className="text-lg font-bold text-primary mb-4">
+          <div className="text-lg font-bold text-primary mb-4 pr-3">
             🎥 مقاطع الفيديو ({videoMedia.length})
           </div>
           {videoMedia.map((media) => (
