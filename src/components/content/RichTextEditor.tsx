@@ -36,8 +36,10 @@ import {
   AlignLeft,
   AlignJustify,
   ImagePlus,
-  Percent
+  Percent,
+  Presentation
 } from 'lucide-react';
+import { GammaEmbed } from '../editor/extensions/GammaEmbed';
 import ImageBubbleMenu from './ImageBubbleMenu';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -88,6 +90,10 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
   const [tableCols, setTableCols] = useState(3);
   const [withHeaderRow, setWithHeaderRow] = useState(true);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [showGammaDialog, setShowGammaDialog] = useState(false);
+  const [gammaUrl, setGammaUrl] = useState('');
+  const [gammaTitle, setGammaTitle] = useState('');
+  const [gammaUrlError, setGammaUrlError] = useState('');
   
   const editor = useEditor({
     extensions: [
@@ -156,6 +162,10 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
       FontFamily,
       Color,
       Underline,
+      GammaEmbed.configure({
+        inline: false,
+        HTMLAttributes: {},
+      }),
     ],
     content,
     onUpdate: ({ editor }) => {
@@ -367,6 +377,39 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
   const handleDeleteImage = () => {
     editor.chain().focus().deleteSelection().run();
     toast.success('تم حذف الصورة');
+  };
+
+  const validateGammaUrl = (url: string): boolean => {
+    const trimmedUrl = url.trim();
+    if (!trimmedUrl) {
+      setGammaUrlError('يرجى إدخال رابط العرض التقديمي');
+      return false;
+    }
+    if (!trimmedUrl.startsWith('https://gamma.app/embed/')) {
+      setGammaUrlError('يجب أن يبدأ الرابط بـ https://gamma.app/embed/');
+      return false;
+    }
+    setGammaUrlError('');
+    return true;
+  };
+
+  const handleGammaInsert = () => {
+    if (!validateGammaUrl(gammaUrl)) {
+      return;
+    }
+
+    editor.commands.setGammaEmbed({
+      src: gammaUrl.trim(),
+      title: gammaTitle || 'عرض تقديمي من Gamma',
+      width: '100%',
+      height: '450px',
+    });
+
+    toast.success('تم إضافة العرض التقديمي بنجاح');
+    setShowGammaDialog(false);
+    setGammaUrl('');
+    setGammaTitle('');
+    setGammaUrlError('');
   };
 
   return (
@@ -633,6 +676,21 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
 
         <Separator orientation="vertical" className="h-6 mx-1" />
 
+        {/* عروض Gamma التقديمية */}
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowGammaDialog(true)}
+          className="h-8 px-2"
+          title="إدراج عرض تقديمي من Gamma"
+        >
+          <Presentation className="h-4 w-4 mr-1" />
+          <span className="text-xs">عرض تقديمي</span>
+        </Button>
+
+        <Separator orientation="vertical" className="h-6 mx-1" />
+
         {/* الصور */}
         <div className="flex items-center gap-1">
           <input
@@ -795,6 +853,72 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
             </Button>
             <Button onClick={handleInsertTable}>
               إدراج الجدول
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog لإدراج عرض تقديمي من Gamma */}
+      <Dialog open={showGammaDialog} onOpenChange={setShowGammaDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>إدراج عرض تقديمي من Gamma</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="gamma-url">رابط Embed من Gamma *</Label>
+              <Input
+                id="gamma-url"
+                type="url"
+                placeholder="https://gamma.app/embed/..."
+                value={gammaUrl}
+                onChange={(e) => {
+                  setGammaUrl(e.target.value);
+                  setGammaUrlError('');
+                }}
+                className={`text-right ${gammaUrlError ? 'border-destructive' : ''}`}
+                dir="ltr"
+              />
+              {gammaUrlError && (
+                <p className="text-sm text-destructive">{gammaUrlError}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="gamma-title">عنوان العرض (اختياري)</Label>
+              <Input
+                id="gamma-title"
+                type="text"
+                placeholder="عرض تقديمي من Gamma"
+                value={gammaTitle}
+                onChange={(e) => setGammaTitle(e.target.value)}
+                className="text-right"
+              />
+            </div>
+
+            <div className="space-y-2 p-3 bg-muted rounded-md text-sm">
+              <p className="font-medium">كيفية الحصول على رابط Embed:</p>
+              <ol className="list-decimal pr-5 space-y-1 text-muted-foreground">
+                <li>افتح العرض التقديمي في Gamma</li>
+                <li>اضغط على زر "Share" أو "مشاركة"</li>
+                <li>اختر "Embed" أو "تضمين"</li>
+                <li>انسخ الرابط الذي يبدأ بـ <code className="text-xs bg-background px-1 py-0.5 rounded">https://gamma.app/embed/</code></li>
+              </ol>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setShowGammaDialog(false);
+              setGammaUrl('');
+              setGammaTitle('');
+              setGammaUrlError('');
+            }}>
+              إلغاء
+            </Button>
+            <Button onClick={handleGammaInsert}>
+              إدراج العرض التقديمي
             </Button>
           </DialogFooter>
         </DialogContent>
