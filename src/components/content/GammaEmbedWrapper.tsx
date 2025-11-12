@@ -68,12 +68,14 @@ const GammaEmbedWrapper: React.FC<GammaEmbedWrapperProps> = ({ content }) => {
             minimizeIcon?.classList.remove('hidden');
             fullscreenBtn.title = 'الخروج من ملء الشاشة';
             wrapper.classList.add('bg-black', 'flex', 'items-center', 'justify-center');
+            iframe.style.cssText = 'width: 100vw !important; height: 100vh !important; max-width: 100vw; max-height: 100vh; border-radius: 0;';
           } else {
             await document.exitFullscreen();
             maximizeIcon?.classList.remove('hidden');
             minimizeIcon?.classList.add('hidden');
             fullscreenBtn.title = 'ملء الشاشة';
             wrapper.classList.remove('bg-black', 'flex', 'items-center', 'justify-center');
+            iframe.style.cssText = '';
           }
         } catch (error) {
           console.error('خطأ في تبديل وضع ملء الشاشة:', error);
@@ -92,6 +94,7 @@ const GammaEmbedWrapper: React.FC<GammaEmbedWrapperProps> = ({ content }) => {
           minimizeIcon?.classList.add('hidden');
           fullscreenBtn.title = 'ملء الشاشة';
           wrapper.classList.remove('bg-black', 'flex', 'items-center', 'justify-center');
+          iframe.style.cssText = '';
         }
       };
 
