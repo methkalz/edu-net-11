@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { NodeViewWrapper, NodeViewProps } from '@tiptap/react';
-import { Trash2, Edit } from 'lucide-react';
+import { Trash2, Edit, Maximize, Minimize } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -25,6 +25,20 @@ const GammaEmbedComponent: React.FC<NodeViewProps> = ({
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
 
   const handleSave = () => {
     updateAttributes(editValues);
@@ -41,12 +55,25 @@ const GammaEmbedComponent: React.FC<NodeViewProps> = ({
     setError(true);
   };
 
+  const toggleFullscreen = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await wrapperRef.current?.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch (error) {
+      console.error('خطأ في تبديل وضع ملء الشاشة:', error);
+    }
+  };
+
   return (
     <NodeViewWrapper className="gamma-embed-node">
       <div
+        ref={wrapperRef}
         className={`relative group rounded-lg overflow-hidden ${
           selected ? 'ring-2 ring-primary' : ''
-        }`}
+        } ${isFullscreen ? 'bg-black flex items-center justify-center' : ''}`}
         style={{ margin: '1rem 0' }}
       >
         {/* Controls overlay - يظهر عند hover */}
@@ -56,14 +83,29 @@ const GammaEmbedComponent: React.FC<NodeViewProps> = ({
             variant="secondary"
             onClick={() => setIsEditing(true)}
             className="h-8 w-8 p-0 bg-background/90 backdrop-blur-sm"
+            title="تعديل الإعدادات"
           >
             <Edit className="h-4 w-4" />
           </Button>
           <Button
             size="sm"
             variant="secondary"
+            onClick={toggleFullscreen}
+            className="h-8 w-8 p-0 bg-background/90 backdrop-blur-sm"
+            title={isFullscreen ? 'الخروج من ملء الشاشة' : 'ملء الشاشة'}
+          >
+            {isFullscreen ? (
+              <Minimize className="h-4 w-4" />
+            ) : (
+              <Maximize className="h-4 w-4" />
+            )}
+          </Button>
+          <Button
+            size="sm"
+            variant="secondary"
             onClick={deleteNode}
             className="h-8 w-8 p-0 bg-background/90 backdrop-blur-sm hover:bg-destructive hover:text-destructive-foreground"
+            title="حذف العرض"
           >
             <Trash2 className="h-4 w-4" />
           </Button>
