@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Settings, Shield, FileText, FileEdit, ChevronDown, Volume2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import AppHeader from '@/components/shared/AppHeader';
+import ModernHeader from '@/components/shared/ModernHeader';
 import AppFooter from '@/components/shared/AppFooter';
 import GradeCards from '@/components/content/GradeCards';
 import TinyMCETestBlock from '@/components/content/TinyMCETestBlock';
@@ -31,11 +31,10 @@ const ContentManagement: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
-      <AppHeader 
+      <ModernHeader 
         title="إدارة المضامين التعليمية" 
         showBackButton={true}
         backPath="/dashboard"
-        showLogout={true}
       />
       
       <main className="container mx-auto px-6 py-8 flex-1">
