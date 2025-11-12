@@ -174,7 +174,7 @@ const Grade11ContentViewer: React.FC = () => {
                                             <div key={lesson.id} className="border-l-4 border-l-blue-300 pl-4 py-3 bg-white rounded-lg border border-blue-200 shadow-sm">
                                               <Grade11LessonContentDisplay lesson={lesson} />
                                               
-                                              <div className="text-xs text-muted-foreground mt-3 pt-2 border-t border-blue-100">
+                                              <div className="text-xs text-muted-foreground mt-3 pt-2 border-t border-blue-100 pr-3">
                                                 {lesson.media?.length || 0} ملف وسائط • تم الإنشاء: {format(new Date(lesson.created_at), 'dd/MM/yyyy')}
                                               </div>
                                             </div>
