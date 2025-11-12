@@ -10,8 +10,6 @@ import Grade11ContentViewer from '@/components/content/Grade11ContentViewer';
 import Grade11SchoolAdminViewer from '@/components/content/Grade11SchoolAdminViewer';
 import Grade11CourseViewer from '@/components/content/Grade11CourseViewer';
 import GamesSection from '@/components/content/GamesSection';
-import { EducationalTermsManager } from '@/components/content/EducationalTermsManager';
-import { ContentGameLauncher } from '@/components/content/ContentGameLauncher';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Grade11ErrorBoundary } from '@/components/error-boundaries/Grade11ErrorBoundary';
 const Grade11Management: React.FC = () => {
@@ -117,13 +115,6 @@ const Grade11Management: React.FC = () => {
 
             <TabsContent value="games" className="space-y-6 mt-8">
               <GamesSection canManageContent={canManageContent} />
-              
-              {canManageContent && (
-                <div className="mt-8">
-                  <h3 className="text-xl font-semibold mb-4">المصطلحات التعليمية (Beta)</h3>
-                  <EducationalTermsManager />
-                </div>
-              )}
             </TabsContent>
           </Tabs>
         </div>
