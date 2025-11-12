@@ -302,7 +302,7 @@ const Grade12FinalProjectManager: React.FC = () => {
                     {isTeacher && (
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <User className="h-4 w-4" />
-                        <span>الطالب: {project.student_id}</span>
+                        <span>الطالب: {project.student_profile?.full_name || 'غير متوفر'}</span>
                       </div>
                     )}
                   </div>

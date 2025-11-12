@@ -25,6 +25,11 @@ interface Grade12FinalProject {
   created_by: string;
   created_at: string;
   updated_at: string;
+  student_profile?: {
+    user_id: string;
+    full_name: string;
+    email: string;
+  } | null;
 }
 
 interface Grade12ProjectTask {
