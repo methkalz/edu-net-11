@@ -23,7 +23,8 @@ import {
   Eye,
   Users,
   Settings,
-  Printer
+  Printer,
+  Presentation
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -39,7 +40,16 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { ViewModeToggle, ViewMode } from './ViewModeToggle';
@@ -78,6 +88,10 @@ export const ProfessionalToolbar: React.FC<ProfessionalToolbarProps> = ({
   const [activeColorPicker, setActiveColorPicker] = useState<'text' | 'highlight' | null>(null);
   const [fontSize, setFontSize] = useState('14');
   const [fontFamily, setFontFamily] = useState('Cairo');
+  const [showGammaDialog, setShowGammaDialog] = useState(false);
+  const [gammaUrl, setGammaUrl] = useState('');
+  const [gammaTitle, setGammaTitle] = useState('');
+  const [gammaUrlError, setGammaUrlError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -199,6 +213,43 @@ export const ProfessionalToolbar: React.FC<ProfessionalToolbarProps> = ({
       });
     }
   }, [documentId, title, toast]);
+
+  // Gamma presentation validation and insert
+  const validateGammaUrl = (url: string): boolean => {
+    const pattern = /^https:\/\/gamma\.app\/embed\/[a-zA-Z0-9]+$/;
+    return pattern.test(url.trim());
+  };
+
+  const handleGammaInsert = useCallback(() => {
+    setGammaUrlError('');
+    
+    if (!gammaUrl.trim()) {
+      setGammaUrlError('الرجاء إدخال رابط العرض التقديمي');
+      return;
+    }
+
+    if (!validateGammaUrl(gammaUrl)) {
+      setGammaUrlError('رابط غير صحيح. يجب أن يبدأ بـ https://gamma.app/embed/');
+      return;
+    }
+
+    editor.commands.setGammaEmbed({
+      src: gammaUrl.trim(),
+      title: gammaTitle.trim() || 'عرض تقديمي من Gamma',
+      width: '100%',
+      height: '450px',
+    });
+
+    // Reset and close
+    setGammaUrl('');
+    setGammaTitle('');
+    setShowGammaDialog(false);
+    
+    toast({
+      title: "تم إضافة العرض التقديمي",
+      description: "تم إدراج العرض التقديمي بنجاح",
+    });
+  }, [editor, gammaUrl, gammaTitle, toast]);
 
   return (
     <div className="professional-toolbar border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -462,6 +513,7 @@ export const ProfessionalToolbar: React.FC<ProfessionalToolbarProps> = ({
             size="sm"
             onClick={handleImageUpload}
             className="p-2"
+            title="إدراج صورة"
           >
             <Image className="h-4 w-4" />
           </Button>
@@ -470,8 +522,18 @@ export const ProfessionalToolbar: React.FC<ProfessionalToolbarProps> = ({
             size="sm"
             onClick={insertTable}
             className="p-2"
+            title="إدراج جدول"
           >
             <Table className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowGammaDialog(true)}
+            className="p-2"
+            title="إدراج عرض تقديمي من Gamma"
+          >
+            <Presentation className="h-4 w-4" />
           </Button>
         </div>
       </div>
@@ -484,6 +546,71 @@ export const ProfessionalToolbar: React.FC<ProfessionalToolbarProps> = ({
         onChange={onImageSelected}
         className="hidden"
       />
+
+      {/* Gamma Dialog */}
+      <Dialog open={showGammaDialog} onOpenChange={setShowGammaDialog}>
+        <DialogContent className="sm:max-w-md" dir="rtl">
+          <DialogHeader>
+            <DialogTitle>إدراج عرض تقديمي من Gamma</DialogTitle>
+            <DialogDescription>
+              انسخ رابط التضمين من Gamma والصقه هنا. يجب أن يبدأ الرابط بـ{' '}
+              <code className="text-xs bg-muted px-1 py-0.5 rounded">https://gamma.app/embed/</code>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="gamma-url">رابط التضمين *</Label>
+              <Input
+                id="gamma-url"
+                value={gammaUrl}
+                onChange={(e) => {
+                  setGammaUrl(e.target.value);
+                  setGammaUrlError('');
+                }}
+                placeholder="https://gamma.app/embed/..."
+                className={gammaUrlError ? 'border-destructive' : ''}
+              />
+              {gammaUrlError && (
+                <p className="text-sm text-destructive">{gammaUrlError}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="gamma-title">العنوان (اختياري)</Label>
+              <Input
+                id="gamma-title"
+                value={gammaTitle}
+                onChange={(e) => setGammaTitle(e.target.value)}
+                placeholder="عنوان العرض التقديمي"
+              />
+            </div>
+            <div className="bg-muted p-3 rounded-lg text-sm">
+              <p className="font-medium mb-1">كيفية الحصول على رابط التضمين:</p>
+              <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
+                <li>افتح العرض التقديمي في Gamma</li>
+                <li>اضغط على زر المشاركة (Share)</li>
+                <li>اختر "Embed" أو "التضمين"</li>
+                <li>انسخ الرابط من src="..." في كود الـ iframe</li>
+              </ol>
+            </div>
+          </div>
+          <DialogFooter className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowGammaDialog(false);
+                setGammaUrl('');
+                setGammaTitle('');
+                setGammaUrlError('');
+              }}
+            >
+              إلغاء
+            </Button>
+            <Button onClick={handleGammaInsert}>
+              إدراج العرض التقديمي
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <style>{`
         .professional-toolbar {
