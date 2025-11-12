@@ -360,53 +360,38 @@ const Grade11Content = () => {
         </div>
       </div>
 
-      <div className="bg-background/50 backdrop-blur-sm rounded-2xl border-2 border-primary/10 p-2">
-        <Tabs defaultValue="textual" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 gap-2 bg-transparent">
-            <TabsTrigger value="textual" className="rounded-xl data-[state=active]:bg-gradient-to-br data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300">
-              <BookOpen className="h-5 w-5 ml-2" />
-              المضامين النصية
-            </TabsTrigger>
-            <TabsTrigger value="files" className="rounded-xl data-[state=active]:bg-gradient-to-br data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300">
-              <FileText className="h-5 w-5 ml-2" />
-              مكتبة الملفات
-            </TabsTrigger>
-            <TabsTrigger value="videos" className="rounded-xl data-[state=active]:bg-gradient-to-br data-[state=active]:from-red-500 data-[state=active]:to-red-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300">
-              <Video className="h-5 w-5 ml-2" />
-              الفيديوهات
-            </TabsTrigger>
-          </TabsList>
+      <Tabs defaultValue="textual" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="textual" className="flex items-center gap-2">
+            <BookOpen className="h-4 w-4" />
+            المضامين النصية
+          </TabsTrigger>
+          <TabsTrigger value="files" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            مكتبة الملفات
+          </TabsTrigger>
+          <TabsTrigger value="videos" className="flex items-center gap-2">
+            <Video className="h-4 w-4" />
+            الفيديوهات التعليمية
+          </TabsTrigger>
+        </TabsList>
 
         <TabsContent value="textual" className="space-y-6">
           <Grade11ContentControls sectionsCount={statistics.sectionsCount} topicsCount={statistics.topicsCount} lessonsCount={statistics.lessonsCount} searchTerm={searchTerm} onSearchChange={setSearchTerm} onAddSection={() => setShowSectionForm(true)} onExpandAll={handleExpandAll} onCollapseAll={handleCollapseAll} filterType={filterType} onFilterChange={setFilterType} />
 
-          <div className="space-y-4 mt-6">
-            {filteredSections.length === 0 ? <div className="text-center py-24 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 rounded-3xl border-2 border-dashed border-primary/20">
-                <div className="relative inline-block mb-8">
-                  <div className="absolute inset-0 bg-primary/10 rounded-full blur-2xl animate-pulse" />
-                  <BookOpen className="relative h-24 w-24 mx-auto text-primary/50" />
-                </div>
-                
-                <h3 className="text-3xl font-bold mb-4 bg-gradient-to-l from-primary to-secondary bg-clip-text text-transparent">
-                  {searchTerm ? 'لا توجد نتائج للبحث' : 'لنبدأ رحلة التعلم!'}
+          <div className="space-y-4">
+            {filteredSections.length === 0 ? <div className="text-center py-16 bg-gradient-to-br from-muted/20 to-muted/40 rounded-xl border-2 border-dashed border-muted-foreground/20">
+                <BookOpen className="h-20 w-20 mx-auto mb-6 text-muted-foreground/50" />
+                <h3 className="text-2xl font-bold mb-3 text-card-foreground">
+                  {searchTerm ? 'لا توجد نتائج للبحث' : 'لا توجد أقسام حتى الآن'}
                 </h3>
-                
-                <p className="text-muted-foreground text-lg mb-8 max-w-md mx-auto leading-relaxed">
-                  {searchTerm 
-                    ? `لم نجد محتوى يطابق "${searchTerm}". جرب كلمات بحث أخرى.`
-                    : 'أضف أول قسم تعليمي وابدأ ببناء محتوى ثري للطلاب'}
+                <p className="text-muted-foreground mb-6 max-w-md mx-auto leading-relaxed">
+                  {searchTerm ? `لم يتم العثور على أي محتوى يحتوي على "${searchTerm}". جرب مصطلحات بحث أخرى.` : 'ابدأ بإضافة قسم جديد لتنظيم المحتوى التعليمي للصف الحادي عشر'}
                 </p>
-                
-                {!searchTerm && (
-                  <Button
-                    onClick={() => setShowSectionForm(true)}
-                    size="lg"
-                    className="bg-gradient-to-r from-primary via-primary/90 to-primary/80 hover:from-primary/90 hover:via-primary/80 hover:to-primary/70 shadow-xl hover:shadow-2xl transition-all duration-300 rounded-xl px-8 py-6 text-lg font-bold"
-                  >
-                    <Plus className="h-6 w-6 ml-2" />
+                {!searchTerm && <button onClick={() => setShowSectionForm(true)} className="inline-flex items-center gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground px-6 py-3 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
+                    <Plus className="h-5 w-5" />
                     إضافة القسم الأول
-                  </Button>
-                )}
+                  </button>}
               </div> : filteredSections.map((section, index) => <Grade11CollapsibleSection key={section.id} section={section} index={index} isDragged={draggedSectionIndex === index} onAddTopic={handleAddTopic} onEditSection={handleEditSection} onDeleteSection={handleDeleteSection} onAddLesson={handleAddLesson} onEditTopic={handleEditTopic} onDeleteTopic={handleDeleteTopic} onEditLesson={handleEditLesson} onDeleteLesson={handleDeleteLesson} onReorderTopics={reorderTopics} onReorderLessons={reorderLessons} onUpdateMedia={updateLessonMedia} onDragStart={handleSectionDragStart} onDragOver={handleSectionDragOver} onDrop={handleSectionDrop} />)}
           </div>
         </TabsContent>
@@ -446,8 +431,8 @@ const Grade11Content = () => {
             />
           </div>
         </TabsContent>
+
       </Tabs>
-      </div>
 
       {/* Forms */}
       {showSectionForm && <Grade11SectionForm section={editingSection} onSave={handleSaveSection} onCancel={handleCloseForm} />}
