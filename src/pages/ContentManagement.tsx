@@ -9,66 +9,34 @@ import TextToSpeechTestBlock from '@/components/content/TextToSpeechTestBlock';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import * as Collapsible from '@radix-ui/react-collapsible';
-
 const ContentManagement: React.FC = () => {
-  const { userProfile } = useAuth();
+  const {
+    userProfile
+  } = useAuth();
   const navigate = useNavigate();
   const [isTinyMCEOpen, setIsTinyMCEOpen] = useState(false);
   const [isTTSOpen, setIsTTSOpen] = useState(false);
 
   // هذه الصفحة مخصصة للسوبر آدمن فقط
   if (userProfile?.role !== 'superadmin') {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex items-center justify-center">
+    return <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex items-center justify-center">
         <div className="text-center">
           <Shield className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
           <h2 className="text-xl font-semibold mb-2">غير مصرح لك بالوصول</h2>
           <p className="text-muted-foreground">هذه الصفحة مخصصة لمدراء النظام فقط</p>
         </div>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
-      <ModernHeader 
-        title="إدارة المضامين التعليمية" 
-        showBackButton={true}
-        backPath="/dashboard"
-      />
+  return <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
+      <ModernHeader title="إدارة المضامين التعليمية" showBackButton={true} backPath="/dashboard" />
       
       <main className="container mx-auto px-6 py-8 flex-1">
         <div className="max-w-7xl mx-auto space-y-8">
-          <div className="text-center space-y-4">
-            <div className="inline-flex items-center gap-3 bg-red-100 text-red-700 px-6 py-3 rounded-full">
-              <Settings className="h-6 w-6" />
-              <span className="font-semibold">نظام الإدارة الكاملة للمضامين</span>
-            </div>
-            <h2 className="text-4xl font-bold text-foreground text-center">
-              إدارة المضامين التعليمية
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              إدارة شاملة وتحكم كامل في المحتوى التعليمي للصفوف الدراسية مع صلاحيات الإنشاء والتعديل والحذف
-            </p>
-            
-            {/* تنبيه للمدراء */}
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 max-w-2xl mx-auto">
-              <div className="flex items-center gap-2 text-amber-800">
-                <Shield className="h-5 w-5" />
-                <span className="font-medium">صلاحيات إدارية</span>
-              </div>
-              <p className="text-amber-700 text-sm mt-1">
-                أنت تدخل كمدير نظام مع صلاحيات كاملة للإنشاء والتعديل والحذف
-              </p>
-            </div>
-          </div>
+          
           
           <div className="animate-fade-in space-y-8">
             {/* Google Docs Management Card */}
-            <Card 
-              className="hover:shadow-lg transition-all duration-300 cursor-pointer border-2 border-transparent hover:border-blue-200"
-              onClick={() => navigate('/google-docs')}
-            >
+            <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer border-2 border-transparent hover:border-blue-200" onClick={() => navigate('/google-docs')}>
               <CardContent className="p-8">
                 <div className="flex items-center gap-4 mb-4">
                   <FileText className="h-10 w-10 text-blue-600" />
@@ -97,11 +65,7 @@ const ContentManagement: React.FC = () => {
                           </span>
                         </div>
                       </div>
-                      <ChevronDown 
-                        className={`h-6 w-6 text-purple-600 transition-transform duration-300 ${
-                          isTinyMCEOpen ? 'rotate-180' : ''
-                        }`}
-                      />
+                      <ChevronDown className={`h-6 w-6 text-purple-600 transition-transform duration-300 ${isTinyMCEOpen ? 'rotate-180' : ''}`} />
                     </div>
                   </Collapsible.Trigger>
                   
@@ -132,11 +96,7 @@ const ContentManagement: React.FC = () => {
                           </span>
                         </div>
                       </div>
-                      <ChevronDown 
-                        className={`h-6 w-6 text-green-600 transition-transform duration-300 ${
-                          isTTSOpen ? 'rotate-180' : ''
-                        }`}
-                      />
+                      <ChevronDown className={`h-6 w-6 text-green-600 transition-transform duration-300 ${isTTSOpen ? 'rotate-180' : ''}`} />
                     </div>
                   </Collapsible.Trigger>
                   
@@ -157,8 +117,6 @@ const ContentManagement: React.FC = () => {
       </main>
       
       <AppFooter />
-    </div>
-  );
+    </div>;
 };
-
 export default ContentManagement;
