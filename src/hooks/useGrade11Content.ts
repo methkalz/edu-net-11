@@ -60,6 +60,7 @@ export interface Grade11LessonWithMedia extends Grade11Lesson {
 export const useGrade11Content = () => {
   const [sections, setSections] = useState<Grade11SectionWithTopics[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   const fetchSections = async () => {
     try {
@@ -108,6 +109,7 @@ export const useGrade11Content = () => {
 
   const addSection = async (sectionData: Omit<Grade11Section, 'id' | 'created_at' | 'updated_at'>) => {
     try {
+      setSaving(true);
       const { data, error } = await supabase
         .from('grade11_sections')
         .insert([sectionData])
@@ -116,36 +118,48 @@ export const useGrade11Content = () => {
 
       if (error) throw error;
 
+      const newSection = { ...data, topics: [] } as Grade11SectionWithTopics;
+      setSections(prev => [...prev, newSection]);
       toast.success('تم إضافة القسم بنجاح');
-      fetchSections();
       return data;
     } catch (error) {
       logger.error('Error adding section', error as Error);
       toast.error('حدث خطأ في إضافة القسم');
       throw error;
+    } finally {
+      setSaving(false);
     }
   };
 
   const updateSection = async (id: string, updates: Partial<Grade11Section>) => {
     try {
-      const { error } = await supabase
+      setSaving(true);
+      const { data, error } = await supabase
         .from('grade11_sections')
         .update(updates)
-        .eq('id', id);
+        .eq('id', id)
+        .select()
+        .single();
 
       if (error) throw error;
 
+      setSections(prev => prev.map(section => 
+        section.id === id ? { ...section, ...data } : section
+      ));
       toast.success('تم تحديث القسم بنجاح');
-      fetchSections();
+      return data;
     } catch (error) {
       logger.error('Error updating section', error as Error);
       toast.error('حدث خطأ في تحديث القسم');
       throw error;
+    } finally {
+      setSaving(false);
     }
   };
 
   const deleteSection = async (id: string) => {
     try {
+      setSaving(true);
       const { error } = await supabase
         .from('grade11_sections')
         .delete()
@@ -153,17 +167,20 @@ export const useGrade11Content = () => {
 
       if (error) throw error;
 
+      setSections(prev => prev.filter(section => section.id !== id));
       toast.success('تم حذف القسم بنجاح');
-      fetchSections();
     } catch (error) {
       logger.error('Error deleting section', error as Error);
       toast.error('حدث خطأ في حذف القسم');
       throw error;
+    } finally {
+      setSaving(false);
     }
   };
 
   const addTopic = async (topicData: Omit<Grade11Topic, 'id' | 'created_at' | 'updated_at'>) => {
     try {
+      setSaving(true);
       const { data, error } = await supabase
         .from('grade11_topics')
         .insert([topicData])
@@ -172,36 +189,55 @@ export const useGrade11Content = () => {
 
       if (error) throw error;
 
+      const newTopic = { ...data, lessons: [] } as Grade11TopicWithLessons;
+      setSections(prev => prev.map(section => 
+        section.id === data.section_id 
+          ? { ...section, topics: [...section.topics, newTopic] }
+          : section
+      ));
       toast.success('تم إضافة الموضوع بنجاح');
-      fetchSections();
       return data;
     } catch (error) {
       logger.error('Error adding topic', error as Error);
       toast.error('حدث خطأ في إضافة الموضوع');
       throw error;
+    } finally {
+      setSaving(false);
     }
   };
 
   const updateTopic = async (id: string, updates: Partial<Grade11Topic>) => {
     try {
-      const { error } = await supabase
+      setSaving(true);
+      const { data, error } = await supabase
         .from('grade11_topics')
         .update(updates)
-        .eq('id', id);
+        .eq('id', id)
+        .select()
+        .single();
 
       if (error) throw error;
 
+      setSections(prev => prev.map(section => ({
+        ...section,
+        topics: section.topics.map(topic => 
+          topic.id === id ? { ...topic, ...data } : topic
+        )
+      })));
       toast.success('تم تحديث الموضوع بنجاح');
-      fetchSections();
+      return data;
     } catch (error) {
       logger.error('Error updating topic', error as Error);
       toast.error('حدث خطأ في تحديث الموضوع');
       throw error;
+    } finally {
+      setSaving(false);
     }
   };
 
   const deleteTopic = async (id: string) => {
     try {
+      setSaving(true);
       const { error } = await supabase
         .from('grade11_topics')
         .delete()
@@ -209,17 +245,23 @@ export const useGrade11Content = () => {
 
       if (error) throw error;
 
+      setSections(prev => prev.map(section => ({
+        ...section,
+        topics: section.topics.filter(topic => topic.id !== id)
+      })));
       toast.success('تم حذف الموضوع بنجاح');
-      fetchSections();
     } catch (error) {
       logger.error('Error deleting topic', error as Error);
       toast.error('حدث خطأ في حذف الموضوع');
       throw error;
+    } finally {
+      setSaving(false);
     }
   };
 
   const addLesson = async (lessonData: Omit<Grade11Lesson, 'id' | 'created_at' | 'updated_at'>) => {
     try {
+      setSaving(true);
       const { data, error } = await supabase
         .from('grade11_lessons')
         .insert([lessonData])
@@ -228,13 +270,23 @@ export const useGrade11Content = () => {
 
       if (error) throw error;
 
+      const newLesson = { ...data, media: [] } as Grade11LessonWithMedia;
+      setSections(prev => prev.map(section => ({
+        ...section,
+        topics: section.topics.map(topic => 
+          topic.id === data.topic_id
+            ? { ...topic, lessons: [...topic.lessons, newLesson] }
+            : topic
+        )
+      })));
       toast.success('تم إضافة الدرس بنجاح');
-      fetchSections();
       return data;
     } catch (error) {
       logger.error('Error adding lesson', error as Error);
       toast.error('حدث خطأ في إضافة الدرس');
       throw error;
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -258,6 +310,7 @@ export const useGrade11Content = () => {
 
   const deleteLesson = async (id: string) => {
     try {
+      setSaving(true);
       const { error } = await supabase
         .from('grade11_lessons')
         .delete()
@@ -265,17 +318,26 @@ export const useGrade11Content = () => {
 
       if (error) throw error;
 
+      setSections(prev => prev.map(section => ({
+        ...section,
+        topics: section.topics.map(topic => ({
+          ...topic,
+          lessons: topic.lessons.filter(lesson => lesson.id !== id)
+        }))
+      })));
       toast.success('تم حذف الدرس بنجاح');
-      fetchSections();
     } catch (error) {
       logger.error('Error deleting lesson', error as Error);
       toast.error('حدث خطأ في حذف الدرس');
       throw error;
+    } finally {
+      setSaving(false);
     }
   };
 
   const addLessonMedia = async (mediaData: Omit<Grade11LessonMedia, 'id' | 'created_at'>) => {
     try {
+      setSaving(true);
       const { data, error } = await supabase
         .from('grade11_lesson_media')
         .insert([mediaData])
@@ -284,18 +346,36 @@ export const useGrade11Content = () => {
 
       if (error) throw error;
 
+      const newMedia: Grade11LessonMedia = {
+        ...data,
+        metadata: data.metadata as Record<string, any> | null
+      };
+
+      setSections(prev => prev.map(section => ({
+        ...section,
+        topics: section.topics.map(topic => ({
+          ...topic,
+          lessons: topic.lessons.map(lesson => 
+            lesson.id === data.lesson_id
+              ? { ...lesson, media: [...(lesson.media || []), newMedia] }
+              : lesson
+          )
+        }))
+      })));
       toast.success('تم إضافة الوسائط بنجاح');
-      fetchSections();
       return data;
     } catch (error) {
       logger.error('Error adding lesson media', error as Error);
       toast.error('حدث خطأ في إضافة الوسائط');
       throw error;
+    } finally {
+      setSaving(false);
     }
   };
 
   const deleteLessonMedia = async (id: string) => {
     try {
+      setSaving(true);
       const { error } = await supabase
         .from('grade11_lesson_media')
         .delete()
@@ -303,12 +383,23 @@ export const useGrade11Content = () => {
 
       if (error) throw error;
 
+      setSections(prev => prev.map(section => ({
+        ...section,
+        topics: section.topics.map(topic => ({
+          ...topic,
+          lessons: topic.lessons.map(lesson => ({
+            ...lesson,
+            media: lesson.media?.filter(media => media.id !== id) || []
+          }))
+        }))
+      })));
       toast.success('تم حذف الوسائط بنجاح');
-      fetchSections();
     } catch (error) {
       logger.error('Error deleting lesson media', error as Error);
       toast.error('حدث خطأ في حذف الوسائط');
       throw error;
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -434,6 +525,7 @@ export const useGrade11Content = () => {
   return {
     sections,
     loading,
+    saving,
     fetchSections,
     addSection,
     updateSection,
