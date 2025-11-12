@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 import './table-styles.css';
 import { 
   Bold, 
@@ -403,24 +404,68 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
     return true;
   };
 
-  const validateHTMLCode = (code: string): { isValid: boolean; error?: string } => {
+  const validateHTMLCode = async (code: string): Promise<{ isValid: boolean; error?: string }> => {
     if (!code.trim()) {
       return { isValid: false, error: 'الكود فارغ' };
-    }
-
-    if (code.includes('<script src=') || code.includes('<script src =')) {
-      return { isValid: false, error: 'لا يُسمح بتحميل scripts خارجية لأسباب أمنية' };
     }
 
     if (code.toLowerCase().includes('<iframe')) {
       return { isValid: false, error: 'لا يُسمح بتضمين iframes داخل الكود' };
     }
 
+    // التحقق من external scripts
+    const scriptSrcRegex = /<script[^>]*\ssrc\s*=/i;
+    if (scriptSrcRegex.test(code)) {
+      // جلب CDNs الموثوقة
+      const { data: trustedCDNs, error: fetchError } = await supabase
+        .from('trusted_cdn_domains')
+        .select('domain')
+        .eq('is_active', true);
+
+      if (fetchError) {
+        console.error('Error fetching trusted CDNs:', fetchError);
+        return { isValid: false, error: 'خطأ في التحقق من CDNs الموثوقة' };
+      }
+
+      // استخراج جميع script src URLs
+      const scriptMatches = code.match(/<script[^>]+src=["']([^"']+)["']/gi);
+      if (scriptMatches) {
+        for (const match of scriptMatches) {
+          const urlMatch = match.match(/src=["']([^"']+)["']/i);
+          if (urlMatch && urlMatch[1]) {
+            const url = urlMatch[1];
+            
+            // التحقق من HTTPS
+            if (!url.startsWith('https://')) {
+              return { isValid: false, error: 'يجب أن تكون جميع scripts عبر HTTPS فقط' };
+            }
+
+            // استخراج النطاق
+            let domain: string;
+            try {
+              domain = new URL(url).hostname;
+            } catch (e) {
+              return { isValid: false, error: 'رابط script غير صحيح' };
+            }
+
+            // التحقق من وجود النطاق في القائمة الموثوقة
+            const isTrusted = trustedCDNs?.some(cdn => domain === cdn.domain || domain.endsWith('.' + cdn.domain));
+            if (!isTrusted) {
+              return { 
+                isValid: false, 
+                error: `النطاق ${domain} غير موثوق. يمكن للسوبر آدمن إضافته في صفحة إدارة CDNs` 
+              };
+            }
+          }
+        }
+      }
+    }
+
     return { isValid: true };
   };
 
-  const handleHTMLInsert = () => {
-    const validation = validateHTMLCode(htmlCode);
+  const handleHTMLInsert = async () => {
+    const validation = await validateHTMLCode(htmlCode);
     
     if (!validation.isValid) {
       toast.error(validation.error || 'خطأ في التحقق من الكود');
@@ -991,6 +1036,13 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
           </DialogHeader>
           <div className="flex-1 grid grid-cols-2 gap-4 overflow-hidden h-[calc(90vh-180px)]">
             <div className="flex flex-col gap-3">
+              <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-sm">
+                <p className="font-medium text-blue-900 dark:text-blue-100 mb-1">ملاحظة أمنية</p>
+                <p className="text-blue-700 dark:text-blue-300 text-xs">
+                  يُسمح فقط بتحميل scripts من CDNs موثوقة عبر HTTPS. 
+                  يمكن للسوبر آدمن إدارة القائمة من لوحة التحكم.
+                </p>
+              </div>
               <div>
                 <Label htmlFor="html-title">العنوان</Label>
                 <Input

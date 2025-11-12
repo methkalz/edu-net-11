@@ -2,6 +2,7 @@ import { NodeViewWrapper } from '@tiptap/react';
 import { useState } from 'react';
 import { Trash2, Edit, Maximize2, Minimize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
 import {
   Dialog,
   DialogContent,
@@ -29,24 +30,68 @@ const HTMLEmbedComponent = ({ node, deleteNode, updateAttributes }: any) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const { toast } = useToast();
 
-  const validateHTMLCode = (code: string): { isValid: boolean; error?: string } => {
+  const validateHTMLCode = async (code: string): Promise<{ isValid: boolean; error?: string }> => {
     if (!code.trim()) {
       return { isValid: false, error: 'الكود فارغ' };
-    }
-
-    if (code.includes('<script src=') || code.includes('<script src =')) {
-      return { isValid: false, error: 'لا يُسمح بتحميل scripts خارجية لأسباب أمنية' };
     }
 
     if (code.toLowerCase().includes('<iframe')) {
       return { isValid: false, error: 'لا يُسمح بتضمين iframes داخل الكود' };
     }
 
+    // التحقق من external scripts
+    const scriptSrcRegex = /<script[^>]*\ssrc\s*=/i;
+    if (scriptSrcRegex.test(code)) {
+      // جلب CDNs الموثوقة
+      const { data: trustedCDNs, error: fetchError } = await supabase
+        .from('trusted_cdn_domains')
+        .select('domain')
+        .eq('is_active', true);
+
+      if (fetchError) {
+        console.error('Error fetching trusted CDNs:', fetchError);
+        return { isValid: false, error: 'خطأ في التحقق من CDNs الموثوقة' };
+      }
+
+      // استخراج جميع script src URLs
+      const scriptMatches = code.match(/<script[^>]+src=["']([^"']+)["']/gi);
+      if (scriptMatches) {
+        for (const match of scriptMatches) {
+          const urlMatch = match.match(/src=["']([^"']+)["']/i);
+          if (urlMatch && urlMatch[1]) {
+            const url = urlMatch[1];
+            
+            // التحقق من HTTPS
+            if (!url.startsWith('https://')) {
+              return { isValid: false, error: 'يجب أن تكون جميع scripts عبر HTTPS فقط' };
+            }
+
+            // استخراج النطاق
+            let domain: string;
+            try {
+              domain = new URL(url).hostname;
+            } catch (e) {
+              return { isValid: false, error: 'رابط script غير صحيح' };
+            }
+
+            // التحقق من وجود النطاق في القائمة الموثوقة
+            const isTrusted = trustedCDNs?.some(cdn => domain === cdn.domain || domain.endsWith('.' + cdn.domain));
+            if (!isTrusted) {
+              return { 
+                isValid: false, 
+                error: `النطاق ${domain} غير موثوق. يمكن للسوبر آدمن إضافته في صفحة إدارة CDNs` 
+              };
+            }
+          }
+        }
+      }
+    }
+
     return { isValid: true };
   };
 
-  const handleSave = () => {
-    const validation = validateHTMLCode(editContent);
+  const handleSave = async () => {
+    const validation = await validateHTMLCode(editContent);
     
     if (!validation.isValid) {
       toast({
@@ -152,6 +197,13 @@ const HTMLEmbedComponent = ({ node, deleteNode, updateAttributes }: any) => {
           </DialogHeader>
           <div className="flex-1 grid grid-cols-2 gap-4 overflow-hidden">
             <div className="flex flex-col gap-3">
+              <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-sm">
+                <p className="font-medium text-blue-900 dark:text-blue-100 mb-1">ملاحظة أمنية</p>
+                <p className="text-blue-700 dark:text-blue-300 text-xs">
+                  يُسمح فقط بتحميل scripts من CDNs موثوقة عبر HTTPS. 
+                  يمكن للسوبر آدمن إدارة القائمة من لوحة التحكم.
+                </p>
+              </div>
               <div>
                 <Label htmlFor="title">العنوان</Label>
                 <Input

@@ -6014,6 +6014,36 @@ export type Database = {
           },
         ]
       }
+      trusted_cdn_domains: {
+        Row: {
+          added_by: string | null
+          created_at: string
+          description: string | null
+          domain: string
+          id: string
+          is_active: boolean
+          updated_at: string
+        }
+        Insert: {
+          added_by?: string | null
+          created_at?: string
+          description?: string | null
+          domain: string
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Update: {
+          added_by?: string | null
+          created_at?: string
+          description?: string | null
+          domain?: string
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_audio_settings: {
         Row: {
           created_at: string
