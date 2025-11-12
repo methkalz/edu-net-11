@@ -3,7 +3,7 @@ import { BookOpen, GraduationCap, Gamepad2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useBackPath } from '@/hooks/useBackPath';
 import { useSearchParams } from 'react-router-dom';
-import ModernHeader from '@/components/shared/ModernHeader';
+import AppHeader from '@/components/shared/AppHeader';
 import AppFooter from '@/components/shared/AppFooter';
 import Grade11Content from '@/components/content/Grade11Content';
 import Grade11ContentViewer from '@/components/content/Grade11ContentViewer';
@@ -59,7 +59,7 @@ const Grade11Management: React.FC = () => {
   
   return <Grade11ErrorBoundary>
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
-      <ModernHeader title="إدارة محتوى الصف الحادي عشر" showBackButton={true} backPath={contentBackPath} />
+      <AppHeader title="إدارة محتوى الصف الحادي عشر" showBackButton={true} backPath={contentBackPath} showLogout={true} />
       
       <main className="container mx-auto px-6 py-8 flex-1">
         <div className="max-w-7xl mx-auto space-y-8">
