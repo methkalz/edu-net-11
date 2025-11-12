@@ -34,17 +34,41 @@ const Grade11LessonForm: React.FC<Grade11LessonFormProps> = ({
     order_index: 1
   });
 
-  // تحميل بيانات الدرس عند التعديل
+  // حساب آخر order_index تلقائياً عند إضافة درس جديد
   useEffect(() => {
-    if (lesson) {
-      setFormData({
-        topic_id: lesson.topic_id,
-        title: lesson.title,
-        content: lesson.content || '',
-        order_index: lesson.order_index
-      });
-    }
-  }, [lesson]);
+    const fetchNextOrder = async () => {
+      if (lesson) {
+        // تحميل بيانات الدرس عند التعديل
+        setFormData({
+          topic_id: lesson.topic_id,
+          title: lesson.title,
+          content: lesson.content || '',
+          order_index: lesson.order_index
+        });
+      } else if (topicId) {
+        // حساب order_index التلقائي للدرس الجديد
+        try {
+          const { supabase } = await import('@/integrations/supabase/client');
+          const { data } = await supabase
+            .from('grade11_lessons')
+            .select('order_index')
+            .eq('topic_id', topicId)
+            .eq('is_active', true)
+            .order('order_index', { ascending: false })
+            .limit(1)
+            .single();
+          
+          const nextOrder = data ? data.order_index + 1 : 1;
+          setFormData(prev => ({ ...prev, topic_id: topicId, order_index: nextOrder }));
+        } catch {
+          // في حالة عدم وجود دروس سابقة
+          setFormData(prev => ({ ...prev, topic_id: topicId, order_index: 1 }));
+        }
+      }
+    };
+    
+    fetchNextOrder();
+  }, [lesson, topicId]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

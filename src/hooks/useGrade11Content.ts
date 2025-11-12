@@ -292,19 +292,35 @@ export const useGrade11Content = () => {
 
   const updateLesson = async (id: string, updates: Partial<Grade11Lesson>) => {
     try {
-      const { error } = await supabase
+      setSaving(true);
+      
+      const { data, error } = await supabase
         .from('grade11_lessons')
         .update(updates)
-        .eq('id', id);
+        .eq('id', id)
+        .select()
+        .single();
 
       if (error) throw error;
 
+      // Optimistic Update - تحديث محلي فوري بدون refresh
+      setSections(prev => prev.map(section => ({
+        ...section,
+        topics: section.topics.map(topic => ({
+          ...topic,
+          lessons: topic.lessons.map(lesson => 
+            lesson.id === id ? { ...lesson, ...data } : lesson
+          )
+        }))
+      })));
+
       toast.success('تم تحديث الدرس بنجاح');
-      fetchSections();
     } catch (error) {
       logger.error('Error updating lesson', error as Error);
       toast.error('حدث خطأ في تحديث الدرس');
       throw error;
+    } finally {
+      setSaving(false);
     }
   };
 
