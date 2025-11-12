@@ -79,7 +79,11 @@ const Grade11Content = () => {
   const [showGameFullscreen, setShowGameFullscreen] = useState(false);
 
   // Video info cards hook
-  const { addCard, updateCard, deleteCard } = useVideoInfoCards('11');
+  const {
+    addCard,
+    updateCard,
+    deleteCard
+  } = useVideoInfoCards('11');
 
   // New state for enhanced UI
   const [searchTerm, setSearchTerm] = useState('');
@@ -319,21 +323,26 @@ const Grade11Content = () => {
     }
     handleCloseForm();
   };
-  
   const handleEditInfoCard = (card: any) => {
     setEditingInfoCard(card);
     setShowInfoCardForm(true);
   };
-  
-  const handleSaveInfoCard = async (cardData: { title: string; description: string }) => {
+  const handleSaveInfoCard = async (cardData: {
+    title: string;
+    description: string;
+  }) => {
     if (editingInfoCard) {
       await updateCard(editingInfoCard.id, cardData);
     } else {
-      await addCard({ ...cardData, grade_level: '11', order_index: 0, is_active: true });
+      await addCard({
+        ...cardData,
+        grade_level: '11',
+        order_index: 0,
+        is_active: true
+      });
     }
     handleCloseForm();
   };
-  
   const handleDeleteInfoCard = async (id: string) => {
     await deleteCard(id);
   };
@@ -353,12 +362,7 @@ const Grade11Content = () => {
       </div>;
   }
   return <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold text-foreground">محتوى الصف الحادي عشر</h2>
-          <p className="text-muted-foreground mt-2">إدارة جميع أنواع المحتوى للصف الحادي عشر</p>
-        </div>
-      </div>
+      
 
       <Tabs defaultValue="textual" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
@@ -420,15 +424,7 @@ const Grade11Content = () => {
                   إضافة فيديو جديد
                 </Button>
               </div>}
-            <Grade11VideoLibrary 
-              videos={videos} 
-              loading={filesLoading} 
-              onAddVideo={canManageContent ? handleAddVideo : () => {}} 
-              onEditVideo={canManageContent ? handleEditVideo : () => {}} 
-              onDeleteVideo={canManageContent ? deleteVideo : () => {}} 
-              onEditInfoCard={canManageContent ? handleEditInfoCard : undefined}
-              onDeleteInfoCard={canManageContent ? handleDeleteInfoCard : undefined}
-            />
+            <Grade11VideoLibrary videos={videos} loading={filesLoading} onAddVideo={canManageContent ? handleAddVideo : () => {}} onEditVideo={canManageContent ? handleEditVideo : () => {}} onDeleteVideo={canManageContent ? deleteVideo : () => {}} onEditInfoCard={canManageContent ? handleEditInfoCard : undefined} onDeleteInfoCard={canManageContent ? handleDeleteInfoCard : undefined} />
           </div>
         </TabsContent>
 
@@ -454,5 +450,4 @@ const Grade11Content = () => {
         </div>}
     </div>;
 };
-
 export default Grade11Content;
