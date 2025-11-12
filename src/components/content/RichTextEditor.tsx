@@ -1001,20 +1001,16 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
                   className="mt-1"
                 />
               </div>
-              <div>
-                <Label htmlFor="html-height">الارتفاع</Label>
-                <Select value={htmlHeight} onValueChange={setHtmlHeight}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="300px">صغير (300px)</SelectItem>
-                    <SelectItem value="400px">متوسط (400px)</SelectItem>
-                    <SelectItem value="600px">كبير (600px)</SelectItem>
-                    <SelectItem value="800px">كبير جداً (800px)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                <div>
+                  <Label htmlFor="html-height">الارتفاع (مثال: 400px، 50vh، 600px)</Label>
+                  <Input
+                    id="html-height"
+                    value={htmlHeight}
+                    onChange={(e) => setHtmlHeight(e.target.value)}
+                    placeholder="400px"
+                    className="mt-1"
+                  />
+                </div>
               <div className="flex-1 flex flex-col min-h-0">
                 <Label htmlFor="html-code">كود HTML</Label>
                 <textarea

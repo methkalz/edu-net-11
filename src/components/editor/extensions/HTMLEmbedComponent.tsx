@@ -163,18 +163,14 @@ const HTMLEmbedComponent = ({ node, deleteNode, updateAttributes }: any) => {
                 />
               </div>
               <div>
-                <Label htmlFor="height">الارتفاع</Label>
-                <Select value={editHeight} onValueChange={setEditHeight}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="300px">صغير (300px)</SelectItem>
-                    <SelectItem value="400px">متوسط (400px)</SelectItem>
-                    <SelectItem value="600px">كبير (600px)</SelectItem>
-                    <SelectItem value="800px">كبير جداً (800px)</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="height">الارتفاع (مثال: 400px، 50vh، 600px)</Label>
+                <Input
+                  id="height"
+                  value={editHeight}
+                  onChange={(e) => setEditHeight(e.target.value)}
+                  placeholder="400px"
+                  className="mt-1"
+                />
               </div>
               <div className="flex-1 flex flex-col min-h-0">
                 <Label htmlFor="code">كود HTML</Label>
