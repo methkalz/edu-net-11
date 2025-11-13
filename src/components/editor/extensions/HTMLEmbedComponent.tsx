@@ -123,6 +123,8 @@ const HTMLEmbedComponent = ({ node, deleteNode, updateAttributes }: any) => {
   const toggleFullscreen = async () => {
     const iframe = document.querySelector(`iframe[data-html-embed-id="${node.attrs.htmlContent.substring(0, 20)}"]`);
     const wrapper = iframe?.closest('.html-embed-wrapper');
+    const card = wrapper?.querySelector('.bg-card');
+    const iframeContainer = iframe?.parentElement;
 
     if (!iframe || !wrapper) return;
 
@@ -130,10 +132,16 @@ const HTMLEmbedComponent = ({ node, deleteNode, updateAttributes }: any) => {
       if (!document.fullscreenElement) {
         await wrapper.requestFullscreen();
         setIsFullscreen(true);
-        (iframe as HTMLElement).style.cssText = 'width: 100vw !important; height: 100vh !important; max-width: 100vw; max-height: 100vh; border-radius: 0;';
+        (wrapper as HTMLElement).style.cssText = 'width: 100vw !important; height: 100vh !important; display: flex; align-items: center; justify-content: center; background: black;';
+        if (card) (card as HTMLElement).style.cssText = 'width: 100vw !important; height: 100vh !important; max-width: 100vw; max-height: 100vh; border-radius: 0;';
+        if (iframeContainer) (iframeContainer as HTMLElement).style.cssText = 'width: 100% !important; height: 100% !important;';
+        (iframe as HTMLElement).style.cssText = 'width: 100% !important; height: 100% !important; border-radius: 0;';
       } else {
         await document.exitFullscreen();
         setIsFullscreen(false);
+        (wrapper as HTMLElement).style.cssText = '';
+        if (card) (card as HTMLElement).style.cssText = '';
+        if (iframeContainer) (iframeContainer as HTMLElement).style.cssText = `height: ${height}`;
         (iframe as HTMLElement).style.cssText = '';
       }
     } catch (error) {
