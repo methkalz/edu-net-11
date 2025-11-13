@@ -6,6 +6,11 @@ interface HTMLEmbedWrapperProps {
 }
 
 const HTMLEmbedWrapper = ({ content }: HTMLEmbedWrapperProps) => {
+  // Early return if no HTML embeds in content
+  if (!content.includes('data-type="html-embed"')) {
+    return null;
+  }
+
   useEffect(() => {
     // Find all HTML embed divs
     const htmlEmbeds = document.querySelectorAll('div[data-type="html-embed"]');
