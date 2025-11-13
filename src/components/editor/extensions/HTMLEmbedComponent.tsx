@@ -132,10 +132,10 @@ const HTMLEmbedComponent = ({ node, deleteNode, updateAttributes }: any) => {
       if (!document.fullscreenElement) {
         await wrapper.requestFullscreen();
         setIsFullscreen(true);
-        (wrapper as HTMLElement).style.cssText = 'width: 100vw !important; height: 100vh !important; display: flex; align-items: center; justify-content: center; background: black;';
-        if (card) (card as HTMLElement).style.cssText = 'width: 100vw !important; height: 100vh !important; max-width: 100vw; max-height: 100vh; border-radius: 0;';
-        if (iframeContainer) (iframeContainer as HTMLElement).style.cssText = 'width: 100% !important; height: 100% !important;';
-        (iframe as HTMLElement).style.cssText = 'width: 100% !important; height: 100% !important; border-radius: 0;';
+        (wrapper as HTMLElement).style.cssText = 'width: 100vw !important; height: 100vh !important; display: flex !important; align-items: center !important; justify-content: center !important; background: rgba(0, 0, 0, 0.95) !important; overflow: hidden !important;';
+        if (card) (card as HTMLElement).style.cssText = 'width: 95vw !important; height: 95vh !important; max-width: 95vw !important; max-height: 95vh !important; border-radius: 8px !important; overflow: hidden !important;';
+        if (iframeContainer) (iframeContainer as HTMLElement).style.cssText = 'width: 100% !important; height: 100% !important; overflow: hidden !important;';
+        (iframe as HTMLElement).style.cssText = 'display: block !important; width: 100% !important; height: 100% !important; border: none !important;';
       } else {
         await document.exitFullscreen();
         setIsFullscreen(false);
