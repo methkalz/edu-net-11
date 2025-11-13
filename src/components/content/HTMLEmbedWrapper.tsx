@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Maximize2, Minimize2 } from 'lucide-react';
+import { wrapHTMLContentForIframe } from '@/lib/html-embed-utils';
 
 interface HTMLEmbedWrapperProps {
   content: string;
@@ -60,7 +61,7 @@ const HTMLEmbedWrapper = ({ content }: HTMLEmbedWrapperProps) => {
       iframeContainer.style.height = height;
 
       const iframe = document.createElement('iframe');
-      iframe.setAttribute('srcdoc', htmlContent);
+      iframe.setAttribute('srcdoc', wrapHTMLContentForIframe(htmlContent));
       iframe.setAttribute('sandbox', 'allow-scripts allow-forms allow-modals allow-popups');
       iframe.className = 'w-full h-full border-0';
       iframe.title = title;

@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { Editor } from '@tiptap/react';
 import { supabase } from '@/integrations/supabase/client';
+import { wrapHTMLContentForIframe } from '@/lib/html-embed-utils';
 import { 
   Bold, 
   Italic, 
@@ -769,7 +770,7 @@ export const ProfessionalToolbar: React.FC<ProfessionalToolbarProps> = ({
               <Label>معاينة مباشرة</Label>
               <div className="flex-1 border border-border rounded-md overflow-hidden bg-background">
                 <iframe
-                  srcDoc={htmlCode}
+                  srcDoc={wrapHTMLContentForIframe(htmlCode)}
                   sandbox="allow-scripts allow-forms allow-modals allow-popups"
                   className="w-full h-full border-0"
                   title="معاينة مباشرة"
