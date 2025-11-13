@@ -6,11 +6,6 @@ interface HTMLEmbedWrapperProps {
 }
 
 const HTMLEmbedWrapper = ({ content }: HTMLEmbedWrapperProps) => {
-  // Early return if no HTML embeds in content
-  if (!content.includes('data-type="html-embed"')) {
-    return null;
-  }
-
   useEffect(() => {
     // Find all HTML embed divs
     const htmlEmbeds = document.querySelectorAll('div[data-type="html-embed"]');
@@ -81,18 +76,14 @@ const HTMLEmbedWrapper = ({ content }: HTMLEmbedWrapperProps) => {
             maximizeIcon?.classList.add('hidden');
             minimizeIcon?.classList.remove('hidden');
             fullscreenBtn.title = 'الخروج من ملء الشاشة';
-            wrapper.style.cssText = 'width: 100vw !important; height: 100vh !important; display: flex; align-items: center; justify-content: center; background: black;';
-            card.style.cssText = 'width: 100vw !important; height: 100vh !important; display: flex !important; flex-direction: column !important; border-radius: 0;';
-            iframeContainer.style.cssText = 'flex: 1 !important; width: 100% !important; overflow: hidden !important;';
-            iframe.style.cssText = 'width: 100% !important; height: 100% !important; border: none !important; display: block !important;';
+            wrapper.classList.add('bg-black', 'flex', 'items-center', 'justify-center');
+            iframe.style.cssText = 'width: 100vw !important; height: 100vh !important; max-width: 100vw; max-height: 100vh; border-radius: 0;';
           } else {
             await document.exitFullscreen();
             maximizeIcon?.classList.remove('hidden');
             minimizeIcon?.classList.add('hidden');
             fullscreenBtn.title = 'ملء الشاشة';
-            wrapper.style.cssText = '';
-            card.style.cssText = '';
-            iframeContainer.style.cssText = `height: ${height}`;
+            wrapper.classList.remove('bg-black', 'flex', 'items-center', 'justify-center');
             iframe.style.cssText = '';
           }
         } catch (error) {
@@ -108,9 +99,7 @@ const HTMLEmbedWrapper = ({ content }: HTMLEmbedWrapperProps) => {
           maximizeIcon?.classList.remove('hidden');
           minimizeIcon?.classList.add('hidden');
           fullscreenBtn.title = 'ملء الشاشة';
-          wrapper.style.cssText = '';
-          card.style.cssText = '';
-          iframeContainer.style.cssText = `height: ${height}`;
+          wrapper.classList.remove('bg-black', 'flex', 'items-center', 'justify-center');
           iframe.style.cssText = '';
         }
       };

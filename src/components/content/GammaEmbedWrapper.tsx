@@ -11,11 +11,6 @@ interface GammaEmbedWrapperProps {
  * in HTML content rendered via dangerouslySetInnerHTML
  */
 const GammaEmbedWrapper: React.FC<GammaEmbedWrapperProps> = ({ content }) => {
-  // Early return if no Gamma embeds in content
-  if (!content.includes('gamma.app/embed')) {
-    return null;
-  }
-
   const containerRef = useRef<HTMLDivElement>(null);
   const [fullscreenElements, setFullscreenElements] = useState<Map<HTMLElement, boolean>>(new Map());
 
