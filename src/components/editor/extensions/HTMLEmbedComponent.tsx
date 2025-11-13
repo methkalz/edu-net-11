@@ -133,9 +133,9 @@ const HTMLEmbedComponent = ({ node, deleteNode, updateAttributes }: any) => {
         await wrapper.requestFullscreen();
         setIsFullscreen(true);
         (wrapper as HTMLElement).style.cssText = 'width: 100vw !important; height: 100vh !important; display: flex; align-items: center; justify-content: center; background: black;';
-        if (card) (card as HTMLElement).style.cssText = 'width: 100vw !important; height: 100vh !important; max-width: 100vw; max-height: 100vh; border-radius: 0;';
-        if (iframeContainer) (iframeContainer as HTMLElement).style.cssText = 'width: 100% !important; height: 100% !important;';
-        (iframe as HTMLElement).style.cssText = 'width: 100% !important; height: 100% !important; border-radius: 0;';
+        if (card) (card as HTMLElement).style.cssText = 'width: 100vw !important; height: 100vh !important; display: flex !important; flex-direction: column !important; border-radius: 0;';
+        if (iframeContainer) (iframeContainer as HTMLElement).style.cssText = 'flex: 1 !important; width: 100% !important; overflow: hidden !important;';
+        (iframe as HTMLElement).style.cssText = 'width: 100% !important; height: 100% !important; border: none !important; display: block !important;';
       } else {
         await document.exitFullscreen();
         setIsFullscreen(false);
