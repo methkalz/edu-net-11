@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { Trash2, Edit, Maximize2, Minimize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import { wrapHTMLContentForIframe } from '@/lib/html-embed-utils';
 import {
   Dialog,
   DialogContent,
@@ -190,7 +189,7 @@ const HTMLEmbedComponent = ({ node, deleteNode, updateAttributes }: any) => {
           <div style={{ height }}>
             <iframe
               data-html-embed-id={htmlContent.substring(0, 20)}
-              srcDoc={wrapHTMLContentForIframe(htmlContent)}
+              srcDoc={htmlContent}
               sandbox="allow-scripts allow-forms allow-modals allow-popups"
               className="w-full h-full border-0"
               title={title}
@@ -249,7 +248,7 @@ const HTMLEmbedComponent = ({ node, deleteNode, updateAttributes }: any) => {
               <Label>معاينة مباشرة</Label>
               <div className="flex-1 border border-border rounded-md overflow-hidden bg-background">
                 <iframe
-                  srcDoc={wrapHTMLContentForIframe(editContent)}
+                  srcDoc={editContent}
                   sandbox="allow-scripts allow-forms allow-modals allow-popups"
                   className="w-full h-full border-0"
                   title="معاينة مباشرة"

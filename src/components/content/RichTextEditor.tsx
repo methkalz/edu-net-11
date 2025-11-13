@@ -15,7 +15,6 @@ import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { wrapHTMLContentForIframe } from '@/lib/html-embed-utils';
 import './table-styles.css';
 import { 
   Bold, 
@@ -1080,7 +1079,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
               <Label>معاينة مباشرة</Label>
               <div className="flex-1 border border-border rounded-md overflow-hidden bg-background">
                 <iframe
-                  srcDoc={wrapHTMLContentForIframe(htmlCode)}
+                  srcDoc={htmlCode}
                   sandbox="allow-scripts allow-forms allow-modals allow-popups"
                   className="w-full h-full border-0"
                   title="معاينة مباشرة"
