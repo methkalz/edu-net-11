@@ -56,18 +56,24 @@ const MediaFullscreenView: React.FC<MediaFullscreenViewProps> = ({ media, onClos
               </div>
             );
           }
-        } else if (metadata.source_type === 'google_drive' && metadata.drive_id) {
-          return (
-            <div className="w-full h-full flex items-center justify-center bg-black">
-              <iframe
-                src={`https://drive.google.com/file/d/${metadata.drive_id}/preview`}
-                title={media.file_name}
-                className="w-full h-full"
-                frameBorder="0"
-                allow="autoplay"
-              />
-            </div>
-          );
+        } else if (metadata.source_type === 'google_drive') {
+          // استخراج drive_id من file_path أو video_url أو metadata
+          const driveIdMatch = (media.file_path || metadata.video_url)?.match(/\/file\/d\/([a-zA-Z0-9-_]+)/);
+          const driveId = metadata.drive_id || driveIdMatch?.[1];
+          
+          if (driveId) {
+            return (
+              <div className="w-full h-full flex items-center justify-center bg-black">
+                <iframe
+                  src={`https://drive.google.com/file/d/${driveId}/preview`}
+                  title={media.file_name}
+                  className="w-full h-full"
+                  frameBorder="0"
+                  allow="autoplay"
+                />
+              </div>
+            );
+          }
         } else if (metadata.source_type === 'upload' || metadata.source_type === 'url') {
           return (
             <div className="w-full h-full flex items-center justify-center bg-black">
