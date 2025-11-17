@@ -16,6 +16,7 @@ import TypewriterCodeBlock from './TypewriterCodeBlock';
 import { logger } from '@/lib/logger';
 import GammaEmbedWrapper from './GammaEmbedWrapper';
 import HTMLEmbedWrapper from './HTMLEmbedWrapper';
+import { Grade11VideoFix } from './Grade11VideoFix';
 
 interface Grade11LessonContentDisplayProps {
   lesson: Grade11LessonWithMedia;
@@ -128,18 +129,8 @@ const Grade11LessonContentDisplay: React.FC<Grade11LessonContentDisplayProps> = 
               </div>
             );
           }
-        } else if (metadata.source_type === 'google_drive' && metadata.drive_id) {
-          return (
-            <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-100">
-              <iframe
-                src={`https://drive.google.com/file/d/${metadata.drive_id}/preview`}
-                title={media.file_name}
-                className="w-full h-full"
-                frameBorder="0"
-                allow="autoplay"
-              />
-            </div>
-          );
+        } else if (metadata.source_type === 'google_drive') {
+          return <Grade11VideoFix media={media} metadata={metadata} />;
         } else if (metadata.source_type === 'upload' || metadata.source_type === 'url') {
           return (
             <div className="relative rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
