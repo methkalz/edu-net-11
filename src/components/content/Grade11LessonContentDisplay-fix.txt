@@ -1,0 +1,35 @@
+في السطر 132-143 من Grade11LessonContentDisplay.tsx، استبدل:
+
+        } else if (metadata.source_type === 'google_drive' && metadata.drive_id) {
+          return (
+            <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-100">
+              <iframe
+                src={`https://drive.google.com/file/d/${metadata.drive_id}/preview`}
+                title={media.file_name}
+                className="w-full h-full"
+                frameBorder="0"
+                allow="autoplay"
+              />
+            </div>
+          );
+        }
+
+بهذا:
+
+        } else if (metadata.source_type === 'google_drive') {
+          const driveId = extractGoogleDriveId(metadata, media.file_path);
+          
+          if (driveId) {
+            return (
+              <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-100">
+                <iframe
+                  src={`https://drive.google.com/file/d/${driveId}/preview`}
+                  title={media.file_name}
+                  className="w-full h-full"
+                  frameBorder="0"
+                  allow="autoplay"
+                />
+              </div>
+            );
+          }
+        }
