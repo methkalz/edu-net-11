@@ -202,7 +202,7 @@ const fetchContentForGrade = async (grade: string, userId?: string): Promise<Gra
             section:grade11_sections(id, title)
           ),
           media:grade11_lesson_media(
-            id, media_type, file_path, file_name, order_index
+            id, media_type, file_path, file_name, order_index, metadata
           )
         `)
         .eq('is_active', true)
