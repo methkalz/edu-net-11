@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { extractGoogleDriveId } from '@/utils/extractDriveId';
 import { Play, Image, Video, FileText, Maximize2, Minimize2, ExternalLink, Code, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
