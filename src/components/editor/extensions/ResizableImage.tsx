@@ -74,81 +74,67 @@ const ResizableImageComponent: React.FC<ResizableImageComponentProps> = ({
   const [isResizing, setIsResizing] = useState(false);
   const [showControls, setShowControls] = useState(false);
   const [resizeHandle, setResizeHandle] = useState<'left' | 'right' | null>(null);
+  const [showDimensions, setShowDimensions] = useState(false);
   const imageRef = useRef<HTMLImageElement>(null);
-  const startWidthRef = useRef<number>(0);
-  const startXRef = useRef<number>(0);
+  const dimensionsTimeoutRef = useRef<NodeJS.Timeout>();
 
   const { src, alt, width, height, align } = node.attrs;
-
-  // حساب العرض الفعلي
-  const getEffectiveWidth = useCallback(() => {
-    if (!imageRef.current) return 0;
-    
-    if (width) {
-      // إذا كان width محدد، استخدمه
-      if (typeof width === 'string' && width.includes('%')) {
-        const percentage = parseFloat(width);
-        const containerWidth = imageRef.current.parentElement?.offsetWidth || 800;
-        return (containerWidth * percentage) / 100;
-      } else if (typeof width === 'string' && width.includes('px')) {
-        return parseFloat(width);
-      } else if (typeof width === 'number') {
-        return width;
-      }
-    }
-    
-    // استخدم العرض المعروض حالياً وليس العرض الطبيعي
-    return imageRef.current.offsetWidth || 400;
-  }, [width]);
 
   // بدء السحب
   const handleMouseDown = useCallback((e: React.MouseEvent, handle: 'left' | 'right') => {
     e.preventDefault();
     setIsResizing(true);
     setResizeHandle(handle);
-    startWidthRef.current = getEffectiveWidth();
-    startXRef.current = e.clientX;
-  }, [getEffectiveWidth]);
+  }, []);
 
   // السحب
   const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!isResizing || !resizeHandle) return;
+    if (!isResizing || !resizeHandle || !imageRef.current) return;
     
-    const deltaX = e.clientX - startXRef.current;
+    const rect = imageRef.current.getBoundingClientRect();
     const isRTL = document.dir === 'rtl' || document.documentElement.dir === 'rtl';
     
-    // حساب التغيير بناءً على أي handle يتم السحب
-    let widthDelta = 0;
+    let newWidth: number;
     
-    // عكس المنطق: السحب للخارج = تكبير
     if (resizeHandle === 'right') {
-      widthDelta = isRTL ? -deltaX : deltaX;
+      // Handle على اليمين
+      newWidth = isRTL 
+        ? rect.right - e.clientX  // في RTL: المسافة من اليمين
+        : e.clientX - rect.left;   // في LTR: المسافة من اليسار
     } else {
-      widthDelta = isRTL ? deltaX : -deltaX;
+      // Handle على اليسار
+      newWidth = isRTL
+        ? e.clientX - rect.left    // في RTL: المسافة من اليسار
+        : rect.right - e.clientX;   // في LTR: المسافة من اليمين
     }
     
-    let newWidth = startWidthRef.current + widthDelta;
-    
-    // تطبيق حد أدنى 150px
+    // تطبيق حدود
     newWidth = Math.max(150, newWidth);
-    
-    // تطبيق حد أقصى (عرض الحاوية + margin)
-    const containerWidth = imageRef.current?.parentElement?.offsetWidth || 1200;
+    const containerWidth = imageRef.current.parentElement?.offsetWidth || 1200;
     newWidth = Math.min(newWidth, containerWidth - 20);
     
-    console.log('🖼️ Resizing:', {
+    console.log('🖼️ Image Resizing:', {
       handle: resizeHandle,
-      handlePosition: resizeHandle === 'right' ? 'يسار بصري في RTL' : 'يمين بصري في RTL',
-      startWidth: startWidthRef.current,
-      deltaX,
-      deltaXDirection: deltaX > 0 ? 'يمين' : 'يسار',
-      widthDelta,
-      widthDeltaSign: widthDelta > 0 ? 'تكبير' : 'تصغير',
-      newWidth,
-      isRTL
+      direction: isRTL ? 'RTL' : 'LTR',
+      mouseX: e.clientX,
+      rectLeft: Math.round(rect.left),
+      rectRight: Math.round(rect.right),
+      calculatedWidth: Math.round(newWidth),
+      finalWidth: Math.round(newWidth)
     });
     
-    updateAttributes({ width: `${Math.round(newWidth)}px`, height: null });
+    updateAttributes({
+      width: `${Math.round(newWidth)}px`,
+      height: null,
+    });
+    
+    setShowDimensions(true);
+    if (dimensionsTimeoutRef.current) {
+      clearTimeout(dimensionsTimeoutRef.current);
+    }
+    dimensionsTimeoutRef.current = setTimeout(() => {
+      setShowDimensions(false);
+    }, 1000);
   }, [isResizing, resizeHandle, updateAttributes]);
 
   // إنهاء السحب
@@ -160,47 +146,45 @@ const ResizableImageComponent: React.FC<ResizableImageComponentProps> = ({
   // Touch events للأجهزة اللوحية
   const handleTouchStart = useCallback((e: React.TouchEvent, handle: 'left' | 'right') => {
     e.preventDefault();
-    const touch = e.touches[0];
     setIsResizing(true);
     setResizeHandle(handle);
-    startWidthRef.current = getEffectiveWidth();
-    startXRef.current = touch.clientX;
-  }, [getEffectiveWidth]);
+  }, []);
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
-    if (!isResizing || !resizeHandle) return;
+    if (!isResizing || !resizeHandle || !imageRef.current || !e.touches[0]) return;
     
-    const touch = e.touches[0];
-    const deltaX = touch.clientX - startXRef.current;
+    const rect = imageRef.current.getBoundingClientRect();
     const isRTL = document.dir === 'rtl' || document.documentElement.dir === 'rtl';
+    const touchX = e.touches[0].clientX;
     
-    let widthDelta = 0;
-    // عكس المنطق: السحب للخارج = تكبير
+    let newWidth: number;
+    
     if (resizeHandle === 'right') {
-      widthDelta = isRTL ? -deltaX : deltaX;
+      newWidth = isRTL 
+        ? rect.right - touchX
+        : touchX - rect.left;
     } else {
-      widthDelta = isRTL ? deltaX : -deltaX;
+      newWidth = isRTL
+        ? touchX - rect.left
+        : rect.right - touchX;
     }
     
-    let newWidth = startWidthRef.current + widthDelta;
     newWidth = Math.max(150, newWidth);
-    
-    const containerWidth = imageRef.current?.parentElement?.offsetWidth || 1200;
+    const containerWidth = imageRef.current.parentElement?.offsetWidth || 1200;
     newWidth = Math.min(newWidth, containerWidth - 20);
     
-    console.log('🖼️ Touch Resizing:', {
-      handle: resizeHandle,
-      handlePosition: resizeHandle === 'right' ? 'يسار بصري في RTL' : 'يمين بصري في RTL',
-      startWidth: startWidthRef.current,
-      deltaX,
-      deltaXDirection: deltaX > 0 ? 'يمين' : 'يسار',
-      widthDelta,
-      widthDeltaSign: widthDelta > 0 ? 'تكبير' : 'تصغير',
-      newWidth,
-      isRTL
+    updateAttributes({
+      width: `${Math.round(newWidth)}px`,
+      height: null,
     });
     
-    updateAttributes({ width: `${Math.round(newWidth)}px`, height: null });
+    setShowDimensions(true);
+    if (dimensionsTimeoutRef.current) {
+      clearTimeout(dimensionsTimeoutRef.current);
+    }
+    dimensionsTimeoutRef.current = setTimeout(() => {
+      setShowDimensions(false);
+    }, 1000);
   }, [isResizing, resizeHandle, updateAttributes]);
 
   const handleTouchEnd = useCallback(() => {
@@ -366,9 +350,9 @@ const ResizableImageComponent: React.FC<ResizableImageComponentProps> = ({
         )}
 
         {/* عرض الأبعاد أثناء التحجيم */}
-        {isResizing && (
+        {showDimensions && imageRef.current && (
           <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-background/95 backdrop-blur-sm border rounded px-3 py-1.5 text-sm font-medium shadow-lg">
-            {Math.round(getEffectiveWidth())}px
+            {Math.round(imageRef.current.offsetWidth)}px
             <span className="text-xs text-muted-foreground ml-2">
               {resizeHandle === 'left' ? '← يسار' : 'يمين →'}
             </span>
