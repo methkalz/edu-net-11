@@ -45,6 +45,7 @@ import { Separator } from '@/components/ui/separator';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import ImageResizer from './ImageResizer';
 
 interface EnhancedDocumentEditorProps {
   content: string;
@@ -448,6 +449,7 @@ const EnhancedDocumentEditor: React.FC<EnhancedDocumentEditorProps> = ({
 
   return (
     <>
+      <ImageResizer />
       <div className="border rounded-lg overflow-hidden bg-white shadow-lg h-full flex flex-col">
         {/* Enhanced Toolbar */}
         <div className="bg-muted/30 p-3 border-b shrink-0">

@@ -7,6 +7,7 @@ import { Underline } from '@tiptap/extension-underline';
 import { FontFamily } from '@tiptap/extension-font-family';
 import { TableKit } from '@tiptap/extension-table';
 import TextAlign from '@tiptap/extension-text-align';
+import Image from '@tiptap/extension-image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -42,7 +43,7 @@ import {
 } from 'lucide-react';
 import { GammaEmbed } from '../editor/extensions/GammaEmbed';
 import { HTMLEmbed } from '../editor/extensions/HTMLEmbed';
-import { ResizableImageExtension } from '../editor/extensions/ResizableImage';
+import ImageBubbleMenu from './ImageBubbleMenu';
 import { Separator } from '@/components/ui/separator';
 import {
   Select,
@@ -157,9 +158,12 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
         alignments: ['left', 'center', 'right', 'justify'],
         defaultAlignment: 'right',
       }),
-      ResizableImageExtension.configure({
+      Image.configure({
         inline: true,
         allowBase64: true,
+        HTMLAttributes: {
+          class: 'rounded-md max-w-full h-auto cursor-pointer hover:shadow-lg transition-shadow my-2',
+        },
       }),
       FontSize,
       FontFamily,
@@ -318,7 +322,73 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
     reader.readAsDataURL(file);
   };
 
-  // تم إزالة وظائف التحجيم القديمة - الآن يتم التحجيم مباشرة عبر ResizableImageExtension
+  const handleImageResize = (width: string) => {
+    const img = editor.view.dom.querySelector('.ProseMirror-selectednode') as HTMLImageElement;
+    if (img) {
+      img.style.width = width;
+      img.style.height = 'auto';
+      toast.success('تم تغيير حجم الصورة');
+    }
+  };
+
+  const handleCustomImageResize = (width: string, height: string, unit: '%' | 'px') => {
+    const img = editor.view.dom.querySelector('.ProseMirror-selectednode') as HTMLImageElement;
+    if (img) {
+      img.style.width = `${width}${unit}`;
+      if (height) {
+        img.style.height = `${height}px`;
+      } else {
+        img.style.height = 'auto';
+      }
+      toast.success('تم تغيير حجم الصورة');
+    }
+  };
+
+  const handleResetImageSize = () => {
+    const img = editor.view.dom.querySelector('.ProseMirror-selectednode') as HTMLImageElement;
+    if (img) {
+      // الحصول على الأبعاد الأصلية
+      const tempImg = new window.Image();
+      tempImg.src = img.src;
+      tempImg.onload = () => {
+        img.style.width = `${tempImg.naturalWidth}px`;
+        img.style.height = 'auto';
+        toast.success('تم إعادة الصورة للحجم الأصلي');
+      };
+    }
+  };
+
+  const handleImageAlignment = (alignment: 'left' | 'center' | 'right') => {
+    const img = editor.view.dom.querySelector('.ProseMirror-selectednode') as HTMLImageElement;
+    if (img) {
+      // تطبيق display block لجعل المحاذاة تعمل
+      img.style.display = 'block';
+      
+      // تطبيق المحاذاة باستخدام margin
+      switch (alignment) {
+        case 'right':
+          img.style.marginLeft = '0';
+          img.style.marginRight = 'auto';
+          break;
+        case 'center':
+          img.style.marginLeft = 'auto';
+          img.style.marginRight = 'auto';
+          break;
+        case 'left':
+          img.style.marginLeft = 'auto';
+          img.style.marginRight = '0';
+          break;
+      }
+      
+      img.setAttribute('data-alignment', alignment);
+      toast.success('تم تغيير محاذاة الصورة');
+    }
+  };
+
+  const handleDeleteImage = () => {
+    editor.chain().focus().deleteSelection().run();
+    toast.success('تم حذف الصورة');
+  };
 
   const validateGammaUrl = (url: string): boolean => {
     const trimmedUrl = url.trim();
@@ -821,6 +891,16 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
       {/* منطقة المحرر */}
       <div className="relative">
         <EditorContent editor={editor} />
+        
+        {/* Bubble Menu للصور */}
+      <ImageBubbleMenu
+        editor={editor}
+        onResize={handleImageResize}
+        onCustomResize={handleCustomImageResize}
+        onAlign={handleImageAlignment}
+        onResetSize={handleResetImageSize}
+        onDelete={handleDeleteImage}
+      />
       </div>
 
       {/* Dialog لإدراج جدول مخصص */}

@@ -12,7 +12,6 @@ import ListItem from '@tiptap/extension-list-item';
 import BulletList from '@tiptap/extension-bullet-list';
 import OrderedList from '@tiptap/extension-ordered-list';
 import Image from '@tiptap/extension-image';
-import { ResizableImageExtension } from '../editor/extensions/ResizableImage';
 import { Table } from '@tiptap/extension-table';
 import TableRow from '@tiptap/extension-table-row';
 import TableCell from '@tiptap/extension-table-cell';
@@ -75,8 +74,11 @@ export const ProfessionalDocumentEditor: React.FC<ProfessionalDocumentEditorProp
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout>();
 
-  // إضافة معالجة الصور المحسنة مع تحجيم تفاعلي
-  const ImageExtension = ResizableImageExtension.configure({
+  // إضافة معالجة الصور المحسنة
+  const ImageExtension = Image.configure({
+    HTMLAttributes: {
+      class: 'prosemirror-image',
+    },
     allowBase64: true,
     inline: false,
   });
