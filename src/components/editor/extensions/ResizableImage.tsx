@@ -77,46 +77,49 @@ const ResizableImageComponent: React.FC<ResizableImageComponentProps> = ({
   const [showDimensions, setShowDimensions] = useState(false);
   const imageRef = useRef<HTMLImageElement>(null);
   const dimensionsTimeoutRef = useRef<NodeJS.Timeout>();
-  const initialXRef = useRef<number>(0);
-  const initialWidthRef = useRef<number>(0);
 
   const { src, alt, width, height, align } = node.attrs;
 
-  // بدء السحب
+  // بدء السحب - منطق مبسط
   const handleMouseDown = useCallback((e: React.MouseEvent, handle: 'left' | 'right') => {
     e.preventDefault();
     setIsResizing(true);
     setResizeHandle(handle);
-    initialXRef.current = e.clientX;
-    initialWidthRef.current = imageRef.current?.offsetWidth || 400;
   }, []);
 
-  // السحب - عكس الإشارات بالكامل
+  // السحب - منطق مطلق باستخدام getBoundingClientRect()
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isResizing || !resizeHandle || !imageRef.current) return;
     
-    const offsetX = e.clientX - initialXRef.current;
+    const rect = imageRef.current.getBoundingClientRect();
     const isRTL = document.dir === 'rtl' || document.documentElement.dir === 'rtl';
-    const isLeft = resizeHandle === 'left';
     
-    // عكس المنطق بالكامل
     let newWidth: number;
-    if (isRTL) {
-      newWidth = initialWidthRef.current + (isLeft ? -offsetX : offsetX);
+    
+    if (resizeHandle === 'right') {
+      // Handle على اليمين بصرياً
+      newWidth = isRTL 
+        ? rect.right - e.clientX  // RTL: المسافة من اليمين
+        : e.clientX - rect.left;   // LTR: المسافة من اليسار
     } else {
-      newWidth = initialWidthRef.current + (isLeft ? offsetX : -offsetX);
+      // Handle على اليسار بصرياً
+      newWidth = isRTL
+        ? e.clientX - rect.left    // RTL: المسافة من اليسار
+        : rect.right - e.clientX;   // LTR: المسافة من اليمين
     }
     
+    // تطبيق حدود صارمة
     newWidth = Math.max(150, newWidth);
     const containerWidth = imageRef.current.parentElement?.offsetWidth || 1200;
     newWidth = Math.min(newWidth, containerWidth - 20);
     
-    console.log('🖼️ Resize:', {
+    console.log('🖼️ Mouse Resize:', {
       handle: resizeHandle,
       rtl: isRTL,
-      initialW: initialWidthRef.current,
-      offsetX,
-      newWidth: Math.round(newWidth)
+      mouseX: e.clientX,
+      rectLeft: Math.round(rect.left),
+      rectRight: Math.round(rect.right),
+      calculatedWidth: Math.round(newWidth)
     });
     
     updateAttributes({
@@ -144,24 +147,25 @@ const ResizableImageComponent: React.FC<ResizableImageComponentProps> = ({
     e.preventDefault();
     setIsResizing(true);
     setResizeHandle(handle);
-    const touch = e.touches[0];
-    initialXRef.current = touch.clientX;
-    initialWidthRef.current = imageRef.current?.offsetWidth || 400;
   }, []);
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
     if (!isResizing || !resizeHandle || !imageRef.current || !e.touches[0]) return;
     
     const touch = e.touches[0];
-    const offsetX = touch.clientX - initialXRef.current;
+    const rect = imageRef.current.getBoundingClientRect();
     const isRTL = document.dir === 'rtl' || document.documentElement.dir === 'rtl';
-    const isLeft = resizeHandle === 'left';
     
     let newWidth: number;
-    if (isRTL) {
-      newWidth = initialWidthRef.current + (isLeft ? -offsetX : offsetX);
+    
+    if (resizeHandle === 'right') {
+      newWidth = isRTL 
+        ? rect.right - touch.clientX
+        : touch.clientX - rect.left;
     } else {
-      newWidth = initialWidthRef.current + (isLeft ? offsetX : -offsetX);
+      newWidth = isRTL
+        ? touch.clientX - rect.left
+        : rect.right - touch.clientX;
     }
     
     newWidth = Math.max(150, newWidth);
