@@ -127,7 +127,7 @@ const ResizableImageComponent: React.FC<ResizableImageComponentProps> = ({
       widthDelta = isRTL ? deltaX : -deltaX;
     }
     
-    let newWidth = startWidthRef.current + widthDelta * 2;
+    let newWidth = startWidthRef.current + widthDelta;
     
     // تطبيق حد أدنى 150px
     newWidth = Math.max(150, newWidth);
@@ -182,7 +182,7 @@ const ResizableImageComponent: React.FC<ResizableImageComponentProps> = ({
       widthDelta = isRTL ? deltaX : -deltaX;
     }
     
-    let newWidth = startWidthRef.current + widthDelta * 2;
+    let newWidth = startWidthRef.current + widthDelta;
     newWidth = Math.max(150, newWidth);
     
     const containerWidth = imageRef.current?.parentElement?.offsetWidth || 1200;
