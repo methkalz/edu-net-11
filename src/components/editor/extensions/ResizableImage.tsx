@@ -120,18 +120,17 @@ const ResizableImageComponent: React.FC<ResizableImageComponentProps> = ({
     // حساب التغيير بناءً على أي handle يتم السحب
     let widthDelta = 0;
     
+    // عكس المنطق: السحب للخارج = تكبير
     if (resizeHandle === 'right') {
-      // Handle اليمين: في RTL، السحب لليمين = تكبير
-      widthDelta = isRTL ? -deltaX : deltaX;
-    } else {
-      // Handle اليسار: في RTL، السحب لليسار = تكبير
       widthDelta = isRTL ? deltaX : -deltaX;
+    } else {
+      widthDelta = isRTL ? -deltaX : deltaX;
     }
     
     let newWidth = startWidthRef.current + widthDelta * 2;
     
-    // تطبيق حد أدنى 100px
-    newWidth = Math.max(100, newWidth);
+    // تطبيق حد أدنى 150px
+    newWidth = Math.max(150, newWidth);
     
     // تطبيق حد أقصى (عرض الحاوية + margin)
     const containerWidth = imageRef.current?.parentElement?.offsetWidth || 1200;
@@ -139,9 +138,12 @@ const ResizableImageComponent: React.FC<ResizableImageComponentProps> = ({
     
     console.log('🖼️ Resizing:', {
       handle: resizeHandle,
+      handlePosition: resizeHandle === 'right' ? 'يسار بصري في RTL' : 'يمين بصري في RTL',
       startWidth: startWidthRef.current,
       deltaX,
+      deltaXDirection: deltaX > 0 ? 'يمين' : 'يسار',
       widthDelta,
+      widthDeltaSign: widthDelta > 0 ? 'تكبير' : 'تصغير',
       newWidth,
       isRTL
     });
@@ -173,23 +175,27 @@ const ResizableImageComponent: React.FC<ResizableImageComponentProps> = ({
     const isRTL = document.dir === 'rtl' || document.documentElement.dir === 'rtl';
     
     let widthDelta = 0;
+    // عكس المنطق: السحب للخارج = تكبير
     if (resizeHandle === 'right') {
-      widthDelta = isRTL ? -deltaX : deltaX;
-    } else {
       widthDelta = isRTL ? deltaX : -deltaX;
+    } else {
+      widthDelta = isRTL ? -deltaX : deltaX;
     }
     
     let newWidth = startWidthRef.current + widthDelta * 2;
-    newWidth = Math.max(100, newWidth);
+    newWidth = Math.max(150, newWidth);
     
     const containerWidth = imageRef.current?.parentElement?.offsetWidth || 1200;
     newWidth = Math.min(newWidth, containerWidth - 20);
     
     console.log('🖼️ Touch Resizing:', {
       handle: resizeHandle,
+      handlePosition: resizeHandle === 'right' ? 'يسار بصري في RTL' : 'يمين بصري في RTL',
       startWidth: startWidthRef.current,
       deltaX,
+      deltaXDirection: deltaX > 0 ? 'يمين' : 'يسار',
       widthDelta,
+      widthDeltaSign: widthDelta > 0 ? 'تكبير' : 'تصغير',
       newWidth,
       isRTL
     });
