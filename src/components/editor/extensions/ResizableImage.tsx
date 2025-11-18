@@ -91,28 +91,22 @@ const ResizableImageComponent: React.FC<ResizableImageComponentProps> = ({
     initialWidthRef.current = imageRef.current?.offsetWidth || 400;
   }, []);
 
-  // السحب - منطق Remotion المُثبت
+  // السحب - عكس الإشارات بالكامل
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isResizing || !resizeHandle || !imageRef.current) return;
     
     const offsetX = e.clientX - initialXRef.current;
     const isRTL = document.dir === 'rtl' || document.documentElement.dir === 'rtl';
-    
-    // منطق مُثبت من Remotion: isLeft يعني handle على اليسار
     const isLeft = resizeHandle === 'left';
     
-    // في LTR: left handle يعكس، right handle طبيعي
-    // في RTL: نعكس المنطق بالكامل
+    // عكس المنطق بالكامل
     let newWidth: number;
     if (isRTL) {
-      // RTL: نعكس كل شيء
-      newWidth = initialWidthRef.current + (isLeft ? offsetX : -offsetX);
-    } else {
-      // LTR: المنطق الطبيعي
       newWidth = initialWidthRef.current + (isLeft ? -offsetX : offsetX);
+    } else {
+      newWidth = initialWidthRef.current + (isLeft ? offsetX : -offsetX);
     }
     
-    // تطبيق حدود صارمة
     newWidth = Math.max(150, newWidth);
     const containerWidth = imageRef.current.parentElement?.offsetWidth || 1200;
     newWidth = Math.min(newWidth, containerWidth - 20);
@@ -165,9 +159,9 @@ const ResizableImageComponent: React.FC<ResizableImageComponentProps> = ({
     
     let newWidth: number;
     if (isRTL) {
-      newWidth = initialWidthRef.current + (isLeft ? offsetX : -offsetX);
-    } else {
       newWidth = initialWidthRef.current + (isLeft ? -offsetX : offsetX);
+    } else {
+      newWidth = initialWidthRef.current + (isLeft ? offsetX : -offsetX);
     }
     
     newWidth = Math.max(150, newWidth);
