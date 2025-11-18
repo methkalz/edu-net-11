@@ -97,8 +97,8 @@ const ResizableImageComponent: React.FC<ResizableImageComponentProps> = ({
       }
     }
     
-    // إذا لم يكن محدد، استخدم العرض الطبيعي أو عرض الحاوية
-    return imageRef.current.naturalWidth || imageRef.current.offsetWidth || 400;
+    // استخدم العرض المعروض حالياً وليس العرض الطبيعي
+    return imageRef.current.offsetWidth || 400;
   }, [width]);
 
   // بدء السحب
@@ -130,12 +130,21 @@ const ResizableImageComponent: React.FC<ResizableImageComponentProps> = ({
     
     let newWidth = startWidthRef.current + widthDelta * 2;
     
-    // تطبيق حد أدنى 150px
-    newWidth = Math.max(150, newWidth);
+    // تطبيق حد أدنى 100px
+    newWidth = Math.max(100, newWidth);
     
-    // تطبيق حد أقصى (عرض الحاوية)
+    // تطبيق حد أقصى (عرض الحاوية + margin)
     const containerWidth = imageRef.current?.parentElement?.offsetWidth || 1200;
-    newWidth = Math.min(newWidth, containerWidth);
+    newWidth = Math.min(newWidth, containerWidth - 20);
+    
+    console.log('🖼️ Resizing:', {
+      handle: resizeHandle,
+      startWidth: startWidthRef.current,
+      deltaX,
+      widthDelta,
+      newWidth,
+      isRTL
+    });
     
     updateAttributes({ width: `${Math.round(newWidth)}px`, height: null });
   }, [isResizing, resizeHandle, updateAttributes]);
@@ -171,10 +180,19 @@ const ResizableImageComponent: React.FC<ResizableImageComponentProps> = ({
     }
     
     let newWidth = startWidthRef.current + widthDelta * 2;
-    newWidth = Math.max(150, newWidth);
+    newWidth = Math.max(100, newWidth);
     
     const containerWidth = imageRef.current?.parentElement?.offsetWidth || 1200;
-    newWidth = Math.min(newWidth, containerWidth);
+    newWidth = Math.min(newWidth, containerWidth - 20);
+    
+    console.log('🖼️ Touch Resizing:', {
+      handle: resizeHandle,
+      startWidth: startWidthRef.current,
+      deltaX,
+      widthDelta,
+      newWidth,
+      isRTL
+    });
     
     updateAttributes({ width: `${Math.round(newWidth)}px`, height: null });
   }, [isResizing, resizeHandle, updateAttributes]);
@@ -343,8 +361,11 @@ const ResizableImageComponent: React.FC<ResizableImageComponentProps> = ({
 
         {/* عرض الأبعاد أثناء التحجيم */}
         {isResizing && (
-          <div className="absolute bottom-2 right-2 bg-background/95 backdrop-blur-sm border rounded px-2 py-1 text-xs font-medium">
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-background/95 backdrop-blur-sm border rounded px-3 py-1.5 text-sm font-medium shadow-lg">
             {Math.round(getEffectiveWidth())}px
+            <span className="text-xs text-muted-foreground ml-2">
+              {resizeHandle === 'left' ? '← يسار' : 'يمين →'}
+            </span>
           </div>
         )}
       </div>
