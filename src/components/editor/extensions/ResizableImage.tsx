@@ -122,9 +122,9 @@ const ResizableImageComponent: React.FC<ResizableImageComponentProps> = ({
     
     // عكس المنطق: السحب للخارج = تكبير
     if (resizeHandle === 'right') {
-      widthDelta = isRTL ? deltaX : -deltaX;
-    } else {
       widthDelta = isRTL ? -deltaX : deltaX;
+    } else {
+      widthDelta = isRTL ? deltaX : -deltaX;
     }
     
     let newWidth = startWidthRef.current + widthDelta * 2;
@@ -177,9 +177,9 @@ const ResizableImageComponent: React.FC<ResizableImageComponentProps> = ({
     let widthDelta = 0;
     // عكس المنطق: السحب للخارج = تكبير
     if (resizeHandle === 'right') {
-      widthDelta = isRTL ? deltaX : -deltaX;
-    } else {
       widthDelta = isRTL ? -deltaX : deltaX;
+    } else {
+      widthDelta = isRTL ? deltaX : -deltaX;
     }
     
     let newWidth = startWidthRef.current + widthDelta * 2;
