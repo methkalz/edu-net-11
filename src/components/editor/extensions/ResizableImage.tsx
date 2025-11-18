@@ -73,6 +73,7 @@ const ResizableImageComponent: React.FC<ResizableImageComponentProps> = ({
 }) => {
   const [isResizing, setIsResizing] = useState(false);
   const [showControls, setShowControls] = useState(false);
+  const [resizeHandle, setResizeHandle] = useState<'left' | 'right' | null>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const startWidthRef = useRef<number>(0);
   const startXRef = useRef<number>(0);
@@ -101,23 +102,33 @@ const ResizableImageComponent: React.FC<ResizableImageComponentProps> = ({
   }, [width]);
 
   // بدء السحب
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+  const handleMouseDown = useCallback((e: React.MouseEvent, handle: 'left' | 'right') => {
     e.preventDefault();
     setIsResizing(true);
+    setResizeHandle(handle);
     startWidthRef.current = getEffectiveWidth();
     startXRef.current = e.clientX;
   }, [getEffectiveWidth]);
 
   // السحب
   const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!isResizing) return;
+    if (!isResizing || !resizeHandle) return;
     
     const deltaX = e.clientX - startXRef.current;
-    // في RTL، نحتاج لعكس الاتجاه
     const isRTL = document.dir === 'rtl' || document.documentElement.dir === 'rtl';
-    const actualDelta = isRTL ? -deltaX : deltaX;
     
-    let newWidth = startWidthRef.current + actualDelta * 2; // *2 لأن التغيير من جانبين
+    // حساب التغيير بناءً على أي handle يتم السحب
+    let widthDelta = 0;
+    
+    if (resizeHandle === 'right') {
+      // Handle اليمين: في RTL، السحب لليمين = تكبير
+      widthDelta = isRTL ? -deltaX : deltaX;
+    } else {
+      // Handle اليسار: في RTL، السحب لليسار = تكبير
+      widthDelta = isRTL ? deltaX : -deltaX;
+    }
+    
+    let newWidth = startWidthRef.current + widthDelta * 2;
     
     // تطبيق حد أدنى 150px
     newWidth = Math.max(150, newWidth);
@@ -127,41 +138,50 @@ const ResizableImageComponent: React.FC<ResizableImageComponentProps> = ({
     newWidth = Math.min(newWidth, containerWidth);
     
     updateAttributes({ width: `${Math.round(newWidth)}px`, height: null });
-  }, [isResizing, updateAttributes]);
+  }, [isResizing, resizeHandle, updateAttributes]);
 
   // إنهاء السحب
   const handleMouseUp = useCallback(() => {
     setIsResizing(false);
+    setResizeHandle(null);
   }, []);
 
   // Touch events للأجهزة اللوحية
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+  const handleTouchStart = useCallback((e: React.TouchEvent, handle: 'left' | 'right') => {
     e.preventDefault();
     const touch = e.touches[0];
     setIsResizing(true);
+    setResizeHandle(handle);
     startWidthRef.current = getEffectiveWidth();
     startXRef.current = touch.clientX;
   }, [getEffectiveWidth]);
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
-    if (!isResizing) return;
+    if (!isResizing || !resizeHandle) return;
     
     const touch = e.touches[0];
     const deltaX = touch.clientX - startXRef.current;
     const isRTL = document.dir === 'rtl' || document.documentElement.dir === 'rtl';
-    const actualDelta = isRTL ? -deltaX : deltaX;
     
-    let newWidth = startWidthRef.current + actualDelta * 2;
+    let widthDelta = 0;
+    if (resizeHandle === 'right') {
+      widthDelta = isRTL ? -deltaX : deltaX;
+    } else {
+      widthDelta = isRTL ? deltaX : -deltaX;
+    }
+    
+    let newWidth = startWidthRef.current + widthDelta * 2;
     newWidth = Math.max(150, newWidth);
     
     const containerWidth = imageRef.current?.parentElement?.offsetWidth || 1200;
     newWidth = Math.min(newWidth, containerWidth);
     
     updateAttributes({ width: `${Math.round(newWidth)}px`, height: null });
-  }, [isResizing, updateAttributes]);
+  }, [isResizing, resizeHandle, updateAttributes]);
 
   const handleTouchEnd = useCallback(() => {
     setIsResizing(false);
+    setResizeHandle(null);
   }, []);
 
   // إضافة event listeners
@@ -253,8 +273,8 @@ const ResizableImageComponent: React.FC<ResizableImageComponentProps> = ({
               className={`absolute top-1/2 left-0 -translate-y-1/2 -translate-x-1/2 w-3 h-12 bg-primary rounded-full cursor-ew-resize transition-opacity ${
                 showControls || isResizing ? 'opacity-100' : 'opacity-0'
               }`}
-              onMouseDown={handleMouseDown}
-              onTouchStart={handleTouchStart}
+              onMouseDown={(e) => handleMouseDown(e, 'left')}
+              onTouchStart={(e) => handleTouchStart(e, 'left')}
               style={{ touchAction: 'none' }}
             />
             
@@ -263,8 +283,8 @@ const ResizableImageComponent: React.FC<ResizableImageComponentProps> = ({
               className={`absolute top-1/2 right-0 -translate-y-1/2 translate-x-1/2 w-3 h-12 bg-primary rounded-full cursor-ew-resize transition-opacity ${
                 showControls || isResizing ? 'opacity-100' : 'opacity-0'
               }`}
-              onMouseDown={handleMouseDown}
-              onTouchStart={handleTouchStart}
+              onMouseDown={(e) => handleMouseDown(e, 'right')}
+              onTouchStart={(e) => handleTouchStart(e, 'right')}
               style={{ touchAction: 'none' }}
             />
           </>
