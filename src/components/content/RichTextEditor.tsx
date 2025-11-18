@@ -158,7 +158,29 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
         alignments: ['left', 'center', 'right', 'justify'],
         defaultAlignment: 'right',
       }),
-      Image.configure({
+      Image.extend({
+        addAttributes() {
+          return {
+            ...this.parent?.(),
+            width: {
+              default: null,
+              parseHTML: element => element.getAttribute('width') || element.style.width,
+              renderHTML: attributes => {
+                if (!attributes.width) return {};
+                return { width: attributes.width, style: `width: ${attributes.width}` };
+              },
+            },
+            height: {
+              default: null,
+              parseHTML: element => element.getAttribute('height') || element.style.height,
+              renderHTML: attributes => {
+                if (!attributes.height) return {};
+                return { height: attributes.height, style: `height: ${attributes.height}` };
+              },
+            },
+          };
+        },
+      }).configure({
         inline: true,
         allowBase64: true,
         HTMLAttributes: {
@@ -323,39 +345,39 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
   };
 
   const handleImageResize = (width: string) => {
-    const img = editor.view.dom.querySelector('.ProseMirror-selectednode') as HTMLImageElement;
-    if (img) {
-      img.style.width = width;
-      img.style.height = 'auto';
-      toast.success('تم تغيير حجم الصورة');
-    }
+    if (!editor) return;
+    
+    editor.chain().focus().updateAttributes('image', {
+      width: width,
+      height: 'auto',
+    }).run();
+    
+    toast.success('تم تغيير حجم الصورة');
   };
 
   const handleCustomImageResize = (width: string, height: string, unit: '%' | 'px') => {
-    const img = editor.view.dom.querySelector('.ProseMirror-selectednode') as HTMLImageElement;
-    if (img) {
-      img.style.width = `${width}${unit}`;
-      if (height) {
-        img.style.height = `${height}px`;
-      } else {
-        img.style.height = 'auto';
-      }
-      toast.success('تم تغيير حجم الصورة');
-    }
+    if (!editor) return;
+    
+    const widthValue = `${width}${unit}`;
+    const heightValue = height ? `${height}px` : 'auto';
+    
+    editor.chain().focus().updateAttributes('image', {
+      width: widthValue,
+      height: heightValue,
+    }).run();
+    
+    toast.success('تم تغيير حجم الصورة');
   };
 
   const handleResetImageSize = () => {
-    const img = editor.view.dom.querySelector('.ProseMirror-selectednode') as HTMLImageElement;
-    if (img) {
-      // الحصول على الأبعاد الأصلية
-      const tempImg = new window.Image();
-      tempImg.src = img.src;
-      tempImg.onload = () => {
-        img.style.width = `${tempImg.naturalWidth}px`;
-        img.style.height = 'auto';
-        toast.success('تم إعادة الصورة للحجم الأصلي');
-      };
-    }
+    if (!editor) return;
+    
+    editor.chain().focus().updateAttributes('image', {
+      width: null,
+      height: null,
+    }).run();
+    
+    toast.success('تم إعادة الصورة للحجم الأصلي');
   };
 
   const handleImageAlignment = (alignment: 'left' | 'center' | 'right') => {
