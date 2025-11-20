@@ -318,7 +318,7 @@ const Grade11Content = () => {
             
             // Check Gamma presentation filter
             if (mediaFilters.presentation) {
-              const hasPresentation = lesson.content?.includes('gamma.app/embed');
+              const hasPresentation = lesson.content?.includes('gamma-embed-wrapper') || lesson.content?.includes('gamma.app/embed');
               if (!hasPresentation) return false;
             }
             
