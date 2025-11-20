@@ -16,7 +16,7 @@ import VideoInfoCardForm from './VideoInfoCardForm';
 import Grade11FileLibrary from './Grade11FileLibrary';
 import Grade11VideoLibrary from './Grade11VideoLibrary';
 import Grade11CollapsibleSection from './Grade11CollapsibleSection';
-import Grade11ContentControls from './Grade11ContentControls';
+import Grade11ContentControls, { MediaFilters } from './Grade11ContentControls';
 import GameLauncher from './GameLauncher';
 import KnowledgeAdventureRealContent from '../games/KnowledgeAdventureRealContent';
 import { logger } from '@/lib/logger';
@@ -89,6 +89,13 @@ const Grade11Content = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'sections' | 'topics' | 'lessons' | 'lessons-with-media'>('all');
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
+  const [mediaFilters, setMediaFilters] = useState<MediaFilters>({
+    video: false,
+    audio: false,
+    lottie: false,
+    html: false,
+    presentation: false
+  });
 
   // Drag and drop states
   const [draggedSectionIndex, setDraggedSectionIndex] = useState<number | null>(null);
@@ -275,8 +282,54 @@ const Grade11Content = () => {
         })).filter(topic => topic.lessons.length > 0)
       })).filter(section => section.topics.length > 0);
     }
+
+    // Apply media filters (only when filtering lessons)
+    const hasActiveMediaFilters = Object.values(mediaFilters).some(f => f);
+    
+    if (hasActiveMediaFilters && (filterType === 'lessons' || filterType === 'lessons-with-media')) {
+      filtered = filtered.map(section => ({
+        ...section,
+        topics: section.topics.map(topic => ({
+          ...topic,
+          lessons: topic.lessons?.filter(lesson => {
+            // Check video filter
+            if (mediaFilters.video) {
+              const hasVideo = lesson.media?.some(m => m.media_type === 'video');
+              if (!hasVideo) return false;
+            }
+            
+            // Check audio filter
+            if (mediaFilters.audio) {
+              const hasAudio = lesson.media?.some(m => m.media_type === 'audio');
+              if (!hasAudio) return false;
+            }
+            
+            // Check lottie filter
+            if (mediaFilters.lottie) {
+              const hasLottie = lesson.media?.some(m => m.media_type === 'lottie');
+              if (!hasLottie) return false;
+            }
+            
+            // Check HTML embed filter
+            if (mediaFilters.html) {
+              const hasHTML = lesson.content?.includes('data-type="html-embed"');
+              if (!hasHTML) return false;
+            }
+            
+            // Check Gamma presentation filter
+            if (mediaFilters.presentation) {
+              const hasPresentation = lesson.content?.includes('gamma.app/embed');
+              if (!hasPresentation) return false;
+            }
+            
+            return true; // Lesson matches all active filters
+          }) || []
+        })).filter(topic => topic.lessons.length > 0)
+      })).filter(section => section.topics.length > 0);
+    }
+    
     return filtered;
-  }, [sections, searchTerm, filterType]);
+  }, [sections, searchTerm, filterType, mediaFilters]);
 
   // Calculate statistics
   const statistics = useMemo(() => {
@@ -383,7 +436,7 @@ const Grade11Content = () => {
         </div>
 
         <TabsContent value="textual" className="space-y-6">
-          <Grade11ContentControls sectionsCount={statistics.sectionsCount} topicsCount={statistics.topicsCount} lessonsCount={statistics.lessonsCount} searchTerm={searchTerm} onSearchChange={setSearchTerm} onAddSection={() => setShowSectionForm(true)} onExpandAll={handleExpandAll} onCollapseAll={handleCollapseAll} filterType={filterType} onFilterChange={setFilterType} />
+          <Grade11ContentControls sectionsCount={statistics.sectionsCount} topicsCount={statistics.topicsCount} lessonsCount={statistics.lessonsCount} searchTerm={searchTerm} onSearchChange={setSearchTerm} onAddSection={() => setShowSectionForm(true)} onExpandAll={handleExpandAll} onCollapseAll={handleCollapseAll} filterType={filterType} onFilterChange={setFilterType} mediaFilters={mediaFilters} onMediaFiltersChange={setMediaFilters} showMediaFilters={filterType === 'lessons' || filterType === 'lessons-with-media'} />
 
           <div className="space-y-4">
             {filteredSections.length === 0 ? <div className="text-center py-16 bg-gradient-to-br from-muted/20 to-muted/40 rounded-xl border-2 border-dashed border-muted-foreground/20">

@@ -1,8 +1,19 @@
 import React from 'react';
-import { ExpandIcon, ShrinkIcon, Search, Filter, Plus } from 'lucide-react';
+import { ExpandIcon, ShrinkIcon, Search, Filter, Plus, Video, Music, Sparkles, Code, Presentation } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+
+export interface MediaFilters {
+  video: boolean;
+  audio: boolean;
+  lottie: boolean;
+  html: boolean;
+  presentation: boolean;
+}
 
 interface Grade11ContentControlsProps {
   sectionsCount: number;
@@ -15,6 +26,9 @@ interface Grade11ContentControlsProps {
   onCollapseAll: () => void;
   filterType: 'all' | 'sections' | 'topics' | 'lessons' | 'lessons-with-media';
   onFilterChange: (filter: 'all' | 'sections' | 'topics' | 'lessons' | 'lessons-with-media') => void;
+  mediaFilters: MediaFilters;
+  onMediaFiltersChange: (filters: MediaFilters) => void;
+  showMediaFilters: boolean;
 }
 
 const Grade11ContentControls: React.FC<Grade11ContentControlsProps> = ({
@@ -28,7 +42,16 @@ const Grade11ContentControls: React.FC<Grade11ContentControlsProps> = ({
   onCollapseAll,
   filterType,
   onFilterChange,
+  mediaFilters,
+  onMediaFiltersChange,
+  showMediaFilters,
 }) => {
+  const handleMediaFilterChange = (filterKey: keyof MediaFilters) => {
+    onMediaFiltersChange({
+      ...mediaFilters,
+      [filterKey]: !mediaFilters[filterKey]
+    });
+  };
   return (
     <div className="space-y-4">
       {/* Statistics */}
@@ -106,6 +129,97 @@ const Grade11ContentControls: React.FC<Grade11ContentControlsProps> = ({
           إضافة قسم جديد
         </Button>
       </div>
+
+      {/* Media Filters - Shows only when filtering lessons */}
+      {showMediaFilters && (
+        <Card className="p-4 bg-gradient-to-br from-muted/20 to-muted/10 border-dashed border-muted-foreground/30">
+          <div className="flex items-center gap-2 mb-3">
+            <Filter className="h-4 w-4 text-primary" />
+            <h4 className="font-semibold text-sm">فلترة حسب نوع المحتوى</h4>
+          </div>
+          <div className="flex flex-wrap gap-4">
+            {/* Video Filter */}
+            <div className="flex items-center space-x-2 space-x-reverse">
+              <Checkbox 
+                id="filter-video" 
+                checked={mediaFilters.video}
+                onCheckedChange={() => handleMediaFilterChange('video')}
+              />
+              <Label 
+                htmlFor="filter-video" 
+                className="flex items-center gap-2 cursor-pointer text-sm font-medium"
+              >
+                <Video className="h-4 w-4 text-blue-600" />
+                <span>فيديو</span>
+              </Label>
+            </div>
+
+            {/* Audio Filter */}
+            <div className="flex items-center space-x-2 space-x-reverse">
+              <Checkbox 
+                id="filter-audio" 
+                checked={mediaFilters.audio}
+                onCheckedChange={() => handleMediaFilterChange('audio')}
+              />
+              <Label 
+                htmlFor="filter-audio" 
+                className="flex items-center gap-2 cursor-pointer text-sm font-medium"
+              >
+                <Music className="h-4 w-4 text-green-600" />
+                <span>صوتيات</span>
+              </Label>
+            </div>
+
+            {/* Lottie Filter */}
+            <div className="flex items-center space-x-2 space-x-reverse">
+              <Checkbox 
+                id="filter-lottie" 
+                checked={mediaFilters.lottie}
+                onCheckedChange={() => handleMediaFilterChange('lottie')}
+              />
+              <Label 
+                htmlFor="filter-lottie" 
+                className="flex items-center gap-2 cursor-pointer text-sm font-medium"
+              >
+                <Sparkles className="h-4 w-4 text-purple-600" />
+                <span>لوتي</span>
+              </Label>
+            </div>
+
+            {/* HTML Filter */}
+            <div className="flex items-center space-x-2 space-x-reverse">
+              <Checkbox 
+                id="filter-html" 
+                checked={mediaFilters.html}
+                onCheckedChange={() => handleMediaFilterChange('html')}
+              />
+              <Label 
+                htmlFor="filter-html" 
+                className="flex items-center gap-2 cursor-pointer text-sm font-medium"
+              >
+                <Code className="h-4 w-4 text-orange-600" />
+                <span>كود HTML</span>
+              </Label>
+            </div>
+
+            {/* Presentation Filter */}
+            <div className="flex items-center space-x-2 space-x-reverse">
+              <Checkbox 
+                id="filter-presentation" 
+                checked={mediaFilters.presentation}
+                onCheckedChange={() => handleMediaFilterChange('presentation')}
+              />
+              <Label 
+                htmlFor="filter-presentation" 
+                className="flex items-center gap-2 cursor-pointer text-sm font-medium"
+              >
+                <Presentation className="h-4 w-4 text-red-600" />
+                <span>بريزنتيشن</span>
+              </Label>
+            </div>
+          </div>
+        </Card>
+      )}
     </div>
   );
 };
