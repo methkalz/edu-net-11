@@ -286,42 +286,59 @@ const Grade11Content = () => {
     // Apply media filters (only when filtering lessons)
     const hasActiveMediaFilters = Object.values(mediaFilters).some(f => f);
     
+    console.log('🔍 Media Filters Debug:', {
+      hasActiveMediaFilters,
+      filterType,
+      mediaFilters,
+      willApplyMediaFilters: hasActiveMediaFilters && (filterType === 'lessons' || filterType === 'lessons-with-media')
+    });
+    
     if (hasActiveMediaFilters && (filterType === 'lessons' || filterType === 'lessons-with-media')) {
       filtered = filtered.map(section => ({
         ...section,
         topics: section.topics.map(topic => ({
           ...topic,
           lessons: topic.lessons?.filter(lesson => {
+            console.log(`📝 Testing lesson: "${lesson.title}"`);
+            
             // Check video filter
             if (mediaFilters.video) {
               const hasVideo = lesson.media?.some(m => m.media_type === 'video');
+              console.log(`  ✓ Video filter active - hasVideo: ${hasVideo}`);
               if (!hasVideo) return false;
             }
             
             // Check audio filter
             if (mediaFilters.audio) {
               const hasAudio = lesson.media?.some(m => m.media_type === 'audio');
+              console.log(`  ✓ Audio filter active - hasAudio: ${hasAudio}`);
               if (!hasAudio) return false;
             }
             
             // Check lottie filter
             if (mediaFilters.lottie) {
               const hasLottie = lesson.media?.some(m => m.media_type === 'lottie');
+              console.log(`  ✓ Lottie filter active - hasLottie: ${hasLottie}`);
               if (!hasLottie) return false;
             }
             
             // Check HTML embed filter
             if (mediaFilters.html) {
               const hasHTML = lesson.content?.includes('data-type="html-embed"');
+              console.log(`  ✓ HTML filter active - hasHTML: ${hasHTML}`);
               if (!hasHTML) return false;
             }
             
             // Check Gamma presentation filter
             if (mediaFilters.presentation) {
-              const hasPresentation = lesson.content?.includes('gamma-embed-wrapper') || lesson.content?.includes('gamma.app/embed');
+              const hasWrapper = lesson.content?.includes('gamma-embed-wrapper');
+              const hasEmbed = lesson.content?.includes('gamma.app/embed');
+              const hasPresentation = hasWrapper || hasEmbed;
+              console.log(`  ✓ Presentation filter active - hasWrapper: ${hasWrapper}, hasEmbed: ${hasEmbed}, hasPresentation: ${hasPresentation}`);
               if (!hasPresentation) return false;
             }
             
+            console.log(`  ✅ Lesson passed all filters!`);
             return true; // Lesson matches all active filters
           }) || []
         })).filter(topic => topic.lessons.length > 0)
