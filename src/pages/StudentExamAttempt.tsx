@@ -5,16 +5,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { ExamQuestion } from '@/components/exam/ExamQuestion';
 import { ExamNavigationGrid } from '@/components/exam/ExamNavigationGrid';
@@ -33,7 +23,6 @@ export default function StudentExamAttempt() {
   const [answers, setAnswers] = useState<Record<string, { answer: string; time_spent?: number }>>({});
   const [attemptId, setAttemptId] = useState<string | null>(null);
   const [attemptStartedAt, setAttemptStartedAt] = useState<string | null>(null);
-  const [showSubmitDialog, setShowSubmitDialog] = useState(false);
   const [recoveryMode, setRecoveryMode] = useState(false);
 
   // تسجيل mount/unmount
@@ -58,7 +47,6 @@ export default function StudentExamAttempt() {
     setAttemptStartedAt(null); // إعادة تعيين وقت البدء
     setAnswers({});
     setCurrentQuestionIndex(0);
-    setShowSubmitDialog(false);
     setRecoveryMode(false);
     
     // ⭐ Reset mutation state أيضاً عند mount
@@ -605,6 +593,14 @@ export default function StudentExamAttempt() {
     }).filter(idx => idx !== -1)
   );
 
+  // حساب الأسئلة غير المجابة مع أرقامها
+  const unansweredQuestionNumbers = examData?.questions
+    .map((q, index) => ({ id: q.id, number: index + 1 }))
+    .filter(q => !answers[q.id])
+    .map(q => q.number) || [];
+
+  const allQuestionsAnswered = unansweredQuestionNumbers.length === 0;
+
   const handleSubmitClick = () => {
     // فحص وجود attemptId قبل التقديم
     if (!attemptId) {
@@ -626,30 +622,20 @@ export default function StudentExamAttempt() {
       return;
     }
 
-    logger.info('🔴🔴🔴 handleSubmitClick تم استدعاؤه', {
-      answeredCount: answeredQuestions.size,
-      totalQuestions: examData?.questions.length || 0,
-      showSubmitDialog: showSubmitDialog
-    });
-    
-    const unansweredCount = (examData?.questions.length || 0) - answeredQuestions.size;
-    
-    if (unansweredCount > 0) {
-      logger.info('🟡 يوجد أسئلة غير مجابة، فتح نافذة التأكيد', { 
-        unansweredCount,
-        willOpenDialog: true 
+    // إذا كان هناك أسئلة غير مجابة، عرض رسالة تحذيرية
+    if (unansweredQuestionNumbers.length > 0) {
+      const questionsList = unansweredQuestionNumbers.join(' - ');
+      toast({
+        title: '⚠️ لم تجب على جميع الأسئلة',
+        description: `الأسئلة غير المجابة: ${questionsList}`,
+        variant: 'destructive',
+        duration: 5000
       });
-      setShowSubmitDialog(true);
-      logger.info('🟢 تم استدعاء setShowSubmitDialog(true)');
-    } else {
-      logger.info('🟢 جميع الأسئلة مجابة، تقديم الامتحان مباشرة');
-      submitExamMutation.mutate();
+      return;
     }
-  };
 
-  const handleConfirmSubmit = () => {
-    logger.info('تأكيد تقديم الامتحان');
-    setShowSubmitDialog(false);
+    // جميع الأسئلة مجابة، تقديم الامتحان مباشرة
+    logger.info('🟢 جميع الأسئلة مجابة، تقديم الامتحان');
     submitExamMutation.mutate();
   };
 
@@ -821,61 +807,41 @@ export default function StudentExamAttempt() {
           </div>
 
           {/* Navigation Buttons */}
-          <div className="flex flex-col sm:flex-row items-stretch gap-4 w-full">
-            <div className="flex gap-4 w-full">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  logger.info('زر السابق تم النقر عليه');
-                  setCurrentQuestionIndex((prev) => Math.max(0, prev - 1));
-                }}
-                disabled={currentQuestionIndex === 0}
-                className="flex-1 h-14 text-base font-bold border-2 hover:shadow-md transition-all"
-              >
-                <ChevronRight className="w-5 h-5 ml-2" />
-                السابق
-              </Button>
+          <div className="flex gap-4 w-full">
+            <Button
+              variant="outline"
+              onClick={() => {
+                logger.info('زر السابق تم النقر عليه');
+                setCurrentQuestionIndex((prev) => Math.max(0, prev - 1));
+              }}
+              disabled={currentQuestionIndex === 0}
+              className="flex-1 h-14 text-base font-bold border-2 hover:shadow-md transition-all"
+            >
+              <ChevronRight className="w-5 h-5 ml-2" />
+              السابق
+            </Button>
 
-              {currentQuestionIndex < examData.questions.length - 1 && (
-                <Button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    logger.info('زر التالي تم النقر عليه');
-                    setCurrentQuestionIndex((prev) => 
-                      Math.min(examData.questions.length - 1, prev + 1)
-                    );
-                  }}
-                  className="flex-1 h-14 text-base font-bold shadow-md hover:shadow-lg transition-all"
-                >
-                  التالي
-                  <ChevronLeft className="w-5 h-5 mr-2" />
-                </Button>
-              )}
-            </div>
-
-            {currentQuestionIndex === examData.questions.length - 1 && (
-              <Button
-                type="button"
-                onClick={() => {
-                  logger.info('🔴🔴🔴 زر تقديم الامتحان تم النقر عليه', {
-                    currentQuestionIndex,
-                    totalQuestions: examData.questions.length
-                  });
-                  handleSubmitClick();
-                }}
-                disabled={submitExamMutation.isPending}
-                className="w-full h-16 text-lg font-bold bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl transition-all"
-              >
-                <Send className="w-6 h-6 ml-2" />
-                {submitExamMutation.isPending ? 'جاري التسليم...' : 'تقديم الامتحان'}
-              </Button>
-            )}
+            <Button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                logger.info('زر التالي تم النقر عليه');
+                setCurrentQuestionIndex((prev) => 
+                  Math.min(examData.questions.length - 1, prev + 1)
+                );
+              }}
+              disabled={currentQuestionIndex === examData.questions.length - 1}
+              className="flex-1 h-14 text-base font-bold shadow-md hover:shadow-lg transition-all"
+            >
+              التالي
+              <ChevronLeft className="w-5 h-5 mr-2" />
+            </Button>
           </div>
 
-          {/* Progress Info */}
+          {/* Progress Info with Submit Button */}
           <Card className="border-2 border-primary/20 bg-primary/5">
-            <CardContent className="p-4">
+            <CardContent className="p-4 space-y-4">
+              {/* Progress Bar */}
               <div className="flex items-center justify-between">
                 <span className="font-semibold">تم الإجابة على {answeredQuestions.size} من {examData.questions.length} سؤال</span>
                 <div className="flex items-center gap-2">
@@ -890,43 +856,40 @@ export default function StudentExamAttempt() {
                   </span>
                 </div>
               </div>
+
+              {/* Submit Button - دائم الظهور */}
+              <Button
+                type="button"
+                onClick={handleSubmitClick}
+                disabled={!allQuestionsAnswered || submitExamMutation.isPending}
+                className={`
+                  w-full h-14 text-lg font-bold shadow-lg hover:shadow-xl transition-all
+                  ${allQuestionsAnswered 
+                    ? 'bg-green-600 hover:bg-green-700 text-white' 
+                    : 'bg-muted hover:bg-muted text-muted-foreground cursor-not-allowed'
+                  }
+                `}
+              >
+                <Send className="w-5 h-5 ml-2" />
+                {submitExamMutation.isPending 
+                  ? 'جاري التسليم...' 
+                  : allQuestionsAnswered 
+                    ? '✅ تقديم الامتحان' 
+                    : `⚠️ أجب على ${unansweredQuestionNumbers.length} سؤال متبقي`
+                }
+              </Button>
+
+              {/* رسالة توضيحية عند عدم اكتمال الإجابات */}
+              {!allQuestionsAnswered && (
+                <p className="text-xs text-muted-foreground text-center">
+                  يجب الإجابة على جميع الأسئلة قبل التقديم
+                </p>
+              )}
             </CardContent>
           </Card>
         </div>
       </div>
 
-      {/* Submit Confirmation Dialog */}
-      <AlertDialog 
-        open={showSubmitDialog} 
-        onOpenChange={(open) => {
-          logger.info('🔵 AlertDialog onOpenChange:', { open });
-          setShowSubmitDialog(open);
-        }}
-      >
-        <AlertDialogContent className="max-w-[90vw] sm:max-w-md z-[100]">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-base sm:text-lg">تأكيد تقديم الامتحان</AlertDialogTitle>
-            <AlertDialogDescription className="text-sm sm:text-base">
-              لم تجب على {(examData?.questions.length || 0) - answeredQuestions.size} سؤال.
-              هل أنت متأكد من أنك تريد تقديم الامتحان الآن؟
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-            <AlertDialogCancel 
-              className="w-full sm:w-auto"
-              onClick={() => logger.info('🔴 تم النقر على إلغاء')}
-            >
-              إلغاء
-            </AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleConfirmSubmit}
-              className="w-full sm:w-auto bg-green-600 hover:bg-green-700"
-            >
-              نعم، قدم الامتحان
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
