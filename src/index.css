@@ -498,6 +498,11 @@ All colors MUST be HSL.
     animation: modern-pulse 2s ease-in-out infinite 0.4s;
   }
 
+  /* تأثير الومضات الخضراء للتنبيه بامتحان متاح */
+  .animate-pulse-green {
+    animation: pulse-green 600ms ease-in-out 3;
+  }
+
   .animate-modern-wave-1 {
     animation: modern-wave 1.2s ease-in-out infinite;
   }
@@ -1361,6 +1366,22 @@ All colors MUST be HSL.
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--primary) / 0.5);
+}
+
+/* Keyframes لتأثير الومضات الخضراء */
+@keyframes pulse-green {
+  0%, 100% { 
+    background-color: transparent; 
+    box-shadow: none;
+  }
+  33% { 
+    background-color: rgba(34, 197, 94, 0.3);
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.5);
+  }
+  66% { 
+    background-color: transparent;
+    box-shadow: none;
+  }
 }
 
 /* Firefox scrollbar */

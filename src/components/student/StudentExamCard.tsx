@@ -1,12 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, FileText, Trophy, Calendar, AlertCircle } from "lucide-react";
+import { Clock, FileText, Trophy, Calendar, AlertCircle, Sparkles } from "lucide-react";
 import { AvailableExam } from "@/types/exam";
 import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow, isPast, isFuture } from "date-fns";
 import { ar } from "date-fns/locale";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { StudentExamResultsDialog } from "./StudentExamResultsDialog";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -18,6 +18,24 @@ export const StudentExamCard = ({ exam }: StudentExamCardProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [showResults, setShowResults] = useState(false);
+  const [isNewlyAvailable, setIsNewlyAvailable] = useState(false);
+
+  // التحقق إذا كان الامتحان أصبح متاحاً للتو (خلال آخر 5 دقائق)
+  useEffect(() => {
+    if (exam.can_start && !isPast(new Date(exam.end_datetime))) {
+      const examStartTime = new Date(exam.start_datetime).getTime();
+      const now = Date.now();
+      
+      // إذا بدأ الامتحان خلال آخر 5 دقائق
+      if (now - examStartTime < 5 * 60 * 1000 && now >= examStartTime) {
+        setIsNewlyAvailable(true);
+        
+        // إخفاء البادج بعد دقيقة واحدة
+        const timer = setTimeout(() => setIsNewlyAvailable(false), 60000);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [exam.can_start, exam.start_datetime, exam.end_datetime]);
 
   const getExamStatus = () => {
     if (exam.can_start && !isPast(new Date(exam.end_datetime))) {
@@ -49,7 +67,15 @@ export const StudentExamCard = ({ exam }: StudentExamCardProps) => {
     <Card className="hover:shadow-md transition-shadow">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
-          <CardTitle className="text-lg line-clamp-2">{exam.title}</CardTitle>
+          <CardTitle className="text-lg line-clamp-2 flex items-center gap-2">
+            {exam.title}
+            {isNewlyAvailable && (
+              <Badge variant="default" className="shrink-0 bg-green-emerald text-white animate-pulse">
+                <Sparkles className="h-3 w-3 ml-1" />
+                جديد!
+              </Badge>
+            )}
+          </CardTitle>
           <Badge variant={status.variant} className="shrink-0">
             {status.label}
           </Badge>
