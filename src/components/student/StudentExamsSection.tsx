@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useStudentExams } from "@/hooks/useStudentExams";
 import { useAuth } from "@/hooks/useAuth";
@@ -20,7 +20,7 @@ export const StudentExamsSection = () => {
   
   // State للتنبيه البصري
   const [highlightAvailable, setHighlightAvailable] = useState(false);
-  const [previousAvailableCount, setPreviousAvailableCount] = useState(0);
+  const previousAvailableCountRef = useRef(0);
   if (isLoading) {
     return <div className="space-y-4">
         <Skeleton className="h-10 w-64" />
@@ -47,20 +47,31 @@ export const StudentExamsSection = () => {
 
   // مراقبة التغييرات في عدد الامتحانات المتاحة للتنبيه البصري
   useEffect(() => {
+    const currentCount = availableExams.length;
+    const previousCount = previousAvailableCountRef.current;
+    
+    console.log('🔍 Available exams count changed:', {
+      current: currentCount,
+      previous: previousCount,
+      shouldHighlight: currentCount > previousCount && previousCount > 0
+    });
+    
     // عند زيادة عدد الامتحانات المتاحة (امتحان جديد أصبح متاحاً)
-    if (availableExams.length > previousAvailableCount && previousAvailableCount > 0) {
+    if (currentCount > previousCount && previousCount > 0) {
+      console.log('✅ Triggering green pulse animation!');
       // تفعيل التأثير البصري (3 ومضات خضراء)
       setHighlightAvailable(true);
       
       // إيقاف التأثير بعد 2 ثانية (3 ومضات × ~600ms)
       setTimeout(() => {
         setHighlightAvailable(false);
+        console.log('⏹️ Green pulse animation ended');
       }, 2000);
     }
     
-    // تحديث العدد السابق
-    setPreviousAvailableCount(availableExams.length);
-  }, [availableExams.length, previousAvailableCount]);
+    // تحديث العدد السابق (لا يسبب re-render)
+    previousAvailableCountRef.current = currentCount;
+  }, [availableExams.length]);
   return <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-2xl font-bold mb-2 text-center mx-0 px-0 my-[4px] py-[2px]">الامتحانات الإلكترونية</h2>
