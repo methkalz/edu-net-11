@@ -225,14 +225,15 @@ const HTMLEmbedComponent = ({ node, deleteNode, updateAttributes }: any) => {
             <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
               <Button
                 size="sm"
-                variant="ghost"
+                variant="secondary"
                 onClick={toggleFullscreen}
                 title={isFullscreen ? 'الخروج من ملء الشاشة' : 'ملء الشاشة'}
+                className="shadow-md hover:shadow-lg transition-all bg-primary/10 hover:bg-primary hover:text-primary-foreground h-9 w-9"
               >
                 {isFullscreen ? (
-                  <Minimize2 className="h-4 w-4" />
+                  <Minimize2 className="h-5 w-5" />
                 ) : (
-                  <Maximize2 className="h-4 w-4" />
+                  <Maximize2 className="h-5 w-5" />
                 )}
               </Button>
               <Button
