@@ -187,6 +187,55 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
     },
     enabled: !!user?.id,
   });
+
+  // جلب عدد الأسئلة المتوفرة حسب الفئات المحددة
+  const { data: myQuestionsByCategory } = useQuery({
+    queryKey: ['my-questions-by-category', user?.id, form.watch('selected_teacher_categories')],
+    queryFn: async () => {
+      if (!user?.id) return 0;
+      const categories = form.watch('selected_teacher_categories');
+      if (!categories || categories.length === 0) return 0;
+      
+      const { count, error } = await supabase
+        .from('teacher_custom_questions')
+        .select('*', { count: 'exact', head: true })
+        .eq('teacher_id', user.id)
+        .eq('is_active', true)
+        .in('category', categories);
+      
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: !!user?.id && (form.watch('selected_teacher_categories')?.length ?? 0) > 0,
+  });
+
+  // جلب عدد أسئلة بنك الأسئلة حسب الأقسام المحددة
+  const { data: questionBankBySection } = useQuery({
+    queryKey: ['question-bank-by-section', selectedGradeLevel, form.watch('selected_sections')],
+    queryFn: async () => {
+      if (!selectedGradeLevel) return 0;
+      const sections = form.watch('selected_sections');
+      if (!sections || sections.length === 0) return 0;
+      
+      const { data: sectionsData } = await supabase
+        .from('question_bank_sections')
+        .select('title')
+        .in('id', sections);
+      
+      if (!sectionsData || sectionsData.length === 0) return 0;
+      
+      const { count, error } = await supabase
+        .from('question_bank')
+        .select('*', { count: 'exact', head: true })
+        .eq('grade_level', selectedGradeLevel)
+        .eq('is_active', true)
+        .in('section_name', sectionsData.map(s => s.title));
+      
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: !!selectedGradeLevel && (form.watch('selected_sections')?.length ?? 0) > 0,
+  });
   
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isQuestionDialogOpen, setIsQuestionDialogOpen] = useState(false);
