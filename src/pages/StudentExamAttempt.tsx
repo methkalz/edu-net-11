@@ -121,9 +121,17 @@ export default function StudentExamAttempt() {
           data: {
             examId: (data as any)?.exam?.id,
             questionsCount: (data as any)?.questions?.length,
-            maxAttempts: (data as any)?.exam?.max_attempts
+            maxAttempts: (data as any)?.exam?.max_attempts,
+            warnings: (data as any)?.warnings,
+            hasFallback: (data as any)?.has_fallback
           }
         });
+
+        // ✅ عرض تنبيه إذا كان هناك fallback
+        if ((data as any)?.has_fallback && (data as any)?.warnings?.length > 0) {
+          const warnings = (data as any).warnings;
+          console.warn('⚠️ Exam generated with fallback:', warnings);
+        }
 
         return data as any as ExamWithQuestions;
       } catch (error: any) {
@@ -725,6 +733,20 @@ export default function StudentExamAttempt() {
           submitMutationStatus: submitExamMutation.status
         }}
       />
+
+      {/* ✅ تنبيه fallback */}
+      {(examData as any)?.has_fallback && (examData as any)?.warnings?.length > 0 && (
+        <Alert className="mb-4 border-amber-200 bg-amber-50 dark:bg-amber-900/20">
+          <AlertCircle className="h-4 w-4 text-amber-600" />
+          <AlertDescription className="text-amber-800 dark:text-amber-200">
+            <p className="font-semibold">ملاحظة:</p>
+            <p className="text-sm">
+              تم إنشاء هذا الامتحان بتعويض تلقائي من مصادر بديلة. 
+              عدد الأسئلة: {(examData as any)?.actual_count || examData?.questions?.length}
+            </p>
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Header with Timer */}
       <div className="bg-background/95 backdrop-blur-sm sticky top-0 z-10 pb-4 mb-6">
