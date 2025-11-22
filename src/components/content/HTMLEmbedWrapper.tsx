@@ -65,25 +65,64 @@ const HTMLEmbedWrapper = ({ content }: HTMLEmbedWrapperProps) => {
       iframe.className = 'w-full h-full border-0';
       iframe.title = title;
 
-      // Fullscreen functionality
+      // Fullscreen functionality with professional Flexbox layout
       fullscreenBtn.addEventListener('click', async () => {
         const maximizeIcon = fullscreenBtn.querySelector('.maximize-icon');
         const minimizeIcon = fullscreenBtn.querySelector('.minimize-icon');
 
         try {
           if (!document.fullscreenElement) {
-            await wrapper.requestFullscreen();
+            await card.requestFullscreen();
             maximizeIcon?.classList.add('hidden');
             minimizeIcon?.classList.remove('hidden');
             fullscreenBtn.title = 'الخروج من ملء الشاشة';
-            wrapper.classList.add('bg-black', 'flex', 'items-center', 'justify-center');
-            iframe.style.cssText = 'width: 100vw !important; height: 100vh !important; max-width: 100vw; max-height: 100vh; border-radius: 0;';
+            
+            // Apply professional flexbox layout for proper fullscreen
+            wrapper.style.cssText = `
+              width: 100vw !important;
+              height: 100vh !important;
+              display: flex !important;
+              flex-direction: column !important;
+              overflow: hidden !important;
+              background: rgba(0, 0, 0, 0.95) !important;
+            `;
+            
+            card.style.cssText = `
+              width: 100% !important;
+              height: 100% !important;
+              display: flex !important;
+              flex-direction: column !important;
+              overflow: hidden !important;
+              border-radius: 0 !important;
+            `;
+            
+            header.style.cssText = `
+              flex-shrink: 0 !important;
+            `;
+            
+            iframeContainer.style.cssText = `
+              flex: 1 !important;
+              overflow: hidden !important;
+              height: auto !important;
+            `;
+            
+            iframe.style.cssText = `
+              width: 100% !important;
+              height: 100% !important;
+              display: block !important;
+              border: none !important;
+            `;
           } else {
             await document.exitFullscreen();
             maximizeIcon?.classList.remove('hidden');
             minimizeIcon?.classList.add('hidden');
             fullscreenBtn.title = 'ملء الشاشة';
-            wrapper.classList.remove('bg-black', 'flex', 'items-center', 'justify-center');
+            
+            // Reset all styles to default
+            wrapper.style.cssText = '';
+            card.style.cssText = '';
+            header.style.cssText = '';
+            iframeContainer.style.cssText = '';
             iframe.style.cssText = '';
           }
         } catch (error) {
@@ -91,7 +130,7 @@ const HTMLEmbedWrapper = ({ content }: HTMLEmbedWrapperProps) => {
         }
       });
 
-      // Handle ESC key
+      // Handle ESC key and fullscreen exit
       const handleFullscreenChange = () => {
         if (!document.fullscreenElement) {
           const maximizeIcon = fullscreenBtn.querySelector('.maximize-icon');
@@ -99,7 +138,12 @@ const HTMLEmbedWrapper = ({ content }: HTMLEmbedWrapperProps) => {
           maximizeIcon?.classList.remove('hidden');
           minimizeIcon?.classList.add('hidden');
           fullscreenBtn.title = 'ملء الشاشة';
-          wrapper.classList.remove('bg-black', 'flex', 'items-center', 'justify-center');
+          
+          // Reset all styles to default when exiting fullscreen
+          wrapper.style.cssText = '';
+          card.style.cssText = '';
+          header.style.cssText = '';
+          iframeContainer.style.cssText = '';
           iframe.style.cssText = '';
         }
       };
