@@ -1,5 +1,5 @@
 import { NodeViewWrapper } from '@tiptap/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Trash2, Edit, Maximize2, Minimize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -123,23 +123,98 @@ const HTMLEmbedComponent = ({ node, deleteNode, updateAttributes }: any) => {
   const toggleFullscreen = async () => {
     const iframe = document.querySelector(`iframe[data-html-embed-id="${node.attrs.htmlContent.substring(0, 20)}"]`);
     const wrapper = iframe?.closest('.html-embed-wrapper');
+    const card = wrapper?.querySelector('.bg-card');
+    const header = wrapper?.querySelector('.bg-muted');
+    const iframeContainer = iframe?.parentElement;
 
-    if (!iframe || !wrapper) return;
+    if (!iframe || !wrapper || !card) return;
 
     try {
       if (!document.fullscreenElement) {
-        await wrapper.requestFullscreen();
+        await (card as HTMLElement).requestFullscreen();
         setIsFullscreen(true);
-        (iframe as HTMLElement).style.cssText = 'width: 100vw !important; height: 100vh !important; max-width: 100vw; max-height: 100vh; border-radius: 0;';
+
+        // Apply professional flexbox layout for proper fullscreen
+        (wrapper as HTMLElement).style.cssText = `
+          width: 100vw !important;
+          height: 100vh !important;
+          display: flex !important;
+          flex-direction: column !important;
+          overflow: hidden !important;
+          background: rgba(0, 0, 0, 0.95) !important;
+        `;
+        
+        (card as HTMLElement).style.cssText = `
+          width: 100% !important;
+          height: 100% !important;
+          display: flex !important;
+          flex-direction: column !important;
+          overflow: hidden !important;
+          border-radius: 0 !important;
+        `;
+        
+        if (header) {
+          (header as HTMLElement).style.cssText = `
+            flex-shrink: 0 !important;
+          `;
+        }
+        
+        if (iframeContainer) {
+          (iframeContainer as HTMLElement).style.cssText = `
+            flex: 1 !important;
+            overflow: hidden !important;
+            height: auto !important;
+          `;
+        }
+        
+        (iframe as HTMLElement).style.cssText = `
+          width: 100% !important;
+          height: 100% !important;
+          display: block !important;
+          border: none !important;
+        `;
       } else {
         await document.exitFullscreen();
         setIsFullscreen(false);
+
+        // Reset all styles to default
+        (wrapper as HTMLElement).style.cssText = '';
+        (card as HTMLElement).style.cssText = '';
+        if (header) (header as HTMLElement).style.cssText = '';
+        if (iframeContainer) (iframeContainer as HTMLElement).style.cssText = '';
         (iframe as HTMLElement).style.cssText = '';
       }
     } catch (error) {
       console.error('خطأ في تبديل وضع ملء الشاشة:', error);
     }
   };
+
+  // Handle fullscreen changes (ESC key)
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement) {
+        setIsFullscreen(false);
+        
+        // Reset all styles to default when exiting fullscreen via ESC
+        const iframe = document.querySelector(`iframe[data-html-embed-id="${node.attrs.htmlContent.substring(0, 20)}"]`);
+        if (iframe) {
+          const wrapper = iframe.closest('.html-embed-wrapper');
+          const card = wrapper?.querySelector('.bg-card');
+          const header = wrapper?.querySelector('.bg-muted');
+          const iframeContainer = iframe.parentElement;
+
+          if (wrapper) (wrapper as HTMLElement).style.cssText = '';
+          if (card) (card as HTMLElement).style.cssText = '';
+          if (header) (header as HTMLElement).style.cssText = '';
+          if (iframeContainer) (iframeContainer as HTMLElement).style.cssText = '';
+          (iframe as HTMLElement).style.cssText = '';
+        }
+      }
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, [node.attrs.htmlContent]);
 
   return (
     <>
