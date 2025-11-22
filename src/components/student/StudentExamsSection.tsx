@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useStudentExams } from "@/hooks/useStudentExams";
 import { useAuth } from "@/hooks/useAuth";
@@ -6,6 +6,8 @@ import { StudentExamCard } from "./StudentExamCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BookOpen, Clock, CheckCircle2, CalendarClock } from "lucide-react";
 import { isPast, isFuture } from "date-fns";
+import { cn } from "@/lib/utils";
+
 export const StudentExamsSection = () => {
   const {
     user
@@ -15,6 +17,10 @@ export const StudentExamsSection = () => {
     isLoading
   } = useStudentExams(user?.id);
   const [activeTab, setActiveTab] = useState("available");
+  
+  // State للتنبيه البصري
+  const [highlightAvailable, setHighlightAvailable] = useState(false);
+  const [previousAvailableCount, setPreviousAvailableCount] = useState(0);
   if (isLoading) {
     return <div className="space-y-4">
         <Skeleton className="h-10 w-64" />
@@ -38,6 +44,23 @@ export const StudentExamsSection = () => {
   const availableExams = exams.filter(exam => exam.can_start && !isPast(new Date(exam.end_datetime)) && !isFuture(new Date(exam.start_datetime)));
   const upcomingExams = exams.filter(exam => isFuture(new Date(exam.start_datetime)) && exam.attempts_remaining > 0);
   const completedExams = exams.filter(exam => exam.attempts_used >= exam.max_attempts || isPast(new Date(exam.end_datetime)));
+
+  // مراقبة التغييرات في عدد الامتحانات المتاحة للتنبيه البصري
+  useEffect(() => {
+    // عند زيادة عدد الامتحانات المتاحة (امتحان جديد أصبح متاحاً)
+    if (availableExams.length > previousAvailableCount && previousAvailableCount > 0) {
+      // تفعيل التأثير البصري (3 ومضات خضراء)
+      setHighlightAvailable(true);
+      
+      // إيقاف التأثير بعد 2 ثانية (3 ومضات × ~600ms)
+      setTimeout(() => {
+        setHighlightAvailable(false);
+      }, 2000);
+    }
+    
+    // تحديث العدد السابق
+    setPreviousAvailableCount(availableExams.length);
+  }, [availableExams.length, previousAvailableCount]);
   return <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-2xl font-bold mb-2 text-center mx-0 px-0 my-[4px] py-[2px]">الامتحانات الإلكترونية</h2>
@@ -48,7 +71,13 @@ export const StudentExamsSection = () => {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3 lg:w-[400px] lg:mx-auto">
-          <TabsTrigger value="available" className="flex items-center gap-2">
+          <TabsTrigger 
+            value="available" 
+            className={cn(
+              "flex items-center gap-2 transition-all duration-300",
+              highlightAvailable && "animate-pulse-green"
+            )}
+          >
             <Clock className="h-4 w-4" />
             متاحة ({availableExams.length})
           </TabsTrigger>
