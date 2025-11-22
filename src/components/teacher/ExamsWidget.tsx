@@ -170,73 +170,6 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
   const { questions = [], categories = [] } = useTeacherQuestions();
   const queryClient = useQueryClient();
   
-  // جلب عدد أسئلة المعلم الخاصة
-  const { data: myQuestionsCount } = useQuery({
-    queryKey: ['my-questions-count', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return 0;
-      
-      const { count, error } = await supabase
-        .from('teacher_custom_questions')
-        .select('*', { count: 'exact', head: true })
-        .eq('teacher_id', user.id)
-        .eq('is_active', true);
-      
-      if (error) throw error;
-      return count || 0;
-    },
-    enabled: !!user?.id,
-  });
-
-  // جلب عدد الأسئلة المتوفرة حسب الفئات المحددة
-  const { data: myQuestionsByCategory } = useQuery({
-    queryKey: ['my-questions-by-category', user?.id, form.watch('selected_teacher_categories')],
-    queryFn: async () => {
-      if (!user?.id) return 0;
-      const categories = form.watch('selected_teacher_categories');
-      if (!categories || categories.length === 0) return 0;
-      
-      const { count, error } = await supabase
-        .from('teacher_custom_questions')
-        .select('*', { count: 'exact', head: true })
-        .eq('teacher_id', user.id)
-        .eq('is_active', true)
-        .in('category', categories);
-      
-      if (error) throw error;
-      return count || 0;
-    },
-    enabled: !!user?.id && (form.watch('selected_teacher_categories')?.length ?? 0) > 0,
-  });
-
-  // جلب عدد أسئلة بنك الأسئلة حسب الأقسام المحددة
-  const { data: questionBankBySection } = useQuery({
-    queryKey: ['question-bank-by-section', selectedGradeLevel, form.watch('selected_sections')],
-    queryFn: async () => {
-      if (!selectedGradeLevel) return 0;
-      const sections = form.watch('selected_sections');
-      if (!sections || sections.length === 0) return 0;
-      
-      const { data: sectionsData } = await supabase
-        .from('question_bank_sections')
-        .select('title')
-        .in('id', sections);
-      
-      if (!sectionsData || sectionsData.length === 0) return 0;
-      
-      const { count, error } = await supabase
-        .from('question_bank')
-        .select('*', { count: 'exact', head: true })
-        .eq('grade_level', selectedGradeLevel)
-        .eq('is_active', true)
-        .in('section_name', sectionsData.map(s => s.title));
-      
-      if (error) throw error;
-      return count || 0;
-    },
-    enabled: !!selectedGradeLevel && (form.watch('selected_sections')?.length ?? 0) > 0,
-  });
-  
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isQuestionDialogOpen, setIsQuestionDialogOpen] = useState(false);
   const [isMyQuestionsOpen, setIsMyQuestionsOpen] = useState(false);
@@ -385,6 +318,74 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
     
     return undefined;
   }, [form.watch('selection_type'), form.watch('grade_levels'), form.watch('target_classes'), availableClasses]);
+
+  // جلب عدد أسئلة المعلم الخاصة - الإجمالي
+  const { data: myQuestionsCount } = useQuery({
+    queryKey: ['my-questions-count', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return 0;
+      
+      const { count, error } = await supabase
+        .from('teacher_custom_questions')
+        .select('*', { count: 'exact', head: true })
+        .eq('teacher_id', user.id)
+        .eq('is_active', true);
+      
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: !!user?.id,
+  });
+
+  // جلب عدد الأسئلة المتوفرة حسب الفئات المحددة
+  const { data: myQuestionsByCategory } = useQuery({
+    queryKey: ['my-questions-by-category', user?.id, form.watch('selected_teacher_categories')],
+    queryFn: async () => {
+      if (!user?.id) return 0;
+      const categories = form.watch('selected_teacher_categories');
+      if (!categories || categories.length === 0) return 0;
+      
+      const { count, error } = await supabase
+        .from('teacher_custom_questions')
+        .select('*', { count: 'exact', head: true })
+        .eq('teacher_id', user.id)
+        .eq('is_active', true)
+        .in('category', categories);
+      
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: !!user?.id && (form.watch('selected_teacher_categories')?.length ?? 0) > 0,
+  });
+
+  // جلب عدد أسئلة بنك الأسئلة حسب الأقسام المحددة
+  const { data: questionBankBySection } = useQuery({
+    queryKey: ['question-bank-by-section', selectedGradeLevel, form.watch('selected_sections')],
+    queryFn: async () => {
+      if (!selectedGradeLevel) return 0;
+      const sections = form.watch('selected_sections');
+      if (!sections || sections.length === 0) return 0;
+      
+      const { data: sectionsData } = await supabase
+        .from('question_bank_sections')
+        .select('title')
+        .in('id', sections);
+      
+      if (!sectionsData || sectionsData.length === 0) return 0;
+      
+      const { count, error } = await supabase
+        .from('question_bank')
+        .select('*', { count: 'exact', head: true })
+        .eq('grade_level', selectedGradeLevel)
+        .eq('is_active', true)
+        .in('section_name', sectionsData.map(s => s.title));
+      
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: !!selectedGradeLevel && (form.watch('selected_sections')?.length ?? 0) > 0,
+  });
+
   const { data: availableSections, isLoading: sectionsLoading } = useQuery({
     queryKey: ['question-sections', selectedGradeLevel],
     queryFn: async () => {
@@ -910,6 +911,44 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
                 }
                 return false;
               }
+            }
+          }
+          
+          // ✅ تحقق متقدم: عدد الأسئلة المتوفرة مقابل المطلوب
+          const validationErrors: string[] = [];
+          for (const source of enabledSources) {
+            const requestedCount = source.count || 0;
+            let availableCount = 0;
+            
+            if (source.type === 'question_bank') {
+              availableCount = questionBankBySection || 0;
+              if (availableCount < requestedCount) {
+                validationErrors.push(
+                  `بنك الأسئلة: متوفر ${availableCount} سؤال فقط (مطلوب ${requestedCount})`
+                );
+              }
+            } else if (source.type === 'my_questions') {
+              availableCount = myQuestionsByCategory || 0;
+              if (availableCount < requestedCount) {
+                validationErrors.push(
+                  `أسئلتك: متوفر ${availableCount} سؤال فقط (مطلوب ${requestedCount})`
+                );
+              }
+            }
+          }
+          
+          // عرض تحذير إذا كانت هناك مشاكل
+          if (validationErrors.length > 0) {
+            toast.warning(
+              'تنبيه: بعض المصادر لا تحتوي على أسئلة كافية',
+              { 
+                description: validationErrors.join(' • ') + '\n\nسيتم تعويض النقص تلقائياً من بنك الأسئلة',
+                duration: 5000 
+              }
+            );
+            
+            if (import.meta.env.DEV) {
+              console.warn('⚠️ Source Validation Warnings:', validationErrors);
             }
           }
         } else {
