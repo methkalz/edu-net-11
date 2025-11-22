@@ -10,7 +10,7 @@ import { ExamQuestion } from '@/components/exam/ExamQuestion';
 import { ExamNavigationGrid } from '@/components/exam/ExamNavigationGrid';
 import { useExamTimer } from '@/hooks/useExamTimer';
 import { ExamWithQuestions } from '@/types/exam';
-import { AlertCircle, Clock, ChevronRight, ChevronLeft, Send } from 'lucide-react';
+import { AlertCircle, Clock, ChevronRight, ChevronLeft, CheckCircle2, Loader2 } from 'lucide-react';
 import { logger } from '@/lib/logging';
 import { ExamDebugger } from '@/lib/exam-debugging';
 import { ExamDebugPanel } from '@/components/exam/ExamDebugPanel';
@@ -839,23 +839,28 @@ export default function StudentExamAttempt() {
           </div>
 
           {/* Progress Info with Submit Button */}
-          <Card className="border-2 border-primary/20 bg-primary/5">
-            <CardContent className="p-4 space-y-4">
+          <Card className="border-2 border-primary/30 bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5 shadow-lg hover:shadow-xl transition-all duration-300">
+            <CardContent className="p-6 space-y-5">
               {/* Progress Bar */}
-              <div className="flex items-center justify-between">
-                <span className="font-semibold">تم الإجابة على {answeredQuestions.size} من {examData.questions.length} سؤال</span>
-                <div className="flex items-center gap-2">
-                  <div className="h-2 w-32 bg-background rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-primary transition-all duration-300"
-                      style={{ width: `${(answeredQuestions.size / examData.questions.length) * 100}%` }}
-                    />
-                  </div>
-                  <span className="text-sm font-bold text-primary">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-base font-bold text-foreground">
+                    تم الإجابة على {answeredQuestions.size} من {examData.questions.length} سؤال
+                  </span>
+                  <span className="text-lg font-extrabold text-primary">
                     {Math.round((answeredQuestions.size / examData.questions.length) * 100)}%
                   </span>
                 </div>
+                <div className="h-3 w-full bg-muted/40 rounded-full overflow-hidden shadow-inner">
+                  <div 
+                    className="h-full bg-gradient-to-r from-primary via-primary/90 to-primary transition-all duration-500 ease-out"
+                    style={{ width: `${(answeredQuestions.size / examData.questions.length) * 100}%` }}
+                  />
+                </div>
               </div>
+
+              {/* Divider */}
+              <div className="border-t border-border/30" />
 
               {/* Submit Button - دائم الظهور */}
               <Button
@@ -863,25 +868,36 @@ export default function StudentExamAttempt() {
                 onClick={handleSubmitClick}
                 disabled={!allQuestionsAnswered || submitExamMutation.isPending}
                 className={`
-                  w-full h-14 text-lg font-bold shadow-lg hover:shadow-xl transition-all
-                  ${allQuestionsAnswered 
-                    ? 'bg-green-600 hover:bg-green-700 text-white' 
-                    : 'bg-muted hover:bg-muted text-muted-foreground cursor-not-allowed'
+                  w-full h-16 text-lg font-bold shadow-lg transition-all duration-300
+                  ${submitExamMutation.isPending
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white cursor-wait'
+                    : allQuestionsAnswered 
+                      ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white hover:scale-[1.02] hover:shadow-2xl animate-pulse-green' 
+                      : 'bg-gradient-to-r from-orange-500/80 to-orange-600/80 hover:from-orange-500 hover:to-orange-600 text-white/90 cursor-not-allowed opacity-70'
                   }
                 `}
               >
-                <Send className="w-5 h-5 ml-2" />
-                {submitExamMutation.isPending 
-                  ? 'جاري التسليم...' 
-                  : allQuestionsAnswered 
-                    ? '✅ تقديم الامتحان' 
-                    : `⚠️ أجب على ${unansweredQuestionNumbers.length} سؤال متبقي`
-                }
+                {submitExamMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-6 h-6 ml-2 animate-spin" />
+                    جاري التسليم...
+                  </>
+                ) : allQuestionsAnswered ? (
+                  <>
+                    <CheckCircle2 className="w-6 h-6 ml-2" />
+                    تقديم الامتحان
+                  </>
+                ) : (
+                  <>
+                    <AlertCircle className="w-6 h-6 ml-2" />
+                    أجب على {unansweredQuestionNumbers.length} سؤال متبقي
+                  </>
+                )}
               </Button>
 
               {/* رسالة توضيحية عند عدم اكتمال الإجابات */}
               {!allQuestionsAnswered && (
-                <p className="text-xs text-muted-foreground text-center">
+                <p className="text-sm text-muted-foreground text-center font-medium">
                   يجب الإجابة على جميع الأسئلة قبل التقديم
                 </p>
               )}
