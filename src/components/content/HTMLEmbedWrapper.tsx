@@ -39,16 +39,16 @@ const HTMLEmbedWrapper = ({ content }: HTMLEmbedWrapperProps) => {
 
       // Fullscreen button
       const fullscreenBtn = document.createElement('button');
-      fullscreenBtn.className = 'inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground h-8 w-8';
+      fullscreenBtn.className = 'inline-flex items-center justify-center rounded-md text-sm font-medium transition-all hover:bg-primary hover:text-primary-foreground bg-primary/10 hover:shadow-lg h-9 w-9 shadow-md';
       fullscreenBtn.title = 'ملء الشاشة';
       fullscreenBtn.innerHTML = `
-        <svg class="maximize-icon h-4 w-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg class="maximize-icon h-5 w-5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M8 3H5a2 2 0 0 0-2 2v3"></path>
           <path d="M21 8V5a2 2 0 0 0-2-2h-3"></path>
           <path d="M3 16v3a2 2 0 0 0 2 2h3"></path>
           <path d="M16 21h3a2 2 0 0 0 2-2v-3"></path>
         </svg>
-        <svg class="minimize-icon h-4 w-4 hidden" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg class="minimize-icon h-5 w-5 hidden" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M8 3v3a2 2 0 0 1-2 2H3"></path>
           <path d="M21 8h-3a2 2 0 0 1-2-2V3"></path>
           <path d="M3 16h3a2 2 0 0 1 2 2v3"></path>
