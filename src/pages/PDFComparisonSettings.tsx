@@ -138,7 +138,7 @@ const PDFComparisonSettings = () => {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/superadmin-dashboard')} className="hover:bg-primary/10">
+            <Button variant="ghost" size="icon" onClick={() => navigate('/pdf-comparison')} className="hover:bg-primary/10">
               <ArrowRight className="h-5 w-5" />
             </Button>
             <div>
