@@ -382,17 +382,14 @@ serve(async (req) => {
           const queryPageCount = fileEmbeddings[i].pageCount;
           
           try {
-            // ✅ استدعاء الدالة مع الإعدادات الديناميكية + algorithm_weights
+            // ✅ استدعاء الدالة بدون algorithm_weights (سيتم إعادة الحساب في Edge Function)
             const { data: matches, error: rpcError } = await supabase.rpc(
               'match_documents_hybrid',
               {
                 query_embedding: queryEmbedding,
                 query_keywords: queryKeywords,
-                match_threshold: settings.thresholds.repository_display,
+                match_threshold: settings.thresholds.repository_display * 0.7, // preliminary filter
                 match_count: 100,
-                cosine_weight: settings.algorithm_weights.cosine_weight,
-                jaccard_weight: settings.algorithm_weights.jaccard_weight,
-                length_weight: settings.algorithm_weights.length_weight,
                 p_grade_level: gradeLevel,
                 p_project_type: comparisonType === 'mini_project' ? 'mini_project' : 'final_project',
                 jaccard_threshold: settings.thresholds.repository_display * 0.6,
@@ -415,14 +412,34 @@ serve(async (req) => {
             
             console.log(`✅ After filtering: ${filteredMatches.length} matches for ${file.fileName}`);
             
-            // تحويل النتائج إلى الصيغة المطلوبة (مع استخدام الإعدادات)
-            const repositoryMatches = filteredMatches.map((match: any) => ({
-              matched_file_id: match.id,
-              matched_file_name: match.file_name,
-              similarity_score: Math.round(match.similarity * 100) / 100,
-              similarity_method: 'pgvector_cosine',
-              flagged: match.similarity >= settings.thresholds.flagged_threshold,
-            })).slice(0, 5); // أخذ أعلى 5 فقط
+            // ✅ إعادة حساب similarity باستخدام algorithm_weights الديناميكية
+            const repositoryMatches = filteredMatches.map((match: any) => {
+              // استخراج المكونات الفردية (إذا كانت موجودة، وإلا استخدام cosine_similarity كأساس)
+              const cosineSim = match.cosine_similarity ?? match.similarity ?? 0;
+              const jaccardSim = match.jaccard_similarity ?? 0;
+              const lengthSim = match.length_similarity ?? 1;
+              
+              // حساب النتيجة النهائية باستخدام الأوزان الديناميكية
+              const finalSimilarity = 
+                (cosineSim * settings.algorithm_weights.cosine_weight) +
+                (jaccardSim * settings.algorithm_weights.jaccard_weight) +
+                (lengthSim * settings.algorithm_weights.length_weight);
+              
+              return {
+                matched_file_id: match.id,
+                matched_file_name: match.file_name,
+                similarity_score: Math.round(finalSimilarity * 100) / 100,
+                similarity_method: 'hybrid_weighted',
+                flagged: finalSimilarity >= settings.thresholds.flagged_threshold,
+                // تخزين المكونات للشفافية
+                cosine_similarity: Math.round(cosineSim * 100) / 100,
+                jaccard_similarity: Math.round(jaccardSim * 100) / 100,
+                length_similarity: Math.round(lengthSim * 100) / 100,
+              };
+            })
+            .filter(m => m.similarity_score >= settings.thresholds.repository_display) // تطبيق العتبة النهائية
+            .sort((a, b) => b.similarity_score - a.similarity_score) // ترتيب تنازلي
+            .slice(0, 5); // أخذ أعلى 5 فقط
             
             // تحديث النتيجة في قاعدة البيانات
             if (repositoryMatches.length > 0) {
