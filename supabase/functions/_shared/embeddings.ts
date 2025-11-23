@@ -8,9 +8,11 @@ import { filterStopwords } from './stopwords.ts';
 /**
  * Normalize Arabic text for comparison
  * Removes diacritics, normalizes letters, and cleans punctuation
+ * @param text - Input text
+ * @param whitelist - Optional array of words to filter out
  */
-export function normalizeArabicText(text: string): string {
-  return text
+export function normalizeArabicText(text: string, whitelist?: string[]): string {
+  let normalized = text
     .toLowerCase()
     .replace(/[ًٌٍَُِّْ]/g, '')
     .replace(/[آإأٱ]/g, 'ا')
@@ -19,6 +21,16 @@ export function normalizeArabicText(text: string): string {
     .replace(/[^\w\s\u0600-\u06FF]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
+  
+  // تطبيق whitelist إذا موجود
+  if (whitelist && whitelist.length > 0) {
+    const words = normalized.split(/\s+/);
+    const filtered = words.filter(word => !whitelist.includes(word));
+    normalized = filtered.join(' ');
+    console.log(`🧹 Whitelist applied: removed ${words.length - filtered.length} words`);
+  }
+  
+  return normalized;
 }
 
 /**
@@ -46,10 +58,11 @@ export function generateNGrams(words: string[], n: number = 2): string[] {
  * Extract top keywords from text for Jaccard similarity
  * @param text - Input text
  * @param maxKeywords - Maximum number of keywords to extract (default: 150)
+ * @param whitelist - Optional array of words to filter out before extraction
  * @returns Array of top keywords
  */
-export function extractTopKeywords(text: string, maxKeywords: number = 150): string[] {
-  const normalized = normalizeArabicText(text);
+export function extractTopKeywords(text: string, maxKeywords: number = 150, whitelist?: string[]): string[] {
+  const normalized = normalizeArabicText(text, whitelist);
   const words = normalized.split(/\s+/).filter(w => w.length > 2);
   
   // Remove stopwords
@@ -90,10 +103,11 @@ export function hashStringWithSign(str: string, maxDim: number): { index: number
  * 
  * @param text - Input text (will be normalized)
  * @param targetDim - Target vector dimension (default: 1024, increased from 384 to reduce collisions)
+ * @param whitelist - Optional array of words to filter out
  * @returns Array of length targetDim representing the text embedding
  */
-export function generateEmbedding(text: string, targetDim: number = 1024): number[] {
-  const normalized = normalizeArabicText(text);
+export function generateEmbedding(text: string, targetDim: number = 1024, whitelist?: string[]): number[] {
+  const normalized = normalizeArabicText(text, whitelist);
   const words = normalized.split(/\s+/).filter(w => w.length > 2);
   
   if (words.length === 0) {

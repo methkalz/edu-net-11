@@ -2,6 +2,7 @@ import { serve } from 'https://deno.land/std@0.208.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import { generateEmbedding, extractTopKeywords } from '../_shared/embeddings.ts';
+import { getPDFComparisonSettings } from '../_shared/pdf-settings.ts';
 import { 
   extractMatchingSegments, 
   preprocessText, 
@@ -35,6 +36,15 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
+
+    // جلب الإعدادات مرة واحدة في بداية الطلب
+    const settings = await getPDFComparisonSettings(supabase);
+    console.log('📋 Comparison settings loaded:', {
+      repository_display: settings.thresholds.repository_display,
+      flagged: settings.thresholds.flagged_threshold,
+      warning: settings.thresholds.warning_threshold,
+      whitelist_count: settings.custom_whitelist.length
+    });
 
     const {
       files,
@@ -116,12 +126,12 @@ serve(async (req) => {
     const internalStartTime = Date.now();
     const internalComparisons: Map<string, any[]> = new Map();
     
-    // توليد embeddings و keywords للملفات المرفوعة
+    // توليد embeddings و keywords للملفات المرفوعة (مع whitelist)
     const fileEmbeddings = files.map(file => {
       const preprocessed = preprocessText(file.fileText, file.fileText.split(/\s+/).length);
       return {
-        embedding: generateEmbedding(file.fileText, 1024), // ✅ زيادة من 384 إلى 1024
-        keywords: extractTopKeywords(file.fileText, 150),
+        embedding: generateEmbedding(file.fileText, 1024, settings.custom_whitelist),
+        keywords: extractTopKeywords(file.fileText, 150, settings.custom_whitelist),
         wordSetSize: preprocessed.wordSetSize,
         wordCount: preprocessed.wordCount,
         pageCount: file.filePages
@@ -207,7 +217,7 @@ serve(async (req) => {
             matched_file_name: file2.fileName,
             similarity_score: Math.round(finalSimilarity * 100) / 100,
             similarity_method: 'hybrid_cosine_jaccard_length',
-            flagged: finalSimilarity >= 0.70,
+            flagged: finalSimilarity >= settings.thresholds.flagged_threshold,
             metadata: {
               cosine: Math.round(cosineSim * 100) / 100,
               jaccard: Math.round(jaccardSim * 100) / 100,
@@ -242,8 +252,8 @@ serve(async (req) => {
       const internalHighRisk = internalMatches.filter(m => m.flagged).length;
       
       let status = 'safe';
-      if (internalMaxSim >= 0.70) status = 'flagged';
-      else if (internalMaxSim >= 0.40) status = 'warning';
+      if (internalMaxSim >= settings.thresholds.flagged_threshold) status = 'flagged';
+      else if (internalMaxSim >= settings.thresholds.warning_threshold) status = 'warning';
       
       const result = {
         batch_id: batchId,
@@ -291,6 +301,11 @@ serve(async (req) => {
         school_id: schoolId,
         processing_time_ms: Date.now() - startTime,
         algorithm_used: 'batch_comparison',
+        settings_used: {
+          thresholds: settings.thresholds,
+          whitelist_count: settings.custom_whitelist.length,
+          timestamp: new Date().toISOString()
+        }
       };
 
       // ✅ محاولة الحفظ مع معالجة الأخطاء
@@ -367,19 +382,19 @@ serve(async (req) => {
           const queryPageCount = fileEmbeddings[i].pageCount;
           
           try {
-            // ✅ استدعاء الدالة الجديدة مع structural filters و real Jaccard
+            // ✅ استدعاء الدالة مع الإعدادات الديناميكية
             const { data: matches, error: rpcError } = await supabase.rpc(
               'match_documents_hybrid',
               {
                 query_embedding: queryEmbedding,
                 query_keywords: queryKeywords,
-                match_threshold: 0.35, // ✅ عرض ملفات المستودع بتشابه ≥ 35%
+                match_threshold: settings.thresholds.repository_display,
                 match_count: 100,
                 p_grade_level: gradeLevel,
                 p_project_type: comparisonType === 'mini_project' ? 'mini_project' : 'final_project',
-                jaccard_threshold: 0.20, // ✅ تخفيض للسماح بمزيد من النتائج
-                p_page_count: queryPageCount, // ✅ structural filter
-                p_word_count: queryWordCount  // ✅ structural filter
+                jaccard_threshold: settings.thresholds.repository_display * 0.6, // نسبياً من العتبة الرئيسية
+                p_page_count: queryPageCount,
+                p_word_count: queryWordCount
               }
             );
             
@@ -397,13 +412,13 @@ serve(async (req) => {
             
             console.log(`✅ After filtering: ${filteredMatches.length} matches for ${file.fileName}`);
             
-            // تحويل النتائج إلى الصيغة المطلوبة
+            // تحويل النتائج إلى الصيغة المطلوبة (مع استخدام الإعدادات)
             const repositoryMatches = filteredMatches.map((match: any) => ({
               matched_file_id: match.id,
               matched_file_name: match.file_name,
               similarity_score: Math.round(match.similarity * 100) / 100,
               similarity_method: 'pgvector_cosine',
-              flagged: match.similarity >= 0.70,
+              flagged: match.similarity >= settings.thresholds.flagged_threshold,
             })).slice(0, 5); // أخذ أعلى 5 فقط
             
             // تحديث النتيجة في قاعدة البيانات
@@ -411,12 +426,12 @@ serve(async (req) => {
               const repoMaxSim = Math.max(...repositoryMatches.map(m => m.similarity_score));
               const repoHighRisk = repositoryMatches.filter(m => m.flagged).length;
               
-              // إعادة حساب الـ status الإجمالي
+              // إعادة حساب الـ status الإجمالي (مع استخدام الإعدادات)
               const internalMaxSim = savedResult.internal_max_similarity || 0;
               const overallMaxSim = Math.max(internalMaxSim, repoMaxSim);
               let newStatus = savedResult.status;
-              if (overallMaxSim >= 0.70) newStatus = 'flagged';
-              else if (overallMaxSim >= 0.40) newStatus = 'warning';
+              if (overallMaxSim >= settings.thresholds.flagged_threshold) newStatus = 'flagged';
+              else if (overallMaxSim >= settings.thresholds.warning_threshold) newStatus = 'warning';
               
               console.log(`📤 Updating result for ${file.fileName}:`, {
                 resultId: savedResult.id,
