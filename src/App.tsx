@@ -65,6 +65,7 @@ const LazyGoogleDocsManagement = React.lazy(() => import('@/components/google-do
 const StudentExamAttemptPage = React.lazy(() => import('@/pages/StudentExamAttempt'));
 const StudentExamResultPage = React.lazy(() => import('@/pages/StudentExamResult'));
 const GradeExamsAnalytics = React.lazy(() => import('@/pages/GradeExamsAnalytics'));
+const ExamBankManagement = React.lazy(() => import('@/pages/ExamBankManagement'));
 import { PageLoading } from "@/components/ui/LoadingComponents";
 
 /**
@@ -200,6 +201,12 @@ const App = () => {
                <Route 
                  path="/exams-analytics/:grade" 
                  element={<Suspense fallback={<PageLoading message="جاري تحميل إحصائيات الامتحانات..." />}><GradeExamsAnalytics /></Suspense>} 
+               />
+               
+               {/* Exam Bank Management route */}
+               <Route 
+                 path="/exam-bank-management" 
+                 element={<Suspense fallback={<PageLoading message="جاري تحميل بنك الأسئلة..." />}><ExamBankManagement /></Suspense>} 
                />
                
                  {/* Game routes */}
