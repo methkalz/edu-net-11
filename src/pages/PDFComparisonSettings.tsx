@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ModernHeader from '@/components/shared/ModernHeader';
 import { Card } from '@/components/ui/card';
@@ -26,7 +26,50 @@ const PDFComparisonSettings = () => {
   } = usePDFComparisonSettings();
   const [newWord, setNewWord] = useState('');
   const [isSaving, setIsSaving] = useState(false);
-  const [currentPreset, setCurrentPreset] = useState<'strict' | 'balanced' | 'lenient' | null>('balanced');
+  const [currentPreset, setCurrentPreset] = useState<'strict' | 'balanced' | 'lenient' | null>(null);
+
+  // Detect current preset based on settings
+  useEffect(() => {
+    if (!settings) return;
+
+    const presets = {
+      strict: {
+        thresholds: { internal_display: 0, repository_display: 50, single_file_display: 40, flagged_threshold: 60, warning_threshold: 30 },
+        algorithm_weights: { cosine_weight: 0.6, jaccard_weight: 0.35, length_weight: 0.05 },
+      },
+      balanced: {
+        thresholds: { internal_display: 0, repository_display: 35, single_file_display: 30, flagged_threshold: 70, warning_threshold: 40 },
+        algorithm_weights: { cosine_weight: 0.5, jaccard_weight: 0.4, length_weight: 0.1 },
+      },
+      lenient: {
+        thresholds: { internal_display: 0, repository_display: 25, single_file_display: 20, flagged_threshold: 80, warning_threshold: 50 },
+        algorithm_weights: { cosine_weight: 0.4, jaccard_weight: 0.45, length_weight: 0.15 },
+      },
+    };
+
+    // Check which preset matches current settings
+    for (const [presetName, presetValues] of Object.entries(presets)) {
+      const thresholdsMatch = 
+        settings.thresholds.internal_display === presetValues.thresholds.internal_display &&
+        settings.thresholds.repository_display === presetValues.thresholds.repository_display &&
+        settings.thresholds.single_file_display === presetValues.thresholds.single_file_display &&
+        settings.thresholds.flagged_threshold === presetValues.thresholds.flagged_threshold &&
+        settings.thresholds.warning_threshold === presetValues.thresholds.warning_threshold;
+
+      const weightsMatch =
+        settings.algorithm_weights.cosine_weight === presetValues.algorithm_weights.cosine_weight &&
+        settings.algorithm_weights.jaccard_weight === presetValues.algorithm_weights.jaccard_weight &&
+        settings.algorithm_weights.length_weight === presetValues.algorithm_weights.length_weight;
+
+      if (thresholdsMatch && weightsMatch) {
+        setCurrentPreset(presetName as 'strict' | 'balanced' | 'lenient');
+        return;
+      }
+    }
+
+    // If no preset matches, it's custom settings
+    setCurrentPreset(null);
+  }, [settings]);
 
   // Redirect if not superadmin
   if (!userProfile || userProfile.role !== 'superadmin') {
