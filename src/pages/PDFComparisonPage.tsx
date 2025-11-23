@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileSearch, History, Database } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { FileSearch, History, Database, Settings } from 'lucide-react';
 import ComparisonUploadZone from '@/components/pdf-comparison/ComparisonUploadZone';
 import ComparisonHistory from '@/components/pdf-comparison/ComparisonHistory';
 import RepositoryManager from '@/components/pdf-comparison/RepositoryManager';
@@ -32,6 +33,19 @@ const PDFComparisonPage = () => {
       />
       
       <div className="container mx-auto p-6 space-y-6 animate-fade-in">
+        {/* Settings Button for Superadmin */}
+        {userProfile?.role === 'superadmin' && (
+          <div className="flex justify-end">
+            <Button
+              onClick={() => navigate('/pdf-comparison-settings')}
+              variant="outline"
+              className="gap-2 hover:bg-primary hover:text-primary-foreground transition-colors"
+            >
+              <Settings className="h-4 w-4" />
+              إعدادات المقارنة
+            </Button>
+          </div>
+        )}
         {/* Grade Level Selection */}
         <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent backdrop-blur-sm hover:shadow-xl transition-all duration-300">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-50" />
