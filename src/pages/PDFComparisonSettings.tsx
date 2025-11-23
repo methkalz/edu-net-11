@@ -26,6 +26,7 @@ const PDFComparisonSettings = () => {
   } = usePDFComparisonSettings();
   const [newWord, setNewWord] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [currentPreset, setCurrentPreset] = useState<'strict' | 'balanced' | 'lenient' | null>('balanced');
 
   // Redirect if not superadmin
   if (!userProfile || userProfile.role !== 'superadmin') {
@@ -60,6 +61,7 @@ const PDFComparisonSettings = () => {
     setIsSaving(true);
     try {
       await applyPreset(preset);
+      setCurrentPreset(preset);
     } finally {
       setIsSaving(false);
     }
@@ -98,9 +100,16 @@ const PDFComparisonSettings = () => {
 
         {/* Presets */}
         <Card className="p-6 glass-effect border-primary/20">
-          <div className="flex items-center gap-2 mb-4">
-            <Plus className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-bold">الإعدادات المسبقة</h2>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Plus className="h-5 w-5 text-primary" />
+              <h2 className="text-xl font-bold">الإعدادات المسبقة</h2>
+            </div>
+            {currentPreset && (
+              <Badge variant="outline" className="text-sm bg-primary/10 border-primary/30">
+                الإعداد الحالي: {currentPreset === 'strict' ? 'صارم' : currentPreset === 'balanced' ? 'متوازن' : 'متساهل'}
+              </Badge>
+            )}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Button variant="outline" onClick={() => handlePreset('strict')} disabled={isSaving} className="h-auto flex-col items-start p-4 hover:border-primary hover:bg-primary/5">
