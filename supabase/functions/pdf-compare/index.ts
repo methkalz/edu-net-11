@@ -197,12 +197,21 @@ serve(async (req) => {
           processedRefText.normalized
         );
         
-        // Overall Score
+        // Overall Score - باستخدام الأوزان من الإعدادات
+        const weights = settings.algorithm_weights;
+        
+        // Mapping ذكي:
+        // - cosine_weight → fuzzy (التشابه النصي العام)
+        // - jaccard_weight → jaccard (تطابق مباشر)
+        // - length_weight → نوزعه على sequence (60%) + structural (40%)
+        const sequenceWeight = weights.length_weight * 0.6;
+        const structuralWeight = weights.length_weight * 0.4;
+        
         const overallScore = (
-          fuzzySim * 0.35 +
-          jaccardSim * 0.25 +
-          sequenceSim * 0.25 +
-          structuralSim * 0.15
+          fuzzySim * weights.cosine_weight +
+          jaccardSim * weights.jaccard_weight +
+          sequenceSim * sequenceWeight +
+          structuralSim * structuralWeight
         );
 
         if (overallScore > settings.thresholds.single_file_display) {
