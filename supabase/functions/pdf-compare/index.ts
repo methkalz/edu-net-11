@@ -268,12 +268,7 @@ serve(async (req) => {
       requested_by: userId,
       school_id: schoolId,
       processing_time_ms: Date.now() - startTime,
-      algorithm_used: 'optimized_hybrid',
-      settings_used: {
-        thresholds: settings.thresholds,
-        whitelist_count: settings.custom_whitelist.length,
-        timestamp: new Date().toISOString()
-      }
+      algorithm_used: 'optimized_hybrid'
     };
 
     const { data: savedResult, error: saveError } = await supabase
