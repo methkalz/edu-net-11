@@ -150,7 +150,7 @@ const PDFComparisonSettings = () => {
 
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <Label>عتبة الملف المفرد (%)</Label>
+                  <Label>عتبة الملف الواحد (%)</Label>
                   <Badge variant="outline">{settings.thresholds.single_file_display}</Badge>
                 </div>
                 <Slider value={[settings.thresholds.single_file_display]} onValueChange={([value]) => {
