@@ -2,6 +2,7 @@ import { serve } from 'https://deno.land/std@0.208.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import * as fuzzball from 'https://esm.sh/fuzzball@2.2.2';
+import { getPDFComparisonSettings } from '../_shared/pdf-settings.ts';
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -20,6 +21,15 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
+
+    // جلب الإعدادات
+    const settings = await getPDFComparisonSettings(supabase);
+    console.log('📋 Single file comparison settings:', {
+      single_file_display: settings.thresholds.single_file_display,
+      flagged: settings.thresholds.flagged_threshold,
+      warning: settings.thresholds.warning_threshold,
+      whitelist_count: settings.custom_whitelist.length
+    });
 
     const {
       fileText,
@@ -135,8 +145,8 @@ serve(async (req) => {
       });
     }
 
-    // 3. تحضير النص الأصلي (sampling للملفات الكبيرة)
-    const processedFileText = preprocessText(fileText, wordCount);
+    // 3. تحضير النص الأصلي (sampling للملفات الكبيرة) مع whitelist
+    const processedFileText = preprocessText(fileText, wordCount, settings.custom_whitelist);
     console.log(`Processed text ready for comparison`);
     
     // 3. حساب التشابه مع كل ملف (حد أقصى 10 ملفات)
@@ -158,9 +168,9 @@ serve(async (req) => {
       if (!refFile.extracted_text) continue;
 
       try {
-        // تحضير النص المرجعي
+        // تحضير النص المرجعي مع whitelist
         const refWordCount = refFile.extracted_text.split(/\s+/).length;
-        const processedRefText = preprocessText(refFile.extracted_text, refWordCount);
+        const processedRefText = preprocessText(refFile.extracted_text, refWordCount, settings.custom_whitelist);
         
         // 1. Fuzzy Similarity (مبسط - أخذ عينة فقط)
         const sampleSize = Math.min(5000, processedFileText.normalized.length);
@@ -195,7 +205,7 @@ serve(async (req) => {
           structuralSim * 0.15
         );
 
-        if (overallScore > 0.30) {
+        if (overallScore > settings.thresholds.single_file_display) {
           comparisons.push({
             matched_file_id: refFile.id,
             matched_file_name: refFile.file_name,
@@ -205,7 +215,7 @@ serve(async (req) => {
             jaccard_score: Math.round(jaccardSim * 100) / 100,
             sequence_score: Math.round(sequenceSim * 100) / 100,
             structural_score: Math.round(structuralSim * 100) / 100,
-            flagged: overallScore >= 0.70,
+            flagged: overallScore >= settings.thresholds.flagged_threshold,
           });
         }
       } catch (compError) {
@@ -234,10 +244,10 @@ serve(async (req) => {
     
     console.log(`📊 Results: ${totalMatchesFound} matches found, showing top ${top5Matches.length}`);
 
-    // 5. تحديد الحالة
+    // 5. تحديد الحالة (مع استخدام الإعدادات)
     let status = 'safe';
-    if (maxScore >= 0.70) status = 'flagged';
-    else if (maxScore >= 0.50) status = 'warning';
+    if (maxScore >= settings.thresholds.flagged_threshold) status = 'flagged';
+    else if (maxScore >= settings.thresholds.warning_threshold) status = 'warning';
 
     // 6. حفظ النتيجة (أعلى 5 تطابقات فقط)
     const result = {
@@ -259,6 +269,11 @@ serve(async (req) => {
       school_id: schoolId,
       processing_time_ms: Date.now() - startTime,
       algorithm_used: 'optimized_hybrid',
+      settings_used: {
+        thresholds: settings.thresholds,
+        whitelist_count: settings.custom_whitelist.length,
+        timestamp: new Date().toISOString()
+      }
     };
 
     const { data: savedResult, error: saveError } = await supabase
@@ -309,8 +324,8 @@ serve(async (req) => {
 });
 
 // تحضير النص للمعالجة
-function preprocessText(text: string, wordCount: number) {
-  const normalized = normalizeArabicText(text);
+function preprocessText(text: string, wordCount: number, whitelist?: string[]) {
+  const normalized = normalizeArabicText(text, whitelist);
   let words = normalized.split(/\s+/).filter(w => w.length > 2);
   
   // استخدام sampling للملفات الكبيرة جداً
@@ -407,8 +422,8 @@ function calculateStructuralSimilarity(text1: string, text2: string): number {
 // يمكن إضافتهم لاحقاً بعد تحسين الأداء
 
 // تطبيع النص العربي
-function normalizeArabicText(text: string): string {
-  return text
+function normalizeArabicText(text: string, whitelist?: string[]): string {
+  let normalized = text
     .toLowerCase()
     .replace(/[ًٌٍَُِّْ]/g, '') // إزالة التشكيل
     .replace(/[آإأٱ]/g, 'ا') // توحيد الألف
@@ -417,4 +432,14 @@ function normalizeArabicText(text: string): string {
     .replace(/[^\w\s\u0600-\u06FF]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
+  
+  // تطبيق whitelist إذا موجود
+  if (whitelist && whitelist.length > 0) {
+    const words = normalized.split(/\s+/);
+    const filtered = words.filter(word => !whitelist.includes(word));
+    normalized = filtered.join(' ');
+    console.log(`🧹 Whitelist applied: removed ${words.length - filtered.length} words`);
+  }
+  
+  return normalized;
 }
