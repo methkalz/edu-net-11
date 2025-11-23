@@ -181,6 +181,10 @@ const App = () => {
                   path="/pdf-comparison" 
                   element={<Suspense fallback={<PageLoading message="جاري تحميل مقارنة ملفات PDF..." />}>{React.createElement(React.lazy(() => import('@/pages/PDFComparisonPage')))}</Suspense>} 
                 />
+                <Route 
+                  path="/pdf-comparison-settings" 
+                  element={<Suspense fallback={<PageLoading message="جاري تحميل إعدادات المقارنة..." />}>{React.createElement(React.lazy(() => import('@/pages/PDFComparisonSettings')))}</Suspense>} 
+                />
                
                {/* Student Exam routes */}
                <Route 

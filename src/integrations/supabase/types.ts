@@ -4611,6 +4611,77 @@ export type Database = {
           },
         ]
       }
+      pdf_comparison_settings: {
+        Row: {
+          algorithm_weights: Json
+          created_at: string | null
+          created_by: string | null
+          custom_whitelist: string[] | null
+          id: string
+          is_active: boolean | null
+          setting_name: string
+          thresholds: Json
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          algorithm_weights?: Json
+          created_at?: string | null
+          created_by?: string | null
+          custom_whitelist?: string[] | null
+          id?: string
+          is_active?: boolean | null
+          setting_name: string
+          thresholds?: Json
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          algorithm_weights?: Json
+          created_at?: string | null
+          created_by?: string | null
+          custom_whitelist?: string[] | null
+          id?: string
+          is_active?: boolean | null
+          setting_name?: string
+          thresholds?: Json
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      pdf_comparison_settings_audit: {
+        Row: {
+          changed_by: string | null
+          changes: Json
+          created_at: string | null
+          id: string
+          setting_id: string | null
+        }
+        Insert: {
+          changed_by?: string | null
+          changes: Json
+          created_at?: string | null
+          id?: string
+          setting_id?: string | null
+        }
+        Update: {
+          changed_by?: string | null
+          changes?: Json
+          created_at?: string | null
+          id?: string
+          setting_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pdf_comparison_settings_audit_setting_id_fkey"
+            columns: ["setting_id"]
+            isOneToOne: false
+            referencedRelation: "pdf_comparison_settings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pdf_matched_segments: {
         Row: {
           batch_number: number | null
