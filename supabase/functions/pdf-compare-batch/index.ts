@@ -2,6 +2,7 @@ import { serve } from 'https://deno.land/std@0.208.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import { generateEmbedding, extractTopKeywords } from '../_shared/embeddings.ts';
+import { getPDFComparisonSettings } from '../_shared/pdf-settings.ts';
 import { 
   extractMatchingSegments, 
   preprocessText, 
@@ -35,6 +36,17 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
+
+    // جلب إعدادات المقارنة
+    const settings = await getPDFComparisonSettings(supabase);
+    console.log('📋 Using PDF comparison settings:', {
+      flagged: settings.thresholds.flagged_threshold,
+      warning: settings.thresholds.warning_threshold,
+      internal_display: settings.thresholds.internal_display,
+      repository_display: settings.thresholds.repository_display,
+      weights: settings.algorithm_weights,
+      whitelist_count: settings.custom_whitelist.length,
+    });
 
     const {
       files,
@@ -186,7 +198,7 @@ serve(async (req) => {
           const pageRatio = Math.min(pageCount1, pageCount2) / Math.max(pageCount1, pageCount2);
           const lengthSimilarity = (wordRatio + pageRatio) / 2;
           
-          // 4. الوزن الهجين المحسّن
+          // 4. الوزن الهجين باستخدام أوزان الخوارزمية من الإعدادات
           // - إذا كان Jaccard منخفض جداً (< 0.15)، فالمستندات مختلفة بغض النظر عن cosine
           // - إذا كان فرق الطول كبير (< 0.5)، خفض الوزن
           let finalSimilarity = 0;
@@ -196,18 +208,22 @@ serve(async (req) => {
             finalSimilarity = cosineSim * 0.3 + jaccardSim * 0.6 + lengthSimilarity * 0.1;
           } else if (lengthSimilarity < 0.5) {
             // فرق كبير في الطول - تخفيض التشابه
-            finalSimilarity = (cosineSim * 0.4 + jaccardSim * 0.5 + lengthSimilarity * 0.1) * 0.7;
+            finalSimilarity = (cosineSim * settings.algorithm_weights.cosine_weight + 
+                              jaccardSim * settings.algorithm_weights.jaccard_weight + 
+                              lengthSimilarity * settings.algorithm_weights.length_weight) * 0.7;
           } else {
-            // حالة عادية - توازن بين المعايير
-            finalSimilarity = cosineSim * 0.5 + jaccardSim * 0.4 + lengthSimilarity * 0.1;
+            // حالة عادية - استخدام الأوزان من الإعدادات
+            finalSimilarity = cosineSim * settings.algorithm_weights.cosine_weight + 
+                             jaccardSim * settings.algorithm_weights.jaccard_weight + 
+                             lengthSimilarity * settings.algorithm_weights.length_weight;
           }
           
-          // ✅ حفظ جميع المقارنات مع التفاصيل
+          // ✅ حفظ جميع المقارنات مع التفاصيل (باستخدام عتبة من الإعدادات)
           file1Comparisons.push({
             matched_file_name: file2.fileName,
             similarity_score: Math.round(finalSimilarity * 100) / 100,
             similarity_method: 'hybrid_cosine_jaccard_length',
-            flagged: finalSimilarity >= 0.70,
+            flagged: finalSimilarity >= (settings.thresholds.flagged_threshold / 100),
             metadata: {
               cosine: Math.round(cosineSim * 100) / 100,
               jaccard: Math.round(jaccardSim * 100) / 100,
@@ -241,9 +257,10 @@ serve(async (req) => {
         : 0;
       const internalHighRisk = internalMatches.filter(m => m.flagged).length;
       
+      // تحديد الحالة باستخدام العتبات من الإعدادات
       let status = 'safe';
-      if (internalMaxSim >= 0.70) status = 'flagged';
-      else if (internalMaxSim >= 0.40) status = 'warning';
+      if (internalMaxSim >= (settings.thresholds.flagged_threshold / 100)) status = 'flagged';
+      else if (internalMaxSim >= (settings.thresholds.warning_threshold / 100)) status = 'warning';
       
       const result = {
         batch_id: batchId,
@@ -291,6 +308,13 @@ serve(async (req) => {
         school_id: schoolId,
         processing_time_ms: Date.now() - startTime,
         algorithm_used: 'batch_comparison',
+        comparison_metadata: {
+          settings_used: {
+            thresholds: settings.thresholds,
+            weights: settings.algorithm_weights,
+            whitelist_count: settings.custom_whitelist.length,
+          }
+        }
       };
 
       // ✅ محاولة الحفظ مع معالجة الأخطاء
@@ -367,17 +391,17 @@ serve(async (req) => {
           const queryPageCount = fileEmbeddings[i].pageCount;
           
           try {
-            // ✅ استدعاء الدالة الجديدة مع structural filters و real Jaccard
+            // ✅ استدعاء الدالة مع structural filters و عتبات من الإعدادات
             const { data: matches, error: rpcError } = await supabase.rpc(
               'match_documents_hybrid',
               {
                 query_embedding: queryEmbedding,
                 query_keywords: queryKeywords,
-                match_threshold: 0.35, // ✅ عرض ملفات المستودع بتشابه ≥ 35%
+                match_threshold: settings.thresholds.repository_display / 100, // ✅ من الإعدادات
                 match_count: 100,
                 p_grade_level: gradeLevel,
                 p_project_type: comparisonType === 'mini_project' ? 'mini_project' : 'final_project',
-                jaccard_threshold: 0.20, // ✅ تخفيض للسماح بمزيد من النتائج
+                jaccard_threshold: 0.20, // ثابت للآن
                 p_page_count: queryPageCount, // ✅ structural filter
                 p_word_count: queryWordCount  // ✅ structural filter
               }
@@ -397,13 +421,13 @@ serve(async (req) => {
             
             console.log(`✅ After filtering: ${filteredMatches.length} matches for ${file.fileName}`);
             
-            // تحويل النتائج إلى الصيغة المطلوبة
+            // تحويل النتائج إلى الصيغة المطلوبة (باستخدام عتبة من الإعدادات)
             const repositoryMatches = filteredMatches.map((match: any) => ({
               matched_file_id: match.id,
               matched_file_name: match.file_name,
               similarity_score: Math.round(match.similarity * 100) / 100,
               similarity_method: 'pgvector_cosine',
-              flagged: match.similarity >= 0.70,
+              flagged: match.similarity >= (settings.thresholds.flagged_threshold / 100),
             })).slice(0, 5); // أخذ أعلى 5 فقط
             
             // تحديث النتيجة في قاعدة البيانات
@@ -411,12 +435,12 @@ serve(async (req) => {
               const repoMaxSim = Math.max(...repositoryMatches.map(m => m.similarity_score));
               const repoHighRisk = repositoryMatches.filter(m => m.flagged).length;
               
-              // إعادة حساب الـ status الإجمالي
+              // إعادة حساب الـ status الإجمالي (باستخدام عتبات من الإعدادات)
               const internalMaxSim = savedResult.internal_max_similarity || 0;
               const overallMaxSim = Math.max(internalMaxSim, repoMaxSim);
               let newStatus = savedResult.status;
-              if (overallMaxSim >= 0.70) newStatus = 'flagged';
-              else if (overallMaxSim >= 0.40) newStatus = 'warning';
+              if (overallMaxSim >= (settings.thresholds.flagged_threshold / 100)) newStatus = 'flagged';
+              else if (overallMaxSim >= (settings.thresholds.warning_threshold / 100)) newStatus = 'warning';
               
               console.log(`📤 Updating result for ${file.fileName}:`, {
                 resultId: savedResult.id,

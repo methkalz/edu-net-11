@@ -2,6 +2,7 @@ import { serve } from 'https://deno.land/std@0.208.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import * as fuzzball from 'https://esm.sh/fuzzball@2.2.2';
+import { getPDFComparisonSettings } from '../_shared/pdf-settings.ts';
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -20,6 +21,16 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
+
+    // جلب إعدادات المقارنة
+    const settings = await getPDFComparisonSettings(supabase);
+    console.log('📋 Using PDF comparison settings:', {
+      flagged: settings.thresholds.flagged_threshold,
+      warning: settings.thresholds.warning_threshold,
+      display: settings.thresholds.single_file_display,
+      weights: settings.algorithm_weights,
+      whitelist_count: settings.custom_whitelist.length,
+    });
 
     const {
       fileText,
@@ -135,8 +146,8 @@ serve(async (req) => {
       });
     }
 
-    // 3. تحضير النص الأصلي (sampling للملفات الكبيرة)
-    const processedFileText = preprocessText(fileText, wordCount);
+    // 3. تحضير النص الأصلي (sampling للملفات الكبيرة) مع تطبيق whitelist
+    const processedFileText = preprocessText(fileText, wordCount, settings.custom_whitelist);
     console.log(`Processed text ready for comparison`);
     
     // 3. حساب التشابه مع كل ملف (حد أقصى 10 ملفات)
@@ -158,9 +169,9 @@ serve(async (req) => {
       if (!refFile.extracted_text) continue;
 
       try {
-        // تحضير النص المرجعي
+        // تحضير النص المرجعي مع تطبيق whitelist
         const refWordCount = refFile.extracted_text.split(/\s+/).length;
-        const processedRefText = preprocessText(refFile.extracted_text, refWordCount);
+        const processedRefText = preprocessText(refFile.extracted_text, refWordCount, settings.custom_whitelist);
         
         // 1. Fuzzy Similarity (مبسط - أخذ عينة فقط)
         const sampleSize = Math.min(5000, processedFileText.normalized.length);
@@ -187,15 +198,16 @@ serve(async (req) => {
           processedRefText.normalized
         );
         
-        // Overall Score
+        // Overall Score باستخدام أوزان الخوارزمية من الإعدادات
+        // نجمع fuzzy + sequence كـ "cosine"، structural كـ "length"
+        const cosineScore = (fuzzySim + sequenceSim) / 2;
         const overallScore = (
-          fuzzySim * 0.35 +
-          jaccardSim * 0.25 +
-          sequenceSim * 0.25 +
-          structuralSim * 0.15
+          cosineScore * settings.algorithm_weights.cosine_weight +
+          jaccardSim * settings.algorithm_weights.jaccard_weight +
+          structuralSim * settings.algorithm_weights.length_weight
         );
 
-        if (overallScore > 0.30) {
+        if (overallScore > (settings.thresholds.single_file_display / 100)) {
           comparisons.push({
             matched_file_id: refFile.id,
             matched_file_name: refFile.file_name,
@@ -234,10 +246,10 @@ serve(async (req) => {
     
     console.log(`📊 Results: ${totalMatchesFound} matches found, showing top ${top5Matches.length}`);
 
-    // 5. تحديد الحالة
+    // 5. تحديد الحالة باستخدام العتبات من الإعدادات
     let status = 'safe';
-    if (maxScore >= 0.70) status = 'flagged';
-    else if (maxScore >= 0.50) status = 'warning';
+    if (maxScore >= (settings.thresholds.flagged_threshold / 100)) status = 'flagged';
+    else if (maxScore >= (settings.thresholds.warning_threshold / 100)) status = 'warning';
 
     // 6. حفظ النتيجة (أعلى 5 تطابقات فقط)
     const result = {
@@ -259,6 +271,13 @@ serve(async (req) => {
       school_id: schoolId,
       processing_time_ms: Date.now() - startTime,
       algorithm_used: 'optimized_hybrid',
+      comparison_metadata: {
+        settings_used: {
+          thresholds: settings.thresholds,
+          weights: settings.algorithm_weights,
+          whitelist_count: settings.custom_whitelist.length,
+        }
+      }
     };
 
     const { data: savedResult, error: saveError } = await supabase
@@ -309,9 +328,15 @@ serve(async (req) => {
 });
 
 // تحضير النص للمعالجة
-function preprocessText(text: string, wordCount: number) {
-  const normalized = normalizeArabicText(text);
+function preprocessText(text: string, wordCount: number, customWhitelist: string[] = []) {
+  let normalized = normalizeArabicText(text);
   let words = normalized.split(/\s+/).filter(w => w.length > 2);
+  
+  // تطبيق القائمة البيضاء المخصصة لفلترة الكلمات الشائعة
+  if (customWhitelist.length > 0) {
+    const whitelistSet = new Set(customWhitelist.map(w => w.toLowerCase()));
+    words = words.filter(w => !whitelistSet.has(w.toLowerCase()));
+  }
   
   // استخدام sampling للملفات الكبيرة جداً
   const maxWords = 50000;
