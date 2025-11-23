@@ -377,7 +377,7 @@ const PDFComparisonSettings = () => {
           <Alert className="mb-6">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              يجب أن يكون مجموع الأوزان = 100% (1.0). التوزيع الحالي: {(tempSettings.algorithm_weights.cosine_weight + tempSettings.algorithm_weights.jaccard_weight + tempSettings.algorithm_weights.length_weight).toFixed(2)}
+              تنبيه: يجب أن يكون مجموع الأوزان = 100% (1.0). التوزيع الحالي: {(tempSettings.algorithm_weights.cosine_weight + tempSettings.algorithm_weights.jaccard_weight + tempSettings.algorithm_weights.length_weight).toFixed(2)}
             </AlertDescription>
           </Alert>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
