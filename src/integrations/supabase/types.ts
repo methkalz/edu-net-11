@@ -6591,31 +6591,61 @@ export type Database = {
         Args: { p_class_id: string; p_teacher_id: string }
         Returns: boolean
       }
-      match_documents_hybrid: {
-        Args: {
-          jaccard_threshold?: number
-          match_count?: number
-          match_threshold?: number
-          p_grade_level?: string
-          p_page_count?: number
-          p_project_type?: string
-          p_word_count?: number
-          query_embedding: string
-          query_keywords: Json
-        }
-        Returns: {
-          file_name: string
-          file_path: string
-          grade_level: string
-          id: string
-          jaccard_similarity: number
-          project_type: string
-          school_id: string
-          similarity: number
-          uploaded_by: string
-          word_count: number
-        }[]
-      }
+      match_documents_hybrid:
+        | {
+            Args: {
+              cosine_weight?: number
+              excluded_ids?: string[]
+              jaccard_weight?: number
+              length_weight?: number
+              match_count?: number
+              match_threshold?: number
+              query_embedding: string
+              query_keywords: Json
+              target_page_count?: number
+              target_word_count?: number
+            }
+            Returns: {
+              cosine_similarity: number
+              file_name: string
+              file_path: string
+              grade_level: string
+              id: string
+              jaccard_similarity: number
+              length_similarity: number
+              original_file_name: string
+              page_count: number
+              similarity: number
+              upload_date: string
+              uploader_name: string
+              word_count: number
+            }[]
+          }
+        | {
+            Args: {
+              jaccard_threshold?: number
+              match_count?: number
+              match_threshold?: number
+              p_grade_level?: string
+              p_page_count?: number
+              p_project_type?: string
+              p_word_count?: number
+              query_embedding: string
+              query_keywords: Json
+            }
+            Returns: {
+              file_name: string
+              file_path: string
+              grade_level: string
+              id: string
+              jaccard_similarity: number
+              project_type: string
+              school_id: string
+              similarity: number
+              uploaded_by: string
+              word_count: number
+            }[]
+          }
       match_similar_documents: {
         Args: {
           match_count?: number

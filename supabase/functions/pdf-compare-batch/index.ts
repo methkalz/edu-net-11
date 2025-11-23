@@ -382,7 +382,7 @@ serve(async (req) => {
           const queryPageCount = fileEmbeddings[i].pageCount;
           
           try {
-            // ✅ استدعاء الدالة مع الإعدادات الديناميكية
+            // ✅ استدعاء الدالة مع الإعدادات الديناميكية + algorithm_weights
             const { data: matches, error: rpcError } = await supabase.rpc(
               'match_documents_hybrid',
               {
@@ -390,9 +390,12 @@ serve(async (req) => {
                 query_keywords: queryKeywords,
                 match_threshold: settings.thresholds.repository_display,
                 match_count: 100,
+                cosine_weight: settings.algorithm_weights.cosine_weight,
+                jaccard_weight: settings.algorithm_weights.jaccard_weight,
+                length_weight: settings.algorithm_weights.length_weight,
                 p_grade_level: gradeLevel,
                 p_project_type: comparisonType === 'mini_project' ? 'mini_project' : 'final_project',
-                jaccard_threshold: settings.thresholds.repository_display * 0.6, // نسبياً من العتبة الرئيسية
+                jaccard_threshold: settings.thresholds.repository_display * 0.6,
                 p_page_count: queryPageCount,
                 p_word_count: queryWordCount
               }
