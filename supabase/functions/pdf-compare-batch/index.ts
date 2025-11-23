@@ -196,20 +196,25 @@ serve(async (req) => {
           const pageRatio = Math.min(pageCount1, pageCount2) / Math.max(pageCount1, pageCount2);
           const lengthSimilarity = (wordRatio + pageRatio) / 2;
           
-          // 4. الوزن الهجين المحسّن
-          // - إذا كان Jaccard منخفض جداً (< 0.15)، فالمستندات مختلفة بغض النظر عن cosine
-          // - إذا كان فرق الطول كبير (< 0.5)، خفض الوزن
+          // 4. الوزن الهجين المحسّن - باستخدام الأوزان من الإعدادات
+          const weights = settings.algorithm_weights;
           let finalSimilarity = 0;
           
           if (jaccardSim < 0.15) {
             // تشابه منخفض جداً في الكلمات - اعتماد أقل على cosine
-            finalSimilarity = cosineSim * 0.3 + jaccardSim * 0.6 + lengthSimilarity * 0.1;
+            finalSimilarity = cosineSim * (weights.cosine_weight * 0.6) + 
+                              jaccardSim * (weights.jaccard_weight * 1.5) + 
+                              lengthSimilarity * (weights.length_weight * 1.0);
           } else if (lengthSimilarity < 0.5) {
             // فرق كبير في الطول - تخفيض التشابه
-            finalSimilarity = (cosineSim * 0.4 + jaccardSim * 0.5 + lengthSimilarity * 0.1) * 0.7;
+            finalSimilarity = (cosineSim * weights.cosine_weight + 
+                               jaccardSim * weights.jaccard_weight + 
+                               lengthSimilarity * weights.length_weight) * 0.7;
           } else {
-            // حالة عادية - توازن بين المعايير
-            finalSimilarity = cosineSim * 0.5 + jaccardSim * 0.4 + lengthSimilarity * 0.1;
+            // حالة عادية - استخدام الأوزان مباشرة
+            finalSimilarity = cosineSim * weights.cosine_weight + 
+                              jaccardSim * weights.jaccard_weight + 
+                              lengthSimilarity * weights.length_weight;
           }
           
           // ✅ حفظ جميع المقارنات مع التفاصيل

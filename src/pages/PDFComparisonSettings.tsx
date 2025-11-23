@@ -9,10 +9,12 @@ import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { usePDFComparisonSettings } from '@/hooks/usePDFComparisonSettings';
+import { useToast } from '@/hooks/use-toast';
 import { ArrowRight, Save, RotateCcw, Plus, X, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 const PDFComparisonSettings = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const {
     userProfile
   } = useAuth();
@@ -90,6 +92,21 @@ const PDFComparisonSettings = () => {
       </div>;
   }
   const handleSave = async () => {
+    // التحقق من صحة الأوزان
+    const totalWeight = 
+      settings.algorithm_weights.cosine_weight +
+      settings.algorithm_weights.jaccard_weight +
+      settings.algorithm_weights.length_weight;
+    
+    if (Math.abs(totalWeight - 1.0) > 0.01) {
+      toast({
+        title: 'خطأ في الأوزان',
+        description: `مجموع الأوزان يجب أن يساوي 100% (حالياً: ${(totalWeight * 100).toFixed(0)}%)`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsSaving(true);
     try {
       await updateSettings({

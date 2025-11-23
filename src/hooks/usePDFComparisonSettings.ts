@@ -78,8 +78,12 @@ export const usePDFComparisonSettings = () => {
 
       if (error) throw error;
 
-      // Type cast the data since we know the structure
-      setSettings(data as unknown as PDFComparisonSettings);
+      // انتظار 2 ثانية لضمان مسح الـ cache في edge functions
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // إعادة جلب الإعدادات لتأكيد التطبيق
+      await fetchSettings();
+
       toast({
         title: 'تم التحديث',
         description: 'تم تحديث إعدادات المقارنة بنجاح',

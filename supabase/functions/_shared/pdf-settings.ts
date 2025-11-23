@@ -14,6 +14,11 @@ const DEFAULT_SETTINGS = {
     flagged_threshold: 0.70,      // 70% - حالة flagged
     warning_threshold: 0.50       // 50% - حالة warning
   },
+  algorithm_weights: {
+    cosine_weight: 0.50,          // 50% - وزن التشابه النصي (cosine)
+    jaccard_weight: 0.40,         // 40% - وزن تطابق الكلمات (jaccard)
+    length_weight: 0.10           // 10% - وزن التشابه في الطول
+  },
   custom_whitelist: [] as string[]
 };
 
@@ -53,6 +58,11 @@ export async function getPDFComparisonSettings(supabase: SupabaseClient) {
         flagged_threshold: (data.thresholds?.flagged_threshold ?? 70) / 100,
         warning_threshold: (data.thresholds?.warning_threshold ?? 50) / 100
       },
+      algorithm_weights: {
+        cosine_weight: data.algorithm_weights?.cosine_weight ?? 0.50,
+        jaccard_weight: data.algorithm_weights?.jaccard_weight ?? 0.40,
+        length_weight: data.algorithm_weights?.length_weight ?? 0.10
+      },
       custom_whitelist: Array.isArray(data.custom_whitelist) 
         ? data.custom_whitelist 
         : []
@@ -64,6 +74,7 @@ export async function getPDFComparisonSettings(supabase: SupabaseClient) {
 
     console.log('✅ Settings loaded:', {
       thresholds: normalizedSettings.thresholds,
+      algorithm_weights: normalizedSettings.algorithm_weights,
       whitelist_count: normalizedSettings.custom_whitelist.length
     });
     
