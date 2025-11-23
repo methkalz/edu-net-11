@@ -54,54 +54,37 @@ serve(async (req) => {
     }
 
     // 1. فحص التطابق التام (Hash comparison)
+    console.log('🔍 Checking for exact hash match...');
     const { data: exactMatch } = await supabase
       .from('pdf_comparison_repository')
       .select('*')
       .eq('text_hash', fileHash)
       .eq('grade_level', gradeLevel)
-      .single();
+      .maybeSingle();
+
+    // مصفوفة لتخزين جميع التطابقات (سنضيف exact match هنا إن وُجد)
+    const initialComparisons = [];
 
     if (exactMatch) {
-      console.log('Exact match found!');
+      console.log('⚠️ EXACT MATCH FOUND! 100% similarity detected');
+      console.log(`Matched file: ${exactMatch.file_name} (ID: ${exactMatch.id})`);
       
-      const result = {
-        compared_file_name: fileName,
-        compared_file_path: filePath,
-        compared_file_hash: fileHash,
-        grade_level: gradeLevel,
-        comparison_type: comparisonType,
-        matches: [{
-          matched_file_id: exactMatch.id,
-          matched_file_name: exactMatch.file_name,
-          similarity_score: 1.0,
-          similarity_method: 'hash_exact_match',
-          flagged: true,
-        }],
-        max_similarity_score: 1.0,
-        avg_similarity_score: 1.0,
-        total_matches_found: 1,
-        high_risk_matches: 1,
-        status: 'flagged',
-        review_required: true,
-        requested_by: userId,
-        school_id: schoolId,
-        processing_time_ms: Date.now() - startTime,
-        algorithm_used: 'hash_comparison',
-      };
-
-      // حفظ النتيجة
-      await supabase.from('pdf_comparison_results').insert(result);
-
-      // تسجيل في audit log
-      await supabase.from('pdf_comparison_audit_log').insert({
-        action_type: 'compare',
-        performed_by: userId,
-        details: { fileName, matchType: 'exact_hash', similarity: 1.0 },
+      // إضافة exact match إلى القائمة
+      initialComparisons.push({
+        matched_file_id: exactMatch.id,
+        matched_file_name: exactMatch.file_name,
+        similarity_score: 1.0,
+        similarity_method: 'hash_exact_match',
+        fuzzy_score: 1.0,
+        jaccard_score: 1.0,
+        sequence_score: 1.0,
+        structural_score: 1.0,
+        flagged: true,
       });
-
-      return new Response(JSON.stringify({ success: true, result }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      
+      console.log('➡️ Continuing to compare with other repository files...');
+    } else {
+      console.log('✅ No exact match found, proceeding with advanced comparison...');
     }
 
     // 2. جلب الملفات المرجعية من المستودع
@@ -170,7 +153,8 @@ serve(async (req) => {
     // لكن للبساطة سنقارن مع جميع الملفات مباشرة باستخدام الخوارزميات المتقدمة
     
     // حل بديل: نستخدم الخوارزميات المتقدمة مباشرة لكن على جميع الملفات
-    const comparisons = [];
+    // دمج exact matches (إن وُجدت) مع comparisons الجديدة
+    const comparisons = [...initialComparisons];
     const maxComparisonTime = 30000; // 30 ثانية
     const comparisonStartTime = Date.now();
 
@@ -184,6 +168,12 @@ serve(async (req) => {
       }
       
       if (!refFile.extracted_text) continue;
+      
+      // تجنب مقارنة الملف مع نفسه (إذا كان exact match موجود بالفعل)
+      if (exactMatch && refFile.id === exactMatch.id) {
+        console.log(`⏭️ Skipping comparison with exact match file: ${refFile.file_name}`);
+        continue;
+      }
 
       try {
         // تحضير النص المرجعي مع whitelist
