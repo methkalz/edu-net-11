@@ -9,21 +9,21 @@ import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { usePDFComparisonSettings } from '@/hooks/usePDFComparisonSettings';
-import { ArrowRight, Save, RotateCcw, Plus, X, Sparkles, AlertCircle } from 'lucide-react';
+import { ArrowRight, Save, RotateCcw, Plus, X, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-
 const PDFComparisonSettings = () => {
   const navigate = useNavigate();
-  const { userProfile } = useAuth();
+  const {
+    userProfile
+  } = useAuth();
   const {
     settings,
     loading,
     updateSettings,
     addWhitelistWord,
     removeWhitelistWord,
-    applyPreset,
+    applyPreset
   } = usePDFComparisonSettings();
-
   const [newWord, setNewWord] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
@@ -32,10 +32,8 @@ const PDFComparisonSettings = () => {
     navigate('/dashboard');
     return null;
   }
-
   if (loading || !settings) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+    return <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
         <ModernHeader />
         <div className="container mx-auto p-6">
           <div className="flex items-center justify-center h-64">
@@ -45,22 +43,19 @@ const PDFComparisonSettings = () => {
             </div>
           </div>
         </div>
-      </div>
-    );
+      </div>;
   }
-
   const handleSave = async () => {
     setIsSaving(true);
     try {
       await updateSettings({
         thresholds: settings.thresholds,
-        algorithm_weights: settings.algorithm_weights,
+        algorithm_weights: settings.algorithm_weights
       });
     } finally {
       setIsSaving(false);
     }
   };
-
   const handlePreset = async (preset: 'strict' | 'balanced' | 'lenient') => {
     setIsSaving(true);
     try {
@@ -69,27 +64,19 @@ const PDFComparisonSettings = () => {
       setIsSaving(false);
     }
   };
-
   const handleAddWord = async () => {
     if (!newWord.trim()) return;
     await addWhitelistWord(newWord);
     setNewWord('');
   };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+  return <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
       <ModernHeader />
       
       <div className="container mx-auto p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate('/superadmin-dashboard')}
-              className="hover:bg-primary/10"
-            >
+            <Button variant="ghost" size="icon" onClick={() => navigate('/superadmin-dashboard')} className="hover:bg-primary/10">
               <ArrowRight className="h-5 w-5" />
             </Button>
             <div>
@@ -102,11 +89,7 @@ const PDFComparisonSettings = () => {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button
-              onClick={handleSave}
-              disabled={isSaving}
-              className="bg-gradient-to-r from-primary to-primary/80"
-            >
+            <Button onClick={handleSave} disabled={isSaving} className="bg-gradient-to-r from-primary to-primary/80">
               <Save className="h-4 w-4 ml-2" />
               حفظ التغييرات
             </Button>
@@ -116,41 +99,26 @@ const PDFComparisonSettings = () => {
         {/* Presets */}
         <Card className="p-6 glass-effect border-primary/20">
           <div className="flex items-center gap-2 mb-4">
-            <Sparkles className="h-5 w-5 text-primary" />
+            <Plus className="h-5 w-5 text-primary" />
             <h2 className="text-xl font-bold">الإعدادات المسبقة</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Button
-              variant="outline"
-              onClick={() => handlePreset('strict')}
-              disabled={isSaving}
-              className="h-auto flex-col items-start p-4 hover:border-primary hover:bg-primary/5"
-            >
+            <Button variant="outline" onClick={() => handlePreset('strict')} disabled={isSaving} className="h-auto flex-col items-start p-4 hover:border-primary hover:bg-primary/5">
               <span className="font-bold text-lg mb-2">صارم</span>
               <span className="text-sm text-muted-foreground text-right">
                 حساسية عالية للكشف عن التشابه
               </span>
             </Button>
-            <Button
-              variant="outline"
-              onClick={() => handlePreset('balanced')}
-              disabled={isSaving}
-              className="h-auto flex-col items-start p-4 hover:border-primary hover:bg-primary/5 border-primary/40"
-            >
+            <Button variant="outline" onClick={() => handlePreset('balanced')} disabled={isSaving} className="h-auto flex-col items-start p-4 hover:border-primary hover:bg-primary/5 border-primary/40">
               <div className="flex items-center gap-2 mb-2">
                 <span className="font-bold text-lg">متوازن</span>
-                <Badge variant="secondary" className="text-xs">افتراضي</Badge>
+                <Badge variant="secondary" className="text-xs bg-emerald-500">افتراضي</Badge>
               </div>
               <span className="text-sm text-muted-foreground text-right">
                 توازن بين الدقة والمرونة
               </span>
             </Button>
-            <Button
-              variant="outline"
-              onClick={() => handlePreset('lenient')}
-              disabled={isSaving}
-              className="h-auto flex-col items-start p-4 hover:border-primary hover:bg-primary/5"
-            >
+            <Button variant="outline" onClick={() => handlePreset('lenient')} disabled={isSaving} className="h-auto flex-col items-start p-4 hover:border-primary hover:bg-primary/5">
               <span className="font-bold text-lg mb-2">متساهل</span>
               <span className="text-sm text-muted-foreground text-right">
                 حساسية منخفضة، تركيز على التشابه الواضح
@@ -169,17 +137,12 @@ const PDFComparisonSettings = () => {
                   <Label>عتبة عرض المستودع (%)</Label>
                   <Badge variant="outline">{settings.thresholds.repository_display}</Badge>
                 </div>
-                <Slider
-                  value={[settings.thresholds.repository_display]}
-                  onValueChange={([value]) => {
-                    settings.thresholds.repository_display = value;
-                    updateSettings({ thresholds: settings.thresholds });
-                  }}
-                  min={10}
-                  max={80}
-                  step={5}
-                  className="my-4"
-                />
+                <Slider value={[settings.thresholds.repository_display]} onValueChange={([value]) => {
+                settings.thresholds.repository_display = value;
+                updateSettings({
+                  thresholds: settings.thresholds
+                });
+              }} min={10} max={80} step={5} className="my-4" />
                 <p className="text-sm text-muted-foreground">
                   الحد الأدنى للتشابه لعرض النتائج من المستودع
                 </p>
@@ -190,17 +153,12 @@ const PDFComparisonSettings = () => {
                   <Label>عتبة الملف المفرد (%)</Label>
                   <Badge variant="outline">{settings.thresholds.single_file_display}</Badge>
                 </div>
-                <Slider
-                  value={[settings.thresholds.single_file_display]}
-                  onValueChange={([value]) => {
-                    settings.thresholds.single_file_display = value;
-                    updateSettings({ thresholds: settings.thresholds });
-                  }}
-                  min={10}
-                  max={70}
-                  step={5}
-                  className="my-4"
-                />
+                <Slider value={[settings.thresholds.single_file_display]} onValueChange={([value]) => {
+                settings.thresholds.single_file_display = value;
+                updateSettings({
+                  thresholds: settings.thresholds
+                });
+              }} min={10} max={70} step={5} className="my-4" />
                 <p className="text-sm text-muted-foreground">
                   الحد الأدنى للتشابه عند مقارنة ملف واحد
                 </p>
@@ -213,17 +171,12 @@ const PDFComparisonSettings = () => {
                   <Label>عتبة الإشارة الحمراء (%)</Label>
                   <Badge variant="destructive">{settings.thresholds.flagged_threshold}</Badge>
                 </div>
-                <Slider
-                  value={[settings.thresholds.flagged_threshold]}
-                  onValueChange={([value]) => {
-                    settings.thresholds.flagged_threshold = value;
-                    updateSettings({ thresholds: settings.thresholds });
-                  }}
-                  min={50}
-                  max={90}
-                  step={5}
-                  className="my-4"
-                />
+                <Slider value={[settings.thresholds.flagged_threshold]} onValueChange={([value]) => {
+                settings.thresholds.flagged_threshold = value;
+                updateSettings({
+                  thresholds: settings.thresholds
+                });
+              }} min={50} max={90} step={5} className="my-4" />
                 <p className="text-sm text-muted-foreground">
                   نسبة التشابه التي تُعتبر تطابق كامل (أحمر)
                 </p>
@@ -236,17 +189,12 @@ const PDFComparisonSettings = () => {
                     {settings.thresholds.warning_threshold}
                   </Badge>
                 </div>
-                <Slider
-                  value={[settings.thresholds.warning_threshold]}
-                  onValueChange={([value]) => {
-                    settings.thresholds.warning_threshold = value;
-                    updateSettings({ thresholds: settings.thresholds });
-                  }}
-                  min={20}
-                  max={70}
-                  step={5}
-                  className="my-4"
-                />
+                <Slider value={[settings.thresholds.warning_threshold]} onValueChange={([value]) => {
+                settings.thresholds.warning_threshold = value;
+                updateSettings({
+                  thresholds: settings.thresholds
+                });
+              }} min={20} max={70} step={5} className="my-4" />
                 <p className="text-sm text-muted-foreground">
                   نسبة التشابه التي تستدعي التحذير (برتقالي)
                 </p>
@@ -261,11 +209,7 @@ const PDFComparisonSettings = () => {
           <Alert className="mb-6">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              يجب أن يكون مجموع الأوزان = 100% (1.0). التوزيع الحالي: {(
-                settings.algorithm_weights.cosine_weight +
-                settings.algorithm_weights.jaccard_weight +
-                settings.algorithm_weights.length_weight
-              ).toFixed(2)}
+              يجب أن يكون مجموع الأوزان = 100% (1.0). التوزيع الحالي: {(settings.algorithm_weights.cosine_weight + settings.algorithm_weights.jaccard_weight + settings.algorithm_weights.length_weight).toFixed(2)}
             </AlertDescription>
           </Alert>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -274,17 +218,12 @@ const PDFComparisonSettings = () => {
                 <Label>وزن التشابه التجميعي (Cosine)</Label>
                 <Badge variant="outline">{(settings.algorithm_weights.cosine_weight * 100).toFixed(0)}%</Badge>
               </div>
-              <Slider
-                value={[settings.algorithm_weights.cosine_weight * 100]}
-                onValueChange={([value]) => {
-                  settings.algorithm_weights.cosine_weight = value / 100;
-                  updateSettings({ algorithm_weights: settings.algorithm_weights });
-                }}
-                min={0}
-                max={100}
-                step={5}
-                className="my-4"
-              />
+              <Slider value={[settings.algorithm_weights.cosine_weight * 100]} onValueChange={([value]) => {
+              settings.algorithm_weights.cosine_weight = value / 100;
+              updateSettings({
+                algorithm_weights: settings.algorithm_weights
+              });
+            }} min={0} max={100} step={5} className="my-4" />
               <p className="text-sm text-muted-foreground">
                 المعاني الدلالية للكلمات والسياق
               </p>
@@ -295,17 +234,12 @@ const PDFComparisonSettings = () => {
                 <Label>وزن التطابق الكلمي (Jaccard)</Label>
                 <Badge variant="outline">{(settings.algorithm_weights.jaccard_weight * 100).toFixed(0)}%</Badge>
               </div>
-              <Slider
-                value={[settings.algorithm_weights.jaccard_weight * 100]}
-                onValueChange={([value]) => {
-                  settings.algorithm_weights.jaccard_weight = value / 100;
-                  updateSettings({ algorithm_weights: settings.algorithm_weights });
-                }}
-                min={0}
-                max={100}
-                step={5}
-                className="my-4"
-              />
+              <Slider value={[settings.algorithm_weights.jaccard_weight * 100]} onValueChange={([value]) => {
+              settings.algorithm_weights.jaccard_weight = value / 100;
+              updateSettings({
+                algorithm_weights: settings.algorithm_weights
+              });
+            }} min={0} max={100} step={5} className="my-4" />
               <p className="text-sm text-muted-foreground">
                 الكلمات المشتركة الفريدة
               </p>
@@ -316,17 +250,12 @@ const PDFComparisonSettings = () => {
                 <Label>وزن التشابه الطولي</Label>
                 <Badge variant="outline">{(settings.algorithm_weights.length_weight * 100).toFixed(0)}%</Badge>
               </div>
-              <Slider
-                value={[settings.algorithm_weights.length_weight * 100]}
-                onValueChange={([value]) => {
-                  settings.algorithm_weights.length_weight = value / 100;
-                  updateSettings({ algorithm_weights: settings.algorithm_weights });
-                }}
-                min={0}
-                max={100}
-                step={5}
-                className="my-4"
-              />
+              <Slider value={[settings.algorithm_weights.length_weight * 100]} onValueChange={([value]) => {
+              settings.algorithm_weights.length_weight = value / 100;
+              updateSettings({
+                algorithm_weights: settings.algorithm_weights
+              });
+            }} min={0} max={100} step={5} className="my-4" />
               <p className="text-sm text-muted-foreground">
                 تشابه عدد الكلمات والصفحات
               </p>
@@ -342,39 +271,24 @@ const PDFComparisonSettings = () => {
           </p>
 
           <div className="flex gap-2 mb-4">
-            <Input
-              value={newWord}
-              onChange={(e) => setNewWord(e.target.value)}
-              placeholder="أضف كلمة جديدة..."
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleAddWord();
-                }
-              }}
-              className="flex-1"
-            />
+            <Input value={newWord} onChange={e => setNewWord(e.target.value)} placeholder="أضف كلمة جديدة..." onKeyDown={e => {
+            if (e.key === 'Enter') {
+              handleAddWord();
+            }
+          }} className="flex-1" />
             <Button onClick={handleAddWord} size="icon" variant="outline">
               <Plus className="h-4 w-4" />
             </Button>
           </div>
 
           <div className="flex flex-wrap gap-2 max-h-64 overflow-y-auto">
-            {settings.custom_whitelist.map((word) => (
-              <Badge
-                key={word}
-                variant="secondary"
-                className="pl-2 pr-3 py-1.5 hover:bg-destructive/20 hover:text-destructive cursor-pointer transition-colors"
-                onClick={() => removeWhitelistWord(word)}
-              >
+            {settings.custom_whitelist.map(word => <Badge key={word} variant="secondary" onClick={() => removeWhitelistWord(word)} className="pl-2 pr-3 py-1.5 hover:text-destructive cursor-pointer transition-colors bg-blue-400">
                 {word}
                 <X className="h-3 w-3 mr-1" />
-              </Badge>
-            ))}
+              </Badge>)}
           </div>
         </Card>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default PDFComparisonSettings;
