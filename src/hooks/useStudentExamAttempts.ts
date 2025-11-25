@@ -13,6 +13,8 @@ export interface StudentExamAttempt {
   total_questions: number;
   exam_title: string;
   passing_percentage: number;
+  correct_answers: number;
+  incorrect_answers: number;
 }
 
 export const useStudentExamAttempts = (
@@ -37,7 +39,7 @@ export const useStudentExamAttempts = (
       // جلب معلومات الامتحان
       const { data: exam, error: examError } = await supabase
         .from("exams")
-        .select("title, total_questions, total_points, passing_percentage, max_attempts")
+        .select("title, total_questions, total_points, passing_percentage, max_attempts, duration_minutes")
         .eq("id", examId)
         .single();
 
@@ -54,19 +56,43 @@ export const useStudentExamAttempts = (
 
       if (attemptsError) throw attemptsError;
 
-      const formattedAttempts: StudentExamAttempt[] = (attempts || []).map((attempt) => ({
-        id: attempt.id,
-        attempt_number: attempt.attempt_number,
-        score: attempt.score || 0,
-        percentage: attempt.percentage || 0,
-        passed: attempt.passed || false,
-        time_spent_seconds: attempt.time_spent_seconds || 0,
-        submitted_at: attempt.submitted_at || attempt.updated_at || "",
-        total_points: exam.total_points,
-        total_questions: exam.total_questions,
-        exam_title: exam.title,
-        passing_percentage: exam.passing_percentage,
-      }));
+      const formattedAttempts: StudentExamAttempt[] = (attempts || []).map((attempt) => {
+        const detailedResults = attempt.detailed_results as any;
+        const correct_answers = detailedResults?.correct_count || 0;
+        const incorrect_answers = (exam.total_questions || 0) - correct_answers;
+
+        return {
+          id: attempt.id,
+          attempt_number: attempt.attempt_number,
+          score: attempt.score || 0,
+          percentage: attempt.percentage || 0,
+          passed: attempt.passed || false,
+          time_spent_seconds: attempt.time_spent_seconds || 0,
+          submitted_at: attempt.submitted_at || attempt.updated_at || "",
+          total_points: exam.total_points,
+          total_questions: exam.total_questions,
+          exam_title: exam.title,
+          passing_percentage: exam.passing_percentage,
+          correct_answers,
+          incorrect_answers,
+        };
+      });
+
+      // حساب الإحصائيات (فقط إذا كان أكثر من محاولة)
+      let statistics = null;
+      if (formattedAttempts.length > 1) {
+        const percentages = formattedAttempts.map(a => a.percentage);
+        const scores = formattedAttempts.map(a => a.score);
+        
+        statistics = {
+          best_percentage: Math.max(...percentages),
+          worst_percentage: Math.min(...percentages),
+          average_percentage: percentages.reduce((a, b) => a + b, 0) / percentages.length,
+          best_score: Math.max(...scores),
+          worst_score: Math.min(...scores),
+          average_score: scores.reduce((a, b) => a + b, 0) / scores.length,
+        };
+      }
 
       return {
         attempts: formattedAttempts,
@@ -78,6 +104,8 @@ export const useStudentExamAttempts = (
           max_attempts: exam.max_attempts,
           attempts_used: formattedAttempts.length,
           attempts_remaining: Math.max(0, exam.max_attempts - formattedAttempts.length),
+          duration_minutes: exam.duration_minutes,
+          statistics,
         },
       };
     },
