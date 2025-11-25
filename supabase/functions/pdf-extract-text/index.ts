@@ -59,6 +59,7 @@ serve(async (req) => {
         success: true,
         text: fullText,
         pages,
+        pageCount: pages.length,
         hash: textHash,
         wordCount,
         metadata: {

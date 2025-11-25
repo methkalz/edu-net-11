@@ -127,18 +127,24 @@ serve(async (req) => {
     const internalComparisons: Map<string, any[]> = new Map();
     
     // توليد embeddings و keywords للملفات المرفوعة (مع whitelist)
-    const fileEmbeddings = files.map(file => {
+    const fileEmbeddings = files.map((file, idx) => {
       const preprocessed = preprocessText(file.fileText, file.fileText.split(/\s+/).length);
       return {
         embedding: generateEmbedding(file.fileText, 1024, settings.custom_whitelist),
         keywords: extractTopKeywords(file.fileText, 150, settings.custom_whitelist),
         wordSetSize: preprocessed.wordSetSize,
         wordCount: preprocessed.wordCount,
-        pageCount: file.filePages
+        pageCount: file.filePages || 1
       };
     });
     
     console.log(`✅ Generated ${fileEmbeddings.length} embeddings with keywords`);
+    console.log('📊 File embeddings generated:', fileEmbeddings.map((fe, idx) => ({
+      fileName: files[idx].fileName,
+      wordCount: fe.wordCount,
+      pageCount: fe.pageCount,
+      keywordsCount: fe.keywords.length,
+    })));
 
     if (files.length > 1) {
       for (let i = 0; i < files.length; i++) {
@@ -188,8 +194,8 @@ serve(async (req) => {
           // 3. فحص التشابه في الطول (Length similarity penalty)
           const wordCount1 = fileEmbeddings[i].wordCount;
           const wordCount2 = fileEmbeddings[j].wordCount;
-          const pageCount1 = fileEmbeddings[i].pageCount;
-          const pageCount2 = fileEmbeddings[j].pageCount;
+          const pageCount1 = fileEmbeddings[i].pageCount || 1;
+          const pageCount2 = fileEmbeddings[j].pageCount || 1;
           
           // إذا كان الفرق في عدد الكلمات كبير جداً، خفض التشابه
           const wordRatio = Math.min(wordCount1, wordCount2) / Math.max(wordCount1, wordCount2);
