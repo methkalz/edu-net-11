@@ -18,8 +18,7 @@ import {
 } from "@/components/ui/table";
 import { CheckCircle, XCircle, Clock, FileText, Trophy, AlertCircle } from "lucide-react";
 import { useStudentExamAttempts } from "@/hooks/useStudentExamAttempts";
-import { formatDistanceToNow } from "date-fns";
-import { ar } from "date-fns/locale";
+import { format } from "date-fns";
 
 interface StudentExamResultsDialogProps {
   open: boolean;
@@ -42,12 +41,9 @@ export const StudentExamResultsDialog = ({
     const secs = seconds % 60;
 
     if (hours > 0) {
-      return `${hours}س ${minutes}د`;
+      return `${hours}:${minutes.toString().padStart(2, '0')}`;
     }
-    if (minutes > 0) {
-      return `${minutes}د ${secs}ث`;
-    }
-    return `${secs}ث`;
+    return `${minutes}:${secs.toString().padStart(2, '0')}`;
   };
 
   if (isLoading) {
@@ -236,10 +232,7 @@ export const StudentExamResultsDialog = ({
                     {formatTime(attempt.time_spent_seconds)}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {formatDistanceToNow(new Date(attempt.submitted_at), {
-                      addSuffix: true,
-                      locale: ar,
-                    })}
+                    {format(new Date(attempt.submitted_at), "d.M.yyyy")}
                   </TableCell>
                 </TableRow>
               ))}
