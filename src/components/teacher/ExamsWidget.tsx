@@ -1132,6 +1132,16 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
     return Array.from(gradeLevels);
   };
 
+  // استخراج صفوف المعلم حسب grade_levels المختارة
+  const getTeacherClassesByGradeLevels = (
+    gradeLevels: string[], 
+    classes: any[]
+  ): string[] => {
+    return classes
+      ?.filter(cls => gradeLevels.includes(cls.grade_levels?.code))
+      ?.map(cls => cls.id) || [];
+  };
+
   const onSubmit = async (data: CreateExamFormData) => {
     // ✅ التحقق من أن المعلم نقر على زر الحفظ فعلياً
     if (!isExplicitSubmit && currentStep === 7) {
@@ -1283,7 +1293,9 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         grade_levels: data.selection_type === 'all_grade' 
           ? data.grade_levels 
           : extractGradeLevelsFromClasses(data.target_classes || [], availableClasses || []),
-        target_classes: data.selection_type === 'specific_classes' ? data.target_classes : [],
+        target_classes: data.selection_type === 'specific_classes' 
+          ? data.target_classes 
+          : getTeacherClassesByGradeLevels(data.grade_levels, availableClasses || []),
         start_datetime: data.start_datetime || null,
         end_datetime: data.end_datetime || null,
         max_attempts: data.max_attempts,
