@@ -148,7 +148,7 @@ export const StudentExamCard = ({
         <div className="flex gap-2">
           {exam.can_start && !isPast(new Date(exam.end_datetime)) ? <Button onClick={handleStartExam} className="w-full" size="sm">
               ابدأ الامتحان
-            </Button> : exam.attempts_used > 0 ? <Button onClick={handleViewResults} variant="outline" className="w-full" size="sm" disabled>
+            </Button> : exam.attempts_used > 0 ? <Button onClick={handleViewResults} variant="outline" className="w-full" size="sm">
               عرض النتائج
             </Button> : <Button disabled className="w-full" size="sm">
               {status.label}
