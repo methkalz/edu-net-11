@@ -92,13 +92,23 @@ export const StudentExamResultsDialog = ({
         </DialogHeader>
 
         {/* معلومات عامة */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
           <Card className="border-border/50">
             <CardContent className="p-4 flex items-center gap-3">
               <FileText className="h-5 w-5 text-primary" />
               <div>
                 <p className="text-xs text-muted-foreground">الأسئلة</p>
                 <p className="text-lg font-semibold">{examInfo.total_questions}</p>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="border-border/50">
+            <CardContent className="p-4 flex items-center gap-3">
+              <Clock className="h-5 w-5 text-primary" />
+              <div>
+                <p className="text-xs text-muted-foreground">المدة</p>
+                <p className="text-lg font-semibold">{examInfo.duration_minutes}د</p>
               </div>
             </CardContent>
           </Card>
@@ -127,14 +137,47 @@ export const StudentExamResultsDialog = ({
           
           <Card className="border-border/50">
             <CardContent className="p-4 flex items-center gap-3">
-              <Clock className="h-5 w-5 text-primary" />
+              <Clock className="h-5 w-5 text-emerald-600" />
               <div>
                 <p className="text-xs text-muted-foreground">المتبقية</p>
-                <p className="text-lg font-semibold">{examInfo.attempts_remaining}</p>
+                <p className="text-lg font-semibold text-primary">{examInfo.attempts_remaining}</p>
               </div>
             </CardContent>
           </Card>
         </div>
+
+        {/* إحصائيات ملخصة - تظهر فقط إذا كان أكثر من محاولة */}
+        {examInfo.statistics && attempts.length > 1 && (
+          <div className="grid grid-cols-3 gap-3 mb-4 p-4 bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg border border-primary/20">
+            <div className="text-center">
+              <p className="text-xs text-muted-foreground mb-1">أعلى علامة</p>
+              <p className="text-xl font-bold text-emerald-600">
+                {examInfo.statistics.best_percentage.toFixed(1)}%
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {examInfo.statistics.best_score} / {examInfo.total_points}
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-muted-foreground mb-1">أدنى علامة</p>
+              <p className="text-xl font-bold text-red-500">
+                {examInfo.statistics.worst_percentage.toFixed(1)}%
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {examInfo.statistics.worst_score} / {examInfo.total_points}
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-muted-foreground mb-1">المتوسط</p>
+              <p className="text-xl font-bold text-blue-600">
+                {examInfo.statistics.average_percentage.toFixed(1)}%
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {examInfo.statistics.average_score.toFixed(1)} / {examInfo.total_points}
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* جدول المحاولات */}
         <div className="border rounded-lg overflow-hidden">
@@ -144,6 +187,7 @@ export const StudentExamResultsDialog = ({
                 <TableHead className="text-right">المحاولة</TableHead>
                 <TableHead className="text-right">العلامة</TableHead>
                 <TableHead className="text-right">النسبة</TableHead>
+                <TableHead className="text-center">الإجابات</TableHead>
                 <TableHead className="text-center">الحالة</TableHead>
                 <TableHead className="text-right">الوقت</TableHead>
                 <TableHead className="text-right">التاريخ</TableHead>
@@ -167,6 +211,13 @@ export const StudentExamResultsDialog = ({
                     >
                       {attempt.percentage.toFixed(1)}%
                     </Badge>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <span className="font-mono text-sm inline-flex items-center gap-1">
+                      <span className="font-bold text-emerald-600">{attempt.correct_answers}</span>
+                      <span className="text-muted-foreground">/</span>
+                      <span className="text-red-500">{attempt.incorrect_answers}</span>
+                    </span>
                   </TableCell>
                   <TableCell className="text-center">
                     {attempt.passed ? (
