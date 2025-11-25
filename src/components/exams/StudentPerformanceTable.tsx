@@ -8,85 +8,68 @@ import { ar } from 'date-fns/locale';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useStudentResults } from '@/hooks/useExamResults';
 import { ExamResultsFilters } from './ExamResultsFilters';
-
 interface StudentPerformanceTableProps {
-  students: Array<{ id: string; user_id: string; name: string }>;
+  students: Array<{
+    id: string;
+    user_id: string;
+    name: string;
+  }>;
   gradeLevel: string;
 }
-
-export const StudentPerformanceTable: React.FC<StudentPerformanceTableProps> = ({ 
-  students, 
-  gradeLevel 
+export const StudentPerformanceTable: React.FC<StudentPerformanceTableProps> = ({
+  students,
+  gradeLevel
 }) => {
   const [selectedStudent, setSelectedStudent] = useState<string>('');
-  
-  const { data, isLoading } = useStudentResults(selectedStudent || null, gradeLevel);
-  
+  const {
+    data,
+    isLoading
+  } = useStudentResults(selectedStudent || null, gradeLevel);
   const chartData = data?.results.map((result, index) => ({
     name: `${index + 1}. ${result.exam_title.substring(0, 10)}...`,
-    'النسبة المئوية': result.percentage,
+    'النسبة المئوية': result.percentage
   })) || [];
-  
   const getImprovementBadge = (improvement: number | null) => {
     if (improvement === null) return null;
-    
     if (improvement > 0) {
-      return (
-        <Badge variant="default" className="gap-1 bg-emerald-500">
+      return <Badge variant="default" className="gap-1 bg-emerald-500">
           <TrendingUp className="h-3 w-3" />
           <span dir="ltr">+{improvement}%</span>
-        </Badge>
-      );
+        </Badge>;
     } else if (improvement < 0) {
-      return (
-        <Badge variant="destructive" className="gap-1">
+      return <Badge variant="destructive" className="gap-1">
           <TrendingDown className="h-3 w-3" />
           <span dir="ltr">{improvement}%</span>
-        </Badge>
-      );
+        </Badge>;
     } else {
-      return (
-        <Badge variant="secondary" className="gap-1">
+      return <Badge variant="secondary" className="gap-1">
           <Minus className="h-3 w-3" />
           <span>بدون تغيير</span>
-        </Badge>
-      );
+        </Badge>;
     }
   };
-  
-  return (
-    <div className="space-y-4">
-      <ExamResultsFilters
-        type="student"
-        selectedStudent={selectedStudent}
-        onStudentChange={setSelectedStudent}
-        onReset={() => setSelectedStudent('')}
-        students={students.map(s => ({ id: s.user_id, name: s.name }))}
-      />
+  return <div className="space-y-4">
+      <ExamResultsFilters type="student" selectedStudent={selectedStudent} onStudentChange={setSelectedStudent} onReset={() => setSelectedStudent('')} students={students.map(s => ({
+      id: s.user_id,
+      name: s.name
+    }))} />
       
-      {!selectedStudent ? (
-        <Card className="border-dashed">
+      {!selectedStudent ? <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <LineChartIcon className="h-12 w-12 text-muted-foreground/50 mb-4" />
             <p className="text-lg font-medium text-muted-foreground">
-              اختر طالباً لعرض أدائه
+              ​يتم تطوير هذه الميّزة   
             </p>
           </CardContent>
-        </Card>
-      ) : isLoading ? (
-        <div className="text-center py-12">
+        </Card> : isLoading ? <div className="text-center py-12">
           <p className="text-muted-foreground">جاري تحميل البيانات...</p>
-        </div>
-      ) : !data || data.results.length === 0 ? (
-        <Card className="border-dashed">
+        </div> : !data || data.results.length === 0 ? <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <p className="text-lg font-medium text-muted-foreground">
               لا توجد نتائج لهذا الطالب
             </p>
           </CardContent>
-        </Card>
-      ) : (
-        <>
+        </Card> : <>
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card>
@@ -106,11 +89,7 @@ export const StudentPerformanceTable: React.FC<StudentPerformanceTableProps> = (
             <Card>
               <CardContent className="p-4 text-center">
                 <p className="text-sm text-muted-foreground mb-1">إجمالي التحسن</p>
-                <p className={`text-2xl font-bold ${
-                  data.stats.total_improvement > 0 ? 'text-emerald-500' :
-                  data.stats.total_improvement < 0 ? 'text-red-500' :
-                  'text-gray-500'
-                }`} dir="ltr">
+                <p className={`text-2xl font-bold ${data.stats.total_improvement > 0 ? 'text-emerald-500' : data.stats.total_improvement < 0 ? 'text-red-500' : 'text-gray-500'}`} dir="ltr">
                   {data.stats.total_improvement > 0 ? '+' : ''}{data.stats.total_improvement}%
                 </p>
               </CardContent>
@@ -126,33 +105,25 @@ export const StudentPerformanceTable: React.FC<StudentPerformanceTableProps> = (
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis 
-                    dataKey="name" 
-                    tick={{ fill: 'hsl(var(--foreground))', fontSize: 11 }}
-                    angle={-45}
-                    textAnchor="end"
-                    height={100}
-                  />
-                  <YAxis 
-                    domain={[0, 100]}
-                    tick={{ fill: 'hsl(var(--foreground))' }}
-                  />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))', 
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px',
-                    }}
-                  />
+                  <XAxis dataKey="name" tick={{
+                fill: 'hsl(var(--foreground))',
+                fontSize: 11
+              }} angle={-45} textAnchor="end" height={100} />
+                  <YAxis domain={[0, 100]} tick={{
+                fill: 'hsl(var(--foreground))'
+              }} />
+                  <Tooltip contentStyle={{
+                backgroundColor: 'hsl(var(--card))',
+                border: '1px solid hsl(var(--border))',
+                borderRadius: '8px'
+              }} />
                   <Legend />
-                  <Line 
-                    type="monotone" 
-                    dataKey="النسبة المئوية" 
-                    stroke="#10b981" 
-                    strokeWidth={3}
-                    dot={{ r: 6, fill: '#10b981' }}
-                    activeDot={{ r: 8 }}
-                  />
+                  <Line type="monotone" dataKey="النسبة المئوية" stroke="#10b981" strokeWidth={3} dot={{
+                r: 6,
+                fill: '#10b981'
+              }} activeDot={{
+                r: 8
+              }} />
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>
@@ -177,8 +148,7 @@ export const StudentPerformanceTable: React.FC<StudentPerformanceTableProps> = (
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {data.results.map((result) => (
-                      <TableRow key={result.id} className="hover:bg-accent/5">
+                    {data.results.map(result => <TableRow key={result.id} className="hover:bg-accent/5">
                         <TableCell className="font-medium max-w-[200px] truncate">
                           {result.exam_title}
                         </TableCell>
@@ -202,18 +172,17 @@ export const StudentPerformanceTable: React.FC<StudentPerformanceTableProps> = (
                         </TableCell>
                         <TableCell className="text-center" dir="ltr">
                           <span className="text-sm">
-                            {format(new Date(result.submitted_at), 'dd/MM/yyyy', { locale: ar })}
+                            {format(new Date(result.submitted_at), 'dd/MM/yyyy', {
+                        locale: ar
+                      })}
                           </span>
                         </TableCell>
-                      </TableRow>
-                    ))}
+                      </TableRow>)}
                   </TableBody>
                 </Table>
               </div>
             </CardContent>
           </Card>
-        </>
-      )}
-    </div>
-  );
+        </>}
+    </div>;
 };
