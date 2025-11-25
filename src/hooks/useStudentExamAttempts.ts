@@ -26,16 +26,6 @@ export const useStudentExamAttempts = (
     queryFn: async () => {
       if (!examId || !studentUserId) return null;
 
-      // جلب بيانات الطالب
-      const { data: student, error: studentError } = await supabase
-        .from("students")
-        .select("id")
-        .eq("user_id", studentUserId)
-        .maybeSingle();
-
-      if (studentError) throw studentError;
-      if (!student) return null;
-
       // جلب معلومات الامتحان
       const { data: exam, error: examError } = await supabase
         .from("exams")
@@ -45,12 +35,12 @@ export const useStudentExamAttempts = (
 
       if (examError) throw examError;
 
-      // جلب جميع محاولات الطالب للامتحان
+      // جلب جميع محاولات الطالب للامتحان (نستخدم user_id مباشرة)
       const { data: attempts, error: attemptsError } = await supabase
         .from("exam_attempts")
         .select("*")
         .eq("exam_id", examId)
-        .eq("student_id", student.id)
+        .eq("student_id", studentUserId)
         .eq("status", "submitted")
         .order("attempt_number", { ascending: true });
 
