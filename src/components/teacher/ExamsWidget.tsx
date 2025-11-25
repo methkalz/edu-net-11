@@ -1117,6 +1117,21 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
     setCurrentStep(prev => prev - 1);
   };
 
+  // استخراج grade_levels من الصفوف المحددة
+  const extractGradeLevelsFromClasses = (
+    classIds: string[], 
+    classes: any[]
+  ): string[] => {
+    const gradeLevels = new Set<string>();
+    classIds?.forEach(classId => {
+      const cls = classes?.find(c => c.id === classId);
+      if (cls?.grade_levels?.code) {
+        gradeLevels.add(cls.grade_levels.code);
+      }
+    });
+    return Array.from(gradeLevels);
+  };
+
   const onSubmit = async (data: CreateExamFormData) => {
     // ✅ التحقق من أن المعلم نقر على زر الحفظ فعلياً
     if (!isExplicitSubmit && currentStep === 7) {
@@ -1265,7 +1280,9 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
         description: data.description || null,
         duration_minutes: data.duration_minutes,
         passing_percentage: data.passing_percentage,
-        grade_levels: data.selection_type === 'all_grade' ? data.grade_levels : [],
+        grade_levels: data.selection_type === 'all_grade' 
+          ? data.grade_levels 
+          : extractGradeLevelsFromClasses(data.target_classes || [], availableClasses || []),
         target_classes: data.selection_type === 'specific_classes' ? data.target_classes : [],
         start_datetime: data.start_datetime || null,
         end_datetime: data.end_datetime || null,
