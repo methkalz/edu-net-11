@@ -47,8 +47,8 @@ function isValidSentence(sentence: string): boolean {
   if (specialCharRatio > 0.4) return false; // أكثر من 40% أحرف خاصة
   
   // رفض الجمل القصيرة جداً بالكلمات (أقل من 5 كلمات)
-  const wordCount = trimmed.split(/\s+/).length;
-  if (wordCount < 5) return false;
+  const words = trimmed.split(/\s+/);
+  if (words.length < 5) return false;
   
   // للجمل التي تحتوي على أحرف عربية، يجب أن تكون النسبة معقولة
   const arabicChars = (trimmed.match(/[\u0600-\u06FF]/g) || []).length;
@@ -59,6 +59,47 @@ function isValidSentence(sentence: string): boolean {
     // يجب أن تكون 30% على الأقل من الجملة عربية إذا كانت تحتوي على عربي
     if (arabicRatio < 0.3) return false;
   }
+  
+  // رفض الأنماط المتكررة (مثل أوامر الشبكات)
+  // كشف التكرار: إذا كانت نفس الكلمة تتكرر أكثر من 40% من الجملة
+  const wordCounts = new Map<string, number>();
+  const lowerWords = words.map(w => w.toLowerCase());
+  
+  for (const word of lowerWords) {
+    if (word.length < 3) continue; // تجاهل الكلمات القصيرة جداً
+    wordCounts.set(word, (wordCounts.get(word) || 0) + 1);
+  }
+  
+  // إذا كانت أي كلمة تتكرر أكثر من 40% من الجملة
+  for (const count of wordCounts.values()) {
+    if (count / words.length > 0.4) return false;
+  }
+  
+  // رفض الجمل التي تحتوي على كلمات تقنية متكررة (Cisco, networking commands, etc.)
+  const technicalPatterns = [
+    /interface\s+\w+\d+/gi,
+    /switchport\s+(access|mode|trunk)/gi,
+    /vlan\s+\d+/gi,
+    /fastethernet\d+/gi,
+    /gigabitethernet\d+/gi,
+    /hostname\s+\w+/gi,
+    /ip\s+address\s+[\d.]+/gi,
+    /no\s+service\s+/gi,
+    /spanning.tree/gi,
+  ];
+  
+  let technicalMatchCount = 0;
+  for (const pattern of technicalPatterns) {
+    const matches = trimmed.match(pattern);
+    if (matches) technicalMatchCount += matches.length;
+  }
+  
+  // إذا كان هناك أكثر من 3 تطابقات تقنية في جملة واحدة
+  if (technicalMatchCount > 3) return false;
+  
+  // رفض الجمل التي تحتوي على تسلسلات رقمية متتالية (مثل 01, 02, 03...)
+  const sequentialNumbers = trimmed.match(/\d{2,3}/g);
+  if (sequentialNumbers && sequentialNumbers.length > 5) return false;
   
   return true;
 }
