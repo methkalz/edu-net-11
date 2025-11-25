@@ -18,6 +18,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Progress } from '@/components/ui/progress';
 import { RefreshCw, FileText, AlertTriangle, AlertCircle, CheckCircle, Eye, Clock, TrendingUp, Target, BookOpen, ArrowRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { usePDFComparison, type GradeLevel, type ComparisonResult, type ComparisonMatch } from '@/hooks/usePDFComparison';
 import { formatDistanceToNow, format } from 'date-fns';
@@ -413,7 +414,7 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
                                     </CardTitle>
                                   </CardHeader>
                                   
-                                  <CardContent className="space-y-6">
+                                   <CardContent className="space-y-6">
                                     {/* إحصائيات سريعة */}
                                     <div className="grid grid-cols-3 gap-4">
                                       <div className="p-4 border rounded-lg bg-gradient-to-br from-blue-500/10 to-blue-500/5">
@@ -444,6 +445,114 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
                                         </p>
                                       </div>
                                     </div>
+
+                                    {/* تفاصيل المقاييس الثلاثة */}
+                                    {selectedMatch.metadata && (
+                                      <Card className="border-0 bg-gradient-to-br from-accent/5 to-primary/5">
+                                        <CardHeader>
+                                          <CardTitle className="text-sm flex items-center gap-2">
+                                            <Target className="h-4 w-4 text-primary" />
+                                            تحليل مكونات التشابه
+                                          </CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="space-y-4">
+                                          {/* Cosine Similarity */}
+                                          <div className="space-y-2">
+                                            <div className="flex items-center justify-between">
+                                              <span className="text-sm font-medium text-foreground">تشابه المحتوى (Cosine)</span>
+                                              <span className="text-sm font-bold text-blue-600">
+                                                {((selectedMatch.metadata.cosine || 0) * 100).toFixed(1)}%
+                                              </span>
+                                            </div>
+                                            <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                                              <div 
+                                                className="h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-500"
+                                                style={{ width: `${(selectedMatch.metadata.cosine || 0) * 100}%` }}
+                                              />
+                                            </div>
+                                            <p className="text-xs text-muted-foreground">قياس التشابه الدلالي للمحتوى باستخدام embeddings</p>
+                                          </div>
+
+                                          {/* Jaccard Similarity */}
+                                          <div className="space-y-2">
+                                            <div className="flex items-center justify-between">
+                                              <span className="text-sm font-medium text-foreground">تشابه الكلمات (Jaccard)</span>
+                                              <span className="text-sm font-bold text-purple-600">
+                                                {((selectedMatch.metadata.jaccard || 0) * 100).toFixed(1)}%
+                                              </span>
+                                            </div>
+                                            <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                                              <div 
+                                                className="h-full bg-gradient-to-r from-purple-500 to-purple-600 transition-all duration-500"
+                                                style={{ width: `${(selectedMatch.metadata.jaccard || 0) * 100}%` }}
+                                              />
+                                            </div>
+                                            <p className="text-xs text-muted-foreground">نسبة الكلمات المفتاحية المشتركة بين الملفين</p>
+                                          </div>
+
+                                          {/* Length Similarity */}
+                                          <div className="space-y-2">
+                                            <div className="flex items-center justify-between">
+                                              <span className="text-sm font-medium text-foreground">تشابه الطول</span>
+                                              <span className="text-sm font-bold text-orange-600">
+                                                {((selectedMatch.metadata.length_similarity || 0) * 100).toFixed(1)}%
+                                              </span>
+                                            </div>
+                                            <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                                              <div 
+                                                className="h-full bg-gradient-to-r from-orange-500 to-orange-600 transition-all duration-500"
+                                                style={{ width: `${(selectedMatch.metadata.length_similarity || 0) * 100}%` }}
+                                              />
+                                            </div>
+                                            <p className="text-xs text-muted-foreground">التقارب في عدد الكلمات والصفحات</p>
+                                          </div>
+                                        </CardContent>
+                                      </Card>
+                                    )}
+
+                                    {/* الصفحات المتأثرة */}
+                                    {selectedMatch.affected_pages && (
+                                      <Card className="border-0 bg-gradient-to-br from-red-500/5 to-orange-500/5">
+                                        <CardContent className="p-4">
+                                          <div className="flex items-start gap-3">
+                                            <div className="p-2 rounded-lg bg-red-500/10">
+                                              <BookOpen className="h-5 w-5 text-red-600" />
+                                            </div>
+                                            <div className="flex-1 space-y-3">
+                                              <p className="font-semibold text-foreground">الصفحات المتأثرة بالتشابه</p>
+                                              <div className="flex flex-wrap gap-2">
+                                                <div className="flex items-center gap-2">
+                                                  <span className="text-xs text-muted-foreground">الملف الأصلي:</span>
+                                                  {selectedMatch.affected_pages.source_pages?.length > 0 ? (
+                                                    selectedMatch.affected_pages.source_pages.map((page, idx) => (
+                                                      <Badge key={idx} variant="outline" className="text-xs bg-blue-50 dark:bg-blue-950/30 border-blue-300">
+                                                        صفحة {page}
+                                                      </Badge>
+                                                    ))
+                                                  ) : (
+                                                    <span className="text-xs text-muted-foreground">لا توجد</span>
+                                                  )}
+                                                </div>
+                                              </div>
+                                              <div className="flex flex-wrap gap-2">
+                                                <div className="flex items-center gap-2">
+                                                  <span className="text-xs text-muted-foreground">الملف المطابق:</span>
+                                                  {selectedMatch.affected_pages.matched_pages?.length > 0 ? (
+                                                    selectedMatch.affected_pages.matched_pages.map((page, idx) => (
+                                                      <Badge key={idx} variant="outline" className="text-xs bg-orange-50 dark:bg-orange-950/30 border-orange-300">
+                                                        صفحة {page}
+                                                      </Badge>
+                                                    ))
+                                                  ) : (
+                                                    <span className="text-xs text-muted-foreground">لا توجد</span>
+                                                  )}
+                                                </div>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </CardContent>
+                                      </Card>
+                                    )}
 
                                     {/* جدول الجمل المتشابهة */}
                                     {selectedMatch.matched_segments && selectedMatch.matched_segments.length > 0 && (

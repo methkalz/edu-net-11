@@ -126,6 +126,10 @@ serve(async (req) => {
     const internalStartTime = Date.now();
     const internalComparisons: Map<string, any[]> = new Map();
     
+    // إنشاء Map للنصوص الكاملة لاستخدامها في استخراج العبارات
+    const fileTextsMap = new Map<string, string>();
+    files.forEach(f => fileTextsMap.set(f.fileHash, f.fileText));
+    
     // توليد embeddings و keywords للملفات المرفوعة (مع whitelist)
     const fileEmbeddings = files.map((file, idx) => {
       const preprocessed = preprocessText(file.fileText, file.fileText.split(/\s+/).length);
@@ -223,17 +227,46 @@ serve(async (req) => {
                               lengthSimilarity * weights.length_weight;
           }
           
+          // استخراج العبارات المتشابهة للمقارنات المرتفعة (≥35%)
+          let matchedSegments: MatchedSegment[] = [];
+          let affectedPages = { source_pages: [], matched_pages: [] };
+          
+          if (finalSimilarity >= 0.35) {
+            const text1 = fileTextsMap.get(file1.fileHash) || '';
+            const text2 = fileTextsMap.get(file2.fileHash) || '';
+            
+            if (text1 && text2) {
+              matchedSegments = extractMatchingSegments(text1, text2).slice(0, 10);
+              
+              // استخراج الصفحات المتأثرة
+              const sourcePages = new Set<number>();
+              const matchedPages = new Set<number>();
+              matchedSegments.forEach(seg => {
+                sourcePages.add(seg.source_page);
+                matchedPages.add(seg.matched_page);
+              });
+              affectedPages = {
+                source_pages: Array.from(sourcePages).sort((a, b) => a - b),
+                matched_pages: Array.from(matchedPages).sort((a, b) => a - b),
+              };
+            }
+          }
+          
           // ✅ حفظ جميع المقارنات مع التفاصيل
           file1Comparisons.push({
             matched_file_name: file2.fileName,
             similarity_score: Math.round(finalSimilarity * 100) / 100,
             similarity_method: 'hybrid_cosine_jaccard_length',
             flagged: finalSimilarity >= settings.thresholds.flagged_threshold,
+            matched_segments: matchedSegments,
+            affected_pages: affectedPages,
             metadata: {
               cosine: Math.round(cosineSim * 100) / 100,
               jaccard: Math.round(jaccardSim * 100) / 100,
               length_similarity: Math.round(lengthSimilarity * 100) / 100,
               word_count_ratio: Math.round(wordRatio * 100) / 100,
+              page_count_source: pageCount1,
+              page_count_matched: pageCount2,
             }
           });
         }

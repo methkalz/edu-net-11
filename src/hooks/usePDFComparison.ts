@@ -29,6 +29,18 @@ export interface ComparisonMatch {
   jaccard_score?: number;
   flagged: boolean;
   matched_segments?: MatchedSegment[];
+  affected_pages?: {
+    source_pages: number[];
+    matched_pages: number[];
+  };
+  metadata?: {
+    cosine: number;
+    jaccard: number;
+    length_similarity: number;
+    word_count_ratio: number;
+    page_count_source?: number;
+    page_count_matched?: number;
+  };
 }
 
 export interface ComparisonResult {
