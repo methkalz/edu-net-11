@@ -51,12 +51,23 @@ export const useStudentExamAttempts = (
         const correct_answers = detailedResults?.correct_count || 0;
         const incorrect_answers = (exam.total_questions || 0) - correct_answers;
 
+        // حساب النسبة الصحيحة بناءً على عدد الإجابات الصحيحة
+        const calculatedPercentage = exam.total_questions > 0 
+          ? (correct_answers / exam.total_questions) * 100 
+          : 0;
+        
+        // العلامة من 100 (تساوي النسبة المئوية)
+        const calculatedScore = calculatedPercentage;
+        
+        // تحديد النجاح بناءً على النسبة الجديدة
+        const calculatedPassed = calculatedPercentage >= exam.passing_percentage;
+
         return {
           id: attempt.id,
           attempt_number: attempt.attempt_number,
-          score: attempt.score || 0,
-          percentage: attempt.percentage || 0,
-          passed: attempt.passed || false,
+          score: calculatedScore,
+          percentage: calculatedPercentage,
+          passed: calculatedPassed,
           time_spent_seconds: attempt.time_spent_seconds || 0,
           submitted_at: attempt.submitted_at || attempt.updated_at || "",
           total_points: exam.total_points,

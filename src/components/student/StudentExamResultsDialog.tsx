@@ -197,7 +197,7 @@ export const StudentExamResultsDialog = ({
                   </TableCell>
                   <TableCell>
                     <span className="font-semibold">
-                      {attempt.score}/{attempt.total_points}
+                      {attempt.percentage.toFixed(0)}/100
                     </span>
                   </TableCell>
                   <TableCell>
