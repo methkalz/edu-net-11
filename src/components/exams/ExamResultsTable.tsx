@@ -3,6 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Eye, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
@@ -18,11 +19,47 @@ export const ExamResultsTable: React.FC<ExamResultsTableProps> = ({ exams }) => 
   const [sortField, setSortField] = useState<string>('percentage');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [currentPage, setCurrentPage] = useState(1);
+  const [aggregationType, setAggregationType] = useState<'all' | 'best' | 'worst' | 'average'>('all');
   const resultsPerPage = 10;
   
   const { data, isLoading } = useExamResults(selectedExam || null);
   
-  
+  // تجميع النتائج حسب نوع التجميع
+  const aggregatedResults = useMemo(() => {
+    if (!data?.results) return [];
+    if (aggregationType === 'all') return data.results;
+    
+    // تجميع حسب student_id
+    const grouped = data.results.reduce((acc, result) => {
+      if (!acc[result.student_id]) {
+        acc[result.student_id] = [];
+      }
+      acc[result.student_id].push(result);
+      return acc;
+    }, {} as Record<string, typeof data.results>);
+    
+    // تطبيق التجميع المطلوب
+    return Object.values(grouped).map(studentResults => {
+      if (aggregationType === 'best') {
+        return studentResults.reduce((best, r) => r.percentage > best.percentage ? r : best);
+      }
+      if (aggregationType === 'worst') {
+        return studentResults.reduce((worst, r) => r.percentage < worst.percentage ? r : worst);
+      }
+      // average
+      const avgPercentage = studentResults.reduce((sum, r) => sum + r.percentage, 0) / studentResults.length;
+      const avgCorrect = Math.round(studentResults.reduce((sum, r) => sum + r.correct_answers, 0) / studentResults.length);
+      const avgTime = Math.round(studentResults.reduce((sum, r) => sum + r.time_spent_seconds, 0) / studentResults.length);
+      return {
+        ...studentResults[0],
+        percentage: avgPercentage,
+        correct_answers: avgCorrect,
+        time_spent_seconds: avgTime,
+        passed: avgPercentage >= (data.stats.passing_percentage || 50),
+        attempt_number: studentResults.length, // عدد المحاولات الكلي
+      };
+    });
+  }, [data?.results, aggregationType, data?.stats.passing_percentage]);
   const handleSort = (field: string) => {
     if (sortField === field) {
       setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
@@ -33,9 +70,9 @@ export const ExamResultsTable: React.FC<ExamResultsTableProps> = ({ exams }) => 
   };
   
   const sortedResults = useMemo(() => {
-    if (!data?.results) return [];
+    if (!aggregatedResults) return [];
     
-    const sorted = [...data.results].sort((a, b) => {
+    const sorted = [...aggregatedResults].sort((a, b) => {
       const aValue = a[sortField as keyof typeof a];
       const bValue = b[sortField as keyof typeof b];
       
@@ -53,7 +90,7 @@ export const ExamResultsTable: React.FC<ExamResultsTableProps> = ({ exams }) => 
     });
     
     return sorted;
-  }, [data?.results, sortField, sortDirection]);
+  }, [aggregatedResults, sortField, sortDirection]);
   
   const paginatedResults = useMemo(() => {
     const startIndex = (currentPage - 1) * resultsPerPage;
@@ -77,10 +114,29 @@ export const ExamResultsTable: React.FC<ExamResultsTableProps> = ({ exams }) => 
         onExamChange={setSelectedExam}
         onReset={() => {
           setSelectedExam('');
+          setAggregationType('all');
           setCurrentPage(1);
         }}
         exams={exams}
       />
+      
+      {/* فلتر التجميع */}
+      {selectedExam && data && data.results.length > 0 && (
+        <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg border border-primary/20">
+          <span className="text-sm font-medium text-foreground">طريقة عرض النتائج:</span>
+          <Select value={aggregationType} onValueChange={(value: any) => setAggregationType(value)}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">جميع المحاولات</SelectItem>
+              <SelectItem value="best">أعلى علامة للطالب</SelectItem>
+              <SelectItem value="worst">أقل علامة للطالب</SelectItem>
+              <SelectItem value="average">متوسط علامات الطالب</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
       
       {!selectedExam ? (
         <Card className="border-dashed">
@@ -109,8 +165,12 @@ export const ExamResultsTable: React.FC<ExamResultsTableProps> = ({ exams }) => 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card>
               <CardContent className="p-4 text-center">
-                <p className="text-sm text-muted-foreground mb-1">عدد المحاولات</p>
-                <p className="text-2xl font-bold" dir="ltr">{data.stats.total_attempts}</p>
+                <p className="text-sm text-muted-foreground mb-1">
+                  {aggregationType === 'all' ? 'عدد المحاولات' : 'عدد الطلاب'}
+                </p>
+                <p className="text-2xl font-bold" dir="ltr">
+                  {aggregationType === 'all' ? data.stats.total_attempts : aggregatedResults.length}
+                </p>
               </CardContent>
             </Card>
             <Card>
@@ -146,7 +206,7 @@ export const ExamResultsTable: React.FC<ExamResultsTableProps> = ({ exams }) => 
                       </TableHead>
                       <TableHead className="text-center" dir="ltr">
                         <Button variant="ghost" onClick={() => handleSort('attempt_number')} className="gap-2 font-semibold">
-                          رقم المحاولة
+                          {aggregationType === 'all' ? 'رقم المحاولة' : aggregationType === 'average' ? 'عدد المحاولات' : 'المحاولة المعروضة'}
                           {getSortIcon('attempt_number')}
                         </Button>
                       </TableHead>
