@@ -9,26 +9,31 @@ import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { useExamResults } from '@/hooks/useExamResults';
 import { ExamResultsFilters } from './ExamResultsFilters';
-
 interface ExamResultsTableProps {
-  exams: Array<{ id: string; title: string }>;
+  exams: Array<{
+    id: string;
+    title: string;
+  }>;
 }
-
-export const ExamResultsTable: React.FC<ExamResultsTableProps> = ({ exams }) => {
+export const ExamResultsTable: React.FC<ExamResultsTableProps> = ({
+  exams
+}) => {
   const [selectedExam, setSelectedExam] = useState<string>('');
   const [sortField, setSortField] = useState<string>('percentage');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [currentPage, setCurrentPage] = useState(1);
   const [aggregationType, setAggregationType] = useState<'all' | 'best' | 'worst' | 'average'>('all');
   const resultsPerPage = 10;
-  
-  const { data, isLoading } = useExamResults(selectedExam || null);
-  
+  const {
+    data,
+    isLoading
+  } = useExamResults(selectedExam || null);
+
   // تجميع النتائج حسب نوع التجميع
   const aggregatedResults = useMemo(() => {
     if (!data?.results) return [];
     if (aggregationType === 'all') return data.results;
-    
+
     // تجميع حسب student_id
     const grouped = data.results.reduce((acc, result) => {
       if (!acc[result.student_id]) {
@@ -37,7 +42,7 @@ export const ExamResultsTable: React.FC<ExamResultsTableProps> = ({ exams }) => 
       acc[result.student_id].push(result);
       return acc;
     }, {} as Record<string, typeof data.results>);
-    
+
     // تطبيق التجميع المطلوب
     return Object.values(grouped).map(studentResults => {
       if (aggregationType === 'best') {
@@ -56,7 +61,7 @@ export const ExamResultsTable: React.FC<ExamResultsTableProps> = ({ exams }) => 
         correct_answers: avgCorrect,
         time_spent_seconds: avgTime,
         passed: avgPercentage >= (data.stats.passing_percentage || 50),
-        attempt_number: studentResults.length, // عدد المحاولات الكلي
+        attempt_number: studentResults.length // عدد المحاولات الكلي
       };
     });
   }, [data?.results, aggregationType, data?.stats.passing_percentage]);
@@ -68,61 +73,39 @@ export const ExamResultsTable: React.FC<ExamResultsTableProps> = ({ exams }) => 
       setSortDirection('desc');
     }
   };
-  
   const sortedResults = useMemo(() => {
     if (!aggregatedResults) return [];
-    
     const sorted = [...aggregatedResults].sort((a, b) => {
       const aValue = a[sortField as keyof typeof a];
       const bValue = b[sortField as keyof typeof b];
-      
       if (typeof aValue === 'number' && typeof bValue === 'number') {
         return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
       }
-      
       if (typeof aValue === 'string' && typeof bValue === 'string') {
-        return sortDirection === 'asc' 
-          ? aValue.localeCompare(bValue, 'ar')
-          : bValue.localeCompare(aValue, 'ar');
+        return sortDirection === 'asc' ? aValue.localeCompare(bValue, 'ar') : bValue.localeCompare(aValue, 'ar');
       }
-      
       return 0;
     });
-    
     return sorted;
   }, [aggregatedResults, sortField, sortDirection]);
-  
   const paginatedResults = useMemo(() => {
     const startIndex = (currentPage - 1) * resultsPerPage;
     return sortedResults.slice(startIndex, startIndex + resultsPerPage);
   }, [sortedResults, currentPage]);
-  
   const totalPages = Math.ceil(sortedResults.length / resultsPerPage);
-  
   const getSortIcon = (field: string) => {
     if (sortField !== field) return <ArrowUpDown className="h-4 w-4 opacity-50" />;
-    return sortDirection === 'asc' 
-      ? <ArrowUp className="h-4 w-4 text-primary" />
-      : <ArrowDown className="h-4 w-4 text-primary" />;
+    return sortDirection === 'asc' ? <ArrowUp className="h-4 w-4 text-primary" /> : <ArrowDown className="h-4 w-4 text-primary" />;
   };
-  
-  return (
-    <div className="space-y-4">
-      <ExamResultsFilters
-        type="exam"
-        selectedExam={selectedExam}
-        onExamChange={setSelectedExam}
-        onReset={() => {
-          setSelectedExam('');
-          setAggregationType('all');
-          setCurrentPage(1);
-        }}
-        exams={exams}
-      />
+  return <div className="space-y-4">
+      <ExamResultsFilters type="exam" selectedExam={selectedExam} onExamChange={setSelectedExam} onReset={() => {
+      setSelectedExam('');
+      setAggregationType('all');
+      setCurrentPage(1);
+    }} exams={exams} />
       
       {/* فلتر التجميع */}
-      {selectedExam && data && data.results.length > 0 && (
-        <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg border border-primary/20">
+      {selectedExam && data && data.results.length > 0 && <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg border border-primary/20">
           <span className="text-sm font-medium text-foreground">طريقة عرض النتائج:</span>
           <Select value={aggregationType} onValueChange={(value: any) => setAggregationType(value)}>
             <SelectTrigger className="w-[200px]">
@@ -135,56 +118,48 @@ export const ExamResultsTable: React.FC<ExamResultsTableProps> = ({ exams }) => 
               <SelectItem value="average">متوسط علامات الطالب</SelectItem>
             </SelectContent>
           </Select>
-        </div>
-      )}
+        </div>}
       
-      {!selectedExam ? (
-        <Card className="border-dashed">
+      {!selectedExam ? <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <Eye className="h-12 w-12 text-muted-foreground/50 mb-4" />
             <p className="text-lg font-medium text-muted-foreground">
               اختر امتحاناً لعرض نتائجه
             </p>
           </CardContent>
-        </Card>
-      ) : isLoading ? (
-        <div className="text-center py-12">
+        </Card> : isLoading ? <div className="text-center py-12">
           <p className="text-muted-foreground">جاري تحميل النتائج...</p>
-        </div>
-      ) : !data || data.results.length === 0 ? (
-        <Card className="border-dashed">
+        </div> : !data || data.results.length === 0 ? <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <p className="text-lg font-medium text-muted-foreground">
               لا توجد نتائج لهذا الامتحان
             </p>
           </CardContent>
-        </Card>
-      ) : (
-        <>
+        </Card> : <>
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card>
               <CardContent className="p-4 text-center">
-                <p className="text-sm text-muted-foreground mb-1">
+                <p className="text-sm text-muted-foreground mb-1 text-center">
                   {aggregationType === 'all' ? 'عدد المحاولات' : 'عدد الطلاب'}
                 </p>
-                <p className="text-2xl font-bold" dir="ltr">
+                <p dir="ltr" className="text-2xl font-bold text-center">
                   {aggregationType === 'all' ? data.stats.total_attempts : aggregatedResults.length}
                 </p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-4 text-center">
-                <p className="text-sm text-muted-foreground mb-1">المتوسط العام</p>
-                <p className="text-2xl font-bold text-emerald-500" dir="ltr">
+                <p className="text-sm text-muted-foreground mb-1 text-center">المتوسط العام</p>
+                <p dir="ltr" className="text-2xl font-bold text-emerald-500 text-center">
                   {data.stats.avg_percentage}%
                 </p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-4 text-center">
-                <p className="text-sm text-muted-foreground mb-1">معدل النجاح</p>
-                <p className="text-2xl font-bold text-blue-500" dir="ltr">
+                <p className="text-sm text-muted-foreground mb-1 text-center">معدل النجاح</p>
+                <p dir="ltr" className="text-2xl font-bold text-blue-500 text-center">
                   {data.stats.pass_rate}%
                 </p>
               </CardContent>
@@ -233,8 +208,7 @@ export const ExamResultsTable: React.FC<ExamResultsTableProps> = ({ exams }) => 
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {paginatedResults.map((result) => (
-                      <TableRow key={result.id} className="hover:bg-accent/5">
+                    {paginatedResults.map(result => <TableRow key={result.id} className="hover:bg-accent/5">
                         <TableCell className="font-medium">{result.student_name}</TableCell>
                         <TableCell className="text-center" dir="ltr">
                           <Badge variant="outline">{result.attempt_number}</Badge>
@@ -258,70 +232,52 @@ export const ExamResultsTable: React.FC<ExamResultsTableProps> = ({ exams }) => 
                         </TableCell>
                         <TableCell className="text-center" dir="ltr">
                           <span className="text-sm font-medium font-mono">
-                            {result.time_spent_seconds > 0 ? (
-                              (() => {
-                                const totalSeconds = result.time_spent_seconds;
-                                const hours = Math.floor(totalSeconds / 3600);
-                                const minutes = Math.floor((totalSeconds % 3600) / 60);
-                                const seconds = totalSeconds % 60;
-                                
-                                if (hours > 0) {
-                                  return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                                } else {
-                                  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-                                }
-                              })()
-                            ) : (
-                              <span className="text-muted-foreground/50">-</span>
-                            )}
+                            {result.time_spent_seconds > 0 ? (() => {
+                        const totalSeconds = result.time_spent_seconds;
+                        const hours = Math.floor(totalSeconds / 3600);
+                        const minutes = Math.floor(totalSeconds % 3600 / 60);
+                        const seconds = totalSeconds % 60;
+                        if (hours > 0) {
+                          return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                        } else {
+                          return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                        }
+                      })() : <span className="text-muted-foreground/50">-</span>}
                           </span>
                         </TableCell>
                         <TableCell className="text-center" dir="ltr">
                           <span className="text-sm">
-                            {format(new Date(result.submitted_at), 'dd/MM/yyyy', { locale: ar })}
+                            {format(new Date(result.submitted_at), 'dd/MM/yyyy', {
+                        locale: ar
+                      })}
                           </span>
                         </TableCell>
-                      </TableRow>
-                    ))}
+                      </TableRow>)}
                   </TableBody>
                 </Table>
               </div>
               
               {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between px-4 py-3 border-t">
+              {totalPages > 1 && <div className="flex items-center justify-between px-4 py-3 border-t">
                   <p className="text-sm text-muted-foreground">
-                    عرض {((currentPage - 1) * resultsPerPage) + 1} - {Math.min(currentPage * resultsPerPage, sortedResults.length)} من {sortedResults.length}
+                    عرض {(currentPage - 1) * resultsPerPage + 1} - {Math.min(currentPage * resultsPerPage, sortedResults.length)} من {sortedResults.length}
                   </p>
                   <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                      disabled={currentPage === 1}
-                    >
+                    <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>
                       <ChevronRight className="h-4 w-4" />
                       السابق
                     </Button>
                     <span className="px-3 py-1 text-sm" dir="ltr">
                       {currentPage} / {totalPages}
                     </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                      disabled={currentPage === totalPages}
-                    >
+                    <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>
                       التالي
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
                   </div>
-                </div>
-              )}
+                </div>}
             </CardContent>
           </Card>
-        </>
-      )}
-    </div>
-  );
+        </>}
+    </div>;
 };
