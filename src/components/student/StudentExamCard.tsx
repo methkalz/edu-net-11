@@ -9,14 +9,16 @@ import { ar } from "date-fns/locale";
 import { useState, useEffect } from "react";
 import { StudentExamResultsDialog } from "./StudentExamResultsDialog";
 import { useAuth } from "@/hooks/useAuth";
-
 interface StudentExamCardProps {
   exam: AvailableExam;
 }
-
-export const StudentExamCard = ({ exam }: StudentExamCardProps) => {
+export const StudentExamCard = ({
+  exam
+}: StudentExamCardProps) => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const {
+    user
+  } = useAuth();
   const [showResults, setShowResults] = useState(false);
   const [isNewlyAvailable, setIsNewlyAvailable] = useState(false);
 
@@ -25,66 +27,76 @@ export const StudentExamCard = ({ exam }: StudentExamCardProps) => {
     if (exam.can_start && !isPast(new Date(exam.end_datetime))) {
       const examStartTime = new Date(exam.start_datetime).getTime();
       const now = Date.now();
-      
+
       // إذا بدأ الامتحان خلال آخر 5 دقائق
       if (now - examStartTime < 5 * 60 * 1000 && now >= examStartTime) {
         setIsNewlyAvailable(true);
-        
+
         // إخفاء البادج بعد دقيقة واحدة
         const timer = setTimeout(() => setIsNewlyAvailable(false), 60000);
         return () => clearTimeout(timer);
       }
     }
   }, [exam.can_start, exam.start_datetime, exam.end_datetime]);
-
   const getExamStatus = () => {
     if (exam.can_start && !isPast(new Date(exam.end_datetime))) {
-      return { label: "متاح الآن", variant: "default" as const, color: "text-primary" };
+      return {
+        label: "متاح الآن",
+        variant: "default" as const,
+        color: "text-primary"
+      };
     }
     if (exam.attempts_used >= exam.max_attempts) {
-      return { label: "مكتمل", variant: "secondary" as const, color: "text-muted-foreground" };
+      return {
+        label: "مكتمل",
+        variant: "secondary" as const,
+        color: "text-muted-foreground"
+      };
     }
     if (isPast(new Date(exam.end_datetime))) {
-      return { label: "منتهي", variant: "destructive" as const, color: "text-destructive" };
+      return {
+        label: "منتهي",
+        variant: "destructive" as const,
+        color: "text-destructive"
+      };
     }
     if (isFuture(new Date(exam.start_datetime))) {
-      return { label: "قريباً", variant: "outline" as const, color: "text-accent-foreground" };
+      return {
+        label: "قريباً",
+        variant: "outline" as const,
+        color: "text-accent-foreground"
+      };
     }
-    return { label: "غير متاح", variant: "outline" as const, color: "text-muted-foreground" };
+    return {
+      label: "غير متاح",
+      variant: "outline" as const,
+      color: "text-muted-foreground"
+    };
   };
-
   const status = getExamStatus();
-
   const handleStartExam = () => {
     navigate(`/student/exam/${exam.id}`);
   };
-
   const handleViewResults = () => {
     setShowResults(true);
   };
-
-  return (
-    <Card className="hover:shadow-md transition-shadow">
+  return <Card className="hover:shadow-md transition-shadow">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-lg line-clamp-2 flex items-center gap-2">
             {exam.title}
-            {isNewlyAvailable && (
-              <Badge variant="default" className="shrink-0 bg-green-emerald text-white animate-pulse">
+            {isNewlyAvailable && <Badge variant="default" className="shrink-0 bg-green-emerald text-white animate-pulse">
                 <Sparkles className="h-3 w-3 ml-1" />
                 جديد!
-              </Badge>
-            )}
+              </Badge>}
           </CardTitle>
-          <Badge variant={status.variant} className="shrink-0">
+          <Badge variant={status.variant} className="shrink-0 text-neutral-50 bg-slate-400">
             {status.label}
           </Badge>
         </div>
-        {exam.description && (
-          <p className="text-sm text-muted-foreground line-clamp-2 mt-2">
+        {exam.description && <p className="text-sm text-muted-foreground line-clamp-2 mt-2">
             {exam.description}
-          </p>
-        )}
+          </p>}
       </CardHeader>
       
       <CardContent className="space-y-4">
@@ -112,67 +124,39 @@ export const StudentExamCard = ({ exam }: StudentExamCardProps) => {
 
         {/* الوقت */}
         <div className="space-y-1 text-sm">
-          {exam.can_start && !isPast(new Date(exam.end_datetime)) && (
-            <div className="flex items-center gap-2 text-primary">
+          {exam.can_start && !isPast(new Date(exam.end_datetime)) && <div className="flex items-center gap-2 text-primary">
               <Calendar className="h-4 w-4" />
               <span>
-                ينتهي {formatDistanceToNow(new Date(exam.end_datetime), { 
-                  addSuffix: true, 
-                  locale: ar 
-                })}
+                ينتهي {formatDistanceToNow(new Date(exam.end_datetime), {
+              addSuffix: true,
+              locale: ar
+            })}
               </span>
-            </div>
-          )}
-          {isFuture(new Date(exam.start_datetime)) && (
-            <div className="flex items-center gap-2 text-accent-foreground">
+            </div>}
+          {isFuture(new Date(exam.start_datetime)) && <div className="flex items-center gap-2 text-accent-foreground">
               <Calendar className="h-4 w-4" />
               <span>
-                يبدأ {formatDistanceToNow(new Date(exam.start_datetime), { 
-                  addSuffix: true, 
-                  locale: ar 
-                })}
+                يبدأ {formatDistanceToNow(new Date(exam.start_datetime), {
+              addSuffix: true,
+              locale: ar
+            })}
               </span>
-            </div>
-          )}
+            </div>}
         </div>
 
         {/* الأزرار */}
         <div className="flex gap-2">
-          {exam.can_start && !isPast(new Date(exam.end_datetime)) ? (
-            <Button 
-              onClick={handleStartExam} 
-              className="w-full"
-              size="sm"
-            >
+          {exam.can_start && !isPast(new Date(exam.end_datetime)) ? <Button onClick={handleStartExam} className="w-full" size="sm">
               ابدأ الامتحان
-            </Button>
-          ) : exam.attempts_used > 0 ? (
-            <Button 
-              onClick={handleViewResults} 
-              variant="outline" 
-              className="w-full"
-              size="sm"
-              disabled
-            >
+            </Button> : exam.attempts_used > 0 ? <Button onClick={handleViewResults} variant="outline" className="w-full" size="sm" disabled>
               عرض النتائج
-            </Button>
-          ) : (
-            <Button disabled className="w-full" size="sm">
+            </Button> : <Button disabled className="w-full" size="sm">
               {status.label}
-            </Button>
-          )}
+            </Button>}
         </div>
       </CardContent>
 
       {/* نافذة عرض النتائج */}
-      {user && (
-        <StudentExamResultsDialog
-          open={showResults}
-          onOpenChange={setShowResults}
-          examId={exam.id}
-          studentUserId={user.id}
-        />
-      )}
-    </Card>
-  );
+      {user && <StudentExamResultsDialog open={showResults} onOpenChange={setShowResults} examId={exam.id} studentUserId={user.id} />}
+    </Card>;
 };
