@@ -29,12 +29,47 @@ export interface MatchedSegment {
 // normalizeArabicText is now imported from _shared/embeddings.ts
 export { normalizeArabicText } from '../_shared/embeddings.ts';
 
+// دالة للتحقق من جودة الجملة
+function isValidSentence(sentence: string): boolean {
+  const trimmed = sentence.trim();
+  
+  // الحد الأدنى للطول: 40 حرف
+  if (trimmed.length < 40) return false;
+  
+  // رفض الجمل التي تحتوي على نسبة عالية من الأرقام
+  const digitCount = (trimmed.match(/\d/g) || []).length;
+  const digitRatio = digitCount / trimmed.length;
+  if (digitRatio > 0.3) return false; // أكثر من 30% أرقام
+  
+  // رفض الجمل التي تحتوي على نسبة عالية من الأحرف الخاصة
+  const specialCharCount = (trimmed.match(/[^a-zA-Z0-9\u0600-\u06FF\s]/g) || []).length;
+  const specialCharRatio = specialCharCount / trimmed.length;
+  if (specialCharRatio > 0.4) return false; // أكثر من 40% أحرف خاصة
+  
+  // رفض الجمل القصيرة جداً بالكلمات (أقل من 5 كلمات)
+  const wordCount = trimmed.split(/\s+/).length;
+  if (wordCount < 5) return false;
+  
+  // للجمل التي تحتوي على أحرف عربية، يجب أن تكون النسبة معقولة
+  const arabicChars = (trimmed.match(/[\u0600-\u06FF]/g) || []).length;
+  const hasArabic = arabicChars > 0;
+  
+  if (hasArabic) {
+    const arabicRatio = arabicChars / trimmed.length;
+    // يجب أن تكون 30% على الأقل من الجملة عربية إذا كانت تحتوي على عربي
+    if (arabicRatio < 0.3) return false;
+  }
+  
+  return true;
+}
+
 export function extractSentencesWithPages(text: string, pages?: ExtractedPage[]): ExtractedSentence[] {
   const sentences: ExtractedSentence[] = [];
   
   if (pages && pages.length > 0) {
     pages.forEach((page) => {
-      const pageSentences = page.text.split(/[.!?؟\n]+/).filter(s => s.trim().length > 20);
+      const pageSentences = page.text.split(/[.!?؟\n]+/)
+        .filter(s => isValidSentence(s));
       pageSentences.forEach((sentence, idx) => {
         sentences.push({
           text: sentence.trim(),
@@ -44,7 +79,8 @@ export function extractSentencesWithPages(text: string, pages?: ExtractedPage[])
       });
     });
   } else {
-    const allSentences = text.split(/[.!?؟\n]+/).filter(s => s.trim().length > 20);
+    const allSentences = text.split(/[.!?؟\n]+/)
+      .filter(s => isValidSentence(s));
     allSentences.forEach((sentence, idx) => {
       sentences.push({
         text: sentence.trim(),
