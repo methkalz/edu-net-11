@@ -29,88 +29,12 @@ export interface MatchedSegment {
 // normalizeArabicText is now imported from _shared/embeddings.ts
 export { normalizeArabicText } from '../_shared/embeddings.ts';
 
-// دالة للتحقق من جودة الجملة
-function isValidSentence(sentence: string): boolean {
-  const trimmed = sentence.trim();
-  
-  // الحد الأدنى للطول: 40 حرف
-  if (trimmed.length < 40) return false;
-  
-  // رفض الجمل التي تحتوي على نسبة عالية من الأرقام
-  const digitCount = (trimmed.match(/\d/g) || []).length;
-  const digitRatio = digitCount / trimmed.length;
-  if (digitRatio > 0.3) return false; // أكثر من 30% أرقام
-  
-  // رفض الجمل التي تحتوي على نسبة عالية من الأحرف الخاصة
-  const specialCharCount = (trimmed.match(/[^a-zA-Z0-9\u0600-\u06FF\s]/g) || []).length;
-  const specialCharRatio = specialCharCount / trimmed.length;
-  if (specialCharRatio > 0.4) return false; // أكثر من 40% أحرف خاصة
-  
-  // رفض الجمل القصيرة جداً بالكلمات (أقل من 5 كلمات)
-  const words = trimmed.split(/\s+/);
-  if (words.length < 5) return false;
-  
-  // للجمل التي تحتوي على أحرف عربية، يجب أن تكون النسبة معقولة
-  const arabicChars = (trimmed.match(/[\u0600-\u06FF]/g) || []).length;
-  const hasArabic = arabicChars > 0;
-  
-  if (hasArabic) {
-    const arabicRatio = arabicChars / trimmed.length;
-    // يجب أن تكون 30% على الأقل من الجملة عربية إذا كانت تحتوي على عربي
-    if (arabicRatio < 0.3) return false;
-  }
-  
-  // رفض الأنماط المتكررة (مثل أوامر الشبكات)
-  // كشف التكرار: إذا كانت نفس الكلمة تتكرر أكثر من 40% من الجملة
-  const wordCounts = new Map<string, number>();
-  const lowerWords = words.map(w => w.toLowerCase());
-  
-  for (const word of lowerWords) {
-    if (word.length < 3) continue; // تجاهل الكلمات القصيرة جداً
-    wordCounts.set(word, (wordCounts.get(word) || 0) + 1);
-  }
-  
-  // إذا كانت أي كلمة تتكرر أكثر من 40% من الجملة
-  for (const count of wordCounts.values()) {
-    if (count / words.length > 0.4) return false;
-  }
-  
-  // رفض الجمل التي تحتوي على كلمات تقنية متكررة (Cisco, networking commands, etc.)
-  const technicalPatterns = [
-    /interface\s+\w+\d+/gi,
-    /switchport\s+(access|mode|trunk)/gi,
-    /vlan\s+\d+/gi,
-    /fastethernet\d+/gi,
-    /gigabitethernet\d+/gi,
-    /hostname\s+\w+/gi,
-    /ip\s+address\s+[\d.]+/gi,
-    /no\s+service\s+/gi,
-    /spanning.tree/gi,
-  ];
-  
-  let technicalMatchCount = 0;
-  for (const pattern of technicalPatterns) {
-    const matches = trimmed.match(pattern);
-    if (matches) technicalMatchCount += matches.length;
-  }
-  
-  // إذا كان هناك أكثر من 3 تطابقات تقنية في جملة واحدة
-  if (technicalMatchCount > 3) return false;
-  
-  // رفض الجمل التي تحتوي على تسلسلات رقمية متتالية (مثل 01, 02, 03...)
-  const sequentialNumbers = trimmed.match(/\d{2,3}/g);
-  if (sequentialNumbers && sequentialNumbers.length > 5) return false;
-  
-  return true;
-}
-
 export function extractSentencesWithPages(text: string, pages?: ExtractedPage[]): ExtractedSentence[] {
   const sentences: ExtractedSentence[] = [];
   
   if (pages && pages.length > 0) {
     pages.forEach((page) => {
-      const pageSentences = page.text.split(/[.!?؟\n]+/)
-        .filter(s => isValidSentence(s));
+      const pageSentences = page.text.split(/[.!?؟\n]+/).filter(s => s.trim().length > 20);
       pageSentences.forEach((sentence, idx) => {
         sentences.push({
           text: sentence.trim(),
@@ -120,8 +44,7 @@ export function extractSentencesWithPages(text: string, pages?: ExtractedPage[])
       });
     });
   } else {
-    const allSentences = text.split(/[.!?؟\n]+/)
-      .filter(s => isValidSentence(s));
+    const allSentences = text.split(/[.!?؟\n]+/).filter(s => s.trim().length > 20);
     allSentences.forEach((sentence, idx) => {
       sentences.push({
         text: sentence.trim(),
