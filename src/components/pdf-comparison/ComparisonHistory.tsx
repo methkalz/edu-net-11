@@ -349,14 +349,21 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
               </div>
 
               {/* Similar files list */}
-              {selectedComparison.matches && selectedComparison.matches.length > 0 && (
-                <Card className="border-0 bg-card/50">
-                  <CardHeader>
-                    <CardTitle className="text-base">الملفات المشابهة</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      {selectedComparison.matches.slice(0, 10).map((match, index) => (
+              {(() => {
+                // دمج المقارنات الداخلية ومقارنات المستودع
+                const allMatches = [
+                  ...(selectedComparison.internal_matches || []).map(m => ({ ...m, source: 'internal' as const })),
+                  ...(selectedComparison.repository_matches || []).map(m => ({ ...m, source: 'repository' as const })),
+                ].sort((a, b) => (b.similarity_score || 0) - (a.similarity_score || 0));
+                
+                return allMatches.length > 0 && (
+                  <Card className="border-0 bg-card/50">
+                    <CardHeader>
+                      <CardTitle className="text-base">الملفات المشابهة ({allMatches.length})</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        {allMatches.slice(0, 10).map((match, index) => (
                         <div key={index}>
                           <div
                             className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
@@ -379,6 +386,12 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
                               <span className="text-sm font-medium truncate">
                                 {match.matched_file_name}
                               </span>
+                              <Badge 
+                                variant={match.source === 'internal' ? 'outline' : 'secondary'}
+                                className="text-xs mr-2"
+                              >
+                                {match.source === 'internal' ? 'مقارنة داخلية' : 'من المستودع'}
+                              </Badge>
                             </div>
                             <div className="flex items-center gap-3">
                               {match.flagged && (
@@ -630,7 +643,8 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
                     </div>
                   </CardContent>
                 </Card>
-              )}
+              );
+            })()}
 
               {/* Processing time and date */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
