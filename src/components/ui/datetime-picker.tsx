@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Calendar as CalendarIcon } from "lucide-react";
+import { isBefore, startOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -81,7 +82,7 @@ export function DateTimePicker({
             mode="single"
             selected={date}
             onSelect={handleDateChange}
-            disabled={(date) => minDate ? date < minDate : false}
+            disabled={(date) => minDate ? isBefore(startOfDay(date), startOfDay(minDate)) : false}
             initialFocus
             className="pointer-events-auto"
           />
