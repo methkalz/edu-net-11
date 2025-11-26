@@ -11,6 +11,16 @@ import {
 } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { RefreshCw, Trash2, Database, Upload } from 'lucide-react';
 import { usePDFComparison, type GradeLevel, type RepositoryFile } from '@/hooks/usePDFComparison';
 import { formatDistanceToNow } from 'date-fns';
@@ -41,6 +51,10 @@ const RepositoryManager = ({ gradeLevel }: RepositoryManagerProps) => {
   const [isUploading, setIsUploading] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
   const [isDeleting, setIsDeleting] = useState(false);
+  
+  // Delete confirmation dialog states
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ type: 'single' | 'bulk'; id?: string } | null>(null);
   
   // Bulk upload states
   const [uploadQueue, setUploadQueue] = useState<Array<{
@@ -73,17 +87,33 @@ const RepositoryManager = ({ gradeLevel }: RepositoryManagerProps) => {
       return;
     }
 
-    if (!confirm('هل أنت متأكد من حذف هذا الملف من المستودع؟')) {
-      return;
+    setDeleteTarget({ type: 'single', id: fileId });
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+
+    if (deleteTarget.type === 'single' && deleteTarget.id) {
+      setDeletingId(deleteTarget.id);
+      const success = await deleteFromRepository(deleteTarget.id);
+      if (success) {
+        setSelectedFiles(new Set());
+        loadData();
+      }
+      setDeletingId(null);
+    } else if (deleteTarget.type === 'bulk') {
+      setIsDeleting(true);
+      const success = await deleteMultipleFromRepository(Array.from(selectedFiles));
+      if (success) {
+        setSelectedFiles(new Set());
+        await loadData();
+      }
+      setIsDeleting(false);
     }
 
-    setDeletingId(fileId);
-    const success = await deleteFromRepository(fileId);
-    if (success) {
-      setSelectedFiles(new Set()); // Clear selection after delete
-      loadData();
-    }
-    setDeletingId(null);
+    setDeleteDialogOpen(false);
+    setDeleteTarget(null);
   };
 
   // تحديد/إلغاء تحديد ملف
@@ -121,17 +151,8 @@ const RepositoryManager = ({ gradeLevel }: RepositoryManagerProps) => {
       return;
     }
 
-    if (!confirm(`هل أنت متأكد من حذف ${selectedFiles.size} ملف من المستودع؟\n\nهذا الإجراء لا يمكن التراجع عنه.`)) {
-      return;
-    }
-
-    setIsDeleting(true);
-    const success = await deleteMultipleFromRepository(Array.from(selectedFiles));
-    if (success) {
-      setSelectedFiles(new Set());
-      await loadData();
-    }
-    setIsDeleting(false);
+    setDeleteTarget({ type: 'bulk' });
+    setDeleteDialogOpen(true);
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -533,6 +554,39 @@ const RepositoryManager = ({ gradeLevel }: RepositoryManagerProps) => {
           )}
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-right">
+              تأكيد الحذف
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-right">
+              {deleteTarget?.type === 'single' ? (
+                <>هل أنت متأكد من حذف هذا الملف من المستودع؟</>
+              ) : (
+                <>
+                  هل أنت متأكد من حذف <span className="font-bold text-destructive">{selectedFiles.size}</span> ملف من المستودع؟
+                  <br />
+                  <span className="text-destructive font-medium">هذا الإجراء لا يمكن التراجع عنه.</span>
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-row-reverse gap-2">
+            <AlertDialogAction 
+              onClick={confirmDelete}
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+            >
+              نعم، احذف
+            </AlertDialogAction>
+            <AlertDialogCancel onClick={() => setDeleteTarget(null)}>
+              إلغاء
+            </AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
