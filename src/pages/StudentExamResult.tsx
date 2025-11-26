@@ -176,7 +176,7 @@ export default function StudentExamResult() {
                     {scoreCount}
                   </span>
                   <span className="text-xl text-muted-foreground font-normal">
-                    / {result.total_points}
+                    / {result.detailed_results?.total_questions || result.total_points}
                   </span>
                 </div>
               </div>

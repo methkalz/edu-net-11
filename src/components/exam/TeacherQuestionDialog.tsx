@@ -40,7 +40,8 @@ export const TeacherQuestionDialog = ({
   const [questionType, setQuestionType] = useState<QuestionType>("multiple_choice");
   const [difficulty, setDifficulty] = useState<QuestionDifficulty>("medium");
   const [category, setCategory] = useState("عام");
-  const [points, setPoints] = useState(1);
+  // النقاط ثابتة = 1 (غير قابلة للتعديل)
+  const points = 1;
   const [choices, setChoices] = useState<{ text: string }[]>([
     { text: "" },
     { text: "" },
@@ -160,7 +161,7 @@ export const TeacherQuestionDialog = ({
       setQuestionType("multiple_choice");
       setDifficulty("medium");
       setCategory("عام");
-      setPoints(1);
+      // points ثابت = 1، لا حاجة لإعادة تعيينه
       setChoices([
         { text: "" },
         { text: "" },
@@ -383,22 +384,18 @@ export const TeacherQuestionDialog = ({
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                 💡 لإضافة تصنيف جديد، انتقل إلى تبويب "إدارة التصنيفات"
               </p>
             </div>
 
-            {/* النقاط */}
+            {/* حقل النقاط مخفي - جميع الأسئلة لها نقطة واحدة */}
+            {/* 
             <div className="space-y-2">
               <Label htmlFor="points">النقاط *</Label>
-              <Input
-                id="points"
-                type="number"
-                min="1"
-                value={points}
-                onChange={(e) => setPoints(parseInt(e.target.value) || 1)}
-              />
+              <Input id="points" type="number" value={1} disabled />
             </div>
+            */}
           </div>
 
           {/* الخيارات */}
