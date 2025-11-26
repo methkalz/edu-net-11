@@ -2,21 +2,8 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Progress } from '@/components/ui/progress';
 import { RefreshCw, FileText, AlertTriangle, AlertCircle, CheckCircle, Eye, Clock, TrendingUp, Target, BookOpen, ArrowRight, ChevronDown, ChevronUp } from 'lucide-react';
@@ -25,31 +12,30 @@ import { formatDistanceToNow, format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { AIAnalysisSection } from './AIAnalysisSection';
-
 interface ComparisonHistoryProps {
   gradeLevel?: GradeLevel;
 }
-
-const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
-  const { getComparisonHistory } = usePDFComparison();
+const ComparisonHistory = ({
+  gradeLevel
+}: ComparisonHistoryProps) => {
+  const {
+    getComparisonHistory
+  } = usePDFComparison();
   const [history, setHistory] = useState<ComparisonResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedComparison, setSelectedComparison] = useState<ComparisonResult | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedMatch, setSelectedMatch] = useState<ComparisonMatch | null>(null);
   const [isMatchDetailOpen, setIsMatchDetailOpen] = useState(false);
-
   const loadHistory = async () => {
     setIsLoading(true);
     const data = await getComparisonHistory(gradeLevel);
     setHistory(data);
     setIsLoading(false);
   };
-
   useEffect(() => {
     loadHistory();
   }, [gradeLevel]);
-
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'flagged':
@@ -60,29 +46,34 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
         return <CheckCircle className="h-4 w-4 text-green-600" />;
     }
   };
-
   const getStatusBadge = (status: string) => {
     const config = {
-      flagged: { label: 'مشبوه', variant: 'destructive' as const },
-      warning: { label: 'تحذير', variant: 'secondary' as const },
-      safe: { label: 'آمن', variant: 'secondary' as const },
+      flagged: {
+        label: 'مشبوه',
+        variant: 'destructive' as const
+      },
+      warning: {
+        label: 'تحذير',
+        variant: 'secondary' as const
+      },
+      safe: {
+        label: 'آمن',
+        variant: 'secondary' as const
+      }
     };
     const statusConfig = config[status as keyof typeof config] || config.safe;
     return <Badge variant={statusConfig.variant}>{statusConfig.label}</Badge>;
   };
-
   const handleViewDetails = (comparison: ComparisonResult) => {
     setSelectedComparison(comparison);
     setIsDialogOpen(true);
     setSelectedMatch(null);
     setIsMatchDetailOpen(false);
   };
-
   const handleMatchClick = (match: ComparisonMatch) => {
     setSelectedMatch(match);
     setIsMatchDetailOpen(true);
   };
-
   const getUniquePages = (segments: ComparisonMatch['matched_segments']) => {
     if (!segments) return [];
     const pages = new Set<number>();
@@ -92,9 +83,7 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
     });
     return Array.from(pages).sort((a, b) => a - b);
   };
-
-  return (
-    <Card className="border border-border/50 bg-card/80 backdrop-blur-sm hover:shadow-lg transition-all duration-300">
+  return <Card className="border border-border/50 bg-card/80 backdrop-blur-sm hover:shadow-lg transition-all duration-300">
       <CardHeader className="border-b border-border/50 bg-gradient-to-r from-card to-card/50">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -110,30 +99,19 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
               </CardDescription>
             </div>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={loadHistory}
-            disabled={isLoading}
-            className="hover:shadow-sm transition-all duration-200"
-          >
+          <Button variant="outline" size="sm" onClick={loadHistory} disabled={isLoading} className="hover:shadow-sm transition-all duration-200">
             <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
           </Button>
         </div>
       </CardHeader>
       <CardContent className="p-6">
-        {isLoading ? (
-          <div className="text-center py-16">
+        {isLoading ? <div className="text-center py-16">
             <RefreshCw className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
             <p className="text-sm text-muted-foreground">جارٍ التحميل...</p>
-          </div>
-        ) : history.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 border-2 border-dashed border-border/50 rounded-xl bg-muted/20">
+          </div> : history.length === 0 ? <div className="flex flex-col items-center justify-center py-16 border-2 border-dashed border-border/50 rounded-xl bg-muted/20">
             <FileText className="h-12 w-12 text-muted-foreground/50 mb-4" />
             <p className="text-sm font-medium text-muted-foreground">لا توجد مقارنات سابقة</p>
-          </div>
-        ) : (
-          <div className="border border-border/50 rounded-xl overflow-hidden">
+          </div> : <div className="border border-border/50 rounded-xl overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/30 border-b border-border/50">
@@ -147,8 +125,7 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {history.map((item) => (
-                  <TableRow key={item.id} className="hover:bg-muted/30 transition-colors duration-200 border-b border-border/30 last:border-0">
+                {history.map(item => <TableRow key={item.id} className="hover:bg-muted/30 transition-colors duration-200 border-b border-border/30 last:border-0">
                     <TableCell className="py-3">
                       <div className="flex items-center gap-2">
                         <FileText className="h-4 w-4 text-primary" />
@@ -169,46 +146,33 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
                       </div>
                     </TableCell>
                     <TableCell className="text-center">
-                      <span className={cn(
-                        'text-sm font-bold',
-                        item.max_similarity_score >= 0.70 ? 'text-red-600' :
-                        item.max_similarity_score >= 0.50 ? 'text-yellow-600' :
-                        'text-green-600'
-                      )}>
+                      <span className={cn('text-sm font-bold', item.max_similarity_score >= 0.70 ? 'text-red-600' : item.max_similarity_score >= 0.50 ? 'text-yellow-600' : 'text-green-600')}>
                         {(item.max_similarity_score * 100).toFixed(1)}%
                       </span>
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-1.5">
                         <span className="text-sm font-semibold">{item.total_matches_found}</span>
-                        {item.high_risk_matches > 0 && (
-                          <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+                        {item.high_risk_matches > 0 && <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
                             {item.high_risk_matches}
-                          </Badge>
-                        )}
+                          </Badge>}
                       </div>
                     </TableCell>
                     <TableCell className="text-center text-xs text-muted-foreground">
                       {formatDistanceToNow(new Date(item.created_at), {
-                        addSuffix: true,
-                        locale: ar,
-                      })}
+                  addSuffix: true,
+                  locale: ar
+                })}
                     </TableCell>
                     <TableCell className="text-center">
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => handleViewDetails(item)}
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => handleViewDetails(item)}>
                         <Eye className="h-4 w-4" />
                       </Button>
                     </TableCell>
-                  </TableRow>
-                ))}
+                  </TableRow>)}
               </TableBody>
             </Table>
-          </div>
-        )}
+          </div>}
       </CardContent>
 
       {/* Dialog for viewing comparison details */}
@@ -229,8 +193,7 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
             </DialogDescription>
           </DialogHeader>
 
-          {selectedComparison && (
-            <div className="space-y-6 mt-4">
+          {selectedComparison && <div className="space-y-6 mt-4">
               {/* File info and status */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Card className="border-0 bg-gradient-to-br from-primary/10 to-primary/5">
@@ -273,12 +236,7 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
                     <TrendingUp className="h-4 w-4 text-red-600" />
                     <p className="text-xs text-muted-foreground">أعلى تشابه</p>
                   </div>
-                  <p className={cn(
-                    "text-2xl font-bold",
-                    selectedComparison.max_similarity_score >= 0.70 ? 'text-red-600' :
-                    selectedComparison.max_similarity_score >= 0.50 ? 'text-yellow-600' :
-                    'text-green-600'
-                  )}>
+                  <p className={cn("text-2xl font-bold", selectedComparison.max_similarity_score >= 0.70 ? 'text-red-600' : selectedComparison.max_similarity_score >= 0.50 ? 'text-yellow-600' : 'text-green-600')}>
                     {(selectedComparison.max_similarity_score * 100).toFixed(1)}%
                   </p>
                 </div>
@@ -290,40 +248,35 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
                   </div>
                   <p className="text-2xl font-bold text-blue-600">
                     {(() => {
-                      // حساب ذكي للمتوسط: يعطي وزن أكبر للمطابقات عالية الخطورة
-                      const internalMatches = selectedComparison.internal_matches || [];
-                      const repoMatches = selectedComparison.repository_matches || [];
-                      const allMatches = [...internalMatches, ...repoMatches];
-                      
-                      if (allMatches.length === 0) return '0.0';
-                      
-                      // حساب متوسط مرجح (weighted average)
-                      let totalWeightedScore = 0;
-                      let totalWeight = 0;
-                      
-                      allMatches.forEach(match => {
-                        const score = match.similarity_score || 0;
-                        // المطابقات عالية الخطورة (>70%) تحصل على وزن 3x
-                        // المطابقات المتوسطة (40-70%) تحصل على وزن 2x
-                        // المطابقات المنخفضة (<40%) تحصل على وزن 1x
-                        let weight = 1;
-                        if (score >= 0.70) weight = 3;
-                        else if (score >= 0.40) weight = 2;
-                        
-                        totalWeightedScore += score * weight;
-                        totalWeight += weight;
-                      });
-                      
-                      const weightedAvg = totalWeight > 0 ? totalWeightedScore / totalWeight : 0;
-                      return (weightedAvg * 100).toFixed(1);
-                    })()}%
+                  // حساب ذكي للمتوسط: يعطي وزن أكبر للمطابقات عالية الخطورة
+                  const internalMatches = selectedComparison.internal_matches || [];
+                  const repoMatches = selectedComparison.repository_matches || [];
+                  const allMatches = [...internalMatches, ...repoMatches];
+                  if (allMatches.length === 0) return '0.0';
+
+                  // حساب متوسط مرجح (weighted average)
+                  let totalWeightedScore = 0;
+                  let totalWeight = 0;
+                  allMatches.forEach(match => {
+                    const score = match.similarity_score || 0;
+                    // المطابقات عالية الخطورة (>70%) تحصل على وزن 3x
+                    // المطابقات المتوسطة (40-70%) تحصل على وزن 2x
+                    // المطابقات المنخفضة (<40%) تحصل على وزن 1x
+                    let weight = 1;
+                    if (score >= 0.70) weight = 3;else if (score >= 0.40) weight = 2;
+                    totalWeightedScore += score * weight;
+                    totalWeight += weight;
+                  });
+                  const weightedAvg = totalWeight > 0 ? totalWeightedScore / totalWeight : 0;
+                  return (weightedAvg * 100).toFixed(1);
+                })()}%
                   </p>
                   <p className="text-[10px] text-muted-foreground mt-1">
                     {(() => {
-                      const internal = selectedComparison.internal_matches?.length || 0;
-                      const repo = selectedComparison.repository_matches?.length || 0;
-                      return `${internal} داخلي · ${repo} مستودع`;
-                    })()}
+                  const internal = selectedComparison.internal_matches?.length || 0;
+                  const repo = selectedComparison.repository_matches?.length || 0;
+                  return `${internal} داخلي · ${repo} مستودع`;
+                })()}
                   </p>
                 </div>
 
@@ -350,76 +303,48 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
 
               {/* Similar files list */}
               {(() => {
-                // دمج المقارنات الداخلية ومقارنات المستودع
-                const allMatches = [
-                  ...(selectedComparison.internal_matches || []).map(m => ({ ...m, source: 'internal' as const })),
-                  ...(selectedComparison.repository_matches || []).map(m => ({ ...m, source: 'repository' as const })),
-                ].sort((a, b) => (b.similarity_score || 0) - (a.similarity_score || 0));
-                
-                return allMatches.length > 0 && (
-                  <Card className="border-0 bg-card/50">
+            // دمج المقارنات الداخلية ومقارنات المستودع
+            const allMatches = [...(selectedComparison.internal_matches || []).map(m => ({
+              ...m,
+              source: 'internal' as const
+            })), ...(selectedComparison.repository_matches || []).map(m => ({
+              ...m,
+              source: 'repository' as const
+            }))].sort((a, b) => (b.similarity_score || 0) - (a.similarity_score || 0));
+            return allMatches.length > 0 && <Card className="border-0 bg-card/50">
                     <CardHeader>
                       <CardTitle className="text-base">الملفات المشابهة ({allMatches.length})</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">
-                        {allMatches.slice(0, 10).map((match, index) => (
-                        <div key={index}>
-                          <div
-                            className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
-                            onClick={() => handleMatchClick(match)}
-                          >
+                        {allMatches.slice(0, 10).map((match, index) => <div key={index}>
+                          <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer" onClick={() => handleMatchClick(match)}>
                             <div className="flex items-center gap-3 flex-1">
-                              <div className={cn(
-                                "p-2 rounded-lg",
-                                match.similarity_score >= 0.70 ? "bg-red-500/10" :
-                                match.similarity_score >= 0.50 ? "bg-yellow-500/10" :
-                                "bg-green-500/10"
-                              )}>
-                                <FileText className={cn(
-                                  "h-4 w-4",
-                                  match.similarity_score >= 0.70 ? "text-red-600" :
-                                  match.similarity_score >= 0.50 ? "text-yellow-600" :
-                                  "text-green-600"
-                                )} />
+                              <div className={cn("p-2 rounded-lg", match.similarity_score >= 0.70 ? "bg-red-500/10" : match.similarity_score >= 0.50 ? "bg-yellow-500/10" : "bg-green-500/10")}>
+                                <FileText className={cn("h-4 w-4", match.similarity_score >= 0.70 ? "text-red-600" : match.similarity_score >= 0.50 ? "text-yellow-600" : "text-green-600")} />
                               </div>
                               <span className="text-sm font-medium truncate">
                                 {match.matched_file_name}
                               </span>
-                              <Badge 
-                                variant={match.source === 'internal' ? 'outline' : 'secondary'}
-                                className="text-xs mr-2"
-                              >
+                              <Badge variant={match.source === 'internal' ? 'outline' : 'secondary'} className="text-xs mr-2 bg-gray-600">
                                 {match.source === 'internal' ? 'مقارنة داخلية' : 'من المستودع'}
                               </Badge>
                             </div>
                             <div className="flex items-center gap-3">
-                              {match.flagged && (
-                                <Badge variant="destructive" className="text-xs">
+                              {match.flagged && <Badge variant="destructive" className="text-xs">
                                   مشبوه
-                                </Badge>
-                              )}
-                              <span className={cn(
-                                "text-sm font-bold",
-                                match.similarity_score >= 0.70 ? "text-red-600" :
-                                match.similarity_score >= 0.50 ? "text-yellow-600" :
-                                "text-green-600"
-                              )}>
+                                </Badge>}
+                              <span className={cn("text-sm font-bold", match.similarity_score >= 0.70 ? "text-red-600" : match.similarity_score >= 0.50 ? "text-yellow-600" : "text-green-600")}>
                                 {(match.similarity_score * 100).toFixed(1)}%
                               </span>
-                              {selectedMatch?.matched_file_name === match.matched_file_name && isMatchDetailOpen ? (
-                                <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                              ) : (
-                                <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                              )}
+                              {selectedMatch?.matched_file_name === match.matched_file_name && isMatchDetailOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
                             </div>
                           </div>
 
                           {/* Match Detail Section */}
                           <Collapsible open={selectedMatch?.matched_file_name === match.matched_file_name && isMatchDetailOpen}>
                             <CollapsibleContent>
-                              {selectedMatch && selectedMatch.matched_file_name === match.matched_file_name && (
-                                <Card className="mt-2 border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
+                              {selectedMatch && selectedMatch.matched_file_name === match.matched_file_name && <Card className="mt-2 border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
                                   <CardHeader>
                                     <CardTitle className="flex items-center gap-3 text-lg">
                                       <Target className="h-5 w-5 text-primary" />
@@ -460,8 +385,7 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
                                     </div>
 
                                     {/* تفاصيل المقاييس الثلاثة */}
-                                    {selectedMatch.metadata && (
-                                      <Card className="border-0 bg-gradient-to-br from-accent/5 to-primary/5">
+                                    {selectedMatch.metadata && <Card className="border-0 bg-gradient-to-br from-accent/5 to-primary/5">
                                         <CardHeader>
                                           <CardTitle className="text-sm flex items-center gap-2">
                                             <Target className="h-4 w-4 text-primary" />
@@ -478,10 +402,9 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
                                               </span>
                                             </div>
                                             <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-                                              <div 
-                                                className="h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-500"
-                                                style={{ width: `${(selectedMatch.metadata.cosine || 0) * 100}%` }}
-                                              />
+                                              <div className="h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-500" style={{
+                                      width: `${(selectedMatch.metadata.cosine || 0) * 100}%`
+                                    }} />
                                             </div>
                                             <p className="text-xs text-muted-foreground">قياس التشابه الدلالي للمحتوى باستخدام embeddings</p>
                                           </div>
@@ -495,10 +418,9 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
                                               </span>
                                             </div>
                                             <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-                                              <div 
-                                                className="h-full bg-gradient-to-r from-purple-500 to-purple-600 transition-all duration-500"
-                                                style={{ width: `${(selectedMatch.metadata.jaccard || 0) * 100}%` }}
-                                              />
+                                              <div className="h-full bg-gradient-to-r from-purple-500 to-purple-600 transition-all duration-500" style={{
+                                      width: `${(selectedMatch.metadata.jaccard || 0) * 100}%`
+                                    }} />
                                             </div>
                                             <p className="text-xs text-muted-foreground">نسبة الكلمات المفتاحية المشتركة بين الملفين</p>
                                           </div>
@@ -512,20 +434,17 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
                                               </span>
                                             </div>
                                             <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-                                              <div 
-                                                className="h-full bg-gradient-to-r from-orange-500 to-orange-600 transition-all duration-500"
-                                                style={{ width: `${(selectedMatch.metadata.length_similarity || 0) * 100}%` }}
-                                              />
+                                              <div className="h-full bg-gradient-to-r from-orange-500 to-orange-600 transition-all duration-500" style={{
+                                      width: `${(selectedMatch.metadata.length_similarity || 0) * 100}%`
+                                    }} />
                                             </div>
                                             <p className="text-xs text-muted-foreground">التقارب في عدد الكلمات والصفحات</p>
                                           </div>
                                         </CardContent>
-                                      </Card>
-                                    )}
+                                      </Card>}
 
                                     {/* الصفحات المتأثرة */}
-                                    {selectedMatch.affected_pages && (
-                                      <Card className="border-0 bg-gradient-to-br from-red-500/5 to-orange-500/5">
+                                    {selectedMatch.affected_pages && <Card className="border-0 bg-gradient-to-br from-red-500/5 to-orange-500/5">
                                         <CardContent className="p-4">
                                           <div className="flex items-start gap-3">
                                             <div className="p-2 rounded-lg bg-red-500/10">
@@ -536,40 +455,26 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
                                               <div className="flex flex-wrap gap-2">
                                                 <div className="flex items-center gap-2">
                                                   <span className="text-xs text-muted-foreground">الملف الأصلي:</span>
-                                                  {selectedMatch.affected_pages.source_pages?.length > 0 ? (
-                                                    selectedMatch.affected_pages.source_pages.map((page, idx) => (
-                                                      <Badge key={idx} variant="outline" className="text-xs bg-blue-50 dark:bg-blue-950/30 border-blue-300">
+                                                  {selectedMatch.affected_pages.source_pages?.length > 0 ? selectedMatch.affected_pages.source_pages.map((page, idx) => <Badge key={idx} variant="outline" className="text-xs bg-blue-50 dark:bg-blue-950/30 border-blue-300">
                                                         صفحة {page}
-                                                      </Badge>
-                                                    ))
-                                                  ) : (
-                                                    <span className="text-xs text-muted-foreground">لا توجد</span>
-                                                  )}
+                                                      </Badge>) : <span className="text-xs text-muted-foreground">لا توجد</span>}
                                                 </div>
                                               </div>
                                               <div className="flex flex-wrap gap-2">
                                                 <div className="flex items-center gap-2">
                                                   <span className="text-xs text-muted-foreground">الملف المطابق:</span>
-                                                  {selectedMatch.affected_pages.matched_pages?.length > 0 ? (
-                                                    selectedMatch.affected_pages.matched_pages.map((page, idx) => (
-                                                      <Badge key={idx} variant="outline" className="text-xs bg-orange-50 dark:bg-orange-950/30 border-orange-300">
+                                                  {selectedMatch.affected_pages.matched_pages?.length > 0 ? selectedMatch.affected_pages.matched_pages.map((page, idx) => <Badge key={idx} variant="outline" className="text-xs bg-orange-50 dark:bg-orange-950/30 border-orange-300">
                                                         صفحة {page}
-                                                      </Badge>
-                                                    ))
-                                                  ) : (
-                                                    <span className="text-xs text-muted-foreground">لا توجد</span>
-                                                  )}
+                                                      </Badge>) : <span className="text-xs text-muted-foreground">لا توجد</span>}
                                                 </div>
                                               </div>
                                             </div>
                                           </div>
                                         </CardContent>
-                                      </Card>
-                                    )}
+                                      </Card>}
 
                                     {/* جدول الجمل المتشابهة */}
-                                    {selectedMatch.matched_segments && selectedMatch.matched_segments.length > 0 && (
-                                      <div>
+                                    {selectedMatch.matched_segments && selectedMatch.matched_segments.length > 0 && <div>
                                         <h4 className="font-semibold mb-3 flex items-center gap-2 text-foreground">
                                           <Target className="h-4 w-4" />
                                           الجمل المتشابهة
@@ -586,8 +491,7 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
                                               </TableRow>
                                             </TableHeader>
                                             <TableBody>
-                                              {selectedMatch.matched_segments.map((segment, idx) => (
-                                                <TableRow key={idx} className="hover:bg-muted/50">
+                                              {selectedMatch.matched_segments.map((segment, idx) => <TableRow key={idx} className="hover:bg-muted/50">
                                                   <TableCell className="max-w-md">
                                                     <div className="text-sm bg-blue-50 dark:bg-blue-950/30 p-3 rounded border-r-4 border-blue-500">
                                                       {segment.source_text}
@@ -616,35 +520,27 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
                                                     </div>
                                                   </TableCell>
                                                   <TableCell className="text-center">
-                                                    <Badge 
-                                                      variant={segment.similarity > 0.9 ? "destructive" : "secondary"}
-                                                      className="font-bold"
-                                                    >
+                                                    <Badge variant={segment.similarity > 0.9 ? "destructive" : "secondary"} className="font-bold">
                                                       {(segment.similarity * 100).toFixed(0)}%
                                                     </Badge>
                                                   </TableCell>
-                                                </TableRow>
-                                              ))}
+                                                </TableRow>)}
                                             </TableBody>
                                           </Table>
                                         </div>
-                                      </div>
-                                    )}
+                                      </div>}
 
                                     {/* التحليل الأولي بالذكاء الاصطناعي */}
                                     <AIAnalysisSection match={selectedMatch} />
                                   </CardContent>
-                                </Card>
-                              )}
+                                </Card>}
                             </CollapsibleContent>
                           </Collapsible>
-                        </div>
-                      ))}
+                        </div>)}
                     </div>
                   </CardContent>
-                </Card>
-              );
-            })()}
+                </Card>;
+          })()}
 
               {/* Processing time and date */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -661,17 +557,16 @@ const ComparisonHistory = ({ gradeLevel }: ComparisonHistoryProps) => {
                   <div>
                     <p className="text-xs text-muted-foreground">تاريخ المقارنة</p>
                     <p className="font-medium">
-                      {format(new Date(selectedComparison.created_at), 'dd/MM/yyyy - HH:mm', { locale: ar })}
+                      {format(new Date(selectedComparison.created_at), 'dd/MM/yyyy - HH:mm', {
+                    locale: ar
+                  })}
                     </p>
                   </div>
                 </div>
               </div>
-            </div>
-          )}
+            </div>}
         </DialogContent>
       </Dialog>
-    </Card>
-  );
+    </Card>;
 };
-
 export default ComparisonHistory;
