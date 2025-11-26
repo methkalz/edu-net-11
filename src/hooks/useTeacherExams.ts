@@ -30,6 +30,9 @@ export const useTeacherExams = (teacherId?: string) => {
 
       logger.debug(`جلب امتحانات المعلم ${teacherId}`);
       
+      // تحديث حالات الامتحانات تلقائياً قبل جلبها
+      await supabase.rpc('update_exam_statuses');
+      
       // جلب الامتحانات التي أنشأها المعلم
       const { data: exams, error: examsError } = await supabase
         .from('exams')
