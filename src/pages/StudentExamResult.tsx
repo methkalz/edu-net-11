@@ -173,7 +173,7 @@ export default function StudentExamResult() {
                 <p className="text-sm font-medium text-muted-foreground mb-2 uppercase tracking-wider group-hover:text-primary transition-colors">الإجابات الصحيحة  </p>
                 <div className="flex items-baseline gap-1.5">
                   <span className="text-3xl font-bold text-foreground">
-                    {scoreCount}
+                    {correctCount}
                   </span>
                   <span className="text-xl text-muted-foreground font-normal">
                     / {result.detailed_results?.total_questions || result.total_points}
