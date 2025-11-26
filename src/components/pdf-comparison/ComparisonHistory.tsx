@@ -326,7 +326,7 @@ const ComparisonHistory = ({
                               <span className="text-sm font-medium truncate">
                                 {match.matched_file_name}
                               </span>
-                              <Badge variant={match.source === 'internal' ? 'outline' : 'secondary'} className="text-xs mr-2 bg-gray-600">
+                              <Badge variant={match.source === 'internal' ? 'outline' : 'secondary'} className="text-xs mr-2 bg-gray-600 text-slate-50">
                                 {match.source === 'internal' ? 'مقارنة داخلية' : 'من المستودع'}
                               </Badge>
                             </div>
