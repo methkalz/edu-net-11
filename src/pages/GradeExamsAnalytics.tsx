@@ -99,7 +99,7 @@ const GradeExamsAnalytics: React.FC = () => {
     const totalExams = filteredExams.length;
     const activeExams = filteredExams.filter(e => e.status === 'active').length;
     const scheduledExams = filteredExams.filter(e => e.status === 'scheduled').length;
-    const completedExams = filteredExams.filter(e => e.status === 'completed').length;
+    const completedExams = filteredExams.filter(e => e.status === 'ended').length;
     const draftExams = filteredExams.filter(e => e.status === 'draft').length;
     
     const totalAttempts = filteredExams.reduce((sum, e) => sum + e.attempts_count, 0);
@@ -196,7 +196,7 @@ const GradeExamsAnalytics: React.FC = () => {
         label: 'مسودة',
         icon: <FileText className="h-3 w-3" />
       },
-      completed: { 
+      ended: { 
         className: 'bg-gray-500/10 text-gray-700 border-gray-500/20', 
         label: 'منتهي',
         icon: <XCircle className="h-3 w-3" />
