@@ -71,8 +71,15 @@ const ComparisonHistory = ({
     setIsMatchDetailOpen(false);
   };
   const handleMatchClick = (match: ComparisonMatch) => {
-    setSelectedMatch(match);
-    setIsMatchDetailOpen(true);
+    // تأثير Accordion: إذا كان نفس الملف مفتوحاً، أغلقه
+    if (selectedMatch?.matched_file_name === match.matched_file_name && isMatchDetailOpen) {
+      setIsMatchDetailOpen(false);
+      setSelectedMatch(null);
+    } else {
+      // إذا كان ملفاً مختلفاً أو مغلقاً، افتحه
+      setSelectedMatch(match);
+      setIsMatchDetailOpen(true);
+    }
   };
   const getUniquePages = (segments: ComparisonMatch['matched_segments']) => {
     if (!segments) return [];
