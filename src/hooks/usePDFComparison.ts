@@ -180,6 +180,7 @@ export const usePDFComparison = () => {
           fileText: extractResult.text,
           fileHash: extractResult.hash,
           filePages: extractResult.pageCount,
+          fileSize: file.size, // ✅ إضافة حجم الملف الفعلي
         });
         
         onProgress?.(i, 60, 'extraction_complete');

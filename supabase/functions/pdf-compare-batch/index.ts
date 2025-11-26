@@ -17,6 +17,7 @@ interface FileToCompare {
   fileText: string;
   fileHash: string;
   filePages: number;
+  fileSize?: number; // ✅ إضافة حجم الملف
 }
 
 serve(async (req) => {
@@ -76,7 +77,7 @@ serve(async (req) => {
             filePath: file.filePath, // تصحيح: استخدام filePath بدلاً من tempFilePath
             fileName: file.fileName,
             bucket: 'pdf-comparison-temp',
-            fileSize: 0,
+            fileSize: file.fileSize || 0, // ✅ استخدام الحجم الفعلي
             gradeLevel,
             projectType: comparisonType,
             sourceProjectId: null,
