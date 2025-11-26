@@ -179,6 +179,10 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [previewExamId, setPreviewExamId] = useState<string | null>(null);
   const [isExplicitSubmit, setIsExplicitSubmit] = useState(false);
+  const [republishDialogOpen, setRepublishDialogOpen] = useState(false);
+  const [republishExamId, setRepublishExamId] = useState<string | null>(null);
+  const [republishEndDate, setRepublishEndDate] = useState<string>('');
+  const [republishStartDate, setRepublishStartDate] = useState<string>('');
 
   // دالة مساعدة لبداية اليوم الحالي
   const getStartOfToday = () => {
@@ -754,6 +758,15 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
 
       if (fetchError) throw fetchError;
 
+      // إذا كان الامتحان منتهياً، فتح dialog إعادة النشر
+      if (exam.status === 'ended') {
+        setRepublishExamId(examId);
+        setRepublishStartDate(exam.start_datetime || '');
+        setRepublishEndDate(exam.end_datetime || '');
+        setRepublishDialogOpen(true);
+        return;
+      }
+
       // التحقق من وجود أسئلة
       if (!exam.exam_questions || exam.exam_questions.length === 0) {
         toast.error('لا يمكن نشر الامتحان: لم يتم إضافة أسئلة بعد');
@@ -784,6 +797,50 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
     } catch (error) {
       console.error('Error publishing exam:', error);
       toast.error('حدث خطأ أثناء نشر الامتحان');
+    }
+  };
+
+  const handleRepublishExam = async () => {
+    try {
+      if (!republishExamId) return;
+
+      // التحقق من أن تاريخ الانتهاء في المستقبل
+      const endDate = new Date(republishEndDate);
+      const now = new Date();
+      
+      if (endDate <= now) {
+        toast.error('يجب أن يكون تاريخ الانتهاء في المستقبل');
+        return;
+      }
+
+      // التحقق من أن تاريخ البدء قبل تاريخ الانتهاء
+      const startDate = new Date(republishStartDate);
+      if (startDate >= endDate) {
+        toast.error('يجب أن يكون تاريخ البدء قبل تاريخ الانتهاء');
+        return;
+      }
+
+      // تحديد الحالة المناسبة
+      const newStatus = startDate > now ? 'scheduled' : 'active';
+
+      const { error } = await supabase
+        .from('exams')
+        .update({ 
+          status: newStatus,
+          start_datetime: republishStartDate,
+          end_datetime: republishEndDate
+        })
+        .eq('id', republishExamId);
+
+      if (error) throw error;
+
+      toast.success(newStatus === 'active' ? 'تم إعادة نشر الامتحان بنجاح!' : 'تم جدولة الامتحان بنجاح!');
+      setRepublishDialogOpen(false);
+      setRepublishExamId(null);
+      await queryClient.invalidateQueries({ queryKey: ['teacher-exams', user?.id] });
+    } catch (error) {
+      console.error('Error republishing exam:', error);
+      toast.error('حدث خطأ أثناء إعادة نشر الامتحان');
     }
   };
 
@@ -3073,6 +3130,115 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
             </DialogContent>
           </Dialog>
         )}
+
+        {/* Dialog إعادة نشر الامتحان المنتهي */}
+        <Dialog open={republishDialogOpen} onOpenChange={setRepublishDialogOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>إعادة نشر الامتحان</DialogTitle>
+              <DialogDescription>
+                قم بتحديث تاريخ الانتهاء لإعادة نشر الامتحان وإتاحته للطلاب مرة أخرى
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4">
+              <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-lg border border-amber-200 dark:border-amber-800">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5" />
+                  <div className="flex-1 text-sm">
+                    <p className="font-semibold text-amber-900 dark:text-amber-100 mb-1">
+                      ملاحظة هامة
+                    </p>
+                    <p className="text-amber-800 dark:text-amber-200">
+                      يجب أن يكون تاريخ الانتهاء الجديد في المستقبل. سيتم تحديث حالة الامتحان تلقائياً بناءً على التواريخ المحددة.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="republish-start">تاريخ ووقت البدء</Label>
+                  <DateTimePicker
+                    value={republishStartDate}
+                    onChange={setRepublishStartDate}
+                    placeholder="اختر تاريخ ووقت البدء"
+                    minDate={getStartOfToday()}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    متى سيصبح الامتحان متاحاً للطلاب
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="republish-end">تاريخ ووقت الانتهاء *</Label>
+                  <DateTimePicker
+                    value={republishEndDate}
+                    onChange={setRepublishEndDate}
+                    placeholder="اختر تاريخ ووقت الانتهاء"
+                    minDate={republishStartDate 
+                      ? (() => {
+                          const startDate = new Date(republishStartDate);
+                          startDate.setHours(0, 0, 0, 0);
+                          return startDate;
+                        })()
+                      : getStartOfToday()
+                    }
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    آخر موعد لتقديم الامتحان (يجب أن يكون في المستقبل)
+                  </p>
+                </div>
+
+                {republishStartDate && republishEndDate && (
+                  <div className="bg-muted/50 p-4 rounded-lg border">
+                    <p className="font-medium mb-3 text-sm">📋 ملخص المواعيد الجديدة:</p>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">🟢 البدء:</span>
+                        <span className="font-mono font-semibold" dir="ltr">
+                          {formatDateTime12H(republishStartDate)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">🔴 الانتهاء:</span>
+                        <span className="font-mono font-semibold" dir="ltr">
+                          {formatDateTime12H(republishEndDate)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between pt-2 border-t">
+                        <span className="text-muted-foreground">⏱️ المدة:</span>
+                        <span className="font-semibold">
+                          {formatDuration(republishStartDate, republishEndDate)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setRepublishDialogOpen(false);
+                  setRepublishExamId(null);
+                }}
+              >
+                إلغاء
+              </Button>
+              <Button
+                onClick={handleRepublishExam}
+                disabled={!republishEndDate}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                <CheckCircle className="w-4 h-4 ml-2" />
+                إعادة النشر
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
     
