@@ -81,7 +81,13 @@ export function DateTimePicker({
             mode="single"
             selected={date}
             onSelect={handleDateChange}
-            disabled={(date) => minDate ? date < minDate : false}
+            disabled={(date) => {
+              if (!minDate) return false;
+              // مقارنة على مستوى اليوم فقط (بدون الوقت)
+              const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+              const minDateOnly = new Date(minDate.getFullYear(), minDate.getMonth(), minDate.getDate());
+              return dateOnly < minDateOnly;
+            }}
             initialFocus
             className="pointer-events-auto"
           />
