@@ -42,7 +42,7 @@ function generateAnalysis(match: ComparisonMatch): Analysis {
   if (score >= 0.70) {
     recommendations.push('يُنصح بمراجعة دقيقة للنصوص المتشابهة');
     recommendations.push('التحقق من المصادر');
-    recommendations.push('مقابلة الطالب لمناقشة العمل');
+    recommendations.push('مقابلة الطالب لمناقشة البرويكت');
     if (segments.length > 10) {
       recommendations.push('عدد كبير من الجمل المتشابهة يتطلب تحقيقاً شاملاً');
     }
