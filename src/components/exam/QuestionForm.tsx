@@ -210,7 +210,7 @@ export const QuestionForm: React.FC<QuestionFormProps> = ({
                     </SelectTrigger>
                     <SelectContent>
                       {choices?.filter(c => c.text.trim()).map((choice) => (
-                        <SelectItem key={choice.id} value={choice.text}>
+                        <SelectItem key={choice.id} value={choice.id}>
                           {choice.text}
                         </SelectItem>
                       ))}
