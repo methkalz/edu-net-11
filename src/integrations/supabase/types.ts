@@ -6681,6 +6681,7 @@ export type Database = {
         Args: { p_completed_game_id: string; p_player_id: string }
         Returns: undefined
       }
+      update_exam_statuses: { Args: never; Returns: undefined }
       update_student_presence: {
         Args: {
           p_current_page?: string

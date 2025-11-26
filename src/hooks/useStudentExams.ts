@@ -61,6 +61,9 @@ export const useStudentExams = (studentId?: string) => {
 
       logger.debug(`جلب الامتحانات المتاحة للطالب ${studentId}`);
       
+      // تحديث حالات الامتحانات تلقائياً قبل جلبها
+      await supabase.rpc('update_exam_statuses');
+      
       const { data, error } = await supabase
         .rpc('get_available_exams', { p_student_id: studentId });
 
