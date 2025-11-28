@@ -5092,6 +5092,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           difficulty: Database["public"]["Enums"]["question_difficulty"]
+          explanation: string | null
           grade_level: string
           id: string
           is_active: boolean
@@ -5108,6 +5109,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           difficulty: Database["public"]["Enums"]["question_difficulty"]
+          explanation?: string | null
           grade_level: string
           id?: string
           is_active?: boolean
@@ -5124,6 +5126,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           difficulty?: Database["public"]["Enums"]["question_difficulty"]
+          explanation?: string | null
           grade_level?: string
           id?: string
           is_active?: boolean
