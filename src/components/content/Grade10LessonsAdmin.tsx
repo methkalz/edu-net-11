@@ -11,12 +11,14 @@ import {
   Trash2, 
   ChevronDown,
   Users,
-  Calendar
+  Calendar,
+  Eye
 } from 'lucide-react';
 import { useGrade10AdminContent, Grade10SectionWithTopics, Grade10TopicWithLessons, Grade10LessonWithMedia } from '@/hooks/useGrade10AdminContent';
 import Grade10SectionForm from './Grade10SectionForm';
 import Grade10TopicForm from './Grade10TopicForm';
 import Grade10LessonForm from './Grade10LessonForm';
+import Grade10LessonPreviewModal from './Grade10LessonPreviewModal';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 const Grade10LessonsAdmin: React.FC = () => {
@@ -47,6 +49,9 @@ const Grade10LessonsAdmin: React.FC = () => {
   const [editingLesson, setEditingLesson] = useState<Grade10LessonWithMedia | null>(null);
   const [selectedSectionId, setSelectedSectionId] = useState<string>('');
   const [selectedTopicId, setSelectedTopicId] = useState<string>('');
+  
+  // Preview state
+  const [previewLesson, setPreviewLesson] = useState<Grade10LessonWithMedia | null>(null);
 
   if (loading) {
     return (
@@ -345,6 +350,14 @@ const Grade10LessonsAdmin: React.FC = () => {
                                           <Button 
                                             size="sm" 
                                             variant="ghost"
+                                            onClick={() => setPreviewLesson(lesson)}
+                                            title="معاينة الدرس"
+                                          >
+                                            <Eye className="h-4 w-4" />
+                                          </Button>
+                                          <Button 
+                                            size="sm" 
+                                            variant="ghost"
                                             onClick={() => handleEditLesson(lesson)}
                                           >
                                             <Edit className="h-4 w-4" />
@@ -445,6 +458,13 @@ const Grade10LessonsAdmin: React.FC = () => {
           onUpdateMedia={updateLessonMedia}
         />
       )}
+
+      {/* Preview Modal */}
+      <Grade10LessonPreviewModal
+        lesson={previewLesson}
+        isOpen={!!previewLesson}
+        onClose={() => setPreviewLesson(null)}
+      />
     </div>
   );
 };
