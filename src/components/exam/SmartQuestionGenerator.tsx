@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { MultiSelect } from '@/components/ui/multi-select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Sparkles, Loader2, AlertCircle, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
@@ -30,7 +31,7 @@ export function SmartQuestionGenerator({ open, onOpenChange }: Props) {
   const [step, setStep] = useState<Step>('setup');
   const [gradeLevel, setGradeLevel] = useState<string | null>(null);
   const [sectionId, setSectionId] = useState<string | null>(null);
-  const [topicId, setTopicId] = useState<string | null>(null);
+  const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>([]);
   const [lessonId, setLessonId] = useState<string | null>(null);
   const [questionCount, setQuestionCount] = useState(10);
   const [difficultyDistribution, setDifficultyDistribution] = useState({
@@ -50,23 +51,45 @@ export function SmartQuestionGenerator({ open, onOpenChange }: Props) {
   // Data loading
   const { data: sections = [] } = useGradeSections(gradeLevel);
   const { data: topics = [] } = useSectionTopics(gradeLevel, sectionId);
-  const { data: lessons = [] } = useSmartGenTopicLessons(topicId);
+  const { data: lessons = [] } = useSmartGenTopicLessons(selectedTopicIds);
   
   const selectedSection = sections.find(s => s.id === sectionId);
-  const selectedTopic = topics.find(t => t.id === topicId);
   const selectedLesson = lessons.find(l => l.id === lessonId);
+  
+  // معالجة اختيار المواضيع
+  const handleTopicChange = (values: string[]) => {
+    if (values.includes('all') && !selectedTopicIds.includes('all')) {
+      // اختار "كل المواضيع" - اختر جميعها
+      setSelectedTopicIds(['all', ...topics.map(t => t.id)]);
+    } else if (!values.includes('all') && selectedTopicIds.includes('all')) {
+      // ألغى "كل المواضيع" - إلغاء الكل
+      setSelectedTopicIds([]);
+    } else {
+      // اختيار عادي
+      const withoutAll = values.filter(v => v !== 'all');
+      const allSelected = withoutAll.length === topics.length;
+      setSelectedTopicIds(allSelected ? ['all', ...withoutAll] : withoutAll);
+    }
+    setLessonId(null); // إعادة تعيين الدرس
+  };
   
   // تقييم المحتوى
   const contentEvaluation = selectedLesson?.content 
     ? evaluateLessonContent(selectedLesson.content)
     : null;
   
-  const canGenerate = gradeLevel && sectionId && topicId && lessonId && 
+  const canGenerate = gradeLevel && sectionId && selectedTopicIds.length > 0 && lessonId && 
                       questionTypes.length > 0 && 
                       contentEvaluation?.isSuitable;
   
   const handleGenerate = async () => {
-    if (!canGenerate || !selectedLesson || !selectedSection || !selectedTopic) return;
+    if (!canGenerate || !selectedLesson || !selectedSection) return;
+    
+    // جلب أسماء المواضيع المختارة
+    const selectedTopicsNames = topics
+      .filter(t => selectedTopicIds.includes(t.id))
+      .map(t => t.title)
+      .join(', ');
     
     // تحذير إذا طلب عدد أكثر من الموصى به
     if (contentEvaluation && questionCount > contentEvaluation.maxRecommendedQuestions) {
@@ -85,7 +108,7 @@ export function SmartQuestionGenerator({ open, onOpenChange }: Props) {
         body: {
           gradeLevel: gradeLevel,
           sectionName: selectedSection.title,
-          topicName: selectedTopic.title,
+          topicName: selectedTopicsNames,
           lessonId: lessonId,
           lessonContent: selectedLesson.content,
           questionCount: questionCount,
@@ -276,7 +299,7 @@ export function SmartQuestionGenerator({ open, onOpenChange }: Props) {
               <Select value={gradeLevel || ''} onValueChange={(v) => {
                 setGradeLevel(v);
                 setSectionId(null);
-                setTopicId(null);
+                setSelectedTopicIds([]);
                 setLessonId(null);
               }}>
                 <SelectTrigger>
@@ -296,7 +319,7 @@ export function SmartQuestionGenerator({ open, onOpenChange }: Props) {
                 <Label>القسم *</Label>
                 <Select value={sectionId || ''} onValueChange={(v) => {
                   setSectionId(v);
-                  setTopicId(null);
+                  setSelectedTopicIds([]);
                   setLessonId(null);
                 }}>
                   <SelectTrigger>
@@ -313,30 +336,35 @@ export function SmartQuestionGenerator({ open, onOpenChange }: Props) {
               </div>
             )}
             
-            {/* اختيار الموضوع */}
+            {/* اختيار المواضيع */}
             {sectionId && (
               <div>
-                <Label>الموضوع *</Label>
-                <Select value={topicId || ''} onValueChange={(v) => {
-                  setTopicId(v);
-                  setLessonId(null);
-                }}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="اختر الموضوع" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {topics.map(topic => (
-                      <SelectItem key={topic.id} value={topic.id}>
-                        {topic.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label>المواضيع * (يمكن اختيار أكثر من موضوع)</Label>
+                <MultiSelect
+                  options={[
+                    { value: 'all', label: '📋 كل المواضيع' },
+                    ...topics.map(t => ({ value: t.id, label: t.title }))
+                  ]}
+                  value={selectedTopicIds}
+                  onChange={handleTopicChange}
+                  placeholder="اختر الموضوع أو المواضيع"
+                  searchPlaceholder="بحث في المواضيع..."
+                />
+                {selectedTopicIds.length > 0 && !selectedTopicIds.includes('all') && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    تم اختيار {selectedTopicIds.length} من {topics.length} مواضيع
+                  </p>
+                )}
+                {selectedTopicIds.includes('all') && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    تم اختيار كل المواضيع ({topics.length} مواضيع)
+                  </p>
+                )}
               </div>
             )}
             
             {/* اختيار الدرس */}
-            {topicId && (
+            {selectedTopicIds.length > 0 && (
               <div>
                 <Label>الدرس *</Label>
                 <Select value={lessonId || ''} onValueChange={setLessonId}>
