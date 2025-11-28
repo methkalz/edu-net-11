@@ -6,32 +6,13 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
-  BookOpen, 
-  Plus, 
-  Search, 
-  Edit2, 
-  Trash2,
-  Filter,
-  RotateCcw,
-  Sparkles
-} from 'lucide-react';
+import { BookOpen, Plus, Search, Edit2, Trash2, Filter, RotateCcw, Sparkles } from 'lucide-react';
 import { useExamBankManager } from '@/hooks/useExamBankManager';
 import { QuestionForm } from '@/components/exam/QuestionForm';
 import { BulkQuestionImporter } from '@/components/exam/BulkQuestionImporter';
 import { SmartQuestionGenerator } from '@/components/exam/SmartQuestionGenerator';
 import { Question } from '@/types/exam';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 const ExamBankManagement = () => {
   const [filters, setFilters] = useState({
     gradeLevel: 'all',
@@ -40,17 +21,15 @@ const ExamBankManagement = () => {
     questionType: 'all',
     searchTerm: ''
   });
-
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSmartGeneratorOpen, setIsSmartGeneratorOpen] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<Question | undefined>(undefined);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [questionToDelete, setQuestionToDelete] = useState<string | null>(null);
-
-  const { 
-    questions, 
-    sections, 
-    stats, 
+  const {
+    questions,
+    sections,
+    stats,
     isLoading,
     addQuestion,
     updateQuestion,
@@ -59,7 +38,6 @@ const ExamBankManagement = () => {
     isUpdating,
     isDeleting
   } = useExamBankManager(filters);
-
   const handleResetFilters = () => {
     setFilters({
       gradeLevel: 'all',
@@ -69,31 +47,29 @@ const ExamBankManagement = () => {
       searchTerm: ''
     });
   };
-
   const handleAddQuestion = () => {
     setEditingQuestion(undefined);
     setIsDialogOpen(true);
   };
-
   const handleEditQuestion = (question: Question) => {
     setEditingQuestion(question);
     setIsDialogOpen(true);
   };
-
   const handleSubmitQuestion = (data: Omit<Question, 'id' | 'created_at' | 'updated_at'>) => {
     if (editingQuestion) {
-      updateQuestion({ id: editingQuestion.id, ...data });
+      updateQuestion({
+        id: editingQuestion.id,
+        ...data
+      });
     } else {
       addQuestion(data);
     }
     setIsDialogOpen(false);
   };
-
   const handleDeleteClick = (questionId: string) => {
     setQuestionToDelete(questionId);
     setDeleteDialogOpen(true);
   };
-
   const confirmDelete = () => {
     if (questionToDelete) {
       deleteQuestion(questionToDelete);
@@ -101,43 +77,41 @@ const ExamBankManagement = () => {
     setDeleteDialogOpen(false);
     setQuestionToDelete(null);
   };
-
   const getDifficultyBadgeColor = (difficulty: string) => {
     switch (difficulty) {
-      case 'easy': return 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20';
-      case 'medium': return 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/20';
-      case 'hard': return 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20';
-      default: return '';
+      case 'easy':
+        return 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20';
+      case 'medium':
+        return 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/20';
+      case 'hard':
+        return 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20';
+      default:
+        return '';
     }
   };
-
   const getGradeBadgeStyle = (grade: string) => {
     switch (grade) {
-      case '10': return 'bg-gradient-to-br from-blue-500 to-cyan-500';
-      case '11': return 'bg-gradient-to-br from-purple-500 to-pink-500';
-      case '12': return 'bg-gradient-to-br from-orange-500 to-red-500';
-      default: return 'bg-gradient-to-br from-primary to-blue-600';
+      case '10':
+        return 'bg-gradient-to-br from-blue-500 to-cyan-500';
+      case '11':
+        return 'bg-gradient-to-br from-purple-500 to-pink-500';
+      case '12':
+        return 'bg-gradient-to-br from-orange-500 to-red-500';
+      default:
+        return 'bg-gradient-to-br from-primary to-blue-600';
     }
   };
-
   const difficultyLabels = {
     easy: 'سهل',
     medium: 'متوسط',
     hard: 'صعب'
   };
-
   const typeLabels = {
     multiple_choice: 'اختيار متعدد',
     true_false: 'صح/خطأ'
   };
-
-  return (
-    <div className="min-h-screen bg-background" dir="rtl">
-      <ModernHeader 
-        title="إدارة بنك أسئلة الامتحانات"
-        showBackButton
-        backPath="/dashboard"
-      />
+  return <div className="min-h-screen bg-background" dir="rtl">
+      <ModernHeader title="إدارة بنك أسئلة الامتحانات" showBackButton backPath="/dashboard" />
 
       <div className="container mx-auto px-4 py-8 space-y-8">
         {/* Hero Section - الإحصائيات */}
@@ -183,17 +157,15 @@ const ExamBankManagement = () => {
             <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
               <div className="relative flex-1 w-full md:max-w-md">
                 <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="ابحث في الأسئلة..."
-                  value={filters.searchTerm}
-                  onChange={(e) => setFilters(prev => ({ ...prev, searchTerm: e.target.value }))}
-                  className="pr-10"
-                />
+                <Input placeholder="ابحث في الأسئلة..." value={filters.searchTerm} onChange={e => setFilters(prev => ({
+                ...prev,
+                searchTerm: e.target.value
+              }))} className="pr-10" />
               </div>
               <div className="flex gap-2 flex-wrap">
                 <Button onClick={() => setIsSmartGeneratorOpen(true)} variant="default" className="gap-2">
                   <Sparkles className="w-4 h-4" />
-                  توليد أسئلة ذكية
+                  نظام توليد الأسئلة الذكي   
                 </Button>
                 <Button onClick={handleAddQuestion} variant="outline" className="gap-2">
                   <Plus className="w-4 h-4" />
@@ -222,7 +194,11 @@ const ExamBankManagement = () => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">الصف الدراسي</label>
-                <Select value={filters.gradeLevel} onValueChange={(value) => setFilters(prev => ({ ...prev, gradeLevel: value, sectionName: 'all' }))}>
+                <Select value={filters.gradeLevel} onValueChange={value => setFilters(prev => ({
+                ...prev,
+                gradeLevel: value,
+                sectionName: 'all'
+              }))}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -237,26 +213,26 @@ const ExamBankManagement = () => {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">القسم</label>
-                <Select 
-                  value={filters.sectionName} 
-                  onValueChange={(value) => setFilters(prev => ({ ...prev, sectionName: value }))}
-                  disabled={filters.gradeLevel === 'all'}
-                >
+                <Select value={filters.sectionName} onValueChange={value => setFilters(prev => ({
+                ...prev,
+                sectionName: value
+              }))} disabled={filters.gradeLevel === 'all'}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">جميع الأقسام</SelectItem>
-                    {sections.map(section => (
-                      <SelectItem key={section} value={section}>{section}</SelectItem>
-                    ))}
+                    {sections.map(section => <SelectItem key={section} value={section}>{section}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">مستوى الصعوبة</label>
-                <Select value={filters.difficulty} onValueChange={(value) => setFilters(prev => ({ ...prev, difficulty: value }))}>
+                <Select value={filters.difficulty} onValueChange={value => setFilters(prev => ({
+                ...prev,
+                difficulty: value
+              }))}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -271,7 +247,10 @@ const ExamBankManagement = () => {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">نوع السؤال</label>
-                <Select value={filters.questionType} onValueChange={(value) => setFilters(prev => ({ ...prev, questionType: value }))}>
+                <Select value={filters.questionType} onValueChange={value => setFilters(prev => ({
+                ...prev,
+                questionType: value
+              }))}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -293,23 +272,17 @@ const ExamBankManagement = () => {
         </Card>
 
         {/* عرض الأسئلة */}
-        {isLoading ? (
-          <div className="text-center py-12">
+        {isLoading ? <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             <p className="mt-4 text-muted-foreground">جاري تحميل الأسئلة...</p>
-          </div>
-        ) : questions.length === 0 ? (
-          <Card>
+          </div> : questions.length === 0 ? <Card>
             <CardContent className="py-12 text-center">
               <BookOpen className="w-16 h-16 mx-auto text-muted-foreground opacity-50 mb-4" />
               <p className="text-lg text-muted-foreground">لا توجد أسئلة</p>
               <p className="text-sm text-muted-foreground mt-2">ابدأ بإضافة أسئلة جديدة أو استيراد أسئلة جاهزة</p>
             </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {questions.map((question, index) => (
-              <Card key={question.id} className="hover:shadow-xl hover:scale-[1.02] transition-all duration-300">
+          </Card> : <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {questions.map((question, index) => <Card key={question.id} className="hover:shadow-xl hover:scale-[1.02] transition-all duration-300">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <Badge variant="outline" className="text-xs">#{index + 1}</Badge>
@@ -328,11 +301,9 @@ const ExamBankManagement = () => {
                       {question.points} نقطة
                     </Badge>
                   </div>
-                  {question.section_name && (
-                    <Badge variant="outline" className="text-xs w-fit mb-2">
+                  {question.section_name && <Badge variant="outline" className="text-xs w-fit mb-2">
                       {question.section_name}
-                    </Badge>
-                  )}
+                    </Badge>}
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <p className="text-sm line-clamp-3">{question.question_text}</p>
@@ -341,37 +312,22 @@ const ExamBankManagement = () => {
                     <p className="text-sm font-medium">{question.correct_answer}</p>
                   </div>
                   <div className="flex gap-2 pt-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => handleEditQuestion(question)}
-                      className="flex-1 gap-2"
-                    >
+                    <Button variant="outline" size="sm" onClick={() => handleEditQuestion(question)} className="flex-1 gap-2">
                       <Edit2 className="w-3 h-3" />
                       تعديل
                     </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => handleDeleteClick(question.id)}
-                      className="flex-1 gap-2 text-destructive hover:text-destructive"
-                    >
+                    <Button variant="outline" size="sm" onClick={() => handleDeleteClick(question.id)} className="flex-1 gap-2 text-destructive hover:text-destructive">
                       <Trash2 className="w-3 h-3" />
                       حذف
                     </Button>
                   </div>
                 </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+              </Card>)}
+          </div>}
       </div>
 
       {/* Smart Question Generator */}
-      <SmartQuestionGenerator
-        open={isSmartGeneratorOpen}
-        onOpenChange={setIsSmartGeneratorOpen}
-      />
+      <SmartQuestionGenerator open={isSmartGeneratorOpen} onOpenChange={setIsSmartGeneratorOpen} />
       
       {/* Dialog للإضافة/التعديل */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -381,12 +337,7 @@ const ExamBankManagement = () => {
               {editingQuestion ? 'تعديل السؤال' : 'إضافة سؤال جديد'}
             </DialogTitle>
           </DialogHeader>
-          <QuestionForm
-            question={editingQuestion}
-            onSubmit={handleSubmitQuestion}
-            onCancel={() => setIsDialogOpen(false)}
-            isSubmitting={isAdding || isUpdating}
-          />
+          <QuestionForm question={editingQuestion} onSubmit={handleSubmitQuestion} onCancel={() => setIsDialogOpen(false)} isSubmitting={isAdding || isUpdating} />
         </DialogContent>
       </Dialog>
 
@@ -407,8 +358,6 @@ const ExamBankManagement = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
-  );
+    </div>;
 };
-
 export default ExamBankManagement;
