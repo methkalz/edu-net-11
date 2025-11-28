@@ -34,40 +34,26 @@ export const ExamQuestion: React.FC<ExamQuestionProps> = ({
     if (question.question_type === 'true_false') {
       return (
         <RadioGroup value={currentAnswer || ''} onValueChange={onAnswerChange}>
-          <label 
-            htmlFor="true"
-            className={`
-              flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer
-              transition-all duration-200 hover:shadow-md
-              ${currentAnswer === 'true' 
-                ? 'border-primary bg-primary/5 shadow-sm' 
-                : 'border-border hover:border-primary/40'
-              }
-            `}
-          >
-            <RadioGroupItem value="true" id="true" disabled={showCorrectAnswer} className="shrink-0" />
-            <span className="flex-1 font-medium">صح</span>
-            {showCorrectAnswer && correctAnswer === 'true' && (
-              <Badge className="bg-green-500">الإجابة الصحيحة</Badge>
-            )}
-          </label>
-          <label 
-            htmlFor="false"
-            className={`
-              flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer
-              transition-all duration-200 hover:shadow-md
-              ${currentAnswer === 'false' 
-                ? 'border-primary bg-primary/5 shadow-sm' 
-                : 'border-border hover:border-primary/40'
-              }
-            `}
-          >
-            <RadioGroupItem value="false" id="false" disabled={showCorrectAnswer} className="shrink-0" />
-            <span className="flex-1 font-medium">خطأ</span>
-            {showCorrectAnswer && correctAnswer === 'false' && (
-              <Badge className="bg-green-500">الإجابة الصحيحة</Badge>
-            )}
-          </label>
+          {question.choices?.map((choice) => (
+            <label 
+              key={choice.value}
+              htmlFor={choice.value}
+              className={`
+                flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer
+                transition-all duration-200 hover:shadow-md
+                ${currentAnswer === choice.value 
+                  ? 'border-primary bg-primary/5 shadow-sm' 
+                  : 'border-border hover:border-primary/40'
+                }
+              `}
+            >
+              <RadioGroupItem value={choice.value} id={choice.value} disabled={showCorrectAnswer} className="shrink-0" />
+              <span className="flex-1 font-medium">{choice.text}</span>
+              {showCorrectAnswer && correctAnswer === choice.value && (
+                <Badge className="bg-green-500">الإجابة الصحيحة</Badge>
+              )}
+            </label>
+          ))}
         </RadioGroup>
       );
     }
