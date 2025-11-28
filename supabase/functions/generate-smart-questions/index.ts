@@ -118,8 +118,6 @@ ${existingQuestionsText}
                 properties: {
                   questions: {
                     type: 'array',
-                    minItems: questionCount,
-                    maxItems: questionCount,
                     description: `يجب أن تحتوي على ${questionCount} سؤال بالضبط`,
                     items: {
                       type: 'object',
@@ -247,8 +245,6 @@ ${lessonContent.substring(0, 8000)}
                   properties: {
                     questions: {
                       type: 'array',
-                      minItems: remainingCount,
-                      maxItems: remainingCount,
                       description: `يجب أن تحتوي على ${remainingCount} سؤال بالضبط`,
                       items: {
                         type: 'object',
