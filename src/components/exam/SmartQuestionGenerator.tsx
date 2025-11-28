@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MultiSelect } from '@/components/ui/multi-select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -437,21 +438,27 @@ export function SmartQuestionGenerator({ open, onOpenChange }: Props) {
             
             {/* عدد الأسئلة */}
             <div>
-              <Label>عدد الأسئلة المطلوبة *</Label>
-              <Select value={questionCount.toString()} onValueChange={(v) => setQuestionCount(Number(v))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: 20 }, (_, i) => i + 1).map(n => (
-                    <SelectItem key={n} value={n.toString()}>
-                      {n} {n === 1 ? 'سؤال' : 'أسئلة'}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="question-count">عدد الأسئلة المطلوبة *</Label>
+              <Input
+                id="question-count"
+                type="number"
+                min={1}
+                max={50}
+                value={questionCount}
+                onChange={(e) => {
+                  const value = parseInt(e.target.value);
+                  if (!isNaN(value) && value >= 1 && value <= 50) {
+                    setQuestionCount(value);
+                  }
+                }}
+                placeholder="أدخل عدد الأسئلة (1-50)"
+                className="text-center"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                يمكن كتابة عدد من 1 إلى 50 سؤال
+              </p>
             </div>
-            
+
             {/* توزيع الصعوبة */}
             <DifficultyDistributionSelector
               totalQuestions={questionCount}
