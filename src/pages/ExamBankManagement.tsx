@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BookOpen, Plus, Search, Edit2, Trash2, Filter, RotateCcw, Sparkles } from 'lucide-react';
+import { BookOpen, Plus, Search, Edit2, Trash2, Filter, RotateCcw, Check } from 'lucide-react';
 import { useExamBankManager } from '@/hooks/useExamBankManager';
 import { QuestionForm } from '@/components/exam/QuestionForm';
 import { BulkQuestionImporter } from '@/components/exam/BulkQuestionImporter';
@@ -164,7 +164,7 @@ const ExamBankManagement = () => {
               </div>
               <div className="flex gap-2 flex-wrap">
                 <Button onClick={() => setIsSmartGeneratorOpen(true)} variant="default" className="gap-2">
-                  <Sparkles className="w-4 h-4" />
+                  <Check className="w-4 h-4" />
                   نظام توليد الأسئلة الذكي   
                 </Button>
                 <Button onClick={handleAddQuestion} variant="outline" className="gap-2">
