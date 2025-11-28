@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
   Plus, 
   BookOpen, 
@@ -10,15 +11,15 @@ import {
   Edit, 
   Trash2, 
   ChevronDown,
+  ChevronRight,
   Users,
-  Calendar,
-  Eye
+  Calendar
 } from 'lucide-react';
 import { useGrade10AdminContent, Grade10SectionWithTopics, Grade10TopicWithLessons, Grade10LessonWithMedia } from '@/hooks/useGrade10AdminContent';
 import Grade10SectionForm from './Grade10SectionForm';
 import Grade10TopicForm from './Grade10TopicForm';
 import Grade10LessonForm from './Grade10LessonForm';
-import Grade10LessonPreviewModal from './Grade10LessonPreviewModal';
+import Grade10LessonContentDisplay from './Grade10LessonContentDisplay';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 const Grade10LessonsAdmin: React.FC = () => {
@@ -49,9 +50,19 @@ const Grade10LessonsAdmin: React.FC = () => {
   const [editingLesson, setEditingLesson] = useState<Grade10LessonWithMedia | null>(null);
   const [selectedSectionId, setSelectedSectionId] = useState<string>('');
   const [selectedTopicId, setSelectedTopicId] = useState<string>('');
-  
-  // Preview state
-  const [previewLesson, setPreviewLesson] = useState<Grade10LessonWithMedia | null>(null);
+  const [expandedLessons, setExpandedLessons] = useState<Set<string>>(new Set());
+
+  const toggleLesson = (lessonId: string) => {
+    setExpandedLessons(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(lessonId)) {
+        newSet.delete(lessonId);
+      } else {
+        newSet.add(lessonId);
+      }
+      return newSet;
+    });
+  };
 
   if (loading) {
     return (
@@ -334,60 +345,75 @@ const Grade10LessonsAdmin: React.FC = () => {
                                 ) : (
                                   <div className="grid gap-2">
                                     {topic.lessons.map((lesson) => (
-                                      <div key={lesson.id} className="flex items-center justify-between p-3 border rounded-lg ml-4">
-                                        <div className="flex items-center gap-2">
-                                          <FileText className="h-4 w-4 text-primary" />
-                                          <div>
-                                            <p className="font-medium">{lesson.title}</p>
-                                            {lesson.media.length > 0 && (
-                                              <Badge variant="secondary" className="text-xs">
-                                                {lesson.media.length} وسائط
-                                              </Badge>
-                                            )}
-                                          </div>
-                                        </div>
-                                        <div className="flex gap-1">
-                                          <Button 
-                                            size="sm" 
-                                            variant="ghost"
-                                            onClick={() => setPreviewLesson(lesson)}
-                                            title="معاينة الدرس"
-                                          >
-                                            <Eye className="h-4 w-4" />
-                                          </Button>
-                                          <Button 
-                                            size="sm" 
-                                            variant="ghost"
-                                            onClick={() => handleEditLesson(lesson)}
-                                          >
-                                            <Edit className="h-4 w-4" />
-                                          </Button>
-                                          <AlertDialog>
-                                            <AlertDialogTrigger asChild>
-                                              <Button size="sm" variant="ghost">
-                                                <Trash2 className="h-4 w-4" />
-                                              </Button>
-                                            </AlertDialogTrigger>
-                                            <AlertDialogContent>
-                                              <AlertDialogHeader>
-                                                <AlertDialogTitle>حذف الدرس</AlertDialogTitle>
-                                                <AlertDialogDescription>
-                                                  هل أنت متأكد من حذف الدرس "{lesson.title}"؟
-                                                </AlertDialogDescription>
-                                              </AlertDialogHeader>
-                                              <AlertDialogFooter>
-                                                <AlertDialogCancel>إلغاء</AlertDialogCancel>
-                                                <AlertDialogAction
-                                                  onClick={() => deleteLesson(lesson.id)}
-                                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                      <Collapsible 
+                                        key={lesson.id}
+                                        open={expandedLessons.has(lesson.id)}
+                                        onOpenChange={() => toggleLesson(lesson.id)}
+                                      >
+                                        <div className="border rounded-lg ml-4 overflow-hidden">
+                                          <CollapsibleTrigger className="w-full">
+                                            <div className="flex items-center justify-between p-3 hover:bg-accent/50 transition-colors cursor-pointer">
+                                              <div className="flex items-center gap-2">
+                                                {expandedLessons.has(lesson.id) ? (
+                                                  <ChevronDown className="h-4 w-4 text-primary" />
+                                                ) : (
+                                                  <ChevronRight className="h-4 w-4 text-primary" />
+                                                )}
+                                                <FileText className="h-4 w-4 text-primary" />
+                                                <div className="text-right">
+                                                  <p className="font-medium">{lesson.title}</p>
+                                                  {lesson.media.length > 0 && (
+                                                    <Badge variant="secondary" className="text-xs">
+                                                      {lesson.media.length} وسائط
+                                                    </Badge>
+                                                  )}
+                                                </div>
+                                              </div>
+                                              <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                                                <Button 
+                                                  size="sm" 
+                                                  variant="ghost"
+                                                  onClick={() => handleEditLesson(lesson)}
                                                 >
-                                                  حذف
-                                                </AlertDialogAction>
-                                              </AlertDialogFooter>
-                                            </AlertDialogContent>
-                                          </AlertDialog>
+                                                  <Edit className="h-4 w-4" />
+                                                </Button>
+                                                <AlertDialog>
+                                                  <AlertDialogTrigger asChild>
+                                                    <Button size="sm" variant="ghost">
+                                                      <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                  </AlertDialogTrigger>
+                                                  <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                      <AlertDialogTitle>حذف الدرس</AlertDialogTitle>
+                                                      <AlertDialogDescription>
+                                                        هل أنت متأكد من حذف الدرس "{lesson.title}"؟
+                                                      </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                      <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                                                      <AlertDialogAction
+                                                        onClick={() => deleteLesson(lesson.id)}
+                                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                                      >
+                                                        حذف
+                                                      </AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                  </AlertDialogContent>
+                                                </AlertDialog>
+                                              </div>
+                                            </div>
+                                          </CollapsibleTrigger>
+                                          <CollapsibleContent>
+                                            <div className="p-4 border-t bg-muted/20">
+                                              <Grade10LessonContentDisplay 
+                                                lesson={lesson as any}
+                                                hideTitle={true}
+                                              />
+                                            </div>
+                                          </CollapsibleContent>
                                         </div>
-                                      </div>
+                                      </Collapsible>
                                     ))}
                                   </div>
                                 )}
@@ -458,13 +484,6 @@ const Grade10LessonsAdmin: React.FC = () => {
           onUpdateMedia={updateLessonMedia}
         />
       )}
-
-      {/* Preview Modal */}
-      <Grade10LessonPreviewModal
-        lesson={previewLesson}
-        isOpen={!!previewLesson}
-        onClose={() => setPreviewLesson(null)}
-      />
     </div>
   );
 };
