@@ -26,3 +26,6 @@ verify_jwt = true
 
 [functions.pdf-compare-batch]
 verify_jwt = true
+
+[functions.generate-smart-questions]
+verify_jwt = true
