@@ -337,7 +337,9 @@ const ExamBankManagement = () => {
                       <p className="text-sm line-clamp-3">{question.question_text}</p>
                       <div className="bg-muted/50 rounded-lg p-2">
                         <p className="text-xs text-muted-foreground mb-1">الإجابة الصحيحة:</p>
-                        <p className="text-sm font-medium">{question.correct_answer}</p>
+                        <p className="text-sm font-medium">
+                          {question.choices?.find(c => c.id === question.correct_answer)?.text || question.correct_answer}
+                        </p>
                       </div>
                       <div className="flex gap-2 pt-2">
                         <Button variant="outline" size="sm" onClick={() => handleEditQuestion(question)} className="flex-1 gap-2">
