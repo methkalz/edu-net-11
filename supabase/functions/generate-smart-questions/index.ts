@@ -304,15 +304,23 @@ ${existingQuestions.map((q, i) => `${i + 1}. ${q.question_text}`).join('\n')}
 
     // Process questions: add IDs to choices and map correct_answer
     const processedQuestions = questions.map((q: any) => {
-      const choicesWithIds = q.choices.map((choice: any, idx: number) => ({
-        id: `choice_${idx + 1}`,
-        text: choice.text
-      }));
+      // استخدام choice_true/choice_false لأسئلة صح/خطأ
+      const choicesWithIds = q.question_type === 'true_false' 
+        ? [{ id: 'choice_true', text: 'صح' }, { id: 'choice_false', text: 'خطأ' }]
+        : q.choices.map((choice: any, idx: number) => ({
+            id: `choice_${idx + 1}`,
+            text: choice.text
+          }));
 
-      // Find correct answer ID by matching text
-      const correctChoice = choicesWithIds.find((c: any) => 
-        c.text.trim().toLowerCase() === q.correct_answer_text.trim().toLowerCase()
-      );
+      // Find correct answer ID by matching text or index
+      let correctChoice;
+      if (q.question_type === 'true_false') {
+        correctChoice = q.correct_answer_index === 0 ? choicesWithIds[0] : choicesWithIds[1];
+      } else {
+        correctChoice = choicesWithIds.find((c: any) => 
+          c.text.trim().toLowerCase() === q.correct_answer_text.trim().toLowerCase()
+        );
+      }
 
       return {
         question_text: q.question_text,

@@ -6679,7 +6679,9 @@ export type Database = {
         Returns: undefined
       }
       refresh_superadmin_view: { Args: never; Returns: undefined }
-      submit_exam_attempt: { Args: { p_attempt_id: string }; Returns: Json }
+      submit_exam_attempt:
+        | { Args: { p_answers: Json; p_attempt_id: string }; Returns: Json }
+        | { Args: { p_attempt_id: string }; Returns: Json }
       unlock_next_games: {
         Args: { p_completed_game_id: string; p_player_id: string }
         Returns: undefined

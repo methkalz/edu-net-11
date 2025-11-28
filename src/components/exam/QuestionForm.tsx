@@ -61,7 +61,7 @@ export const QuestionForm: React.FC<QuestionFormProps> = ({
       question_type: (question?.question_type === 'multiple_choice' || question?.question_type === 'true_false') 
         ? question.question_type 
         : 'multiple_choice',
-      choices: question?.choices || [{ id: '1', text: '' }, { id: '2', text: '' }],
+      choices: question?.choices || [{ id: 'choice_1', text: '' }, { id: 'choice_2', text: '' }],
       correct_answer: question?.correct_answer || '',
       difficulty: question?.difficulty || 'medium',
       grade_level: question?.grade_level || '11',
@@ -75,17 +75,17 @@ export const QuestionForm: React.FC<QuestionFormProps> = ({
   useEffect(() => {
     if (questionType === 'true_false') {
       form.setValue('choices', [
-        { id: 'true', text: 'صح' },
-        { id: 'false', text: 'خطأ' }
+        { id: 'choice_true', text: 'صح' },
+        { id: 'choice_false', text: 'خطأ' }
       ]);
     } else if (questionType === 'multiple_choice' && (!choices || choices.length < 2)) {
-      form.setValue('choices', [{ id: '1', text: '' }, { id: '2', text: '' }]);
+      form.setValue('choices', [{ id: 'choice_1', text: '' }, { id: 'choice_2', text: '' }]);
     }
   }, [questionType]);
 
   const addChoice = () => {
     const currentChoices = form.getValues('choices') || [];
-    form.setValue('choices', [...currentChoices, { id: String(currentChoices.length + 1), text: '' }]);
+    form.setValue('choices', [...currentChoices, { id: `choice_${currentChoices.length + 1}`, text: '' }]);
   };
 
   const removeChoice = (index: number) => {
