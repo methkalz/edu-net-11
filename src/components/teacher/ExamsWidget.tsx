@@ -395,47 +395,35 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
     queryFn: async () => {
       if (!selectedGradeLevel) return [];
       
-      // جلب الأقسام من جدول question_bank_sections
-      const { data: sections, error: sectionsError } = await supabase
-        .from('question_bank_sections')
-        .select('id, title, grade_level')
-        .eq('grade_level', selectedGradeLevel)
-        .eq('is_active', true);
-
-      if (sectionsError) throw sectionsError;
-      if (!sections || sections.length === 0) return [];
-
-      // جلب عدد الأسئلة لكل قسم حسب المستوى
-      const { data: questions, error: questionsError } = await supabase
+      // جلب الأقسام مباشرة من الأسئلة الفعلية
+      const { data: questions, error } = await supabase
         .from('question_bank')
         .select('section_name, difficulty')
         .eq('grade_level', selectedGradeLevel)
         .eq('is_active', true);
 
-      if (questionsError) throw questionsError;
+      if (error) throw error;
+      if (!questions || questions.length === 0) return [];
 
-      // تجميع عدد الأسئلة لكل قسم
-      const questionsMap = new Map<string, { easy: number; medium: number; hard: number }>();
-      questions?.forEach(q => {
-        if (!questionsMap.has(q.section_name)) {
-          questionsMap.set(q.section_name, { easy: 0, medium: 0, hard: 0 });
+      // تجميع الأقسام وعدد الأسئلة لكل قسم
+      const sectionsMap = new Map<string, { easy: number; medium: number; hard: number }>();
+      questions.forEach(q => {
+        if (!sectionsMap.has(q.section_name)) {
+          sectionsMap.set(q.section_name, { easy: 0, medium: 0, hard: 0 });
         }
-        const counts = questionsMap.get(q.section_name)!;
+        const counts = sectionsMap.get(q.section_name)!;
         counts[q.difficulty]++;
       });
 
-      // دمج البيانات: استخدام section.id الحقيقي من question_bank_sections
-      return sections.map(section => {
-        const counts = questionsMap.get(section.title) || { easy: 0, medium: 0, hard: 0 };
-        return {
-          id: section.id,  // استخدام ID الحقيقي من question_bank_sections
-          name: section.title,
-          easy: counts.easy,
-          medium: counts.medium,
-          hard: counts.hard,
-          total: counts.easy + counts.medium + counts.hard,
-        };
-      }).filter(section => section.total > 0); // فقط الأقسام التي تحتوي على أسئلة
+      // تحويل إلى array مع استخدام اسم القسم كـ ID
+      return Array.from(sectionsMap.entries()).map(([sectionName, counts]) => ({
+        id: sectionName,  // استخدام اسم القسم كـ ID
+        name: sectionName,
+        easy: counts.easy,
+        medium: counts.medium,
+        hard: counts.hard,
+        total: counts.easy + counts.medium + counts.hard,
+      }));
     },
     enabled: !!selectedGradeLevel && isCreateDialogOpen,
   });
