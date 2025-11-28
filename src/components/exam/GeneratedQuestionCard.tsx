@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Edit2, Trash2, Save, X, CheckCircle2 } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Edit2, Trash2, Save, X, CheckCircle2, AlertCircle } from 'lucide-react';
 
 export interface GeneratedQuestion {
   id?: string;
@@ -19,6 +20,11 @@ export interface GeneratedQuestion {
   topic_name: string;
   grade_level: string;
   points: number;
+  similarityWarning?: {
+    found: boolean;
+    match?: string;
+    similarity?: number;
+  };
 }
 
 interface Props {
@@ -75,6 +81,20 @@ export function GeneratedQuestionCard({
   
   return (
     <Card className={`p-4 ${isApproved ? 'border-green-500 bg-green-50/30' : ''}`}>
+      {/* Similarity Warning */}
+      {question.similarityWarning?.found && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            ⚠️ سؤال مشابه موجود في بنك الأسئلة ({question.similarityWarning.similarity}% تشابه):
+            <br />
+            <span className="text-sm text-muted-foreground mt-1 block">
+              "{question.similarityWarning.match}"
+            </span>
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2">
           <span className="text-sm font-bold text-muted-foreground">#{index + 1}</span>

@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MultiSelect } from '@/components/ui/multi-select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Sparkles, Loader2, AlertCircle, ExternalLink } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Sparkles, Loader2, AlertCircle, ExternalLink, Filter } from 'lucide-react';
 import { toast } from 'sonner';
 import { useGradeSections } from '@/hooks/useGradeSections';
 import { useSectionTopics } from '@/hooks/useSectionTopics';
@@ -16,7 +17,8 @@ import { ContentSuitabilityBadge } from './ContentSuitabilityBadge';
 import { GeneratedQuestionCard, GeneratedQuestion } from './GeneratedQuestionCard';
 import { evaluateLessonContent } from '@/utils/contentEvaluator';
 import { supabase } from '@/integrations/supabase/client';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { findSimilarQuestion } from '@/utils/textSimilarity';
 
 interface Props {
   open: boolean;
@@ -45,6 +47,7 @@ export function SmartQuestionGenerator({ open, onOpenChange }: Props) {
   // Step 2: Preview
   const [generatedQuestions, setGeneratedQuestions] = useState<GeneratedQuestion[]>([]);
   const [approvedQuestions, setApprovedQuestions] = useState<Set<number>>(new Set());
+  const [showOnlyNew, setShowOnlyNew] = useState(false);
   
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -61,6 +64,22 @@ export function SmartQuestionGenerator({ open, onOpenChange }: Props) {
     if (!l.content) return false;
     const evaluation = evaluateLessonContent(l.content);
     return evaluation.isSuitable;
+  });
+
+  // Fetch existing questions to check for duplicates
+  const { data: existingQuestions = [] } = useQuery({
+    queryKey: ['existing-questions', gradeLevel, selectedSection?.title],
+    queryFn: async () => {
+      if (!gradeLevel || !selectedSection) return [];
+      const { data } = await supabase
+        .from('question_bank')
+        .select('question_text')
+        .eq('grade_level', gradeLevel)
+        .eq('section_name', selectedSection.title)
+        .eq('is_active', true);
+      return data || [];
+    },
+    enabled: !!gradeLevel && !!selectedSection
   });
   
   // معالجة اختيار المواضيع
@@ -209,12 +228,27 @@ export function SmartQuestionGenerator({ open, onOpenChange }: Props) {
         });
         return;
       }
+
+      // Check for similarity with existing questions
+      const questionsWithSimilarity = data.questions.map((q: GeneratedQuestion) => {
+        const similarityCheck = findSimilarQuestion(q.question_text, existingQuestions);
+        return {
+          ...q,
+          similarityWarning: similarityCheck
+        };
+      });
       
-      setGeneratedQuestions(data.questions);
+      setGeneratedQuestions(questionsWithSimilarity);
       setApprovedQuestions(new Set());
       setStep('preview');
+
+      const similarCount = questionsWithSimilarity.filter((q: GeneratedQuestion) => q.similarityWarning?.found).length;
       
-      toast.success(`تم توليد ${data.questions.length} سؤال بنجاح! 🎉`);
+      if (similarCount > 0) {
+        toast.success(`تم توليد ${data.questions.length} سؤال! ⚠️ ${similarCount} منها مشابه لأسئلة موجودة`);
+      } else {
+        toast.success(`تم توليد ${data.questions.length} سؤال بنجاح! 🎉`);
+      }
       
     } catch (error) {
       console.error('Error generating questions:', error);
@@ -551,35 +585,56 @@ export function SmartQuestionGenerator({ open, onOpenChange }: Props) {
           </div>
         ) : (
           <div className="space-y-4 py-4">
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">
-                تم توليد {generatedQuestions.length} سؤال • 
-                تمت الموافقة على {approvedQuestions.size} سؤال
-              </p>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <p className="text-sm text-muted-foreground">
+                  تم توليد {generatedQuestions.length} سؤال
+                </p>
+                {generatedQuestions.filter(q => q.similarityWarning?.found).length > 0 && (
+                  <Badge variant="secondary">
+                    {generatedQuestions.filter(q => q.similarityWarning?.found).length} سؤال مشابه
+                  </Badge>
+                )}
+              </div>
               
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={handleApproveAll}
-                disabled={approvedQuestions.size === generatedQuestions.length}
-              >
-                الموافقة على الكل
-              </Button>
+              <div className="flex gap-2">
+                {generatedQuestions.some(q => q.similarityWarning?.found) && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={showOnlyNew ? "default" : "outline"}
+                    onClick={() => setShowOnlyNew(!showOnlyNew)}
+                  >
+                    <Filter className="w-4 h-4 mr-1" />
+                    {showOnlyNew ? 'عرض الكل' : 'إخفاء المشابهة'}
+                  </Button>
+                )}
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={handleApproveAll}
+                  disabled={approvedQuestions.size === generatedQuestions.length}
+                >
+                  الموافقة على الكل
+                </Button>
+              </div>
             </div>
             
             <div className="space-y-3 max-h-[500px] overflow-y-auto">
-              {generatedQuestions.map((question, idx) => (
-                <GeneratedQuestionCard
-                  key={idx}
-                  question={question}
-                  index={idx}
-                  onEdit={(edited) => handleEditQuestion(idx, edited)}
-                  onDelete={() => handleDeleteQuestion(idx)}
-                  onApprove={() => handleApproveQuestion(idx)}
-                  isApproved={approvedQuestions.has(idx)}
-                />
-              ))}
+              {generatedQuestions
+                .filter(q => !showOnlyNew || !q.similarityWarning?.found)
+                .map((question, idx) => (
+                  <GeneratedQuestionCard
+                    key={idx}
+                    question={question}
+                    index={idx}
+                    onEdit={(edited) => handleEditQuestion(idx, edited)}
+                    onDelete={() => handleDeleteQuestion(idx)}
+                    onApprove={() => handleApproveQuestion(idx)}
+                    isApproved={approvedQuestions.has(idx)}
+                  />
+                ))}
             </div>
             
             <div className="flex justify-between gap-2 pt-4 border-t">

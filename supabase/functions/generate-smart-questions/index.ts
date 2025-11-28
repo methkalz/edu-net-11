@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -20,10 +21,37 @@ serve(async (req) => {
 
     console.log('Generating questions for:', { gradeLevel, sectionName, topicName, lessonId, questionCount });
 
+    // Create Supabase client for fetching existing questions
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Fetch existing questions to avoid duplicates
+    console.log('🔍 Fetching existing questions to avoid duplicates...');
+    const { data: existingQuestions } = await supabase
+      .from('question_bank')
+      .select('question_text')
+      .eq('grade_level', gradeLevel)
+      .eq('section_name', sectionName)
+      .eq('is_active', true)
+      .limit(100);
+
+    console.log(`📚 Found ${existingQuestions?.length || 0} existing questions in the bank`);
+
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
+
+    // Prepare existing questions text for AI prompt
+    const existingQuestionsText = existingQuestions && existingQuestions.length > 0
+      ? `
+
+⚠️ تجنب توليد أسئلة مشابهة لهذه الأسئلة الموجودة في بنك الأسئلة:
+${existingQuestions.map((q, i) => `${i + 1}. ${q.question_text}`).join('\n')}
+
+يجب أن تكون الأسئلة الجديدة مختلفة تماماً في الفكرة والصياغة.`
+      : '';
 
     // Build system prompt with strict count enforcement
     const systemPrompt = `أنت خبير في تصميم أسئلة الامتحانات التعليمية للمناهج العربية.
@@ -46,6 +74,7 @@ serve(async (req) => {
 
 محتوى الدرس:
 ${lessonContent.substring(0, 8000)}
+${existingQuestionsText}
 
 ⚠️ مهم جداً: يجب توليد بالضبط ${questionCount} سؤال (لا أكثر ولا أقل).
 
