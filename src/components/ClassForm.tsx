@@ -401,21 +401,33 @@ export const ClassForm: React.FC<ClassFormProps> = ({ editingClass, onSuccess, o
           return;
         }
       } else {
-        // Create new student (without password)
-        const { data: newStudentData, error: studentError } = await supabase
-          .from('students')
-          .insert({
+        // Generate password for new student
+        const generatePassword = (length: number = 10): string => {
+          const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+          let result = '';
+          for (let i = 0; i < length; i++) {
+            result += chars.charAt(Math.floor(Math.random() * chars.length));
+          }
+          return result;
+        };
+        
+        const password = newStudent.password || generatePassword();
+        
+        // Create new student using Edge Function
+        const { data: newStudentData, error: studentError } = await supabase.functions.invoke('create-student', {
+          body: {
             school_id: userProfile.school_id,
             full_name: newStudent.full_name.trim(),
-            username: newStudent.email || null, // Use email as username
             email: newStudent.email || null,
-            phone: newStudent.phone || null
-          })
-          .select()
-          .single();
+            phone: newStudent.phone || null,
+            password: password
+          }
+        });
 
-        if (studentError) throw studentError;
-        studentId = newStudentData.id;
+        if (studentError || !newStudentData || newStudentData.error) {
+          throw new Error(studentError?.message || newStudentData?.error || 'فشل في إنشاء الطالب');
+        }
+        studentId = newStudentData.student_id;
       }
 
       // Enroll student in class
