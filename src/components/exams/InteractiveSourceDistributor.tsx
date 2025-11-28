@@ -54,7 +54,8 @@ export const InteractiveSourceDistributor: React.FC<InteractiveSourceDistributor
     }));
 
     setSources(updatedSources);
-    onSourcesChange(updatedSources);
+    // إزالة icon قبل الإرسال لتجنب circular reference
+    onSourcesChange(updatedSources.map(({ icon, ...rest }) => rest as SourceDistribution));
   }, [totalQuestions]);
 
   // تفعيل/تعطيل مصدر
@@ -77,10 +78,10 @@ export const InteractiveSourceDistributor: React.FC<InteractiveSourceDistributor
       }));
 
       setSources(redistributed);
-      onSourcesChange(redistributed);
+      onSourcesChange(redistributed.map(({ icon, ...rest }) => rest as SourceDistribution));
     } else {
       setSources(updatedSources);
-      onSourcesChange(updatedSources);
+      onSourcesChange(updatedSources.map(({ icon, ...rest }) => rest as SourceDistribution));
     }
   };
 
@@ -123,7 +124,7 @@ export const InteractiveSourceDistributor: React.FC<InteractiveSourceDistributor
     }
 
     setSources(updatedSources);
-    onSourcesChange(updatedSources);
+    onSourcesChange(updatedSources.map(({ icon, ...rest }) => rest as SourceDistribution));
   };
 
   const enabledSources = sources.filter(s => s.enabled);
