@@ -120,13 +120,21 @@ export const TeacherQuestionDialog = ({
         ? choices
             .filter((c) => c.text.trim())
             .map((choice, idx) => ({
-              id: `choice_${idx}`,
+              id: `choice_${idx + 1}`,
               text: choice.text.trim(),
             }))
         : [
-            { id: "choice_0", text: "صح" },
-            { id: "choice_1", text: "خطأ" },
+            { id: "choice_true", text: "صح" },
+            { id: "choice_false", text: "خطأ" },
           ];
+
+      const correctChoice = questionType === "true_false"
+        ? (correctAnswer === 'true' ? 'choice_true' : 'choice_false')
+        : formattedChoices[parseInt(correctAnswer)]?.id;
+      
+      if (!correctChoice) {
+        throw new Error("الإجابة الصحيحة غير صالحة");
+      }
 
       const questionData = {
         teacher_id: user?.id,
@@ -138,9 +146,7 @@ export const TeacherQuestionDialog = ({
         category: category,
         points,
         choices: formattedChoices,
-        correct_answer: questionType === "true_false" 
-          ? correctAnswer 
-          : formattedChoices[parseInt(correctAnswer)]?.id || "",
+        correct_answer: correctChoice,
         tags: [],
         is_active: true,
       };
