@@ -6,13 +6,16 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BookOpen, Plus, Search, Edit2, Trash2, Filter, RotateCcw, Check } from 'lucide-react';
+import { BookOpen, Plus, Search, Edit2, Trash2, Filter, RotateCcw, Check, ChevronRight, ChevronLeft } from 'lucide-react';
 import { useExamBankManager } from '@/hooks/useExamBankManager';
 import { QuestionForm } from '@/components/exam/QuestionForm';
 import { BulkQuestionImporter } from '@/components/exam/BulkQuestionImporter';
 import { SmartQuestionGenerator } from '@/components/exam/SmartQuestionGenerator';
 import { Question } from '@/types/exam';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+
+const ITEMS_PER_PAGE = 30;
+
 const ExamBankManagement = () => {
   const [filters, setFilters] = useState({
     gradeLevel: 'all',
@@ -21,6 +24,7 @@ const ExamBankManagement = () => {
     questionType: 'all',
     searchTerm: ''
   });
+  const [currentPage, setCurrentPage] = useState(1);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSmartGeneratorOpen, setIsSmartGeneratorOpen] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<Question | undefined>(undefined);
@@ -38,6 +42,20 @@ const ExamBankManagement = () => {
     isUpdating,
     isDeleting
   } = useExamBankManager(filters);
+
+  // Pagination logic
+  const totalPages = Math.ceil(questions.length / ITEMS_PER_PAGE);
+  const paginatedQuestions = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return questions.slice(startIndex, endIndex);
+  }, [questions, currentPage]);
+
+  // Reset to page 1 when filters change
+  useMemo(() => {
+    setCurrentPage(1);
+  }, [filters.gradeLevel, filters.sectionName, filters.difficulty, filters.questionType, filters.searchTerm]);
+
   const handleResetFilters = () => {
     setFilters({
       gradeLevel: 'all',
@@ -46,6 +64,7 @@ const ExamBankManagement = () => {
       questionType: 'all',
       searchTerm: ''
     });
+    setCurrentPage(1);
   };
   const handleAddQuestion = () => {
     setEditingQuestion(undefined);
@@ -263,10 +282,15 @@ const ExamBankManagement = () => {
               </div>
             </div>
 
-            <div className="mt-4">
+            <div className="mt-4 flex items-center justify-between">
               <Badge variant="secondary" className="text-sm">
                 {questions.length} سؤال
               </Badge>
+              {totalPages > 1 && (
+                <div className="text-xs text-muted-foreground">
+                  الصفحة {currentPage} من {totalPages}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -281,49 +305,119 @@ const ExamBankManagement = () => {
               <p className="text-lg text-muted-foreground">لا توجد أسئلة</p>
               <p className="text-sm text-muted-foreground mt-2">ابدأ بإضافة أسئلة جديدة أو استيراد أسئلة جاهزة</p>
             </CardContent>
-          </Card> : <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {questions.map((question, index) => <Card key={question.id} className="hover:shadow-xl hover:scale-[1.02] transition-all duration-300">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <Badge variant="outline" className="text-xs">#{index + 1}</Badge>
-                    <Badge className={`${getGradeBadgeStyle(question.grade_level)} text-white border-none`}>
-                      الصف {question.grade_level}
-                    </Badge>
-                  </div>
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    <Badge variant="outline" className="text-xs">
-                      {typeLabels[question.question_type as keyof typeof typeLabels]}
-                    </Badge>
-                    <Badge className={`text-xs border ${getDifficultyBadgeColor(question.difficulty)}`}>
-                      {difficultyLabels[question.difficulty as keyof typeof difficultyLabels]}
-                    </Badge>
-                    <Badge variant="secondary" className="text-xs">
-                      {question.points} نقطة
-                    </Badge>
-                  </div>
-                  {question.section_name && <Badge variant="outline" className="text-xs w-fit mb-2">
-                      {question.section_name}
-                    </Badge>}
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <p className="text-sm line-clamp-3">{question.question_text}</p>
-                  <div className="bg-muted/50 rounded-lg p-2">
-                    <p className="text-xs text-muted-foreground mb-1">الإجابة الصحيحة:</p>
-                    <p className="text-sm font-medium">{question.correct_answer}</p>
-                  </div>
-                  <div className="flex gap-2 pt-2">
-                    <Button variant="outline" size="sm" onClick={() => handleEditQuestion(question)} className="flex-1 gap-2">
-                      <Edit2 className="w-3 h-3" />
-                      تعديل
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => handleDeleteClick(question.id)} className="flex-1 gap-2 text-destructive hover:text-destructive">
-                      <Trash2 className="w-3 h-3" />
-                      حذف
-                    </Button>
+          </Card> : <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {paginatedQuestions.map((question, index) => {
+                const globalIndex = (currentPage - 1) * ITEMS_PER_PAGE + index;
+                return (
+                  <Card key={question.id} className="hover:shadow-xl hover:scale-[1.02] transition-all duration-300">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <Badge variant="outline" className="text-xs">#{globalIndex + 1}</Badge>
+                        <Badge className={`${getGradeBadgeStyle(question.grade_level)} text-white border-none`}>
+                          الصف {question.grade_level}
+                        </Badge>
+                      </div>
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        <Badge variant="outline" className="text-xs">
+                          {typeLabels[question.question_type as keyof typeof typeLabels]}
+                        </Badge>
+                        <Badge className={`text-xs border ${getDifficultyBadgeColor(question.difficulty)}`}>
+                          {difficultyLabels[question.difficulty as keyof typeof difficultyLabels]}
+                        </Badge>
+                        <Badge variant="secondary" className="text-xs">
+                          {question.points} نقطة
+                        </Badge>
+                      </div>
+                      {question.section_name && <Badge variant="outline" className="text-xs w-fit mb-2">
+                          {question.section_name}
+                        </Badge>}
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <p className="text-sm line-clamp-3">{question.question_text}</p>
+                      <div className="bg-muted/50 rounded-lg p-2">
+                        <p className="text-xs text-muted-foreground mb-1">الإجابة الصحيحة:</p>
+                        <p className="text-sm font-medium">{question.correct_answer}</p>
+                      </div>
+                      <div className="flex gap-2 pt-2">
+                        <Button variant="outline" size="sm" onClick={() => handleEditQuestion(question)} className="flex-1 gap-2">
+                          <Edit2 className="w-3 h-3" />
+                          تعديل
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => handleDeleteClick(question.id)} className="flex-1 gap-2 text-destructive hover:text-destructive">
+                          <Trash2 className="w-3 h-3" />
+                          حذف
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <Card className="mt-6">
+                <CardContent className="py-4">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-muted-foreground">
+                      عرض {((currentPage - 1) * ITEMS_PER_PAGE) + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, questions.length)} من {questions.length} سؤال
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                        disabled={currentPage === 1}
+                        className="gap-2"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                        السابق
+                      </Button>
+
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => {
+                          // Show first, last, current, and pages around current
+                          if (
+                            page === 1 ||
+                            page === totalPages ||
+                            (page >= currentPage - 1 && page <= currentPage + 1)
+                          ) {
+                            return (
+                              <Button
+                                key={page}
+                                variant={page === currentPage ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setCurrentPage(page)}
+                                className="min-w-[40px]"
+                              >
+                                {page}
+                              </Button>
+                            );
+                          } else if (page === currentPage - 2 || page === currentPage + 2) {
+                            return <span key={page} className="px-2 text-muted-foreground">...</span>;
+                          }
+                          return null;
+                        })}
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                        disabled={currentPage === totalPages}
+                        className="gap-2"
+                      >
+                        التالي
+                        <ChevronLeft className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
-              </Card>)}
-          </div>}
+              </Card>
+            )}
+          </>}
       </div>
 
       {/* Smart Question Generator */}
