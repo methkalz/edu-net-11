@@ -13,11 +13,13 @@ import {
   Edit2, 
   Trash2,
   Filter,
-  RotateCcw
+  RotateCcw,
+  Sparkles
 } from 'lucide-react';
 import { useExamBankManager } from '@/hooks/useExamBankManager';
 import { QuestionForm } from '@/components/exam/QuestionForm';
 import { BulkQuestionImporter } from '@/components/exam/BulkQuestionImporter';
+import { SmartQuestionGenerator } from '@/components/exam/SmartQuestionGenerator';
 import { Question } from '@/types/exam';
 import {
   AlertDialog,
@@ -40,6 +42,7 @@ const ExamBankManagement = () => {
   });
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSmartGeneratorOpen, setIsSmartGeneratorOpen] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<Question | undefined>(undefined);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [questionToDelete, setQuestionToDelete] = useState<string | null>(null);
@@ -188,10 +191,13 @@ const ExamBankManagement = () => {
                 />
               </div>
               <div className="flex gap-2 flex-wrap">
-                <BulkQuestionImporter />
-                <Button onClick={handleAddQuestion} className="gap-2">
+                <Button onClick={() => setIsSmartGeneratorOpen(true)} variant="default" className="gap-2">
+                  <Sparkles className="w-4 h-4" />
+                  توليد أسئلة ذكية
+                </Button>
+                <Button onClick={handleAddQuestion} variant="outline" className="gap-2">
                   <Plus className="w-4 h-4" />
-                  إضافة سؤال جديد
+                  إضافة سؤال يدوياً
                 </Button>
               </div>
             </div>
@@ -361,6 +367,12 @@ const ExamBankManagement = () => {
         )}
       </div>
 
+      {/* Smart Question Generator */}
+      <SmartQuestionGenerator
+        open={isSmartGeneratorOpen}
+        onOpenChange={setIsSmartGeneratorOpen}
+      />
+      
       {/* Dialog للإضافة/التعديل */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
