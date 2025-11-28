@@ -242,11 +242,13 @@ export default function StudentManagement() {
 
           return {
             ...student,
-            classes: classData?.map(item => ({
-              id: item.classes.id,
-              class_name: item.classes.class_names.name,
-              grade_level: item.classes.grade_levels.label
-            })) || []
+            classes: classData
+              ?.filter(item => item.classes !== null)
+              ?.map(item => ({
+                id: item.classes!.id,
+                class_name: item.classes!.class_names?.name || '',
+                grade_level: item.classes!.grade_levels?.label || ''
+              })) || []
           };
         })
       );
