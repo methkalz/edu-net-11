@@ -370,19 +370,13 @@ export const ExamsWidget: React.FC<ExamsWidgetProps> = ({ canAccessGrade10, canA
       const sections = form.watch('selected_sections');
       if (!sections || sections.length === 0) return 0;
       
-      const { data: sectionsData } = await supabase
-        .from('question_bank_sections')
-        .select('title')
-        .in('id', sections);
-      
-      if (!sectionsData || sectionsData.length === 0) return 0;
-      
+      // استخدام sections مباشرة (تحتوي على أسماء الأقسام)
       const { count, error } = await supabase
         .from('question_bank')
         .select('*', { count: 'exact', head: true })
         .eq('grade_level', selectedGradeLevel)
         .eq('is_active', true)
-        .in('section_name', sectionsData.map(s => s.title));
+        .in('section_name', sections);
       
       if (error) throw error;
       return count || 0;
