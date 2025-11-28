@@ -32,7 +32,7 @@ export function SmartQuestionGenerator({ open, onOpenChange }: Props) {
   const [gradeLevel, setGradeLevel] = useState<string | null>(null);
   const [sectionId, setSectionId] = useState<string | null>(null);
   const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>([]);
-  const [lessonId, setLessonId] = useState<string | null>(null);
+  const [selectedLessonIds, setSelectedLessonIds] = useState<string[]>([]);
   const [questionCount, setQuestionCount] = useState(10);
   const [difficultyDistribution, setDifficultyDistribution] = useState({
     easy: 33,
@@ -54,7 +54,13 @@ export function SmartQuestionGenerator({ open, onOpenChange }: Props) {
   const { data: lessons = [] } = useSmartGenTopicLessons(selectedTopicIds);
   
   const selectedSection = sections.find(s => s.id === sectionId);
-  const selectedLesson = lessons.find(l => l.id === lessonId);
+  
+  // فلترة الدروس لعرض المناسبة فقط
+  const suitableLessons = lessons.filter(l => {
+    if (!l.content) return false;
+    const evaluation = evaluateLessonContent(l.content);
+    return evaluation.isSuitable;
+  });
   
   // معالجة اختيار المواضيع
   const handleTopicChange = (values: string[]) => {
@@ -70,20 +76,30 @@ export function SmartQuestionGenerator({ open, onOpenChange }: Props) {
       const allSelected = withoutAll.length === topics.length;
       setSelectedTopicIds(allSelected ? ['all', ...withoutAll] : withoutAll);
     }
-    setLessonId(null); // إعادة تعيين الدرس
+    setSelectedLessonIds([]); // إعادة تعيين الدروس
   };
   
-  // تقييم المحتوى
-  const contentEvaluation = selectedLesson?.content 
-    ? evaluateLessonContent(selectedLesson.content)
-    : null;
+  // معالجة اختيار الدروس
+  const handleLessonChange = (values: string[]) => {
+    if (values.includes('all') && !selectedLessonIds.includes('all')) {
+      // اختار "كل الدروس" - اختر جميع المناسبة
+      setSelectedLessonIds(['all', ...suitableLessons.map(l => l.id)]);
+    } else if (!values.includes('all') && selectedLessonIds.includes('all')) {
+      // ألغى "كل الدروس" - إلغاء الكل
+      setSelectedLessonIds([]);
+    } else {
+      // اختيار عادي
+      const withoutAll = values.filter(v => v !== 'all');
+      const allSelected = withoutAll.length === suitableLessons.length;
+      setSelectedLessonIds(allSelected ? ['all', ...withoutAll] : withoutAll);
+    }
+  };
   
-  const canGenerate = gradeLevel && sectionId && selectedTopicIds.length > 0 && lessonId && 
-                      questionTypes.length > 0 && 
-                      contentEvaluation?.isSuitable;
+  const canGenerate = gradeLevel && sectionId && selectedTopicIds.length > 0 && 
+                      selectedLessonIds.length > 0 && questionTypes.length > 0;
   
   const handleGenerate = async () => {
-    if (!canGenerate || !selectedLesson || !selectedSection) return;
+    if (!canGenerate || !selectedSection) return;
     
     // جلب أسماء المواضيع المختارة
     const selectedTopicsNames = topics
@@ -91,11 +107,35 @@ export function SmartQuestionGenerator({ open, onOpenChange }: Props) {
       .map(t => t.title)
       .join(', ');
     
+    // جلب الدروس المختارة الفعلية (بدون 'all')
+    const actualLessonIds = selectedLessonIds.filter(id => id !== 'all');
+    const selectedLessons = lessons.filter(l => actualLessonIds.includes(l.id));
+    
+    if (selectedLessons.length === 0) {
+      toast.error('لم يتم العثور على دروس مختارة');
+      return;
+    }
+    
+    // جمع محتوى جميع الدروس المختارة
+    const combinedContent = selectedLessons
+      .map(l => `## ${l.title}\n\n${l.content || ''}`)
+      .join('\n\n---\n\n');
+    
+    // حساب مجموع أطوال النصوص لجميع الدروس
+    const totalTextLength = selectedLessons.reduce((sum, l) => {
+      if (!l.content) return sum;
+      const evaluation = evaluateLessonContent(l.content);
+      return sum + evaluation.textLength;
+    }, 0);
+    
+    // تقدير العدد الأقصى الموصى به (كل 200 حرف = سؤال واحد)
+    const estimatedMaxQuestions = Math.floor(totalTextLength / 200);
+    
     // تحذير إذا طلب عدد أكثر من الموصى به
-    if (contentEvaluation && questionCount > contentEvaluation.maxRecommendedQuestions) {
+    if (questionCount > estimatedMaxQuestions) {
       const confirmed = window.confirm(
         `المحتوى قد لا يكون كافياً لتوليد ${questionCount} سؤال بجودة عالية.\n` +
-        `العدد الموصى به: ${contentEvaluation.maxRecommendedQuestions} سؤال.\n\n` +
+        `العدد الموصى به بناءً على الدروس المختارة: ${estimatedMaxQuestions} سؤال.\n\n` +
         `هل تريد المتابعة؟`
       );
       if (!confirmed) return;
@@ -109,8 +149,8 @@ export function SmartQuestionGenerator({ open, onOpenChange }: Props) {
           gradeLevel: gradeLevel,
           sectionName: selectedSection.title,
           topicName: selectedTopicsNames,
-          lessonId: lessonId,
-          lessonContent: selectedLesson.content,
+          lessonId: actualLessonIds[0], // للتوافق مع الكود القديم
+          lessonContent: combinedContent,
           questionCount: questionCount,
           difficultyDistribution: difficultyDistribution,
           questionTypes: questionTypes
@@ -300,7 +340,7 @@ export function SmartQuestionGenerator({ open, onOpenChange }: Props) {
                 setGradeLevel(v);
                 setSectionId(null);
                 setSelectedTopicIds([]);
-                setLessonId(null);
+                setSelectedLessonIds([]);
               }}>
                 <SelectTrigger>
                   <SelectValue placeholder="اختر الصف" />
@@ -320,7 +360,7 @@ export function SmartQuestionGenerator({ open, onOpenChange }: Props) {
                 <Select value={sectionId || ''} onValueChange={(v) => {
                   setSectionId(v);
                   setSelectedTopicIds([]);
-                  setLessonId(null);
+                  setSelectedLessonIds([]);
                 }}>
                   <SelectTrigger>
                     <SelectValue placeholder="اختر القسم" />
@@ -363,32 +403,34 @@ export function SmartQuestionGenerator({ open, onOpenChange }: Props) {
               </div>
             )}
             
-            {/* اختيار الدرس */}
+            {/* اختيار الدروس */}
             {selectedTopicIds.length > 0 && (
               <div>
-                <Label>الدرس *</Label>
-                <Select value={lessonId || ''} onValueChange={setLessonId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="اختر الدرس" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {lessons.map(lesson => (
-                      <SelectItem key={lesson.id} value={lesson.id}>
-                        <div className="flex items-center justify-between w-full gap-2">
-                          <span>{lesson.title}</span>
-                          {lesson.content && (
-                            <ContentSuitabilityBadge content={lesson.content} />
-                          )}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                
-                {lessonId && selectedLesson?.content && (
-                  <div className="mt-2">
-                    <ContentSuitabilityBadge content={selectedLesson.content} />
-                  </div>
+                <Label>الدروس * (يمكن اختيار أكثر من درس - فقط الدروس المناسبة)</Label>
+                <MultiSelect
+                  options={[
+                    { value: 'all', label: '📚 كل الدروس المناسبة' },
+                    ...suitableLessons.map(l => ({ value: l.id, label: l.title }))
+                  ]}
+                  value={selectedLessonIds}
+                  onChange={handleLessonChange}
+                  placeholder="اختر الدرس أو الدروس"
+                  searchPlaceholder="بحث في الدروس..."
+                />
+                {selectedLessonIds.length > 0 && !selectedLessonIds.includes('all') && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    تم اختيار {selectedLessonIds.length} من {suitableLessons.length} دروس مناسبة
+                  </p>
+                )}
+                {selectedLessonIds.includes('all') && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    تم اختيار كل الدروس المناسبة ({suitableLessons.length} دروس)
+                  </p>
+                )}
+                {lessons.length > suitableLessons.length && (
+                  <p className="text-xs text-orange-600 mt-1">
+                    ⚠️ تم إخفاء {lessons.length - suitableLessons.length} درس غير مناسب لتوليد الأسئلة
+                  </p>
                 )}
               </div>
             )}
@@ -461,15 +503,13 @@ export function SmartQuestionGenerator({ open, onOpenChange }: Props) {
               )}
             </div>
             
-            {/* تحذيرات المحتوى */}
-            {contentEvaluation && !contentEvaluation.isSuitable && (
+            {/* تحذيرات */}
+            {selectedLessonIds.length === 0 && selectedTopicIds.length > 0 && suitableLessons.length === 0 && (
               <div className="flex items-start gap-2 p-3 bg-orange-50 border border-orange-200 rounded-lg">
                 <AlertCircle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
                 <div className="space-y-1">
-                  <p className="text-sm font-medium text-orange-900">المحتوى غير كافٍ لتوليد أسئلة عالية الجودة</p>
-                  {contentEvaluation.warnings.map((warning, idx) => (
-                    <p key={idx} className="text-xs text-orange-700">• {warning}</p>
-                  ))}
+                  <p className="text-sm font-medium text-orange-900">لا توجد دروس مناسبة في المواضيع المختارة</p>
+                  <p className="text-xs text-orange-700">• يرجى اختيار مواضيع تحتوي على دروس بمحتوى نصي كافٍ</p>
                 </div>
               </div>
             )}
