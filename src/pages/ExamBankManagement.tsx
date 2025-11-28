@@ -13,9 +13,7 @@ import { BulkQuestionImporter } from '@/components/exam/BulkQuestionImporter';
 import { SmartQuestionGenerator } from '@/components/exam/SmartQuestionGenerator';
 import { Question } from '@/types/exam';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-
 const ITEMS_PER_PAGE = 30;
-
 const ExamBankManagement = () => {
   const [filters, setFilters] = useState({
     gradeLevel: 'all',
@@ -55,7 +53,6 @@ const ExamBankManagement = () => {
   useMemo(() => {
     setCurrentPage(1);
   }, [filters.gradeLevel, filters.sectionName, filters.difficulty, filters.questionType, filters.searchTerm]);
-
   const handleResetFilters = () => {
     setFilters({
       gradeLevel: 'all',
@@ -286,11 +283,9 @@ const ExamBankManagement = () => {
               <Badge variant="secondary" className="text-sm">
                 {questions.length} سؤال
               </Badge>
-              {totalPages > 1 && (
-                <div className="text-xs text-muted-foreground">
+              {totalPages > 1 && <div className="text-xs text-muted-foreground">
                   الصفحة {currentPage} من {totalPages}
-                </div>
-              )}
+                </div>}
             </div>
           </CardContent>
         </Card>
@@ -308,9 +303,8 @@ const ExamBankManagement = () => {
           </Card> : <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {paginatedQuestions.map((question, index) => {
-                const globalIndex = (currentPage - 1) * ITEMS_PER_PAGE + index;
-                return (
-                  <Card key={question.id} className="hover:shadow-xl hover:scale-[1.02] transition-all duration-300">
+            const globalIndex = (currentPage - 1) * ITEMS_PER_PAGE + index;
+            return <Card key={question.id} className="hover:shadow-xl hover:scale-[1.02] transition-all duration-300">
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between gap-2 mb-2">
                         <Badge variant="outline" className="text-xs">#{globalIndex + 1}</Badge>
@@ -325,7 +319,7 @@ const ExamBankManagement = () => {
                         <Badge className={`text-xs border ${getDifficultyBadgeColor(question.difficulty)}`}>
                           {difficultyLabels[question.difficulty as keyof typeof difficultyLabels]}
                         </Badge>
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="secondary" className="text-xs bg-gray-200 text-gray-600">
                           {question.points} نقطة
                         </Badge>
                       </div>
@@ -352,73 +346,48 @@ const ExamBankManagement = () => {
                         </Button>
                       </div>
                     </CardContent>
-                  </Card>
-                );
-              })}
+                  </Card>;
+          })}
             </div>
 
             {/* Pagination Controls */}
-            {totalPages > 1 && (
-              <Card className="mt-6">
+            {totalPages > 1 && <Card className="mt-6">
                 <CardContent className="py-4">
                   <div className="flex items-center justify-between">
                     <div className="text-sm text-muted-foreground">
-                      عرض {((currentPage - 1) * ITEMS_PER_PAGE) + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, questions.length)} من {questions.length} سؤال
+                      عرض {(currentPage - 1) * ITEMS_PER_PAGE + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, questions.length)} من {questions.length} سؤال
                     </div>
                     
                     <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                        disabled={currentPage === 1}
-                        className="gap-2"
-                      >
+                      <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={currentPage === 1} className="gap-2">
                         <ChevronRight className="w-4 h-4" />
                         السابق
                       </Button>
 
                       <div className="flex items-center gap-1">
-                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => {
-                          // Show first, last, current, and pages around current
-                          if (
-                            page === 1 ||
-                            page === totalPages ||
-                            (page >= currentPage - 1 && page <= currentPage + 1)
-                          ) {
-                            return (
-                              <Button
-                                key={page}
-                                variant={page === currentPage ? "default" : "outline"}
-                                size="sm"
-                                onClick={() => setCurrentPage(page)}
-                                className="min-w-[40px]"
-                              >
+                        {Array.from({
+                    length: totalPages
+                  }, (_, i) => i + 1).map(page => {
+                    // Show first, last, current, and pages around current
+                    if (page === 1 || page === totalPages || page >= currentPage - 1 && page <= currentPage + 1) {
+                      return <Button key={page} variant={page === currentPage ? "default" : "outline"} size="sm" onClick={() => setCurrentPage(page)} className="min-w-[40px]">
                                 {page}
-                              </Button>
-                            );
-                          } else if (page === currentPage - 2 || page === currentPage + 2) {
-                            return <span key={page} className="px-2 text-muted-foreground">...</span>;
-                          }
-                          return null;
-                        })}
+                              </Button>;
+                    } else if (page === currentPage - 2 || page === currentPage + 2) {
+                      return <span key={page} className="px-2 text-muted-foreground">...</span>;
+                    }
+                    return null;
+                  })}
                       </div>
 
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                        disabled={currentPage === totalPages}
-                        className="gap-2"
-                      >
+                      <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages} className="gap-2">
                         التالي
                         <ChevronLeft className="w-4 h-4" />
                       </Button>
                     </div>
                   </div>
                 </CardContent>
-              </Card>
-            )}
+              </Card>}
           </>}
       </div>
 
