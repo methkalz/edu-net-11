@@ -565,13 +565,13 @@ serve(async (req) => {
               const { error: updateError } = await supabase
                 .from('pdf_comparison_results')
                 .update({
-                  repository_matches: repositoryMatches,
+                  repository_matches: sortedMatches,
                   repository_max_similarity: repoMaxSim,
                   repository_high_risk_count: repoHighRisk,
                   comparison_source: 'both',
                   status: newStatus,
                   max_similarity_score: overallMaxSim,
-                  total_matches_found: (savedResult.internal_matches?.length || 0) + repositoryMatches.length,
+                  total_matches_found: (savedResult.internal_matches?.length || 0) + sortedMatches.length,
                   high_risk_matches: (savedResult.internal_high_risk_count || 0) + repoHighRisk,
                   updated_at: new Date().toISOString(),
                 })
@@ -580,7 +580,7 @@ serve(async (req) => {
               if (updateError) {
                 console.error(`❌ Error updating result for ${file.fileName}:`, updateError);
               } else {
-                console.log(`✅ Successfully updated ${file.fileName} with ${repositoryMatches.length} repo matches (status: ${newStatus})`);
+                console.log(`✅ Successfully updated ${file.fileName} with ${sortedMatches.length} repo matches (status: ${newStatus})`);
               }
             } else {
               console.log(`ℹ️ No repository matches for ${file.fileName} after filtering`);
