@@ -175,3 +175,105 @@ function calculateJaccard(set1: Set<string>, set2: Set<string>): number {
   const unionSize = set1.size + set2.size - intersectionSize;
   return unionSize === 0 ? 0 : intersectionSize / unionSize;
 }
+
+// ===== Coverage-Based Scoring Functions =====
+
+/**
+ * تقسيم النص إلى فقرات (paragraphs) بحجم متوسط 100-150 كلمة
+ */
+export function splitIntoParagraphs(text: string, wordsPerParagraph: number = 100): string[] {
+  const words = text.split(/\s+/).filter(w => w.length > 2);
+  const paragraphs: string[] = [];
+  
+  for (let i = 0; i < words.length; i += wordsPerParagraph) {
+    const paragraph = words.slice(i, i + wordsPerParagraph).join(' ');
+    if (paragraph.trim().length > 50) { // تخطي الفقرات القصيرة جداً
+      paragraphs.push(paragraph);
+    }
+  }
+  
+  return paragraphs;
+}
+
+/**
+ * حساب نسبة التغطية (Coverage Ratio): نسبة النص المغطاة بتطابقات عالية (≥75%)
+ */
+export function calculateCoverage(
+  text1: string, 
+  text2: string, 
+  paragraphSimilarityMin: number = 0.75
+): number {
+  const paragraphs1 = splitIntoParagraphs(text1, 100);
+  const paragraphs2 = splitIntoParagraphs(text2, 100);
+  
+  if (paragraphs1.length === 0) return 0;
+  
+  let coveredWords = 0;
+  const totalWords = text1.split(/\s+/).filter(w => w.length > 2).length;
+  
+  // مقارنة كل فقرة من text1 مع جميع فقرات text2
+  for (const para1 of paragraphs1) {
+    let bestMatch = 0;
+    
+    for (const para2 of paragraphs2) {
+      // استخدام fuzzball للمقارنة الدقيقة
+      const similarity = fuzzball.ratio(
+        normalizeArabicText(para1),
+        normalizeArabicText(para2)
+      ) / 100;
+      
+      if (similarity > bestMatch) {
+        bestMatch = similarity;
+      }
+      
+      // إذا وجدنا تطابق عالي، نتوقف عن البحث لهذه الفقرة
+      if (similarity >= paragraphSimilarityMin) {
+        break;
+      }
+    }
+    
+    // إذا كان التطابق عالي، نعتبر الفقرة "مغطاة"
+    if (bestMatch >= paragraphSimilarityMin) {
+      const paraWordCount = para1.split(/\s+/).filter(w => w.length > 2).length;
+      coveredWords += paraWordCount;
+    }
+  }
+  
+  return totalWords > 0 ? coveredWords / totalWords : 0;
+}
+
+/**
+ * اكتشاف التطابقات الطويلة المتتالية (للتحليل التفصيلي)
+ */
+export function findLongMatches(
+  text1: string,
+  text2: string,
+  minSimilarity: number = 0.75
+): Array<{ para1: string; para2: string; similarity: number; length: number }> {
+  const paragraphs1 = splitIntoParagraphs(text1, 100);
+  const paragraphs2 = splitIntoParagraphs(text2, 100);
+  
+  const longMatches: Array<{ para1: string; para2: string; similarity: number; length: number }> = [];
+  
+  for (const para1 of paragraphs1) {
+    for (const para2 of paragraphs2) {
+      const similarity = fuzzball.ratio(
+        normalizeArabicText(para1),
+        normalizeArabicText(para2)
+      ) / 100;
+      
+      if (similarity >= minSimilarity) {
+        const length = para1.split(/\s+/).filter(w => w.length > 2).length;
+        longMatches.push({
+          para1: para1.substring(0, 200), // أول 200 حرف فقط
+          para2: para2.substring(0, 200),
+          similarity: Math.round(similarity * 100) / 100,
+          length
+        });
+      }
+    }
+  }
+  
+  // ترتيب من الأطول للأقصر
+  return longMatches.sort((a, b) => b.length - a.length).slice(0, 10);
+}

@@ -45,16 +45,16 @@ const PDFComparisonSettings = () => {
 
     const presets = {
       strict: {
-        thresholds: { internal_display: 0, repository_display: 50, single_file_display: 40, flagged_threshold: 60, warning_threshold: 30 },
-        algorithm_weights: { cosine_weight: 0.6, jaccard_weight: 0.35, length_weight: 0.05 },
+        thresholds: { internal_display: 0, repository_display: 50, single_file_display: 40, flagged_threshold: 60, warning_threshold: 30, coverage_high_threshold: 20, coverage_medium_threshold: 12, paragraph_similarity_min: 80 },
+        algorithm_weights: { cosine_weight: 0.40, jaccard_weight: 0.30, length_weight: 0.05, coverage_weight: 0.25 },
       },
       balanced: {
-        thresholds: { internal_display: 0, repository_display: 35, single_file_display: 30, flagged_threshold: 70, warning_threshold: 40 },
-        algorithm_weights: { cosine_weight: 0.5, jaccard_weight: 0.4, length_weight: 0.1 },
+        thresholds: { internal_display: 0, repository_display: 35, single_file_display: 30, flagged_threshold: 70, warning_threshold: 40, coverage_high_threshold: 25, coverage_medium_threshold: 15, paragraph_similarity_min: 75 },
+        algorithm_weights: { cosine_weight: 0.40, jaccard_weight: 0.30, length_weight: 0.05, coverage_weight: 0.25 },
       },
       lenient: {
-        thresholds: { internal_display: 0, repository_display: 25, single_file_display: 20, flagged_threshold: 80, warning_threshold: 50 },
-        algorithm_weights: { cosine_weight: 0.4, jaccard_weight: 0.45, length_weight: 0.15 },
+        thresholds: { internal_display: 0, repository_display: 25, single_file_display: 20, flagged_threshold: 80, warning_threshold: 50, coverage_high_threshold: 30, coverage_medium_threshold: 18, paragraph_similarity_min: 70 },
+        algorithm_weights: { cosine_weight: 0.40, jaccard_weight: 0.35, length_weight: 0.05, coverage_weight: 0.20 },
       },
     };
 
@@ -70,7 +70,8 @@ const PDFComparisonSettings = () => {
       const weightsMatch =
         tempSettings.algorithm_weights.cosine_weight === presetValues.algorithm_weights.cosine_weight &&
         tempSettings.algorithm_weights.jaccard_weight === presetValues.algorithm_weights.jaccard_weight &&
-        tempSettings.algorithm_weights.length_weight === presetValues.algorithm_weights.length_weight;
+        tempSettings.algorithm_weights.length_weight === presetValues.algorithm_weights.length_weight &&
+        tempSettings.algorithm_weights.coverage_weight === presetValues.algorithm_weights.coverage_weight;
 
       if (thresholdsMatch && weightsMatch) {
         setCurrentPreset(presetName as 'strict' | 'balanced' | 'lenient');
@@ -107,11 +108,12 @@ const PDFComparisonSettings = () => {
   const handleSave = async () => {
     if (!tempSettings) return;
 
-    // التحقق من صحة الأوزان
+    // التحقق من صحة الأوزان - الآن 4 أوزان (cosine + jaccard + length + coverage)
     const totalWeight = 
       tempSettings.algorithm_weights.cosine_weight +
       tempSettings.algorithm_weights.jaccard_weight +
-      tempSettings.algorithm_weights.length_weight;
+      tempSettings.algorithm_weights.length_weight +
+      tempSettings.algorithm_weights.coverage_weight;
     
     if (Math.abs(totalWeight - 1.0) > 0.01) {
       toast({
@@ -377,10 +379,15 @@ const PDFComparisonSettings = () => {
           <Alert className="mb-6">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              تنبيه: يجب أن يكون مجموع الأوزان = 100% (1.0). التوزيع الحالي: {(tempSettings.algorithm_weights.cosine_weight + tempSettings.algorithm_weights.jaccard_weight + tempSettings.algorithm_weights.length_weight).toFixed(2)}
+              تنبيه: يجب أن يكون مجموع الأوزان = 100% (1.0). التوزيع الحالي: {(
+                tempSettings.algorithm_weights.cosine_weight + 
+                tempSettings.algorithm_weights.jaccard_weight + 
+                tempSettings.algorithm_weights.length_weight + 
+                tempSettings.algorithm_weights.coverage_weight
+              ).toFixed(2)}
             </AlertDescription>
           </Alert>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <div className="flex justify-between items-center mb-2">
                 <Label>وزن التشابه التجميعي (Cosine)</Label>
@@ -459,6 +466,139 @@ const PDFComparisonSettings = () => {
               />
               <p className="text-sm text-muted-foreground">
                 تشابه عدد الكلمات والصفحات
+              </p>
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <Label>وزن التغطية (Coverage)</Label>
+                <Badge variant="outline" className="bg-emerald-500/20 text-emerald-600 border-emerald-500/30">
+                  {(tempSettings.algorithm_weights.coverage_weight * 100).toFixed(0)}%
+                </Badge>
+              </div>
+              <Slider 
+                value={[tempSettings.algorithm_weights.coverage_weight * 100]} 
+                onValueChange={([value]) => {
+                  setTempSettings(prev => ({
+                    ...prev!,
+                    algorithm_weights: {
+                      ...prev!.algorithm_weights,
+                      coverage_weight: value / 100
+                    }
+                  }));
+                  setHasUnsavedChanges(true);
+                }}
+                min={0} 
+                max={100} 
+                step={5} 
+                className="my-4" 
+              />
+              <p className="text-sm text-muted-foreground">
+                نسبة الفقرات/الصفحات المتطابقة بشكل كامل
+              </p>
+            </div>
+          </div>
+        </Card>
+
+        {/* Coverage Settings */}
+        <Card className="p-6 glass-effect border-emerald-500/20">
+          <div className="flex items-center gap-2 mb-6">
+            <div className="h-10 w-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
+              <AlertCircle className="h-5 w-5 text-emerald-600" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold">إعدادات التغطية (Coverage)</h2>
+              <p className="text-sm text-muted-foreground">
+                تحكم في كيفية اكتشاف الفقرات والصفحات المتطابقة بشكل كامل
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <Label>عتبة التغطية العالية (%)</Label>
+                <Badge variant="outline" className="bg-red-500/20 text-red-600 border-red-500/30">
+                  {tempSettings.thresholds.coverage_high_threshold}
+                </Badge>
+              </div>
+              <Slider 
+                value={[tempSettings.thresholds.coverage_high_threshold]} 
+                onValueChange={([value]) => {
+                  setTempSettings(prev => ({
+                    ...prev!,
+                    thresholds: {
+                      ...prev!.thresholds,
+                      coverage_high_threshold: value
+                    }
+                  }));
+                  setHasUnsavedChanges(true);
+                }}
+                min={15} 
+                max={40} 
+                step={5} 
+                className="my-4" 
+              />
+              <p className="text-sm text-muted-foreground">
+                عند تجاوز هذه النسبة، يتم رفع التشابه إلى 65% على الأقل
+              </p>
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <Label>عتبة التغطية المتوسطة (%)</Label>
+                <Badge variant="outline" className="bg-amber-500/20 text-amber-600 border-amber-500/30">
+                  {tempSettings.thresholds.coverage_medium_threshold}
+                </Badge>
+              </div>
+              <Slider 
+                value={[tempSettings.thresholds.coverage_medium_threshold]} 
+                onValueChange={([value]) => {
+                  setTempSettings(prev => ({
+                    ...prev!,
+                    thresholds: {
+                      ...prev!.thresholds,
+                      coverage_medium_threshold: value
+                    }
+                  }));
+                  setHasUnsavedChanges(true);
+                }}
+                min={8} 
+                max={25} 
+                step={2} 
+                className="my-4" 
+              />
+              <p className="text-sm text-muted-foreground">
+                عند تجاوز هذه النسبة، يتم رفع التشابه إلى 50% على الأقل
+              </p>
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <Label>حد تشابه الفقرات (%)</Label>
+                <Badge variant="outline" className="bg-blue-500/20 text-blue-600 border-blue-500/30">
+                  {tempSettings.thresholds.paragraph_similarity_min}
+                </Badge>
+              </div>
+              <Slider 
+                value={[tempSettings.thresholds.paragraph_similarity_min]} 
+                onValueChange={([value]) => {
+                  setTempSettings(prev => ({
+                    ...prev!,
+                    thresholds: {
+                      ...prev!.thresholds,
+                      paragraph_similarity_min: value
+                    }
+                  }));
+                  setHasUnsavedChanges(true);
+                }}
+                min={60} 
+                max={90} 
+                step={5} 
+                className="my-4" 
+              />
+              <p className="text-sm text-muted-foreground">
+                الحد الأدنى للتشابه لاعتبار الفقرتين متطابقتين
               </p>
             </div>
           </div>

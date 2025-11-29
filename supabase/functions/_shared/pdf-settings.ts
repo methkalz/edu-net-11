@@ -12,12 +12,16 @@ const DEFAULT_SETTINGS = {
     repository_display: 0.35,     // 35% - عرض نتائج المستودع
     internal_display: 0.00,       // 0% - عرض جميع المقارنات الداخلية
     flagged_threshold: 0.70,      // 70% - حالة flagged
-    warning_threshold: 0.50       // 50% - حالة warning
+    warning_threshold: 0.50,      // 50% - حالة warning
+    coverage_high_threshold: 0.25,   // 25% - تغطية عالية (boost إلى 65%)
+    coverage_medium_threshold: 0.15, // 15% - تغطية متوسطة (boost إلى 50%)
+    paragraph_similarity_min: 0.75   // 75% - حد أدنى لتشابه الفقرات
   },
   algorithm_weights: {
-    cosine_weight: 0.50,          // 50% - وزن التشابه النصي (cosine)
-    jaccard_weight: 0.40,         // 40% - وزن تطابق الكلمات (jaccard)
-    length_weight: 0.10           // 10% - وزن التشابه في الطول
+    cosine_weight: 0.40,          // 40% - وزن التشابه النصي (cosine)
+    jaccard_weight: 0.30,         // 30% - وزن تطابق الكلمات (jaccard)
+    length_weight: 0.05,          // 5% - وزن التشابه في الطول
+    coverage_weight: 0.25         // 25% - وزن التغطية (الفقرات المتطابقة)
   },
   custom_whitelist: [] as string[]
 };
@@ -56,12 +60,16 @@ export async function getPDFComparisonSettings(supabase: SupabaseClient) {
         repository_display: (data.thresholds?.repository_display ?? 35) / 100,
         internal_display: (data.thresholds?.internal_display ?? 0) / 100,
         flagged_threshold: (data.thresholds?.flagged_threshold ?? 70) / 100,
-        warning_threshold: (data.thresholds?.warning_threshold ?? 50) / 100
+        warning_threshold: (data.thresholds?.warning_threshold ?? 50) / 100,
+        coverage_high_threshold: (data.thresholds?.coverage_high_threshold ?? 25) / 100,
+        coverage_medium_threshold: (data.thresholds?.coverage_medium_threshold ?? 15) / 100,
+        paragraph_similarity_min: (data.thresholds?.paragraph_similarity_min ?? 75) / 100
       },
       algorithm_weights: {
-        cosine_weight: data.algorithm_weights?.cosine_weight ?? 0.50,
-        jaccard_weight: data.algorithm_weights?.jaccard_weight ?? 0.40,
-        length_weight: data.algorithm_weights?.length_weight ?? 0.10
+        cosine_weight: data.algorithm_weights?.cosine_weight ?? 0.40,
+        jaccard_weight: data.algorithm_weights?.jaccard_weight ?? 0.30,
+        length_weight: data.algorithm_weights?.length_weight ?? 0.05,
+        coverage_weight: data.algorithm_weights?.coverage_weight ?? 0.25
       },
       custom_whitelist: Array.isArray(data.custom_whitelist) 
         ? data.custom_whitelist 
