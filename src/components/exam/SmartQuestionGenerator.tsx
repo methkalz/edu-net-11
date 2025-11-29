@@ -1,5 +1,15 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle 
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -50,6 +60,10 @@ export function SmartQuestionGenerator({
   const [showOnlyNew, setShowOnlyNew] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  
+  // AlertDialog state for content warning
+  const [showWarningDialog, setShowWarningDialog] = useState(false);
+  const [warningMessage, setWarningMessage] = useState({ requested: 0, recommended: 0 });
 
   // Data loading
   const {
@@ -147,9 +161,38 @@ export function SmartQuestionGenerator({
 
     // تحذير إذا طلب عدد أكثر من الموصى به
     if (questionCount > estimatedMaxQuestions) {
-      const confirmed = window.confirm(`المحتوى قد لا يكون كافياً لتوليد ${questionCount} سؤال بجودة عالية.\n` + `العدد الموصى به بناءً على الدروس المختارة: ${estimatedMaxQuestions} سؤال.\n\n` + `هل تريد المتابعة؟`);
-      if (!confirmed) return;
+      setWarningMessage({ requested: questionCount, recommended: estimatedMaxQuestions });
+      setShowWarningDialog(true);
+      return; // إيقاف التنفيذ - سيُستكمل من AlertDialog
     }
+    
+    // المتابعة مباشرة إذا لم يكن هناك تحذير
+    await proceedWithGeneration(combinedContent, selectedTopicsNames, actualLessonIds);
+  };
+  
+  // دالة للمتابعة بعد التأكيد من AlertDialog
+  const handleConfirmGenerate = async () => {
+    setShowWarningDialog(false);
+    
+    if (!selectedSection) return;
+    
+    // جمع البيانات اللازمة
+    const selectedTopicsNames = topics.filter(t => selectedTopicIds.includes(t.id)).map(t => t.title).join(', ');
+    const actualLessonIds = selectedLessonIds.filter(id => id !== 'all');
+    const selectedLessons = lessons.filter(l => actualLessonIds.includes(l.id));
+    const combinedContent = selectedLessons.map(l => `## ${l.title}\n\n${l.content || ''}`).join('\n\n---\n\n');
+    
+    await proceedWithGeneration(combinedContent, selectedTopicsNames, actualLessonIds);
+  };
+  
+  // دالة التوليد الفعلية
+  const proceedWithGeneration = async (
+    combinedContent: string, 
+    selectedTopicsNames: string, 
+    actualLessonIds: string[]
+  ) => {
+    if (!selectedSection) return;
+    
     setIsGenerating(true);
     try {
       const {
@@ -529,5 +572,33 @@ export function SmartQuestionGenerator({
             </div>
           </div>}
       </DialogContent>
+      
+      {/* AlertDialog للتحذير من نقص المحتوى */}
+      <AlertDialog open={showWarningDialog} onOpenChange={setShowWarningDialog}>
+        <AlertDialogContent className="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-amber-600">
+              <AlertCircle className="w-5 h-5" />
+              تنبيه: المحتوى قد لا يكون كافياً
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2 text-right">
+              <p>أنت تطلب توليد <strong>{warningMessage.requested}</strong> سؤال</p>
+              <p>العدد الموصى به بناءً على الدروس المختارة: <strong className="text-green-600">{warningMessage.recommended}</strong> سؤال</p>
+              <p className="text-amber-600 text-sm mt-4">
+                المتابعة قد تؤدي إلى أسئلة بجودة أقل أو تكرار في المحتوى.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-row-reverse gap-2">
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmGenerate}
+              className="bg-amber-600 hover:bg-amber-700"
+            >
+              متابعة على أي حال
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>;
 }
