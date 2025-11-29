@@ -3,7 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import * as fuzzball from 'https://esm.sh/fuzzball@2.2.2';
 import { getPDFComparisonSettings } from '../_shared/pdf-settings.ts';
-import { calculateCoverage } from '../pdf-compare-batch/_helpers.ts';
+import { calculateCoverage } from '../_shared/pdf-helpers.ts';
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {

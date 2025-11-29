@@ -11,7 +11,7 @@ import {
   findLongMatches,
   type ExtractedPage,
   type MatchedSegment 
-} from './_helpers.ts';
+} from '../_shared/pdf-helpers.ts';
 
 interface FileToCompare {
   fileName: string;
