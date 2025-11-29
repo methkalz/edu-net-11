@@ -196,27 +196,32 @@ export function splitIntoParagraphs(text: string, wordsPerParagraph: number = 10
 }
 
 /**
- * حساب Coverage في اتجاه واحد (text1 → text2)
+ * حساب Coverage في اتجاه واحد (text1 → text2) - محسّن للأداء
  */
 function calculateOneWayCoverage(
   text1: string,
   text2: string,
   paragraphSimilarityMin: number
 ): number {
-  const paragraphs1 = splitIntoParagraphs(text1, 100);
-  const paragraphs2 = splitIntoParagraphs(text2, 100);
+  // تحسين 1: فقرات أكبر = عدد أقل من المقارنات (150 كلمة بدلاً من 100)
+  const paragraphs1 = splitIntoParagraphs(text1, 150);
+  const paragraphs2 = splitIntoParagraphs(text2, 150);
   
   if (paragraphs1.length === 0) return 0;
+  
+  // تحسين 2: معالجة عينة فقط من الفقرات (أول 15 فقرة)
+  // هذا يقلل الوقت من O(n*m) إلى O(15*m) حيث n,m عدد الفقرات
+  const maxParagraphs = 15;
+  const sample1 = paragraphs1.slice(0, maxParagraphs);
   
   let coveredWords = 0;
   const totalWords = text1.split(/\s+/).filter(w => w.length > 2).length;
   
-  // مقارنة كل فقرة من text1 مع جميع فقرات text2
-  for (const para1 of paragraphs1) {
+  // مقارنة كل فقرة من sample1 مع جميع فقرات text2
+  for (const para1 of sample1) {
     let bestMatch = 0;
     
     for (const para2 of paragraphs2) {
-      // استخدام fuzzball للمقارنة الدقيقة
       const similarity = fuzzball.ratio(
         normalizeArabicText(para1),
         normalizeArabicText(para2)
@@ -226,13 +231,12 @@ function calculateOneWayCoverage(
         bestMatch = similarity;
       }
       
-      // إذا وجدنا تطابق عالي، نتوقف عن البحث لهذه الفقرة
+      // تحسين 3: early exit عند أول تطابق عالي
       if (similarity >= paragraphSimilarityMin) {
         break;
       }
     }
     
-    // إذا كان التطابق عالي، نعتبر الفقرة "مغطاة"
     if (bestMatch >= paragraphSimilarityMin) {
       const paraWordCount = para1.split(/\s+/).filter(w => w.length > 2).length;
       coveredWords += paraWordCount;
