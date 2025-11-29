@@ -8,12 +8,17 @@ export interface PDFComparisonThresholds {
   single_file_display: number;
   flagged_threshold: number;
   warning_threshold: number;
+  // Coverage thresholds
+  coverage_high_threshold: number;
+  coverage_medium_threshold: number;
+  paragraph_similarity_min: number;
 }
 
 export interface AlgorithmWeights {
   cosine_weight: number;
   jaccard_weight: number;
   length_weight: number;
+  coverage_weight: number;  // وزن التغطية (الفقرات المتطابقة)
   fuzzy_weight?: number;
   sequence_weight?: number;
   structural_weight?: number;
@@ -135,11 +140,15 @@ export const usePDFComparisonSettings = () => {
           single_file_display: 40,
           flagged_threshold: 60,
           warning_threshold: 30,
+          coverage_high_threshold: 20,
+          coverage_medium_threshold: 12,
+          paragraph_similarity_min: 80,
         },
         algorithm_weights: {
-          cosine_weight: 0.6,
-          jaccard_weight: 0.35,
+          cosine_weight: 0.40,
+          jaccard_weight: 0.30,
           length_weight: 0.05,
+          coverage_weight: 0.25,
         },
       },
       balanced: {
@@ -149,11 +158,15 @@ export const usePDFComparisonSettings = () => {
           single_file_display: 30,
           flagged_threshold: 70,
           warning_threshold: 40,
+          coverage_high_threshold: 25,
+          coverage_medium_threshold: 15,
+          paragraph_similarity_min: 75,
         },
         algorithm_weights: {
-          cosine_weight: 0.5,
-          jaccard_weight: 0.4,
-          length_weight: 0.1,
+          cosine_weight: 0.40,
+          jaccard_weight: 0.30,
+          length_weight: 0.05,
+          coverage_weight: 0.25,
         },
       },
       lenient: {
@@ -163,11 +176,15 @@ export const usePDFComparisonSettings = () => {
           single_file_display: 20,
           flagged_threshold: 80,
           warning_threshold: 50,
+          coverage_high_threshold: 30,
+          coverage_medium_threshold: 18,
+          paragraph_similarity_min: 70,
         },
         algorithm_weights: {
-          cosine_weight: 0.4,
-          jaccard_weight: 0.45,
-          length_weight: 0.15,
+          cosine_weight: 0.40,
+          jaccard_weight: 0.35,
+          length_weight: 0.05,
+          coverage_weight: 0.20,
         },
       },
     };

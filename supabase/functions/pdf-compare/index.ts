@@ -3,6 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import * as fuzzball from 'https://esm.sh/fuzzball@2.2.2';
 import { getPDFComparisonSettings } from '../_shared/pdf-settings.ts';
+import { calculateCoverage } from '../pdf-compare-batch/_helpers.ts';
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -205,33 +206,54 @@ serve(async (req) => {
           processedRefText.normalized
         );
         
-        // Overall Score - باستخدام الأوزان من الإعدادات
+        // 5. 🆕 Coverage Ratio - حساب نسبة التغطية بالفقرات المتطابقة
+        const coverageRatio = calculateCoverage(
+          fileText,
+          refFile.extracted_text,
+          settings.thresholds.paragraph_similarity_min
+        );
+        
+        // Overall Score - باستخدام 4 أوزان من الإعدادات
         const weights = settings.algorithm_weights;
         
         // Mapping ذكي:
         // - cosine_weight → fuzzy (التشابه النصي العام)
         // - jaccard_weight → jaccard (تطابق مباشر)
         // - length_weight → نوزعه على sequence (60%) + structural (40%)
+        // - coverage_weight → التغطية بالفقرات المتطابقة
         const sequenceWeight = weights.length_weight * 0.6;
         const structuralWeight = weights.length_weight * 0.4;
         
-        const overallScore = (
+        let overallScore = (
           fuzzySim * weights.cosine_weight +
           jaccardSim * weights.jaccard_weight +
           sequenceSim * sequenceWeight +
-          structuralSim * structuralWeight
+          structuralSim * structuralWeight +
+          coverageRatio * weights.coverage_weight
         );
+        
+        // 6. 🆕 Coverage Boost - رفع النتيجة عند وجود تغطية عالية
+        if (coverageRatio >= settings.thresholds.coverage_high_threshold) {
+          // تغطية عالية (≥25%) → boost إلى 65% على الأقل
+          overallScore = Math.max(overallScore, 0.65);
+          console.log(`🚀 High coverage boost: ${refFile.file_name} (${(coverageRatio * 100).toFixed(1)}%)`);
+        } else if (coverageRatio >= settings.thresholds.coverage_medium_threshold) {
+          // تغطية متوسطة (≥15%) → boost إلى 50% على الأقل
+          overallScore = Math.max(overallScore, 0.50);
+          console.log(`⚡ Medium coverage boost: ${refFile.file_name} (${(coverageRatio * 100).toFixed(1)}%)`);
+        }
 
         if (overallScore > settings.thresholds.single_file_display) {
           comparisons.push({
             matched_file_id: refFile.id,
             matched_file_name: refFile.file_name,
             similarity_score: Math.round(overallScore * 100) / 100,
-            similarity_method: 'advanced_multi_algorithm',
+            similarity_method: 'advanced_multi_algorithm_with_coverage',
             fuzzy_score: Math.round(fuzzySim * 100) / 100,
             jaccard_score: Math.round(jaccardSim * 100) / 100,
             sequence_score: Math.round(sequenceSim * 100) / 100,
             structural_score: Math.round(structuralSim * 100) / 100,
+            coverage_ratio: Math.round(coverageRatio * 100) / 100,
             flagged: overallScore >= settings.thresholds.flagged_threshold,
           });
         }

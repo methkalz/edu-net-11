@@ -7,6 +7,8 @@ import {
   extractMatchingSegments, 
   preprocessText, 
   calculateSimilarity,
+  calculateCoverage,
+  findLongMatches,
   type ExtractedPage,
   type MatchedSegment 
 } from './_helpers.ts';
@@ -173,7 +175,7 @@ serve(async (req) => {
             continue;
           }
 
-          // ✅ حساب التشابه باستخدام معايير متعددة (Hybrid Approach)
+          // ✅ حساب التشابه باستخدام معايير متعددة (Hybrid Approach مع Coverage)
           
           // 1. Cosine similarity على embeddings
           const emb1 = fileEmbeddings[i].embedding;
@@ -196,18 +198,30 @@ serve(async (req) => {
           const union = keywords1.size + keywords2.size - intersection;
           const jaccardSim = union > 0 ? intersection / union : 0;
           
-          // 3. فحص التشابه في الطول (Length similarity penalty)
+          // 3. فحص التشابه في الطول (Length similarity)
           const wordCount1 = fileEmbeddings[i].wordCount;
           const wordCount2 = fileEmbeddings[j].wordCount;
           const pageCount1 = fileEmbeddings[i].pageCount || 1;
           const pageCount2 = fileEmbeddings[j].pageCount || 1;
           
-          // إذا كان الفرق في عدد الكلمات كبير جداً، خفض التشابه
           const wordRatio = Math.min(wordCount1, wordCount2) / Math.max(wordCount1, wordCount2);
           const pageRatio = Math.min(pageCount1, pageCount2) / Math.max(pageCount1, pageCount2);
           const lengthSimilarity = (wordRatio + pageRatio) / 2;
           
-          // 4. الوزن الهجين المحسّن - باستخدام الأوزان من الإعدادات
+          // 4. 🆕 Coverage Ratio - حساب نسبة التغطية بالفقرات المتطابقة
+          const text1 = fileTextsMap.get(file1.fileHash) || '';
+          const text2 = fileTextsMap.get(file2.fileHash) || '';
+          let coverageRatio = 0;
+          
+          if (text1 && text2) {
+            coverageRatio = calculateCoverage(
+              text1, 
+              text2, 
+              settings.thresholds.paragraph_similarity_min
+            );
+          }
+          
+          // 5. الوزن الهجين المحسّن - باستخدام 4 أوزان من الإعدادات
           const weights = settings.algorithm_weights;
           let finalSimilarity = 0;
           
@@ -215,49 +229,60 @@ serve(async (req) => {
             // تشابه منخفض جداً في الكلمات - اعتماد أقل على cosine
             finalSimilarity = cosineSim * (weights.cosine_weight * 0.6) + 
                               jaccardSim * (weights.jaccard_weight * 1.5) + 
-                              lengthSimilarity * (weights.length_weight * 1.0);
+                              lengthSimilarity * (weights.length_weight * 1.0) +
+                              coverageRatio * weights.coverage_weight;
           } else if (lengthSimilarity < 0.5) {
             // فرق كبير في الطول - تخفيض التشابه
-            finalSimilarity = (cosineSim * weights.cosine_weight + 
-                               jaccardSim * weights.jaccard_weight + 
-                               lengthSimilarity * weights.length_weight) * 0.7;
+            finalSimilarity = (
+              cosineSim * weights.cosine_weight + 
+              jaccardSim * weights.jaccard_weight + 
+              lengthSimilarity * weights.length_weight +
+              coverageRatio * weights.coverage_weight
+            ) * 0.7;
           } else {
-            // حالة عادية - استخدام الأوزان مباشرة
+            // حالة عادية - استخدام الأوزان الأربعة مباشرة
             finalSimilarity = cosineSim * weights.cosine_weight + 
                               jaccardSim * weights.jaccard_weight + 
-                              lengthSimilarity * weights.length_weight;
+                              lengthSimilarity * weights.length_weight +
+                              coverageRatio * weights.coverage_weight;
+          }
+          
+          // 6. 🆕 Coverage Boost - رفع النتيجة عند وجود تغطية عالية
+          if (coverageRatio >= settings.thresholds.coverage_high_threshold) {
+            // تغطية عالية (≥25%) → boost إلى 65% على الأقل
+            finalSimilarity = Math.max(finalSimilarity, 0.65);
+            console.log(`🚀 High coverage boost applied (${(coverageRatio * 100).toFixed(1)}%): ${file1.fileName} vs ${file2.fileName}`);
+          } else if (coverageRatio >= settings.thresholds.coverage_medium_threshold) {
+            // تغطية متوسطة (≥15%) → boost إلى 50% على الأقل
+            finalSimilarity = Math.max(finalSimilarity, 0.50);
+            console.log(`⚡ Medium coverage boost applied (${(coverageRatio * 100).toFixed(1)}%): ${file1.fileName} vs ${file2.fileName}`);
           }
           
           // استخراج العبارات المتشابهة للمقارنات المرتفعة (≥35%)
           let matchedSegments: MatchedSegment[] = [];
           let affectedPages = { source_pages: [], matched_pages: [] };
           
-          if (finalSimilarity >= 0.35) {
-            const text1 = fileTextsMap.get(file1.fileHash) || '';
-            const text2 = fileTextsMap.get(file2.fileHash) || '';
+          if (finalSimilarity >= 0.35 && text1 && text2) {
+            matchedSegments = extractMatchingSegments(text1, text2).slice(0, 10);
             
-            if (text1 && text2) {
-              matchedSegments = extractMatchingSegments(text1, text2).slice(0, 10);
-              
-              // استخراج الصفحات المتأثرة
-              const sourcePages = new Set<number>();
-              const matchedPages = new Set<number>();
-              matchedSegments.forEach(seg => {
-                sourcePages.add(seg.source_page);
-                matchedPages.add(seg.matched_page);
-              });
-              affectedPages = {
-                source_pages: Array.from(sourcePages).sort((a, b) => a - b),
-                matched_pages: Array.from(matchedPages).sort((a, b) => a - b),
-              };
-            }
+            // استخراج الصفحات المتأثرة
+            const sourcePages = new Set<number>();
+            const matchedPages = new Set<number>();
+            matchedSegments.forEach(seg => {
+              sourcePages.add(seg.source_page);
+              matchedPages.add(seg.matched_page);
+            });
+            affectedPages = {
+              source_pages: Array.from(sourcePages).sort((a, b) => a - b),
+              matched_pages: Array.from(matchedPages).sort((a, b) => a - b),
+            };
           }
           
           // ✅ حفظ جميع المقارنات مع التفاصيل
           file1Comparisons.push({
             matched_file_name: file2.fileName,
             similarity_score: Math.round(finalSimilarity * 100) / 100,
-            similarity_method: 'hybrid_cosine_jaccard_length',
+            similarity_method: 'hybrid_cosine_jaccard_length_coverage',
             flagged: finalSimilarity >= settings.thresholds.flagged_threshold,
             matched_segments: matchedSegments,
             affected_pages: affectedPages,
@@ -265,6 +290,7 @@ serve(async (req) => {
               cosine: Math.round(cosineSim * 100) / 100,
               jaccard: Math.round(jaccardSim * 100) / 100,
               length_similarity: Math.round(lengthSimilarity * 100) / 100,
+              coverage_ratio: Math.round(coverageRatio * 100) / 100,
               word_count_ratio: Math.round(wordRatio * 100) / 100,
               page_count_source: pageCount1,
               page_count_matched: pageCount2,
@@ -452,39 +478,73 @@ serve(async (req) => {
             
             console.log(`✅ After filtering: ${filteredMatches.length} matches for ${file.fileName}`);
             
-            // ✅ إعادة حساب similarity باستخدام algorithm_weights الديناميكية
-            const repositoryMatches = filteredMatches.map((match: any) => {
-              // استخراج المكونات الفردية (إذا كانت موجودة، وإلا استخدام cosine_similarity كأساس)
-              const cosineSim = match.cosine_similarity ?? match.similarity ?? 0;
-              const jaccardSim = match.jaccard_similarity ?? 0;
-              const lengthSim = match.length_similarity ?? 1;
-              
-              // حساب النتيجة النهائية باستخدام الأوزان الديناميكية
-              const finalSimilarity = 
-                (cosineSim * settings.algorithm_weights.cosine_weight) +
-                (jaccardSim * settings.algorithm_weights.jaccard_weight) +
-                (lengthSim * settings.algorithm_weights.length_weight);
-              
-              return {
-                matched_file_id: match.id,
-                matched_file_name: match.file_name,
-                similarity_score: Math.round(finalSimilarity * 100) / 100,
-                similarity_method: 'hybrid_weighted',
-                flagged: finalSimilarity >= settings.thresholds.flagged_threshold,
-                // تخزين المكونات للشفافية
-                cosine_similarity: Math.round(cosineSim * 100) / 100,
-                jaccard_similarity: Math.round(jaccardSim * 100) / 100,
-                length_similarity: Math.round(lengthSim * 100) / 100,
-              };
-            })
-            .filter(m => m.similarity_score >= settings.thresholds.repository_display) // تطبيق العتبة النهائية
-            .sort((a, b) => b.similarity_score - a.similarity_score) // ترتيب تنازلي
-            .slice(0, 5); // أخذ أعلى 5 فقط
+            // ✅ إعادة حساب similarity باستخدام algorithm_weights الديناميكية مع Coverage
+            const repositoryMatches = await Promise.all(
+              filteredMatches.map(async (match: any) => {
+                // استخراج المكونات الفردية
+                const cosineSim = match.cosine_similarity ?? match.similarity ?? 0;
+                const jaccardSim = match.jaccard_similarity ?? 0;
+                const lengthSim = match.length_similarity ?? 1;
+                
+                // 🆕 حساب Coverage للملف مع المستودع
+                let coverageRatio = 0;
+                const fileText = fileTextsMap.get(file.fileHash) || '';
+                
+                if (fileText && match.id) {
+                  // جلب النص من المستودع
+                  const { data: repoFile } = await supabase
+                    .from('pdf_comparison_repository')
+                    .select('extracted_text')
+                    .eq('id', match.id)
+                    .single();
+                  
+                  if (repoFile?.extracted_text) {
+                    coverageRatio = calculateCoverage(
+                      fileText,
+                      repoFile.extracted_text,
+                      settings.thresholds.paragraph_similarity_min
+                    );
+                  }
+                }
+                
+                // حساب النتيجة النهائية باستخدام 4 أوزان
+                let finalSimilarity = 
+                  (cosineSim * settings.algorithm_weights.cosine_weight) +
+                  (jaccardSim * settings.algorithm_weights.jaccard_weight) +
+                  (lengthSim * settings.algorithm_weights.length_weight) +
+                  (coverageRatio * settings.algorithm_weights.coverage_weight);
+                
+                // تطبيق Coverage Boost
+                if (coverageRatio >= settings.thresholds.coverage_high_threshold) {
+                  finalSimilarity = Math.max(finalSimilarity, 0.65);
+                } else if (coverageRatio >= settings.thresholds.coverage_medium_threshold) {
+                  finalSimilarity = Math.max(finalSimilarity, 0.50);
+                }
+                
+                return {
+                  matched_file_id: match.id,
+                  matched_file_name: match.file_name,
+                  similarity_score: Math.round(finalSimilarity * 100) / 100,
+                  similarity_method: 'hybrid_weighted_with_coverage',
+                  flagged: finalSimilarity >= settings.thresholds.flagged_threshold,
+                  cosine_similarity: Math.round(cosineSim * 100) / 100,
+                  jaccard_similarity: Math.round(jaccardSim * 100) / 100,
+                  length_similarity: Math.round(lengthSim * 100) / 100,
+                  coverage_ratio: Math.round(coverageRatio * 100) / 100,
+                };
+              })
+            );
+            
+            // تصفية وترتيب النتائج
+            const sortedMatches = repositoryMatches
+              .filter(m => m.similarity_score >= settings.thresholds.repository_display)
+              .sort((a, b) => b.similarity_score - a.similarity_score)
+              .slice(0, 5);
             
             // تحديث النتيجة في قاعدة البيانات
-            if (repositoryMatches.length > 0) {
-              const repoMaxSim = Math.max(...repositoryMatches.map(m => m.similarity_score));
-              const repoHighRisk = repositoryMatches.filter(m => m.flagged).length;
+            if (sortedMatches.length > 0) {
+              const repoMaxSim = Math.max(...sortedMatches.map(m => m.similarity_score));
+              const repoHighRisk = sortedMatches.filter(m => m.flagged).length;
               
               // إعادة حساب الـ status الإجمالي (مع استخدام الإعدادات)
               const internalMaxSim = savedResult.internal_max_similarity || 0;
