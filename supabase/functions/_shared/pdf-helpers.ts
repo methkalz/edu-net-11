@@ -196,32 +196,27 @@ export function splitIntoParagraphs(text: string, wordsPerParagraph: number = 10
 }
 
 /**
- * حساب Coverage في اتجاه واحد (text1 → text2) - محسّن للأداء
+ * حساب نسبة التغطية (Coverage Ratio): نسبة النص المغطاة بتطابقات عالية (≥75%)
  */
-function calculateOneWayCoverage(
-  text1: string,
-  text2: string,
-  paragraphSimilarityMin: number
+export function calculateCoverage(
+  text1: string, 
+  text2: string, 
+  paragraphSimilarityMin: number = 0.75
 ): number {
-  // تحسين 1: فقرات أكبر = عدد أقل من المقارنات (150 كلمة بدلاً من 100)
-  const paragraphs1 = splitIntoParagraphs(text1, 150);
-  const paragraphs2 = splitIntoParagraphs(text2, 150);
+  const paragraphs1 = splitIntoParagraphs(text1, 100);
+  const paragraphs2 = splitIntoParagraphs(text2, 100);
   
   if (paragraphs1.length === 0) return 0;
-  
-  // تحسين 2: معالجة عينة فقط من الفقرات (أول 15 فقرة)
-  // هذا يقلل الوقت من O(n*m) إلى O(15*m) حيث n,m عدد الفقرات
-  const maxParagraphs = 15;
-  const sample1 = paragraphs1.slice(0, maxParagraphs);
   
   let coveredWords = 0;
   const totalWords = text1.split(/\s+/).filter(w => w.length > 2).length;
   
-  // مقارنة كل فقرة من sample1 مع جميع فقرات text2
-  for (const para1 of sample1) {
+  // مقارنة كل فقرة من text1 مع جميع فقرات text2
+  for (const para1 of paragraphs1) {
     let bestMatch = 0;
     
     for (const para2 of paragraphs2) {
+      // استخدام fuzzball للمقارنة الدقيقة
       const similarity = fuzzball.ratio(
         normalizeArabicText(para1),
         normalizeArabicText(para2)
@@ -231,12 +226,13 @@ function calculateOneWayCoverage(
         bestMatch = similarity;
       }
       
-      // تحسين 3: early exit عند أول تطابق عالي
+      // إذا وجدنا تطابق عالي، نتوقف عن البحث لهذه الفقرة
       if (similarity >= paragraphSimilarityMin) {
         break;
       }
     }
     
+    // إذا كان التطابق عالي، نعتبر الفقرة "مغطاة"
     if (bestMatch >= paragraphSimilarityMin) {
       const paraWordCount = para1.split(/\s+/).filter(w => w.length > 2).length;
       coveredWords += paraWordCount;
@@ -244,28 +240,6 @@ function calculateOneWayCoverage(
   }
   
   return totalWords > 0 ? coveredWords / totalWords : 0;
-}
-
-/**
- * حساب نسبة التغطية المتماثلة (Symmetric Coverage Ratio):
- * المتوسط بين coverage(text1→text2) و coverage(text2→text1)
- * 
- * هذا يضمن أن نسبة التشابه متماثلة في كلا الاتجاهين:
- * coverage(A, B) = coverage(B, A)
- */
-export function calculateCoverage(
-  text1: string, 
-  text2: string, 
-  paragraphSimilarityMin: number = 0.75
-): number {
-  // حساب Coverage من text1 إلى text2
-  const coverage1to2 = calculateOneWayCoverage(text1, text2, paragraphSimilarityMin);
-  
-  // حساب Coverage من text2 إلى text1
-  const coverage2to1 = calculateOneWayCoverage(text2, text1, paragraphSimilarityMin);
-  
-  // إرجاع المتوسط (نسبة متماثلة)
-  return (coverage1to2 + coverage2to1) / 2;
 }
 
 /**
