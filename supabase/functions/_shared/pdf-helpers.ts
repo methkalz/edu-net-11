@@ -196,12 +196,12 @@ export function splitIntoParagraphs(text: string, wordsPerParagraph: number = 10
 }
 
 /**
- * حساب نسبة التغطية (Coverage Ratio): نسبة النص المغطاة بتطابقات عالية (≥75%)
+ * حساب Coverage في اتجاه واحد (text1 → text2)
  */
-export function calculateCoverage(
-  text1: string, 
-  text2: string, 
-  paragraphSimilarityMin: number = 0.75
+function calculateOneWayCoverage(
+  text1: string,
+  text2: string,
+  paragraphSimilarityMin: number
 ): number {
   const paragraphs1 = splitIntoParagraphs(text1, 100);
   const paragraphs2 = splitIntoParagraphs(text2, 100);
@@ -240,6 +240,28 @@ export function calculateCoverage(
   }
   
   return totalWords > 0 ? coveredWords / totalWords : 0;
+}
+
+/**
+ * حساب نسبة التغطية المتماثلة (Symmetric Coverage Ratio):
+ * المتوسط بين coverage(text1→text2) و coverage(text2→text1)
+ * 
+ * هذا يضمن أن نسبة التشابه متماثلة في كلا الاتجاهين:
+ * coverage(A, B) = coverage(B, A)
+ */
+export function calculateCoverage(
+  text1: string, 
+  text2: string, 
+  paragraphSimilarityMin: number = 0.75
+): number {
+  // حساب Coverage من text1 إلى text2
+  const coverage1to2 = calculateOneWayCoverage(text1, text2, paragraphSimilarityMin);
+  
+  // حساب Coverage من text2 إلى text1
+  const coverage2to1 = calculateOneWayCoverage(text2, text1, paragraphSimilarityMin);
+  
+  // إرجاع المتوسط (نسبة متماثلة)
+  return (coverage1to2 + coverage2to1) / 2;
 }
 
 /**
