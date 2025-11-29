@@ -68,15 +68,15 @@ export function extractMatchingSegments(
   const sentences1 = extractSentencesWithPages(text1, pages1);
   const sentences2 = extractSentencesWithPages(text2, pages2);
   
-  // تحسين الأداء: أخذ عينة من الجمل فقط
-  const maxSentences = 50;
+  // تحسين التغطية: زيادة عينة الجمل من 50 إلى 100 (معظم الملفات 1800-2500 كلمة)
+  const maxSentences = 100;
   const sample1 = sentences1.slice(0, maxSentences);
   const sample2 = sentences2.slice(0, maxSentences);
   
   for (const sent1 of sample1) {
     for (const sent2 of sample2) {
-      // التوقف إذا وصلنا لـ 20 segment
-      if (segments.length >= 20) break;
+      // زيادة max segments من 20 إلى 30 للحصول على تفاصيل أكثر
+      if (segments.length >= 30) break;
       
       const similarity = fuzzball.ratio(
         normalizeArabicText(sent1.text),
@@ -95,17 +95,24 @@ export function extractMatchingSegments(
         });
       }
     }
-    if (segments.length >= 20) break;
+    if (segments.length >= 30) break;
   }
   
-  return segments.sort((a, b) => b.similarity - a.similarity).slice(0, 20);
+  return segments.sort((a, b) => b.similarity - a.similarity).slice(0, 30);
 }
 
 export function preprocessText(text: string, wordCount: number) {
   const normalized = normalizeArabicText(text);
-  const words = normalized.split(/\s+/).filter(w => w.length > 2);
+  let words = normalized.split(/\s+/).filter(w => w.length > 2);
   
-  // Process ALL words (no sampling) for accurate comparison
+  // معظم الملفات 1800-2500 كلمة - رفع الحد إلى 4000 لتغطية 100%
+  const maxWords = 4000;
+  if (words.length > maxWords) {
+    console.log(`Sampling large file: ${words.length} words → ${maxWords} words`);
+    const step = Math.floor(words.length / maxWords);
+    words = words.filter((_, i) => i % step === 0).slice(0, maxWords);
+  }
+  
   const wordSet = new Set(words);
   
   return { 
@@ -120,8 +127,9 @@ export function preprocessText(text: string, wordCount: number) {
 export function calculateSimilarity(text1: any, text2: any): number {
   const jaccard = calculateJaccard(text1.wordSet, text2.wordSet);
   
+  // زيادة sampleSize من 15,000 إلى 25,000 حرف لتغطية 100% من معظم الملفات (1800-2500 كلمة)
   const sampleSize = Math.min(
-    15000,
+    25000,
     Math.min(text1.normalized.length, text2.normalized.length)
   );
   

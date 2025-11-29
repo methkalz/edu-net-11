@@ -180,8 +180,8 @@ serve(async (req) => {
         const refWordCount = refFile.extracted_text.split(/\s+/).length;
         const processedRefText = preprocessText(refFile.extracted_text, refWordCount, settings.custom_whitelist);
         
-        // 1. Fuzzy Similarity (مبسط - أخذ عينة فقط)
-        const sampleSize = Math.min(5000, processedFileText.normalized.length);
+        // 1. Fuzzy Similarity (تغطية موسعة - 20,000 حرف لتغطية 100% من معظم الملفات)
+        const sampleSize = Math.min(20000, processedFileText.normalized.length);
         const fuzzySim = fuzzball.ratio(
           processedFileText.normalized.substring(0, sampleSize),
           processedRefText.normalized.substring(0, sampleSize)
@@ -193,10 +193,10 @@ serve(async (req) => {
           processedRefText.wordSet
         );
         
-        // 3. Sequence Similarity (مبسط - نوافذ أصغر فقط)
+        // 3. Sequence Similarity (تغطية موسعة - 3,000 كلمة لتغطية 100% من معظم الملفات)
         const sequenceSim = calculateSequenceSimilarity(
-          processedFileText.words.slice(0, 1000),
-          processedRefText.words.slice(0, 1000)
+          processedFileText.words.slice(0, 3000),
+          processedRefText.words.slice(0, 3000)
         );
         
         // 4. Structural Similarity
@@ -340,14 +340,20 @@ function preprocessText(text: string, wordCount: number, whitelist?: string[]) {
   const normalized = normalizeArabicText(text, whitelist);
   let words = normalized.split(/\s+/).filter(w => w.length > 2);
   
-  // استخدام sampling للملفات الكبيرة جداً
-  const maxWords = 50000;
+  // استخدام sampling للملفات الكبيرة جداً (معظم الملفات 1800-2500 كلمة، لن تحتاج sampling)
+  const maxWords = 80000;
   if (words.length > maxWords) {
-    console.log(`⚠️ Large file detected (${words.length} words). Sampling to ${maxWords} words.`);
+    console.log(`⚠️ Large file detected (${words.length} words). Sampling to ${maxWords} words with improved distribution.`);
     
-    // أخذ عينة موزعة بشكل متساوي من النص
-    const step = Math.floor(words.length / maxWords);
-    words = words.filter((_, i) => i % step === 0).slice(0, maxWords);
+    // أخذ عينة موزعة من البداية والوسط والنهاية (لتغطية أفضل)
+    const third = Math.floor(maxWords / 3);
+    const step = Math.floor(words.length / third);
+    
+    const beginning = words.filter((_, i) => i % step === 0).slice(0, third);
+    const middle = words.filter((_, i) => i % step === 0).slice(Math.floor(words.length / 3), Math.floor(words.length / 3) + third);
+    const end = words.filter((_, i) => i % step === 0).slice(-third);
+    
+    words = [...beginning, ...middle, ...end].slice(0, maxWords);
   }
   
   const wordSet = new Set(words);
