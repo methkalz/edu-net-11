@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BookOpen, Plus, Search, Edit2, Trash2, Filter, RotateCcw, Check, ChevronRight, ChevronLeft } from 'lucide-react';
+import { MultiSelect } from '@/components/ui/multi-select';
 import { useExamBankManager } from '@/hooks/useExamBankManager';
 import { QuestionForm } from '@/components/exam/QuestionForm';
 import { BulkQuestionImporter } from '@/components/exam/BulkQuestionImporter';
@@ -18,6 +19,7 @@ const ExamBankManagement = () => {
   const [filters, setFilters] = useState({
     gradeLevel: 'all',
     sectionName: 'all',
+    topicNames: [] as string[],
     difficulty: 'all',
     questionType: 'all',
     searchTerm: ''
@@ -31,6 +33,7 @@ const ExamBankManagement = () => {
   const {
     questions,
     sections,
+    topics,
     stats,
     isLoading,
     addQuestion,
@@ -52,11 +55,12 @@ const ExamBankManagement = () => {
   // Reset to page 1 when filters change
   useMemo(() => {
     setCurrentPage(1);
-  }, [filters.gradeLevel, filters.sectionName, filters.difficulty, filters.questionType, filters.searchTerm]);
+  }, [filters.gradeLevel, filters.sectionName, filters.topicNames, filters.difficulty, filters.questionType, filters.searchTerm]);
   const handleResetFilters = () => {
     setFilters({
       gradeLevel: 'all',
       sectionName: 'all',
+      topicNames: [],
       difficulty: 'all',
       questionType: 'all',
       searchTerm: ''
@@ -207,13 +211,14 @@ const ExamBankManagement = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">الصف الدراسي</label>
                 <Select value={filters.gradeLevel} onValueChange={value => setFilters(prev => ({
                 ...prev,
                 gradeLevel: value,
-                sectionName: 'all'
+                sectionName: 'all',
+                topicNames: []
               }))}>
                   <SelectTrigger>
                     <SelectValue />
@@ -231,7 +236,8 @@ const ExamBankManagement = () => {
                 <label className="text-sm font-medium">القسم</label>
                 <Select value={filters.sectionName} onValueChange={value => setFilters(prev => ({
                 ...prev,
-                sectionName: value
+                sectionName: value,
+                topicNames: []
               }))} disabled={filters.gradeLevel === 'all'}>
                   <SelectTrigger>
                     <SelectValue />
@@ -241,6 +247,22 @@ const ExamBankManagement = () => {
                     {sections.map(section => <SelectItem key={section} value={section}>{section}</SelectItem>)}
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">المواضيع</label>
+                <MultiSelect
+                  options={topics.map(topic => ({ value: topic, label: topic }))}
+                  value={filters.topicNames}
+                  onChange={(value) => setFilters(prev => ({
+                    ...prev,
+                    topicNames: value
+                  }))}
+                  placeholder="جميع المواضيع"
+                  searchPlaceholder="ابحث عن موضوع..."
+                  emptyText="لا توجد مواضيع"
+                  className={filters.sectionName === 'all' ? 'opacity-50 pointer-events-none' : ''}
+                />
               </div>
 
               <div className="space-y-2">
