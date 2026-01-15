@@ -7,6 +7,7 @@ import { logger } from '@/lib/logging';
 interface UseExamBankManagerFilters {
   gradeLevel: string;
   sectionName: string;
+  topicNames: string[];
   difficulty: string;
   questionType: string;
   searchTerm: string;
@@ -41,6 +42,11 @@ export const useExamBankManager = (filters: UseExamBankManagerFilters) => {
 
       if (filters.sectionName && filters.sectionName !== 'all') {
         query = query.eq('section_name', filters.sectionName);
+      }
+
+      // فلترة المواضيع (اختيار متعدد)
+      if (filters.topicNames && filters.topicNames.length > 0) {
+        query = query.in('topic_name', filters.topicNames);
       }
 
       if (filters.difficulty && filters.difficulty !== 'all') {
@@ -104,6 +110,33 @@ export const useExamBankManager = (filters: UseExamBankManagerFilters) => {
       return uniqueSections as string[];
     },
     enabled: filters.gradeLevel !== 'all'
+  });
+
+  // جلب المواضيع الفريدة حسب الصف والقسم
+  const { data: topics = [] } = useQuery({
+    queryKey: ['exam-bank-topics', filters.gradeLevel, filters.sectionName],
+    queryFn: async () => {
+      if (!filters.sectionName || filters.sectionName === 'all') {
+        return [];
+      }
+
+      const { data, error } = await supabase
+        .from('question_bank')
+        .select('topic_name')
+        .eq('grade_level', filters.gradeLevel)
+        .eq('section_name', filters.sectionName)
+        .eq('is_active', true)
+        .not('topic_name', 'is', null);
+
+      if (error) {
+        logger.error('خطأ في جلب المواضيع', error);
+        return [];
+      }
+
+      const uniqueTopics = [...new Set(data.map(item => item.topic_name).filter(Boolean))];
+      return uniqueTopics as string[];
+    },
+    enabled: filters.sectionName !== 'all'
   });
 
   // حساب الإحصائيات
@@ -199,6 +232,7 @@ export const useExamBankManager = (filters: UseExamBankManagerFilters) => {
   return {
     questions,
     sections,
+    topics,
     stats,
     isLoading,
     addQuestion: addQuestion.mutate,
