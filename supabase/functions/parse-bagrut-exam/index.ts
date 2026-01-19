@@ -235,7 +235,21 @@ serve(async (req) => {
                               },
                               correct_answer: { type: 'string' },
                               answer_explanation: { type: 'string' },
-                              sub_questions: { type: 'array' },
+                              sub_questions: { 
+                                type: 'array',
+                                items: {
+                                  type: 'object',
+                                  properties: {
+                                    question_number: { type: 'string' },
+                                    question_text: { type: 'string' },
+                                    question_type: { type: 'string' },
+                                    points: { type: 'number' },
+                                    correct_answer: { type: 'string' },
+                                    answer_explanation: { type: 'string' }
+                                  },
+                                  required: ['question_number', 'question_text', 'question_type', 'points']
+                                }
+                              },
                               topic_tags: { type: 'array', items: { type: 'string' } }
                             },
                             required: ['question_number', 'question_text', 'question_type', 'points']
