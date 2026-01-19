@@ -29,3 +29,6 @@ verify_jwt = true
 
 [functions.generate-smart-questions]
 verify_jwt = true
+
+[functions.parse-bagrut-exam]
+verify_jwt = false
