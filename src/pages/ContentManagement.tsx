@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Settings, Shield, FileText, FileEdit, ChevronDown, BookOpen } from 'lucide-react';
+import { Settings, Shield, FileText, FileEdit, ChevronDown, BookOpen, GraduationCap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ModernHeader from '@/components/shared/ModernHeader';
 import AppFooter from '@/components/shared/AppFooter';
@@ -55,6 +55,19 @@ const ContentManagement: React.FC = () => {
                 </div>
                 <p className="text-muted-foreground text-lg">
                   إدارة الأسئلة لجميع الصفوف (10، 11، 12) من مكان واحد مع فلاتر متقدمة وإحصائيات شاملة
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Bagrut Exams Management Card */}
+            <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer border-2 border-transparent hover:border-orange-200" onClick={() => navigate('/bagrut-management')}>
+              <CardContent className="p-8">
+                <div className="flex items-center gap-4 mb-4">
+                  <GraduationCap className="h-10 w-10 text-orange-600" />
+                  <h3 className="text-2xl font-bold">إدارة امتحانات البجروت</h3>
+                </div>
+                <p className="text-muted-foreground text-lg">
+                  إدارة امتحانات البجروت والتحكم بإتاحتها للصفوف المختلفة مع متابعة تقدم الطلاب
                 </p>
               </CardContent>
             </Card>
