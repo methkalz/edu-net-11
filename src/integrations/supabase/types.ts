@@ -182,6 +182,433 @@ export type Database = {
         }
         Relationships: []
       }
+      bagrut_attempts: {
+        Row: {
+          answers: Json | null
+          attempt_number: number | null
+          created_at: string | null
+          detailed_results: Json | null
+          exam_id: string
+          graded_at: string | null
+          graded_by: string | null
+          id: string
+          last_activity_at: string | null
+          max_score: number | null
+          percentage: number | null
+          school_id: string | null
+          score: number | null
+          section_scores: Json | null
+          selected_section_ids: string[] | null
+          selected_specialization: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["bagrut_attempt_status"] | null
+          student_id: string
+          submitted_at: string | null
+          teacher_feedback: string | null
+          time_spent_seconds: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          answers?: Json | null
+          attempt_number?: number | null
+          created_at?: string | null
+          detailed_results?: Json | null
+          exam_id: string
+          graded_at?: string | null
+          graded_by?: string | null
+          id?: string
+          last_activity_at?: string | null
+          max_score?: number | null
+          percentage?: number | null
+          school_id?: string | null
+          score?: number | null
+          section_scores?: Json | null
+          selected_section_ids?: string[] | null
+          selected_specialization?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["bagrut_attempt_status"] | null
+          student_id: string
+          submitted_at?: string | null
+          teacher_feedback?: string | null
+          time_spent_seconds?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          answers?: Json | null
+          attempt_number?: number | null
+          created_at?: string | null
+          detailed_results?: Json | null
+          exam_id?: string
+          graded_at?: string | null
+          graded_by?: string | null
+          id?: string
+          last_activity_at?: string | null
+          max_score?: number | null
+          percentage?: number | null
+          school_id?: string | null
+          score?: number | null
+          section_scores?: Json | null
+          selected_section_ids?: string[] | null
+          selected_specialization?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["bagrut_attempt_status"] | null
+          student_id?: string
+          submitted_at?: string | null
+          teacher_feedback?: string | null
+          time_spent_seconds?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bagrut_attempts_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "bagrut_exams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bagrut_attempts_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bagrut_attempts_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "superadmin_school_stats"
+            referencedColumns: ["school_id"]
+          },
+        ]
+      }
+      bagrut_exam_sections: {
+        Row: {
+          created_at: string | null
+          exam_id: string
+          id: string
+          instructions: string | null
+          max_questions_to_answer: number | null
+          min_questions_to_answer: number | null
+          order_index: number | null
+          section_number: number
+          section_title: string
+          section_type: Database["public"]["Enums"]["bagrut_section_type"]
+          specialization: string | null
+          specialization_label: string | null
+          total_points: number
+        }
+        Insert: {
+          created_at?: string | null
+          exam_id: string
+          id?: string
+          instructions?: string | null
+          max_questions_to_answer?: number | null
+          min_questions_to_answer?: number | null
+          order_index?: number | null
+          section_number: number
+          section_title: string
+          section_type?: Database["public"]["Enums"]["bagrut_section_type"]
+          specialization?: string | null
+          specialization_label?: string | null
+          total_points: number
+        }
+        Update: {
+          created_at?: string | null
+          exam_id?: string
+          id?: string
+          instructions?: string | null
+          max_questions_to_answer?: number | null
+          min_questions_to_answer?: number | null
+          order_index?: number | null
+          section_number?: number
+          section_title?: string
+          section_type?: Database["public"]["Enums"]["bagrut_section_type"]
+          specialization?: string | null
+          specialization_label?: string | null
+          total_points?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bagrut_exam_sections_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "bagrut_exams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bagrut_exams: {
+        Row: {
+          ai_parsed_at: string | null
+          ai_processing_log: Json | null
+          allow_review_after_submit: boolean | null
+          available_for_grades: string[] | null
+          available_for_specializations: string[] | null
+          available_from: string | null
+          available_until: string | null
+          created_at: string | null
+          created_by: string | null
+          duration_minutes: number | null
+          exam_code: string | null
+          exam_season: Database["public"]["Enums"]["bagrut_exam_season"]
+          exam_year: number
+          id: string
+          instructions: string | null
+          is_published: boolean | null
+          notes: string | null
+          show_answers_to_students: boolean | null
+          show_answers_to_teachers: boolean | null
+          show_explanations: boolean | null
+          source_file_name: string | null
+          source_file_type: string | null
+          source_file_url: string | null
+          status: Database["public"]["Enums"]["bagrut_exam_status"] | null
+          subject: string
+          title: string
+          total_points: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          ai_parsed_at?: string | null
+          ai_processing_log?: Json | null
+          allow_review_after_submit?: boolean | null
+          available_for_grades?: string[] | null
+          available_for_specializations?: string[] | null
+          available_from?: string | null
+          available_until?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          duration_minutes?: number | null
+          exam_code?: string | null
+          exam_season: Database["public"]["Enums"]["bagrut_exam_season"]
+          exam_year: number
+          id?: string
+          instructions?: string | null
+          is_published?: boolean | null
+          notes?: string | null
+          show_answers_to_students?: boolean | null
+          show_answers_to_teachers?: boolean | null
+          show_explanations?: boolean | null
+          source_file_name?: string | null
+          source_file_type?: string | null
+          source_file_url?: string | null
+          status?: Database["public"]["Enums"]["bagrut_exam_status"] | null
+          subject: string
+          title: string
+          total_points?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          ai_parsed_at?: string | null
+          ai_processing_log?: Json | null
+          allow_review_after_submit?: boolean | null
+          available_for_grades?: string[] | null
+          available_for_specializations?: string[] | null
+          available_from?: string | null
+          available_until?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          duration_minutes?: number | null
+          exam_code?: string | null
+          exam_season?: Database["public"]["Enums"]["bagrut_exam_season"]
+          exam_year?: number
+          id?: string
+          instructions?: string | null
+          is_published?: boolean | null
+          notes?: string | null
+          show_answers_to_students?: boolean | null
+          show_answers_to_teachers?: boolean | null
+          show_explanations?: boolean | null
+          source_file_name?: string | null
+          source_file_type?: string | null
+          source_file_url?: string | null
+          status?: Database["public"]["Enums"]["bagrut_exam_status"] | null
+          subject?: string
+          title?: string
+          total_points?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      bagrut_media: {
+        Row: {
+          alt_text: string | null
+          created_at: string | null
+          exam_id: string
+          extracted_text: string | null
+          file_path: string | null
+          file_size: number | null
+          file_url: string
+          height: number | null
+          id: string
+          media_type: string
+          order_index: number | null
+          original_filename: string | null
+          question_id: string | null
+          width: number | null
+        }
+        Insert: {
+          alt_text?: string | null
+          created_at?: string | null
+          exam_id: string
+          extracted_text?: string | null
+          file_path?: string | null
+          file_size?: number | null
+          file_url: string
+          height?: number | null
+          id?: string
+          media_type: string
+          order_index?: number | null
+          original_filename?: string | null
+          question_id?: string | null
+          width?: number | null
+        }
+        Update: {
+          alt_text?: string | null
+          created_at?: string | null
+          exam_id?: string
+          extracted_text?: string | null
+          file_path?: string | null
+          file_size?: number | null
+          file_url?: string
+          height?: number | null
+          id?: string
+          media_type?: string
+          order_index?: number | null
+          original_filename?: string | null
+          question_id?: string | null
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bagrut_media_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "bagrut_exams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bagrut_media_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "bagrut_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bagrut_questions: {
+        Row: {
+          answer_explanation: string | null
+          choices: Json | null
+          code_content: string | null
+          code_language: string | null
+          correct_answer: string | null
+          correct_answer_data: Json | null
+          created_at: string | null
+          difficulty_level: string | null
+          exam_id: string
+          has_code: boolean | null
+          has_image: boolean | null
+          has_table: boolean | null
+          id: string
+          image_alt_text: string | null
+          image_url: string | null
+          is_bonus: boolean | null
+          order_index: number | null
+          parent_question_id: string | null
+          points: number
+          question_number: string
+          question_text: string
+          question_type: Database["public"]["Enums"]["bagrut_question_type"]
+          section_id: string | null
+          sub_question_label: string | null
+          table_data: Json | null
+          topic_tags: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          answer_explanation?: string | null
+          choices?: Json | null
+          code_content?: string | null
+          code_language?: string | null
+          correct_answer?: string | null
+          correct_answer_data?: Json | null
+          created_at?: string | null
+          difficulty_level?: string | null
+          exam_id: string
+          has_code?: boolean | null
+          has_image?: boolean | null
+          has_table?: boolean | null
+          id?: string
+          image_alt_text?: string | null
+          image_url?: string | null
+          is_bonus?: boolean | null
+          order_index?: number | null
+          parent_question_id?: string | null
+          points: number
+          question_number: string
+          question_text: string
+          question_type: Database["public"]["Enums"]["bagrut_question_type"]
+          section_id?: string | null
+          sub_question_label?: string | null
+          table_data?: Json | null
+          topic_tags?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          answer_explanation?: string | null
+          choices?: Json | null
+          code_content?: string | null
+          code_language?: string | null
+          correct_answer?: string | null
+          correct_answer_data?: Json | null
+          created_at?: string | null
+          difficulty_level?: string | null
+          exam_id?: string
+          has_code?: boolean | null
+          has_image?: boolean | null
+          has_table?: boolean | null
+          id?: string
+          image_alt_text?: string | null
+          image_url?: string | null
+          is_bonus?: boolean | null
+          order_index?: number | null
+          parent_question_id?: string | null
+          points?: number
+          question_number?: string
+          question_text?: string
+          question_type?: Database["public"]["Enums"]["bagrut_question_type"]
+          section_id?: string | null
+          sub_question_label?: string | null
+          table_data?: Json | null
+          topic_tags?: string[] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bagrut_questions_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "bagrut_exams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bagrut_questions_parent_question_id_fkey"
+            columns: ["parent_question_id"]
+            isOneToOne: false
+            referencedRelation: "bagrut_questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bagrut_questions_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "bagrut_exam_sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calendar_events: {
         Row: {
           color: string | null
@@ -6717,6 +7144,28 @@ export type Database = {
     Enums: {
       app_role: "superadmin" | "school_admin" | "teacher" | "student" | "parent"
       attempt_status: "in_progress" | "submitted" | "auto_submitted" | "expired"
+      bagrut_attempt_status: "in_progress" | "submitted" | "graded"
+      bagrut_exam_season: "summer" | "winter" | "spring"
+      bagrut_exam_status:
+        | "draft"
+        | "processing"
+        | "ready"
+        | "published"
+        | "archived"
+      bagrut_question_type:
+        | "multiple_choice"
+        | "true_false"
+        | "true_false_multi"
+        | "fill_blank"
+        | "fill_table"
+        | "matching"
+        | "ordering"
+        | "calculation"
+        | "diagram_based"
+        | "cli_command"
+        | "open_ended"
+        | "multi_part"
+      bagrut_section_type: "mandatory" | "elective"
       exam_status: "draft" | "scheduled" | "active" | "ended" | "archived"
       file_kind: "pkt" | "pdf" | "image" | "video" | "document"
       media_type: "video" | "lottie" | "image" | "code" | "audio"
@@ -6853,6 +7302,30 @@ export const Constants = {
     Enums: {
       app_role: ["superadmin", "school_admin", "teacher", "student", "parent"],
       attempt_status: ["in_progress", "submitted", "auto_submitted", "expired"],
+      bagrut_attempt_status: ["in_progress", "submitted", "graded"],
+      bagrut_exam_season: ["summer", "winter", "spring"],
+      bagrut_exam_status: [
+        "draft",
+        "processing",
+        "ready",
+        "published",
+        "archived",
+      ],
+      bagrut_question_type: [
+        "multiple_choice",
+        "true_false",
+        "true_false_multi",
+        "fill_blank",
+        "fill_table",
+        "matching",
+        "ordering",
+        "calculation",
+        "diagram_based",
+        "cli_command",
+        "open_ended",
+        "multi_part",
+      ],
+      bagrut_section_type: ["mandatory", "elective"],
       exam_status: ["draft", "scheduled", "active", "ended", "archived"],
       file_kind: ["pkt", "pdf", "image", "video", "document"],
       media_type: ["video", "lottie", "image", "code", "audio"],
