@@ -108,9 +108,16 @@ serve(async (req) => {
 
     console.log(`Processing file: ${file.name}, type: ${fileType}, size: ${file.size}`);
 
-    // Convert file to base64 for AI processing
+    // Convert file to base64 for AI processing (chunked to avoid stack overflow)
     const arrayBuffer = await file.arrayBuffer();
-    const base64Content = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+    const uint8Array = new Uint8Array(arrayBuffer);
+    const chunkSize = 32768; // 32KB chunks
+    let base64Content = '';
+    for (let i = 0; i < uint8Array.length; i += chunkSize) {
+      const chunk = uint8Array.subarray(i, Math.min(i + chunkSize, uint8Array.length));
+      base64Content += String.fromCharCode.apply(null, chunk as unknown as number[]);
+    }
+    base64Content = btoa(base64Content);
     
     // Determine MIME type
     const mimeType = fileType === 'pdf' 
