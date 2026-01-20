@@ -1,9 +1,8 @@
-import * as pdfjsLib from 'pdfjs-dist';
-// @ts-ignore - Vite URL import for worker
-import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+import { getDocument, GlobalWorkerOptions, OPS } from 'pdfjs-dist';
 
-// Configure PDF.js worker - Vite compatible
-pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
+// Disable worker to avoid Vite bundling issues
+// This runs PDF.js in the main thread (acceptable for our use case)
+GlobalWorkerOptions.workerSrc = '';
 
 export interface ExtractedImage {
   pageNumber: number;
@@ -22,7 +21,7 @@ export async function extractImagesFromPDF(file: File): Promise<ExtractedImage[]
   
   try {
     const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const pdf = await getDocument({ data: arrayBuffer }).promise;
     const images: ExtractedImage[] = [];
     
     console.log(`PDF loaded: ${pdf.numPages} pages`);
@@ -36,8 +35,8 @@ export async function extractImagesFromPDF(file: File): Promise<ExtractedImage[]
         
         for (let i = 0; i < operatorList.fnArray.length; i++) {
           // Check for image paint operations
-          if (operatorList.fnArray[i] === pdfjsLib.OPS.paintImageXObject ||
-              operatorList.fnArray[i] === pdfjsLib.OPS.paintXObject) {
+          if (operatorList.fnArray[i] === OPS.paintImageXObject ||
+              operatorList.fnArray[i] === OPS.paintXObject) {
             
             try {
               const imgName = operatorList.argsArray[i][0];
