@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { extractImages, getDocumentProxy } from "https://esm.sh/unpdf@0.12.1?bundle";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,6 +13,60 @@ interface ExtractedImage {
   base64: string;
   width: number;
   height: number;
+}
+
+// Extract images from PDF using unpdf library (server-side)
+async function extractImagesFromPDFServer(pdfBytes: Uint8Array): Promise<ExtractedImage[]> {
+  console.log('Extracting images from PDF server-side using unpdf...');
+  
+  try {
+    const doc = await getDocumentProxy(pdfBytes);
+    const allImages: ExtractedImage[] = [];
+    
+    console.log(`PDF has ${doc.numPages} pages`);
+    
+    for (let pageNum = 1; pageNum <= doc.numPages; pageNum++) {
+      try {
+        const images = await extractImages(doc, pageNum);
+        
+        console.log(`Page ${pageNum}: found ${images.length} images`);
+        
+        for (let i = 0; i < images.length; i++) {
+          const img = images[i];
+          
+          // Skip very small images (likely icons or artifacts)
+          if (img.width < 50 || img.height < 50) {
+            console.log(`Skipping small image on page ${pageNum}: ${img.width}x${img.height}`);
+            continue;
+          }
+          
+          // Convert image data to base64
+          const base64Data = btoa(
+            String.fromCharCode(...new Uint8Array(img.data))
+          );
+          const mimeType = img.type || 'image/png';
+          
+          allImages.push({
+            pageNumber: pageNum,
+            imageIndex: i,
+            base64: `data:${mimeType};base64,${base64Data}`,
+            width: img.width,
+            height: img.height
+          });
+          
+          console.log(`Extracted image: page ${pageNum}, index ${i}, size ${img.width}x${img.height}`);
+        }
+      } catch (pageError) {
+        console.warn(`Failed to extract images from page ${pageNum}:`, pageError);
+      }
+    }
+    
+    console.log(`Total images extracted from PDF: ${allImages.length}`);
+    return allImages;
+  } catch (error) {
+    console.error('PDF image extraction failed:', error);
+    return [];
+  }
 }
 
 interface ParsedQuestion {
@@ -497,7 +552,7 @@ async function updateJobStatus(
 // Main background processing function
 async function processJobInBackground(
   jobId: string, 
-  fileData: { base64Content: string; fileName: string; fileType: string; extractedImages: ExtractedImage[] },
+  fileData: { base64Content: string; fileName: string; fileType: string },
   supabase: any,
   apiKey: string
 ) {
@@ -514,6 +569,14 @@ async function processJobInBackground(
         'حالياً يُدعم فقط ملفات PDF. الرجاء تحويل ملف Word إلى PDF ثم إعادة الرفع.');
       return;
     }
+
+    // Step 1: Extract images from PDF server-side
+    await updateJobStatus(supabase, jobId, 'processing', 15, 'جاري استخراج الصور من PDF...');
+    
+    const pdfBytes = Uint8Array.from(atob(base64Content), c => c.charCodeAt(0));
+    const extractedImages = await extractImagesFromPDFServer(pdfBytes);
+    
+    console.log(`[Job ${jobId}] Extracted ${extractedImages.length} images from PDF`);
 
     await updateJobStatus(supabase, jobId, 'processing', 20, 'جاري التعرف على هيكل الامتحان...');
 
@@ -725,9 +788,9 @@ async function processJobInBackground(
     
     await updateJobStatus(supabase, jobId, 'processing', 70, 'جاري معالجة الصور...');
     
-    // Process images using extracted images from frontend
+    // Process images using extracted images from server-side extraction
     try {
-      await processQuestionsImages(parsedExam, fileData.extractedImages, apiKey, supabase);
+      await processQuestionsImages(parsedExam, extractedImages, apiKey, supabase);
     } catch (imgError) {
       console.error(`[Job ${jobId}] Image processing error (non-fatal):`, imgError);
       // Continue even if image generation fails - images can be added manually
@@ -826,18 +889,10 @@ serve(async (req) => {
     const formData = await req.formData();
     const file = formData.get('file') as File;
     const fileType = formData.get('fileType') as string;
-    const extractedImagesJson = formData.get('extractedImages') as string | null;
     
-    // Parse extracted images from frontend
-    let extractedImages: ExtractedImage[] = [];
-    if (extractedImagesJson) {
-      try {
-        extractedImages = JSON.parse(extractedImagesJson);
-        console.log(`Received ${extractedImages.length} extracted images from frontend`);
-      } catch (e) {
-        console.warn('Failed to parse extractedImages:', e);
-      }
-    }
+    // Note: Images are now extracted server-side using unpdf library
+    // No longer rely on frontend extraction which had bundling issues
+
     if (!file) {
       return new Response(JSON.stringify({ error: 'No file provided' }), {
         status: 400,
@@ -898,7 +953,7 @@ serve(async (req) => {
       EdgeRuntime.waitUntil(
         processJobInBackground(
           jobData.id,
-          { base64Content, fileName: file.name, fileType, extractedImages },
+          { base64Content, fileName: file.name, fileType },
           supabase,
           LOVABLE_API_KEY
         )
@@ -907,7 +962,7 @@ serve(async (req) => {
       // Fallback: process inline (for local testing)
       processJobInBackground(
         jobData.id,
-        { base64Content, fileName: file.name, fileType, extractedImages },
+        { base64Content, fileName: file.name, fileType },
         supabase,
         LOVABLE_API_KEY
       );
