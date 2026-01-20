@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { GraduationCap, Plus, FileText, Loader2 } from 'lucide-react';
+import { GraduationCap, Plus, FileText, Loader2, Trash2 } from 'lucide-react';
 import ModernHeader from '@/components/shared/ModernHeader';
 import AppFooter from '@/components/shared/AppFooter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,6 +39,49 @@ const BagrutManagement: React.FC = () => {
   const [parsedExam, setParsedExam] = useState<ParsedExam | null>(null);
   const [statistics, setStatistics] = useState<Statistics | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [deletingExamId, setDeletingExamId] = useState<string | null>(null);
+
+  // Delete exam function
+  const handleDeleteExam = async (examId: string, examTitle: string) => {
+    if (!confirm(`هل أنت متأكد من حذف امتحان "${examTitle}"؟\nسيتم حذف جميع الأقسام والأسئلة المرتبطة به.`)) {
+      return;
+    }
+
+    setDeletingExamId(examId);
+    try {
+      // Delete related questions first
+      const { error: questionsError } = await supabase
+        .from('bagrut_questions')
+        .delete()
+        .eq('exam_id', examId);
+      
+      if (questionsError) throw questionsError;
+
+      // Delete related sections
+      const { error: sectionsError } = await supabase
+        .from('bagrut_exam_sections')
+        .delete()
+        .eq('exam_id', examId);
+      
+      if (sectionsError) throw sectionsError;
+
+      // Delete the exam itself
+      const { error: examError } = await supabase
+        .from('bagrut_exams')
+        .delete()
+        .eq('id', examId);
+      
+      if (examError) throw examError;
+
+      toast.success('تم حذف الامتحان بنجاح');
+      refetch();
+    } catch (error) {
+      console.error('Error deleting exam:', error);
+      toast.error('حدث خطأ أثناء حذف الامتحان');
+    } finally {
+      setDeletingExamId(null);
+    }
+  };
 
   // Fetch existing exams
   const {
@@ -205,7 +248,7 @@ const BagrutManagement: React.FC = () => {
             {isLoading ? <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div> : exams && exams.length > 0 ? <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {exams.map(exam => <Card key={exam.id} className="hover:shadow-md transition-shadow">
+                {exams.map(exam => <Card key={exam.id} className="hover:shadow-md transition-shadow relative group">
                     <CardHeader className="pb-2">
                       <CardTitle className="text-lg flex items-center gap-2">
                         <FileText className="h-5 w-5 text-orange-500" />
@@ -216,10 +259,23 @@ const BagrutManagement: React.FC = () => {
                       <div className="space-y-2 text-sm text-muted-foreground">
                         <p>{exam.subject} - {exam.exam_year}</p>
                         <p>{exam.duration_minutes} دقيقة | {exam.total_points} نقطة</p>
-                        <div className="flex items-center gap-2 mt-3">
+                        <div className="flex items-center justify-between mt-3">
                           <span className={`px-2 py-1 rounded-full text-xs ${exam.is_published ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'}`}>
                             {exam.is_published ? 'منشور' : 'مسودة'}
                           </span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => handleDeleteExam(exam.id, exam.title)}
+                            disabled={deletingExamId === exam.id}
+                          >
+                            {deletingExamId === exam.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                          </Button>
                         </div>
                       </div>
                     </CardContent>
