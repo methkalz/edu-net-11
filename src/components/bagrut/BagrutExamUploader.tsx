@@ -80,7 +80,7 @@ const BagrutExamUploader: React.FC<BagrutExamUploaderProps> = ({ onExamParsed, o
 
       // Call edge function with extended timeout using AbortController
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 180000); // 3 minutes timeout
+      const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minutes timeout
       
       const response = await fetch(
         `https://swlwhjnwycvjdhgclwlx.supabase.co/functions/v1/parse-bagrut-exam`,
@@ -88,6 +88,7 @@ const BagrutExamUploader: React.FC<BagrutExamUploaderProps> = ({ onExamParsed, o
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
+            'Connection': 'keep-alive',
           },
           body: formData,
           signal: controller.signal,
