@@ -1,10 +1,9 @@
 import * as pdfjsLib from 'pdfjs-dist';
+// @ts-ignore - Vite URL import for worker
+import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 
 // Configure PDF.js worker - Vite compatible
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.mjs',
-  import.meta.url
-).toString();
+pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
 
 export interface ExtractedImage {
   pageNumber: number;
