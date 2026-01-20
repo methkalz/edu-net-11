@@ -142,10 +142,15 @@ serve(async (req) => {
       // Or try to extract basic text from the docx (simplified approach)
       // Since DOCX is a zip file containing XML, we can try basic extraction
       
-      // For now, return an error asking for PDF
+      // For now, return an error asking for PDF with helpful converter links
       return new Response(JSON.stringify({ 
         error: 'حالياً يُدعم فقط ملفات PDF. الرجاء تحويل ملف Word إلى PDF ثم إعادة الرفع.',
-        suggestion: 'يمكنك تحويل الملف من Word إلى PDF باستخدام Microsoft Word أو أي محول مجاني على الإنترنت.'
+        suggestion: 'يمكنك تحويل الملف مجاناً من أحد هذه المواقع:',
+        converterLinks: [
+          { name: 'iLovePDF', url: 'https://www.ilovepdf.com/word_to_pdf' },
+          { name: 'SmallPDF', url: 'https://smallpdf.com/word-to-pdf' },
+          { name: 'PDF24', url: 'https://tools.pdf24.org/ar/word-to-pdf' }
+        ]
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

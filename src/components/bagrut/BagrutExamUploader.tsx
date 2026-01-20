@@ -182,7 +182,7 @@ const BagrutExamUploader: React.FC<BagrutExamUploaderProps> = ({ onExamParsed, o
               <p className="text-lg font-medium">{getStatusText()}</p>
               {uploadStatus === 'idle' && !selectedFile && (
                 <p className="text-sm text-muted-foreground">
-                  يدعم ملفات Word (.docx) و PDF
+                  يدعم ملفات PDF فقط
                 </p>
               )}
               {selectedFile && uploadStatus === 'idle' && (
@@ -229,10 +229,31 @@ const BagrutExamUploader: React.FC<BagrutExamUploaderProps> = ({ onExamParsed, o
         <div className="bg-muted/50 rounded-lg p-4 text-sm text-muted-foreground">
           <h4 className="font-medium mb-2">ملاحظات مهمة:</h4>
           <ul className="list-disc list-inside space-y-1 text-right">
+            <li>يُدعم حالياً <strong>ملفات PDF فقط</strong></li>
             <li>تأكد من أن الملف يحتوي على امتحان بجروت كامل</li>
             <li>سيتم استخراج الأسئلة والإجابات والشروحات تلقائياً</li>
             <li>يمكنك مراجعة وتعديل البيانات بعد التحليل</li>
             <li>الصور والجداول ستُستخرج تلقائياً</li>
+            <li>
+              لتحويل ملف Word إلى PDF مجاناً:{' '}
+              <a 
+                href="https://www.ilovepdf.com/word_to_pdf" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                iLovePDF
+              </a>
+              {' | '}
+              <a 
+                href="https://smallpdf.com/word-to-pdf" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                SmallPDF
+              </a>
+            </li>
           </ul>
         </div>
       </CardContent>
