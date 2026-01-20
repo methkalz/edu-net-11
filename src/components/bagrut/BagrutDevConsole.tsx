@@ -302,7 +302,7 @@ export const BagrutDevConsole = ({ isVisible = true }: BagrutDevConsoleProps) =>
                         <div className="flex items-center gap-2 mb-1">
                           {getCategoryBadge(log.category)}
                           <span className="text-xs text-muted-foreground">
-                            {log.timestamp.toLocaleTimeString('ar-SA')}
+                            {log.timestamp.toLocaleTimeString('en-US', { hour12: false })}
                           </span>
                         </div>
                         <p className="text-sm truncate">{log.message}</p>
