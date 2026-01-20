@@ -25,6 +25,29 @@ interface ParsedQuestion {
   topic_tags?: string[];
 }
 
+interface ParsedSection {
+  section_number: number;
+  section_title: string;
+  section_type: 'mandatory' | 'elective';
+  total_points: number;
+  specialization?: string;
+  specialization_label?: string;
+  instructions?: string;
+  questions: ParsedQuestion[];
+}
+
+interface ParsedExam {
+  title: string;
+  exam_year: number;
+  exam_season: string;
+  exam_code?: string;
+  subject: string;
+  duration_minutes: number;
+  total_points: number;
+  instructions?: string;
+  sections: ParsedSection[];
+}
+
 // Generate an educational image using AI
 async function generateImageFromDescription(
   apiKey: string,
@@ -223,29 +246,6 @@ async function processQuestionsImages(
   console.log('Image generation completed');
 }
 
-interface ParsedSection {
-  section_number: number;
-  section_title: string;
-  section_type: 'mandatory' | 'elective';
-  total_points: number;
-  specialization?: string;
-  specialization_label?: string;
-  instructions?: string;
-  questions: ParsedQuestion[];
-}
-
-interface ParsedExam {
-  title: string;
-  exam_year: number;
-  exam_season: string;
-  exam_code?: string;
-  subject: string;
-  duration_minutes: number;
-  total_points: number;
-  instructions?: string;
-  sections: ParsedSection[];
-}
-
 // Models to try in order (from most capable to fallback)
 const AI_MODELS = [
   'google/gemini-2.5-pro',      // Most capable, handles large responses
@@ -410,93 +410,54 @@ async function callAIWithModel(
   }
 }
 
-serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+// Update job status helper
+async function updateJobStatus(
+  supabase: any, 
+  jobId: string, 
+  status: string, 
+  progress: number, 
+  currentStep: string,
+  result?: any,
+  errorMessage?: string
+) {
+  const updateData: any = { 
+    status, 
+    progress, 
+    current_step: currentStep,
+    updated_at: new Date().toISOString()
+  };
+  
+  if (result) updateData.result = result;
+  if (errorMessage) updateData.error_message = errorMessage;
+  
+  await supabase
+    .from('bagrut_parsing_jobs')
+    .update(updateData)
+    .eq('id', jobId);
+}
 
+// Main background processing function
+async function processJobInBackground(
+  jobId: string, 
+  fileData: { base64Content: string; fileName: string; fileType: string },
+  supabase: any,
+  apiKey: string
+) {
   try {
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY is not configured');
-    }
-
-    const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    console.log(`[Job ${jobId}] Starting background processing...`);
     
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    await updateJobStatus(supabase, jobId, 'processing', 10, 'جاري قراءة ملف PDF...');
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-    
-    // Verify user is superadmin
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('user_id', user.id)
-      .single();
-
-    if (profile?.role !== 'superadmin') {
-      return new Response(JSON.stringify({ error: 'Access denied. Superadmin only.' }), {
-        status: 403,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    const formData = await req.formData();
-    const file = formData.get('file') as File;
-    const fileType = formData.get('fileType') as string;
-    
-    if (!file) {
-      return new Response(JSON.stringify({ error: 'No file provided' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    console.log(`Processing file: ${file.name}, type: ${fileType}, size: ${file.size}`);
-
-    // Convert file to base64 for AI processing (chunked to avoid stack overflow)
-    const arrayBuffer = await file.arrayBuffer();
-    const uint8Array = new Uint8Array(arrayBuffer);
-    const chunkSize = 32768; // 32KB chunks
-    let base64Content = '';
-    for (let i = 0; i < uint8Array.length; i += chunkSize) {
-      const chunk = uint8Array.subarray(i, Math.min(i + chunkSize, uint8Array.length));
-      base64Content += String.fromCharCode.apply(null, chunk as unknown as number[]);
-    }
-    base64Content = btoa(base64Content);
+    const { base64Content, fileType } = fileData;
 
     // Only PDF is supported
     if (fileType !== 'pdf') {
-      return new Response(JSON.stringify({ 
-        error: 'حالياً يُدعم فقط ملفات PDF. الرجاء تحويل ملف Word إلى PDF ثم إعادة الرفع.',
-        suggestion: 'يمكنك تحويل الملف مجاناً من أحد هذه المواقع:',
-        converterLinks: [
-          { name: 'iLovePDF', url: 'https://www.ilovepdf.com/word_to_pdf' },
-          { name: 'SmallPDF', url: 'https://smallpdf.com/word-to-pdf' },
-          { name: 'PDF24', url: 'https://tools.pdf24.org/ar/word-to-pdf' }
-        ]
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      await updateJobStatus(supabase, jobId, 'failed', 0, '', null, 
+        'حالياً يُدعم فقط ملفات PDF. الرجاء تحويل ملف Word إلى PDF ثم إعادة الرفع.');
+      return;
     }
+
+    await updateJobStatus(supabase, jobId, 'processing', 20, 'جاري التعرف على هيكل الامتحان...');
 
     const userContent = [
       {
@@ -644,16 +605,23 @@ serve(async (req) => {
       }
     };
 
+    await updateJobStatus(supabase, jobId, 'processing', 30, 'تم اكتشاف الأقسام، جاري تحليلها...');
+
     // Try each model until one succeeds
     let lastError = '';
     let parsedExam: ParsedExam | null = null;
+    let modelIndex = 0;
     
     for (const model of AI_MODELS) {
-      console.log(`\n=== Attempting with ${model} ===`);
+      modelIndex++;
+      const progressStep = 30 + (modelIndex * 15);
+      await updateJobStatus(supabase, jobId, 'processing', Math.min(progressStep, 60), `جاري التحليل باستخدام ${model}...`);
+      
+      console.log(`[Job ${jobId}] Attempting with ${model}`);
       
       const result = await callAIWithModel(
         model,
-        LOVABLE_API_KEY,
+        apiKey,
         systemPrompt,
         userContent,
         toolSchema,
@@ -662,46 +630,42 @@ serve(async (req) => {
       
       if (result.success && result.parsedExam) {
         parsedExam = result.parsedExam;
-        console.log(`Success with ${model}!`);
+        console.log(`[Job ${jobId}] Success with ${model}!`);
         break;
       }
       
       lastError = result.error || 'Unknown error';
-      console.log(`Model ${model} failed: ${lastError}`);
+      console.log(`[Job ${jobId}] Model ${model} failed: ${lastError}`);
       
       // Don't continue if rate limited or credits exhausted
       if (result.error === 'rate_limit') {
-        return new Response(JSON.stringify({ error: 'تم تجاوز حد الطلبات. الرجاء المحاولة لاحقاً.' }), {
-          status: 429,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+        await updateJobStatus(supabase, jobId, 'failed', 0, '', null, 'تم تجاوز حد الطلبات. الرجاء المحاولة لاحقاً.');
+        return;
       }
       if (result.error === 'credits_exhausted') {
-        return new Response(JSON.stringify({ error: 'نفدت رصيد AI. الرجاء إضافة رصيد.' }), {
-          status: 402,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+        await updateJobStatus(supabase, jobId, 'failed', 0, '', null, 'نفدت رصيد AI. الرجاء إضافة رصيد.');
+        return;
       }
     }
     
     if (!parsedExam) {
-      console.error('All models failed. Last error:', lastError);
-      return new Response(JSON.stringify({ 
-        error: 'فشل في تحليل الامتحان بعد عدة محاولات. الرجاء المحاولة مرة أخرى أو استخدام ملف أصغر.',
-        details: lastError
-      }), {
-        status: 502,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      console.error(`[Job ${jobId}] All models failed. Last error:`, lastError);
+      await updateJobStatus(supabase, jobId, 'failed', 0, '', null, 
+        'فشل في تحليل الامتحان بعد عدة محاولات. الرجاء المحاولة مرة أخرى أو استخدام ملف أصغر.');
+      return;
     }
+    
+    await updateJobStatus(supabase, jobId, 'processing', 70, 'جاري معالجة الصور...');
     
     // Generate images for questions that need them
     try {
-      await processQuestionsImages(parsedExam, LOVABLE_API_KEY, supabase);
+      await processQuestionsImages(parsedExam, apiKey, supabase);
     } catch (imgError) {
-      console.error('Image processing error (non-fatal):', imgError);
+      console.error(`[Job ${jobId}] Image processing error (non-fatal):`, imgError);
       // Continue even if image generation fails - images can be added manually
     }
+    
+    await updateJobStatus(supabase, jobId, 'processing', 90, 'جاري حساب الإحصائيات...');
     
     // Calculate statistics
     let totalQuestions = 0;
@@ -721,10 +685,9 @@ serve(async (req) => {
       }
     }
 
-    console.log('Calculated statistics:', { totalSections: parsedExam.sections?.length, totalQuestions });
+    console.log(`[Job ${jobId}] Calculated statistics:`, { totalSections: parsedExam.sections?.length, totalQuestions });
     
-    const responseData = {
-      success: true,
+    const resultData = {
       parsedExam,
       statistics: {
         totalSections: parsedExam.sections?.length || 0,
@@ -734,23 +697,147 @@ serve(async (req) => {
       }
     };
     
-    console.log('Sending response, size:', JSON.stringify(responseData).length, 'bytes');
-
-    return new Response(JSON.stringify(responseData), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    await updateJobStatus(supabase, jobId, 'completed', 100, 'تم التحليل بنجاح!', resultData);
+    console.log(`[Job ${jobId}] Processing completed successfully`);
 
   } catch (error) {
-    console.error('Error parsing exam:', error);
+    console.error(`[Job ${jobId}] Error:`, error);
+    await updateJobStatus(supabase, jobId, 'failed', 0, '', null, 
+      error instanceof Error ? error.message : 'حدث خطأ غير متوقع');
+  }
+}
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    if (!LOVABLE_API_KEY) {
+      throw new Error('LOVABLE_API_KEY is not configured');
+    }
+
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     
-    if (error instanceof Error && error.name === 'AbortError') {
-      return new Response(JSON.stringify({ 
-        error: 'انتهت مهلة المعالجة. الملف كبير جداً، يرجى المحاولة بملف أصغر.',
-      }), {
-        status: 504,
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    
+    // Verify user is superadmin
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('user_id', user.id)
+      .single();
+
+    if (profile?.role !== 'superadmin') {
+      return new Response(JSON.stringify({ error: 'Access denied. Superadmin only.' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const formData = await req.formData();
+    const file = formData.get('file') as File;
+    const fileType = formData.get('fileType') as string;
+    
+    if (!file) {
+      return new Response(JSON.stringify({ error: 'No file provided' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    console.log(`Processing file: ${file.name}, type: ${fileType}, size: ${file.size}`);
+
+    // Convert file to base64 for AI processing (chunked to avoid stack overflow)
+    const arrayBuffer = await file.arrayBuffer();
+    const uint8Array = new Uint8Array(arrayBuffer);
+    const chunkSize = 32768; // 32KB chunks
+    let base64Content = '';
+    for (let i = 0; i < uint8Array.length; i += chunkSize) {
+      const chunk = uint8Array.subarray(i, Math.min(i + chunkSize, uint8Array.length));
+      base64Content += String.fromCharCode.apply(null, chunk as unknown as number[]);
+    }
+    base64Content = btoa(base64Content);
+
+    // Create a job record
+    const { data: jobData, error: jobError } = await supabase
+      .from('bagrut_parsing_jobs')
+      .insert({
+        user_id: user.id,
+        file_name: file.name,
+        status: 'pending',
+        progress: 0,
+        current_step: 'جاري بدء المعالجة...'
+      })
+      .select()
+      .single();
+
+    if (jobError || !jobData) {
+      console.error('Failed to create job:', jobError);
+      return new Response(JSON.stringify({ error: 'فشل في إنشاء مهمة المعالجة' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    console.log(`Created job: ${jobData.id}`);
+
+    // Return immediately with job ID
+    const response = new Response(
+      JSON.stringify({ 
+        success: true, 
+        jobId: jobData.id,
+        message: 'تم بدء معالجة الملف. يمكنك متابعة التقدم.'
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+
+    // Start background processing using EdgeRuntime.waitUntil
+    // @ts-ignore - EdgeRuntime is available in Supabase Edge Functions
+    if (typeof EdgeRuntime !== 'undefined' && EdgeRuntime.waitUntil) {
+      // @ts-ignore
+      EdgeRuntime.waitUntil(
+        processJobInBackground(
+          jobData.id,
+          { base64Content, fileName: file.name, fileType },
+          supabase,
+          LOVABLE_API_KEY
+        )
+      );
+    } else {
+      // Fallback: process inline (for local testing)
+      processJobInBackground(
+        jobData.id,
+        { base64Content, fileName: file.name, fileType },
+        supabase,
+        LOVABLE_API_KEY
+      );
+    }
+
+    return response;
+
+  } catch (error) {
+    console.error('Error starting job:', error);
     
     return new Response(JSON.stringify({ 
       error: error instanceof Error ? error.message : 'حدث خطأ غير متوقع',

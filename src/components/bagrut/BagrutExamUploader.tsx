@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, FileText, Loader2, CheckCircle, AlertCircle, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,45 +39,102 @@ const BagrutExamUploader: React.FC<BagrutExamUploaderProps> = ({ onExamParsed, o
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [currentStep, setCurrentStep] = useState<string>('');
+  const [jobId, setJobId] = useState<string | null>(null);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Progress steps for simulated real-time updates
-  const progressSteps = [
-    { time: 0, message: 'جاري قراءة ملف PDF...' },
-    { time: 3000, message: 'جاري التعرف على هيكل الامتحان...' },
-    { time: 8000, message: 'تم اكتشاف الأقسام، جاري تحليلها...' },
-    { time: 15000, message: 'جاري استخراج الأسئلة...' },
-    { time: 25000, message: 'جاري تحليل السؤال 1-5...' },
-    { time: 40000, message: 'جاري تحليل السؤال 6-10...' },
-    { time: 55000, message: 'جاري التعرف على الجداول والصور...' },
-    { time: 70000, message: 'جاري حساب النقاط والتصنيفات...' },
-    { time: 90000, message: 'جاري الانتهاء من التحليل...' },
-    { time: 120000, message: 'الملف كبير، يرجى الانتظار...' },
-    { time: 150000, message: 'لا يزال التحليل جارياً...' },
-  ];
-
-  // Effect to run progress step updates
+  // Cleanup polling on unmount
   useEffect(() => {
-    if (uploadStatus === 'processing') {
-      const timers: NodeJS.Timeout[] = [];
-      
-      progressSteps.forEach(step => {
-        const timer = setTimeout(() => {
-          setCurrentStep(step.message);
-        }, step.time);
-        timers.push(timer);
-      });
-      
-      return () => timers.forEach(t => clearTimeout(t));
-    } else {
-      setCurrentStep('');
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+    };
+  }, []);
+
+  // Poll for job status
+  const startPolling = async (newJobId: string) => {
+    const poll = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          stopPolling();
+          setUploadStatus('error');
+          setErrorMessage('انتهت الجلسة. يرجى تسجيل الدخول مجدداً.');
+          return;
+        }
+
+        const response = await fetch(
+          `https://swlwhjnwycvjdhgclwlx.supabase.co/functions/v1/check-bagrut-job`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ jobId: newJobId }),
+          }
+        );
+
+        if (!response.ok) {
+          console.error('Poll response not ok:', response.status);
+          return;
+        }
+
+        const data = await response.json();
+        
+        if (!data.success) {
+          console.error('Poll error:', data.error);
+          return;
+        }
+
+        // Update UI with job status
+        setProgress(data.progress || 0);
+        setCurrentStep(data.currentStep || '');
+
+        if (data.status === 'completed') {
+          stopPolling();
+          setUploadStatus('success');
+          setProgress(100);
+          toast.success('تم تحليل الامتحان بنجاح!');
+          
+          // Pass parsed data to parent
+          if (data.result?.parsedExam && data.result?.statistics) {
+            onExamParsed(data.result.parsedExam, data.result.statistics);
+          }
+        } else if (data.status === 'failed') {
+          stopPolling();
+          setUploadStatus('error');
+          setErrorMessage(data.error || 'فشل في تحليل الامتحان');
+          toast.error(data.error || 'فشل في تحليل الامتحان');
+        }
+        // If still processing, continue polling
+
+      } catch (error) {
+        console.error('Polling error:', error);
+        // Don't stop polling on network errors, just retry
+      }
+    };
+
+    // Start polling every 3 seconds
+    pollingIntervalRef.current = setInterval(poll, 3000);
+    
+    // Also poll immediately
+    poll();
+  };
+
+  const stopPolling = () => {
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
     }
-  }, [uploadStatus]);
+  };
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
       setSelectedFile(acceptedFiles[0]);
       setUploadStatus('idle');
       setErrorMessage('');
+      setJobId(null);
     }
   }, []);
 
@@ -94,7 +151,8 @@ const BagrutExamUploader: React.FC<BagrutExamUploaderProps> = ({ onExamParsed, o
     if (!selectedFile) return;
 
     setUploadStatus('uploading');
-    setProgress(10);
+    setProgress(5);
+    setCurrentStep('جاري رفع الملف...');
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -102,76 +160,62 @@ const BagrutExamUploader: React.FC<BagrutExamUploaderProps> = ({ onExamParsed, o
         throw new Error('يجب تسجيل الدخول أولاً');
       }
 
-      setProgress(20);
-      setUploadStatus('processing');
+      setProgress(10);
 
       // Prepare form data
       const formData = new FormData();
       formData.append('file', selectedFile);
       formData.append('fileType', selectedFile.name.endsWith('.pdf') ? 'pdf' : 'docx');
 
-      setProgress(40);
-
-      // Call edge function with extended timeout using AbortController
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minutes timeout
-      
+      // Call edge function - this will return immediately with a job ID
       const response = await fetch(
         `https://swlwhjnwycvjdhgclwlx.supabase.co/functions/v1/parse-bagrut-exam`,
         {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
-            'Connection': 'keep-alive',
           },
           body: formData,
-          signal: controller.signal,
         }
       );
-      
-      clearTimeout(timeoutId);
-
-      setProgress(80);
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'فشل في تحليل الامتحان');
+        throw new Error(errorData.error || 'فشل في بدء تحليل الامتحان');
       }
 
       const result = await response.json();
 
-      if (!result.success) {
-        throw new Error(result.error || 'فشل في تحليل الامتحان');
+      if (!result.success || !result.jobId) {
+        throw new Error(result.error || 'فشل في إنشاء مهمة التحليل');
       }
 
-      setProgress(100);
-      setUploadStatus('success');
+      // Got job ID, start polling
+      setJobId(result.jobId);
+      setUploadStatus('processing');
+      setProgress(15);
+      setCurrentStep('جاري بدء المعالجة...');
       
-      toast.success('تم تحليل الامتحان بنجاح!');
-      
-      // Pass parsed data to parent
-      onExamParsed(result.parsedExam, result.statistics);
+      // Start polling for status
+      startPolling(result.jobId);
 
     } catch (error) {
       console.error('Error processing file:', error);
       setUploadStatus('error');
-      
-      // Handle abort/timeout errors specifically
-      if (error instanceof Error && error.name === 'AbortError') {
-        setErrorMessage('انتهت مهلة المعالجة. الملف كبير جداً، يرجى المحاولة بملف أصغر.');
-        toast.error('انتهت مهلة المعالجة. الرجاء المحاولة مجدداً.');
-      } else {
-        setErrorMessage(error instanceof Error ? error.message : 'حدث خطأ غير متوقع');
-        toast.error(error instanceof Error ? error.message : 'حدث خطأ في معالجة الملف');
-      }
+      stopPolling();
+      setErrorMessage(error instanceof Error ? error.message : 'حدث خطأ غير متوقع');
+      toast.error(error instanceof Error ? error.message : 'حدث خطأ في معالجة الملف');
     }
   };
 
   const resetUpload = () => {
+    stopPolling();
     setSelectedFile(null);
     setUploadStatus('idle');
     setProgress(0);
     setErrorMessage('');
+    setJobId(null);
+    setCurrentStep('');
   };
 
   const getStatusIcon = () => {
@@ -193,7 +237,7 @@ const BagrutExamUploader: React.FC<BagrutExamUploaderProps> = ({ onExamParsed, o
       case 'uploading':
         return 'جاري رفع الملف...';
       case 'processing':
-        return 'جاري تحليل الامتحان... (قد يستغرق 1-3 دقائق)';
+        return 'جاري تحليل الامتحان...';
       case 'success':
         return 'تم تحليل الامتحان بنجاح!';
       case 'error':
@@ -249,9 +293,14 @@ const BagrutExamUploader: React.FC<BagrutExamUploaderProps> = ({ onExamParsed, o
             <p className="text-sm text-center text-muted-foreground">
               {progress}% - {uploadStatus === 'uploading' ? 'رفع الملف' : 'تحليل بالذكاء الاصطناعي'}
             </p>
-            {uploadStatus === 'processing' && currentStep && (
+            {currentStep && (
               <p className="text-sm text-center text-primary font-medium animate-pulse">
                 {currentStep}
+              </p>
+            )}
+            {uploadStatus === 'processing' && (
+              <p className="text-xs text-center text-muted-foreground mt-2">
+                ⏱️ قد يستغرق التحليل 1-3 دقائق للملفات الكبيرة
               </p>
             )}
           </div>
