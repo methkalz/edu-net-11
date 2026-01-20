@@ -13,6 +13,7 @@ interface ParsedQuestion {
   points: number;
   has_image: boolean;
   image_description?: string;
+  image_url?: string;
   has_table: boolean;
   table_data?: any;
   has_code: boolean;
@@ -22,6 +23,182 @@ interface ParsedQuestion {
   answer_explanation?: string;
   sub_questions?: ParsedQuestion[];
   topic_tags?: string[];
+}
+
+// Generate an educational image using AI
+async function generateImageFromDescription(
+  apiKey: string,
+  description: string,
+  questionContext: string
+): Promise<string | null> {
+  try {
+    const prompt = `Create a clear educational diagram for a Bagrut exam question in computer science:
+
+Image Description: ${description}
+Question Context: ${questionContext.substring(0, 300)}
+
+Requirements:
+- Simple, clear technical diagram or chart
+- White or light background
+- Professional exam-style design suitable for educational materials
+- Use clean lines and shapes
+- Labels should be clear and readable
+- If showing code or data structures, use proper formatting
+- Aspect ratio: 4:3 or 16:9 for better display`;
+
+    console.log(`Generating image for: ${description.substring(0, 100)}...`);
+
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash-image-preview',
+        messages: [{ role: 'user', content: prompt }],
+        modalities: ['image', 'text']
+      })
+    });
+
+    if (!response.ok) {
+      console.error('Image generation failed:', response.status);
+      return null;
+    }
+    
+    const data = await response.json();
+    const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    
+    if (imageUrl) {
+      console.log('Image generated successfully');
+      return imageUrl;
+    }
+    
+    console.log('No image in response');
+    return null;
+  } catch (error) {
+    console.error('Image generation error:', error);
+    return null;
+  }
+}
+
+// Upload base64 image to Supabase Storage
+async function uploadImageToStorage(
+  supabaseClient: any,
+  base64Image: string,
+  questionNumber: string,
+  examCode: string
+): Promise<string | null> {
+  try {
+    // Remove the data URL prefix if present
+    const base64Data = base64Image.replace(/^data:image\/\w+;base64,/, '');
+    
+    // Decode base64 to binary
+    const binaryString = atob(base64Data);
+    const imageBuffer = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      imageBuffer[i] = binaryString.charCodeAt(i);
+    }
+    
+    // Create unique filename
+    const timestamp = Date.now();
+    const safeExamCode = (examCode || 'exam').replace(/[^a-zA-Z0-9]/g, '_');
+    const fileName = `generated/${safeExamCode}/q${questionNumber}_${timestamp}.png`;
+    
+    console.log(`Uploading image to: ${fileName}`);
+    
+    const { data, error } = await supabaseClient.storage
+      .from('bagrut-exam-images')
+      .upload(fileName, imageBuffer, {
+        contentType: 'image/png',
+        upsert: true
+      });
+    
+    if (error) {
+      console.error('Storage upload error:', error);
+      return null;
+    }
+    
+    // Get public URL
+    const { data: urlData } = supabaseClient.storage
+      .from('bagrut-exam-images')
+      .getPublicUrl(fileName);
+    
+    console.log(`Image uploaded: ${urlData.publicUrl}`);
+    return urlData.publicUrl;
+  } catch (error) {
+    console.error('Upload error:', error);
+    return null;
+  }
+}
+
+// Process images for all questions that need them
+async function processQuestionsImages(
+  parsedExam: ParsedExam,
+  apiKey: string,
+  supabaseClient: any
+): Promise<void> {
+  console.log('Starting image generation for questions with has_image=true...');
+  
+  for (const section of parsedExam.sections) {
+    for (const question of section.questions) {
+      // Process main question
+      if (question.has_image && question.image_description && !question.image_url) {
+        console.log(`Processing image for question ${question.question_number}...`);
+        
+        const generatedImage = await generateImageFromDescription(
+          apiKey,
+          question.image_description,
+          question.question_text
+        );
+        
+        if (generatedImage) {
+          const publicUrl = await uploadImageToStorage(
+            supabaseClient,
+            generatedImage,
+            question.question_number,
+            parsedExam.exam_code || `${parsedExam.exam_year}`
+          );
+          
+          if (publicUrl) {
+            question.image_url = publicUrl;
+            console.log(`✓ Image ready for question ${question.question_number}`);
+          }
+        }
+      }
+      
+      // Process sub-questions
+      if (question.sub_questions) {
+        for (const subQ of question.sub_questions) {
+          if ((subQ as any).has_image && (subQ as any).image_description && !(subQ as any).image_url) {
+            console.log(`Processing image for sub-question ${subQ.question_number}...`);
+            
+            const generatedImage = await generateImageFromDescription(
+              apiKey,
+              (subQ as any).image_description,
+              subQ.question_text
+            );
+            
+            if (generatedImage) {
+              const publicUrl = await uploadImageToStorage(
+                supabaseClient,
+                generatedImage,
+                subQ.question_number,
+                parsedExam.exam_code || `${parsedExam.exam_year}`
+              );
+              
+              if (publicUrl) {
+                (subQ as any).image_url = publicUrl;
+                console.log(`✓ Image ready for sub-question ${subQ.question_number}`);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  console.log('Image generation completed');
 }
 
 interface ParsedSection {
@@ -494,6 +671,14 @@ serve(async (req) => {
         status: 502,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+    }
+    
+    // Generate images for questions that need them
+    try {
+      await processQuestionsImages(parsedExam, LOVABLE_API_KEY, supabase);
+    } catch (imgError) {
+      console.error('Image processing error (non-fatal):', imgError);
+      // Continue even if image generation fails - images can be added manually
     }
     
     // Calculate statistics
