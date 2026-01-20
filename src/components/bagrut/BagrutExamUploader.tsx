@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, FileText, Loader2, CheckCircle, AlertCircle, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -38,6 +38,40 @@ const BagrutExamUploader: React.FC<BagrutExamUploaderProps> = ({ onExamParsed, o
   const [progress, setProgress] = useState(0);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [currentStep, setCurrentStep] = useState<string>('');
+
+  // Progress steps for simulated real-time updates
+  const progressSteps = [
+    { time: 0, message: 'جاري قراءة ملف PDF...' },
+    { time: 3000, message: 'جاري التعرف على هيكل الامتحان...' },
+    { time: 8000, message: 'تم اكتشاف الأقسام، جاري تحليلها...' },
+    { time: 15000, message: 'جاري استخراج الأسئلة...' },
+    { time: 25000, message: 'جاري تحليل السؤال 1-5...' },
+    { time: 40000, message: 'جاري تحليل السؤال 6-10...' },
+    { time: 55000, message: 'جاري التعرف على الجداول والصور...' },
+    { time: 70000, message: 'جاري حساب النقاط والتصنيفات...' },
+    { time: 90000, message: 'جاري الانتهاء من التحليل...' },
+    { time: 120000, message: 'الملف كبير، يرجى الانتظار...' },
+    { time: 150000, message: 'لا يزال التحليل جارياً...' },
+  ];
+
+  // Effect to run progress step updates
+  useEffect(() => {
+    if (uploadStatus === 'processing') {
+      const timers: NodeJS.Timeout[] = [];
+      
+      progressSteps.forEach(step => {
+        const timer = setTimeout(() => {
+          setCurrentStep(step.message);
+        }, step.time);
+        timers.push(timer);
+      });
+      
+      return () => timers.forEach(t => clearTimeout(t));
+    } else {
+      setCurrentStep('');
+    }
+  }, [uploadStatus]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
@@ -215,6 +249,11 @@ const BagrutExamUploader: React.FC<BagrutExamUploaderProps> = ({ onExamParsed, o
             <p className="text-sm text-center text-muted-foreground">
               {progress}% - {uploadStatus === 'uploading' ? 'رفع الملف' : 'تحليل بالذكاء الاصطناعي'}
             </p>
+            {uploadStatus === 'processing' && currentStep && (
+              <p className="text-sm text-center text-primary font-medium animate-pulse">
+                {currentStep}
+              </p>
+            )}
           </div>
         )}
 
