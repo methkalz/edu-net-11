@@ -159,7 +159,7 @@ const BagrutExamUploader: React.FC<BagrutExamUploaderProps> = ({ onExamParsed, o
       case 'uploading':
         return 'جاري رفع الملف...';
       case 'processing':
-        return 'جاري تحليل الامتحان بالذكاء الاصطناعي...';
+        return 'جاري تحليل الامتحان... (قد يستغرق 1-3 دقائق)';
       case 'success':
         return 'تم تحليل الامتحان بنجاح!';
       case 'error':
