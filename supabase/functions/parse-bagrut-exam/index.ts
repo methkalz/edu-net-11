@@ -118,11 +118,39 @@ serve(async (req) => {
       base64Content += String.fromCharCode.apply(null, chunk as unknown as number[]);
     }
     base64Content = btoa(base64Content);
+
+    // Build AI request based on file type
+    // Gemini only supports PDF for file uploads, for DOCX we need to extract text
+    let userContent: any[];
     
-    // Determine MIME type
-    const mimeType = fileType === 'pdf' 
-      ? 'application/pdf' 
-      : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    if (fileType === 'pdf') {
+      // PDF can be sent directly as image
+      userContent = [
+        {
+          type: 'text',
+          text: 'حلل هذا الامتحان واستخرج جميع المعلومات بالتنسيق المطلوب. الملف المرفق هو امتحان بجروت.'
+        },
+        {
+          type: 'image_url',
+          image_url: {
+            url: `data:application/pdf;base64,${base64Content}`
+          }
+        }
+      ];
+    } else {
+      // For DOCX, we need to inform the user that only PDF is supported for now
+      // Or try to extract basic text from the docx (simplified approach)
+      // Since DOCX is a zip file containing XML, we can try basic extraction
+      
+      // For now, return an error asking for PDF
+      return new Response(JSON.stringify({ 
+        error: 'حالياً يُدعم فقط ملفات PDF. الرجاء تحويل ملف Word إلى PDF ثم إعادة الرفع.',
+        suggestion: 'يمكنك تحويل الملف من Word إلى PDF باستخدام Microsoft Word أو أي محول مجاني على الإنترنت.'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     // Call AI to parse the exam
     const systemPrompt = `أنت محلل متخصص في امتحانات البجروت الإسرائيلية. مهمتك تحليل ملف امتحان واستخراج جميع المعلومات بدقة عالية.
@@ -160,18 +188,7 @@ serve(async (req) => {
           { role: 'system', content: systemPrompt },
           {
             role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: 'حلل هذا الامتحان واستخرج جميع المعلومات بالتنسيق المطلوب.'
-              },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: `data:${mimeType};base64,${base64Content}`
-                }
-              }
-            ]
+            content: userContent
           }
         ],
         tools: [
