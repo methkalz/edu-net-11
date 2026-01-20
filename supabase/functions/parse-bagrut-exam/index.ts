@@ -13,6 +13,7 @@ interface ParsedQuestion {
   points: number;
   has_image: boolean;
   image_description?: string;
+  image_data?: string; // Base64 extracted image from PDF
   image_url?: string;
   has_table: boolean;
   table_data?: any;
@@ -48,28 +49,33 @@ interface ParsedExam {
   sections: ParsedSection[];
 }
 
-// Generate an educational image using AI
+// Generate an educational image using AI with Arabic support
 async function generateImageFromDescription(
   apiKey: string,
   description: string,
   questionContext: string
 ): Promise<string | null> {
   try {
-    const prompt = `Create a clear educational diagram for a Bagrut exam question in computer science:
+    // Enhanced prompt with Arabic language support
+    const prompt = `أنشئ رسماً تعليمياً واضحاً ومهنياً لسؤال امتحان بجروت في علوم الحاسوب:
 
-Image Description: ${description}
-Question Context: ${questionContext.substring(0, 300)}
+وصف الصورة المطلوبة: ${description}
+سياق السؤال: ${questionContext.substring(0, 400)}
 
-Requirements:
-- Simple, clear technical diagram or chart
-- White or light background
-- Professional exam-style design suitable for educational materials
-- Use clean lines and shapes
-- Labels should be clear and readable
-- If showing code or data structures, use proper formatting
-- Aspect ratio: 4:3 or 16:9 for better display`;
+المتطلبات الأساسية:
+- رسم بياني تقني واضح وبسيط
+- خلفية بيضاء أو فاتحة جداً
+- تصميم احترافي مناسب للامتحانات الرسمية
+- خطوط نظيفة وأشكال واضحة
+- جميع النصوص والتسميات باللغة العربية الصحيحة
+- إذا كان هناك كود برمجي، اكتبه بالإنجليزية لكن الشروحات بالعربية
+- إذا كان هناك هياكل بيانات (Queue, Stack, Tree)، ارسمها بشكل صحيح مع التسميات العربية
+- نسبة العرض إلى الارتفاع: 4:3
 
-    console.log(`Generating image for: ${description.substring(0, 100)}...`);
+Create a clear professional educational diagram for a Bagrut computer science exam.
+All labels and text MUST be in Arabic language.`;
+
+    console.log(`Generating image with Arabic support for: ${description.substring(0, 100)}...`);
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -93,7 +99,7 @@ Requirements:
     const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
     
     if (imageUrl) {
-      console.log('Image generated successfully');
+      console.log('Image generated successfully with Arabic support');
       return imageUrl;
     }
     
@@ -178,36 +184,60 @@ async function uploadImageToStorage(
 }
 
 // Process images for all questions that need them
+// Priority: 1. Extracted image_data from PDF, 2. Generate with AI as fallback
 async function processQuestionsImages(
   parsedExam: ParsedExam,
   apiKey: string,
   supabaseClient: any
 ): Promise<void> {
-  console.log('Starting image generation for questions with has_image=true...');
+  console.log('Starting image processing for questions with has_image=true...');
+  
+  const examCode = parsedExam.exam_code || `${parsedExam.exam_year}`;
   
   for (const section of parsedExam.sections) {
     for (const question of section.questions) {
       // Process main question
-      if (question.has_image && question.image_description && !question.image_url) {
+      if (question.has_image && !question.image_url) {
         console.log(`Processing image for question ${question.question_number}...`);
         
-        const generatedImage = await generateImageFromDescription(
-          apiKey,
-          question.image_description,
-          question.question_text
-        );
-        
-        if (generatedImage) {
+        // Priority 1: Use extracted image from PDF if available
+        if ((question as any).image_data) {
+          console.log(`Using extracted image from PDF for question ${question.question_number}`);
           const publicUrl = await uploadImageToStorage(
             supabaseClient,
-            generatedImage,
+            (question as any).image_data,
             question.question_number,
-            parsedExam.exam_code || `${parsedExam.exam_year}`
+            examCode
           );
           
           if (publicUrl) {
             question.image_url = publicUrl;
-            console.log(`✓ Image ready for question ${question.question_number}`);
+            console.log(`✓ Extracted image uploaded for question ${question.question_number}`);
+            continue;
+          }
+        }
+        
+        // Priority 2: Fallback to AI generation with Arabic support
+        if (question.image_description) {
+          console.log(`Generating image with AI for question ${question.question_number}...`);
+          const generatedImage = await generateImageFromDescription(
+            apiKey,
+            question.image_description,
+            question.question_text
+          );
+          
+          if (generatedImage) {
+            const publicUrl = await uploadImageToStorage(
+              supabaseClient,
+              generatedImage,
+              question.question_number,
+              examCode
+            );
+            
+            if (publicUrl) {
+              question.image_url = publicUrl;
+              console.log(`✓ Generated image ready for question ${question.question_number}`);
+            }
           }
         }
       }
@@ -215,26 +245,48 @@ async function processQuestionsImages(
       // Process sub-questions
       if (question.sub_questions) {
         for (const subQ of question.sub_questions) {
-          if ((subQ as any).has_image && (subQ as any).image_description && !(subQ as any).image_url) {
+          const subQuestion = subQ as any;
+          if (subQuestion.has_image && !subQuestion.image_url) {
             console.log(`Processing image for sub-question ${subQ.question_number}...`);
             
-            const generatedImage = await generateImageFromDescription(
-              apiKey,
-              (subQ as any).image_description,
-              subQ.question_text
-            );
-            
-            if (generatedImage) {
+            // Priority 1: Use extracted image from PDF if available
+            if (subQuestion.image_data) {
+              console.log(`Using extracted image from PDF for sub-question ${subQ.question_number}`);
               const publicUrl = await uploadImageToStorage(
                 supabaseClient,
-                generatedImage,
+                subQuestion.image_data,
                 subQ.question_number,
-                parsedExam.exam_code || `${parsedExam.exam_year}`
+                examCode
               );
               
               if (publicUrl) {
-                (subQ as any).image_url = publicUrl;
-                console.log(`✓ Image ready for sub-question ${subQ.question_number}`);
+                subQuestion.image_url = publicUrl;
+                console.log(`✓ Extracted image uploaded for sub-question ${subQ.question_number}`);
+                continue;
+              }
+            }
+            
+            // Priority 2: Fallback to AI generation with Arabic support
+            if (subQuestion.image_description) {
+              console.log(`Generating image with AI for sub-question ${subQ.question_number}...`);
+              const generatedImage = await generateImageFromDescription(
+                apiKey,
+                subQuestion.image_description,
+                subQ.question_text
+              );
+              
+              if (generatedImage) {
+                const publicUrl = await uploadImageToStorage(
+                  supabaseClient,
+                  generatedImage,
+                  subQ.question_number,
+                  examCode
+                );
+                
+                if (publicUrl) {
+                  subQuestion.image_url = publicUrl;
+                  console.log(`✓ Generated image ready for sub-question ${subQ.question_number}`);
+                }
               }
             }
           }
@@ -243,7 +295,7 @@ async function processQuestionsImages(
     }
   }
   
-  console.log('Image generation completed');
+  console.log('Image processing completed');
 }
 
 // Models to try in order (from most capable to fallback)
@@ -479,6 +531,13 @@ async function processJobInBackground(
 2. الأقسام: رقم القسم، العنوان، النوع (mandatory/elective)، التخصص إن وجد
 3. الأسئلة: الرقم، النص، النوع، النقاط، الخيارات والإجابة الصحيحة
 
+**مهم جداً - استخراج الصور:**
+- إذا كان السؤال يحتوي على صورة أو رسم بياني أو مخطط، يجب:
+  * تعيين has_image = true
+  * استخراج الصورة الفعلية من الامتحان وإرسالها في image_data كـ base64 (data:image/png;base64,...)
+  * كتابة وصف مختصر للصورة في image_description للمرجعية
+- الأولوية القصوى: استخراج الصورة الأصلية من PDF وليس وصفها فقط
+
 **مهم جداً - استخراج الجداول:**
 - إذا احتوى السؤال على جدول، يجب استخراجه بالكامل في table_data
 - table_data يحتوي على: headers (عناوين الأعمدة) و rows (صفوف البيانات)
@@ -495,8 +554,9 @@ async function processJobInBackground(
 - fill_table: إكمال جدول
 - matching: مطابقة
 - calculation: حساب
+- cli_command: أمر CLI
 
-مهم جداً: أكمل جميع البيانات ولا تقطع الإجابة في المنتصف. استخرج جميع الجداول بدقة.`;
+مهم جداً: أكمل جميع البيانات ولا تقطع الإجابة في المنتصف. استخرج جميع الجداول والصور بدقة.`;
 
     // Simplified tool schema for better completion rates
     const toolSchema = {
@@ -537,7 +597,8 @@ async function processJobInBackground(
                         question_type: { type: 'string' },
                         points: { type: 'number' },
                         has_image: { type: 'boolean' },
-                        image_description: { type: 'string' },
+                        image_description: { type: 'string', description: 'وصف مختصر للصورة' },
+                        image_data: { type: 'string', description: 'الصورة الأصلية من الامتحان بصيغة base64 (data:image/png;base64,...)' },
                         has_table: { type: 'boolean' },
                         table_data: {
                           type: 'object',
