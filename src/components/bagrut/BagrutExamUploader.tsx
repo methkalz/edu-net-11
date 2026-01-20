@@ -1,11 +1,12 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, FileText, Loader2, CheckCircle, AlertCircle, X } from 'lucide-react';
+import { Upload, FileText, Loader2, CheckCircle, AlertCircle, X, Image } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { extractImagesFromPDF, type ExtractedImage } from '@/utils/pdfImageExtractor';
 
 interface ParsedExam {
   title: string;
@@ -40,6 +41,7 @@ const BagrutExamUploader: React.FC<BagrutExamUploaderProps> = ({ onExamParsed, o
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [currentStep, setCurrentStep] = useState<string>('');
   const [jobId, setJobId] = useState<string | null>(null);
+  const [extractedImagesCount, setExtractedImagesCount] = useState<number>(0);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Cleanup polling on unmount
@@ -152,7 +154,7 @@ const BagrutExamUploader: React.FC<BagrutExamUploaderProps> = ({ onExamParsed, o
 
     setUploadStatus('uploading');
     setProgress(5);
-    setCurrentStep('جاري رفع الملف...');
+    setCurrentStep('جاري استخراج الصور من PDF...');
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -160,12 +162,35 @@ const BagrutExamUploader: React.FC<BagrutExamUploaderProps> = ({ onExamParsed, o
         throw new Error('يجب تسجيل الدخول أولاً');
       }
 
-      setProgress(10);
+      // Step 1: Extract embedded images from PDF in the browser
+      let extractedImages: ExtractedImage[] = [];
+      try {
+        extractedImages = await extractImagesFromPDF(selectedFile);
+        setExtractedImagesCount(extractedImages.length);
+        console.log(`Extracted ${extractedImages.length} images from PDF`);
+        
+        if (extractedImages.length > 0) {
+          toast.info(`تم استخراج ${extractedImages.length} صورة من الملف`);
+        }
+      } catch (extractError) {
+        console.warn('Image extraction failed, continuing without images:', extractError);
+        // Continue even if extraction fails - images can be added manually
+      }
+
+      setProgress(15);
+      setCurrentStep('جاري رفع الملف...');
 
       // Prepare form data
       const formData = new FormData();
       formData.append('file', selectedFile);
       formData.append('fileType', selectedFile.name.endsWith('.pdf') ? 'pdf' : 'docx');
+      
+      // Add extracted images as JSON
+      if (extractedImages.length > 0) {
+        formData.append('extractedImages', JSON.stringify(extractedImages));
+      }
+
+      setProgress(20);
 
       // Call edge function - this will return immediately with a job ID
       const response = await fetch(
@@ -193,7 +218,7 @@ const BagrutExamUploader: React.FC<BagrutExamUploaderProps> = ({ onExamParsed, o
       // Got job ID, start polling
       setJobId(result.jobId);
       setUploadStatus('processing');
-      setProgress(15);
+      setProgress(25);
       setCurrentStep('جاري بدء المعالجة...');
       
       // Start polling for status
@@ -216,6 +241,7 @@ const BagrutExamUploader: React.FC<BagrutExamUploaderProps> = ({ onExamParsed, o
     setErrorMessage('');
     setJobId(null);
     setCurrentStep('');
+    setExtractedImagesCount(0);
   };
 
   const getStatusIcon = () => {
@@ -278,8 +304,16 @@ const BagrutExamUploader: React.FC<BagrutExamUploaderProps> = ({ onExamParsed, o
                 </p>
               )}
               {selectedFile && uploadStatus === 'idle' && (
-                <p className="text-sm text-muted-foreground">
-                  الحجم: {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">
+                    الحجم: {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                  </p>
+                </div>
+              )}
+              {extractedImagesCount > 0 && uploadStatus === 'processing' && (
+                <p className="text-sm text-primary flex items-center gap-1">
+                  <Image className="h-4 w-4" />
+                  تم استخراج {extractedImagesCount} صورة من الملف
                 </p>
               )}
             </div>
