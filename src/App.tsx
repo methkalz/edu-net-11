@@ -49,6 +49,7 @@ import {
   LazyTest,
   LazyPairMatchingPage,
   LazyReports,
+  LazyBagrutManagement,
   withLazyLoading
 } from "@/components/LazyComponents";
 
@@ -66,7 +67,6 @@ const StudentExamAttemptPage = React.lazy(() => import('@/pages/StudentExamAttem
 const StudentExamResultPage = React.lazy(() => import('@/pages/StudentExamResult'));
 const GradeExamsAnalytics = React.lazy(() => import('@/pages/GradeExamsAnalytics'));
 const ExamBankManagement = React.lazy(() => import('@/pages/ExamBankManagement'));
-const BagrutManagement = React.lazy(() => import('@/pages/BagrutManagement'));
 import { PageLoading } from "@/components/ui/LoadingComponents";
 
 /**
@@ -213,7 +213,7 @@ const App = () => {
                {/* Bagrut Exams Management route */}
                <Route 
                  path="/bagrut-management" 
-                 element={<Suspense fallback={<PageLoading message="جاري تحميل إدارة امتحانات البجروت..." />}><BagrutManagement /></Suspense>} 
+                 element={<LazyBagrutManagement />} 
                />
                
                  {/* Game routes */}
