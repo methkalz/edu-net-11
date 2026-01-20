@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +20,38 @@ import {
   Table
 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import BagrutImageUpload from './BagrutImageUpload';
+
+interface ParsedQuestion {
+  question_number: string;
+  question_text: string;
+  question_type: string;
+  points: number;
+  has_image?: boolean;
+  image_description?: string;
+  image_url?: string;
+  has_table?: boolean;
+  table_data?: { headers?: string[]; rows?: string[][] };
+  word_bank?: string[];
+  has_code?: boolean;
+  code_content?: string;
+  choices?: Array<{ id: string; text: string; is_correct: boolean }>;
+  correct_answer?: string;
+  answer_explanation?: string;
+  sub_questions?: ParsedQuestion[];
+  topic_tags?: string[];
+}
+
+interface ParsedSection {
+  section_number: number;
+  section_title: string;
+  section_type: 'mandatory' | 'elective';
+  total_points: number;
+  specialization?: string;
+  specialization_label?: string;
+  instructions?: string;
+  questions: ParsedQuestion[];
+}
 
 interface ParsedExam {
   title: string;
@@ -30,7 +62,7 @@ interface ParsedExam {
   duration_minutes: number;
   total_points: number;
   instructions?: string;
-  sections: any[];
+  sections: ParsedSection[];
 }
 
 interface Statistics {
@@ -45,6 +77,7 @@ interface BagrutExamPreviewProps {
   statistics: Statistics;
   onSave: () => void;
   onCancel: () => void;
+  onExamUpdate?: (updatedExam: ParsedExam) => void;
   isSaving?: boolean;
 }
 
@@ -74,10 +107,32 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
   statistics,
   onSave,
   onCancel,
+  onExamUpdate,
   isSaving = false
 }) => {
   const [showAnswers, setShowAnswers] = useState(false);
   const [activeSection, setActiveSection] = useState('0');
+  const [localExam, setLocalExam] = useState(exam);
+
+  // Handle image upload for a question
+  const handleImageUploaded = useCallback((sectionIndex: number, questionNumber: string, imageUrl: string) => {
+    setLocalExam(prev => {
+      const updated = { ...prev };
+      updated.sections = prev.sections.map((section, sIdx) => {
+        if (sIdx !== sectionIndex) return section;
+        return {
+          ...section,
+          questions: section.questions.map(q => 
+            q.question_number === questionNumber 
+              ? { ...q, image_url: imageUrl }
+              : q
+          )
+        };
+      });
+      onExamUpdate?.(updated);
+      return updated;
+    });
+  }, [onExamUpdate]);
 
   return (
     <div className="space-y-6">
@@ -159,7 +214,7 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
       {/* Sections */}
       <Tabs value={activeSection} onValueChange={setActiveSection}>
         <TabsList className="w-full justify-start">
-          {exam.sections.map((section, index) => (
+          {localExam.sections.map((section, index) => (
             <TabsTrigger key={index} value={String(index)}>
               {section.section_title}
               {section.section_type === 'elective' && (
@@ -169,7 +224,7 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
           ))}
         </TabsList>
 
-        {exam.sections.map((section, sectionIndex) => (
+        {localExam.sections.map((section, sectionIndex) => (
           <TabsContent key={sectionIndex} value={String(sectionIndex)}>
             <Card>
               <CardHeader className="pb-2">
@@ -191,11 +246,13 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
               <CardContent>
                 <ScrollArea className="h-[500px] pr-4">
                   <div className="space-y-4">
-                    {section.questions.map((question: any, qIndex: number) => (
+                    {section.questions.map((question, qIndex) => (
                       <QuestionCard 
                         key={qIndex} 
                         question={question} 
                         showAnswers={showAnswers}
+                        sectionIndex={sectionIndex}
+                        onImageUploaded={handleImageUploaded}
                       />
                     ))}
                   </div>
@@ -234,7 +291,19 @@ const isInputCell = (cellValue: string) => {
 };
 
 // Question Card Component
-const QuestionCard: React.FC<{ question: any; showAnswers: boolean }> = ({ question, showAnswers }) => {
+interface QuestionCardProps {
+  question: ParsedQuestion;
+  showAnswers: boolean;
+  sectionIndex: number;
+  onImageUploaded: (sectionIndex: number, questionNumber: string, imageUrl: string) => void;
+}
+
+const QuestionCard: React.FC<QuestionCardProps> = ({ 
+  question, 
+  showAnswers, 
+  sectionIndex,
+  onImageUploaded 
+}) => {
   return (
     <div className="border rounded-lg p-4 space-y-3">
       {/* Question Header */}
@@ -251,21 +320,14 @@ const QuestionCard: React.FC<{ question: any; showAnswers: boolean }> = ({ quest
       {/* Question Text */}
       <p className="text-foreground whitespace-pre-wrap">{question.question_text}</p>
 
-      {/* Image Placeholder */}
+      {/* Image Upload/Display */}
       {question.has_image && (
-        <div className="border-2 border-dashed border-muted rounded-lg p-4 bg-muted/20">
-          <div className="flex flex-col items-center gap-2 text-muted-foreground">
-            <div className="w-16 h-16 bg-muted rounded-lg flex items-center justify-center">
-              <ImageIcon className="h-8 w-8" />
-            </div>
-            <p className="text-sm font-medium">صورة مرفقة في الامتحان الأصلي</p>
-            {question.image_description && (
-              <p className="text-xs text-center max-w-md">
-                وصف: {question.image_description}
-              </p>
-            )}
-          </div>
-        </div>
+        <BagrutImageUpload
+          questionNumber={question.question_number}
+          description={question.image_description}
+          currentImageUrl={question.image_url}
+          onImageUploaded={(url) => onImageUploaded(sectionIndex, question.question_number, url)}
+        />
       )}
 
       {/* Table Display */}
@@ -379,8 +441,14 @@ const QuestionCard: React.FC<{ question: any; showAnswers: boolean }> = ({ quest
       {/* Sub Questions */}
       {question.sub_questions && question.sub_questions.length > 0 && (
         <div className="mr-4 border-r-2 border-muted pr-4 space-y-3">
-          {question.sub_questions.map((subQ: any, subIndex: number) => (
-            <QuestionCard key={subIndex} question={subQ} showAnswers={showAnswers} />
+          {question.sub_questions.map((subQ, subIndex) => (
+            <QuestionCard 
+              key={subIndex} 
+              question={subQ} 
+              showAnswers={showAnswers}
+              sectionIndex={sectionIndex}
+              onImageUploaded={onImageUploaded}
+            />
           ))}
         </div>
       )}

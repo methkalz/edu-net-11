@@ -211,6 +211,7 @@ const BagrutManagement: React.FC = () => {
       points: Math.round(question.points || 0),
       has_image: question.has_image || false,
       image_alt_text: question.image_description,
+      image_url: question.image_url || null,
       has_table: question.has_table || false,
       table_data: question.table_data,
       has_code: question.has_code || false,
@@ -231,6 +232,11 @@ const BagrutManagement: React.FC = () => {
         await insertQuestion(examId, sectionId, question.sub_questions[i], i, questionData.id);
       }
     }
+  };
+
+  // Handle exam update from preview (for image uploads)
+  const handleExamUpdate = (updatedExam: ParsedExam) => {
+    setParsedExam(updatedExam);
   };
 
   // Access check
@@ -320,7 +326,7 @@ const BagrutManagement: React.FC = () => {
         setViewState('list');
         setParsedExam(null);
         setStatistics(null);
-      }} isSaving={isSaving} />}
+      }} onExamUpdate={handleExamUpdate} isSaving={isSaving} />}
       </main>
       
       <AppFooter />
