@@ -1,8 +1,9 @@
-import { getDocument, GlobalWorkerOptions, OPS } from 'pdfjs-dist';
-
-// Disable worker to avoid Vite bundling issues
-// This runs PDF.js in the main thread (acceptable for our use case)
-GlobalWorkerOptions.workerSrc = '';
+/**
+ * PDF Image Extractor Utility
+ * 
+ * Extracts embedded images from PDF files using pdfjs-dist.
+ * Uses dynamic import to avoid Vite bundling issues.
+ */
 
 export interface ExtractedImage {
   pageNumber: number;
@@ -20,8 +21,14 @@ export async function extractImagesFromPDF(file: File): Promise<ExtractedImage[]
   console.log('Starting PDF image extraction...');
   
   try {
+    // Dynamic import to avoid Vite bundling issues
+    const pdfjsLib = await import('pdfjs-dist');
+    
+    // Disable worker - runs in main thread
+    pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+    
     const arrayBuffer = await file.arrayBuffer();
-    const pdf = await getDocument({ data: arrayBuffer }).promise;
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     const images: ExtractedImage[] = [];
     
     console.log(`PDF loaded: ${pdf.numPages} pages`);
@@ -35,8 +42,8 @@ export async function extractImagesFromPDF(file: File): Promise<ExtractedImage[]
         
         for (let i = 0; i < operatorList.fnArray.length; i++) {
           // Check for image paint operations
-          if (operatorList.fnArray[i] === OPS.paintImageXObject ||
-              operatorList.fnArray[i] === OPS.paintXObject) {
+          if (operatorList.fnArray[i] === pdfjsLib.OPS.paintImageXObject ||
+              operatorList.fnArray[i] === pdfjsLib.OPS.paintXObject) {
             
             try {
               const imgName = operatorList.argsArray[i][0];
