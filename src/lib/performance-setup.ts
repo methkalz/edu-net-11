@@ -92,8 +92,15 @@ class PerformanceSetup {
     const originalFetch = window.fetch;
     
     window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+      // إذا كان هناك signal موجود مسبقاً، استخدمه بدلاً من إنشاء واحد جديد
+      // هذا يسمح للطلبات الطويلة (مثل parse-bagrut-exam) بتحديد timeout خاص بها
+      if (init?.signal) {
+        return originalFetch(input, init);
+      }
+      
+      // فقط للطلبات بدون signal نضيف timeout افتراضي 30 ثانية
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 ثانية timeout
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
 
       try {
         const response = await originalFetch(input, {
