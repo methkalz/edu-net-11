@@ -96,6 +96,20 @@ const questionTypeLabels: Record<string, string> = {
   multi_part: 'متعدد البنود'
 };
 
+// Convert English question number back to Arabic for display
+const englishToArabicNumber = (questionNumber: string): string => {
+  const map: Record<string, string> = {
+    'a': 'أ', 'b': 'ب', 'c': 'ج', 'd': 'د', 'e': 'هـ',
+    'f': 'و', 'g': 'ز', 'h': 'ح', 'i': 'ط', 'j': 'ي',
+    'k': 'ك', 'l': 'ل', 'm': 'م', 'n': 'ن'
+  };
+  
+  // Convert only single letters after hyphen (e.g., 23-i → 23-ط)
+  return questionNumber.replace(/-([a-n])$/i, (match, letter) => {
+    return '-' + (map[letter.toLowerCase()] || letter);
+  });
+};
+
 const seasonLabels: Record<string, string> = {
   summer: 'صيف',
   winter: 'شتاء',
@@ -333,7 +347,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
       {/* Question Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-2">
-          <span className="font-bold text-primary">سؤال {question.question_number}</span>
+          <span className="font-bold text-primary">سؤال {englishToArabicNumber(question.question_number)}</span>
           <Badge variant="outline" className="text-xs">
             {questionTypeLabels[question.question_type] || question.question_type}
           </Badge>

@@ -82,6 +82,27 @@ Requirements:
   }
 }
 
+// Convert Arabic question number to English for safe file naming
+function arabicToEnglishNumber(questionNumber: string): string {
+  const map: Record<string, string> = {
+    'أ': 'a', 'ب': 'b', 'ج': 'c', 'د': 'd', 
+    'ه': 'e', 'هـ': 'e', 'و': 'f', 'ز': 'g', 
+    'ح': 'h', 'ط': 'i', 'ي': 'j', 'ى': 'j',
+    'ك': 'k', 'ل': 'l', 'م': 'm', 'ن': 'n',
+    'س': 's', 'ع': 'aa', 'ف': 'ff', 'ص': 'ss',
+    'ق': 'q', 'ر': 'r', 'ش': 'sh', 'ت': 't',
+    'ث': 'th', 'خ': 'kh', 'ذ': 'z', 'ض': 'dd',
+    'ظ': 'zz', 'غ': 'gh'
+  };
+  
+  let result = questionNumber;
+  for (const [arabic, english] of Object.entries(map)) {
+    result = result.replace(new RegExp(arabic, 'g'), english);
+  }
+  // Remove any remaining non-ASCII characters
+  return result.replace(/[^a-zA-Z0-9_-]/g, '');
+}
+
 // Upload base64 image to Supabase Storage
 async function uploadImageToStorage(
   supabaseClient: any,
@@ -100,10 +121,11 @@ async function uploadImageToStorage(
       imageBuffer[i] = binaryString.charCodeAt(i);
     }
     
-    // Create unique filename
+    // Create unique filename with safe question number
     const timestamp = Date.now();
     const safeExamCode = (examCode || 'exam').replace(/[^a-zA-Z0-9]/g, '_');
-    const fileName = `generated/${safeExamCode}/q${questionNumber}_${timestamp}.png`;
+    const safeQuestionNumber = arabicToEnglishNumber(questionNumber);
+    const fileName = `generated/${safeExamCode}/q${safeQuestionNumber}_${timestamp}.png`;
     
     console.log(`Uploading image to: ${fileName}`);
     
