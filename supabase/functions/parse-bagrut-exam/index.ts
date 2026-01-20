@@ -327,10 +327,13 @@ serve(async (req) => {
     // Extract the parsed exam from tool call
     const toolCall = aiResult.choices?.[0]?.message?.tool_calls?.[0];
     if (!toolCall || toolCall.function.name !== 'parse_bagrut_exam') {
+      console.error('Unexpected tool call:', JSON.stringify(aiResult.choices?.[0]?.message));
       throw new Error('AI did not return expected tool call');
     }
 
+    console.log('Parsing tool call arguments...');
     const parsedExam: ParsedExam = JSON.parse(toolCall.function.arguments);
+    console.log('Parsed exam successfully, sections:', parsedExam.sections?.length);
     
     // Calculate statistics
     let totalQuestions = 0;
@@ -350,7 +353,9 @@ serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({
+    console.log('Calculated statistics:', { totalSections: parsedExam.sections.length, totalQuestions });
+    
+    const responseData = {
       success: true,
       parsedExam,
       statistics: {
@@ -359,7 +364,11 @@ serve(async (req) => {
         questionsByType,
         totalPoints: parsedExam.total_points
       }
-    }), {
+    };
+    
+    console.log('Sending response, size:', JSON.stringify(responseData).length, 'bytes');
+
+    return new Response(JSON.stringify(responseData), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
