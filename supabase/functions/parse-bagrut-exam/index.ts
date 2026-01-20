@@ -181,7 +181,13 @@ serve(async (req) => {
 - إذا كان السؤال يتضمن جدول، حوّله لـ JSON في table_data
 - إذا كان السؤال يتضمن كود أو أوامر CLI، ضعها في code_content`;
 
+    console.log('Sending request to AI Gateway...');
+    
     // Use gemini-2.5-flash for faster processing of large documents
+    // Add AbortController with 120 second timeout for AI request
+    const aiController = new AbortController();
+    const aiTimeout = setTimeout(() => aiController.abort(), 120000);
+    
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -290,7 +296,10 @@ serve(async (req) => {
         ],
         tool_choice: { type: 'function', function: { name: 'parse_bagrut_exam' } }
       }),
+      signal: aiController.signal,
     });
+    
+    clearTimeout(aiTimeout);
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
@@ -356,6 +365,17 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error parsing exam:', error);
+    
+    // Check if it's an abort error from AI timeout
+    if (error instanceof Error && error.name === 'AbortError') {
+      return new Response(JSON.stringify({ 
+        error: 'انتهت مهلة معالجة الذكاء الاصطناعي. الملف قد يكون معقداً جداً، يرجى المحاولة مرة أخرى.' 
+      }), {
+        status: 504,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
     return new Response(JSON.stringify({ 
       error: error instanceof Error ? error.message : 'Failed to parse exam' 
     }), {
