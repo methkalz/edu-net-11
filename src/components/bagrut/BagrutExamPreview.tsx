@@ -31,7 +31,7 @@ interface ParsedQuestion {
   image_description?: string;
   image_url?: string;
   has_table?: boolean;
-  table_data?: { headers?: string[]; rows?: string[][] };
+  table_data?: { headers?: string[]; rows?: string[][]; input_columns?: number[] };
   word_bank?: string[];
   has_code?: boolean;
   code_content?: string;
@@ -299,9 +299,26 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
 };
 
 // Helper function to check if a cell should be an input field
-const isInputCell = (cellValue: string) => {
-  const inputIndicators = ['?', '؟', '', '_', '___', '...', '....'];
-  return inputIndicators.includes(cellValue?.trim() || '');
+const isInputCell = (cellValue: string, columnIndex?: number, inputColumns?: number[]) => {
+  // If input_columns is specified and this column is in the list
+  if (inputColumns && typeof columnIndex === 'number' && inputColumns.includes(columnIndex)) {
+    return true;
+  }
+  
+  // Traditional indicators
+  const inputIndicators = ['?', '؟', '', '_', '___', '...', '....', '---', '____'];
+  const trimmedValue = cellValue?.trim() || '';
+  
+  if (inputIndicators.includes(trimmedValue)) {
+    return true;
+  }
+  
+  // If the cell contains only question marks, dots, underscores, or dashes
+  if (/^[\?\؟\.\_\-\s]+$/.test(trimmedValue)) {
+    return true;
+  }
+  
+  return false;
 };
 
 // Helper function to render fill_blank text with input fields
@@ -426,7 +443,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                 <tr key={rowIndex} className={rowIndex % 2 === 0 ? 'bg-background' : 'bg-muted/20'}>
                   {row.map((cell: string, cellIndex: number) => (
                     <td key={cellIndex} className="border border-muted p-2 text-sm text-center">
-                      {isInputCell(cell) ? (
+                      {isInputCell(cell, cellIndex, question.table_data?.input_columns) ? (
                         <input
                           type="text"
                           className="w-full min-w-[80px] px-2 py-1 border border-dashed border-muted-foreground/50 rounded text-center bg-accent/30 focus:outline-none focus:border-primary focus:bg-background"
