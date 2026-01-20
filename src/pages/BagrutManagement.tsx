@@ -12,6 +12,16 @@ import { useQuery } from '@tanstack/react-query';
 import BagrutExamUploader from '@/components/bagrut/BagrutExamUploader';
 import BagrutExamPreview from '@/components/bagrut/BagrutExamPreview';
 import { BagrutDevConsole } from '@/components/bagrut/BagrutDevConsole';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface ParsedExam {
   title: string;
@@ -40,20 +50,28 @@ const BagrutManagement: React.FC = () => {
   const [statistics, setStatistics] = useState<Statistics | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [deletingExamId, setDeletingExamId] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [examToDelete, setExamToDelete] = useState<{ id: string; title: string } | null>(null);
+
+  // Open delete confirmation dialog
+  const openDeleteDialog = (examId: string, examTitle: string) => {
+    setExamToDelete({ id: examId, title: examTitle });
+    setDeleteDialogOpen(true);
+  };
 
   // Delete exam function
-  const handleDeleteExam = async (examId: string, examTitle: string) => {
-    if (!confirm(`هل أنت متأكد من حذف امتحان "${examTitle}"؟\nسيتم حذف جميع الأقسام والأسئلة المرتبطة به.`)) {
-      return;
-    }
+  const handleDeleteExam = async () => {
+    if (!examToDelete) return;
 
-    setDeletingExamId(examId);
+    setDeleteDialogOpen(false);
+    setDeletingExamId(examToDelete.id);
+    
     try {
       // Delete related questions first
       const { error: questionsError } = await supabase
         .from('bagrut_questions')
         .delete()
-        .eq('exam_id', examId);
+        .eq('exam_id', examToDelete.id);
       
       if (questionsError) throw questionsError;
 
@@ -61,7 +79,7 @@ const BagrutManagement: React.FC = () => {
       const { error: sectionsError } = await supabase
         .from('bagrut_exam_sections')
         .delete()
-        .eq('exam_id', examId);
+        .eq('exam_id', examToDelete.id);
       
       if (sectionsError) throw sectionsError;
 
@@ -69,7 +87,7 @@ const BagrutManagement: React.FC = () => {
       const { error: examError } = await supabase
         .from('bagrut_exams')
         .delete()
-        .eq('id', examId);
+        .eq('id', examToDelete.id);
       
       if (examError) throw examError;
 
@@ -80,6 +98,7 @@ const BagrutManagement: React.FC = () => {
       toast.error('حدث خطأ أثناء حذف الامتحان');
     } finally {
       setDeletingExamId(null);
+      setExamToDelete(null);
     }
   };
 
@@ -267,7 +286,7 @@ const BagrutManagement: React.FC = () => {
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={() => handleDeleteExam(exam.id, exam.title)}
+                            onClick={() => openDeleteDialog(exam.id, exam.title)}
                             disabled={deletingExamId === exam.id}
                           >
                             {deletingExamId === exam.id ? (
@@ -308,6 +327,29 @@ const BagrutManagement: React.FC = () => {
       
       {/* Dev Console - only in development */}
       {process.env.NODE_ENV === 'development' && <BagrutDevConsole />}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>تأكيد حذف الامتحان</AlertDialogTitle>
+            <AlertDialogDescription>
+              هل أنت متأكد من حذف امتحان "{examToDelete?.title}"؟
+              <br />
+              سيتم حذف جميع الأقسام والأسئلة المرتبطة به نهائياً.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-row-reverse gap-2">
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteExam}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              تأكيد الحذف
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>;
 };
 export default BagrutManagement;
