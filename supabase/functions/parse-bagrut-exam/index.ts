@@ -312,12 +312,19 @@ serve(async (req) => {
       }
     ];
 
-    // Simplified and clearer system prompt
+    // Simplified and clearer system prompt with table extraction instructions
     const systemPrompt = `أنت محلل متخصص في امتحانات البجروت. حلل الامتحان واستخرج:
 
 1. معلومات الامتحان: العنوان، السنة، الموسم (summer/winter/spring)، المادة، المدة بالدقائق، مجموع العلامات
 2. الأقسام: رقم القسم، العنوان، النوع (mandatory/elective)، التخصص إن وجد
 3. الأسئلة: الرقم، النص، النوع، النقاط، الخيارات والإجابة الصحيحة
+
+**مهم جداً - استخراج الجداول:**
+- إذا احتوى السؤال على جدول، يجب استخراجه بالكامل في table_data
+- table_data يحتوي على: headers (عناوين الأعمدة) و rows (صفوف البيانات)
+- الخلايا الفارغة أو التي يجب على الطالب ملؤها ضعها كـ "?" 
+- إذا كان هناك "مخزن كلمات" أو خيارات مساعدة، ضعها في word_bank كمصفوفة نصية
+- استخدم نوع السؤال fill_table إذا كان السؤال يطلب إكمال جدول
 
 أنواع الأسئلة المتاحة:
 - multiple_choice: اختيار من متعدد
@@ -325,10 +332,11 @@ serve(async (req) => {
 - open_ended: سؤال مفتوح
 - multi_part: سؤال متعدد الأجزاء
 - fill_blank: ملء الفراغ
+- fill_table: إكمال جدول
 - matching: مطابقة
 - calculation: حساب
 
-مهم جداً: أكمل جميع البيانات ولا تقطع الإجابة في المنتصف.`;
+مهم جداً: أكمل جميع البيانات ولا تقطع الإجابة في المنتصف. استخرج جميع الجداول بدقة.`;
 
     // Simplified tool schema for better completion rates
     const toolSchema = {
@@ -371,6 +379,30 @@ serve(async (req) => {
                         has_image: { type: 'boolean' },
                         image_description: { type: 'string' },
                         has_table: { type: 'boolean' },
+                        table_data: {
+                          type: 'object',
+                          description: 'بيانات الجدول إذا كان السؤال يحتوي على جدول',
+                          properties: {
+                            headers: {
+                              type: 'array',
+                              items: { type: 'string' },
+                              description: 'عناوين أعمدة الجدول'
+                            },
+                            rows: {
+                              type: 'array',
+                              items: {
+                                type: 'array',
+                                items: { type: 'string' }
+                              },
+                              description: 'صفوف الجدول - كل صف هو مصفوفة من القيم، الخلايا الفارغة تكون ?'
+                            }
+                          }
+                        },
+                        word_bank: {
+                          type: 'array',
+                          items: { type: 'string' },
+                          description: 'مخزن الكلمات المساعدة للطالب إن وجد'
+                        },
                         has_code: { type: 'boolean' },
                         code_content: { type: 'string' },
                         choices: {
