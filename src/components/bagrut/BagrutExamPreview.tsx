@@ -227,6 +227,12 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
   );
 };
 
+// Helper function to check if a cell should be an input field
+const isInputCell = (cellValue: string) => {
+  const inputIndicators = ['?', '؟', '', '_', '___', '...', '....'];
+  return inputIndicators.includes(cellValue?.trim() || '');
+};
+
 // Question Card Component
 const QuestionCard: React.FC<{ question: any; showAnswers: boolean }> = ({ question, showAnswers }) => {
   return (
@@ -282,7 +288,16 @@ const QuestionCard: React.FC<{ question: any; showAnswers: boolean }> = ({ quest
                 <tr key={rowIndex} className={rowIndex % 2 === 0 ? 'bg-background' : 'bg-muted/20'}>
                   {row.map((cell: string, cellIndex: number) => (
                     <td key={cellIndex} className="border border-muted p-2 text-sm text-center">
-                      {cell}
+                      {isInputCell(cell) ? (
+                        <input
+                          type="text"
+                          className="w-full min-w-[80px] px-2 py-1 border border-dashed border-muted-foreground/50 rounded text-center bg-accent/30 focus:outline-none focus:border-primary focus:bg-background"
+                          placeholder="..."
+                          dir="ltr"
+                        />
+                      ) : (
+                        cell
+                      )}
                     </td>
                   ))}
                 </tr>
