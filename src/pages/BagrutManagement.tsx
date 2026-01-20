@@ -11,6 +11,8 @@ import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import BagrutExamUploader from '@/components/bagrut/BagrutExamUploader';
 import BagrutExamPreview from '@/components/bagrut/BagrutExamPreview';
+import { BagrutDevConsole } from '@/components/bagrut/BagrutDevConsole';
+
 interface ParsedExam {
   title: string;
   exam_year: number;
@@ -247,6 +249,9 @@ const BagrutManagement: React.FC = () => {
       </main>
       
       <AppFooter />
+      
+      {/* Dev Console - only in development */}
+      {process.env.NODE_ENV === 'development' && <BagrutDevConsole />}
     </div>;
 };
 export default BagrutManagement;
