@@ -307,6 +307,20 @@ const QuestionCard: React.FC<{ question: any; showAnswers: boolean }> = ({ quest
         </div>
       )}
 
+      {/* Word Bank - مخزن الكلمات */}
+      {question.word_bank && question.word_bank.length > 0 && (
+        <div className="mt-3 p-3 bg-accent/50 rounded-lg border border-border">
+          <p className="text-sm font-medium mb-2 text-foreground">مخزن الكلمات:</p>
+          <div className="flex flex-wrap gap-2">
+            {question.word_bank.map((word: string, index: number) => (
+              <Badge key={index} variant="outline" className="text-sm bg-background border-border">
+                {word}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Table Indicator (if no table_data) */}
       {question.has_table && !question.table_data && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 p-2 rounded">
