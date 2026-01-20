@@ -78,7 +78,10 @@ const BagrutExamUploader: React.FC<BagrutExamUploaderProps> = ({ onExamParsed, o
 
       setProgress(40);
 
-      // Call edge function
+      // Call edge function with extended timeout using AbortController
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 180000); // 3 minutes timeout
+      
       const response = await fetch(
         `https://swlwhjnwycvjdhgclwlx.supabase.co/functions/v1/parse-bagrut-exam`,
         {
@@ -87,8 +90,11 @@ const BagrutExamUploader: React.FC<BagrutExamUploaderProps> = ({ onExamParsed, o
             'Authorization': `Bearer ${session.access_token}`,
           },
           body: formData,
+          signal: controller.signal,
         }
       );
+      
+      clearTimeout(timeoutId);
 
       setProgress(80);
 
@@ -114,8 +120,15 @@ const BagrutExamUploader: React.FC<BagrutExamUploaderProps> = ({ onExamParsed, o
     } catch (error) {
       console.error('Error processing file:', error);
       setUploadStatus('error');
-      setErrorMessage(error instanceof Error ? error.message : 'حدث خطأ غير متوقع');
-      toast.error(error instanceof Error ? error.message : 'حدث خطأ في معالجة الملف');
+      
+      // Handle abort/timeout errors specifically
+      if (error instanceof Error && error.name === 'AbortError') {
+        setErrorMessage('انتهت مهلة المعالجة. الملف كبير جداً، يرجى المحاولة بملف أصغر.');
+        toast.error('انتهت مهلة المعالجة. الرجاء المحاولة مجدداً.');
+      } else {
+        setErrorMessage(error instanceof Error ? error.message : 'حدث خطأ غير متوقع');
+        toast.error(error instanceof Error ? error.message : 'حدث خطأ في معالجة الملف');
+      }
     }
   };
 
