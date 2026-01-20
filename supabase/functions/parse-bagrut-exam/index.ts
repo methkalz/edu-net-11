@@ -181,6 +181,7 @@ serve(async (req) => {
 - إذا كان السؤال يتضمن جدول، حوّله لـ JSON في table_data
 - إذا كان السؤال يتضمن كود أو أوامر CLI، ضعها في code_content`;
 
+    // Use gemini-2.5-flash for faster processing of large documents
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -188,7 +189,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-pro',
+        model: 'google/gemini-2.5-flash',
         messages: [
           { role: 'system', content: systemPrompt },
           {
