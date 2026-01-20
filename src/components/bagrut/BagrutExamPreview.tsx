@@ -290,6 +290,30 @@ const isInputCell = (cellValue: string) => {
   return inputIndicators.includes(cellValue?.trim() || '');
 };
 
+// Helper function to render fill_blank text with input fields
+const renderFillBlankText = (text: string) => {
+  const blankPatterns = /(_+|\.{3,}|…+|\[\.+\]|\(\s*\))/g;
+  const parts = text.split(blankPatterns);
+  
+  let blankIndex = 0;
+  return parts.map((part, index) => {
+    if (part.match(blankPatterns)) {
+      blankIndex++;
+      return (
+        <input
+          key={index}
+          type="text"
+          className="inline-block w-32 mx-1 px-2 py-1 border-b-2 border-dashed border-primary/50 
+                     bg-accent/30 text-center focus:outline-none focus:border-primary 
+                     focus:bg-background rounded"
+          placeholder={`فراغ ${blankIndex}`}
+        />
+      );
+    }
+    return <span key={index}>{part}</span>;
+  });
+};
+
 // Question Card Component
 interface QuestionCardProps {
   question: ParsedQuestion;
@@ -317,8 +341,46 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
         <Badge variant="secondary">{question.points} نقاط</Badge>
       </div>
 
-      {/* Question Text */}
-      <p className="text-foreground whitespace-pre-wrap">{question.question_text}</p>
+      {/* Question Text - with fill blanks support */}
+      {question.question_type === 'fill_blank' ? (
+        <p className="text-foreground whitespace-pre-wrap leading-8">
+          {renderFillBlankText(question.question_text)}
+        </p>
+      ) : (
+        <p className="text-foreground whitespace-pre-wrap">{question.question_text}</p>
+      )}
+
+      {/* Open-ended Answer Area */}
+      {question.question_type === 'open_ended' && (
+        <div className="mt-3">
+          <label className="text-sm font-medium text-muted-foreground mb-2 block">
+            أكتب إجابتك هنا:
+          </label>
+          <textarea
+            className="w-full min-h-[120px] p-3 border border-dashed border-muted-foreground/50 
+                       rounded-lg bg-accent/20 focus:outline-none focus:border-primary 
+                       focus:bg-background resize-y"
+            placeholder="اكتب إجابتك هنا..."
+            dir="rtl"
+          />
+        </div>
+      )}
+
+      {/* Calculation/CLI Answer Area */}
+      {(question.question_type === 'calculation' || question.question_type === 'cli_command') && (
+        <div className="mt-3">
+          <label className="text-sm font-medium text-muted-foreground mb-2 block">
+            {question.question_type === 'calculation' ? 'الحل:' : 'الأمر:'}
+          </label>
+          <textarea
+            className="w-full min-h-[80px] p-3 border border-dashed border-muted-foreground/50 
+                       rounded-lg bg-accent/20 focus:outline-none focus:border-primary 
+                       focus:bg-background font-mono"
+            placeholder={question.question_type === 'calculation' ? 'اكتب الحل...' : 'اكتب الأمر...'}
+            dir="ltr"
+          />
+        </div>
+      )}
 
       {/* Image Upload/Display */}
       {question.has_image && (
