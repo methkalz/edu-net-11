@@ -321,8 +321,36 @@ serve(async (req) => {
       throw new Error(`AI Gateway error: ${aiResponse.status}`);
     }
 
-    const aiResult = await aiResponse.json();
-    console.log('AI Response received');
+    // Read response as text first to handle incomplete responses
+    const responseText = await aiResponse.text();
+    console.log('AI Response received, length:', responseText.length);
+    
+    // Log start and end of response for debugging
+    if (responseText.length < 100) {
+      console.log('Full response:', responseText);
+    } else {
+      console.log('Response start:', responseText.substring(0, 200));
+      console.log('Response end:', responseText.substring(responseText.length - 200));
+    }
+    
+    // Parse the response with error handling
+    let aiResult;
+    try {
+      aiResult = JSON.parse(responseText);
+      console.log('AI Response parsed successfully');
+    } catch (parseError) {
+      console.error('Failed to parse AI response as JSON');
+      console.error('Parse error:', parseError);
+      console.error('Response length:', responseText.length);
+      
+      return new Response(JSON.stringify({ 
+        error: 'استجابة AI غير مكتملة. الرجاء المحاولة مرة أخرى.',
+        details: 'Response was truncated or malformed'
+      }), {
+        status: 502,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     // Extract the parsed exam from tool call
     const toolCall = aiResult.choices?.[0]?.message?.tool_calls?.[0];
@@ -332,8 +360,24 @@ serve(async (req) => {
     }
 
     console.log('Parsing tool call arguments...');
-    const parsedExam: ParsedExam = JSON.parse(toolCall.function.arguments);
-    console.log('Parsed exam successfully, sections:', parsedExam.sections?.length);
+    
+    // Parse the tool call arguments with error handling
+    let parsedExam: ParsedExam;
+    try {
+      parsedExam = JSON.parse(toolCall.function.arguments);
+      console.log('Parsed exam successfully, sections:', parsedExam.sections?.length);
+    } catch (parseError) {
+      console.error('Failed to parse tool call arguments');
+      console.error('Arguments length:', toolCall.function.arguments?.length);
+      
+      return new Response(JSON.stringify({ 
+        error: 'فشل في تحليل بيانات الامتحان. الرجاء المحاولة مرة أخرى.',
+        details: 'Tool call arguments were truncated'
+      }), {
+        status: 502,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
     
     // Calculate statistics
     let totalQuestions = 0;
