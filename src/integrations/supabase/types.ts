@@ -497,6 +497,45 @@ export type Database = {
           },
         ]
       }
+      bagrut_parsing_jobs: {
+        Row: {
+          created_at: string | null
+          current_step: string | null
+          error_message: string | null
+          file_name: string
+          id: string
+          progress: number | null
+          result: Json | null
+          status: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          current_step?: string | null
+          error_message?: string | null
+          file_name: string
+          id?: string
+          progress?: number | null
+          result?: Json | null
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          current_step?: string | null
+          error_message?: string | null
+          file_name?: string
+          id?: string
+          progress?: number | null
+          result?: Json | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       bagrut_questions: {
         Row: {
           answer_explanation: string | null
