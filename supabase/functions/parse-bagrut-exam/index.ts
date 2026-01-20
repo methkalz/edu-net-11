@@ -1,73 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { extractImages, getDocumentProxy } from "https://esm.sh/unpdf@0.12.1?bundle";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
-
-interface ExtractedImage {
-  pageNumber: number;
-  imageIndex: number;
-  base64: string;
-  width: number;
-  height: number;
-}
-
-// Extract images from PDF using unpdf library (server-side)
-async function extractImagesFromPDFServer(pdfBytes: Uint8Array): Promise<ExtractedImage[]> {
-  console.log('Extracting images from PDF server-side using unpdf...');
-  
-  try {
-    const doc = await getDocumentProxy(pdfBytes);
-    const allImages: ExtractedImage[] = [];
-    
-    console.log(`PDF has ${doc.numPages} pages`);
-    
-    for (let pageNum = 1; pageNum <= doc.numPages; pageNum++) {
-      try {
-        const images = await extractImages(doc, pageNum);
-        
-        console.log(`Page ${pageNum}: found ${images.length} images`);
-        
-        for (let i = 0; i < images.length; i++) {
-          const img = images[i];
-          
-          // Skip very small images (likely icons or artifacts)
-          if (img.width < 50 || img.height < 50) {
-            console.log(`Skipping small image on page ${pageNum}: ${img.width}x${img.height}`);
-            continue;
-          }
-          
-          // Convert image data to base64
-          const base64Data = btoa(
-            String.fromCharCode(...new Uint8Array(img.data))
-          );
-          const mimeType = img.type || 'image/png';
-          
-          allImages.push({
-            pageNumber: pageNum,
-            imageIndex: i,
-            base64: `data:${mimeType};base64,${base64Data}`,
-            width: img.width,
-            height: img.height
-          });
-          
-          console.log(`Extracted image: page ${pageNum}, index ${i}, size ${img.width}x${img.height}`);
-        }
-      } catch (pageError) {
-        console.warn(`Failed to extract images from page ${pageNum}:`, pageError);
-      }
-    }
-    
-    console.log(`Total images extracted from PDF: ${allImages.length}`);
-    return allImages;
-  } catch (error) {
-    console.error('PDF image extraction failed:', error);
-    return [];
-  }
-}
 
 interface ParsedQuestion {
   question_number: string;
@@ -76,8 +13,6 @@ interface ParsedQuestion {
   points: number;
   has_image: boolean;
   image_description?: string;
-  image_page?: number;     // Page number where the image is located
-  image_index?: number;    // Index of the image on the page (0-based)
   image_url?: string;
   has_table: boolean;
   table_data?: any;
@@ -113,14 +48,28 @@ interface ParsedExam {
   sections: ParsedSection[];
 }
 
-// Enhance an existing image using AI (NOT generate a new one)
-// This preserves the original content while improving clarity
-async function enhanceExistingImage(
+// Generate an educational image using AI
+async function generateImageFromDescription(
   apiKey: string,
-  originalImageBase64: string
+  description: string,
+  questionContext: string
 ): Promise<string | null> {
   try {
-    console.log('Enhancing existing image with Nano Banana...');
+    const prompt = `Create a clear educational diagram for a Bagrut exam question in computer science:
+
+Image Description: ${description}
+Question Context: ${questionContext.substring(0, 300)}
+
+Requirements:
+- Simple, clear technical diagram or chart
+- White or light background
+- Professional exam-style design suitable for educational materials
+- Use clean lines and shapes
+- Labels should be clear and readable
+- If showing code or data structures, use proper formatting
+- Aspect ratio: 4:3 or 16:9 for better display`;
+
+    console.log(`Generating image for: ${description.substring(0, 100)}...`);
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -130,50 +79,28 @@ async function enhanceExistingImage(
       },
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash-image-preview',
-        messages: [{
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: `Enhance this educational exam image for better clarity and readability.
-
-CRITICAL RULES - YOU MUST FOLLOW:
-1. Keep ALL text EXACTLY as is - Arabic (العربية), Hebrew (עברית), and English
-2. Do NOT modify, translate, change, or remove any labels, captions, numbers, or text content
-3. Do NOT add any new text or labels
-4. ONLY improve: image clarity, contrast, sharpness, remove noise/artifacts
-5. Maintain the exact same layout, structure, and content
-6. Output should be a cleaner, sharper version of the SAME image
-
-This is an exam image - accuracy is critical. Any text change will invalidate the exam.`
-            },
-            {
-              type: 'image_url',
-              image_url: { url: originalImageBase64 }
-            }
-          ]
-        }],
+        messages: [{ role: 'user', content: prompt }],
         modalities: ['image', 'text']
       })
     });
 
     if (!response.ok) {
-      console.error('Image enhancement failed:', response.status);
+      console.error('Image generation failed:', response.status);
       return null;
     }
     
     const data = await response.json();
-    const enhancedImageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
     
-    if (enhancedImageUrl) {
-      console.log('Image enhanced successfully');
-      return enhancedImageUrl;
+    if (imageUrl) {
+      console.log('Image generated successfully');
+      return imageUrl;
     }
     
-    console.log('No enhanced image in response');
+    console.log('No image in response');
     return null;
   } catch (error) {
-    console.error('Image enhancement error:', error);
+    console.error('Image generation error:', error);
     return null;
   }
 }
@@ -251,104 +178,64 @@ async function uploadImageToStorage(
 }
 
 // Process images for all questions that need them
-// Priority: 1. Use extracted images from frontend, 2. Skip if not available (manual upload later)
 async function processQuestionsImages(
   parsedExam: ParsedExam,
-  extractedImages: ExtractedImage[],
   apiKey: string,
   supabaseClient: any
 ): Promise<void> {
-  console.log('Starting image processing for questions with has_image=true...');
-  console.log(`Available extracted images: ${extractedImages.length}`);
-  
-  const examCode = parsedExam.exam_code || `${parsedExam.exam_year}`;
+  console.log('Starting image generation for questions with has_image=true...');
   
   for (const section of parsedExam.sections) {
     for (const question of section.questions) {
       // Process main question
-      if (question.has_image && !question.image_url) {
+      if (question.has_image && question.image_description && !question.image_url) {
         console.log(`Processing image for question ${question.question_number}...`);
         
-        // Find matching extracted image by page number and index
-        const matchingImage = extractedImages.find(
-          img => img.pageNumber === question.image_page && 
-                 img.imageIndex === (question.image_index || 0)
+        const generatedImage = await generateImageFromDescription(
+          apiKey,
+          question.image_description,
+          question.question_text
         );
         
-        if (matchingImage) {
-          console.log(`Found extracted image for question ${question.question_number}: page ${matchingImage.pageNumber}, index ${matchingImage.imageIndex}`);
-          
-          // Enhance the extracted image with Nano Banana
-          let finalImage = matchingImage.base64;
-          try {
-            const enhancedImage = await enhanceExistingImage(apiKey, matchingImage.base64);
-            if (enhancedImage) {
-              finalImage = enhancedImage;
-              console.log(`✓ Enhanced image for question ${question.question_number}`);
-            } else {
-              console.log(`Using original extracted image for question ${question.question_number} (enhancement failed)`);
-            }
-          } catch (enhanceError) {
-            console.warn(`Enhancement failed for question ${question.question_number}, using original:`, enhanceError);
-          }
-          
-          // Upload the image (enhanced or original)
+        if (generatedImage) {
           const publicUrl = await uploadImageToStorage(
             supabaseClient,
-            finalImage,
+            generatedImage,
             question.question_number,
-            examCode
+            parsedExam.exam_code || `${parsedExam.exam_year}`
           );
           
           if (publicUrl) {
             question.image_url = publicUrl;
-            console.log(`✓ Image uploaded for question ${question.question_number}`);
+            console.log(`✓ Image ready for question ${question.question_number}`);
           }
-        } else {
-          console.log(`No matching extracted image found for question ${question.question_number} (page: ${question.image_page}, index: ${question.image_index}). Image can be uploaded manually.`);
         }
       }
       
       // Process sub-questions
       if (question.sub_questions) {
         for (const subQ of question.sub_questions) {
-          const subQuestion = subQ as any;
-          if (subQuestion.has_image && !subQuestion.image_url) {
+          if ((subQ as any).has_image && (subQ as any).image_description && !(subQ as any).image_url) {
             console.log(`Processing image for sub-question ${subQ.question_number}...`);
             
-            // Find matching extracted image
-            const matchingImage = extractedImages.find(
-              img => img.pageNumber === subQuestion.image_page && 
-                     img.imageIndex === (subQuestion.image_index || 0)
+            const generatedImage = await generateImageFromDescription(
+              apiKey,
+              (subQ as any).image_description,
+              subQ.question_text
             );
             
-            if (matchingImage) {
-              console.log(`Found extracted image for sub-question ${subQ.question_number}`);
-              
-              let finalImage = matchingImage.base64;
-              try {
-                const enhancedImage = await enhanceExistingImage(apiKey, matchingImage.base64);
-                if (enhancedImage) {
-                  finalImage = enhancedImage;
-                  console.log(`✓ Enhanced image for sub-question ${subQ.question_number}`);
-                }
-              } catch (enhanceError) {
-                console.warn(`Enhancement failed for sub-question ${subQ.question_number}:`, enhanceError);
-              }
-              
+            if (generatedImage) {
               const publicUrl = await uploadImageToStorage(
                 supabaseClient,
-                finalImage,
+                generatedImage,
                 subQ.question_number,
-                examCode
+                parsedExam.exam_code || `${parsedExam.exam_year}`
               );
               
               if (publicUrl) {
-                subQuestion.image_url = publicUrl;
-                console.log(`✓ Image uploaded for sub-question ${subQ.question_number}`);
+                (subQ as any).image_url = publicUrl;
+                console.log(`✓ Image ready for sub-question ${subQ.question_number}`);
               }
-            } else {
-              console.log(`No matching extracted image for sub-question ${subQ.question_number}. Image can be uploaded manually.`);
             }
           }
         }
@@ -356,7 +243,7 @@ async function processQuestionsImages(
     }
   }
   
-  console.log('Image processing completed');
+  console.log('Image generation completed');
 }
 
 // Models to try in order (from most capable to fallback)
@@ -570,14 +457,6 @@ async function processJobInBackground(
       return;
     }
 
-    // Step 1: Extract images from PDF server-side
-    await updateJobStatus(supabase, jobId, 'processing', 15, 'جاري استخراج الصور من PDF...');
-    
-    const pdfBytes = Uint8Array.from(atob(base64Content), c => c.charCodeAt(0));
-    const extractedImages = await extractImagesFromPDFServer(pdfBytes);
-    
-    console.log(`[Job ${jobId}] Extracted ${extractedImages.length} images from PDF`);
-
     await updateJobStatus(supabase, jobId, 'processing', 20, 'جاري التعرف على هيكل الامتحان...');
 
     const userContent = [
@@ -600,13 +479,6 @@ async function processJobInBackground(
 2. الأقسام: رقم القسم، العنوان، النوع (mandatory/elective)، التخصص إن وجد
 3. الأسئلة: الرقم، النص، النوع، النقاط، الخيارات والإجابة الصحيحة
 
-**مهم جداً - ربط الصور بالأسئلة:**
-- إذا كان السؤال يحتوي على صورة أو رسم بياني أو مخطط:
-  * has_image = true
-  * image_page = رقم الصفحة التي تظهر فيها الصورة (1, 2, 3...)
-  * image_index = ترتيب الصورة في الصفحة (0 للأولى، 1 للثانية...)
-  * image_description = وصف مختصر للتحقق من الربط الصحيح
-
 **مهم جداً - استخراج الجداول:**
 - إذا احتوى السؤال على جدول، يجب استخراجه بالكامل في table_data
 - table_data يحتوي على: headers (عناوين الأعمدة) و rows (صفوف البيانات)
@@ -623,7 +495,6 @@ async function processJobInBackground(
 - fill_table: إكمال جدول
 - matching: مطابقة
 - calculation: حساب
-- cli_command: أمر CLI
 
 مهم جداً: أكمل جميع البيانات ولا تقطع الإجابة في المنتصف. استخرج جميع الجداول بدقة.`;
 
@@ -666,9 +537,7 @@ async function processJobInBackground(
                         question_type: { type: 'string' },
                         points: { type: 'number' },
                         has_image: { type: 'boolean' },
-                        image_description: { type: 'string', description: 'وصف مختصر للصورة' },
-                        image_page: { type: 'number', description: 'رقم الصفحة التي تظهر فيها الصورة (1, 2, 3...)' },
-                        image_index: { type: 'number', description: 'ترتيب الصورة في الصفحة (0 للأولى، 1 للثانية...)' },
+                        image_description: { type: 'string' },
                         has_table: { type: 'boolean' },
                         table_data: {
                           type: 'object',
@@ -788,9 +657,9 @@ async function processJobInBackground(
     
     await updateJobStatus(supabase, jobId, 'processing', 70, 'جاري معالجة الصور...');
     
-    // Process images using extracted images from server-side extraction
+    // Generate images for questions that need them
     try {
-      await processQuestionsImages(parsedExam, extractedImages, apiKey, supabase);
+      await processQuestionsImages(parsedExam, apiKey, supabase);
     } catch (imgError) {
       console.error(`[Job ${jobId}] Image processing error (non-fatal):`, imgError);
       // Continue even if image generation fails - images can be added manually
@@ -890,9 +759,6 @@ serve(async (req) => {
     const file = formData.get('file') as File;
     const fileType = formData.get('fileType') as string;
     
-    // Note: Images are now extracted server-side using unpdf library
-    // No longer rely on frontend extraction which had bundling issues
-
     if (!file) {
       return new Response(JSON.stringify({ error: 'No file provided' }), {
         status: 400,

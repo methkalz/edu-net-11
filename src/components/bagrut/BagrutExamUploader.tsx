@@ -152,7 +152,7 @@ const BagrutExamUploader: React.FC<BagrutExamUploaderProps> = ({ onExamParsed, o
 
     setUploadStatus('uploading');
     setProgress(5);
-    setCurrentStep('جاري رفع الملف للتحليل...');
+    setCurrentStep('جاري رفع الملف...');
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -160,19 +160,12 @@ const BagrutExamUploader: React.FC<BagrutExamUploaderProps> = ({ onExamParsed, o
         throw new Error('يجب تسجيل الدخول أولاً');
       }
 
-      // Images will be extracted server-side using unpdf library
-      // This avoids browser compatibility issues with pdfjs-dist
-      console.log('PDF images will be extracted server-side');
+      setProgress(10);
 
-      setProgress(15);
-      setCurrentStep('جاري رفع الملف...');
-
-      // Prepare form data - no extracted images from frontend
+      // Prepare form data
       const formData = new FormData();
       formData.append('file', selectedFile);
       formData.append('fileType', selectedFile.name.endsWith('.pdf') ? 'pdf' : 'docx');
-
-      setProgress(20);
 
       // Call edge function - this will return immediately with a job ID
       const response = await fetch(
@@ -200,7 +193,7 @@ const BagrutExamUploader: React.FC<BagrutExamUploaderProps> = ({ onExamParsed, o
       // Got job ID, start polling
       setJobId(result.jobId);
       setUploadStatus('processing');
-      setProgress(25);
+      setProgress(15);
       setCurrentStep('جاري بدء المعالجة...');
       
       // Start polling for status
@@ -285,11 +278,9 @@ const BagrutExamUploader: React.FC<BagrutExamUploaderProps> = ({ onExamParsed, o
                 </p>
               )}
               {selectedFile && uploadStatus === 'idle' && (
-                <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">
-                    الحجم: {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                  </p>
-                </div>
+                <p className="text-sm text-muted-foreground">
+                  الحجم: {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                </p>
               )}
             </div>
           </div>
