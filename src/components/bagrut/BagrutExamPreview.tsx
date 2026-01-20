@@ -15,7 +15,9 @@ import {
   Clock,
   Award,
   Layers,
-  HelpCircle
+  HelpCircle,
+  ImageIcon,
+  Table
 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -243,11 +245,58 @@ const QuestionCard: React.FC<{ question: any; showAnswers: boolean }> = ({ quest
       {/* Question Text */}
       <p className="text-foreground whitespace-pre-wrap">{question.question_text}</p>
 
-      {/* Image Indicator */}
+      {/* Image Placeholder */}
       {question.has_image && (
+        <div className="border-2 border-dashed border-muted rounded-lg p-4 bg-muted/20">
+          <div className="flex flex-col items-center gap-2 text-muted-foreground">
+            <div className="w-16 h-16 bg-muted rounded-lg flex items-center justify-center">
+              <ImageIcon className="h-8 w-8" />
+            </div>
+            <p className="text-sm font-medium">صورة مرفقة في الامتحان الأصلي</p>
+            {question.image_description && (
+              <p className="text-xs text-center max-w-md">
+                وصف: {question.image_description}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Table Display */}
+      {question.has_table && question.table_data && (
+        <div className="overflow-x-auto border rounded-lg">
+          <table className="min-w-full border-collapse">
+            {question.table_data.headers && question.table_data.headers.length > 0 && (
+              <thead>
+                <tr className="bg-muted/50">
+                  {question.table_data.headers.map((header: string, i: number) => (
+                    <th key={i} className="border border-muted p-2 text-sm font-medium text-center">
+                      {header}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+            )}
+            <tbody>
+              {question.table_data.rows?.map((row: string[], rowIndex: number) => (
+                <tr key={rowIndex} className={rowIndex % 2 === 0 ? 'bg-background' : 'bg-muted/20'}>
+                  {row.map((cell: string, cellIndex: number) => (
+                    <td key={cellIndex} className="border border-muted p-2 text-sm text-center">
+                      {cell}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Table Indicator (if no table_data) */}
+      {question.has_table && !question.table_data && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 p-2 rounded">
-          <FileText className="h-4 w-4" />
-          <span>يحتوي على صورة: {question.image_description || 'صورة مرفقة'}</span>
+          <Table className="h-4 w-4" />
+          <span>يحتوي على جدول في الامتحان الأصلي</span>
         </div>
       )}
 
