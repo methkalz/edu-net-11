@@ -24,6 +24,39 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
+interface ParsedQuestion {
+  question_number: string;
+  question_text: string;
+  question_type: string;
+  points: number;
+  has_image?: boolean;
+  image_description?: string;
+  image_url?: string;
+  has_table?: boolean;
+  table_data?: any;
+  word_bank?: string[];
+  has_code?: boolean;
+  code_content?: string;
+  choices?: Array<{ id: string; text: string; is_correct: boolean }>;
+  correct_answer?: string;
+  answer_explanation?: string;
+  sub_questions?: ParsedQuestion[];
+  topic_tags?: string[];
+  question_db_id?: string;
+}
+
+interface ParsedSection {
+  section_number: number;
+  section_title: string;
+  section_type: 'mandatory' | 'elective';
+  total_points: number;
+  specialization?: string;
+  specialization_label?: string;
+  instructions?: string;
+  questions: ParsedQuestion[];
+  section_db_id?: string;
+}
+
 interface ParsedExam {
   title: string;
   exam_year: number;
@@ -33,8 +66,10 @@ interface ParsedExam {
   duration_minutes: number;
   total_points: number;
   instructions?: string;
-  sections: any[];
+  sections: ParsedSection[];
+  exam_db_id?: string;
 }
+
 interface Statistics {
   totalSections: number;
   totalQuestions: number;
@@ -283,6 +318,69 @@ const BagrutManagement: React.FC = () => {
     setParsedExam(updatedExam);
   };
 
+  // Save edits to existing exam in database
+  const handleSaveEditsToDb = async (updatedExam: ParsedExam) => {
+    if (!updatedExam.exam_db_id) {
+      toast.error('لا يمكن حفظ التعديلات: معرف الامتحان مفقود');
+      return;
+    }
+
+    try {
+      // Collect all questions to update (recursively)
+      const collectQuestionsToUpdate = (questions: ParsedQuestion[]): ParsedQuestion[] => {
+        const result: ParsedQuestion[] = [];
+        for (const q of questions) {
+          if (q.question_db_id) {
+            result.push(q);
+          }
+          if (q.sub_questions && q.sub_questions.length > 0) {
+            result.push(...collectQuestionsToUpdate(q.sub_questions));
+          }
+        }
+        return result;
+      };
+
+      const allQuestions: ParsedQuestion[] = [];
+      for (const section of updatedExam.sections) {
+        allQuestions.push(...collectQuestionsToUpdate(section.questions));
+      }
+
+      // Update questions in parallel batches
+      const updatePromises = allQuestions.map(async (q) => {
+        if (!q.question_db_id) return;
+
+        const { error } = await supabase
+          .from('bagrut_questions')
+          .update({
+            question_text: q.question_text,
+            points: Math.round(q.points || 0),
+            choices: q.choices,
+            correct_answer: q.correct_answer,
+            answer_explanation: q.answer_explanation,
+            table_data: q.table_data,
+            code_content: q.code_content,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', q.question_db_id);
+
+        if (error) throw error;
+      });
+
+      await Promise.all(updatePromises);
+
+      toast.success('تم حفظ التعديلات بنجاح!');
+      
+      // Refresh the exam data
+      if (updatedExam.exam_db_id) {
+        await handlePreviewExam(updatedExam.exam_db_id);
+      }
+    } catch (error) {
+      console.error('Error saving edits:', error);
+      toast.error('فشل في حفظ التعديلات');
+      throw error;
+    }
+  };
+
   // Access check
   if (userProfile?.role !== 'superadmin') {
     return <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex items-center justify-center">
@@ -391,7 +489,7 @@ const BagrutManagement: React.FC = () => {
         setViewState('list');
         setParsedExam(null);
         setStatistics(null);
-      }} showSaveButton={false} />}
+      }} onExamUpdate={handleExamUpdate} onSaveEdits={handleSaveEditsToDb} showSaveButton={false} />}
       </main>
       
       <AppFooter />
