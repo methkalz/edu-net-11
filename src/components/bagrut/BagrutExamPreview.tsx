@@ -76,10 +76,11 @@ interface Statistics {
 interface BagrutExamPreviewProps {
   exam: ParsedExam;
   statistics: Statistics;
-  onSave: () => void;
+  onSave?: () => void;
   onCancel: () => void;
   onExamUpdate?: (updatedExam: ParsedExam) => void;
   isSaving?: boolean;
+  showSaveButton?: boolean;
 }
 
 const questionTypeLabels: Record<string, string> = {
@@ -140,7 +141,8 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
   onSave,
   onCancel,
   onExamUpdate,
-  isSaving = false
+  isSaving = false,
+  showSaveButton = true
 }) => {
   const [showAnswers, setShowAnswers] = useState(false);
   const [activeSection, setActiveSection] = useState('0');
@@ -297,16 +299,18 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
 
       {/* Actions */}
       <div className="flex justify-center gap-4">
-        <Button onClick={onSave} disabled={isSaving} className="gap-2">
-          {isSaving ? (
-            <>جاري الحفظ...</>
-          ) : (
-            <>
-              <Save className="h-4 w-4" />
-              حفظ الامتحان
-            </>
-          )}
-        </Button>
+        {showSaveButton && (
+          <Button onClick={onSave} disabled={isSaving || !onSave} className="gap-2">
+            {isSaving ? (
+              <>جاري الحفظ...</>
+            ) : (
+              <>
+                <Save className="h-4 w-4" />
+                حفظ الامتحان
+              </>
+            )}
+          </Button>
+        )}
         <Button variant="outline" onClick={onCancel} disabled={isSaving}>
           <X className="h-4 w-4 ml-2" />
           إلغاء
