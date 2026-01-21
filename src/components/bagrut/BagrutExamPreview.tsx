@@ -1,10 +1,11 @@
-import React, { useState, useCallback } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { 
   Eye, 
   EyeOff, 
@@ -114,6 +115,23 @@ const seasonLabels: Record<string, string> = {
   summer: 'صيف',
   winter: 'شتاء',
   spring: 'ربيع'
+};
+
+const normalizeComparable = (value?: string) => (value || '').trim().toLowerCase();
+
+const isCorrectChoice = (
+  question: ParsedQuestion,
+  choice: { id: string; text: string; is_correct?: boolean }
+) => {
+  if (choice?.is_correct) return true;
+
+  const correct = normalizeComparable(question.correct_answer);
+  if (!correct) return false;
+
+  return (
+    normalizeComparable(choice.id) === correct ||
+    normalizeComparable(choice.text) === correct
+  );
 };
 
 const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
@@ -359,6 +377,25 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   sectionIndex,
   onImageUploaded 
 }) => {
+  const isChoiceQuestion =
+    question.question_type === 'multiple_choice' ||
+    question.question_type === 'true_false' ||
+    question.question_type === 'true_false_multi';
+
+  const effectiveChoices = useMemo(() => {
+    if (question.choices && question.choices.length > 0) return question.choices;
+    if (question.question_type === 'true_false' || question.question_type === 'true_false_multi') {
+      return [
+        { id: 'صح', text: 'صح', is_correct: false },
+        { id: 'خطأ', text: 'خطأ', is_correct: false }
+      ];
+    }
+    return [];
+  }, [question.choices, question.question_type]);
+
+  const shouldWarnMissingChoices =
+    isChoiceQuestion && (!question.choices || question.choices.length === 0);
+
   return (
     <div className="border rounded-lg p-4 space-y-3">
       {/* Question Header */}
@@ -492,39 +529,73 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
       )}
 
       {/* Choices */}
-      {question.choices && question.choices.length > 0 && (
-        <div className="space-y-2">
-          {question.choices.map((choice: any, index: number) => (
-            <div 
-              key={index}
-              className={`p-2 rounded border ${
-                showAnswers && choice.is_correct 
-                  ? 'border-green-500 bg-green-50 dark:bg-green-950/30' 
-                  : 'border-muted'
-              }`}
-            >
-              <span className="font-medium ml-2">{choice.id}.</span>
-              {choice.text}
-              {showAnswers && choice.is_correct && (
-                <CheckCircle className="h-4 w-4 text-green-500 inline mr-2" />
-              )}
+      {isChoiceQuestion && (
+        <div className="space-y-3">
+          {shouldWarnMissingChoices && (
+            <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+              تحذير: لم يتم استخراج خيارات هذا السؤال من ملف الامتحان. قد لا يظهر للطالب بشكل صحيح بعد الحفظ.
             </div>
-          ))}
+          )}
+
+          {effectiveChoices.length > 0 && (
+            <RadioGroup value="" onValueChange={() => {}} className="space-y-2">
+              {effectiveChoices.map((choice, index) => {
+                const correct = showAnswers && isCorrectChoice(question, choice as any);
+                const radioId = `${question.question_number}-choice-${index}`;
+
+                return (
+                  <label
+                    key={radioId}
+                    htmlFor={radioId}
+                    className={
+                      `flex items-start gap-3 rounded-lg border p-3 transition-colors ` +
+                      (correct
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border bg-background')
+                    }
+                  >
+                    <RadioGroupItem
+                      id={radioId}
+                      value={choice.id}
+                      disabled
+                      className="mt-1"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        {choice.id && (
+                          <span className="text-sm font-medium text-muted-foreground">
+                            {choice.id}.
+                          </span>
+                        )}
+                        <span className="text-sm text-foreground">{choice.text}</span>
+                      </div>
+                    </div>
+                    {correct && (
+                      <span className="inline-flex items-center gap-1 text-sm text-primary">
+                        <CheckCircle className="h-4 w-4" />
+                        <span className="font-medium">الإجابة الصحيحة</span>
+                      </span>
+                    )}
+                  </label>
+                );
+              })}
+            </RadioGroup>
+          )}
         </div>
       )}
 
       {/* Answer & Explanation */}
       {showAnswers && (question.correct_answer || question.answer_explanation) && (
-        <div className="mt-3 p-3 bg-green-50 dark:bg-green-950/30 rounded-lg space-y-2">
+        <div className="mt-3 p-3 bg-accent/30 rounded-lg border border-border space-y-2">
           {question.correct_answer && (
             <div>
-              <span className="font-medium text-green-700 dark:text-green-400">الإجابة الصحيحة: </span>
-              <span>{question.correct_answer}</span>
+              <span className="font-medium text-foreground">الإجابة الصحيحة: </span>
+              <span className="text-foreground">{question.correct_answer}</span>
             </div>
           )}
           {question.answer_explanation && (
             <div>
-              <span className="font-medium text-green-700 dark:text-green-400">الشرح: </span>
+              <span className="font-medium text-foreground">الشرح: </span>
               <span className="text-muted-foreground">{question.answer_explanation}</span>
             </div>
           )}
