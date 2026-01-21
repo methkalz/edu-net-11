@@ -16,6 +16,8 @@ export interface ParsedQuestion {
   answer_explanation?: string;
   sub_questions?: ParsedQuestion[];
   topic_tags?: string[];
+  // DB ID for updates (only present for exams loaded from database)
+  question_db_id?: string;
 }
 
 export interface ParsedSection {
@@ -27,6 +29,8 @@ export interface ParsedSection {
   specialization_label?: string;
   instructions?: string;
   questions: ParsedQuestion[];
+  // DB ID for updates (only present for exams loaded from database)
+  section_db_id?: string;
 }
 
 export interface ParsedExam {
@@ -39,6 +43,8 @@ export interface ParsedExam {
   total_points: number;
   instructions?: string;
   sections: ParsedSection[];
+  // DB ID for updates (only present for exams loaded from database)
+  exam_db_id?: string;
 }
 
 export interface Statistics {
@@ -124,7 +130,9 @@ const buildQuestionTree = (rows: QuestionRow[]): ParsedQuestion[] => {
       correct_answer: r.correct_answer ?? undefined,
       answer_explanation: r.answer_explanation ?? undefined,
       topic_tags: r.topic_tags ?? undefined,
-      sub_questions: []
+      sub_questions: [],
+      // Add DB ID for updates
+      question_db_id: r.id
     });
   }
 
@@ -141,7 +149,7 @@ const buildQuestionTree = (rows: QuestionRow[]): ParsedQuestion[] => {
     kids.sort((a, b) => a.__order - b.__order);
     node.sub_questions = kids.map((k) => {
       attach(k);
-      // strip internal fields
+      // strip internal fields but keep question_db_id
       const { __id, __parent, __order, ...clean } = k as any;
       return clean as ParsedQuestion;
     });
@@ -152,6 +160,7 @@ const buildQuestionTree = (rows: QuestionRow[]): ParsedQuestion[] => {
 
   return roots.map((r) => {
     attach(r);
+    // strip internal fields but keep question_db_id
     const { __id, __parent, __order, ...clean } = r as any;
     return clean as ParsedQuestion;
   });
@@ -179,7 +188,7 @@ const tallyTypesRecursive = (questions: ParsedQuestion[], acc: Record<string, nu
 };
 
 export const buildBagrutPreviewFromDb = (args: {
-  exam: ExamRow;
+  exam: ExamRow & { id: string };
   sections: SectionRow[];
   questions: QuestionRow[];
 }): { exam: ParsedExam; statistics: Statistics } => {
@@ -215,7 +224,9 @@ export const buildBagrutPreviewFromDb = (args: {
       specialization: s.specialization,
       specialization_label: s.specialization_label,
       instructions: s.instructions,
-      questions: buildQuestionTree(sectionQuestions)
+      questions: buildQuestionTree(sectionQuestions),
+      // Add DB ID for updates
+      section_db_id: s.id
     };
   });
 
@@ -228,7 +239,9 @@ export const buildBagrutPreviewFromDb = (args: {
     duration_minutes: exam.duration_minutes ?? 0,
     total_points: exam.total_points ?? 0,
     instructions: exam.instructions ?? undefined,
-    sections: sectionsWithQuestions
+    sections: sectionsWithQuestions,
+    // Add DB ID for updates
+    exam_db_id: exam.id
   };
 
   const questionsByType: Record<string, number> = {};

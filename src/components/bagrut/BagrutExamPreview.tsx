@@ -12,16 +12,16 @@ import {
   Save, 
   X, 
   CheckCircle,
-  FileText,
   Clock,
   Award,
   Layers,
   HelpCircle,
-  ImageIcon,
-  Table
+  Table,
+  Pencil
 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import BagrutImageUpload from './BagrutImageUpload';
+import BagrutQuestionEditDialog from './BagrutQuestionEditDialog';
 
 interface ParsedQuestion {
   question_number: string;
@@ -41,6 +41,7 @@ interface ParsedQuestion {
   answer_explanation?: string;
   sub_questions?: ParsedQuestion[];
   topic_tags?: string[];
+  question_db_id?: string;
 }
 
 interface ParsedSection {
@@ -52,6 +53,7 @@ interface ParsedSection {
   specialization_label?: string;
   instructions?: string;
   questions: ParsedQuestion[];
+  section_db_id?: string;
 }
 
 interface ParsedExam {
@@ -64,6 +66,7 @@ interface ParsedExam {
   total_points: number;
   instructions?: string;
   sections: ParsedSection[];
+  exam_db_id?: string;
 }
 
 interface Statistics {
@@ -79,6 +82,7 @@ interface BagrutExamPreviewProps {
   onSave?: () => void;
   onCancel: () => void;
   onExamUpdate?: (updatedExam: ParsedExam) => void;
+  onSaveEdits?: (updatedExam: ParsedExam) => Promise<void>;
   isSaving?: boolean;
   showSaveButton?: boolean;
 }
@@ -141,12 +145,18 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
   onSave,
   onCancel,
   onExamUpdate,
+  onSaveEdits,
   isSaving = false,
   showSaveButton = true
 }) => {
   const [showAnswers, setShowAnswers] = useState(false);
   const [activeSection, setActiveSection] = useState('0');
   const [localExam, setLocalExam] = useState(exam);
+  const [editMode, setEditMode] = useState(false);
+  const [hasEdits, setHasEdits] = useState(false);
+  const [isSavingEdits, setIsSavingEdits] = useState(false);
+  const [editingQuestion, setEditingQuestion] = useState<ParsedQuestion | null>(null);
+  const [editingContext, setEditingContext] = useState<{ sectionIndex: number } | null>(null);
 
   // Handle image upload for a question
   const handleImageUploaded = useCallback((sectionIndex: number, questionNumber: string, imageUrl: string) => {
@@ -168,6 +178,70 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
     });
   }, [onExamUpdate]);
 
+  // Update a question in the exam (supports sub_questions recursively)
+  const updateQuestionInSection = useCallback((
+    questions: ParsedQuestion[],
+    questionNumber: string,
+    updater: (q: ParsedQuestion) => ParsedQuestion
+  ): ParsedQuestion[] => {
+    return questions.map(q => {
+      if (q.question_number === questionNumber) {
+        return updater(q);
+      }
+      if (q.sub_questions && q.sub_questions.length > 0) {
+        return {
+          ...q,
+          sub_questions: updateQuestionInSection(q.sub_questions, questionNumber, updater)
+        };
+      }
+      return q;
+    });
+  }, []);
+
+  const handleQuestionEdit = useCallback((question: ParsedQuestion, sectionIndex: number) => {
+    setEditingQuestion(question);
+    setEditingContext({ sectionIndex });
+  }, []);
+
+  const handleQuestionUpdate = useCallback((updatedQuestion: ParsedQuestion) => {
+    if (!editingContext) return;
+
+    setLocalExam(prev => {
+      const updated = { ...prev };
+      updated.sections = prev.sections.map((section, sIdx) => {
+        if (sIdx !== editingContext.sectionIndex) return section;
+        return {
+          ...section,
+          questions: updateQuestionInSection(
+            section.questions,
+            updatedQuestion.question_number,
+            () => updatedQuestion
+          )
+        };
+      });
+      onExamUpdate?.(updated);
+      return updated;
+    });
+
+    setHasEdits(true);
+    setEditingQuestion(null);
+    setEditingContext(null);
+  }, [editingContext, updateQuestionInSection, onExamUpdate]);
+
+  const handleSaveEditsClick = async () => {
+    if (!onSaveEdits) return;
+    setIsSavingEdits(true);
+    try {
+      await onSaveEdits(localExam);
+      setHasEdits(false);
+    } finally {
+      setIsSavingEdits(false);
+    }
+  };
+
+  // Check if this is a DB-loaded exam
+  const isDbExam = !!exam.exam_db_id;
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -181,16 +255,31 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
                 {exam.exam_code && ` (${exam.exam_code})`}
               </p>
             </div>
-            <div className="flex items-center gap-2">
-              <Switch
-                id="show-answers"
-                checked={showAnswers}
-                onCheckedChange={setShowAnswers}
-              />
-              <Label htmlFor="show-answers" className="flex items-center gap-1">
-                {showAnswers ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                {showAnswers ? 'إخفاء الإجابات' : 'إظهار الإجابات'}
-              </Label>
+            <div className="flex items-center gap-4">
+              {/* Edit Mode Toggle */}
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="edit-mode"
+                  checked={editMode}
+                  onCheckedChange={setEditMode}
+                />
+                <Label htmlFor="edit-mode" className="flex items-center gap-1">
+                  <Pencil className="h-4 w-4" />
+                  وضع التعديل
+                </Label>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="show-answers"
+                  checked={showAnswers}
+                  onCheckedChange={setShowAnswers}
+                />
+                <Label htmlFor="show-answers" className="flex items-center gap-1">
+                  {showAnswers ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                  {showAnswers ? 'إخفاء الإجابات' : 'إظهار الإجابات'}
+                </Label>
+              </div>
             </div>
           </div>
         </CardHeader>
@@ -287,6 +376,8 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
                         showAnswers={showAnswers}
                         sectionIndex={sectionIndex}
                         onImageUploaded={handleImageUploaded}
+                        editMode={editMode}
+                        onEdit={(q) => handleQuestionEdit(q, sectionIndex)}
                       />
                     ))}
                   </div>
@@ -299,6 +390,25 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
 
       {/* Actions */}
       <div className="flex justify-center gap-4">
+        {/* Save Edits Button - only for DB exams with edits */}
+        {isDbExam && hasEdits && onSaveEdits && (
+          <Button 
+            onClick={handleSaveEditsClick} 
+            disabled={isSavingEdits}
+            variant="default"
+            className="gap-2"
+          >
+            {isSavingEdits ? (
+              <>جاري حفظ التعديلات...</>
+            ) : (
+              <>
+                <Save className="h-4 w-4" />
+                حفظ التعديلات
+              </>
+            )}
+          </Button>
+        )}
+        
         {showSaveButton && (
           <Button onClick={onSave} disabled={isSaving || !onSave} className="gap-2">
             {isSaving ? (
@@ -311,11 +421,27 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
             )}
           </Button>
         )}
-        <Button variant="outline" onClick={onCancel} disabled={isSaving}>
+        <Button variant="outline" onClick={onCancel} disabled={isSaving || isSavingEdits}>
           <X className="h-4 w-4 ml-2" />
-          إلغاء
+          {isDbExam ? 'إغلاق' : 'إلغاء'}
         </Button>
       </div>
+
+      {/* Edit Dialog */}
+      {editingQuestion && (
+        <BagrutQuestionEditDialog
+          open={!!editingQuestion}
+          onOpenChange={(open) => {
+            if (!open) {
+              setEditingQuestion(null);
+              setEditingContext(null);
+            }
+          }}
+          question={editingQuestion}
+          questionTypeLabel={questionTypeLabels[editingQuestion.question_type] || editingQuestion.question_type}
+          onSubmit={handleQuestionUpdate}
+        />
+      )}
     </div>
   );
 };
@@ -373,13 +499,17 @@ interface QuestionCardProps {
   showAnswers: boolean;
   sectionIndex: number;
   onImageUploaded: (sectionIndex: number, questionNumber: string, imageUrl: string) => void;
+  editMode?: boolean;
+  onEdit?: (question: ParsedQuestion) => void;
 }
 
 const QuestionCard: React.FC<QuestionCardProps> = ({ 
   question, 
   showAnswers, 
   sectionIndex,
-  onImageUploaded 
+  onImageUploaded,
+  editMode = false,
+  onEdit
 }) => {
   const isChoiceQuestion =
     question.question_type === 'multiple_choice' ||
@@ -401,7 +531,19 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
     isChoiceQuestion && (!question.choices || question.choices.length === 0);
 
   return (
-    <div className="border rounded-lg p-4 space-y-3">
+    <div className="border rounded-lg p-4 space-y-3 relative group">
+      {/* Edit Button */}
+      {editMode && onEdit && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute top-2 left-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 hover:bg-accent"
+          onClick={() => onEdit(question)}
+        >
+          <Pencil className="h-4 w-4" />
+        </Button>
+      )}
+
       {/* Question Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-2">
@@ -616,6 +758,8 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               showAnswers={showAnswers}
               sectionIndex={sectionIndex}
               onImageUploaded={onImageUploaded}
+              editMode={editMode}
+              onEdit={onEdit}
             />
           ))}
         </div>
