@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { GraduationCap, Plus, FileText, Loader2, Trash2 } from 'lucide-react';
+import { GraduationCap, Plus, FileText, Loader2, Trash2, Eye } from 'lucide-react';
 import ModernHeader from '@/components/shared/ModernHeader';
 import AppFooter from '@/components/shared/AppFooter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +12,7 @@ import { useQuery } from '@tanstack/react-query';
 import BagrutExamUploader from '@/components/bagrut/BagrutExamUploader';
 import BagrutExamPreview from '@/components/bagrut/BagrutExamPreview';
 import { BagrutDevConsole } from '@/components/bagrut/BagrutDevConsole';
+import { buildBagrutPreviewFromDb } from '@/lib/bagrut/buildBagrutPreview';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,7 +41,7 @@ interface Statistics {
   questionsByType: Record<string, number>;
   totalPoints: number;
 }
-type ViewState = 'list' | 'upload' | 'preview';
+type ViewState = 'list' | 'upload' | 'preview' | 'db_preview';
 const BagrutManagement: React.FC = () => {
   const {
     userProfile
@@ -50,8 +51,51 @@ const BagrutManagement: React.FC = () => {
   const [statistics, setStatistics] = useState<Statistics | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [deletingExamId, setDeletingExamId] = useState<string | null>(null);
+  const [previewLoadingId, setPreviewLoadingId] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [examToDelete, setExamToDelete] = useState<{ id: string; title: string } | null>(null);
+
+  // Preview an existing exam from DB
+  const handlePreviewExam = async (examId: string) => {
+    setPreviewLoadingId(examId);
+    try {
+      const { data: examRow, error: examError } = await supabase
+        .from('bagrut_exams')
+        .select('*')
+        .eq('id', examId)
+        .single();
+      if (examError) throw examError;
+
+      const { data: sectionRows, error: sectionsError } = await supabase
+        .from('bagrut_exam_sections')
+        .select('*')
+        .eq('exam_id', examId)
+        .order('order_index', { ascending: true });
+      if (sectionsError) throw sectionsError;
+
+      const { data: questionRows, error: questionsError } = await supabase
+        .from('bagrut_questions')
+        .select('*')
+        .eq('exam_id', examId)
+        .order('order_index', { ascending: true });
+      if (questionsError) throw questionsError;
+
+      const rebuilt = buildBagrutPreviewFromDb({
+        exam: examRow as any,
+        sections: (sectionRows || []) as any,
+        questions: (questionRows || []) as any
+      });
+
+      setParsedExam(rebuilt.exam as any);
+      setStatistics(rebuilt.statistics as any);
+      setViewState('db_preview');
+    } catch (error) {
+      console.error('Error previewing exam:', error);
+      toast.error('حدث خطأ أثناء معاينة الامتحان');
+    } finally {
+      setPreviewLoadingId(null);
+    }
+  };
 
   // Open delete confirmation dialog
   const openDeleteDialog = (examId: string, examTitle: string) => {
@@ -273,7 +317,7 @@ const BagrutManagement: React.FC = () => {
             {isLoading ? <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div> : exams && exams.length > 0 ? <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {exams.map(exam => <Card key={exam.id} className="hover:shadow-md transition-shadow relative group">
+                 {exams.map(exam => <Card key={exam.id} className="hover:shadow-md transition-shadow relative group">
                     <CardHeader className="pb-2">
                       <CardTitle className="text-lg flex items-center gap-2">
                         <FileText className="h-5 w-5 text-orange-500" />
@@ -288,19 +332,34 @@ const BagrutManagement: React.FC = () => {
                           <span className={`px-2 py-1 rounded-full text-xs ${exam.is_published ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'}`}>
                             {exam.is_published ? 'منشور' : 'مسودة'}
                           </span>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={() => openDeleteDialog(exam.id, exam.title)}
-                            disabled={deletingExamId === exam.id}
-                          >
-                            {deletingExamId === exam.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Trash2 className="h-4 w-4" />
-                            )}
-                          </Button>
+                           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                             <Button
+                               variant="ghost"
+                               size="icon"
+                               className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                               onClick={() => handlePreviewExam(exam.id)}
+                               disabled={previewLoadingId === exam.id}
+                             >
+                               {previewLoadingId === exam.id ? (
+                                 <Loader2 className="h-4 w-4 animate-spin" />
+                               ) : (
+                                 <Eye className="h-4 w-4" />
+                               )}
+                             </Button>
+                             <Button
+                               variant="ghost"
+                               size="icon"
+                               className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                               onClick={() => openDeleteDialog(exam.id, exam.title)}
+                               disabled={deletingExamId === exam.id}
+                             >
+                               {deletingExamId === exam.id ? (
+                                 <Loader2 className="h-4 w-4 animate-spin" />
+                               ) : (
+                                 <Trash2 className="h-4 w-4" />
+                               )}
+                             </Button>
+                           </div>
                         </div>
                       </div>
                     </CardContent>
@@ -327,6 +386,12 @@ const BagrutManagement: React.FC = () => {
         setParsedExam(null);
         setStatistics(null);
       }} onExamUpdate={handleExamUpdate} isSaving={isSaving} />}
+
+        {viewState === 'db_preview' && parsedExam && statistics && <BagrutExamPreview exam={parsedExam} statistics={statistics} onCancel={() => {
+        setViewState('list');
+        setParsedExam(null);
+        setStatistics(null);
+      }} showSaveButton={false} />}
       </main>
       
       <AppFooter />
