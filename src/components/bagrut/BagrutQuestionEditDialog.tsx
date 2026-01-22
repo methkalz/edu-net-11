@@ -474,7 +474,7 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
 
             {/* Points */}
             <div className="space-y-2">
-              <Label htmlFor="points">النقاط</Label>
+              <Label htmlFor="points">العلامات</Label>
               <Input
                 id="points"
                 type="number"
