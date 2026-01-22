@@ -69,6 +69,7 @@ const ExamBankManagement = React.lazy(() => import('@/pages/ExamBankManagement')
 const BagrutManagement = React.lazy(() => import('@/pages/BagrutManagement'));
 const StudentBagrutExams = React.lazy(() => import('@/pages/StudentBagrutExams'));
 const StudentBagrutAttempt = React.lazy(() => import('@/pages/StudentBagrutAttempt'));
+const StudentBagrutSubmitted = React.lazy(() => import('@/pages/StudentBagrutSubmitted'));
 const StudentBagrutResult = React.lazy(() => import('@/pages/StudentBagrutResult'));
 const BagrutGradingPage = React.lazy(() => import('@/pages/BagrutGradingPage'));
 import { PageLoading } from "@/components/ui/LoadingComponents";
@@ -228,6 +229,10 @@ const App = () => {
                <Route 
                  path="/student/bagrut-attempt/:examId" 
                  element={<Suspense fallback={<PageLoading message="جاري تحميل الامتحان..." />}><StudentBagrutAttempt /></Suspense>} 
+               />
+               <Route 
+                 path="/student/bagrut-submitted/:examId" 
+                 element={<Suspense fallback={<PageLoading message="جاري تحميل صفحة التأكيد..." />}><StudentBagrutSubmitted /></Suspense>} 
                />
                <Route 
                  path="/bagrut-grading/:examId" 

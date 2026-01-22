@@ -94,15 +94,16 @@ export default function StudentBagrutResult() {
     enabled: !!examId && !!user?.id,
   });
 
-  // التحقق من إمكانية عرض النتائج
+  // التحقق من إمكانية عرض النتائج - يجب أن تكون هناك علامة فعلية
   const canViewResults = useMemo(() => {
     if (!data?.bestAttempt) return false;
     
-    // إذا تم نشر النتيجة
+    // إذا تم نشر النتيجة من قبل المعلم
     if (data.bestAttempt.is_result_published) return true;
     
-    // إذا كان الامتحان يسمح بعرض النتائج بعد التقديم
-    if (data.exam?.allow_review_after_submit) return true;
+    // إذا كانت هناك علامة محسوبة (تم التصحيح)
+    const hasScore = data.bestAttempt.score !== null && data.bestAttempt.percentage !== null;
+    if (hasScore && data.exam?.allow_review_after_submit) return true;
     
     return false;
   }, [data]);

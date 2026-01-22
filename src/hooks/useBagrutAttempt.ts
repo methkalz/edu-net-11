@@ -1,6 +1,6 @@
 // Hook لإدارة محاولة امتحان البجروت
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { logger } from '@/lib/logging';
 import { useToast } from '@/hooks/use-toast';
@@ -49,6 +49,7 @@ export function useBagrutAttempt(examId: string | undefined, studentId: string |
   const [selectedSectionIds, setSelectedSectionIds] = useState<string[]>([]);
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastSavedAnswersRef = useRef<string>('');
+  const hasAutoSubmittedRef = useRef<boolean>(false);
 
   // جلب بيانات الامتحان والأقسام
   const examQuery = useQuery({
@@ -323,6 +324,44 @@ export function useBagrutAttempt(examId: string | undefined, studentId: string |
     saveAnswersMutation.mutate(answers);
   }, [answers, saveAnswersMutation]);
 
+  // حساب إذا انتهى وقت المحاولة (يستمر حتى لو خرج الطالب من الصفحة)
+  const isTimeExpired = useMemo(() => {
+    if (!attemptStartedAt || !examQuery.data?.exam.duration_minutes) return false;
+    const startTime = new Date(attemptStartedAt).getTime();
+    const durationMs = examQuery.data.exam.duration_minutes * 60 * 1000;
+    const endTime = startTime + durationMs;
+    return Date.now() > endTime;
+  }, [attemptStartedAt, examQuery.data?.exam.duration_minutes]);
+
+  // حساب الوقت المتبقي بالثواني
+  const remainingSeconds = useMemo(() => {
+    if (!attemptStartedAt || !examQuery.data?.exam.duration_minutes) return 0;
+    const startTime = new Date(attemptStartedAt).getTime();
+    const durationMs = examQuery.data.exam.duration_minutes * 60 * 1000;
+    const endTime = startTime + durationMs;
+    const remaining = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
+    return remaining;
+  }, [attemptStartedAt, examQuery.data?.exam.duration_minutes]);
+
+  // تقديم تلقائي عند انتهاء الوقت
+  const autoSubmitOnTimeExpired = useCallback(() => {
+    if (isTimeExpired && attemptId && !hasAutoSubmittedRef.current && !submitExamMutation.isPending) {
+      hasAutoSubmittedRef.current = true;
+      logger.info('تقديم تلقائي - انتهى وقت الامتحان');
+      toast({
+        title: 'انتهى وقت الامتحان',
+        description: 'تم تقديم إجاباتك تلقائياً',
+        variant: 'destructive',
+      });
+      submitExamMutation.mutate();
+    }
+  }, [isTimeExpired, attemptId, submitExamMutation, toast]);
+
+  // تنفيذ التقديم التلقائي عند انتهاء الوقت
+  useEffect(() => {
+    autoSubmitOnTimeExpired();
+  }, [autoSubmitOnTimeExpired]);
+
   return {
     examData: examQuery.data,
     isLoading: examQuery.isLoading,
@@ -340,6 +379,8 @@ export function useBagrutAttempt(examId: string | undefined, studentId: string |
     isSaving: saveAnswersMutation.isPending,
     isSubmitting: submitExamMutation.isPending,
     isSubmitted: submitExamMutation.isSuccess,
+    isTimeExpired,
+    remainingSeconds,
   };
 }
 
