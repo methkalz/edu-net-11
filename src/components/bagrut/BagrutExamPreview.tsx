@@ -690,7 +690,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                     key={radioId}
                     htmlFor={radioId}
                     className={
-                      `flex items-start gap-3 rounded-lg border p-3 transition-colors ` +
+                      `flex items-center gap-3 rounded-lg border p-3 transition-colors ` +
                       (correct
                         ? 'border-primary bg-primary/5'
                         : 'border-border bg-background')
@@ -700,16 +700,11 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                       id={radioId}
                       value={choice.id}
                       disabled
-                      className="mt-1"
                     />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-muted-foreground">
-                          {index + 1}.
-                        </span>
-                        <span className="text-sm text-foreground">{choice.text}</span>
-                      </div>
-                    </div>
+                    <span className="text-sm font-medium text-muted-foreground">
+                      {index + 1}.
+                    </span>
+                    <span className="text-sm text-foreground flex-1">{choice.text}</span>
                     {correct && (
                       <span className="inline-flex items-center gap-1 text-sm text-primary">
                         <CheckCircle className="h-4 w-4" />
