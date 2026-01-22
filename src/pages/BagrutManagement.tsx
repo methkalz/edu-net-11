@@ -458,7 +458,7 @@ const BagrutManagement: React.FC = () => {
                         <p>
                           معرف الامتحان: {(exam.exam_code || '—')}
                         </p>
-                        <p>{exam.duration_minutes} دقيقة | {exam.total_points} نقطة</p>
+                        <p>{exam.duration_minutes} دقيقة | {exam.total_points} علامة</p>
                         <div className="flex items-center justify-between mt-3">
                           <span className={`px-2 py-1 rounded-full text-xs ${exam.is_published ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'}`}>
                             {exam.is_published ? 'منشور' : 'مسودة'}

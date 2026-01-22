@@ -492,6 +492,61 @@ const normalizeExamForReliability = (parsedExam: ParsedExam) => {
   });
 };
 
+// Distribute points automatically to questions with 0 points
+const distributePoints = (parsedExam: ParsedExam) => {
+  for (const section of parsedExam.sections || []) {
+    const questions = section.questions || [];
+    const sectionPoints = section.total_points || 0;
+    
+    // 1. Calculate main questions without points
+    const mainQuestionsWithZero = questions.filter(q => !q.points || q.points === 0);
+    const assignedMainPoints = questions.reduce((sum, q) => sum + (q.points || 0), 0);
+    
+    // 2. Distribute remaining points to main questions equally
+    if (mainQuestionsWithZero.length > 0) {
+      const remaining = sectionPoints - assignedMainPoints;
+      if (remaining > 0) {
+        const perQuestion = Math.floor(remaining / mainQuestionsWithZero.length);
+        mainQuestionsWithZero.forEach(q => { q.points = perQuestion; });
+      }
+    }
+    
+    // 3. Handle sub-questions - distribute parent points to children
+    for (const q of questions) {
+      if (q.sub_questions && q.sub_questions.length > 0) {
+        const parentPoints = q.points || 0;
+        const subWithZero = q.sub_questions.filter(s => !s.points || s.points === 0);
+        const assignedSubPoints = q.sub_questions.reduce((sum, s) => sum + (s.points || 0), 0);
+        
+        if (subWithZero.length > 0) {
+          const remainingSub = parentPoints - assignedSubPoints;
+          if (remainingSub > 0) {
+            const perSub = Math.floor(remainingSub / subWithZero.length);
+            subWithZero.forEach(s => { s.points = perSub; });
+          }
+        }
+        
+        // Handle deeper nested sub_questions
+        for (const sub of q.sub_questions) {
+          if (sub.sub_questions && sub.sub_questions.length > 0) {
+            const subParentPoints = sub.points || 0;
+            const deepWithZero = sub.sub_questions.filter(d => !d.points || d.points === 0);
+            const assignedDeep = sub.sub_questions.reduce((sum, d) => sum + (d.points || 0), 0);
+            
+            if (deepWithZero.length > 0) {
+              const remainingDeep = subParentPoints - assignedDeep;
+              if (remainingDeep > 0) {
+                const perDeep = Math.floor(remainingDeep / deepWithZero.length);
+                deepWithZero.forEach(d => { d.points = perDeep; });
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+};
+
 const tableHasCorrectAnswers = (tableData: any) => {
   return !!(tableData?.correct_answers && typeof tableData.correct_answers === 'object' && Object.keys(tableData.correct_answers).length > 0);
 };
@@ -634,7 +689,29 @@ async function processJobInBackground(
 
 1. معلومات الامتحان: العنوان، السنة، الموسم (summer/winter/spring)، المادة، المدة بالدقائق، مجموع العلامات
 2. الأقسام: رقم القسم، العنوان، النوع (mandatory/elective)، التخصص إن وجد
-3. الأسئلة: الرقم، النص، النوع، النقاط، الخيارات
+3. الأسئلة: الرقم، النص، النوع، العلامات، الخيارات
+
+**قواعد استخراج العلامات (مهم جداً - لا تترك علامات السؤال = 0):**
+1. ابحث عن توزيع العلامات في الملف - عادة يكون مذكوراً في:
+   - بداية كل قسم (مثل: "60 علامة" أو "40 علامة")
+   - بجانب كل سؤال رئيسي (مثل: "سؤال 1 (20 علامات)")
+   - في جدول توزيع العلامات
+   - بين قوسين بجانب رقم السؤال
+
+2. إذا كانت العلامات مذكورة للقسم فقط وليس للأسئلة الفردية:
+   - قسّم علامات القسم بالتساوي على الأسئلة الرئيسية
+   - مثال: قسم 60 علامة فيه 3 أسئلة = 20 علامة لكل سؤال
+
+3. للأسئلة الفرعية:
+   - العلامات الفرعية يجب أن تجمع = علامات السؤال الأم
+   - إذا لم تكن محددة، وزعها بالتساوي
+
+4. تأكد أن مجموع علامات جميع الأسئلة = total_points للامتحان
+
+5. **للقسم الاختياري (التخصص):**
+   - كل تخصص يُعامل كقسم منفصل (section_type = 'elective')
+   - ضع اسم التخصص في specialization ووصفه في specialization_label
+   - علامات التخصص توزع على أسئلته فقط
 
 **قواعد استخراج الإجابات (مهم جداً):**
 - لا تخمّن الإجابات ولا تستنتجها من معرفتك.
@@ -902,6 +979,15 @@ async function processJobInBackground(
       normalizeExamForReliability(parsedExam);
     } catch (e) {
       console.error(`[Job ${jobId}] normalizeExamForReliability failed (non-fatal):`, e);
+    }
+
+    // Distribute points automatically to questions with 0 points
+    await updateJobStatus(supabase, jobId, 'processing', 67, 'جاري توزيع العلامات...');
+    try {
+      distributePoints(parsedExam);
+      console.log(`[Job ${jobId}] Points distribution completed`);
+    } catch (e) {
+      console.error(`[Job ${jobId}] distributePoints failed (non-fatal):`, e);
     }
 
     // Accuracy-first: attempt to extract explicit correct answers for table input cells (when present in the PDF)

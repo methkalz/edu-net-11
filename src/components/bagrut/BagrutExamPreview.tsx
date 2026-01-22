@@ -248,8 +248,8 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
             <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
               <Award className="h-5 w-5 text-orange-500" />
               <div>
-                <p className="text-sm text-muted-foreground">مجموع النقاط</p>
-                <p className="font-semibold">{statistics.totalPoints} نقطة</p>
+                <p className="text-sm text-muted-foreground">مجموع العلامات</p>
+                <p className="font-semibold">{statistics.totalPoints} علامة</p>
               </div>
             </div>
             <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
@@ -312,7 +312,7 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
                       </p>
                     )}
                   </div>
-                  <Badge>{section.total_points} نقطة</Badge>
+                  <Badge>{section.total_points} علامة</Badge>
                 </div>
                 {section.instructions && (
                   <p className="text-sm text-muted-foreground mt-2">{section.instructions}</p>
@@ -548,7 +548,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
             {questionTypeLabels[question.question_type] || question.question_type}
           </Badge>
         </div>
-        <Badge variant="secondary">{question.points} نقاط</Badge>
+        <Badge variant="secondary">{question.points} علامة</Badge>
       </div>
 
       {/* Question Text - with fill blanks support */}
