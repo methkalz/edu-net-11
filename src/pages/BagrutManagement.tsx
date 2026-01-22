@@ -244,10 +244,7 @@ const BagrutManagement: React.FC = () => {
     const safeChoices = question?.choices ? JSON.parse(JSON.stringify(question.choices)) : null;
     const safeCorrectAnswerData = correctAnswerData ? JSON.parse(JSON.stringify(correctAnswerData)) : null;
 
-    const {
-      data: questionData,
-      error: questionError
-    } = await (supabase.from('bagrut_questions') as any).insert({
+    const insertPayload: any = {
       exam_id: examId,
       section_id: sectionId,
       question_number: question.question_number,
@@ -269,7 +266,12 @@ const BagrutManagement: React.FC = () => {
       sub_question_label: question.sub_question_label,
       topic_tags: question.topic_tags || [],
       order_index: orderIndex
-    }).select().single();
+    };
+
+    const {
+      data: questionData,
+      error: questionError
+    } = await (supabase.from('bagrut_questions') as any).insert(insertPayload).select().single();
     if (questionError) throw questionError;
 
     // Insert sub-questions recursively
@@ -324,18 +326,20 @@ const BagrutManagement: React.FC = () => {
         const safeChoices = (q as any).choices ? JSON.parse(JSON.stringify((q as any).choices)) : null;
         const safeCorrectAnswerData = correctAnswerData ? JSON.parse(JSON.stringify(correctAnswerData)) : null;
 
+        const updatePayload: any = {
+          question_text: q.question_text,
+          points: Math.round(q.points || 0),
+          choices: safeChoices,
+          correct_answer: q.correct_answer,
+          correct_answer_data: safeCorrectAnswerData,
+          answer_explanation: q.answer_explanation,
+          table_data: safeTableData,
+          code_content: q.code_content,
+          updated_at: new Date().toISOString()
+        };
+
         const { error } = await (supabase.from('bagrut_questions') as any)
-          .update({
-            question_text: q.question_text,
-            points: Math.round(q.points || 0),
-            choices: safeChoices,
-            correct_answer: q.correct_answer,
-            correct_answer_data: safeCorrectAnswerData,
-            answer_explanation: q.answer_explanation,
-            table_data: safeTableData,
-            code_content: q.code_content,
-            updated_at: new Date().toISOString()
-          })
+          .update(updatePayload)
           .eq('id', q.question_db_id);
 
         if (error) throw error;
