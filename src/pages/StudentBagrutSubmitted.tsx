@@ -141,8 +141,8 @@ export default function StudentBagrutSubmitted() {
 
             {/* رسالة المراجعة */}
             <div className="bg-white/60 dark:bg-black/20 rounded-xl p-4 max-w-md mx-auto">
-              <div className="flex items-start gap-3 text-right">
-                <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+              <div className="flex flex-col items-center gap-2 text-center">
+                <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
                 <div>
                   <p className="font-medium text-foreground">
                     سيتم مراجعة إجاباتك من قبل المعلم
