@@ -36,6 +36,7 @@ import { StudentDailyChallenges } from './StudentDailyChallenges';
 import StudentNotifications from './StudentNotifications';
 import { StudentExamsWidget } from './StudentExamsWidget';
 import { StudentExamsSection } from './StudentExamsSection';
+import StudentBagrutWidget from './StudentBagrutWidget';
 import { SchoolCalendarWidget } from '@/components/calendar/SchoolCalendarWidget';
 import { UniversalAvatar } from '@/components/shared/UniversalAvatar';
 import { UserTitleBadge } from '@/components/shared/UserTitleBadge';
@@ -307,6 +308,11 @@ const StudentDashboard: React.FC = () => {
 
                 {/* Student Notifications */}
                 <StudentNotifications />
+
+                {/* Bagrut Exams Widget - for grades 11 and 12 */}
+                {(assignedGrade === '11' || assignedGrade === '12') && (
+                  <StudentBagrutWidget gradeLevel={assignedGrade} />
+                )}
 
                 {/* Exams Widget */}
                 <StudentExamsWidget />

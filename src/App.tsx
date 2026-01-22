@@ -67,6 +67,7 @@ const StudentExamResultPage = React.lazy(() => import('@/pages/StudentExamResult
 const GradeExamsAnalytics = React.lazy(() => import('@/pages/GradeExamsAnalytics'));
 const ExamBankManagement = React.lazy(() => import('@/pages/ExamBankManagement'));
 const BagrutManagement = React.lazy(() => import('@/pages/BagrutManagement'));
+const StudentBagrutExams = React.lazy(() => import('@/pages/StudentBagrutExams'));
 import { PageLoading } from "@/components/ui/LoadingComponents";
 
 /**
@@ -214,6 +215,12 @@ const App = () => {
                <Route 
                  path="/bagrut-management" 
                  element={<Suspense fallback={<PageLoading message="جاري تحميل إدارة امتحانات البجروت..." />}><BagrutManagement /></Suspense>} 
+               />
+               
+               {/* Student Bagrut Exams routes */}
+               <Route 
+                 path="/student/bagrut-exams" 
+                 element={<Suspense fallback={<PageLoading message="جاري تحميل امتحانات البجروت..." />}><StudentBagrutExams /></Suspense>} 
                />
                
                  {/* Game routes */}
