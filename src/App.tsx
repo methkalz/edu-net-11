@@ -68,6 +68,9 @@ const GradeExamsAnalytics = React.lazy(() => import('@/pages/GradeExamsAnalytics
 const ExamBankManagement = React.lazy(() => import('@/pages/ExamBankManagement'));
 const BagrutManagement = React.lazy(() => import('@/pages/BagrutManagement'));
 const StudentBagrutExams = React.lazy(() => import('@/pages/StudentBagrutExams'));
+const StudentBagrutAttempt = React.lazy(() => import('@/pages/StudentBagrutAttempt'));
+const StudentBagrutResult = React.lazy(() => import('@/pages/StudentBagrutResult'));
+const BagrutGradingPage = React.lazy(() => import('@/pages/BagrutGradingPage'));
 import { PageLoading } from "@/components/ui/LoadingComponents";
 
 /**
@@ -221,6 +224,18 @@ const App = () => {
                <Route 
                  path="/student/bagrut-exams" 
                  element={<Suspense fallback={<PageLoading message="جاري تحميل امتحانات البجروت..." />}><StudentBagrutExams /></Suspense>} 
+               />
+               <Route 
+                 path="/student/bagrut-attempt/:examId" 
+                 element={<Suspense fallback={<PageLoading message="جاري تحميل الامتحان..." />}><StudentBagrutAttempt /></Suspense>} 
+               />
+               <Route 
+                 path="/bagrut-grading/:examId" 
+                 element={<Suspense fallback={<PageLoading message="جاري تحميل صفحة التصحيح..." />}><BagrutGradingPage /></Suspense>} 
+               />
+               <Route 
+                 path="/student/bagrut-results/:examId" 
+                 element={<Suspense fallback={<PageLoading message="جاري تحميل النتائج..." />}><StudentBagrutResult /></Suspense>} 
                />
                
                  {/* Game routes */}

@@ -368,8 +368,6 @@ function mapDbQuestionToParsed(dbQ: any, allQuestions: any[]): ParsedQuestion {
     blanks: dbQ.correct_answer_data?.blanks || undefined,
     word_bank: dbQ.correct_answer_data?.word_bank || undefined,
     topic_tags: dbQ.topic_tags || undefined,
-    difficulty_level: dbQ.difficulty_level || undefined,
-    is_bonus: dbQ.is_bonus || false,
     sub_questions: subQuestions.length > 0 ? subQuestions : undefined,
     question_db_id: dbQ.id,
   };
