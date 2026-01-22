@@ -13,6 +13,7 @@ import BagrutExamUploader from '@/components/bagrut/BagrutExamUploader';
 import BagrutExamPreview from '@/components/bagrut/BagrutExamPreview';
 import { BagrutDevConsole } from '@/components/bagrut/BagrutDevConsole';
 import { buildBagrutPreviewFromDb } from '@/lib/bagrut/buildBagrutPreview';
+import type { ParsedExam, Statistics, ParsedQuestion } from '@/lib/bagrut/buildBagrutPreview';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,58 +25,12 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-interface ParsedQuestion {
-  question_number: string;
-  question_text: string;
-  question_type: string;
-  points: number;
-  has_image?: boolean;
-  image_description?: string;
-  image_url?: string;
-  has_table?: boolean;
-  table_data?: any;
-  word_bank?: string[];
-  has_code?: boolean;
-  code_content?: string;
-  choices?: Array<{ id: string; text: string; is_correct: boolean }>;
-  correct_answer?: string;
-  answer_explanation?: string;
-  sub_questions?: ParsedQuestion[];
-  topic_tags?: string[];
-  question_db_id?: string;
-}
-
-interface ParsedSection {
-  section_number: number;
-  section_title: string;
-  section_type: 'mandatory' | 'elective';
-  total_points: number;
-  specialization?: string;
-  specialization_label?: string;
-  instructions?: string;
-  questions: ParsedQuestion[];
-  section_db_id?: string;
-}
-
-interface ParsedExam {
-  title: string;
-  exam_year: number;
-  exam_season: string;
-  exam_code?: string;
-  subject: string;
-  duration_minutes: number;
-  total_points: number;
-  instructions?: string;
-  sections: ParsedSection[];
-  exam_db_id?: string;
-}
-
-interface Statistics {
-  totalSections: number;
+type AnswersReport = {
   totalQuestions: number;
-  questionsByType: Record<string, number>;
-  totalPoints: number;
-}
+  answeredCount: number;
+  unansweredCount: number;
+  unansweredList: Array<{ question_number: string; question_type: string; reason: string }>;
+};
 type ViewState = 'list' | 'upload' | 'preview' | 'db_preview';
 const BagrutManagement: React.FC = () => {
   const {
@@ -84,6 +39,7 @@ const BagrutManagement: React.FC = () => {
   const [viewState, setViewState] = useState<ViewState>('list');
   const [parsedExam, setParsedExam] = useState<ParsedExam | null>(null);
   const [statistics, setStatistics] = useState<Statistics | null>(null);
+  const [answersReport, setAnswersReport] = useState<AnswersReport | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [deletingExamId, setDeletingExamId] = useState<string | null>(null);
   const [previewLoadingId, setPreviewLoadingId] = useState<string | null>(null);
@@ -202,9 +158,10 @@ const BagrutManagement: React.FC = () => {
   });
 
   // Handle exam parsed from uploader
-  const handleExamParsed = (exam: ParsedExam, stats: Statistics) => {
+  const handleExamParsed = (exam: ParsedExam, stats: Statistics, report?: AnswersReport) => {
     setParsedExam(exam);
     setStatistics(stats);
+    setAnswersReport(report || null);
     setViewState('preview');
   };
 
@@ -267,6 +224,7 @@ const BagrutManagement: React.FC = () => {
       setViewState('list');
       setParsedExam(null);
       setStatistics(null);
+      setAnswersReport(null);
       refetch();
     } catch (error) {
       console.error('Error saving exam:', error);
@@ -278,10 +236,18 @@ const BagrutManagement: React.FC = () => {
 
   // Recursive function to insert questions
   const insertQuestion = async (examId: string, sectionId: string, question: any, orderIndex: number, parentId: string | null) => {
+    const correctAnswerData =
+      question?.correct_answer_data ??
+      (question?.blanks?.length ? { blanks: question.blanks } : null);
+
+    const safeTableData = question?.table_data ? JSON.parse(JSON.stringify(question.table_data)) : null;
+    const safeChoices = question?.choices ? JSON.parse(JSON.stringify(question.choices)) : null;
+    const safeCorrectAnswerData = correctAnswerData ? JSON.parse(JSON.stringify(correctAnswerData)) : null;
+
     const {
       data: questionData,
       error: questionError
-    } = await supabase.from('bagrut_questions').insert({
+    } = await (supabase.from('bagrut_questions') as any).insert({
       exam_id: examId,
       section_id: sectionId,
       question_number: question.question_number,
@@ -292,11 +258,12 @@ const BagrutManagement: React.FC = () => {
       image_alt_text: question.image_description,
       image_url: question.image_url || null,
       has_table: question.has_table || false,
-      table_data: question.table_data,
+      table_data: safeTableData,
       has_code: question.has_code || false,
       code_content: question.code_content,
-      choices: question.choices,
+      choices: safeChoices,
       correct_answer: question.correct_answer,
+      correct_answer_data: safeCorrectAnswerData,
       answer_explanation: question.answer_explanation,
       parent_question_id: parentId,
       sub_question_label: question.sub_question_label,
@@ -349,15 +316,23 @@ const BagrutManagement: React.FC = () => {
       const updatePromises = allQuestions.map(async (q) => {
         if (!q.question_db_id) return;
 
-        const { error } = await supabase
-          .from('bagrut_questions')
+        const correctAnswerData =
+          (q as any).correct_answer_data ??
+          ((q as any).blanks?.length ? { blanks: (q as any).blanks } : null);
+
+        const safeTableData = (q as any).table_data ? JSON.parse(JSON.stringify((q as any).table_data)) : null;
+        const safeChoices = (q as any).choices ? JSON.parse(JSON.stringify((q as any).choices)) : null;
+        const safeCorrectAnswerData = correctAnswerData ? JSON.parse(JSON.stringify(correctAnswerData)) : null;
+
+        const { error } = await (supabase.from('bagrut_questions') as any)
           .update({
             question_text: q.question_text,
             points: Math.round(q.points || 0),
-            choices: q.choices,
+            choices: safeChoices,
             correct_answer: q.correct_answer,
+            correct_answer_data: safeCorrectAnswerData,
             answer_explanation: q.answer_explanation,
-            table_data: q.table_data,
+            table_data: safeTableData,
             code_content: q.code_content,
             updated_at: new Date().toISOString()
           })
@@ -479,16 +454,42 @@ const BagrutManagement: React.FC = () => {
 
         {viewState === 'upload' && <BagrutExamUploader onExamParsed={handleExamParsed} onCancel={() => setViewState('list')} />}
 
-        {viewState === 'preview' && parsedExam && statistics && <BagrutExamPreview exam={parsedExam} statistics={statistics} onSave={handleSaveExam} onCancel={() => {
-        setViewState('list');
-        setParsedExam(null);
-        setStatistics(null);
-      }} onExamUpdate={handleExamUpdate} isSaving={isSaving} />}
+        {viewState === 'preview' && parsedExam && statistics && <div className="space-y-4">
+            {answersReport && <Card>
+                <CardContent className="py-4">
+                  {answersReport.answeredCount > 0 ? <div className="space-y-2">
+                      <p className="font-medium text-center">تم العثور على إجابات لـ {answersReport.answeredCount} سؤال</p>
+                      {answersReport.unansweredCount > 0 ? <p className="text-sm text-muted-foreground text-center">
+                          لم يتم العثور على إجابات لـ {answersReport.unansweredCount} سؤال في الملف أو تعذر التعرف عليها.
+                        </p> : <p className="text-sm text-muted-foreground text-center">كل الأسئلة التي لها إجابات في الملف تم التقاطها.</p>}
+                      {answersReport.unansweredCount > 0 && <div className="text-sm text-muted-foreground">
+                          <p className="font-medium mb-2">أسئلة بدون إجابات مكتشفة (مختصر):</p>
+                          <div className="flex flex-wrap gap-2">
+                            {answersReport.unansweredList.slice(0, 20).map((q, idx) => <span key={`${q.question_number}-${idx}`} className="px-2 py-1 rounded bg-muted">
+                                {q.question_number || '—'}
+                              </span>)}
+                            {answersReport.unansweredList.length > 20 && <span className="px-2 py-1 rounded bg-muted">+{answersReport.unansweredList.length - 20}</span>}
+                          </div>
+                        </div>}
+                    </div> : <p className="text-sm text-muted-foreground text-center">
+                      لم يتم العثور على إجابات في الملف المرفق أو تعذر التعرف عليها. يمكنك إدخال الإجابات يدويًا قبل نشر الامتحان.
+                    </p>}
+                </CardContent>
+              </Card>}
+
+            <BagrutExamPreview exam={parsedExam} statistics={statistics} onSave={handleSaveExam} onCancel={() => {
+          setViewState('list');
+          setParsedExam(null);
+          setStatistics(null);
+          setAnswersReport(null);
+        }} onExamUpdate={handleExamUpdate} isSaving={isSaving} />
+          </div>}
 
         {viewState === 'db_preview' && parsedExam && statistics && <BagrutExamPreview exam={parsedExam} statistics={statistics} onCancel={() => {
         setViewState('list');
         setParsedExam(null);
         setStatistics(null);
+        setAnswersReport(null);
       }} onExamUpdate={handleExamUpdate} onSaveEdits={handleSaveEditsToDb} showSaveButton={false} />}
       </main>
       
