@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { GraduationCap, Plus, FileText, Loader2, Trash2, Eye, Pencil } from 'lucide-react';
+import { GraduationCap, Plus, FileText, Loader2, Trash2, Eye, Pencil, Send } from 'lucide-react';
 import ModernHeader from '@/components/shared/ModernHeader';
 import AppFooter from '@/components/shared/AppFooter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import BagrutExamUploader from '@/components/bagrut/BagrutExamUploader';
 import BagrutExamPreview from '@/components/bagrut/BagrutExamPreview';
+import BagrutPublishDialog from '@/components/bagrut/BagrutPublishDialog';
 import { BagrutDevConsole } from '@/components/bagrut/BagrutDevConsole';
 import { buildBagrutPreviewFromDb } from '@/lib/bagrut/buildBagrutPreview';
 import type { ParsedExam, Statistics, ParsedQuestion } from '@/lib/bagrut/buildBagrutPreview';
@@ -59,6 +60,15 @@ const BagrutManagement: React.FC = () => {
   const [editIdentifierOpen, setEditIdentifierOpen] = useState(false);
   const [examToEditIdentifier, setExamToEditIdentifier] = useState<{ id: string; title: string; exam_code?: string | null } | null>(null);
   const [editedExamCode, setEditedExamCode] = useState('');
+
+  // حالة dialog النشر
+  const [publishDialogOpen, setPublishDialogOpen] = useState(false);
+  const [examToPublish, setExamToPublish] = useState<any>(null);
+
+  const openPublishDialog = (exam: any) => {
+    setExamToPublish(exam);
+    setPublishDialogOpen(true);
+  };
 
   // Preview an existing exam from DB
   const handlePreviewExam = async (examId: string) => {
@@ -467,6 +477,15 @@ const BagrutManagement: React.FC = () => {
                              <Button
                                variant="ghost"
                                size="icon"
+                               className="h-8 w-8 text-muted-foreground hover:text-primary"
+                               onClick={() => openPublishDialog(exam)}
+                               title="إعدادات النشر"
+                             >
+                               <Send className="h-4 w-4" />
+                             </Button>
+                             <Button
+                               variant="ghost"
+                               size="icon"
                                className="h-8 w-8 text-muted-foreground hover:text-foreground"
                                onClick={() => openEditIdentifierDialog(exam as any)}
                                title="تعديل معرف الامتحان"
@@ -620,6 +639,14 @@ const BagrutManagement: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Publish Dialog */}
+      <BagrutPublishDialog
+        open={publishDialogOpen}
+        onOpenChange={setPublishDialogOpen}
+        exam={examToPublish}
+        onSuccess={() => refetch()}
+      />
     </div>;
 };
 export default BagrutManagement;
