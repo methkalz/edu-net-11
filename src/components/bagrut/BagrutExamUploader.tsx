@@ -247,6 +247,14 @@ const BagrutExamUploader: React.FC<BagrutExamUploaderProps> = ({ onExamParsed, o
     }
   };
 
+  const getDisplayStepText = (step: string) => {
+    // Normalize backend/model-specific messages into user-friendly branding
+    if (step.includes('google/gemini-2.5-pro')) {
+      return 'جاري التحليل باستخدام موديل Edunet Ai';
+    }
+    return step;
+  };
+
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader className="flex flex-row items-center justify-between">
@@ -291,11 +299,13 @@ const BagrutExamUploader: React.FC<BagrutExamUploaderProps> = ({ onExamParsed, o
           <div className="space-y-2">
             <Progress value={progress} className="h-2" />
             <p className="text-sm text-center text-muted-foreground">
-              {progress}% - {uploadStatus === 'uploading' ? 'رفع الملف' : 'تحليل بالذكاء الاصطناعي'}
+              {uploadStatus === 'uploading'
+                ? `جاري رفع الملف — ${progress}%`
+                : `نقوم حاليًا بتحليل الإمتحان — ${progress}%`}
             </p>
             {currentStep && (
               <p className="text-sm text-center text-primary font-medium animate-pulse">
-                {currentStep}
+                {getDisplayStepText(currentStep)}
               </p>
             )}
             {uploadStatus === 'processing' && (
