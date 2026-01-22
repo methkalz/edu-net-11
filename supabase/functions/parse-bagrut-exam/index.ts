@@ -311,15 +311,16 @@ function repairTruncatedJSON(jsonString: string): ParsedExam | null {
   }
 }
 
-// Call AI with a specific model
+// Call AI with a specific model (supports different tool names)
 async function callAIWithModel(
   model: string,
   apiKey: string,
   systemPrompt: string,
   userContent: any[],
   toolSchema: any,
+  toolName: string = 'parse_bagrut_exam',
   timeoutMs: number = 180000
-): Promise<{ success: boolean; parsedExam?: ParsedExam; error?: string }> {
+): Promise<{ success: boolean; parsedExam?: ParsedExam; toolArgs?: any; error?: string }> {
   
   console.log(`Trying model: ${model}`);
   
@@ -340,7 +341,7 @@ async function callAIWithModel(
           { role: 'user', content: userContent }
         ],
         tools: [toolSchema],
-        tool_choice: { type: 'function', function: { name: 'parse_bagrut_exam' } }
+        tool_choice: { type: 'function', function: { name: toolName } }
       }),
       signal: controller.signal,
     });
@@ -374,7 +375,7 @@ async function callAIWithModel(
     
     // Extract tool call
     const toolCall = aiResult.choices?.[0]?.message?.tool_calls?.[0];
-    if (!toolCall || toolCall.function.name !== 'parse_bagrut_exam') {
+    if (!toolCall || toolCall.function.name !== toolName) {
       console.error(`Model ${model}: No valid tool call found`);
       return { success: false, error: 'no_tool_call' };
     }
@@ -383,12 +384,21 @@ async function callAIWithModel(
     console.log(`Tool call arguments length: ${args?.length || 0}`);
     
     // Try to parse tool call arguments
-    let parsedExam: ParsedExam;
     try {
-      parsedExam = JSON.parse(args);
-      console.log(`Model ${model}: Parsed successfully, sections: ${parsedExam.sections?.length}`);
-      return { success: true, parsedExam };
+      const parsed = JSON.parse(args);
+      // For main parser tool, keep legacy return shape
+      if (toolName === 'parse_bagrut_exam') {
+        const parsedExam = parsed as ParsedExam;
+        console.log(`Model ${model}: Parsed successfully, sections: ${parsedExam.sections?.length}`);
+        return { success: true, parsedExam };
+      }
+
+      return { success: true, toolArgs: parsed };
     } catch (e) {
+      if (toolName !== 'parse_bagrut_exam') {
+        return { success: false, error: 'arguments_truncated' };
+      }
+
       console.log(`Model ${model}: Arguments JSON invalid, attempting repair...`);
       
       // Try to repair truncated JSON
@@ -412,6 +422,149 @@ async function callAIWithModel(
     console.error(`Model ${model}: Unexpected error:`, e);
     return { success: false, error: 'unexpected_error' };
   }
+}
+
+// -----------------------------
+// Post-processing helpers (table reliability)
+// -----------------------------
+
+const TABLE_INPUT_INDICATORS = ['?', '؟', '', '_', '___', '...', '....', '---', '____', '…'];
+
+const isLikelyInputCellValue = (value: any) => {
+  const trimmed = (typeof value === 'string' ? value : String(value ?? '')).trim();
+  if (TABLE_INPUT_INDICATORS.includes(trimmed)) return true;
+  if (/^[\?\؟\.\_\-\s…]+$/.test(trimmed)) return true;
+  return false;
+};
+
+const normalizeTableRows = (tableData: any) => {
+  if (!tableData || !Array.isArray(tableData.rows)) return tableData;
+
+  const normalizedRows = tableData.rows.map((row: any[]) => {
+    if (!Array.isArray(row)) return row;
+    return row.map((cell) => {
+      const str = typeof cell === 'string' ? cell : String(cell ?? '');
+      const trimmed = str.trim();
+      // Convert empty / placeholders to ? for consistent input detection
+      if (isLikelyInputCellValue(trimmed)) return '?';
+      return str;
+    });
+  });
+
+  return {
+    ...tableData,
+    rows: normalizedRows,
+    input_columns: Array.isArray(tableData.input_columns) ? tableData.input_columns : undefined,
+    correct_answers: tableData.correct_answers && typeof tableData.correct_answers === 'object' ? tableData.correct_answers : undefined
+  };
+};
+
+const visitQuestions = (
+  parsedExam: ParsedExam,
+  visitor: (q: any) => void
+) => {
+  for (const section of parsedExam.sections || []) {
+    for (const q of section.questions || []) {
+      visitor(q);
+      if (Array.isArray(q.sub_questions)) {
+        for (const sub of q.sub_questions) visitor(sub);
+      }
+    }
+  }
+};
+
+const normalizeExamForReliability = (parsedExam: ParsedExam) => {
+  visitQuestions(parsedExam, (q) => {
+    // Normalize booleans (AI sometimes omits them)
+    q.has_image = !!q.has_image;
+    q.has_code = !!q.has_code;
+
+    if (q.table_data) {
+      q.table_data = normalizeTableRows(q.table_data);
+      q.has_table = true;
+      // Ensure type aligns with table questions
+      if (!q.question_type || q.question_type === 'unknown') {
+        q.question_type = 'fill_table';
+      }
+    } else {
+      q.has_table = !!q.has_table;
+    }
+  });
+};
+
+const tableHasCorrectAnswers = (tableData: any) => {
+  return !!(tableData?.correct_answers && typeof tableData.correct_answers === 'object' && Object.keys(tableData.correct_answers).length > 0);
+};
+
+async function extractTableCorrectAnswersFromPdf(args: {
+  apiKey: string;
+  base64Content: string;
+  questionNumber: string;
+  questionText: string;
+  tableData: any;
+}): Promise<any | null> {
+  const { apiKey, base64Content, questionNumber, questionText, tableData } = args;
+
+  const toolName = 'extract_table_answers';
+  const toolSchema = {
+    type: 'function',
+    function: {
+      name: toolName,
+      description: 'Extract explicit correct answers for table input cells from the PDF (no guessing).',
+      parameters: {
+        type: 'object',
+        properties: {
+          correct_answers: {
+            type: 'object',
+            description: 'Map of rowIndex -> colIndex -> answer, ONLY when explicitly present in the PDF',
+            additionalProperties: true
+          }
+        },
+        required: ['correct_answers']
+      }
+    }
+  };
+
+  const systemPrompt = `أنت مساعد متخصص في استخراج إجابات من PDF.
+
+ممنوع التخمين.
+- استخرج الإجابة فقط إذا كانت مكتوبة صراحة داخل ملف الـ PDF (صفحة حلول/نموذج إجابة/سلم تصحيح/مكتوبة بجانب الجدول).
+- إذا لم تجد إجابة صريحة: اترك correct_answers فارغة أو بدون مفاتيح لتلك الخانة.
+
+المطلوب: إعطاء correct_answers فقط لخلايا الإدخال في الجدول الخاص بالسؤال.`;
+
+  const userContent = [
+    {
+      type: 'text',
+      text: `ابحث في ملف الـ PDF عن إجابات صريحة لسؤال رقم ${questionNumber} (جدول).
+
+نص السؤال:\n${questionText}\n
+بيانات الجدول الحالية (للمساعدة على تحديد الخلايا):\n${JSON.stringify(tableData)}\n
+أعد فقط correct_answers بخريطة {rowIndex: {colIndex: "answer"}}.`
+    },
+    {
+      type: 'image_url',
+      image_url: {
+        url: `data:application/pdf;base64,${base64Content}`
+      }
+    }
+  ];
+
+  // Accuracy-first: try strongest model only to avoid inconsistent merging
+  const result = await callAIWithModel(
+    'google/gemini-2.5-pro',
+    apiKey,
+    systemPrompt,
+    userContent,
+    toolSchema,
+    toolName,
+    120000
+  );
+
+  if (!result.success || !result.toolArgs) return null;
+  const extracted = result.toolArgs;
+  if (!extracted?.correct_answers || typeof extracted.correct_answers !== 'object') return null;
+  return extracted.correct_answers;
 }
 
 // Update job status helper
@@ -706,14 +859,15 @@ async function processJobInBackground(
       
       console.log(`[Job ${jobId}] Attempting with ${model}`);
       
-      const result = await callAIWithModel(
-        model,
-        apiKey,
-        systemPrompt,
-        userContent,
-        toolSchema,
-        180000 // 3 minutes timeout
-      );
+       const result = await callAIWithModel(
+         model,
+         apiKey,
+         systemPrompt,
+         userContent,
+         toolSchema,
+         'parse_bagrut_exam',
+         180000 // 3 minutes timeout
+       );
       
       if (result.success && result.parsedExam) {
         parsedExam = result.parsedExam;
@@ -742,6 +896,49 @@ async function processJobInBackground(
       return;
     }
     
+    // Normalize exam structure to avoid UI/DB regressions (e.g., missing has_table)
+    await updateJobStatus(supabase, jobId, 'processing', 65, 'جاري تحسين استخراج الجداول...');
+    try {
+      normalizeExamForReliability(parsedExam);
+    } catch (e) {
+      console.error(`[Job ${jobId}] normalizeExamForReliability failed (non-fatal):`, e);
+    }
+
+    // Accuracy-first: attempt to extract explicit correct answers for table input cells (when present in the PDF)
+    try {
+      const candidates: Array<any> = [];
+      visitQuestions(parsedExam, (q) => {
+        if (!q?.table_data) return;
+        const isTable = q.question_type === 'fill_table' || q.has_table;
+        if (!isTable) return;
+        if (tableHasCorrectAnswers(q.table_data)) return;
+        candidates.push(q);
+      });
+
+      // Avoid long runtimes
+      const MAX_TABLES_TO_ENRICH = 6;
+      const tablesToEnrich = candidates.slice(0, MAX_TABLES_TO_ENRICH);
+
+      for (const q of tablesToEnrich) {
+        const correctAnswers = await extractTableCorrectAnswersFromPdf({
+          apiKey,
+          base64Content,
+          questionNumber: q.question_number,
+          questionText: q.question_text,
+          tableData: q.table_data
+        });
+
+        if (correctAnswers && Object.keys(correctAnswers).length > 0) {
+          q.table_data = {
+            ...(q.table_data || {}),
+            correct_answers: correctAnswers
+          };
+        }
+      }
+    } catch (e) {
+      console.error(`[Job ${jobId}] table correct_answers enrichment failed (non-fatal):`, e);
+    }
+
     await updateJobStatus(supabase, jobId, 'processing', 70, 'جاري معالجة الصور...');
     
     // Generate images for questions that need them

@@ -46,7 +46,8 @@ const BagrutManagement: React.FC = () => {
     userProfile
   } = useAuth();
   const [viewState, setViewState] = useState<ViewState>('list');
-  const [parsedExam, setParsedExam] = useState<ParsedExam | null>(null);
+  // Use loose typing here to avoid TS2322 with complex JSON shapes (table_data / correct_answer_data)
+  const [parsedExam, setParsedExam] = useState<any>(null);
   const [statistics, setStatistics] = useState<Statistics | null>(null);
   const [answersReport, setAnswersReport] = useState<AnswersReport | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -296,7 +297,7 @@ const BagrutManagement: React.FC = () => {
       has_image: question.has_image || false,
       image_alt_text: question.image_description,
       image_url: question.image_url || null,
-      has_table: question.has_table || false,
+       has_table: (question.has_table || !!question.table_data) || false,
       table_data: safeTableData,
       has_code: question.has_code || false,
       code_content: question.code_content,
@@ -326,7 +327,8 @@ const BagrutManagement: React.FC = () => {
 
   // Handle exam update from preview (for image uploads)
   const handleExamUpdate = (updatedExam: ParsedExam) => {
-    setParsedExam(updatedExam);
+    // keep local state, but avoid overly strict typing against Supabase Json
+    setParsedExam(updatedExam as any);
   };
 
   // Save edits to existing exam in database
@@ -368,13 +370,14 @@ const BagrutManagement: React.FC = () => {
         const safeChoices = (q as any).choices ? JSON.parse(JSON.stringify((q as any).choices)) : null;
         const safeCorrectAnswerData = correctAnswerData ? JSON.parse(JSON.stringify(correctAnswerData)) : null;
 
-        const updatePayload: any = {
+         const updatePayload: any = {
           question_text: q.question_text,
           points: Math.round(q.points || 0),
           choices: safeChoices,
           correct_answer: q.correct_answer,
           correct_answer_data: safeCorrectAnswerData,
           answer_explanation: q.answer_explanation,
+           has_table: ((q as any).has_table || !!(q as any).table_data) || false,
           table_data: safeTableData,
           code_content: q.code_content,
           updated_at: new Date().toISOString()
