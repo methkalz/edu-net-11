@@ -603,7 +603,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
       )}
 
       {/* Table Display */}
-      {question.has_table && question.table_data && (
+      {(question.has_table || !!question.table_data) && question.table_data && (
         <div className="overflow-x-auto border rounded-lg">
           <table className="min-w-full border-collapse">
             {question.table_data.headers && question.table_data.headers.length > 0 && (
@@ -623,12 +623,18 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                   {row.map((cell: string, cellIndex: number) => (
                     <td key={cellIndex} className="border border-muted p-2 text-sm text-center">
                       {isInputCell(cell, cellIndex, question.table_data?.input_columns) ? (
-                        <input
-                          type="text"
-                          className="w-full min-w-[80px] px-2 py-1 border border-dashed border-muted-foreground/50 rounded text-center bg-accent/30 focus:outline-none focus:border-primary focus:bg-background"
-                          placeholder="..."
-                          dir="ltr"
-                        />
+                        showAnswers && question.table_data?.correct_answers?.[rowIndex]?.[cellIndex] ? (
+                          <span className="inline-flex min-w-[80px] justify-center px-2 py-1 rounded border border-primary/30 bg-primary/10 text-primary font-medium" dir="ltr">
+                            {question.table_data.correct_answers[rowIndex][cellIndex]}
+                          </span>
+                        ) : (
+                          <input
+                            type="text"
+                            className="w-full min-w-[80px] px-2 py-1 border border-dashed border-muted-foreground/50 rounded text-center bg-accent/30 focus:outline-none focus:border-primary focus:bg-background"
+                            placeholder="..."
+                            dir="ltr"
+                          />
+                        )
                       ) : (
                         cell
                       )}
@@ -656,7 +662,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
       )}
 
       {/* Table Indicator (if no table_data) */}
-      {question.has_table && !question.table_data && (
+      {(question.has_table || question.question_type === 'fill_table') && !question.table_data && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 p-2 rounded">
           <Table className="h-4 w-4" />
           <span>يحتوي على جدول في الامتحان الأصلي</span>
