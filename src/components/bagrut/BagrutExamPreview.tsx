@@ -704,11 +704,9 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                     />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        {choice.id && (
-                          <span className="text-sm font-medium text-muted-foreground">
-                            {choice.id}.
-                          </span>
-                        )}
+                        <span className="text-sm font-medium text-muted-foreground">
+                          {index + 1}.
+                        </span>
                         <span className="text-sm text-foreground">{choice.text}</span>
                       </div>
                     </div>
