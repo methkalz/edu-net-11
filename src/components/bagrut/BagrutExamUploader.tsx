@@ -317,7 +317,7 @@ const BagrutExamUploader: React.FC<BagrutExamUploaderProps> = ({ onExamParsed, o
             )}
             {uploadStatus === 'processing' && (
               <p className="text-xs text-center text-muted-foreground mt-2">
-                ⏱️ قد يستغرق التحليل 1-3 دقائق للملفات الكبيرة
+                قد يستغرق التحليل 5-10 دقائق للملفات الكبيرة
               </p>
             )}
           </div>
