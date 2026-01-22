@@ -696,12 +696,6 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                         : 'border-border bg-background')
                     }
                   >
-                    <RadioGroupItem
-                      id={radioId}
-                      value={choice.id}
-                      disabled
-                      className="mt-1"
-                    />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-muted-foreground">
@@ -716,6 +710,12 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                         <span className="font-medium">الإجابة الصحيحة</span>
                       </span>
                     )}
+                    <RadioGroupItem
+                      id={radioId}
+                      value={choice.id}
+                      disabled
+                      className="mt-1"
+                    />
                   </label>
                 );
               })}
