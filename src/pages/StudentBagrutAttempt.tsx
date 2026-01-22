@@ -52,6 +52,7 @@ export default function StudentBagrutAttempt() {
     isSaving,
     isSubmitting,
     isSubmitted,
+    isTimeExpired,
   } = useBagrutAttempt(examId, user?.id);
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -132,12 +133,28 @@ export default function StudentBagrutAttempt() {
     setShowConfirmSubmit(true);
   };
 
-  // التوجيه بعد التقديم
+  // حساب الوقت المستغرق
+  const calculateTimeSpent = useCallback(() => {
+    if (!attemptStartedAt) return 0;
+    const startTime = new Date(attemptStartedAt).getTime();
+    const endTime = Date.now();
+    return Math.floor((endTime - startTime) / 1000);
+  }, [attemptStartedAt]);
+
+  // التوجيه بعد التقديم - إلى صفحة التأكيد الجديدة
   useEffect(() => {
     if (isSubmitted && attemptId) {
-      navigate(`/student/bagrut-results/${examId}`);
+      navigate(`/student/bagrut-submitted/${examId}`, {
+        state: {
+          answeredCount,
+          totalQuestions: allQuestions.length,
+          timeSpentSeconds: calculateTimeSpent(),
+          attemptNumber: examData?.attempt?.attempt_number || 1,
+          examTitle: examData?.exam.title,
+        },
+      });
     }
-  }, [isSubmitted, attemptId, examId, navigate]);
+  }, [isSubmitted, attemptId, examId, navigate, answeredCount, allQuestions.length, calculateTimeSpent, examData]);
 
   // Loading
   if (isLoading) {
