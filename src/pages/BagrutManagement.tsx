@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { GraduationCap, Plus, FileText, Loader2, Trash2, Eye } from 'lucide-react';
+import { GraduationCap, Plus, FileText, Loader2, Trash2, Eye, Pencil } from 'lucide-react';
 import ModernHeader from '@/components/shared/ModernHeader';
 import AppFooter from '@/components/shared/AppFooter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,6 +24,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 type AnswersReport = {
   totalQuestions: number;
@@ -45,6 +54,10 @@ const BagrutManagement: React.FC = () => {
   const [previewLoadingId, setPreviewLoadingId] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [examToDelete, setExamToDelete] = useState<{ id: string; title: string } | null>(null);
+
+  const [editIdentifierOpen, setEditIdentifierOpen] = useState(false);
+  const [examToEditIdentifier, setExamToEditIdentifier] = useState<{ id: string; title: string; exam_code?: string | null } | null>(null);
+  const [editedExamCode, setEditedExamCode] = useState('');
 
   // Preview an existing exam from DB
   const handlePreviewExam = async (examId: string) => {
@@ -92,6 +105,35 @@ const BagrutManagement: React.FC = () => {
   const openDeleteDialog = (examId: string, examTitle: string) => {
     setExamToDelete({ id: examId, title: examTitle });
     setDeleteDialogOpen(true);
+  };
+
+  const openEditIdentifierDialog = (exam: { id: string; title: string; exam_code?: string | null }) => {
+    setExamToEditIdentifier({ id: exam.id, title: exam.title, exam_code: exam.exam_code });
+    setEditedExamCode(exam.exam_code || '');
+    setEditIdentifierOpen(true);
+  };
+
+  const handleSaveExamIdentifier = async () => {
+    if (!examToEditIdentifier) return;
+
+    try {
+      const { error } = await supabase
+        .from('bagrut_exams')
+        .update({
+          exam_code: editedExamCode?.trim() || null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', examToEditIdentifier.id);
+
+      if (error) throw error;
+      toast.success('تم تحديث معرف الامتحان');
+      setEditIdentifierOpen(false);
+      setExamToEditIdentifier(null);
+      await refetch();
+    } catch (e) {
+      console.error('Error updating exam identifier:', e);
+      toast.error('فشل في تحديث معرف الامتحان');
+    }
   };
 
   // Delete exam function
@@ -396,20 +438,38 @@ const BagrutManagement: React.FC = () => {
               </div> : exams && exams.length > 0 ? <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                  {exams.map(exam => <Card key={exam.id} className="hover:shadow-md transition-shadow relative group">
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        <FileText className="h-5 w-5 text-orange-500" />
-                        {exam.title}
-                      </CardTitle>
+                      <div className="flex items-start justify-between gap-3">
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <FileText className="h-5 w-5 text-orange-500" />
+                          <span className="line-clamp-2">{exam.title}</span>
+                        </CardTitle>
+
+                        <span className="shrink-0 px-2 py-1 rounded-md text-xs bg-muted text-foreground">
+                          #{(exam as any).exam_number}
+                        </span>
+                      </div>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2 text-sm text-muted-foreground">
                         <p>{exam.subject} - {exam.exam_year}</p>
+                        <p>
+                          معرف الامتحان: {(exam.exam_code || '—')}
+                        </p>
                         <p>{exam.duration_minutes} دقيقة | {exam.total_points} نقطة</p>
                         <div className="flex items-center justify-between mt-3">
                           <span className={`px-2 py-1 rounded-full text-xs ${exam.is_published ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'}`}>
                             {exam.is_published ? 'منشور' : 'مسودة'}
                           </span>
                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                             <Button
+                               variant="ghost"
+                               size="icon"
+                               className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                               onClick={() => openEditIdentifierDialog(exam as any)}
+                               title="تعديل معرف الامتحان"
+                             >
+                               <Pencil className="h-4 w-4" />
+                             </Button>
                              <Button
                                variant="ghost"
                                size="icon"
@@ -524,6 +584,39 @@ const BagrutManagement: React.FC = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Edit exam identifier (exam_code) */}
+      <Dialog open={editIdentifierOpen} onOpenChange={setEditIdentifierOpen}>
+        <DialogContent dir="rtl">
+          <DialogHeader>
+            <DialogTitle>تعديل معرف الامتحان</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              الرقم التسلسلي ثابت ولا يتغير: #{(exams?.find((e: any) => e.id === examToEditIdentifier?.id) as any)?.exam_number}
+            </p>
+
+            <div className="space-y-2">
+              <Label htmlFor="exam-code">معرف الامتحان (اختياري)</Label>
+              <Input
+                id="exam-code"
+                value={editedExamCode}
+                onChange={(e) => setEditedExamCode(e.target.value)}
+                placeholder="مثال: CS-2025-SUMMER"
+              />
+              <p className="text-xs text-muted-foreground">
+                يمكنك تغيير هذا المعرف في أي وقت. يُستخدم كاسم مرجعي فقط.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter className="flex-row-reverse gap-2">
+            <Button onClick={handleSaveExamIdentifier}>حفظ</Button>
+            <Button variant="outline" onClick={() => setEditIdentifierOpen(false)}>إلغاء</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>;
 };
 export default BagrutManagement;
