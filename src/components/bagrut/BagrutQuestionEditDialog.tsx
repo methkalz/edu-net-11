@@ -14,8 +14,11 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Plus, Trash2, Save, AlertCircle } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Separator } from '@/components/ui/separator';
+import { Plus, Trash2, Save, AlertCircle, GripVertical } from 'lucide-react';
 import { toast } from 'sonner';
+import type { TableData, BlankDefinition } from '@/lib/bagrut/buildBagrutPreview';
 
 interface Choice {
   id: string;
@@ -32,7 +35,7 @@ interface ParsedQuestion {
   image_description?: string;
   image_url?: string;
   has_table?: boolean;
-  table_data?: { headers?: string[]; rows?: string[][]; input_columns?: number[] };
+  table_data?: TableData;
   word_bank?: string[];
   has_code?: boolean;
   code_content?: string;
@@ -41,6 +44,7 @@ interface ParsedQuestion {
   answer_explanation?: string;
   sub_questions?: ParsedQuestion[];
   topic_tags?: string[];
+  blanks?: BlankDefinition[];
   question_db_id?: string;
 }
 
@@ -92,11 +96,13 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
     editedQuestion.question_type === 'true_false' ||
     editedQuestion.question_type === 'true_false_multi';
 
-  // Initialize choices if needed
+  const isFillBlank = editedQuestion.question_type === 'fill_blank';
+
+  // Initialize choices if needed - use numeric IDs (1, 2, 3...)
   const choices: Choice[] = editedQuestion.choices || 
     (isTrueFalse ? [
-      { id: 'صح', text: 'صح', is_correct: false },
-      { id: 'خطأ', text: 'خطأ', is_correct: false }
+      { id: '1', text: 'صح', is_correct: false },
+      { id: '2', text: 'خطأ', is_correct: false }
     ] : []);
 
   const handleTextChange = (field: keyof ParsedQuestion, value: string | number) => {
@@ -124,7 +130,7 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
   };
 
   const handleAddChoice = () => {
-    const newId = String.fromCharCode(65 + choices.length); // A, B, C, D...
+    const newId = String(choices.length + 1); // Numeric IDs: 1, 2, 3...
     const newChoices = [...choices, { id: newId, text: '', is_correct: false }];
     setEditedQuestion(prev => ({ ...prev, choices: newChoices }));
   };
@@ -135,10 +141,10 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
       return;
     }
     const newChoices = choices.filter((_, i) => i !== index);
-    // Reassign IDs
+    // Reassign IDs (numeric: 1, 2, 3...)
     const reIdChoices = newChoices.map((c, i) => ({
       ...c,
-      id: String.fromCharCode(65 + i)
+      id: String(i + 1)
     }));
     // If we removed the correct answer, clear it
     const hadCorrect = choices[index]?.is_correct;
@@ -149,8 +155,10 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
     }));
   };
 
+  // ========== Table Editor Functions ==========
+  const tableData = editedQuestion.table_data || { headers: [], rows: [], input_columns: [], correct_answers: {} };
+
   const handleTableHeaderChange = (index: number, value: string) => {
-    const tableData = editedQuestion.table_data || { headers: [], rows: [] };
     const newHeaders = [...(tableData.headers || [])];
     newHeaders[index] = value;
     setEditedQuestion(prev => ({
@@ -160,7 +168,6 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
   };
 
   const handleTableCellChange = (rowIndex: number, cellIndex: number, value: string) => {
-    const tableData = editedQuestion.table_data || { headers: [], rows: [] };
     const newRows = [...(tableData.rows || [])];
     if (!newRows[rowIndex]) newRows[rowIndex] = [];
     newRows[rowIndex] = [...newRows[rowIndex]];
@@ -171,10 +178,131 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
     }));
   };
 
+  const handleAddTableRow = () => {
+    const colCount = tableData.headers?.length || (tableData.rows?.[0]?.length || 3);
+    const newRow = Array(colCount).fill('');
+    const newRows = [...(tableData.rows || []), newRow];
+    setEditedQuestion(prev => ({
+      ...prev,
+      table_data: { ...tableData, rows: newRows }
+    }));
+  };
+
+  const handleRemoveTableRow = (rowIndex: number) => {
+    if ((tableData.rows?.length || 0) <= 1) {
+      toast.error('يجب أن يكون هناك صف واحد على الأقل');
+      return;
+    }
+    const newRows = (tableData.rows || []).filter((_, i) => i !== rowIndex);
+    // Also remove correct answers for this row and shift higher indices
+    const newCorrectAnswers = { ...(tableData.correct_answers || {}) };
+    delete newCorrectAnswers[rowIndex];
+    // Shift indices
+    const shiftedAnswers: typeof newCorrectAnswers = {};
+    for (const [key, val] of Object.entries(newCorrectAnswers)) {
+      const idx = Number(key);
+      if (idx > rowIndex) {
+        shiftedAnswers[idx - 1] = val;
+      } else {
+        shiftedAnswers[idx] = val;
+      }
+    }
+    setEditedQuestion(prev => ({
+      ...prev,
+      table_data: { ...tableData, rows: newRows, correct_answers: shiftedAnswers }
+    }));
+  };
+
+  const handleToggleInputColumn = (colIndex: number) => {
+    const inputColumns = [...(tableData.input_columns || [])];
+    const idx = inputColumns.indexOf(colIndex);
+    if (idx >= 0) {
+      inputColumns.splice(idx, 1);
+    } else {
+      inputColumns.push(colIndex);
+      inputColumns.sort((a, b) => a - b);
+    }
+    setEditedQuestion(prev => ({
+      ...prev,
+      table_data: { ...tableData, input_columns: inputColumns }
+    }));
+  };
+
+  const handleTableCorrectAnswerChange = (rowIndex: number, colIndex: number, value: string) => {
+    const newCorrectAnswers = { ...(tableData.correct_answers || {}) };
+    if (!newCorrectAnswers[rowIndex]) {
+      newCorrectAnswers[rowIndex] = {};
+    }
+    newCorrectAnswers[rowIndex] = { ...newCorrectAnswers[rowIndex], [colIndex]: value };
+    setEditedQuestion(prev => ({
+      ...prev,
+      table_data: { ...tableData, correct_answers: newCorrectAnswers }
+    }));
+  };
+
+  // ========== Word Bank Functions ==========
+  const wordBank = editedQuestion.word_bank || [];
+
+  const handleAddWord = () => {
+    setEditedQuestion(prev => ({
+      ...prev,
+      word_bank: [...(prev.word_bank || []), '']
+    }));
+  };
+
+  const handleRemoveWord = (index: number) => {
+    setEditedQuestion(prev => ({
+      ...prev,
+      word_bank: (prev.word_bank || []).filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleWordChange = (index: number, value: string) => {
+    setEditedQuestion(prev => {
+      const newWordBank = [...(prev.word_bank || [])];
+      newWordBank[index] = value;
+      return { ...prev, word_bank: newWordBank };
+    });
+  };
+
+  // ========== Blanks Functions (fill_blank) ==========
+  const blanks = editedQuestion.blanks || [];
+
+  const handleAddBlank = () => {
+    const newId = String(blanks.length + 1);
+    const newBlanks: BlankDefinition[] = [...blanks, { id: newId, placeholder: '', correct_answer: '' }];
+    setEditedQuestion(prev => ({ ...prev, blanks: newBlanks }));
+  };
+
+  const handleRemoveBlank = (index: number) => {
+    const newBlanks = blanks.filter((_, i) => i !== index);
+    // Re-ID blanks
+    const reIdBlanks = newBlanks.map((b, i) => ({ ...b, id: String(i + 1) }));
+    setEditedQuestion(prev => ({ ...prev, blanks: reIdBlanks }));
+  };
+
+  const handleBlankChange = (index: number, field: 'placeholder' | 'correct_answer', value: string) => {
+    const newBlanks = [...blanks];
+    newBlanks[index] = { ...newBlanks[index], [field]: value };
+    setEditedQuestion(prev => ({ ...prev, blanks: newBlanks }));
+  };
+
+  const handleInsertBlankMarker = (blankId: string) => {
+    // Insert a marker at the end of question text
+    const marker = `____${blankId}____`;
+    setEditedQuestion(prev => ({
+      ...prev,
+      question_text: prev.question_text + ' ' + marker
+    }));
+    toast.success(`تم إدراج علامة الفراغ ${blankId}`);
+  };
+
+  // ========== Code Editor ==========
   const handleCodeChange = (value: string) => {
     setEditedQuestion(prev => ({ ...prev, code_content: value }));
   };
 
+  // ========== Validation & Submit ==========
   const validateAndSubmit = () => {
     // Validation for choice questions
     if (isChoiceQuestion) {
@@ -201,9 +329,11 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
     toast.success('تم حفظ التعديلات');
   };
 
+  const colCount = tableData.headers?.length || (tableData.rows?.[0]?.length || 0);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh]" dir="rtl">
+      <DialogContent className="max-w-3xl max-h-[90vh]" dir="rtl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             تحرير السؤال {question.question_number}
@@ -243,7 +373,7 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
               />
             </div>
 
-            {/* Choices for MCQ / True-False */}
+            {/* Choices for MCQ / True-False (Numeric IDs) */}
             {isChoiceQuestion && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -270,10 +400,11 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
                   {choices.map((choice, index) => (
                     <div key={index} className="flex items-center gap-3">
                       <RadioGroupItem value={choice.id} id={`choice-${index}`} />
+                      <span className="w-6 text-sm font-medium text-muted-foreground">{choice.id}.</span>
                       <Input
                         value={choice.text}
                         onChange={(e) => handleChoiceTextChange(index, e.target.value)}
-                        placeholder={`خيار ${choice.id}`}
+                        placeholder={`خيار ${index + 1}`}
                         className="flex-1"
                       />
                       {!isTrueFalse && choices.length > 2 && (
@@ -297,17 +428,99 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
               </div>
             )}
 
-            {/* Table Editor */}
-            {editedQuestion.has_table && editedQuestion.table_data && (
+            {/* Fill Blank - Blanks Management */}
+            {isFillBlank && (
               <div className="space-y-4">
-                <Label>تحرير الجدول</Label>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <Label className="text-base font-semibold">إدارة الفراغات</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleAddBlank}
+                    className="gap-1"
+                  >
+                    <Plus className="h-4 w-4" />
+                    إضافة فراغ
+                  </Button>
+                </div>
+                
+                <p className="text-sm text-muted-foreground">
+                  أضف الفراغات ثم انقر "إدراج" لوضع علامة الفراغ في نص السؤال
+                </p>
+
+                <div className="space-y-3">
+                  {blanks.map((blank, index) => (
+                    <div key={index} className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg">
+                      <span className="font-medium text-sm min-w-[60px]">فراغ {blank.id}:</span>
+                      <Input
+                        value={blank.correct_answer}
+                        onChange={(e) => handleBlankChange(index, 'correct_answer', e.target.value)}
+                        placeholder="الإجابة الصحيحة"
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handleInsertBlankMarker(blank.id)}
+                      >
+                        إدراج
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleRemoveBlank(index)}
+                        className="h-8 w-8 text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  {blanks.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      لا توجد فراغات محددة. انقر "إضافة فراغ" لإنشاء فراغ جديد.
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Table Editor - Enhanced */}
+            {editedQuestion.has_table && (
+              <div className="space-y-4">
+                <Separator />
+                <Label className="text-base font-semibold">تحرير الجدول</Label>
+                
+                {/* Input Columns Selection */}
+                {colCount > 0 && (
+                  <div className="space-y-2">
+                    <Label className="text-sm text-muted-foreground">أعمدة الإدخال (يملأها الطالب)</Label>
+                    <div className="flex gap-2 flex-wrap">
+                      {Array.from({ length: colCount }, (_, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                          <Checkbox
+                            id={`input-col-${i}`}
+                            checked={(tableData.input_columns || []).includes(i)}
+                            onCheckedChange={() => handleToggleInputColumn(i)}
+                          />
+                          <Label htmlFor={`input-col-${i}`} className="text-sm">
+                            عمود {i + 1}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 
                 {/* Headers */}
-                {editedQuestion.table_data.headers && editedQuestion.table_data.headers.length > 0 && (
+                {tableData.headers && tableData.headers.length > 0 && (
                   <div className="space-y-2">
                     <Label className="text-sm text-muted-foreground">العناوين</Label>
                     <div className="flex gap-2 flex-wrap">
-                      {editedQuestion.table_data.headers.map((header, i) => (
+                      {tableData.headers.map((header, i) => (
                         <Input
                           key={i}
                           value={header}
@@ -320,22 +533,58 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
                   </div>
                 )}
 
-                {/* Rows */}
-                {editedQuestion.table_data.rows && editedQuestion.table_data.rows.length > 0 && (
-                  <div className="space-y-2">
-                    <Label className="text-sm text-muted-foreground">الصفوف</Label>
-                    <div className="space-y-2">
-                      {editedQuestion.table_data.rows.map((row, rowIndex) => (
-                        <div key={rowIndex} className="flex gap-2 flex-wrap">
-                          {row.map((cell, cellIndex) => (
-                            <Input
-                              key={cellIndex}
-                              value={cell}
-                              onChange={(e) => handleTableCellChange(rowIndex, cellIndex, e.target.value)}
-                              className="w-32"
-                              placeholder="..."
-                            />
-                          ))}
+                {/* Rows with correct answers */}
+                {tableData.rows && tableData.rows.length > 0 && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm text-muted-foreground">الصفوف</Label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleAddTableRow}
+                        className="gap-1"
+                      >
+                        <Plus className="h-4 w-4" />
+                        إضافة صف
+                      </Button>
+                    </div>
+                    <div className="space-y-4">
+                      {tableData.rows.map((row, rowIndex) => (
+                        <div key={rowIndex} className="p-3 bg-muted/20 rounded-lg space-y-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <GripVertical className="h-4 w-4 text-muted-foreground" />
+                            {row.map((cell, cellIndex) => (
+                              <div key={cellIndex} className="flex flex-col gap-1">
+                                <Input
+                                  value={cell}
+                                  onChange={(e) => handleTableCellChange(rowIndex, cellIndex, e.target.value)}
+                                  className="w-28"
+                                  placeholder="..."
+                                />
+                                {/* Show correct answer input for input columns */}
+                                {(tableData.input_columns || []).includes(cellIndex) && (
+                                  <Input
+                                    value={tableData.correct_answers?.[rowIndex]?.[cellIndex] || ''}
+                                    onChange={(e) => handleTableCorrectAnswerChange(rowIndex, cellIndex, e.target.value)}
+                                    className="w-28 text-xs bg-green-50 dark:bg-green-950/30 border-green-300"
+                                    placeholder="الصحيح"
+                                  />
+                                )}
+                              </div>
+                            ))}
+                            {(tableData.rows?.length || 0) > 1 && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleRemoveTableRow(rowIndex)}
+                                className="h-8 w-8 text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -344,9 +593,57 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
               </div>
             )}
 
+            {/* Word Bank Editor */}
+            {(editedQuestion.word_bank && editedQuestion.word_bank.length > 0) || editedQuestion.has_table ? (
+              <div className="space-y-4">
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <Label className="text-base font-semibold">مستودع المصطلحات</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleAddWord}
+                    className="gap-1"
+                  >
+                    <Plus className="h-4 w-4" />
+                    إضافة مصطلح
+                  </Button>
+                </div>
+
+                <div className="space-y-2">
+                  {wordBank.map((word, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <Input
+                        value={word}
+                        onChange={(e) => handleWordChange(index, e.target.value)}
+                        placeholder="أدخل المصطلح"
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleRemoveWord(index)}
+                        className="h-8 w-8 text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  {wordBank.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-2">
+                      لا توجد مصطلحات. انقر "إضافة مصطلح" لإنشاء مصطلح جديد.
+                    </p>
+                  )}
+                </div>
+              </div>
+            ) : null}
+
             {/* Code Editor */}
             {editedQuestion.has_code && (
               <div className="space-y-2">
+                <Separator />
                 <Label htmlFor="code-content">الكود</Label>
                 <Textarea
                   id="code-content"
@@ -360,6 +657,7 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
 
             {/* Answer Explanation */}
             <div className="space-y-2">
+              <Separator />
               <Label htmlFor="explanation">شرح الإجابة (اختياري)</Label>
               <Textarea
                 id="explanation"

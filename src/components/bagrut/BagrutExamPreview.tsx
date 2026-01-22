@@ -23,58 +23,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import BagrutImageUpload from './BagrutImageUpload';
 import BagrutQuestionEditDialog from './BagrutQuestionEditDialog';
 
-interface ParsedQuestion {
-  question_number: string;
-  question_text: string;
-  question_type: string;
-  points: number;
-  has_image?: boolean;
-  image_description?: string;
-  image_url?: string;
-  has_table?: boolean;
-  table_data?: { headers?: string[]; rows?: string[][]; input_columns?: number[] };
-  word_bank?: string[];
-  has_code?: boolean;
-  code_content?: string;
-  choices?: Array<{ id: string; text: string; is_correct: boolean }>;
-  correct_answer?: string;
-  answer_explanation?: string;
-  sub_questions?: ParsedQuestion[];
-  topic_tags?: string[];
-  question_db_id?: string;
-}
+import type { ParsedQuestion, ParsedSection, ParsedExam, Statistics } from '@/lib/bagrut/buildBagrutPreview';
 
-interface ParsedSection {
-  section_number: number;
-  section_title: string;
-  section_type: 'mandatory' | 'elective';
-  total_points: number;
-  specialization?: string;
-  specialization_label?: string;
-  instructions?: string;
-  questions: ParsedQuestion[];
-  section_db_id?: string;
-}
-
-interface ParsedExam {
-  title: string;
-  exam_year: number;
-  exam_season: string;
-  exam_code?: string;
-  subject: string;
-  duration_minutes: number;
-  total_points: number;
-  instructions?: string;
-  sections: ParsedSection[];
-  exam_db_id?: string;
-}
-
-interface Statistics {
-  totalSections: number;
-  totalQuestions: number;
-  questionsByType: Record<string, number>;
-  totalPoints: number;
-}
+// Re-export types for component internal use
+export type { ParsedQuestion, ParsedSection, ParsedExam, Statistics };
 
 interface BagrutExamPreviewProps {
   exam: ParsedExam;

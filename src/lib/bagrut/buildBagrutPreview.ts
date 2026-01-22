@@ -1,3 +1,19 @@
+// Enhanced table data with correct answers support
+export interface TableData {
+  headers?: string[];
+  rows?: string[][];
+  input_columns?: number[];
+  // Correct answers for each input cell: { rowIndex: { colIndex: "answer" } }
+  correct_answers?: { [rowIndex: number]: { [colIndex: number]: string } };
+}
+
+// Structured blank for fill_blank questions
+export interface BlankDefinition {
+  id: string;
+  placeholder?: string;
+  correct_answer: string;
+}
+
 export interface ParsedQuestion {
   question_number: string;
   question_text: string;
@@ -7,7 +23,7 @@ export interface ParsedQuestion {
   image_description?: string;
   image_url?: string;
   has_table?: boolean;
-  table_data?: any;
+  table_data?: TableData;
   word_bank?: string[];
   has_code?: boolean;
   code_content?: string;
@@ -16,6 +32,8 @@ export interface ParsedQuestion {
   answer_explanation?: string;
   sub_questions?: ParsedQuestion[];
   topic_tags?: string[];
+  // Structured blanks for fill_blank questions
+  blanks?: BlankDefinition[];
   // DB ID for updates (only present for exams loaded from database)
   question_db_id?: string;
 }
