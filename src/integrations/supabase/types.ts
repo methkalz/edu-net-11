@@ -192,6 +192,7 @@ export type Database = {
           graded_at: string | null
           graded_by: string | null
           id: string
+          is_result_published: boolean | null
           last_activity_at: string | null
           max_score: number | null
           percentage: number | null
@@ -217,6 +218,7 @@ export type Database = {
           graded_at?: string | null
           graded_by?: string | null
           id?: string
+          is_result_published?: boolean | null
           last_activity_at?: string | null
           max_score?: number | null
           percentage?: number | null
@@ -242,6 +244,7 @@ export type Database = {
           graded_at?: string | null
           graded_by?: string | null
           id?: string
+          is_result_published?: boolean | null
           last_activity_at?: string | null
           max_score?: number | null
           percentage?: number | null
@@ -357,6 +360,7 @@ export type Database = {
           id: string
           instructions: string | null
           is_published: boolean | null
+          max_attempts: number | null
           notes: string | null
           show_answers_to_students: boolean | null
           show_answers_to_teachers: boolean | null
@@ -388,6 +392,7 @@ export type Database = {
           id?: string
           instructions?: string | null
           is_published?: boolean | null
+          max_attempts?: number | null
           notes?: string | null
           show_answers_to_students?: boolean | null
           show_answers_to_teachers?: boolean | null
@@ -419,6 +424,7 @@ export type Database = {
           id?: string
           instructions?: string | null
           is_published?: boolean | null
+          max_attempts?: number | null
           notes?: string | null
           show_answers_to_students?: boolean | null
           show_answers_to_teachers?: boolean | null
@@ -538,6 +544,66 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      bagrut_question_grades: {
+        Row: {
+          attempt_id: string
+          auto_score: number | null
+          created_at: string | null
+          final_score: number | null
+          graded_at: string | null
+          graded_by: string | null
+          id: string
+          manual_score: number | null
+          max_score: number
+          question_id: string
+          teacher_feedback: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          attempt_id: string
+          auto_score?: number | null
+          created_at?: string | null
+          final_score?: number | null
+          graded_at?: string | null
+          graded_by?: string | null
+          id?: string
+          manual_score?: number | null
+          max_score: number
+          question_id: string
+          teacher_feedback?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          attempt_id?: string
+          auto_score?: number | null
+          created_at?: string | null
+          final_score?: number | null
+          graded_at?: string | null
+          graded_by?: string | null
+          id?: string
+          manual_score?: number | null
+          max_score?: number
+          question_id?: string
+          teacher_feedback?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bagrut_question_grades_attempt_id_fkey"
+            columns: ["attempt_id"]
+            isOneToOne: false
+            referencedRelation: "bagrut_attempts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bagrut_question_grades_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "bagrut_questions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       bagrut_questions: {
         Row: {
