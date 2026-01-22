@@ -1,0 +1,453 @@
+// صفحة حل امتحان البجروت للطالب
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import { useBagrutAttempt } from '@/hooks/useBagrutAttempt';
+import { useExamTimer } from '@/hooks/useExamTimer';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Progress } from '@/components/ui/progress';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
+import BagrutSectionSelector from '@/components/bagrut/BagrutSectionSelector';
+import BagrutQuestionRenderer from '@/components/bagrut/BagrutQuestionRenderer';
+import {
+  AlertCircle,
+  Clock,
+  ChevronRight,
+  ChevronLeft,
+  Save,
+  Send,
+  CheckCircle2,
+  Circle,
+  Loader2,
+  Home,
+} from 'lucide-react';
+import { logger } from '@/lib/logging';
+import type { ParsedQuestion } from '@/lib/bagrut/buildBagrutPreview';
+
+export default function StudentBagrutAttempt() {
+  const { examId } = useParams<{ examId: string }>();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  const {
+    examData,
+    isLoading,
+    isError,
+    error,
+    attemptId,
+    attemptStartedAt,
+    answers,
+    selectedSectionIds,
+    updateAnswer,
+    startExam,
+    submitExam,
+    saveAnswers,
+    isCreatingAttempt,
+    isSaving,
+    isSubmitting,
+    isSubmitted,
+  } = useBagrutAttempt(examId, user?.id);
+
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [showConfirmSubmit, setShowConfirmSubmit] = useState(false);
+
+  // جمع كل الأسئلة من الأقسام المختارة
+  const allQuestions = useMemo(() => {
+    if (!examData || selectedSectionIds.length === 0) return [];
+    
+    const questions: ParsedQuestion[] = [];
+    examData.sections.forEach(section => {
+      if (selectedSectionIds.includes(section.section_db_id!)) {
+        questions.push(...section.questions);
+      }
+    });
+    return questions;
+  }, [examData, selectedSectionIds]);
+
+  // المؤقت
+  const timer = useExamTimer({
+    durationMinutes: examData?.exam.duration_minutes || 180,
+    startedAt: attemptStartedAt,
+    onTimeUp: () => {
+      toast({
+        title: '⏰ انتهى وقت الامتحان',
+        description: 'جاري تقديم الامتحان تلقائياً...',
+        variant: 'destructive',
+      });
+      handleSubmit();
+    },
+    startImmediately: false,
+  });
+
+  // بدء المؤقت عند وجود محاولة
+  useEffect(() => {
+    if (attemptId && attemptStartedAt && !timer.isRunning && !timer.isTimeUp) {
+      timer.start();
+    }
+  }, [attemptId, attemptStartedAt, timer]);
+
+  // إحصائيات الإجابات
+  const answeredCount = useMemo(() => {
+    return allQuestions.filter(q => {
+      const qId = q.question_db_id || q.question_number;
+      return answers[qId] && answers[qId].answer;
+    }).length;
+  }, [allQuestions, answers]);
+
+  const progressPercent = allQuestions.length > 0 
+    ? Math.round((answeredCount / allQuestions.length) * 100) 
+    : 0;
+
+  // التنقل
+  const goToQuestion = useCallback((index: number) => {
+    if (index >= 0 && index < allQuestions.length) {
+      setCurrentQuestionIndex(index);
+    }
+  }, [allQuestions.length]);
+
+  const goNext = () => goToQuestion(currentQuestionIndex + 1);
+  const goPrev = () => goToQuestion(currentQuestionIndex - 1);
+
+  // التقديم
+  const handleSubmit = useCallback(() => {
+    if (isSubmitting) return;
+    submitExam();
+  }, [submitExam, isSubmitting]);
+
+  const confirmSubmit = () => {
+    const unansweredCount = allQuestions.length - answeredCount;
+    if (unansweredCount > 0) {
+      toast({
+        title: `⚠️ ${unansweredCount} سؤال بدون إجابة`,
+        description: 'هل أنت متأكد من تقديم الامتحان؟',
+        variant: 'destructive',
+      });
+    }
+    setShowConfirmSubmit(true);
+  };
+
+  // التوجيه بعد التقديم
+  useEffect(() => {
+    if (isSubmitted && attemptId) {
+      navigate(`/student/bagrut-results/${examId}`);
+    }
+  }, [isSubmitted, attemptId, examId, navigate]);
+
+  // Loading
+  if (isLoading) {
+    return (
+      <div className="container mx-auto p-6 max-w-4xl">
+        <Card>
+          <CardContent className="p-8">
+            <div className="flex items-center justify-center gap-3">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              <span className="text-lg">جاري تحميل الامتحان...</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Error
+  if (isError || !examData) {
+    return (
+      <div className="container mx-auto p-6 max-w-4xl">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {error?.message || 'فشل في تحميل الامتحان'}
+          </AlertDescription>
+        </Alert>
+        <Button variant="outline" className="mt-4" onClick={() => navigate('/student/bagrut-exams')}>
+          <Home className="ml-2 h-4 w-4" />
+          العودة لقائمة الامتحانات
+        </Button>
+      </div>
+    );
+  }
+
+  // لا يمكن البدء
+  if (!examData.can_start) {
+    return (
+      <div className="container mx-auto p-6 max-w-4xl">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            لقد استنفدت جميع المحاولات المسموح بها ({examData.exam.max_attempts})
+          </AlertDescription>
+        </Alert>
+        <Button variant="outline" className="mt-4" onClick={() => navigate('/student/bagrut-exams')}>
+          <Home className="ml-2 h-4 w-4" />
+          العودة لقائمة الامتحانات
+        </Button>
+      </div>
+    );
+  }
+
+  // اختيار الأقسام (إذا لم تبدأ المحاولة بعد)
+  if (!attemptId) {
+    return (
+      <div className="container mx-auto p-6">
+        <BagrutSectionSelector
+          sections={examData.sections}
+          examTitle={examData.exam.title}
+          examDuration={examData.exam.duration_minutes}
+          totalPoints={examData.exam.total_points}
+          instructions={examData.exam.instructions}
+          onStart={startExam}
+          isStarting={isCreatingAttempt}
+        />
+      </div>
+    );
+  }
+
+  const currentQuestion = allQuestions[currentQuestionIndex];
+
+  if (!currentQuestion) {
+    return (
+      <div className="container mx-auto p-6">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>لا توجد أسئلة في الأقسام المختارة</AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* شريط المؤقت والمعلومات */}
+      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center justify-between gap-4">
+            {/* العنوان */}
+            <div className="hidden sm:block">
+              <h1 className="font-semibold text-lg truncate max-w-[200px]">
+                {examData.exam.title}
+              </h1>
+            </div>
+
+            {/* المؤقت */}
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
+              timer.isLastFiveMinutes 
+                ? 'bg-destructive/10 text-destructive animate-pulse' 
+                : 'bg-muted'
+            }`}>
+              <Clock className="h-5 w-5" />
+              <span className="font-mono text-xl font-bold">{timer.formattedTime}</span>
+            </div>
+
+            {/* التقدم */}
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-muted-foreground hidden sm:inline">
+                {answeredCount}/{allQuestions.length}
+              </span>
+              <Progress value={progressPercent} className="w-24" />
+              <Badge variant={isSaving ? 'secondary' : 'outline'} className="hidden sm:flex gap-1">
+                {isSaving ? (
+                  <>
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    حفظ...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-3 w-3" />
+                    محفوظ
+                  </>
+                )}
+              </Badge>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-6 flex gap-6">
+        {/* القائمة الجانبية - التنقل بين الأسئلة */}
+        <aside className="hidden lg:block w-64 flex-shrink-0">
+          <Card className="sticky top-24">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm">الأسئلة</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-[400px]">
+                <div className="grid grid-cols-4 gap-2">
+                  {allQuestions.map((q, index) => {
+                    const qId = q.question_db_id || q.question_number;
+                    const isAnswered = answers[qId]?.answer;
+                    const isCurrent = index === currentQuestionIndex;
+
+                    return (
+                      <button
+                        key={qId}
+                        onClick={() => goToQuestion(index)}
+                        className={`w-10 h-10 rounded-lg text-sm font-medium transition-all flex items-center justify-center ${
+                          isCurrent
+                            ? 'bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2'
+                            : isAnswered
+                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                            : 'bg-muted hover:bg-muted/80'
+                        }`}
+                      >
+                        {index + 1}
+                      </button>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </aside>
+
+        {/* محتوى السؤال */}
+        <main className="flex-1 max-w-3xl">
+          {/* رقم السؤال الحالي */}
+          <div className="flex items-center justify-between mb-4">
+            <Badge variant="outline" className="text-lg px-4 py-2">
+              السؤال {currentQuestionIndex + 1} من {allQuestions.length}
+            </Badge>
+            <div className="flex gap-2 lg:hidden">
+              {allQuestions.slice(
+                Math.max(0, currentQuestionIndex - 2),
+                Math.min(allQuestions.length, currentQuestionIndex + 3)
+              ).map((q, i) => {
+                const actualIndex = Math.max(0, currentQuestionIndex - 2) + i;
+                const qId = q.question_db_id || q.question_number;
+                const isAnswered = answers[qId]?.answer;
+                const isCurrent = actualIndex === currentQuestionIndex;
+                
+                return (
+                  <button
+                    key={qId}
+                    onClick={() => goToQuestion(actualIndex)}
+                    className={`w-8 h-8 rounded text-sm font-medium ${
+                      isCurrent
+                        ? 'bg-primary text-primary-foreground'
+                        : isAnswered
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-muted'
+                    }`}
+                  >
+                    {actualIndex + 1}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* السؤال */}
+          <BagrutQuestionRenderer
+            question={currentQuestion}
+            answer={answers[currentQuestion.question_db_id || currentQuestion.question_number]}
+            onAnswerChange={updateAnswer}
+            disabled={isSubmitting}
+          />
+
+          {/* أزرار التنقل */}
+          <div className="flex items-center justify-between mt-6 gap-4">
+            <Button
+              variant="outline"
+              onClick={goPrev}
+              disabled={currentQuestionIndex === 0}
+              className="gap-2"
+            >
+              <ChevronRight className="h-4 w-4" />
+              السابق
+            </Button>
+
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={saveAnswers}
+                disabled={isSaving}
+                className="gap-2"
+              >
+                <Save className="h-4 w-4" />
+                <span className="hidden sm:inline">حفظ</span>
+              </Button>
+
+              {currentQuestionIndex === allQuestions.length - 1 ? (
+                <Button
+                  onClick={confirmSubmit}
+                  disabled={isSubmitting}
+                  className="gap-2 bg-green-600 hover:bg-green-700"
+                >
+                  <Send className="h-4 w-4" />
+                  تقديم الامتحان
+                </Button>
+              ) : (
+                <Button onClick={goNext} className="gap-2">
+                  التالي
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          </div>
+        </main>
+      </div>
+
+      {/* نافذة تأكيد التقديم */}
+      {showConfirmSubmit && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle>تأكيد تقديم الامتحان</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                <span>الأسئلة المجابة</span>
+                <Badge variant="default">{answeredCount} / {allQuestions.length}</Badge>
+              </div>
+              
+              {answeredCount < allQuestions.length && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    لديك {allQuestions.length - answeredCount} سؤال بدون إجابة
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              <p className="text-sm text-muted-foreground">
+                لا يمكن التراجع بعد التقديم. هل أنت متأكد؟
+              </p>
+
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setShowConfirmSubmit(false)}
+                >
+                  إلغاء
+                </Button>
+                <Button
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                      جاري التقديم...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="ml-2 h-4 w-4" />
+                      تقديم نهائي
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+    </div>
+  );
+}
