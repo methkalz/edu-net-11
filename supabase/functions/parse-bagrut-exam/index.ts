@@ -21,6 +21,10 @@ interface ParsedQuestion {
   choices?: Array<{ id: string; text: string; is_correct: boolean }>;
   correct_answer?: string;
   answer_explanation?: string;
+  // Structured blanks for fill_blank questions
+  blanks?: Array<{ id: string; placeholder?: string; correct_answer: string }>;
+  // Generic structured answers for complex question types
+  correct_answer_data?: any;
   sub_questions?: ParsedQuestion[];
   topic_tags?: string[];
 }
@@ -472,16 +476,23 @@ async function processJobInBackground(
       }
     ];
 
-    // Enhanced system prompt with strict table extraction rules
+    // Enhanced system prompt with answer extraction support (ONLY when explicitly present in the PDF)
     const systemPrompt = `أنت محلل متخصص في امتحانات البجروت. حلل الامتحان واستخرج:
 
 1. معلومات الامتحان: العنوان، السنة، الموسم (summer/winter/spring)، المادة، المدة بالدقائق، مجموع العلامات
 2. الأقسام: رقم القسم، العنوان، النوع (mandatory/elective)، التخصص إن وجد
-3. الأسئلة: الرقم، النص، النوع، النقاط، الخيارات والإجابة الصحيحة
+3. الأسئلة: الرقم، النص، النوع، النقاط، الخيارات
+
+**قواعد استخراج الإجابات (مهم جداً):**
+- لا تخمّن الإجابات ولا تستنتجها من معرفتك.
+- استخرج الإجابة فقط إذا كانت موجودة صراحة داخل ملف الـ PDF (مثلاً: "الإجابة:" / "الحل:" / "نموذج الإجابة" / "سلم التصحيح" / أو مكتوبة مباشرة تحت السؤال أو داخل جدول الإجابات).
+- إذا لم تكن الإجابة موجودة أو غير واضحة: اتركها فارغة.
+- الهدف: تمكين السوبر آدمن من رؤية الإجابات الموجودة في الملف قبل نشر الامتحان، وتمكين المعلم لاحقاً من التصحيح.
 
 **قواعد صارمة جداً لاستخراج الجداول التفاعلية:**
 
-هذا امتحان وليس دليل معلم! لا تستخرج الإجابات أبداً!
+هذا امتحان، لكن قد يحتوي أحياناً على صفحة/قسم إجابات أو حلول.
+إذا كان الملف يحتوي على إجابات صريحة: استخرجها وخزنها في الحقول المناسبة (بدون أي تخمين).
 
 1. **جداول التحويل بين الأنظمة العددية (ثنائي/عشري/هيكساديسيمالي):**
    - عادة عمود واحد فقط يحتوي على المعطيات (القيمة المعطاة)
@@ -490,6 +501,7 @@ async function processJobInBackground(
      - المعطى: 205 في العمود العشري
      - المطلوب: "?" في عمود الثنائي و "?" في عمود الهيكساديسيمالي
    - استخدم input_columns لتحديد أرقام الأعمدة التي هي خانات إدخال (0-based)
+   - **إذا كان هناك نموذج إجابة داخل نفس الملف:** لا تملأ rows بالإجابات، بل ضعها داخل table_data.correct_answers
 
 2. **جداول الإكمال العامة:**
    - إذا كان السؤال يطلب "أكمل" أو "احسب" أو "حول" = الخلايا المقابلة للمطلوب تكون "?"
@@ -575,6 +587,11 @@ async function processJobInBackground(
                               type: 'array',
                               items: { type: 'number' },
                               description: 'أرقام الأعمدة (0-based) التي يجب أن تكون خانات إدخال للطالب'
+                            },
+                            correct_answers: {
+                              type: 'object',
+                              description: 'الإجابات الصحيحة (إن كانت موجودة صراحة في الملف) لكل خلية إدخال: { rowIndex: { colIndex: "answer" } }',
+                              additionalProperties: true
                             }
                           }
                         },
@@ -598,6 +615,24 @@ async function processJobInBackground(
                         },
                         correct_answer: { type: 'string' },
                         answer_explanation: { type: 'string' },
+                        blanks: {
+                          type: 'array',
+                          description: 'تعريف الفراغات لأسئلة fill_blank إن وُجدت إجابات صريحة في الملف',
+                          items: {
+                            type: 'object',
+                            properties: {
+                              id: { type: 'string' },
+                              placeholder: { type: 'string' },
+                              correct_answer: { type: 'string' }
+                            },
+                            required: ['id', 'correct_answer']
+                          }
+                        },
+                        correct_answer_data: {
+                          type: 'object',
+                          description: 'إجابات منظمة لأنواع الأسئلة المركبة (matching/ordering/...) عند وجودها صراحة في الملف',
+                          additionalProperties: true
+                        },
                         sub_questions: {
                           type: 'array',
                           items: {
@@ -607,7 +642,39 @@ async function processJobInBackground(
                               question_text: { type: 'string' },
                               question_type: { type: 'string' },
                               points: { type: 'number' },
-                              correct_answer: { type: 'string' }
+                              correct_answer: { type: 'string' },
+                              answer_explanation: { type: 'string' },
+                              blanks: {
+                                type: 'array',
+                                items: {
+                                  type: 'object',
+                                  properties: {
+                                    id: { type: 'string' },
+                                    placeholder: { type: 'string' },
+                                    correct_answer: { type: 'string' }
+                                  },
+                                  required: ['id', 'correct_answer']
+                                }
+                              },
+                              correct_answer_data: {
+                                type: 'object',
+                                additionalProperties: true
+                              },
+                              table_data: {
+                                type: 'object',
+                                additionalProperties: true
+                              },
+                              choices: {
+                                type: 'array',
+                                items: {
+                                  type: 'object',
+                                  properties: {
+                                    id: { type: 'string' },
+                                    text: { type: 'string' },
+                                    is_correct: { type: 'boolean' }
+                                  }
+                                }
+                              }
                             }
                           }
                         }
@@ -690,16 +757,74 @@ async function processJobInBackground(
     // Calculate statistics
     let totalQuestions = 0;
     let questionsByType: Record<string, number> = {};
+
+    // Answers report (which questions have explicit answers in the PDF)
+    const unansweredList: Array<{ question_number: string; question_type: string; reason: string }> = [];
+    let answeredCount = 0;
+
+    const hasExplicitAnswer = (q: any): boolean => {
+      if (!q) return false;
+
+      // MCQ: any choice marked correct OR correct_answer provided
+      if (Array.isArray(q.choices) && q.choices.some((c: any) => c?.is_correct)) return true;
+      if (typeof q.correct_answer === 'string' && q.correct_answer.trim()) return true;
+
+      // fill_blank: blanks with correct_answer
+      if (Array.isArray(q.blanks) && q.blanks.some((b: any) => typeof b?.correct_answer === 'string' && b.correct_answer.trim())) {
+        return true;
+      }
+
+      // fill_table: table_data.correct_answers
+      if (q.table_data?.correct_answers && Object.keys(q.table_data.correct_answers).length > 0) return true;
+
+      // generic structured
+      if (q.correct_answer_data && Object.keys(q.correct_answer_data).length > 0) return true;
+
+      return false;
+    };
+
+    const collectAnswerReport = (q: any) => {
+      if (hasExplicitAnswer(q)) {
+        answeredCount++;
+      } else {
+        // Only report for question types that typically have a correct answer
+        const type = q?.question_type || 'unknown';
+        const shouldHaveAnswer = [
+          'multiple_choice',
+          'true_false',
+          'true_false_multi',
+          'fill_blank',
+          'fill_table',
+          'matching',
+          'ordering',
+          'calculation',
+          'open_ended',
+          'cli_command',
+          'diagram_based'
+        ].includes(type);
+
+        if (shouldHaveAnswer) {
+          unansweredList.push({
+            question_number: q?.question_number || '',
+            question_type: type,
+            reason: 'no_explicit_answer_detected'
+          });
+        }
+      }
+    };
     
     for (const section of parsedExam.sections || []) {
       for (const question of section.questions || []) {
         totalQuestions++;
         questionsByType[question.question_type] = (questionsByType[question.question_type] || 0) + 1;
+
+        collectAnswerReport(question);
         
         if (question.sub_questions) {
           totalQuestions += question.sub_questions.length;
           for (const sub of question.sub_questions) {
             questionsByType[sub.question_type] = (questionsByType[sub.question_type] || 0) + 1;
+            collectAnswerReport(sub);
           }
         }
       }
@@ -714,6 +839,12 @@ async function processJobInBackground(
         totalQuestions,
         questionsByType,
         totalPoints: parsedExam.total_points
+      },
+      answersReport: {
+        totalQuestions,
+        answeredCount,
+        unansweredCount: unansweredList.length,
+        unansweredList
       }
     };
     

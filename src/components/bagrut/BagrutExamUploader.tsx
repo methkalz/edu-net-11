@@ -26,8 +26,15 @@ interface Statistics {
   totalPoints: number;
 }
 
+interface AnswersReport {
+  totalQuestions: number;
+  answeredCount: number;
+  unansweredCount: number;
+  unansweredList: Array<{ question_number: string; question_type: string; reason: string }>;
+}
+
 interface BagrutExamUploaderProps {
-  onExamParsed: (exam: ParsedExam, statistics: Statistics) => void;
+  onExamParsed: (exam: ParsedExam, statistics: Statistics, answersReport?: AnswersReport) => void;
   onCancel: () => void;
 }
 
@@ -99,7 +106,7 @@ const BagrutExamUploader: React.FC<BagrutExamUploaderProps> = ({ onExamParsed, o
           
           // Pass parsed data to parent
           if (data.result?.parsedExam && data.result?.statistics) {
-            onExamParsed(data.result.parsedExam, data.result.statistics);
+            onExamParsed(data.result.parsedExam, data.result.statistics, data.result.answersReport);
           }
         } else if (data.status === 'failed') {
           stopPolling();

@@ -34,6 +34,8 @@ export interface ParsedQuestion {
   topic_tags?: string[];
   // Structured blanks for fill_blank questions
   blanks?: BlankDefinition[];
+  // Generic structured answers for complex types (matching/ordering/...) or future extensions
+  correct_answer_data?: any;
   // DB ID for updates (only present for exams loaded from database)
   question_db_id?: string;
 }
@@ -116,6 +118,7 @@ type QuestionRow = {
   code_content: string | null;
   choices: any;
   correct_answer: string | null;
+  correct_answer_data: any;
   answer_explanation: string | null;
   topic_tags: string[] | null;
 };
@@ -129,6 +132,9 @@ const buildQuestionTree = (rows: QuestionRow[]): ParsedQuestion[] => {
   const children = new Map<string, Array<ParsedQuestion & { __id: string; __parent: string | null; __order: number }>>();
 
   for (const r of rows) {
+    const correctAnswerData = (r as any).correct_answer_data ?? undefined;
+    const blanksFromDb = correctAnswerData?.blanks as BlankDefinition[] | undefined;
+
     byId.set(r.id, {
       __id: r.id,
       __parent: r.parent_question_id,
@@ -146,8 +152,10 @@ const buildQuestionTree = (rows: QuestionRow[]): ParsedQuestion[] => {
       code_content: r.code_content ?? undefined,
       choices: (r.choices as any) ?? undefined,
       correct_answer: r.correct_answer ?? undefined,
+      correct_answer_data: correctAnswerData,
       answer_explanation: r.answer_explanation ?? undefined,
       topic_tags: r.topic_tags ?? undefined,
+      blanks: blanksFromDb,
       sub_questions: [],
       // Add DB ID for updates
       question_db_id: r.id
