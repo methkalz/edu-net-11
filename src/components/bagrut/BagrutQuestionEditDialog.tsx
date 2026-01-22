@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -268,6 +268,101 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
   // ========== Blanks Functions (fill_blank) ==========
   const blanks = editedQuestion.blanks || [];
 
+  // Extract blanks from question text (auto-detect on open)
+  const extractBlanksFromText = useCallback((text: string, existingBlanks?: BlankDefinition[]): BlankDefinition[] => {
+    const foundBlanks: BlankDefinition[] = [];
+    
+    // Pattern 1: New format [فراغ:X]
+    const newFormatPattern = /\[فراغ:(\d+)\]/g;
+    // Pattern 2: Old numbered format ____X____
+    const oldNumberedPattern = /____(\d+)____/g;
+    // Pattern 3: General blanks (unnamed) - ____, ..., etc.
+    const generalPattern = /(_+|\.{3,}|…+)/g;
+    
+    let match;
+    const numberedIds = new Set<number>();
+    
+    // First pass: find numbered blanks
+    while ((match = newFormatPattern.exec(text)) !== null) {
+      const id = parseInt(match[1]);
+      numberedIds.add(id);
+      foundBlanks.push({
+        id: String(id),
+        placeholder: '',
+        correct_answer: existingBlanks?.find(b => b.id === String(id))?.correct_answer || ''
+      });
+    }
+    
+    // Reset regex
+    oldNumberedPattern.lastIndex = 0;
+    while ((match = oldNumberedPattern.exec(text)) !== null) {
+      const id = parseInt(match[1]);
+      if (!numberedIds.has(id)) {
+        numberedIds.add(id);
+        foundBlanks.push({
+          id: String(id),
+          placeholder: '',
+          correct_answer: existingBlanks?.find(b => b.id === String(id))?.correct_answer || ''
+        });
+      }
+    }
+    
+    // Second pass: count general blanks and assign IDs
+    let generalIndex = 0;
+    generalPattern.lastIndex = 0;
+    while ((match = generalPattern.exec(text)) !== null) {
+      generalIndex++;
+      // Only add if no numbered blanks found (to avoid duplicates)
+      if (numberedIds.size === 0) {
+        foundBlanks.push({
+          id: String(generalIndex),
+          placeholder: '',
+          correct_answer: existingBlanks?.[generalIndex - 1]?.correct_answer || ''
+        });
+      }
+    }
+    
+    // Sort by ID
+    foundBlanks.sort((a, b) => parseInt(a.id) - parseInt(b.id));
+    
+    // Remove duplicates
+    const uniqueBlanks = foundBlanks.filter((blank, index, self) => 
+      index === self.findIndex(b => b.id === blank.id)
+    );
+    
+    return uniqueBlanks;
+  }, []);
+
+  // Auto-detect blanks when dialog opens for fill_blank questions
+  useEffect(() => {
+    if (open && isFillBlank) {
+      const existingBlanks = question.blanks || [];
+      if (existingBlanks.length === 0) {
+        // Only auto-detect if no blanks are defined
+        const detected = extractBlanksFromText(question.question_text, existingBlanks);
+        if (detected.length > 0) {
+          setEditedQuestion(prev => ({ ...prev, blanks: detected }));
+        }
+      }
+    }
+  }, [open, isFillBlank, question, extractBlanksFromText]);
+
+  // Check if a blank marker exists in the text
+  const isBlankInText = (blankId: string): boolean => {
+    const text = editedQuestion.question_text;
+    const newFormat = new RegExp(`\\[فراغ:${blankId}\\]`);
+    const oldFormat = new RegExp(`____${blankId}____`);
+    return newFormat.test(text) || oldFormat.test(text);
+  };
+
+  // Count general blanks in text (without IDs)
+  const countGeneralBlanksInText = (): number => {
+    const text = editedQuestion.question_text;
+    const generalPattern = /(_+|\.{3,}|…+)/g;
+    const matches = text.match(generalPattern);
+    return matches ? matches.length : 0;
+  };
+
   const handleAddBlank = () => {
     const newId = String(blanks.length + 1);
     const newBlanks: BlankDefinition[] = [...blanks, { id: newId, placeholder: '', correct_answer: '' }];
@@ -275,10 +370,17 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
   };
 
   const handleRemoveBlank = (index: number) => {
+    const blankToRemove = blanks[index];
     const newBlanks = blanks.filter((_, i) => i !== index);
     // Re-ID blanks
     const reIdBlanks = newBlanks.map((b, i) => ({ ...b, id: String(i + 1) }));
-    setEditedQuestion(prev => ({ ...prev, blanks: reIdBlanks }));
+    
+    // Also remove the marker from text if exists
+    let updatedText = editedQuestion.question_text;
+    updatedText = updatedText.replace(new RegExp(`\\[فراغ:${blankToRemove.id}\\]`, 'g'), '____');
+    updatedText = updatedText.replace(new RegExp(`____${blankToRemove.id}____`, 'g'), '____');
+    
+    setEditedQuestion(prev => ({ ...prev, blanks: reIdBlanks, question_text: updatedText }));
   };
 
   const handleBlankChange = (index: number, field: 'placeholder' | 'correct_answer', value: string) => {
@@ -288,13 +390,23 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
   };
 
   const handleInsertBlankMarker = (blankId: string) => {
-    // Insert a marker at the end of question text
-    const marker = `____${blankId}____`;
+    // Use new format: [فراغ:X]
+    const marker = `[فراغ:${blankId}]`;
     setEditedQuestion(prev => ({
       ...prev,
       question_text: prev.question_text + ' ' + marker
     }));
     toast.success(`تم إدراج علامة الفراغ ${blankId}`);
+  };
+
+  const handleDetectBlanks = () => {
+    const detected = extractBlanksFromText(editedQuestion.question_text, editedQuestion.blanks);
+    if (detected.length > 0) {
+      setEditedQuestion(prev => ({ ...prev, blanks: detected }));
+      toast.success(`تم اكتشاف ${detected.length} فراغ/فراغات`);
+    } else {
+      toast.info('لم يتم العثور على فراغات في النص');
+    }
   };
 
   // ========== Code Editor ==========
@@ -434,52 +546,84 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
                 <Separator />
                 <div className="flex items-center justify-between">
                   <Label className="text-base font-semibold">إدارة الفراغات</Label>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleAddBlank}
-                    className="gap-1"
-                  >
-                    <Plus className="h-4 w-4" />
-                    إضافة فراغ
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleDetectBlanks}
+                      className="gap-1"
+                    >
+                      🔍 اكتشاف الفراغات
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleAddBlank}
+                      className="gap-1"
+                    >
+                      <Plus className="h-4 w-4" />
+                      إضافة فراغ
+                    </Button>
+                  </div>
                 </div>
                 
+                {/* Info about detected blanks */}
+                {countGeneralBlanksInText() > 0 && blanks.length === 0 && (
+                  <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg text-sm text-amber-800 dark:text-amber-200">
+                    ℹ️ تم اكتشاف {countGeneralBlanksInText()} فراغ/فراغات في النص. انقر "اكتشاف الفراغات" لإنشائها تلقائياً.
+                  </div>
+                )}
+                
                 <p className="text-sm text-muted-foreground">
-                  أضف الفراغات ثم انقر "إدراج" لوضع علامة الفراغ في نص السؤال
+                  أضف الفراغات ثم انقر "إدراج" لوضع علامة الفراغ في نص السؤال. الصيغة: [فراغ:1]
                 </p>
 
                 <div className="space-y-3">
-                  {blanks.map((blank, index) => (
-                    <div key={index} className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg">
-                      <span className="font-medium text-sm min-w-[60px]">فراغ {blank.id}:</span>
-                      <Input
-                        value={blank.correct_answer}
-                        onChange={(e) => handleBlankChange(index, 'correct_answer', e.target.value)}
-                        placeholder="الإجابة الصحيحة"
-                        className="flex-1"
-                      />
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => handleInsertBlankMarker(blank.id)}
-                      >
-                        إدراج
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleRemoveBlank(index)}
-                        className="h-8 w-8 text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                  {blanks.length === 0 && (
+                  {blanks.map((blank, index) => {
+                    const inText = isBlankInText(blank.id);
+                    return (
+                      <div key={index} className={`flex items-center gap-2 p-3 rounded-lg ${inText ? 'bg-muted/30' : 'bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800'}`}>
+                        <span className="font-medium text-sm min-w-[70px]">فراغ {blank.id}:</span>
+                        {inText ? (
+                          <Badge variant="outline" className="text-xs bg-green-50 dark:bg-green-950/30 border-green-300 dark:border-green-700 text-green-700 dark:text-green-300">
+                            ✓ في النص
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-xs bg-amber-50 dark:bg-amber-950/30 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300">
+                            ⚠ غير مدرج
+                          </Badge>
+                        )}
+                        <Input
+                          value={blank.correct_answer}
+                          onChange={(e) => handleBlankChange(index, 'correct_answer', e.target.value)}
+                          placeholder="الإجابة الصحيحة"
+                          className="flex-1"
+                        />
+                        {!inText && (
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => handleInsertBlankMarker(blank.id)}
+                          >
+                            إدراج
+                          </Button>
+                        )}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleRemoveBlank(index)}
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    );
+                  })}
+                  {blanks.length === 0 && countGeneralBlanksInText() === 0 && (
                     <p className="text-sm text-muted-foreground text-center py-4">
                       لا توجد فراغات محددة. انقر "إضافة فراغ" لإنشاء فراغ جديد.
                     </p>

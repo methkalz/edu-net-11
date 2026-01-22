@@ -422,27 +422,71 @@ const isInputCell = (cellValue: string, columnIndex?: number, inputColumns?: num
 };
 
 // Helper function to render fill_blank text with input fields
-const renderFillBlankText = (text: string) => {
-  const blankPatterns = /(_+|\.{3,}|…+|\[\.+\]|\(\s*\))/g;
-  const parts = text.split(blankPatterns);
+// Supports both new format [فراغ:X] and old format ____X____ and general blanks
+const renderFillBlankText = (
+  text: string, 
+  blanks?: Array<{ id: string; correct_answer: string; placeholder?: string }>,
+  showAnswers?: boolean
+) => {
+  // First, normalize old numbered format to new format
+  let normalizedText = text.replace(/____(\d+)____/g, '[فراغ:$1]');
   
-  let blankIndex = 0;
-  return parts.map((part, index) => {
-    if (part.match(blankPatterns)) {
-      blankIndex++;
-      return (
-        <input
-          key={index}
-          type="text"
-          className="inline-block w-32 mx-1 px-2 py-1 border-b-2 border-dashed border-primary/50 
-                     bg-accent/30 text-center focus:outline-none focus:border-primary 
-                     focus:bg-background rounded"
-          placeholder={`فراغ ${blankIndex}`}
-        />
-      );
+  // Combined pattern: new format OR general blanks
+  const combinedPattern = /(\[فراغ:(\d+)\])|(_+|\.{3,}|…+|\[\.+\]|\(\s*\))/g;
+  
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let generalBlankCounter = 0;
+  let match;
+  
+  while ((match = combinedPattern.exec(normalizedText)) !== null) {
+    // Add text before the blank
+    if (match.index > lastIndex) {
+      parts.push(<span key={`text-${lastIndex}`}>{normalizedText.slice(lastIndex, match.index)}</span>);
     }
-    return <span key={index}>{part}</span>;
-  });
+    
+    let blankId: number;
+    let blankDef: typeof blanks extends Array<infer T> ? T : never | undefined;
+    
+    if (match[2]) {
+      // Numbered format [فراغ:X]
+      blankId = parseInt(match[2]);
+      blankDef = blanks?.find(b => parseInt(b.id) === blankId);
+    } else {
+      // General blank - use sequential counter
+      generalBlankCounter++;
+      blankId = generalBlankCounter;
+      // Try to find by sequential index if no numbered blanks exist
+      blankDef = blanks?.[generalBlankCounter - 1];
+    }
+    
+    parts.push(
+      <span key={`blank-${match.index}`} className="inline-block mx-1">
+        {showAnswers && blankDef?.correct_answer ? (
+          <span className="px-2 py-1 bg-primary/10 border-b-2 border-primary text-primary font-medium rounded">
+            {blankDef.correct_answer}
+          </span>
+        ) : (
+          <input
+            type="text"
+            className="w-28 px-2 py-1 border-b-2 border-dashed border-primary/50 
+                       bg-accent/30 text-center focus:outline-none focus:border-primary 
+                       focus:bg-background rounded"
+            placeholder={blankDef?.placeholder || `فراغ ${blankId}`}
+          />
+        )}
+      </span>
+    );
+    
+    lastIndex = match.index + match[0].length;
+  }
+  
+  // Add remaining text
+  if (lastIndex < normalizedText.length) {
+    parts.push(<span key={`text-end`}>{normalizedText.slice(lastIndex)}</span>);
+  }
+  
+  return parts.length > 0 ? parts : [<span key="full">{text}</span>];
 };
 
 // Question Card Component
@@ -510,7 +554,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
       {/* Question Text - with fill blanks support */}
       {question.question_type === 'fill_blank' ? (
         <p className="text-foreground whitespace-pre-wrap leading-8">
-          {renderFillBlankText(question.question_text)}
+          {renderFillBlankText(question.question_text, question.blanks, showAnswers)}
         </p>
       ) : (
         <p className="text-foreground whitespace-pre-wrap">{question.question_text}</p>
