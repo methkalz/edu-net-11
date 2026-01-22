@@ -351,6 +351,7 @@ export type Database = {
           created_by: string | null
           duration_minutes: number | null
           exam_code: string | null
+          exam_number: number
           exam_season: Database["public"]["Enums"]["bagrut_exam_season"]
           exam_year: number
           id: string
@@ -381,6 +382,7 @@ export type Database = {
           created_by?: string | null
           duration_minutes?: number | null
           exam_code?: string | null
+          exam_number?: number
           exam_season: Database["public"]["Enums"]["bagrut_exam_season"]
           exam_year: number
           id?: string
@@ -411,6 +413,7 @@ export type Database = {
           created_by?: string | null
           duration_minutes?: number | null
           exam_code?: string | null
+          exam_number?: number
           exam_season?: Database["public"]["Enums"]["bagrut_exam_season"]
           exam_year?: number
           id?: string
