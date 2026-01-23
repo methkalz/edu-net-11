@@ -15,43 +15,43 @@ export const BagrutStatsCards: FC<BagrutStatsCardsProps> = memo(({ stats, loadin
       title: 'إجمالي الامتحانات',
       value: stats?.totalExams?.toString() || '0',
       icon: FileText,
-      iconBg: 'bg-primary/10',
-      iconColor: 'text-primary',
+      iconBg: 'bg-blue-50',
+      iconColor: 'text-blue-600',
     },
     {
       title: 'الامتحانات المنشورة',
       value: stats?.publishedExams?.toString() || '0',
       icon: Send,
-      iconBg: 'bg-emerald-500/10',
-      iconColor: 'text-emerald-600',
+      iconBg: 'bg-green-50',
+      iconColor: 'text-green-600',
     },
     {
       title: 'إجمالي المحاولات',
       value: stats?.totalAttempts?.toString() || '0',
       icon: ClipboardList,
-      iconBg: 'bg-violet-500/10',
-      iconColor: 'text-violet-600',
+      iconBg: 'bg-purple-50',
+      iconColor: 'text-purple-600',
     },
     {
       title: 'الطلاب المتقدمون',
       value: stats?.uniqueStudents?.toString() || '0',
       icon: Users,
-      iconBg: 'bg-amber-500/10',
-      iconColor: 'text-amber-600',
+      iconBg: 'bg-orange-50',
+      iconColor: 'text-orange-600',
     },
     {
       title: 'المدارس المشاركة',
       value: stats?.participatingSchools?.toString() || '0',
       icon: School,
-      iconBg: 'bg-cyan-500/10',
-      iconColor: 'text-cyan-600',
+      iconBg: 'bg-teal-50',
+      iconColor: 'text-teal-600',
     },
     {
       title: 'معدل النجاح',
       value: `${stats?.averageScore || 0}%`,
       icon: TrendingUp,
-      iconBg: 'bg-rose-500/10',
-      iconColor: 'text-rose-600',
+      iconBg: 'bg-emerald-50',
+      iconColor: 'text-emerald-600',
     },
   ];
 
@@ -59,14 +59,14 @@ export const BagrutStatsCards: FC<BagrutStatsCardsProps> = memo(({ stats, loadin
     return (
       <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
         {[1, 2, 3, 4, 5, 6].map((i) => (
-          <Card key={i} className="border shadow-sm">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <Skeleton className="h-10 w-10 rounded-lg" />
-                <div className="flex-1 space-y-2">
-                  <Skeleton className="h-3 w-16" />
-                  <Skeleton className="h-6 w-8" />
+          <Card key={i} className="border-0 shadow-sm bg-white">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-7 w-12" />
                 </div>
+                <Skeleton className="h-11 w-11 rounded-xl" />
               </div>
             </CardContent>
           </Card>
@@ -82,20 +82,20 @@ export const BagrutStatsCards: FC<BagrutStatsCardsProps> = memo(({ stats, loadin
         return (
           <Card 
             key={index} 
-            className="border bg-card shadow-sm hover:shadow-md transition-shadow duration-200"
+            className="border-0 shadow-sm hover:shadow-md transition-shadow duration-200 bg-white"
           >
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className={`${stat.iconBg} p-2.5 rounded-lg shrink-0`}>
-                  <Icon className={`h-5 w-5 ${stat.iconColor}`} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-muted-foreground truncate">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-gray-600">
                     {stat.title}
                   </p>
-                  <p className="text-xl font-bold text-foreground mt-0.5">
+                  <p className="text-2xl font-bold text-gray-900">
                     {stat.value}
                   </p>
+                </div>
+                <div className={`p-3 rounded-xl ${stat.iconBg}`}>
+                  <Icon className={`h-5 w-5 ${stat.iconColor}`} />
                 </div>
               </div>
             </CardContent>
