@@ -23,6 +23,7 @@ export interface BagrutAttemptForGrading {
   graded_at: string | null;
   graded_by: string | null;
   teacher_feedback: string | null;
+  selected_section_ids: string[] | null;
 }
 
 export interface QuestionGrade {
@@ -94,6 +95,7 @@ export function useBagrutGrading(examId: string | undefined, schoolId: string | 
           graded_at: attempt.graded_at,
           graded_by: attempt.graded_by,
           teacher_feedback: attempt.teacher_feedback,
+          selected_section_ids: attempt.selected_section_ids || null,
         };
       });
     },

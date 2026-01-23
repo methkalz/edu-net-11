@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { useBagrutGrading, QuestionGrade } from '@/hooks/useBagrutGrading';
 import { supabase } from '@/integrations/supabase/client';
+import { buildBagrutPreviewFromDb, type ParsedQuestion, type ParsedSection } from '@/lib/bagrut/buildBagrutPreview';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -45,7 +46,6 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import type { ParsedQuestion, ParsedSection } from '@/lib/bagrut/buildBagrutPreview';
 
 export default function BagrutGradingPage() {
   const { examId } = useParams<{ examId: string }>();
@@ -400,16 +400,66 @@ function GradingDialog({
     }
   }, [open, attemptId, fetchQuestionGrades]);
 
-  const questions = examData?.questions || [];
+  // بناء الهيكل المنظم للامتحان
+  const structuredExam = useMemo(() => {
+    if (!examData?.exam || !examData?.sections || !examData?.questions) {
+      return null;
+    }
+    try {
+      const { exam } = buildBagrutPreviewFromDb({
+        exam: { ...examData.exam, id: examData.exam.id },
+        sections: examData.sections,
+        questions: examData.questions,
+      });
+      return exam;
+    } catch (e) {
+      console.error('Failed to build exam structure', e);
+      return null;
+    }
+  }, [examData]);
+
+  // فلترة الأقسام بناءً على اختيارات الطالب
+  const relevantSections = useMemo(() => {
+    if (!structuredExam?.sections) return [];
+    
+    const selectedSectionIds = attempt?.selected_section_ids || [];
+    
+    // إذا لم يختر الطالب أقسام محددة، نعرض جميع الأقسام
+    if (selectedSectionIds.length === 0) {
+      return structuredExam.sections;
+    }
+    
+    // الأقسام الإلزامية + الأقسام المختارة
+    return structuredExam.sections.filter(
+      s => s.section_type === 'mandatory' || selectedSectionIds.includes(s.section_db_id || '')
+    );
+  }, [structuredExam, attempt?.selected_section_ids]);
+
   const answers = attempt?.answers || {};
 
-  const updateQuestionGrade = (questionId: string, field: string, value: any) => {
+  // جمع كل الأسئلة للحسابات
+  const allQuestions = useMemo(() => {
+    const result: ParsedQuestion[] = [];
+    const collectQuestions = (questions: ParsedQuestion[]) => {
+      questions.forEach(q => {
+        result.push(q);
+        if (q.sub_questions?.length) {
+          collectQuestions(q.sub_questions);
+        }
+      });
+    };
+    relevantSections.forEach(s => collectQuestions(s.questions));
+    return result;
+  }, [relevantSections]);
+
+  const updateQuestionGrade = (questionId: string, field: string, value: any, maxScore: number) => {
     setQuestionGrades(prev => ({
       ...prev,
       [questionId]: {
         ...prev[questionId],
         attempt_id: attemptId,
         question_id: questionId,
+        max_score: maxScore,
         [field]: value,
       },
     }));
@@ -418,8 +468,8 @@ function GradingDialog({
   const calculateTotalScore = () => {
     let total = 0;
     let maxTotal = 0;
-    questions.forEach((q: any) => {
-      const grade = questionGrades[q.id];
+    allQuestions.forEach((q) => {
+      const grade = questionGrades[q.question_db_id || ''];
       if (grade?.final_score !== undefined && grade?.final_score !== null) {
         total += grade.final_score;
       } else if (grade?.manual_score !== undefined && grade?.manual_score !== null) {
@@ -458,6 +508,101 @@ function GradingDialog({
 
   const scores = calculateTotalScore();
 
+  // مكون عرض سؤال واحد (يدعم الأسئلة الفرعية)
+  const QuestionCard = ({ question, depth = 0 }: { question: ParsedQuestion; depth?: number }) => {
+    const questionId = question.question_db_id || '';
+    const answer = answers[questionId];
+    const grade = questionGrades[questionId] || {};
+
+    return (
+      <div className={depth > 0 ? 'mr-4 border-r-2 border-muted pr-4' : ''}>
+        <Card className={depth > 0 ? 'border-dashed' : ''}>
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm">
+                سؤال {question.question_number} ({question.points} علامة)
+                <Badge variant="outline" className="mr-2 text-xs">
+                  {question.question_type}
+                </Badge>
+              </CardTitle>
+              {question.points > 0 && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">العلامة:</span>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={question.points}
+                    value={(grade as any).manual_score ?? ''}
+                    onChange={(e) => updateQuestionGrade(
+                      questionId,
+                      'manual_score',
+                      e.target.value ? parseInt(e.target.value) : null,
+                      question.points
+                    )}
+                    className="w-20 h-8"
+                  />
+                  <span className="text-sm">/ {question.points}</span>
+                </div>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="p-3 bg-muted/50 rounded-lg">
+              <p className="text-sm font-medium mb-1">السؤال:</p>
+              <p className="text-sm whitespace-pre-wrap">{question.question_text}</p>
+              {question.image_url && (
+                <img src={question.image_url} alt="صورة السؤال" className="mt-2 max-h-48 rounded" />
+              )}
+            </div>
+
+            <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
+              <p className="text-sm font-medium mb-1">إجابة الطالب:</p>
+              <div className="text-sm">
+                {!answer?.answer ? (
+                  <span className="text-muted-foreground italic">لم يجب</span>
+                ) : typeof answer.answer === 'object' ? (
+                  <pre className="bg-background/50 p-2 rounded text-xs overflow-auto max-h-32" dir="ltr">
+                    {JSON.stringify(answer.answer, null, 2)}
+                  </pre>
+                ) : (
+                  <p className="whitespace-pre-wrap">{answer.answer}</p>
+                )}
+              </div>
+            </div>
+
+            {question.correct_answer && (
+              <div className="p-3 bg-green-50 dark:bg-green-950/30 rounded-lg">
+                <p className="text-sm font-medium mb-1">الإجابة الصحيحة:</p>
+                <p className="text-sm whitespace-pre-wrap">{question.correct_answer}</p>
+              </div>
+            )}
+
+            {question.points > 0 && (
+              <div>
+                <label className="text-sm font-medium">ملاحظات على هذا السؤال:</label>
+                <Textarea
+                  value={(grade as any).teacher_feedback || ''}
+                  onChange={(e) => updateQuestionGrade(questionId, 'teacher_feedback', e.target.value, question.points)}
+                  placeholder="ملاحظات اختيارية..."
+                  className="mt-1 h-16"
+                />
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* الأسئلة الفرعية */}
+        {question.sub_questions && question.sub_questions.length > 0 && (
+          <div className="mt-3 space-y-3">
+            {question.sub_questions.map((subQ) => (
+              <QuestionCard key={subQ.question_db_id} question={subQ} depth={depth + 1} />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-4xl h-[85vh] flex flex-col gap-0 p-0">
@@ -482,70 +627,39 @@ function GradingDialog({
               </div>
             ) : (
               <div className="space-y-6">
-                {questions.map((question: any, index: number) => {
-                  const answer = answers[question.id];
-                  const grade = questionGrades[question.id] || {};
-
-                  return (
-                    <Card key={question.id}>
-                      <CardHeader className="pb-2">
-                        <div className="flex items-center justify-between">
-                          <CardTitle className="text-sm">
-                            سؤال {question.question_number} ({question.points} علامة)
-                          </CardTitle>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-muted-foreground">العلامة:</span>
-                            <Input
-                              type="number"
-                              min={0}
-                              max={question.points}
-                              value={(grade as any).manual_score ?? ''}
-                              onChange={(e) => updateQuestionGrade(
-                                question.id,
-                                'manual_score',
-                                e.target.value ? parseInt(e.target.value) : null
-                              )}
-                              className="w-20 h-8"
-                            />
-                            <span className="text-sm">/ {question.points}</span>
-                          </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <div className="p-3 bg-muted/50 rounded-lg">
-                          <p className="text-sm font-medium mb-1">السؤال:</p>
-                          <p className="text-sm">{question.question_text}</p>
-                        </div>
-
-                        <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
-                          <p className="text-sm font-medium mb-1">إجابة الطالب:</p>
-                          <p className="text-sm">
-                            {typeof answer?.answer === 'object'
-                              ? JSON.stringify(answer.answer, null, 2)
-                              : answer?.answer || <span className="text-muted-foreground italic">لم يجب</span>}
-                          </p>
-                        </div>
-
-                        {question.correct_answer && (
-                          <div className="p-3 bg-green-50 dark:bg-green-950/30 rounded-lg">
-                            <p className="text-sm font-medium mb-1">الإجابة الصحيحة:</p>
-                            <p className="text-sm">{question.correct_answer}</p>
-                          </div>
+                {relevantSections.length === 0 ? (
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>لا توجد أسئلة للتصحيح</AlertDescription>
+                  </Alert>
+                ) : (
+                  relevantSections.map((section) => (
+                    <div key={section.section_db_id} className="space-y-4">
+                      {/* عنوان القسم */}
+                      <div className="bg-muted/50 p-4 rounded-lg border">
+                        <h3 className="font-bold text-lg">
+                          قسم {section.section_number}: {section.section_title}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {section.total_points} علامة
+                          {section.specialization_label && (
+                            <span className="mr-2">• {section.specialization_label}</span>
+                          )}
+                        </p>
+                        {section.instructions && (
+                          <p className="text-sm text-muted-foreground mt-1">{section.instructions}</p>
                         )}
+                      </div>
 
-                        <div>
-                          <label className="text-sm font-medium">ملاحظات على هذا السؤال:</label>
-                          <Textarea
-                            value={(grade as any).teacher_feedback || ''}
-                            onChange={(e) => updateQuestionGrade(question.id, 'teacher_feedback', e.target.value)}
-                            placeholder="ملاحظات اختيارية..."
-                            className="mt-1 h-16"
-                          />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
+                      {/* أسئلة القسم */}
+                      <div className="space-y-4">
+                        {section.questions.map((question) => (
+                          <QuestionCard key={question.question_db_id} question={question} />
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                )}
 
                 <Separator />
 
