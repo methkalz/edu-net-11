@@ -606,8 +606,8 @@ function GradingDialog({
       );
     }
 
-    // MCQ
-    if (question.question_type === 'mcq' && question.choices) {
+    // MCQ أو multiple_choice - دعم كلا الاسمين
+    if ((question.question_type === 'mcq' || question.question_type === 'multiple_choice') && question.choices) {
       const correctChoice = question.choices.find((c: any) => c.is_correct);
       if (correctChoice) {
         const idx = question.choices.indexOf(correctChoice) + 1;
@@ -620,10 +620,24 @@ function GradingDialog({
       }
     }
 
-    // صح/خطأ
-    if (question.question_type === 'true_false' && question.correct_answer) {
-      const isTrue = question.correct_answer === 'true' || question.correct_answer === 'صح';
-      return <span className="font-bold text-green-600">{isTrue ? 'صح ✓' : 'خطأ ✗'}</span>;
+    // صح/خطأ - دعم جميع الصيغ
+    if (question.question_type === 'true_false') {
+      // أولاً: التحقق من choices إذا كانت موجودة
+      if (question.choices && question.choices.length > 0) {
+        const correctChoice = question.choices.find((c: any) => c.is_correct);
+        if (correctChoice) {
+          const isTrue = correctChoice.text === 'صح' || String(correctChoice.id) === '1';
+          return <span className="font-bold text-green-600">{isTrue ? 'صح ✓' : 'خطأ ✗'}</span>;
+        }
+      }
+      
+      // ثانياً: التحقق من correct_answer
+      if (question.correct_answer) {
+        const answer = String(question.correct_answer).toLowerCase();
+        // دعم: "صح", "خطأ", "true", "false", "1", "2", "صحيح", "غير صحيح"
+        const isTrue = answer === 'true' || answer === 'صح' || answer === '1' || answer === 'صحيح';
+        return <span className="font-bold text-green-600">{isTrue ? 'صح ✓' : 'خطأ ✗'}</span>;
+      }
     }
 
     // نص عادي
@@ -632,6 +646,34 @@ function GradingDialog({
     }
 
     return null;
+  };
+
+  // دالة مساعدة للتحقق من وجود إجابة صحيحة
+  const hasCorrectAnswer = (question: ParsedQuestion): boolean => {
+    // MCQ أو multiple_choice مع خيار صحيح
+    if ((question.question_type === 'mcq' || question.question_type === 'multiple_choice') && question.choices) {
+      return question.choices.some((c: any) => c.is_correct);
+    }
+    
+    // صح/خطأ مع إجابة
+    if (question.question_type === 'true_false') {
+      if (question.choices?.some((c: any) => c.is_correct)) return true;
+      if (question.correct_answer) return true;
+      return false;
+    }
+    
+    // جداول
+    if (question.question_type === 'fill_table' && question.table_data?.correct_answers) {
+      return Object.keys(question.table_data.correct_answers).length > 0;
+    }
+    
+    // فراغات
+    if (question.question_type === 'fill_blank' && question.blanks) {
+      return question.blanks.some((b: any) => b.correct_answer);
+    }
+    
+    // إجابة نصية
+    return !!question.correct_answer;
   };
 
   const updateQuestionGrade = (questionId: string, field: string, value: any, maxScore: number) => {
@@ -744,7 +786,7 @@ function GradingDialog({
               </div>
             </div>
 
-            {(question.correct_answer || question.choices || question.blanks || question.table_data?.correct_answers) && (
+            {hasCorrectAnswer(question) && (
               <div className="p-3 bg-green-50 dark:bg-green-950/30 rounded-lg">
                 <p className="text-sm font-medium mb-1">الإجابة الصحيحة:</p>
                 <div className="text-sm">
