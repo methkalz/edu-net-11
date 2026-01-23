@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { GraduationCap, Plus, FileText, Loader2, Trash2, Eye, Pencil, Send } from 'lucide-react';
+import { GraduationCap, Plus, FileText, Loader2, Trash2, Eye, Pencil, Send, RefreshCw } from 'lucide-react';
+import { useBagrutStats } from '@/hooks/useBagrutStats';
+import { BagrutStatsCards } from '@/components/bagrut/BagrutStatsCards';
 import ModernHeader from '@/components/shared/ModernHeader';
 import AppFooter from '@/components/shared/AppFooter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -189,6 +191,9 @@ const BagrutManagement: React.FC = () => {
       setExamToDelete(null);
     }
   };
+
+  // Fetch stats
+  const { data: bagrutStats, isLoading: statsLoading, refetch: refetchStats } = useBagrutStats();
 
   // Fetch existing exams
   const {
@@ -430,19 +435,27 @@ const BagrutManagement: React.FC = () => {
       
       <main className="container mx-auto px-6 py-8 flex-1">
         {viewState === 'list' && <div className="space-y-6">
+            {/* Stats Section */}
+            <BagrutStatsCards stats={bagrutStats} loading={statsLoading} />
+
             {/* Header with Add Button */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <GraduationCap className="h-8 w-8 text-orange-600" />
+                <GraduationCap className="h-8 w-8 text-primary" />
                 <div>
                   <h1 className="text-2xl font-bold">امتحانات البجروت</h1>
                   <p className="text-muted-foreground">إدارة ورفع امتحانات البجروت بالذكاء الاصطناعي</p>
                 </div>
               </div>
-              <Button onClick={() => setViewState('upload')} className="gap-2">
-                <Plus className="h-4 w-4" />
-                رفع امتحان جديد
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" size="icon" onClick={() => { refetch(); refetchStats(); }}>
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
+                <Button onClick={() => setViewState('upload')} className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  رفع امتحان جديد
+                </Button>
+              </div>
             </div>
 
             {/* Exams List */}
@@ -453,7 +466,7 @@ const BagrutManagement: React.FC = () => {
                     <CardHeader className="pb-2">
                       <div className="flex items-start justify-between gap-3">
                         <CardTitle className="text-lg flex items-center gap-2">
-                          <FileText className="h-5 w-5 text-orange-500" />
+                          <FileText className="h-5 w-5 text-primary" />
                           <span className="line-clamp-2">{exam.title}</span>
                         </CardTitle>
 
