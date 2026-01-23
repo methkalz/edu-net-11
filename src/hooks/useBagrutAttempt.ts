@@ -265,8 +265,8 @@ export function useBagrutAttempt(examId: string | undefined, studentId: string |
       return { attemptId, answersCount: Object.keys(answers).length };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bagrut-exam-attempt', examId] });
-      queryClient.invalidateQueries({ queryKey: ['student-bagrut-exams'] });
+      // لا نقوم بـ invalidate هنا لتجنب race condition مع التوجيه
+      // سيتم invalidate في صفحة التأكيد
       toast({
         title: 'تم تقديم الامتحان',
         description: 'سيتم مراجعة إجاباتك قريباً',

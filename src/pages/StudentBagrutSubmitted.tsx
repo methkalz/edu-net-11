@@ -7,10 +7,11 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { CheckCircle, Clock, FileQuestion, Hash, ArrowLeft, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { PageLoading } from '@/components/ui/LoadingComponents';
+import { useEffect } from 'react';
 
 interface SubmissionState {
   answeredCount: number;
@@ -25,7 +26,14 @@ export default function StudentBagrutSubmitted() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const state = location.state as SubmissionState | null;
+
+  // تنظيف الكاش عند الوصول لهذه الصفحة لتجنب بيانات قديمة
+  useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: ['bagrut-exam-attempt'] });
+    queryClient.invalidateQueries({ queryKey: ['student-bagrut-exams'] });
+  }, [queryClient]);
 
   // جلب بيانات الامتحان والمحاولة إذا لم تكن موجودة في state
   const { data, isLoading } = useQuery({
