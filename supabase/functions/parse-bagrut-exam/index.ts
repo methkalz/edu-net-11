@@ -1116,44 +1116,71 @@ async function processJobInBackground(
     console.log(`[Job ${jobId}] Calculated statistics:`, { totalSections: parsedExam.sections?.length, totalQuestions });
     
     // Calculate points report for validation
-    // Helper to calculate section points from leaf questions only
+    // Helper to round points to avoid floating-point issues
+    const roundPoints = (points: number | undefined): number => {
+      if (!points) return 0;
+      return Math.round(points);
+    };
+
+    // Helper to count questions in a section (including sub-questions)
+    const countSectionQuestions = (section: ParsedSection): number => {
+      let count = 0;
+      for (const q of section.questions || []) {
+        if (q.sub_questions?.length) {
+          count += q.sub_questions.length;
+        } else {
+          count += 1;
+        }
+      }
+      return count;
+    };
+
+    // Helper to calculate section points from leaf questions only (rounded)
     const calculateSectionPoints = (section: ParsedSection): number => {
       let sectionTotal = 0;
       for (const q of section.questions || []) {
         if (q.sub_questions?.length) {
           for (const sub of q.sub_questions) {
-            sectionTotal += sub.points || 0;
+            sectionTotal += roundPoints(sub.points);
           }
         } else {
-          sectionTotal += q.points || 0;
+          sectionTotal += roundPoints(q.points);
         }
       }
-      return sectionTotal;
+      return roundPoints(sectionTotal);
     };
 
     // Calculate actual points considering that student picks ONE elective section only
     const calculateActualPointsWithBreakdown = (): { 
       total: number; 
       mandatoryTotal: number;
-      electiveSections: Array<{ name: string; points: number; specialization?: string }>;
+      electiveSections: Array<{ name: string; points: number; specialization?: string; questionCount: number }>;
       selectedElective: number;
+      mandatoryQuestionCount: number;
     } => {
       let mandatoryTotal = 0;
-      const electiveSections: Array<{ name: string; points: number; specialization?: string }> = [];
+      let mandatoryQuestionCount = 0;
+      const electiveSections: Array<{ name: string; points: number; specialization?: string; questionCount: number }> = [];
       
       for (const section of parsedExam.sections || []) {
         const sectionPoints = calculateSectionPoints(section);
+        const questionCount = countSectionQuestions(section);
         
         if (section.section_type === 'mandatory') {
           mandatoryTotal += sectionPoints;
+          mandatoryQuestionCount += questionCount;
         } else if (section.section_type === 'elective') {
           electiveSections.push({
             name: section.specialization_label || section.specialization || section.section_title,
-            points: sectionPoints,
-            specialization: section.specialization
+            points: roundPoints(sectionPoints),
+            specialization: section.specialization,
+            questionCount
           });
         }
       }
+      
+      // Round mandatory total
+      mandatoryTotal = roundPoints(mandatoryTotal);
       
       // Student picks ONE elective section - use the highest for validation
       // (All elective sections should ideally have equal points)
@@ -1162,10 +1189,11 @@ async function processJobInBackground(
         : 0;
       
       return {
-        total: mandatoryTotal + selectedElective,
+        total: roundPoints(mandatoryTotal + selectedElective),
         mandatoryTotal,
         electiveSections,
-        selectedElective
+        selectedElective: roundPoints(selectedElective),
+        mandatoryQuestionCount
       };
     };
 
@@ -1232,14 +1260,21 @@ async function processJobInBackground(
     }
 
     const pointsReport = {
-      declaredTotal: declaredPoints,
-      actualTotal: actualPoints,
-      difference: pointsDifference,
+      declaredTotal: roundPoints(declaredPoints),
+      actualTotal: roundPoints(actualPoints),
+      difference: roundPoints(pointsDifference),
       isValid: Math.abs(pointsDifference) <= 2 && questionsWithZeroPoints.length === 0, // Allow ±2 tolerance for rounding
       breakdown: {
         mandatory: pointsBreakdown.mandatoryTotal,
         electiveSections: pointsBreakdown.electiveSections,
-        selectedElective: pointsBreakdown.selectedElective
+        selectedElective: pointsBreakdown.selectedElective,
+        questionCounts: {
+          mandatory: pointsBreakdown.mandatoryQuestionCount,
+          elective: pointsBreakdown.electiveSections.map(e => ({
+            name: e.name,
+            count: e.questionCount
+          }))
+        }
       },
       issues: pointsIssues
     };

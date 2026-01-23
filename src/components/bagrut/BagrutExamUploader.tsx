@@ -40,8 +40,12 @@ export interface PointsReport {
   isValid: boolean;
   breakdown?: {
     mandatory: number;
-    electiveSections: Array<{ name: string; points: number; specialization?: string }>;
+    electiveSections: Array<{ name: string; points: number; specialization?: string; questionCount?: number }>;
     selectedElective: number;
+    questionCounts?: {
+      mandatory: number;
+      elective: Array<{ name: string; count: number }>;
+    };
   };
   issues: Array<{
     type: 'missing_points' | 'excess_points' | 'zero_points_question';
