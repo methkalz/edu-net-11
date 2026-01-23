@@ -361,7 +361,7 @@ export default function StudentBagrutAttempt() {
           {/* السؤال */}
           <BagrutQuestionRenderer
             question={currentQuestion}
-            answer={answers[currentQuestion.question_db_id || currentQuestion.question_number]}
+            answers={answers}  // ← تمرير كل الإجابات
             onAnswerChange={updateAnswer}
             disabled={isSubmitting}
           />
