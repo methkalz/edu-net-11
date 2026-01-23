@@ -38,6 +38,11 @@ export interface PointsReport {
   actualTotal: number;
   difference: number;
   isValid: boolean;
+  breakdown?: {
+    mandatory: number;
+    electiveSections: Array<{ name: string; points: number; specialization?: string }>;
+    selectedElective: number;
+  };
   issues: Array<{
     type: 'missing_points' | 'excess_points' | 'zero_points_question';
     description: string;

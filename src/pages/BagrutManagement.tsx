@@ -582,6 +582,27 @@ const BagrutManagement: React.FC = () => {
                     </span>
                   </div>
 
+                  {/* تفصيل توزيع العلامات */}
+                  {pointsReport.breakdown && (
+                    <div className="text-sm space-y-1 mb-3 p-3 bg-muted/50 rounded-lg">
+                      <p className="font-medium mb-2">تفصيل الحساب:</p>
+                      <p>• القسم الإلزامي: <span className="font-semibold">{pointsReport.breakdown.mandatory}</span> علامة</p>
+                      {pointsReport.breakdown.electiveSections.length > 0 && (
+                        <>
+                          <p>• التخصصات المتاحة (يختار الطالب واحداً):</p>
+                          {pointsReport.breakdown.electiveSections.map((e, i) => (
+                            <p key={i} className="mr-4 text-muted-foreground">
+                              - {e.name}: <span className="font-semibold">{e.points}</span> علامة
+                            </p>
+                          ))}
+                        </>
+                      )}
+                      <p className="font-medium pt-2 border-t border-border/50 mt-2">
+                        المجموع = {pointsReport.breakdown.mandatory} + {pointsReport.breakdown.selectedElective} = {pointsReport.actualTotal} علامة
+                      </p>
+                    </div>
+                  )}
+
                   {!pointsReport.isValid && (
                     <div className="space-y-3">
                       {/* تنبيه النقص */}
