@@ -1115,6 +1115,94 @@ async function processJobInBackground(
 
     console.log(`[Job ${jobId}] Calculated statistics:`, { totalSections: parsedExam.sections?.length, totalQuestions });
     
+    // Calculate points report for validation
+    const calculateActualPoints = (): number => {
+      let total = 0;
+      for (const section of parsedExam.sections || []) {
+        for (const q of section.questions || []) {
+          if (q.sub_questions?.length) {
+            for (const sub of q.sub_questions) {
+              total += sub.points || 0;
+            }
+          } else {
+            total += q.points || 0;
+          }
+        }
+      }
+      return total;
+    };
+
+    const declaredPoints = parsedExam.total_points || 100;
+    const actualPoints = calculateActualPoints();
+    const pointsDifference = declaredPoints - actualPoints;
+
+    // Find questions with zero points
+    const questionsWithZeroPoints: Array<{ section: string; question: string }> = [];
+    for (const section of parsedExam.sections || []) {
+      for (const q of section.questions || []) {
+        if (!q.sub_questions?.length && (!q.points || q.points === 0)) {
+          questionsWithZeroPoints.push({
+            section: section.section_title,
+            question: q.question_number
+          });
+        }
+        if (q.sub_questions) {
+          for (const sub of q.sub_questions) {
+            if (!sub.points || sub.points === 0) {
+              questionsWithZeroPoints.push({
+                section: section.section_title,
+                question: sub.question_number
+              });
+            }
+          }
+        }
+      }
+    }
+
+    // Build points issues list
+    const pointsIssues: Array<{
+      type: 'missing_points' | 'excess_points' | 'zero_points_question';
+      description: string;
+      section?: string;
+      question?: string;
+      suggestedFix?: string;
+    }> = [];
+
+    if (pointsDifference > 0) {
+      pointsIssues.push({
+        type: 'missing_points',
+        description: `يوجد نقص ${pointsDifference} علامة`,
+        suggestedFix: `قد يكون هناك سؤال لم يتم التعرف عليه أو علاماته ناقصة`
+      });
+    }
+
+    if (pointsDifference < 0) {
+      pointsIssues.push({
+        type: 'excess_points',
+        description: `المجموع يتجاوز ${declaredPoints} بـ ${Math.abs(pointsDifference)} علامة`,
+        suggestedFix: `راجع توزيع العلامات على الأسئلة`
+      });
+    }
+
+    for (const zq of questionsWithZeroPoints) {
+      pointsIssues.push({
+        type: 'zero_points_question',
+        section: zq.section,
+        question: zq.question,
+        description: `السؤال ${zq.question} بدون علامات`
+      });
+    }
+
+    const pointsReport = {
+      declaredTotal: declaredPoints,
+      actualTotal: actualPoints,
+      difference: pointsDifference,
+      isValid: pointsDifference === 0 && questionsWithZeroPoints.length === 0,
+      issues: pointsIssues
+    };
+
+    console.log(`[Job ${jobId}] Points validation:`, { declaredPoints, actualPoints, difference: pointsDifference, zeroPointsQuestions: questionsWithZeroPoints.length });
+
     const resultData = {
       parsedExam,
       statistics: {
@@ -1128,7 +1216,8 @@ async function processJobInBackground(
         answeredCount,
         unansweredCount: unansweredList.length,
         unansweredList
-      }
+      },
+      pointsReport
     };
     
     await updateJobStatus(supabase, jobId, 'completed', 100, 'تم التحليل بنجاح!', resultData);

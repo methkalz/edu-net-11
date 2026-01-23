@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { GraduationCap, Plus, FileText, Loader2, Trash2, Eye, Pencil, Send, RefreshCw } from 'lucide-react';
+import { GraduationCap, Plus, FileText, Loader2, Trash2, Eye, Pencil, Send, RefreshCw, CheckCircle, AlertTriangle, AlertCircle } from 'lucide-react';
 import { useBagrutStats } from '@/hooks/useBagrutStats';
 import { BagrutStatsCards } from '@/components/bagrut/BagrutStatsCards';
 import ModernHeader from '@/components/shared/ModernHeader';
@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import BagrutExamUploader from '@/components/bagrut/BagrutExamUploader';
+import type { PointsReport } from '@/components/bagrut/BagrutExamUploader';
 import BagrutExamPreview from '@/components/bagrut/BagrutExamPreview';
 import BagrutPublishDialog from '@/components/bagrut/BagrutPublishDialog';
 import { BagrutDevConsole } from '@/components/bagrut/BagrutDevConsole';
@@ -43,6 +44,10 @@ type AnswersReport = {
   unansweredCount: number;
   unansweredList: Array<{ question_number: string; question_type: string; reason: string }>;
 };
+
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+
 type ViewState = 'list' | 'upload' | 'preview' | 'db_preview';
 const BagrutManagement: React.FC = () => {
   const {
@@ -53,6 +58,7 @@ const BagrutManagement: React.FC = () => {
   const [parsedExam, setParsedExam] = useState<any>(null);
   const [statistics, setStatistics] = useState<Statistics | null>(null);
   const [answersReport, setAnswersReport] = useState<AnswersReport | null>(null);
+  const [pointsReport, setPointsReport] = useState<PointsReport | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [deletingExamId, setDeletingExamId] = useState<string | null>(null);
   const [previewLoadingId, setPreviewLoadingId] = useState<string | null>(null);
@@ -216,10 +222,11 @@ const BagrutManagement: React.FC = () => {
   });
 
   // Handle exam parsed from uploader
-  const handleExamParsed = (exam: ParsedExam, stats: Statistics, report?: AnswersReport) => {
+  const handleExamParsed = (exam: ParsedExam, stats: Statistics, report?: AnswersReport, ptsReport?: PointsReport) => {
     setParsedExam(exam);
     setStatistics(stats);
     setAnswersReport(report || null);
+    setPointsReport(ptsReport || null);
     setViewState('preview');
   };
 
@@ -283,6 +290,7 @@ const BagrutManagement: React.FC = () => {
       setParsedExam(null);
       setStatistics(null);
       setAnswersReport(null);
+      setPointsReport(null);
       refetch();
     } catch (error) {
       console.error('Error saving exam:', error);
@@ -554,6 +562,100 @@ const BagrutManagement: React.FC = () => {
         {viewState === 'upload' && <BagrutExamUploader onExamParsed={handleExamParsed} onCancel={() => setViewState('list')} />}
 
         {viewState === 'preview' && parsedExam && statistics && <div className="space-y-4">
+            {/* تقرير العلامات */}
+            {pointsReport && (
+              <Card className={pointsReport.isValid 
+                ? "border-green-500/30 bg-green-500/5" 
+                : "border-amber-500/30 bg-amber-500/5"
+              }>
+                <CardContent className="py-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-medium flex items-center gap-2">
+                      {pointsReport.isValid 
+                        ? <CheckCircle className="h-5 w-5 text-green-600" />
+                        : <AlertTriangle className="h-5 w-5 text-amber-600" />
+                      }
+                      تقرير العلامات
+                    </h3>
+                    <span className="text-lg font-bold">
+                      {pointsReport.actualTotal} / {pointsReport.declaredTotal}
+                    </span>
+                  </div>
+
+                  {!pointsReport.isValid && (
+                    <div className="space-y-3">
+                      {/* تنبيه النقص */}
+                      {pointsReport.difference > 0 && (
+                        <Alert className="border-amber-500/30 bg-amber-500/10">
+                          <AlertTriangle className="h-4 w-4 text-amber-600" />
+                          <AlertDescription className="text-amber-800 dark:text-amber-200">
+                            ⚠️ نقص {pointsReport.difference} علامة - 
+                            قد يكون هناك سؤال لم يتم التعرف عليه
+                          </AlertDescription>
+                        </Alert>
+                      )}
+
+                      {/* تنبيه الزيادة */}
+                      {pointsReport.difference < 0 && (
+                        <Alert className="border-destructive/30 bg-destructive/10">
+                          <AlertCircle className="h-4 w-4 text-destructive" />
+                          <AlertDescription className="text-destructive">
+                            ❌ المجموع يتجاوز {pointsReport.declaredTotal} بـ {Math.abs(pointsReport.difference)} علامة
+                          </AlertDescription>
+                        </Alert>
+                      )}
+
+                      {/* أسئلة بدون علامات */}
+                      {pointsReport.issues.filter(i => i.type === 'zero_points_question').length > 0 && (
+                        <div className="text-sm">
+                          <p className="font-medium mb-2">أسئلة بدون علامات:</p>
+                          <div className="flex flex-wrap gap-2">
+                            {pointsReport.issues
+                              .filter(i => i.type === 'zero_points_question')
+                              .slice(0, 15)
+                              .map((issue, idx) => (
+                                <Badge key={idx} variant="outline" className="text-amber-700 border-amber-300">
+                                  {issue.question}
+                                </Badge>
+                              ))
+                            }
+                            {pointsReport.issues.filter(i => i.type === 'zero_points_question').length > 15 && (
+                              <Badge variant="outline">
+                                +{pointsReport.issues.filter(i => i.type === 'zero_points_question').length - 15}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* اقتراحات الإصلاح */}
+                      <div className="mt-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
+                        <p className="text-sm font-medium text-primary">
+                          💡 اقتراحات:
+                        </p>
+                        <ul className="text-sm text-muted-foreground mt-1 list-disc list-inside space-y-1">
+                          <li>راجع الامتحان للتأكد من وجود جميع الأسئلة</li>
+                          <li>يمكنك تعديل علامات الأسئلة يدوياً في المعاينة</li>
+                          {pointsReport.difference > 0 && (
+                            <li>
+                              قد تحتاج لإضافة {pointsReport.difference} علامة للأسئلة الناقصة
+                            </li>
+                          )}
+                        </ul>
+                      </div>
+                    </div>
+                  )}
+
+                  {pointsReport.isValid && (
+                    <p className="text-sm text-green-700 dark:text-green-400">
+                      ✅ مجموع العلامات صحيح ومتطابق
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* تقرير الإجابات */}
             {answersReport && <Card>
                 <CardContent className="py-4">
                   {answersReport.answeredCount > 0 ? <div className="space-y-2">
@@ -581,6 +683,7 @@ const BagrutManagement: React.FC = () => {
           setParsedExam(null);
           setStatistics(null);
           setAnswersReport(null);
+          setPointsReport(null);
         }} onExamUpdate={handleExamUpdate} isSaving={isSaving} />
           </div>}
 
@@ -589,6 +692,7 @@ const BagrutManagement: React.FC = () => {
         setParsedExam(null);
         setStatistics(null);
         setAnswersReport(null);
+        setPointsReport(null);
       }} onExamUpdate={handleExamUpdate} onSaveEdits={handleSaveEditsToDb} showSaveButton={false} />}
       </main>
       
