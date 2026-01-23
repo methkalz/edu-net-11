@@ -437,20 +437,202 @@ function GradingDialog({
 
   const answers = attempt?.answers || {};
 
-  // جمع كل الأسئلة للحسابات
+  // جمع الأسئلة الورقية فقط (بدون أسئلة لها فرعيات) لتجنب الاحتساب المزدوج
   const allQuestions = useMemo(() => {
     const result: ParsedQuestion[] = [];
-    const collectQuestions = (questions: ParsedQuestion[]) => {
+    const collectLeafQuestions = (questions: ParsedQuestion[]) => {
       questions.forEach(q => {
-        result.push(q);
+        // إذا كان للسؤال أسئلة فرعية، نجمع الفرعية فقط
         if (q.sub_questions?.length) {
-          collectQuestions(q.sub_questions);
+          collectLeafQuestions(q.sub_questions);
+        } else {
+          // سؤال ورقي - نضيفه للحساب
+          result.push(q);
         }
       });
     };
-    relevantSections.forEach(s => collectQuestions(s.questions));
+    relevantSections.forEach(s => collectLeafQuestions(s.questions));
     return result;
   }, [relevantSections]);
+
+  // دالة تنسيق إجابة الطالب حسب نوع السؤال
+  const formatStudentAnswer = (question: ParsedQuestion, answer: any): React.ReactNode => {
+    if (!answer?.answer) {
+      return <span className="text-muted-foreground italic">لم يجب</span>;
+    }
+
+    const value = answer.answer;
+
+    // 1. إجابات الجداول
+    if (question.question_type === 'fill_table' && typeof value === 'object' && question.table_data) {
+      const tableData = question.table_data;
+      if (!tableData.rows || !tableData.headers) {
+        return <span className="text-muted-foreground">إجابة جدول غير صالحة</span>;
+      }
+      
+      return (
+        <table className="w-full border-collapse text-sm mt-2">
+          <thead>
+            <tr>
+              {tableData.headers.map((h: string, i: number) => (
+                <th key={i} className="border p-2 bg-muted/30 text-right text-xs">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {tableData.rows.map((row: string[], rowIdx: number) => (
+              <tr key={rowIdx}>
+                {row.map((cell: string, colIdx: number) => {
+                  const isInput = tableData.input_columns?.includes(colIdx);
+                  const studentAnswer = value[`${rowIdx}-${colIdx}`] || value[`cell_${rowIdx}_${colIdx}`];
+                  return (
+                    <td key={colIdx} className="border p-2 text-xs">
+                      {isInput ? (
+                        <span className="font-medium text-primary bg-primary/10 px-1 rounded">
+                          {studentAnswer || '—'}
+                        </span>
+                      ) : cell}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      );
+    }
+
+    // 2. ملء الفراغات
+    if (question.question_type === 'fill_blank' && typeof value === 'object') {
+      const entries = Object.entries(value);
+      if (entries.length === 0) {
+        return <span className="text-muted-foreground italic">لم يجب</span>;
+      }
+      return (
+        <div className="space-y-1">
+          {entries.map(([blankId, ans], idx) => (
+            <div key={blankId} className="flex gap-2 text-sm">
+              <span className="text-muted-foreground">فراغ {idx + 1}:</span>
+              <span className="font-medium">{String(ans) || '—'}</span>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    // 3. MCQ - عرض الخيار المختار
+    if (question.question_type === 'mcq' && question.choices) {
+      const choiceIndex = typeof value === 'number' ? value - 1 : parseInt(value) - 1;
+      const choice = question.choices[choiceIndex];
+      if (choice) {
+        return (
+          <span>
+            <span className="text-muted-foreground">الخيار {choiceIndex + 1}:</span>{' '}
+            <span className="font-medium">{choice.text}</span>
+          </span>
+        );
+      }
+    }
+
+    // 4. صح/خطأ
+    if (question.question_type === 'true_false') {
+      const boolValue = value === true || value === 'true' || value === 'صح';
+      return <span className="font-medium">{boolValue ? 'صح ✓' : 'خطأ ✗'}</span>;
+    }
+
+    // 5. نص عادي
+    if (typeof value === 'string') {
+      return <p className="whitespace-pre-wrap">{value}</p>;
+    }
+
+    // fallback
+    if (typeof value === 'object') {
+      return (
+        <pre className="text-xs overflow-auto bg-muted/30 p-2 rounded max-h-24" dir="ltr">
+          {JSON.stringify(value, null, 2)}
+        </pre>
+      );
+    }
+
+    return <span>{String(value)}</span>;
+  };
+
+  // دالة تنسيق الإجابة الصحيحة
+  const formatCorrectAnswer = (question: ParsedQuestion): React.ReactNode => {
+    // للجداول
+    if (question.question_type === 'fill_table' && question.table_data?.correct_answers) {
+      const { correct_answers, headers, rows, input_columns } = question.table_data;
+      return (
+        <table className="w-full border-collapse text-sm mt-2">
+          <thead>
+            <tr>
+              {headers?.map((h: string, i: number) => (
+                <th key={i} className="border p-2 bg-green-100 dark:bg-green-950/50 text-right text-xs">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows?.map((row: string[], rowIdx: number) => (
+              <tr key={rowIdx}>
+                {row.map((cell: string, colIdx: number) => {
+                  const isInput = input_columns?.includes(colIdx);
+                  const correctAns = correct_answers?.[`${rowIdx}-${colIdx}`] || correct_answers?.[`cell_${rowIdx}_${colIdx}`];
+                  return (
+                    <td key={colIdx} className="border p-2 text-xs">
+                      {isInput && correctAns ? (
+                        <span className="font-bold text-green-600">{correctAns}</span>
+                      ) : cell}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      );
+    }
+
+    // للفراغات
+    if (question.question_type === 'fill_blank' && question.blanks) {
+      return (
+        <div className="space-y-1">
+          {question.blanks.map((blank: any, i: number) => (
+            <div key={blank.id || i} className="flex gap-2 text-sm">
+              <span className="text-muted-foreground">فراغ {i + 1}:</span>
+              <span className="font-bold text-green-600">{blank.correct_answer}</span>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    // MCQ
+    if (question.question_type === 'mcq' && question.choices) {
+      const correctChoice = question.choices.find((c: any) => c.is_correct);
+      if (correctChoice) {
+        const idx = question.choices.indexOf(correctChoice) + 1;
+        return (
+          <span>
+            <span className="text-muted-foreground">الخيار {idx}:</span>{' '}
+            <span className="font-bold text-green-600">{correctChoice.text}</span>
+          </span>
+        );
+      }
+    }
+
+    // صح/خطأ
+    if (question.question_type === 'true_false' && question.correct_answer) {
+      const isTrue = question.correct_answer === 'true' || question.correct_answer === 'صح';
+      return <span className="font-bold text-green-600">{isTrue ? 'صح ✓' : 'خطأ ✗'}</span>;
+    }
+
+    // نص عادي
+    if (question.correct_answer) {
+      return <p className="whitespace-pre-wrap font-medium text-green-600">{question.correct_answer}</p>;
+    }
+
+    return null;
+  };
 
   const updateQuestionGrade = (questionId: string, field: string, value: any, maxScore: number) => {
     setQuestionGrades(prev => ({
@@ -558,22 +740,16 @@ function GradingDialog({
             <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
               <p className="text-sm font-medium mb-1">إجابة الطالب:</p>
               <div className="text-sm">
-                {!answer?.answer ? (
-                  <span className="text-muted-foreground italic">لم يجب</span>
-                ) : typeof answer.answer === 'object' ? (
-                  <pre className="bg-background/50 p-2 rounded text-xs overflow-auto max-h-32" dir="ltr">
-                    {JSON.stringify(answer.answer, null, 2)}
-                  </pre>
-                ) : (
-                  <p className="whitespace-pre-wrap">{answer.answer}</p>
-                )}
+                {formatStudentAnswer(question, answer)}
               </div>
             </div>
 
-            {question.correct_answer && (
+            {(question.correct_answer || question.choices || question.blanks || question.table_data?.correct_answers) && (
               <div className="p-3 bg-green-50 dark:bg-green-950/30 rounded-lg">
                 <p className="text-sm font-medium mb-1">الإجابة الصحيحة:</p>
-                <p className="text-sm whitespace-pre-wrap">{question.correct_answer}</p>
+                <div className="text-sm">
+                  {formatCorrectAnswer(question)}
+                </div>
               </div>
             )}
 
