@@ -57,6 +57,7 @@ import Grade12ProjectsWidget from '@/components/teacher/Grade12ProjectsWidget';
 import ProjectNotifications from '@/components/teacher/ProjectNotifications';
 import Grade10ProjectsWidget from '@/components/teacher/Grade10ProjectsWidget';
 import { ExamsWidget } from '@/components/teacher/ExamsWidget';
+import { BagrutWidget } from '@/components/teacher/BagrutWidget';
 import ModernHeader from '@/components/shared/ModernHeader';
 import { StudentPresenceWidget } from '@/components/teacher/StudentPresenceWidget';
 import { OnlineStudentsStats } from '@/components/dashboard/OnlineStudentsStats';
@@ -606,6 +607,14 @@ const TeacherDashboard: React.FC = () => {
           <ExamsWidget 
             canAccessGrade10={canAccessGrade('10')}
             canAccessGrade11={canAccessGrade('11')}
+          />
+        )}
+
+        {/* Bagrut Widget - للمعلمين المسؤولين عن الصف 11 أو 12 */}
+        {(canAccessGrade('11') || canAccessGrade('12')) && (
+          <BagrutWidget 
+            canAccessGrade11={canAccessGrade('11')}
+            canAccessGrade12={canAccessGrade('12')}
           />
         )}
 
