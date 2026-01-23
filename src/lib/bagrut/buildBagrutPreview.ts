@@ -199,10 +199,20 @@ const countQuestionsRecursive = (questions: ParsedQuestion[]): number => {
   }, 0);
 };
 
-const sumPointsRecursive = (questions: ParsedQuestion[]): number => {
+/**
+ * حساب العلامات من الأسئلة "الطرفية" فقط (Leaf-Only)
+ * - إذا كان للسؤال أسئلة فرعية → نحسب الفرعية فقط (لا نضيف علامة الأب)
+ * - إذا لم يكن له فرعية → نحسب علامته
+ * هذا يمنع الحساب المزدوج
+ */
+const sumPointsLeafOnly = (questions: ParsedQuestion[]): number => {
   return questions.reduce((acc, q) => {
-    const sub = q.sub_questions ? sumPointsRecursive(q.sub_questions) : 0;
-    return acc + (Number.isFinite(q.points) ? q.points : 0) + sub;
+    if (q.sub_questions && q.sub_questions.length > 0) {
+      // للسؤال أسئلة فرعية → نحسب الفرعية فقط (لا نضيف علامة الأب)
+      return acc + sumPointsLeafOnly(q.sub_questions);
+    }
+    // سؤال طرفي (بدون فرعية) → نحسب علامته
+    return acc + (Number.isFinite(q.points) ? q.points : 0);
   }, 0);
 };
 
@@ -272,13 +282,27 @@ export const buildBagrutPreviewFromDb = (args: {
 
   const questionsByType: Record<string, number> = {};
   let totalQuestions = 0;
-  let totalPoints = 0;
+
+  // حساب المجموع باستخدام العلامات الرسمية للأقسام
+  // القسم الإلزامي: 60 علامة، قسم التخصص: 40 علامة (يختار الطالب واحداً)
+  let mandatoryPoints = 0;
+  let maxElectivePoints = 0;
 
   for (const s of sectionsWithQuestions) {
     totalQuestions += countQuestionsRecursive(s.questions);
-    totalPoints += sumPointsRecursive(s.questions);
     tallyTypesRecursive(s.questions, questionsByType);
+    
+    // استخدام section.total_points الرسمي بدلاً من جمع الأسئلة
+    if (s.section_type === 'mandatory') {
+      mandatoryPoints += s.total_points;
+    } else if (s.section_type === 'elective') {
+      // الطالب يختار تخصص واحد فقط → نأخذ الأعلى
+      maxElectivePoints = Math.max(maxElectivePoints, s.total_points);
+    }
   }
+
+  // المجموع = القسم الإلزامي + أعلى تخصص = 60 + 40 = 100
+  const totalPoints = mandatoryPoints + maxElectivePoints;
 
   const statistics: Statistics = {
     totalSections: sectionsWithQuestions.length,
