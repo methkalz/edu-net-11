@@ -585,25 +585,28 @@ const BagrutManagement: React.FC = () => {
                   {/* تفصيل توزيع العلامات */}
                   {pointsReport.breakdown && (
                     <div className="text-sm space-y-1 mb-3 p-3 bg-muted/50 rounded-lg">
-                      <p className="font-medium mb-2">تفصيل الحساب:</p>
+                      <p className="font-medium mb-2">تفصيل الحساب (باستخدام العلامات الرسمية للأقسام):</p>
                       <p>
                         • القسم الإلزامي: <span className="font-semibold">{Math.round(pointsReport.breakdown.mandatory)}</span> علامة
                         {pointsReport.breakdown.questionCounts && (
                           <span className="text-xs text-muted-foreground mr-2">
-                            ({pointsReport.breakdown.questionCounts.mandatory} سؤال)
+                            ({pointsReport.breakdown.questionCounts.mandatory} سؤال رئيسي)
                           </span>
                         )}
                       </p>
                       {pointsReport.breakdown.electiveSections.length > 0 && (
                         <>
-                          <p>• التخصصات المتاحة (يختار الطالب واحداً):</p>
+                          <p className="mt-2">• التخصصات المتاحة (يختار الطالب واحداً):</p>
                           {pointsReport.breakdown.electiveSections.map((e, i) => {
                             const questionCount = pointsReport.breakdown?.questionCounts?.elective?.find(eq => eq.name === e.name)?.count;
+                            const hasQuestions = questionCount !== undefined && questionCount > 0;
                             return (
-                              <p key={i} className="mr-4 text-muted-foreground">
+                              <p key={i} className={`mr-4 ${!hasQuestions ? 'text-amber-600' : 'text-muted-foreground'}`}>
                                 - {e.name}: <span className="font-semibold">{Math.round(e.points)}</span> علامة
                                 {questionCount !== undefined && (
-                                  <span className="text-xs mr-2">({questionCount} سؤال)</span>
+                                  <span className="text-xs mr-2">
+                                    ({questionCount} سؤال رئيسي{!hasQuestions ? ' ⚠️ قد لا يكون موجوداً في الملف' : ''})
+                                  </span>
                                 )}
                               </p>
                             );
@@ -611,7 +614,7 @@ const BagrutManagement: React.FC = () => {
                         </>
                       )}
                       <p className="font-medium pt-2 border-t border-border/50 mt-2">
-                        المجموع = {Math.round(pointsReport.breakdown.mandatory)} + {Math.round(pointsReport.breakdown.selectedElective)} = {Math.round(pointsReport.actualTotal)} علامة
+                        المجموع = {Math.round(pointsReport.breakdown.mandatory)} + {Math.round(pointsReport.breakdown.selectedElective)} = <span className="text-lg">{Math.round(pointsReport.actualTotal)}</span> علامة
                       </p>
                     </div>
                   )}

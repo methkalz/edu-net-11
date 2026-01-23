@@ -493,50 +493,78 @@ const normalizeExamForReliability = (parsedExam: ParsedExam) => {
 };
 
 // Distribute points automatically to questions with 0 points
+// Smart point distribution: allows decimals internally for accurate grading
 const distributePoints = (parsedExam: ParsedExam) => {
   for (const section of parsedExam.sections || []) {
     const questions = section.questions || [];
     const sectionPoints = section.total_points || 0;
     
-    // 1. Calculate main questions without points
-    const mainQuestionsWithZero = questions.filter(q => !q.points || q.points === 0);
-    const assignedMainPoints = questions.reduce((sum, q) => sum + (q.points || 0), 0);
+    if (questions.length === 0) continue;
     
-    // 2. Distribute remaining points to main questions equally
-    if (mainQuestionsWithZero.length > 0) {
-      const remaining = sectionPoints - assignedMainPoints;
-      if (remaining > 0) {
-        const perQuestion = Math.floor(remaining / mainQuestionsWithZero.length);
-        mainQuestionsWithZero.forEach(q => { q.points = perQuestion; });
+    // 1. Check if all main questions have zero points (AI didn't extract individual marks)
+    const allMainQuestionsZero = questions.every(q => !q.points || q.points === 0);
+    
+    if (allMainQuestionsZero && sectionPoints > 0) {
+      // Count total "leaf" items (questions without sub-questions + all sub-questions)
+      let leafCount = 0;
+      for (const q of questions) {
+        if (q.sub_questions && q.sub_questions.length > 0) {
+          leafCount += q.sub_questions.length;
+        } else {
+          leafCount += 1;
+        }
       }
-    }
-    
-    // 3. Handle sub-questions - distribute parent points to children
-    for (const q of questions) {
-      if (q.sub_questions && q.sub_questions.length > 0) {
-        const parentPoints = q.points || 0;
-        const subWithZero = q.sub_questions.filter(s => !s.points || s.points === 0);
-        const assignedSubPoints = q.sub_questions.reduce((sum, s) => sum + (s.points || 0), 0);
+      
+      if (leafCount > 0) {
+        // Distribute section points equally to leaves (allowing decimals)
+        const pointsPerLeaf = sectionPoints / leafCount;
         
-        if (subWithZero.length > 0) {
-          const remainingSub = parentPoints - assignedSubPoints;
-          if (remainingSub > 0) {
-            const perSub = Math.floor(remainingSub / subWithZero.length);
-            subWithZero.forEach(s => { s.points = perSub; });
+        for (const q of questions) {
+          if (q.sub_questions && q.sub_questions.length > 0) {
+            // Parent gets sum of children
+            q.points = pointsPerLeaf * q.sub_questions.length;
+            for (const sub of q.sub_questions) {
+              sub.points = pointsPerLeaf;
+            }
+          } else {
+            q.points = pointsPerLeaf;
           }
         }
-        
-        // Handle deeper nested sub_questions
-        for (const sub of q.sub_questions) {
-          if (sub.sub_questions && sub.sub_questions.length > 0) {
-            const subParentPoints = sub.points || 0;
-            const deepWithZero = sub.sub_questions.filter(d => !d.points || d.points === 0);
-            const assignedDeep = sub.sub_questions.reduce((sum, d) => sum + (d.points || 0), 0);
-            
-            if (deepWithZero.length > 0) {
-              const remainingDeep = subParentPoints - assignedDeep;
-              if (remainingDeep > 0) {
-                const perDeep = Math.floor(remainingDeep / deepWithZero.length);
+      }
+    } else {
+      // Some questions have explicit points - distribute remaining to those with zero
+      const questionsWithZero = questions.filter(q => !q.points || q.points === 0);
+      const assignedPoints = questions.reduce((sum, q) => sum + (q.points || 0), 0);
+      
+      if (questionsWithZero.length > 0 && sectionPoints > assignedPoints) {
+        const remaining = sectionPoints - assignedPoints;
+        const perQuestion = remaining / questionsWithZero.length;
+        questionsWithZero.forEach(q => { q.points = perQuestion; });
+      }
+      
+      // 3. Handle sub-questions - distribute parent points to children
+      for (const q of questions) {
+        if (q.sub_questions && q.sub_questions.length > 0) {
+          const parentPoints = q.points || 0;
+          const subWithZero = q.sub_questions.filter(s => !s.points || s.points === 0);
+          const assignedSubPoints = q.sub_questions.reduce((sum, s) => sum + (s.points || 0), 0);
+          
+          if (subWithZero.length > 0 && parentPoints > assignedSubPoints) {
+            const remainingSub = parentPoints - assignedSubPoints;
+            const perSub = remainingSub / subWithZero.length;
+            subWithZero.forEach(s => { s.points = perSub; });
+          }
+          
+          // Handle deeper nested sub_questions
+          for (const sub of q.sub_questions) {
+            if (sub.sub_questions && sub.sub_questions.length > 0) {
+              const subParentPoints = sub.points || 0;
+              const deepWithZero = sub.sub_questions.filter(d => !d.points || d.points === 0);
+              const assignedDeep = sub.sub_questions.reduce((sum, d) => sum + (d.points || 0), 0);
+              
+              if (deepWithZero.length > 0 && subParentPoints > assignedDeep) {
+                const remainingDeep = subParentPoints - assignedDeep;
+                const perDeep = remainingDeep / deepWithZero.length;
                 deepWithZero.forEach(d => { d.points = perDeep; });
               }
             }
@@ -1122,35 +1150,20 @@ async function processJobInBackground(
       return Math.round(points);
     };
 
-    // Helper to count questions in a section (including sub-questions)
-    const countSectionQuestions = (section: ParsedSection): number => {
-      let count = 0;
-      for (const q of section.questions || []) {
-        if (q.sub_questions?.length) {
-          count += q.sub_questions.length;
-        } else {
-          count += 1;
-        }
-      }
-      return count;
+    // Helper to count MAIN questions only (not sub-questions)
+    // This reflects the actual question structure: 22 main questions, not 27 sub-items
+    const countMainQuestions = (section: ParsedSection): number => {
+      return (section.questions || []).length;
     };
 
-    // Helper to calculate section points from leaf questions only (rounded)
-    const calculateSectionPoints = (section: ParsedSection): number => {
-      let sectionTotal = 0;
-      for (const q of section.questions || []) {
-        if (q.sub_questions?.length) {
-          for (const sub of q.sub_questions) {
-            sectionTotal += roundPoints(sub.points);
-          }
-        } else {
-          sectionTotal += roundPoints(q.points);
-        }
-      }
-      return roundPoints(sectionTotal);
+    // CRITICAL: Use official section.total_points instead of summing individual question points
+    // This ensures the total always equals 100 (60 mandatory + 40 elective) as declared in the exam
+    const getOfficialSectionPoints = (section: ParsedSection): number => {
+      return section.total_points || 0;
     };
 
     // Calculate actual points considering that student picks ONE elective section only
+    // Uses OFFICIAL section totals, not computed sums
     const calculateActualPointsWithBreakdown = (): { 
       total: number; 
       mandatoryTotal: number;
@@ -1163,18 +1176,19 @@ async function processJobInBackground(
       const electiveSections: Array<{ name: string; points: number; specialization?: string; questionCount: number }> = [];
       
       for (const section of parsedExam.sections || []) {
-        const sectionPoints = calculateSectionPoints(section);
-        const questionCount = countSectionQuestions(section);
+        // Use OFFICIAL section total_points (from exam instructions), NOT computed sum
+        const officialPoints = getOfficialSectionPoints(section);
+        const mainQuestionCount = countMainQuestions(section);
         
         if (section.section_type === 'mandatory') {
-          mandatoryTotal += sectionPoints;
-          mandatoryQuestionCount += questionCount;
+          mandatoryTotal += officialPoints;
+          mandatoryQuestionCount += mainQuestionCount;
         } else if (section.section_type === 'elective') {
           electiveSections.push({
             name: section.specialization_label || section.specialization || section.section_title,
-            points: roundPoints(sectionPoints),
+            points: roundPoints(officialPoints),
             specialization: section.specialization,
-            questionCount
+            questionCount: mainQuestionCount
           });
         }
       }
