@@ -460,8 +460,9 @@ function GradingDialog({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader>
+      <DialogContent className="max-w-4xl h-[85vh] flex flex-col gap-0 p-0">
+        {/* Header - Fixed */}
+        <DialogHeader className="p-6 pb-4 border-b shrink-0">
           <DialogTitle className="flex items-center justify-between">
             <span>تصحيح إجابات: {attempt?.student_name}</span>
             <Badge variant={scores.percentage >= 55 ? 'default' : 'destructive'}>
@@ -470,109 +471,113 @@ function GradingDialog({
           </DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 -mx-6 px-6">
-          {isLoadingGrades ? (
-            <div className="space-y-4 py-4">
-              {[1, 2, 3].map(i => (
-                <Skeleton key={i} className="h-32 w-full" />
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-6 py-4">
-              {questions.map((question: any, index: number) => {
-                const answer = answers[question.id];
-                const grade = questionGrades[question.id] || {};
+        {/* Scrollable Content */}
+        <ScrollArea className="flex-1 min-h-0">
+          <div className="p-6">
+            {isLoadingGrades ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map(i => (
+                  <Skeleton key={i} className="h-32 w-full" />
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {questions.map((question: any, index: number) => {
+                  const answer = answers[question.id];
+                  const grade = questionGrades[question.id] || {};
 
-                return (
-                  <Card key={question.id}>
-                    <CardHeader className="pb-2">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-sm">
-                          سؤال {question.question_number} ({question.points} علامة)
-                        </CardTitle>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-muted-foreground">العلامة:</span>
-                          <Input
-                            type="number"
-                            min={0}
-                            max={question.points}
-                            value={(grade as any).manual_score ?? ''}
-                            onChange={(e) => updateQuestionGrade(
-                              question.id,
-                              'manual_score',
-                              e.target.value ? parseInt(e.target.value) : null
-                            )}
-                            className="w-20 h-8"
+                  return (
+                    <Card key={question.id}>
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-sm">
+                            سؤال {question.question_number} ({question.points} علامة)
+                          </CardTitle>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-muted-foreground">العلامة:</span>
+                            <Input
+                              type="number"
+                              min={0}
+                              max={question.points}
+                              value={(grade as any).manual_score ?? ''}
+                              onChange={(e) => updateQuestionGrade(
+                                question.id,
+                                'manual_score',
+                                e.target.value ? parseInt(e.target.value) : null
+                              )}
+                              className="w-20 h-8"
+                            />
+                            <span className="text-sm">/ {question.points}</span>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="p-3 bg-muted/50 rounded-lg">
+                          <p className="text-sm font-medium mb-1">السؤال:</p>
+                          <p className="text-sm">{question.question_text}</p>
+                        </div>
+
+                        <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
+                          <p className="text-sm font-medium mb-1">إجابة الطالب:</p>
+                          <p className="text-sm">
+                            {typeof answer?.answer === 'object'
+                              ? JSON.stringify(answer.answer, null, 2)
+                              : answer?.answer || <span className="text-muted-foreground italic">لم يجب</span>}
+                          </p>
+                        </div>
+
+                        {question.correct_answer && (
+                          <div className="p-3 bg-green-50 dark:bg-green-950/30 rounded-lg">
+                            <p className="text-sm font-medium mb-1">الإجابة الصحيحة:</p>
+                            <p className="text-sm">{question.correct_answer}</p>
+                          </div>
+                        )}
+
+                        <div>
+                          <label className="text-sm font-medium">ملاحظات على هذا السؤال:</label>
+                          <Textarea
+                            value={(grade as any).teacher_feedback || ''}
+                            onChange={(e) => updateQuestionGrade(question.id, 'teacher_feedback', e.target.value)}
+                            placeholder="ملاحظات اختيارية..."
+                            className="mt-1 h-16"
                           />
-                          <span className="text-sm">/ {question.points}</span>
                         </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="p-3 bg-muted/50 rounded-lg">
-                        <p className="text-sm font-medium mb-1">السؤال:</p>
-                        <p className="text-sm">{question.question_text}</p>
-                      </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
 
-                      <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
-                        <p className="text-sm font-medium mb-1">إجابة الطالب:</p>
-                        <p className="text-sm">
-                          {typeof answer?.answer === 'object'
-                            ? JSON.stringify(answer.answer, null, 2)
-                            : answer?.answer || <span className="text-muted-foreground italic">لم يجب</span>}
-                        </p>
-                      </div>
+                <Separator />
 
-                      {question.correct_answer && (
-                        <div className="p-3 bg-green-50 dark:bg-green-950/30 rounded-lg">
-                          <p className="text-sm font-medium mb-1">الإجابة الصحيحة:</p>
-                          <p className="text-sm">{question.correct_answer}</p>
-                        </div>
-                      )}
+                {/* التعليق العام */}
+                <div>
+                  <label className="text-sm font-medium">تعليق عام على الامتحان:</label>
+                  <Textarea
+                    value={teacherFeedback}
+                    onChange={(e) => setTeacherFeedback(e.target.value)}
+                    placeholder="تعليق عام للطالب..."
+                    className="mt-1"
+                  />
+                </div>
 
-                      <div>
-                        <label className="text-sm font-medium">ملاحظات على هذا السؤال:</label>
-                        <Textarea
-                          value={(grade as any).teacher_feedback || ''}
-                          onChange={(e) => updateQuestionGrade(question.id, 'teacher_feedback', e.target.value)}
-                          placeholder="ملاحظات اختيارية..."
-                          className="mt-1 h-16"
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-
-              <Separator />
-
-              {/* التعليق العام */}
-              <div>
-                <label className="text-sm font-medium">تعليق عام على الامتحان:</label>
-                <Textarea
-                  value={teacherFeedback}
-                  onChange={(e) => setTeacherFeedback(e.target.value)}
-                  placeholder="تعليق عام للطالب..."
-                  className="mt-1"
-                />
+                {/* نشر النتيجة */}
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="publish"
+                    checked={publishResult}
+                    onCheckedChange={(c) => setPublishResult(!!c)}
+                  />
+                  <label htmlFor="publish" className="text-sm">
+                    نشر النتيجة للطالب فوراً
+                  </label>
+                </div>
               </div>
-
-              {/* نشر النتيجة */}
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="publish"
-                  checked={publishResult}
-                  onCheckedChange={(c) => setPublishResult(!!c)}
-                />
-                <label htmlFor="publish" className="text-sm">
-                  نشر النتيجة للطالب فوراً
-                </label>
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </ScrollArea>
 
-        <DialogFooter className="gap-2">
+        {/* Footer - Fixed */}
+        <DialogFooter className="p-6 pt-4 border-t shrink-0 gap-2">
           <Button variant="outline" onClick={onClose}>
             إلغاء
           </Button>
