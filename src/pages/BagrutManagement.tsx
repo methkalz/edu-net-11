@@ -230,9 +230,43 @@ const BagrutManagement: React.FC = () => {
     setViewState('preview');
   };
 
+  // Validate exam points = 100 (mandatory 60 + one elective 40)
+  const validateExamPoints = (exam: any): { isValid: boolean; message?: string; total?: number } => {
+    let mandatoryTotal = 0;
+    let maxElectiveTotal = 0;
+    
+    for (const section of exam.sections || []) {
+      if (section.section_type === 'mandatory') {
+        mandatoryTotal += section.total_points || 0;
+      } else if (section.section_type === 'elective') {
+        maxElectiveTotal = Math.max(maxElectiveTotal, section.total_points || 0);
+      }
+    }
+    
+    const total = mandatoryTotal + maxElectiveTotal;
+    
+    if (total !== 100) {
+      return {
+        isValid: false,
+        total,
+        message: `مجموع العلامات ${total} ≠ 100. يجب أن يكون القسم الإلزامي (${mandatoryTotal}) + التخصص (${maxElectiveTotal}) = 100`
+      };
+    }
+    
+    return { isValid: true, total: 100 };
+  };
+
   // Save exam to database
   const handleSaveExam = async () => {
     if (!parsedExam || !statistics) return;
+    
+    // Validate points before saving
+    const validation = validateExamPoints(parsedExam);
+    if (!validation.isValid) {
+      toast.error(validation.message || 'مجموع العلامات غير صحيح');
+      return; // Block save
+    }
+    
     setIsSaving(true);
     try {
       const {

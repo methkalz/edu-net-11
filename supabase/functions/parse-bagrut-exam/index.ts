@@ -521,8 +521,8 @@ const distributePoints = (parsedExam: ParsedExam) => {
         
         for (const q of questions) {
           if (q.sub_questions && q.sub_questions.length > 0) {
-            // Parent gets sum of children
-            q.points = pointsPerLeaf * q.sub_questions.length;
+            // Parent gets ZERO - points are ONLY on leaves to prevent double counting
+            q.points = 0;
             for (const sub of q.sub_questions) {
               sub.points = pointsPerLeaf;
             }
