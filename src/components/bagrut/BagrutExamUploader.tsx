@@ -33,8 +33,22 @@ interface AnswersReport {
   unansweredList: Array<{ question_number: string; question_type: string; reason: string }>;
 }
 
+export interface PointsReport {
+  declaredTotal: number;
+  actualTotal: number;
+  difference: number;
+  isValid: boolean;
+  issues: Array<{
+    type: 'missing_points' | 'excess_points' | 'zero_points_question';
+    description: string;
+    section?: string;
+    question?: string;
+    suggestedFix?: string;
+  }>;
+}
+
 interface BagrutExamUploaderProps {
-  onExamParsed: (exam: ParsedExam, statistics: Statistics, answersReport?: AnswersReport) => void;
+  onExamParsed: (exam: ParsedExam, statistics: Statistics, answersReport?: AnswersReport, pointsReport?: PointsReport) => void;
   onCancel: () => void;
 }
 
@@ -106,7 +120,7 @@ const BagrutExamUploader: React.FC<BagrutExamUploaderProps> = ({ onExamParsed, o
           
           // Pass parsed data to parent
           if (data.result?.parsedExam && data.result?.statistics) {
-            onExamParsed(data.result.parsedExam, data.result.statistics, data.result.answersReport);
+            onExamParsed(data.result.parsedExam, data.result.statistics, data.result.answersReport, data.result.pointsReport);
           }
         } else if (data.status === 'failed') {
           stopPolling();
