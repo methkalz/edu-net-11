@@ -13,7 +13,7 @@ import type { BagrutAnswer } from '@/hooks/useBagrutAttempt';
 
 interface BagrutQuestionRendererProps {
   question: ParsedQuestion;
-  answer: BagrutAnswer | undefined;
+  answers: Record<string, BagrutAnswer>;  // كل الإجابات - كل سؤال يستخرج إجابته الخاصة
   onAnswerChange: (questionId: string, answer: BagrutAnswer) => void;
   showAnswer?: boolean;
   disabled?: boolean;
@@ -36,7 +36,7 @@ const questionTypeLabels: Record<string, string> = {
 
 export default function BagrutQuestionRenderer({
   question,
-  answer,
+  answers,  // ← كل الإجابات
   onAnswerChange,
   showAnswer = false,
   disabled = false,
@@ -47,7 +47,8 @@ export default function BagrutQuestionRenderer({
     onAnswerChange(questionId, { answer: value });
   };
 
-  const currentAnswer = answer?.answer;
+  // كل سؤال يستخرج إجابته الخاصة من الـ record
+  const currentAnswer = answers[questionId]?.answer;
 
   return (
     <Card className="border-border">
@@ -165,7 +166,7 @@ export default function BagrutQuestionRenderer({
               <BagrutQuestionRenderer
                 key={subQ.question_db_id || index}
                 question={subQ}
-                answer={answer}
+                answers={answers}  // ← تمرير كل الإجابات - كل سؤال فرعي يستخرج إجابته
                 onAnswerChange={onAnswerChange}
                 showAnswer={showAnswer}
                 disabled={disabled}
@@ -207,6 +208,7 @@ function MultipleChoiceQuestion({
   showAnswer: boolean;
 }) {
   const choices = question.choices || [];
+  const questionId = question.question_db_id || question.question_number;  // ← id فريد
 
   return (
     <RadioGroup
@@ -222,6 +224,7 @@ function MultipleChoiceQuestion({
           choice.text === question.correct_answer
         );
         const isSelected = answer === choice.id || answer === choice.text;
+        const choiceId = `choice-${questionId}-${index}`;  // ← id فريد لكل سؤال
 
         return (
           <label
@@ -232,7 +235,7 @@ function MultipleChoiceQuestion({
                 : 'border-border hover:bg-accent/50'
             } ${isCorrect ? 'border-green-500 bg-green-50 dark:bg-green-950/30' : ''}`}
           >
-            <RadioGroupItem value={choice.id || choice.text} id={`choice-${index}`} />
+            <RadioGroupItem value={choice.id || choice.text} id={choiceId} />
             <span className="flex-1">{choice.text}</span>
             {showAnswer && isCorrect && (
               <Badge variant="default" className="bg-green-500">صحيح</Badge>
@@ -262,6 +265,7 @@ function TrueFalseQuestion({
     { value: 'صح', label: 'صح ✓' },
     { value: 'خطأ', label: 'خطأ ✗' },
   ];
+  const questionId = question.question_db_id || question.question_number;  // ← id فريد
 
   return (
     <RadioGroup
@@ -273,6 +277,7 @@ function TrueFalseQuestion({
       {options.map((option) => {
         const isCorrect = showAnswer && question.correct_answer === option.value;
         const isSelected = answer === option.value;
+        const optionId = `tf-${questionId}-${option.value}`;  // ← id فريد لكل سؤال
 
         return (
           <label
@@ -283,7 +288,7 @@ function TrueFalseQuestion({
                 : 'border-border hover:bg-accent/50'
             } ${isCorrect ? 'border-green-500 bg-green-50 dark:bg-green-950/30' : ''}`}
           >
-            <RadioGroupItem value={option.value} id={`tf-${option.value}`} />
+            <RadioGroupItem value={option.value} id={optionId} />
             <span className="font-medium">{option.label}</span>
           </label>
         );
