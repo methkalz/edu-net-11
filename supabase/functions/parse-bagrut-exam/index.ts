@@ -1116,24 +1116,62 @@ async function processJobInBackground(
     console.log(`[Job ${jobId}] Calculated statistics:`, { totalSections: parsedExam.sections?.length, totalQuestions });
     
     // Calculate points report for validation
-    const calculateActualPoints = (): number => {
-      let total = 0;
-      for (const section of parsedExam.sections || []) {
-        for (const q of section.questions || []) {
-          if (q.sub_questions?.length) {
-            for (const sub of q.sub_questions) {
-              total += sub.points || 0;
-            }
-          } else {
-            total += q.points || 0;
+    // Helper to calculate section points from leaf questions only
+    const calculateSectionPoints = (section: ParsedSection): number => {
+      let sectionTotal = 0;
+      for (const q of section.questions || []) {
+        if (q.sub_questions?.length) {
+          for (const sub of q.sub_questions) {
+            sectionTotal += sub.points || 0;
           }
+        } else {
+          sectionTotal += q.points || 0;
         }
       }
-      return total;
+      return sectionTotal;
+    };
+
+    // Calculate actual points considering that student picks ONE elective section only
+    const calculateActualPointsWithBreakdown = (): { 
+      total: number; 
+      mandatoryTotal: number;
+      electiveSections: Array<{ name: string; points: number; specialization?: string }>;
+      selectedElective: number;
+    } => {
+      let mandatoryTotal = 0;
+      const electiveSections: Array<{ name: string; points: number; specialization?: string }> = [];
+      
+      for (const section of parsedExam.sections || []) {
+        const sectionPoints = calculateSectionPoints(section);
+        
+        if (section.section_type === 'mandatory') {
+          mandatoryTotal += sectionPoints;
+        } else if (section.section_type === 'elective') {
+          electiveSections.push({
+            name: section.specialization_label || section.specialization || section.section_title,
+            points: sectionPoints,
+            specialization: section.specialization
+          });
+        }
+      }
+      
+      // Student picks ONE elective section - use the highest for validation
+      // (All elective sections should ideally have equal points)
+      const selectedElective = electiveSections.length > 0 
+        ? Math.max(...electiveSections.map(e => e.points))
+        : 0;
+      
+      return {
+        total: mandatoryTotal + selectedElective,
+        mandatoryTotal,
+        electiveSections,
+        selectedElective
+      };
     };
 
     const declaredPoints = parsedExam.total_points || 100;
-    const actualPoints = calculateActualPoints();
+    const pointsBreakdown = calculateActualPointsWithBreakdown();
+    const actualPoints = pointsBreakdown.total;
     const pointsDifference = declaredPoints - actualPoints;
 
     // Find questions with zero points
@@ -1197,7 +1235,12 @@ async function processJobInBackground(
       declaredTotal: declaredPoints,
       actualTotal: actualPoints,
       difference: pointsDifference,
-      isValid: pointsDifference === 0 && questionsWithZeroPoints.length === 0,
+      isValid: Math.abs(pointsDifference) <= 2 && questionsWithZeroPoints.length === 0, // Allow ±2 tolerance for rounding
+      breakdown: {
+        mandatory: pointsBreakdown.mandatoryTotal,
+        electiveSections: pointsBreakdown.electiveSections,
+        selectedElective: pointsBreakdown.selectedElective
+      },
       issues: pointsIssues
     };
 
