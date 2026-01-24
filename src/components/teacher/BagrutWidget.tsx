@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -18,7 +17,6 @@ import {
   Clock,
   TrendingUp,
   CheckCircle,
-  AlertCircle,
   ArrowLeft,
   RefreshCw,
   GraduationCap,
@@ -69,52 +67,22 @@ export const BagrutWidget: React.FC<BagrutWidgetProps> = ({
     }
   }, [stats?.examsWithDetails, activeTab]);
 
-  // بطاقات الإحصائيات
-  const statCards = [
-    {
-      title: 'امتحانات متاحة',
-      value: stats?.availableExams || 0,
-      icon: BookOpen,
-      gradient: 'from-orange-500 to-amber-500',
-      bgGradient: 'from-orange-500/10 to-amber-500/10',
-    },
-    {
-      title: 'طلاب متقدمين',
-      value: stats?.studentsParticipated || 0,
-      icon: Users,
-      gradient: 'from-blue-500 to-cyan-500',
-      bgGradient: 'from-blue-500/10 to-cyan-500/10',
-    },
-    {
-      title: 'بانتظار التصحيح',
-      value: stats?.pendingGrading || 0,
-      icon: Clock,
-      gradient: 'from-yellow-500 to-orange-500',
-      bgGradient: 'from-yellow-500/10 to-orange-500/10',
-      highlight: (stats?.pendingGrading || 0) > 0,
-    },
-    {
-      title: 'معدل العلامات',
-      value: stats?.averageScore ? `${stats.averageScore}%` : '-',
-      icon: TrendingUp,
-      gradient: 'from-green-500 to-emerald-500',
-      bgGradient: 'from-green-500/10 to-emerald-500/10',
-    },
-  ];
+  const pendingCount = stats?.examsWithDetails.filter(e => e.pendingGrading > 0).length || 0;
+  const gradedCount = stats?.examsWithDetails.filter(e => e.gradedCount > 0 && e.pendingGrading === 0).length || 0;
 
   if (isLoading) {
     return (
-      <Card className="border-orange-200/50 dark:border-orange-800/30">
-        <CardHeader className="pb-3">
+      <Card>
+        <CardHeader>
           <Skeleton className="h-6 w-48" />
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
             {[1, 2, 3, 4].map(i => (
-              <Skeleton key={i} className="h-20 rounded-xl" />
+              <Skeleton key={i} className="h-24 rounded-lg" />
             ))}
           </div>
-          <Skeleton className="h-32 rounded-xl" />
+          <Skeleton className="h-32 rounded-lg" />
         </CardContent>
       </Card>
     );
@@ -122,109 +90,131 @@ export const BagrutWidget: React.FC<BagrutWidgetProps> = ({
 
   return (
     <>
-      <Card className="border-orange-200/50 dark:border-orange-800/30 overflow-hidden">
-        <CardHeader className="pb-3 bg-gradient-to-r from-orange-500/5 to-amber-500/5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 text-white">
-                <GraduationCap className="h-5 w-5" />
-              </div>
-              <div>
-                <CardTitle className="text-lg">امتحانات البجروت</CardTitle>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {canAccessGrade11 && canAccessGrade12 
-                    ? 'الصف الحادي عشر والثاني عشر'
-                    : canAccessGrade11 
-                    ? 'الصف الحادي عشر'
-                    : 'الصف الثاني عشر'
-                  }
-                </p>
-              </div>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => refetch()}
-              disabled={isRefetching}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <RefreshCw className={cn("h-4 w-4", isRefetching && "animate-spin")} />
-            </Button>
-          </div>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-xl flex items-center gap-2">
+            <GraduationCap className="w-5 h-5" />
+            امتحانات البجروت
+            <span className="text-sm font-normal text-muted-foreground">
+              ({canAccessGrade11 && canAccessGrade12 
+                ? 'الصف الحادي عشر والثاني عشر'
+                : canAccessGrade11 
+                ? 'الصف الحادي عشر'
+                : 'الصف الثاني عشر'
+              })
+            </span>
+          </CardTitle>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => refetch()}
+            disabled={isRefetching}
+          >
+            <RefreshCw className={cn("h-4 w-4", isRefetching && "animate-spin")} />
+          </Button>
         </CardHeader>
 
-        <CardContent className="pt-4">
+        <CardContent>
           {/* بطاقات الإحصائيات */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-            {statCards.map((stat, idx) => (
-              <div
-                key={idx}
-                className={cn(
-                  "relative p-3 rounded-xl transition-all duration-300",
-                  `bg-gradient-to-br ${stat.bgGradient}`,
-                  stat.highlight && "ring-2 ring-yellow-500/50 animate-pulse"
-                )}
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  <stat.icon className={cn(
-                    "h-4 w-4",
-                    `bg-gradient-to-br ${stat.gradient} bg-clip-text text-transparent`
-                  )} style={{ color: stat.gradient.includes('orange') ? '#f97316' : stat.gradient.includes('blue') ? '#3b82f6' : stat.gradient.includes('yellow') ? '#eab308' : '#22c55e' }} />
-                  <span className="text-xs text-muted-foreground">{stat.title}</span>
-                </div>
-                <p className={cn(
-                  "text-xl font-bold",
-                  `bg-gradient-to-br ${stat.gradient} bg-clip-text text-transparent`
-                )} style={{ WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                  {stat.value}
-                </p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            {/* امتحانات متاحة */}
+            <div className="bg-gradient-to-br from-orange-500/10 to-orange-600/5 p-4 rounded-lg border border-orange-500/20">
+              <div className="flex items-center gap-2 mb-2">
+                <BookOpen className="w-4 h-4 text-orange-600" />
+                <span className="text-sm text-muted-foreground">امتحانات متاحة</span>
               </div>
-            ))}
+              <p className="text-2xl font-bold text-orange-600">{stats?.availableExams || 0}</p>
+            </div>
+
+            {/* طلاب متقدمين */}
+            <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 p-4 rounded-lg border border-blue-500/20">
+              <div className="flex items-center gap-2 mb-2">
+                <Users className="w-4 h-4 text-blue-600" />
+                <span className="text-sm text-muted-foreground">طلاب متقدمين</span>
+              </div>
+              <p className="text-2xl font-bold text-blue-600">{stats?.studentsParticipated || 0}</p>
+            </div>
+
+            {/* بانتظار التصحيح */}
+            <div className={cn(
+              "bg-gradient-to-br from-yellow-500/10 to-yellow-600/5 p-4 rounded-lg border border-yellow-500/20",
+              (stats?.pendingGrading || 0) > 0 && "ring-2 ring-yellow-500/30"
+            )}>
+              <div className="flex items-center gap-2 mb-2">
+                <Clock className="w-4 h-4 text-yellow-600" />
+                <span className="text-sm text-muted-foreground">بانتظار التصحيح</span>
+              </div>
+              <p className="text-2xl font-bold text-yellow-600">{stats?.pendingGrading || 0}</p>
+            </div>
+
+            {/* معدل العلامات */}
+            <div className="bg-gradient-to-br from-green-500/10 to-green-600/5 p-4 rounded-lg border border-green-500/20">
+              <div className="flex items-center gap-2 mb-2">
+                <TrendingUp className="w-4 h-4 text-green-600" />
+                <span className="text-sm text-muted-foreground">معدل العلامات</span>
+              </div>
+              <p className="text-2xl font-bold text-green-600">
+                {stats?.averageScore ? `${stats.averageScore}%` : '-'}
+              </p>
+            </div>
           </div>
 
-          {/* تبويبات الامتحانات */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
-            <TabsList className="w-full grid grid-cols-3 mb-3">
-              <TabsTrigger value="all" className="text-xs">
-                الكل ({stats?.examsWithDetails.length || 0})
-              </TabsTrigger>
-              <TabsTrigger value="pending" className="text-xs">
-                بانتظار التصحيح ({stats?.examsWithDetails.filter(e => e.pendingGrading > 0).length || 0})
-              </TabsTrigger>
-              <TabsTrigger value="graded" className="text-xs">
-                مصححة ({stats?.examsWithDetails.filter(e => e.gradedCount > 0 && e.pendingGrading === 0).length || 0})
-              </TabsTrigger>
-            </TabsList>
+          {/* أزرار الفلترة */}
+          <div className="flex gap-2 mb-4 flex-wrap">
+            <Button
+              variant={activeTab === 'all' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActiveTab('all')}
+            >
+              الكل ({stats?.examsWithDetails.length || 0})
+            </Button>
+            <Button
+              variant={activeTab === 'pending' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActiveTab('pending')}
+              className={activeTab !== 'pending' && pendingCount > 0 ? 'border-yellow-500/50 text-yellow-600 hover:bg-yellow-50' : ''}
+            >
+              <Clock className="w-3 h-3 ml-1" />
+              بانتظار التصحيح ({pendingCount})
+            </Button>
+            <Button
+              variant={activeTab === 'graded' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActiveTab('graded')}
+              className={activeTab !== 'graded' && gradedCount > 0 ? 'border-green-500/50 text-green-600 hover:bg-green-50' : ''}
+            >
+              <CheckCircle className="w-3 h-3 ml-1" />
+              مصححة ({gradedCount})
+            </Button>
+          </div>
 
-            <TabsContent value={activeTab} className="mt-0">
-              {filteredExams.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <FileText className="h-10 w-10 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">
-                    {activeTab === 'pending' 
-                      ? 'لا توجد محاولات بانتظار التصحيح'
-                      : activeTab === 'graded'
-                      ? 'لا توجد امتحانات مصححة بعد'
-                      : 'لا توجد امتحانات بجروت متاحة حالياً'
-                    }
-                  </p>
-                </div>
-              ) : (
-                <ScrollArea className="h-[280px] pr-2">
-                  <div className="space-y-3">
-                    {filteredExams.map((exam) => (
-                      <ExamCard
-                        key={exam.id}
-                        exam={exam}
-                        onViewDetails={() => setSelectedExam(exam)}
-                        onGrade={() => navigate(`/bagrut-grading/${exam.id}`)}
-                      />
-                    ))}
-                  </div>
-                </ScrollArea>
-              )}
-            </TabsContent>
-          </Tabs>
+          {/* قائمة الامتحانات */}
+          {filteredExams.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <FileText className="h-10 w-10 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">
+                {activeTab === 'pending' 
+                  ? 'لا توجد محاولات بانتظار التصحيح'
+                  : activeTab === 'graded'
+                  ? 'لا توجد امتحانات مصححة بعد'
+                  : 'لا توجد امتحانات بجروت متاحة حالياً'
+                }
+              </p>
+            </div>
+          ) : (
+            <ScrollArea className="h-[280px]">
+              <div className="space-y-3 pr-2">
+                {filteredExams.map((exam) => (
+                  <ExamCard
+                    key={exam.id}
+                    exam={exam}
+                    onViewDetails={() => setSelectedExam(exam)}
+                    onGrade={() => navigate(`/bagrut-grading/${exam.id}`)}
+                  />
+                ))}
+              </div>
+            </ScrollArea>
+          )}
         </CardContent>
       </Card>
 
@@ -253,17 +243,12 @@ const ExamCard: React.FC<ExamCardProps> = ({ exam, onViewDetails, onGrade }) => 
   const hasPending = exam.pendingGrading > 0;
   
   return (
-    <div className={cn(
-      "p-3 rounded-xl border transition-all duration-200 hover:shadow-md",
-      hasPending 
-        ? "border-yellow-300/50 bg-yellow-50/30 dark:bg-yellow-900/10" 
-        : "border-border/50 bg-card/50"
-    )}>
+    <div className="p-4 rounded-lg border hover:shadow-md transition-all">
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex-1 min-w-0">
           <h4 className="font-medium text-sm truncate">{exam.title}</h4>
           <div className="flex items-center gap-2 mt-1 flex-wrap">
-            <Badge variant="outline" className="text-xs bg-orange-100/50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300">
+            <Badge variant="outline" className="text-xs">
               {exam.subject}
             </Badge>
             <span className="text-xs text-muted-foreground">
@@ -287,13 +272,13 @@ const ExamCard: React.FC<ExamCardProps> = ({ exam, onViewDetails, onGrade }) => 
           {exam.studentAttempts} محاولة
         </span>
         {hasPending && (
-          <span className="flex items-center gap-1 text-yellow-600 dark:text-yellow-400 font-medium">
+          <span className="flex items-center gap-1 text-yellow-600 font-medium">
             <Clock className="h-3 w-3" />
             {exam.pendingGrading} بانتظار
           </span>
         )}
         {exam.gradedCount > 0 && (
-          <span className="flex items-center gap-1 text-green-600 dark:text-green-400">
+          <span className="flex items-center gap-1 text-green-600">
             <CheckCircle className="h-3 w-3" />
             {exam.gradedCount} مصحح
           </span>
@@ -320,10 +305,7 @@ const ExamCard: React.FC<ExamCardProps> = ({ exam, onViewDetails, onGrade }) => 
         <Button
           variant={hasPending ? "default" : "outline"}
           size="sm"
-          className={cn(
-            "text-xs flex-1",
-            hasPending && "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600"
-          )}
+          className="text-xs flex-1"
           onClick={onGrade}
         >
           {hasPending ? (
@@ -360,11 +342,11 @@ const ExamDetailsDialog: React.FC<ExamDetailsDialogProps> = ({
   if (!exam) return null;
 
   const stats = [
-    { label: 'إجمالي المحاولات', value: exam.studentAttempts, icon: Users },
-    { label: 'بانتظار التصحيح', value: exam.pendingGrading, icon: Clock, highlight: exam.pendingGrading > 0 },
-    { label: 'تم التصحيح', value: exam.gradedCount, icon: CheckCircle },
-    { label: 'تم النشر', value: exam.publishedCount, icon: Award },
-    { label: 'معدل العلامات', value: exam.averageScore ? `${exam.averageScore}%` : '-', icon: BarChart3 },
+    { label: 'إجمالي المحاولات', value: exam.studentAttempts, icon: Users, color: 'text-blue-600', bg: 'bg-blue-500/10' },
+    { label: 'بانتظار التصحيح', value: exam.pendingGrading, icon: Clock, color: 'text-yellow-600', bg: 'bg-yellow-500/10', highlight: exam.pendingGrading > 0 },
+    { label: 'تم التصحيح', value: exam.gradedCount, icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-500/10' },
+    { label: 'تم النشر', value: exam.publishedCount, icon: Award, color: 'text-purple-600', bg: 'bg-purple-500/10' },
+    { label: 'معدل العلامات', value: exam.averageScore ? `${exam.averageScore}%` : '-', icon: BarChart3, color: 'text-orange-600', bg: 'bg-orange-500/10' },
   ];
 
   return (
@@ -372,20 +354,20 @@ const ExamDetailsDialog: React.FC<ExamDetailsDialogProps> = ({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <GraduationCap className="h-5 w-5 text-orange-500" />
+            <GraduationCap className="h-5 w-5" />
             تفاصيل الامتحان
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           {/* معلومات الامتحان */}
-          <div className="p-4 rounded-xl bg-gradient-to-br from-orange-500/10 to-amber-500/10">
+          <div className="p-4 rounded-lg bg-muted/50">
             <h3 className="font-bold text-lg mb-2">{exam.title}</h3>
             <div className="flex flex-wrap gap-2">
-              <Badge className="bg-orange-500/20 text-orange-700 dark:text-orange-300">
+              <Badge variant="outline">
                 {exam.subject}
               </Badge>
-              <Badge variant="outline">
+              <Badge variant="secondary">
                 {exam.exam_year} - {seasonLabels[exam.exam_season] || exam.exam_season}
               </Badge>
               {exam.available_for_grades.map(grade => (
@@ -393,7 +375,7 @@ const ExamDetailsDialog: React.FC<ExamDetailsDialogProps> = ({
               ))}
             </div>
             <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground">
-              <span>{exam.total_points} نقطة</span>
+              <span>{exam.total_points} علامة</span>
               <span>{exam.duration_minutes} دقيقة</span>
             </div>
           </div>
@@ -404,18 +386,16 @@ const ExamDetailsDialog: React.FC<ExamDetailsDialogProps> = ({
               <div
                 key={idx}
                 className={cn(
-                  "p-3 rounded-lg border",
-                  stat.highlight && "border-yellow-400 bg-yellow-50 dark:bg-yellow-900/20"
+                  "p-3 rounded-lg",
+                  stat.bg,
+                  stat.highlight && "ring-2 ring-yellow-500/30"
                 )}
               >
-                <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                  <stat.icon className="h-4 w-4" />
-                  <span className="text-xs">{stat.label}</span>
+                <div className="flex items-center gap-2 mb-1">
+                  <stat.icon className={cn("h-4 w-4", stat.color)} />
+                  <span className="text-xs text-muted-foreground">{stat.label}</span>
                 </div>
-                <p className={cn(
-                  "text-xl font-bold",
-                  stat.highlight && "text-yellow-600 dark:text-yellow-400"
-                )}>
+                <p className={cn("text-xl font-bold", stat.color)}>
                   {stat.value}
                 </p>
               </div>
@@ -424,7 +404,7 @@ const ExamDetailsDialog: React.FC<ExamDetailsDialogProps> = ({
 
           {/* زر التصحيح */}
           <Button
-            className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600"
+            className="w-full"
             onClick={() => onGrade(exam.id)}
           >
             <ArrowLeft className="h-4 w-4 ml-2" />
