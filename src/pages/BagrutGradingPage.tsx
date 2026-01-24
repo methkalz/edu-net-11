@@ -1031,7 +1031,7 @@ function GradingDialog({
               <AlertDescription className="text-sm flex flex-wrap items-center gap-x-3 gap-y-1">
                 <span className="font-bold">تم تصحيح {autoGradeStats.total} سؤال تلقائياً:</span>
                 <span className="text-green-600 font-medium">
-                  ✓ {autoGradeStats.correct} صحيح ({autoGradeStats.autoGradedScore} نقطة)
+                  ✓ {autoGradeStats.correct} صحيح ({autoGradeStats.autoGradedScore} علامة)
                 </span>
                 <span className="text-red-600 font-medium">
                   ✗ {autoGradeStats.wrong} خطأ
