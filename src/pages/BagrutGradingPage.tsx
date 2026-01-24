@@ -588,6 +588,23 @@ function GradingDialog({
     };
   }, [allQuestions, answers]);
 
+  // حساب المجموع الكلي للعلامات من الأقسام الرسمية
+  // القسم الإلزامي: 60 + قسم التخصص: 40 = 100
+  const totalPoints = useMemo(() => {
+    let mandatoryPoints = 0;
+    let electivePoints = 0;
+    
+    relevantSections.forEach(section => {
+      if (section.section_type === 'mandatory') {
+        mandatoryPoints += section.total_points;
+      } else if (section.section_type === 'elective') {
+        electivePoints = Math.max(electivePoints, section.total_points);
+      }
+    });
+    
+    return mandatoryPoints + electivePoints;
+  }, [relevantSections]);
+
   // دالة تحديد حالة تصحيح السؤال
   const getQuestionGradingStatus = (question: ParsedQuestion): 'auto_graded' | 'manual_graded' | 'needs_manual' => {
     const questionId = question.question_db_id || '';
@@ -862,7 +879,7 @@ function GradingDialog({
   };
   const calculateTotalScore = () => {
     let total = 0;
-    let maxTotal = 0;
+    
     allQuestions.forEach(q => {
       const questionId = q.question_db_id || '';
       const grade = questionGrades[questionId];
@@ -882,12 +899,13 @@ function GradingDialog({
           total += autoResult.autoScore;
         }
       }
-      maxTotal += q.points || 0;
     });
+    
+    // استخدام المجموع الرسمي من الأقسام (60 + 40 = 100)
     return {
       total,
-      maxTotal,
-      percentage: maxTotal > 0 ? total / maxTotal * 100 : 0
+      maxTotal: totalPoints,
+      percentage: totalPoints > 0 ? (total / totalPoints) * 100 : 0
     };
   };
   const handleSave = () => {
