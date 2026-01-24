@@ -76,10 +76,15 @@ export default function BagrutGradingPage() {
 
   // إحصائيات
   const stats = useMemo(() => {
-    const graded = attempts.filter(a => a.status === 'graded').length;
+    const gradedAttempts = attempts.filter(a => a.status === 'graded');
+    const graded = gradedAttempts.length;
     const pending = attempts.filter(a => a.status === 'submitted').length;
     const published = attempts.filter(a => a.is_result_published).length;
-    const avgScore = attempts.length > 0 ? attempts.reduce((sum, a) => sum + (a.percentage || 0), 0) / attempts.length : 0;
+    // حساب المتوسط بناءً على الامتحانات المصححة فقط
+    const gradedWithScores = gradedAttempts.filter(a => a.percentage !== null);
+    const avgScore = gradedWithScores.length > 0 
+      ? gradedWithScores.reduce((sum, a) => sum + (a.percentage || 0), 0) / gradedWithScores.length 
+      : 0;
     return {
       total: attempts.length,
       graded,
