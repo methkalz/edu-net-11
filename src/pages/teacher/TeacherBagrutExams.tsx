@@ -51,9 +51,9 @@ const StatCard: React.FC<StatCardProps> = ({ icon: Icon, label, value, colorClas
         <div className={`p-3 rounded-xl ${bgClass} backdrop-blur-sm group-hover:scale-110 transition-transform`}>
           <Icon className={`h-7 w-7 ${colorClass}`} />
         </div>
-        <div className="space-y-1">
-          <p className="text-sm text-muted-foreground font-medium">{label}</p>
-          <p className={`text-3xl font-bold ${colorClass}`}>
+        <div className="space-y-1 w-full">
+          <p className="text-sm text-muted-foreground font-medium text-center">{label}</p>
+          <p className={`text-3xl font-bold ${colorClass} text-center`}>
             {value}
           </p>
         </div>
