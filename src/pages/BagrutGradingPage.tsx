@@ -379,26 +379,14 @@ function GradingDialog({
   const [publishResult, setPublishResult] = useState(attempt?.is_result_published || false);
   const [isLoadingGrades, setIsLoadingGrades] = useState(true);
 
+  // نقل useEffect للأسفل بعد تعريف autoGradeQuestion
+  const [shouldLoadGrades, setShouldLoadGrades] = useState(false);
+  
   useEffect(() => {
-    const loadGrades = async () => {
-      setIsLoadingGrades(true);
-      try {
-        const grades = await fetchQuestionGrades(attemptId);
-        const gradesMap: Record<string, QuestionGrade> = {};
-        grades.forEach(g => {
-          gradesMap[g.question_id] = g;
-        });
-        setQuestionGrades(gradesMap);
-      } catch (error) {
-        console.error('Failed to load grades', error);
-      }
-      setIsLoadingGrades(false);
-    };
-
     if (open && attemptId) {
-      loadGrades();
+      setShouldLoadGrades(true);
     }
-  }, [open, attemptId, fetchQuestionGrades]);
+  }, [open, attemptId]);
 
   // بناء الهيكل المنظم للامتحان
   const structuredExam = useMemo(() => {
@@ -454,6 +442,130 @@ function GradingDialog({
     relevantSections.forEach(s => collectLeafQuestions(s.questions));
     return result;
   }, [relevantSections]);
+
+  // دالة التصحيح التلقائي للأسئلة الموضوعية
+  const autoGradeQuestion = (question: ParsedQuestion, studentAnswer: any): {
+    isAutoGradable: boolean;
+    isCorrect: boolean | null;
+    autoScore: number;
+  } => {
+    // التحقق من وجود إجابة
+    if (!studentAnswer?.answer) {
+      return { isAutoGradable: false, isCorrect: null, autoScore: 0 };
+    }
+
+    const value = studentAnswer.answer;
+
+    // 1. MCQ أو multiple_choice
+    if ((question.question_type === 'mcq' || question.question_type === 'multiple_choice') && question.choices) {
+      const correctChoice = question.choices.find((c: any) => c.is_correct);
+      if (correctChoice) {
+        // الخيار المختار من الطالب (رقم 1-based)
+        const choiceIndex = typeof value === 'number' ? value : parseInt(value);
+        const correctIndex = question.choices.indexOf(correctChoice) + 1;
+        const isCorrect = choiceIndex === correctIndex;
+        return {
+          isAutoGradable: true,
+          isCorrect,
+          autoScore: isCorrect ? (question.points || 0) : 0
+        };
+      }
+    }
+
+    // 2. صح/خطأ
+    if (question.question_type === 'true_false') {
+      // تحويل إجابة الطالب
+      const studentTrue = value === true || value === 'true' || value === 'صح' || value === '1';
+      const studentFalse = value === false || value === 'false' || value === 'خطأ' || value === '2';
+      
+      // الإجابة الصحيحة من choices أو correct_answer
+      let correctIsTrue: boolean | null = null;
+      
+      if (question.choices?.length && question.choices.length > 0) {
+        const correctChoice = question.choices.find((c: any) => c.is_correct);
+        if (correctChoice) {
+          correctIsTrue = correctChoice.text === 'صح' || String(correctChoice.id) === '1';
+        }
+      } else if (question.correct_answer) {
+        const answer = String(question.correct_answer).toLowerCase();
+        correctIsTrue = answer === 'true' || answer === 'صح' || answer === '1' || answer === 'صحيح';
+      }
+      
+      if (correctIsTrue !== null && (studentTrue || studentFalse)) {
+        const isCorrect = (studentTrue && correctIsTrue) || (studentFalse && !correctIsTrue);
+        return {
+          isAutoGradable: true,
+          isCorrect,
+          autoScore: isCorrect ? (question.points || 0) : 0
+        };
+      }
+    }
+
+    return { isAutoGradable: false, isCorrect: null, autoScore: 0 };
+  };
+
+  // دالة مساعدة للتحقق من وجود إجابة صحيحة (يجب أن تكون قبل autoGradeStats)
+  const hasCorrectAnswer = (question: ParsedQuestion): boolean => {
+    // MCQ أو multiple_choice مع خيار صحيح
+    if ((question.question_type === 'mcq' || question.question_type === 'multiple_choice') && question.choices) {
+      return question.choices.some((c: any) => c.is_correct);
+    }
+    
+    // صح/خطأ مع إجابة
+    if (question.question_type === 'true_false') {
+      if (question.choices?.some((c: any) => c.is_correct)) return true;
+      if (question.correct_answer) return true;
+      return false;
+    }
+    
+    // جداول
+    if (question.question_type === 'fill_table' && question.table_data?.correct_answers) {
+      return Object.keys(question.table_data.correct_answers).length > 0;
+    }
+    
+    // فراغات
+    if (question.question_type === 'fill_blank' && question.blanks) {
+      return question.blanks.some((b: any) => b.correct_answer);
+    }
+    
+    // إجابة نصية
+    return !!question.correct_answer;
+  };
+
+  // حساب إحصائيات التصحيح التلقائي
+  const autoGradeStats = useMemo(() => {
+    let total = 0;
+    let correct = 0;
+    let wrong = 0;
+    let autoGradedScore = 0;
+    let unanswered = 0;
+
+    allQuestions.forEach(q => {
+      const questionId = q.question_db_id || '';
+      const answer = answers[questionId];
+      
+      // هل السؤال قابل للتصحيح التلقائي؟
+      const isObjective = (q.question_type === 'mcq' || q.question_type === 'multiple_choice' || q.question_type === 'true_false');
+      const hasCorrect = hasCorrectAnswer(q);
+      
+      if (isObjective && hasCorrect) {
+        const result = autoGradeQuestion(q, answer);
+        if (result.isAutoGradable) {
+          total++;
+          if (result.isCorrect) {
+            correct++;
+            autoGradedScore += result.autoScore;
+          } else {
+            wrong++;
+          }
+        } else if (!answer?.answer) {
+          unanswered++;
+        }
+      }
+    });
+
+    return { total, correct, wrong, autoGradedScore, unanswered };
+  }, [allQuestions, answers]);
 
   // دالة تنسيق إجابة الطالب حسب نوع السؤال
   const formatStudentAnswer = (question: ParsedQuestion, answer: any): React.ReactNode => {
@@ -521,7 +633,7 @@ function GradingDialog({
     }
 
     // 3. MCQ - عرض الخيار المختار
-    if (question.question_type === 'mcq' && question.choices) {
+    if ((question.question_type === 'mcq' || question.question_type === 'multiple_choice') && question.choices) {
       const choiceIndex = typeof value === 'number' ? value - 1 : parseInt(value) - 1;
       const choice = question.choices[choiceIndex];
       if (choice) {
@@ -536,7 +648,7 @@ function GradingDialog({
 
     // 4. صح/خطأ
     if (question.question_type === 'true_false') {
-      const boolValue = value === true || value === 'true' || value === 'صح';
+      const boolValue = value === true || value === 'true' || value === 'صح' || value === '1';
       return <span className="font-medium">{boolValue ? 'صح ✓' : 'خطأ ✗'}</span>;
     }
 
@@ -648,33 +760,54 @@ function GradingDialog({
     return null;
   };
 
-  // دالة مساعدة للتحقق من وجود إجابة صحيحة
-  const hasCorrectAnswer = (question: ParsedQuestion): boolean => {
-    // MCQ أو multiple_choice مع خيار صحيح
-    if ((question.question_type === 'mcq' || question.question_type === 'multiple_choice') && question.choices) {
-      return question.choices.some((c: any) => c.is_correct);
-    }
-    
-    // صح/خطأ مع إجابة
-    if (question.question_type === 'true_false') {
-      if (question.choices?.some((c: any) => c.is_correct)) return true;
-      if (question.correct_answer) return true;
-      return false;
-    }
-    
-    // جداول
-    if (question.question_type === 'fill_table' && question.table_data?.correct_answers) {
-      return Object.keys(question.table_data.correct_answers).length > 0;
-    }
-    
-    // فراغات
-    if (question.question_type === 'fill_blank' && question.blanks) {
-      return question.blanks.some((b: any) => b.correct_answer);
-    }
-    
-    // إجابة نصية
-    return !!question.correct_answer;
-  };
+  // تحميل العلامات مع التصحيح التلقائي
+  useEffect(() => {
+    const loadGrades = async () => {
+      if (!shouldLoadGrades || !attemptId) return;
+      
+      setIsLoadingGrades(true);
+      try {
+        const grades = await fetchQuestionGrades(attemptId);
+        const gradesMap: Record<string, QuestionGrade> = {};
+        
+        // أولاً: تحميل العلامات المحفوظة
+        grades.forEach(g => {
+          gradesMap[g.question_id] = g;
+        });
+        
+        // ثانياً: تشغيل التصحيح التلقائي للأسئلة التي لم تُصحح بعد
+        allQuestions.forEach(q => {
+          const questionId = q.question_db_id || '';
+          const existingGrade = gradesMap[questionId];
+          
+          // إذا لم تكن هناك علامة يدوية أو تلقائية، نحاول التصحيح التلقائي
+          if (existingGrade?.manual_score === undefined && existingGrade?.auto_score === undefined) {
+            const answer = answers[questionId];
+            const autoResult = autoGradeQuestion(q, answer);
+            
+            if (autoResult.isAutoGradable) {
+              gradesMap[questionId] = {
+                ...gradesMap[questionId],
+                attempt_id: attemptId,
+                question_id: questionId,
+                auto_score: autoResult.autoScore,
+                final_score: autoResult.autoScore,
+                max_score: q.points || 0,
+              };
+            }
+          }
+        });
+        
+        setQuestionGrades(gradesMap);
+      } catch (error) {
+        console.error('Failed to load grades', error);
+      }
+      setIsLoadingGrades(false);
+      setShouldLoadGrades(false);
+    };
+
+    loadGrades();
+  }, [shouldLoadGrades, attemptId, fetchQuestionGrades, allQuestions, answers]);
 
   const updateQuestionGrade = (questionId: string, field: string, value: any, maxScore: number) => {
     setQuestionGrades(prev => ({
@@ -693,12 +826,25 @@ function GradingDialog({
     let total = 0;
     let maxTotal = 0;
     allQuestions.forEach((q) => {
-      const grade = questionGrades[q.question_db_id || ''];
-      if (grade?.final_score !== undefined && grade?.final_score !== null) {
-        total += grade.final_score;
-      } else if (grade?.manual_score !== undefined && grade?.manual_score !== null) {
+      const questionId = q.question_db_id || '';
+      const grade = questionGrades[questionId];
+      const answer = answers[questionId];
+      
+      // أولوية: manual_score ثم final_score ثم auto_score ثم التصحيح التلقائي الآني
+      if (grade?.manual_score !== undefined && grade?.manual_score !== null) {
         total += grade.manual_score;
+      } else if (grade?.final_score !== undefined && grade?.final_score !== null) {
+        total += grade.final_score;
+      } else if (grade?.auto_score !== undefined && grade?.auto_score !== null) {
+        total += grade.auto_score;
+      } else {
+        // التصحيح التلقائي الآني للأسئلة التي لم تُحفظ بعد
+        const autoResult = autoGradeQuestion(q, answer);
+        if (autoResult.isAutoGradable && autoResult.isCorrect) {
+          total += autoResult.autoScore;
+        }
       }
+      
       maxTotal += q.points || 0;
     });
     return { total, maxTotal, percentage: maxTotal > 0 ? (total / maxTotal) * 100 : 0 };
@@ -737,17 +883,37 @@ function GradingDialog({
     const questionId = question.question_db_id || '';
     const answer = answers[questionId];
     const grade = questionGrades[questionId] || {};
+    
+    // التحقق من التصحيح التلقائي
+    const autoGradeResult = autoGradeQuestion(question, answer);
+    const isAutoGraded = autoGradeResult.isAutoGradable;
+    const hasManualScore = (grade as any).manual_score !== undefined && (grade as any).manual_score !== null;
+    
+    // القيمة المعروضة في حقل العلامة
+    const displayScore = hasManualScore 
+      ? (grade as any).manual_score 
+      : (isAutoGraded ? autoGradeResult.autoScore : '');
 
     return (
       <div className={depth > 0 ? 'mr-4 border-r-2 border-muted pr-4' : ''}>
-        <Card className={depth > 0 ? 'border-dashed' : ''}>
+        <Card className={`${depth > 0 ? 'border-dashed' : ''} ${isAutoGraded && !hasManualScore ? (autoGradeResult.isCorrect ? 'border-green-300 dark:border-green-800' : 'border-red-300 dark:border-red-800') : ''}`}>
           <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm">
-                سؤال {question.question_number} ({question.points} علامة)
-                <Badge variant="outline" className="mr-2 text-xs">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <CardTitle className="text-sm flex items-center gap-2 flex-wrap">
+                <span>سؤال {question.question_number} ({question.points} علامة)</span>
+                <Badge variant="outline" className="text-xs">
                   {question.question_type}
                 </Badge>
+                
+                {/* شارة التصحيح التلقائي */}
+                {isAutoGraded && !hasManualScore && (
+                  <Badge 
+                    variant={autoGradeResult.isCorrect ? "default" : "destructive"}
+                    className={`text-xs ${autoGradeResult.isCorrect ? 'bg-green-500 hover:bg-green-600' : ''}`}
+                  >
+                    {autoGradeResult.isCorrect ? '✓ صحيح تلقائي' : '✗ خطأ تلقائي'}
+                  </Badge>
+                )}
               </CardTitle>
               {question.points > 0 && (
                 <div className="flex items-center gap-2">
@@ -756,14 +922,14 @@ function GradingDialog({
                     type="number"
                     min={0}
                     max={question.points}
-                    value={(grade as any).manual_score ?? ''}
+                    value={displayScore}
                     onChange={(e) => updateQuestionGrade(
                       questionId,
                       'manual_score',
                       e.target.value ? parseInt(e.target.value) : null,
                       question.points
                     )}
-                    className="w-20 h-8"
+                    className={`w-20 h-8 ${isAutoGraded && !hasManualScore ? (autoGradeResult.isCorrect ? 'bg-green-50 border-green-300 dark:bg-green-950/30' : 'bg-red-50 border-red-300 dark:bg-red-950/30') : ''}`}
                   />
                   <span className="text-sm">/ {question.points}</span>
                 </div>
@@ -825,13 +991,29 @@ function GradingDialog({
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-4xl h-[85vh] flex flex-col gap-0 p-0">
         {/* Header - Fixed */}
-        <DialogHeader className="p-6 pb-4 border-b shrink-0">
+        <DialogHeader className="p-6 pb-4 border-b shrink-0 space-y-3">
           <DialogTitle className="flex items-center justify-between">
             <span>تصحيح إجابات: {attempt?.student_name}</span>
             <Badge variant={scores.percentage >= 55 ? 'default' : 'destructive'}>
               {scores.total} / {scores.maxTotal} ({scores.percentage.toFixed(1)}%)
             </Badge>
           </DialogTitle>
+          
+          {/* ملخص التصحيح التلقائي */}
+          {autoGradeStats.total > 0 && (
+            <Alert className="bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800">
+              <CheckCircle2 className="h-4 w-4 text-blue-600" />
+              <AlertDescription className="text-sm flex flex-wrap items-center gap-x-3 gap-y-1">
+                <span className="font-bold">تم تصحيح {autoGradeStats.total} سؤال تلقائياً:</span>
+                <span className="text-green-600 font-medium">
+                  ✓ {autoGradeStats.correct} صحيح ({autoGradeStats.autoGradedScore} نقطة)
+                </span>
+                <span className="text-red-600 font-medium">
+                  ✗ {autoGradeStats.wrong} خطأ
+                </span>
+              </AlertDescription>
+            </Alert>
+          )}
         </DialogHeader>
 
         {/* Scrollable Content */}
