@@ -17,56 +17,26 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import {
-  AlertCircle,
-  ArrowRight,
-  CheckCircle2,
-  Clock,
-  Eye,
-  FileText,
-  Loader2,
-  Save,
-  Send,
-  User,
-  XCircle,
-  TrendingUp,
-  BookOpen,
-  Calendar,
-} from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { AlertCircle, ArrowRight, CheckCircle2, Clock, Eye, FileText, Loader2, Save, Send, User, XCircle, TrendingUp, BookOpen, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
-
 export default function BagrutGradingPage() {
-  const { examId } = useParams<{ examId: string }>();
+  const {
+    examId
+  } = useParams<{
+    examId: string;
+  }>();
   const navigate = useNavigate();
-  const { user, userProfile } = useAuth();
-
+  const {
+    user,
+    userProfile
+  } = useAuth();
   const [selectedAttempt, setSelectedAttempt] = useState<string | null>(null);
   const [selectedAttempts, setSelectedAttempts] = useState<string[]>([]);
   const [gradingDialogOpen, setGradingDialogOpen] = useState(false);
-
   const {
     attempts,
     isLoading,
@@ -76,36 +46,32 @@ export default function BagrutGradingPage() {
     updateAttempt,
     publishResults,
     isSaving,
-    isPublishing,
+    isPublishing
   } = useBagrutGrading(examId, userProfile?.school_id);
 
   // جلب معلومات الامتحان
-  const { data: examData } = useQuery({
+  const {
+    data: examData
+  } = useQuery({
     queryKey: ['bagrut-exam-details', examId],
     queryFn: async () => {
       if (!examId) return null;
-
-      const { data: exam } = await supabase
-        .from('bagrut_exams')
-        .select('*')
-        .eq('id', examId)
-        .single();
-
-      const { data: sections } = await supabase
-        .from('bagrut_exam_sections')
-        .select('*')
-        .eq('exam_id', examId)
-        .order('order_index');
-
-      const { data: questions } = await supabase
-        .from('bagrut_questions')
-        .select('*')
-        .eq('exam_id', examId)
-        .order('order_index');
-
-      return { exam, sections, questions };
+      const {
+        data: exam
+      } = await supabase.from('bagrut_exams').select('*').eq('id', examId).single();
+      const {
+        data: sections
+      } = await supabase.from('bagrut_exam_sections').select('*').eq('exam_id', examId).order('order_index');
+      const {
+        data: questions
+      } = await supabase.from('bagrut_questions').select('*').eq('exam_id', examId).order('order_index');
+      return {
+        exam,
+        sections,
+        questions
+      };
     },
-    enabled: !!examId,
+    enabled: !!examId
   });
 
   // إحصائيات
@@ -113,13 +79,15 @@ export default function BagrutGradingPage() {
     const graded = attempts.filter(a => a.status === 'graded').length;
     const pending = attempts.filter(a => a.status === 'submitted').length;
     const published = attempts.filter(a => a.is_result_published).length;
-    const avgScore = attempts.length > 0
-      ? attempts.reduce((sum, a) => sum + (a.percentage || 0), 0) / attempts.length
-      : 0;
-
-    return { total: attempts.length, graded, pending, published, avgScore };
+    const avgScore = attempts.length > 0 ? attempts.reduce((sum, a) => sum + (a.percentage || 0), 0) / attempts.length : 0;
+    return {
+      total: attempts.length,
+      graded,
+      pending,
+      published,
+      avgScore
+    };
   }, [attempts]);
-
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
       setSelectedAttempts(attempts.map(a => a.id));
@@ -127,7 +95,6 @@ export default function BagrutGradingPage() {
       setSelectedAttempts([]);
     }
   };
-
   const handleSelectAttempt = (attemptId: string, checked: boolean) => {
     if (checked) {
       setSelectedAttempts(prev => [...prev, attemptId]);
@@ -135,71 +102,45 @@ export default function BagrutGradingPage() {
       setSelectedAttempts(prev => prev.filter(id => id !== attemptId));
     }
   };
-
   const handlePublishSelected = () => {
     if (selectedAttempts.length > 0) {
       publishResults(selectedAttempts);
       setSelectedAttempts([]);
     }
   };
-
   const openGradingDialog = (attemptId: string) => {
     setSelectedAttempt(attemptId);
     setGradingDialogOpen(true);
   };
-
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
-        <ModernHeader 
-          title="تصحيح امتحان البجروت" 
-          showBackButton 
-          backPath="/bagrut-management" 
-        />
+    return <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
+        <ModernHeader title="تصحيح امتحان البجروت" showBackButton backPath="/bagrut-management" />
         <div className="container mx-auto px-6 py-8 space-y-6">
           <Skeleton className="h-28 w-full rounded-xl" />
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            {[...Array(5)].map((_, i) => (
-              <Skeleton key={i} className="h-32 rounded-xl" />
-            ))}
+            {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-32 rounded-xl" />)}
           </div>
           <Skeleton className="h-[400px] rounded-xl" />
         </div>
-      </div>
-    );
+      </div>;
   }
-
   if (isError || !examId) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
-        <ModernHeader 
-          title="تصحيح امتحان البجروت" 
-          showBackButton 
-          backPath="/bagrut-management" 
-        />
+    return <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
+        <ModernHeader title="تصحيح امتحان البجروت" showBackButton backPath="/bagrut-management" />
         <div className="container mx-auto px-6 py-8">
           <Alert variant="destructive" className="max-w-md mx-auto">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>فشل في تحميل بيانات التصحيح</AlertDescription>
           </Alert>
         </div>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
-      <ModernHeader 
-        title="تصحيح امتحان البجروت" 
-        showBackButton 
-        backPath="/bagrut-management"
-        onRefresh={() => window.location.reload()}
-      />
+  return <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
+      <ModernHeader title="تصحيح امتحان البجروت" showBackButton backPath="/bagrut-management" onRefresh={() => window.location.reload()} />
       
       <div className="container mx-auto px-6 py-8 space-y-6">
         {/* Exam Info Card */}
-        {examData?.exam && (
-          <Card className="bg-card/60 backdrop-blur-lg border-0 shadow-lg overflow-hidden">
+        {examData?.exam && <Card className="bg-card/60 backdrop-blur-lg border-0 shadow-lg overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-secondary/5 -z-10" />
             <CardContent className="p-6">
               <div className="flex items-center justify-between flex-wrap gap-4">
@@ -221,25 +162,13 @@ export default function BagrutGradingPage() {
                   </div>
                 </div>
                 
-                {selectedAttempts.length > 0 && (
-                  <Button 
-                    onClick={handlePublishSelected} 
-                    disabled={isPublishing}
-                    className="bg-gradient-to-r from-primary to-primary/80 shadow-lg hover:shadow-xl transition-all"
-                    size="lg"
-                  >
-                    {isPublishing ? (
-                      <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Send className="ml-2 h-4 w-4" />
-                    )}
+                {selectedAttempts.length > 0 && <Button onClick={handlePublishSelected} disabled={isPublishing} className="bg-gradient-to-r from-primary to-primary/80 shadow-lg hover:shadow-xl transition-all" size="lg">
+                    {isPublishing ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <Send className="ml-2 h-4 w-4" />}
                     نشر النتائج ({selectedAttempts.length})
-                  </Button>
-                )}
+                  </Button>}
               </div>
             </CardContent>
-          </Card>
-        )}
+          </Card>}
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -253,7 +182,7 @@ export default function BagrutGradingPage() {
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground font-medium">إجمالي المحاولات</p>
-                  <p className="text-3xl font-bold text-foreground">
+                  <p className="text-3xl font-bold text-foreground text-center">
                     {stats.total}
                   </p>
                 </div>
@@ -271,7 +200,7 @@ export default function BagrutGradingPage() {
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground font-medium">بانتظار التصحيح</p>
-                  <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">
+                  <p className="text-3xl font-bold text-orange-600 dark:text-orange-400 text-center">
                     {stats.pending}
                   </p>
                 </div>
@@ -289,7 +218,7 @@ export default function BagrutGradingPage() {
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground font-medium">مصححة</p>
-                  <p className="text-3xl font-bold text-green-600 dark:text-green-400">
+                  <p className="text-3xl font-bold text-green-600 dark:text-green-400 text-center">
                     {stats.graded}
                   </p>
                 </div>
@@ -307,7 +236,7 @@ export default function BagrutGradingPage() {
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground font-medium">منشورة</p>
-                  <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                  <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 text-center">
                     {stats.published}
                   </p>
                 </div>
@@ -325,7 +254,7 @@ export default function BagrutGradingPage() {
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground font-medium">متوسط الدرجات</p>
-                  <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">
+                  <p className="text-3xl font-bold text-purple-600 dark:text-purple-400 text-center">
                     {stats.avgScore.toFixed(1)}%
                   </p>
                 </div>
@@ -348,23 +277,17 @@ export default function BagrutGradingPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
-            {attempts.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
+            {attempts.length === 0 ? <div className="text-center py-12 text-muted-foreground">
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted/50 flex items-center justify-center">
                   <FileText className="h-8 w-8 opacity-50" />
                 </div>
                 <p className="text-lg font-medium">لا توجد محاولات للتصحيح بعد</p>
                 <p className="text-sm mt-1">سيظهر هنا محاولات الطلاب عند تقديمهم للامتحان</p>
-              </div>
-            ) : (
-              <Table>
+              </div> : <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/30 hover:bg-muted/30">
                     <TableHead className="w-12">
-                      <Checkbox
-                        checked={selectedAttempts.length === attempts.length}
-                        onCheckedChange={handleSelectAll}
-                      />
+                      <Checkbox checked={selectedAttempts.length === attempts.length} onCheckedChange={handleSelectAll} />
                     </TableHead>
                     <TableHead>الطالب</TableHead>
                     <TableHead>تاريخ التقديم</TableHead>
@@ -375,16 +298,9 @@ export default function BagrutGradingPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {attempts.map((attempt) => (
-                    <TableRow 
-                      key={attempt.id}
-                      className="hover:bg-accent/50 transition-colors"
-                    >
+                  {attempts.map(attempt => <TableRow key={attempt.id} className="hover:bg-accent/50 transition-colors">
                       <TableCell>
-                        <Checkbox
-                          checked={selectedAttempts.includes(attempt.id)}
-                          onCheckedChange={(checked) => handleSelectAttempt(attempt.id, !!checked)}
-                        />
+                        <Checkbox checked={selectedAttempts.includes(attempt.id)} onCheckedChange={checked => handleSelectAttempt(attempt.id, !!checked)} />
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-3">
@@ -395,85 +311,51 @@ export default function BagrutGradingPage() {
                         </div>
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {attempt.submitted_at
-                          ? format(new Date(attempt.submitted_at), 'dd MMM yyyy HH:mm', { locale: ar })
-                          : '-'}
+                        {attempt.submitted_at ? format(new Date(attempt.submitted_at), 'dd MMM yyyy HH:mm', {
+                    locale: ar
+                  }) : '-'}
                       </TableCell>
                       <TableCell className="text-center">
-                        {attempt.status === 'graded' ? (
-                          <Badge className="bg-green-500/10 text-green-600 border-green-200 dark:border-green-800 hover:bg-green-500/20">
+                        {attempt.status === 'graded' ? <Badge className="bg-green-500/10 text-green-600 border-green-200 dark:border-green-800 hover:bg-green-500/20">
                             <CheckCircle2 className="ml-1 h-3 w-3" />
                             مصحح
-                          </Badge>
-                        ) : (
-                          <Badge variant="secondary" className="bg-orange-500/10 text-orange-600 border-orange-200 dark:border-orange-800">
+                          </Badge> : <Badge variant="secondary" className="bg-orange-500/10 text-orange-600 border-orange-200 dark:border-orange-800">
                             <Clock className="ml-1 h-3 w-3" />
                             بانتظار التصحيح
-                          </Badge>
-                        )}
+                          </Badge>}
                       </TableCell>
                       <TableCell className="text-center">
-                        {attempt.percentage !== null ? (
-                          <span className={`font-mono font-bold text-lg ${
-                            attempt.percentage >= 55 ? 'text-green-600' : 'text-red-500'
-                          }`}>
+                        {attempt.percentage !== null ? <span className={`font-mono font-bold text-lg ${attempt.percentage >= 55 ? 'text-green-600' : 'text-red-500'}`}>
                             {attempt.percentage.toFixed(1)}%
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
-                        )}
+                          </span> : <span className="text-muted-foreground">-</span>}
                       </TableCell>
                       <TableCell className="text-center">
-                        {attempt.is_result_published ? (
-                          <Badge className="bg-blue-500/10 text-blue-600 border-blue-200 dark:border-blue-800">
+                        {attempt.is_result_published ? <Badge className="bg-blue-500/10 text-blue-600 border-blue-200 dark:border-blue-800">
                             <CheckCircle2 className="ml-1 h-3 w-3" />
                             منشور
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-muted-foreground">
+                          </Badge> : <Badge variant="outline" className="text-muted-foreground">
                             غير منشور
-                          </Badge>
-                        )}
+                          </Badge>}
                       </TableCell>
                       <TableCell>
-                        <Button
-                          size="sm"
-                          onClick={() => openGradingDialog(attempt.id)}
-                          className="bg-gradient-to-r from-primary to-primary/80 shadow hover:shadow-md transition-all"
-                        >
+                        <Button size="sm" onClick={() => openGradingDialog(attempt.id)} className="bg-gradient-to-r from-primary to-primary/80 shadow hover:shadow-md transition-all">
                           <Eye className="ml-1 h-4 w-4" />
                           تصحيح
                         </Button>
                       </TableCell>
-                    </TableRow>
-                  ))}
+                    </TableRow>)}
                 </TableBody>
-              </Table>
-            )}
+              </Table>}
           </CardContent>
         </Card>
       </div>
 
       {/* Grading Dialog */}
-      {selectedAttempt && (
-        <GradingDialog
-          open={gradingDialogOpen}
-          onClose={() => {
-            setGradingDialogOpen(false);
-            setSelectedAttempt(null);
-          }}
-          attemptId={selectedAttempt}
-          attempt={attempts.find(a => a.id === selectedAttempt)!}
-          examData={examData}
-          userId={user?.id || ''}
-          onSave={updateAttempt}
-          fetchQuestionGrades={fetchQuestionGrades}
-          saveQuestionGrade={saveQuestionGrade}
-          isSaving={isSaving}
-        />
-      )}
-    </div>
-  );
+      {selectedAttempt && <GradingDialog open={gradingDialogOpen} onClose={() => {
+      setGradingDialogOpen(false);
+      setSelectedAttempt(null);
+    }} attemptId={selectedAttempt} attempt={attempts.find(a => a.id === selectedAttempt)!} examData={examData} userId={user?.id || ''} onSave={updateAttempt} fetchQuestionGrades={fetchQuestionGrades} saveQuestionGrade={saveQuestionGrade} isSaving={isSaving} />}
+    </div>;
 }
 
 // Dialog component for grading individual attempt
@@ -489,7 +371,6 @@ interface GradingDialogProps {
   saveQuestionGrade: (grade: any) => void;
   isSaving: boolean;
 }
-
 function GradingDialog({
   open,
   onClose,
@@ -500,7 +381,7 @@ function GradingDialog({
   onSave,
   fetchQuestionGrades,
   saveQuestionGrade,
-  isSaving,
+  isSaving
 }: GradingDialogProps) {
   const [questionGrades, setQuestionGrades] = useState<Record<string, QuestionGrade>>({});
   const [teacherFeedback, setTeacherFeedback] = useState(attempt?.teacher_feedback || '');
@@ -510,7 +391,6 @@ function GradingDialog({
 
   // نقل useEffect للأسفل بعد تعريف autoGradeQuestion
   const [shouldLoadGrades, setShouldLoadGrades] = useState(false);
-  
   useEffect(() => {
     if (open && attemptId) {
       setShouldLoadGrades(true);
@@ -523,10 +403,15 @@ function GradingDialog({
       return null;
     }
     try {
-      const { exam } = buildBagrutPreviewFromDb({
-        exam: { ...examData.exam, id: examData.exam.id },
+      const {
+        exam
+      } = buildBagrutPreviewFromDb({
+        exam: {
+          ...examData.exam,
+          id: examData.exam.id
+        },
         sections: examData.sections,
-        questions: examData.questions,
+        questions: examData.questions
       });
       return exam;
     } catch (e) {
@@ -538,20 +423,16 @@ function GradingDialog({
   // فلترة الأقسام بناءً على اختيارات الطالب
   const relevantSections = useMemo(() => {
     if (!structuredExam?.sections) return [];
-    
     const selectedSectionIds = attempt?.selected_section_ids || [];
-    
+
     // إذا لم يختر الطالب أقسام محددة، نعرض جميع الأقسام
     if (selectedSectionIds.length === 0) {
       return structuredExam.sections;
     }
-    
-    // الأقسام الإلزامية + الأقسام المختارة
-    return structuredExam.sections.filter(
-      s => s.section_type === 'mandatory' || selectedSectionIds.includes(s.section_db_id || '')
-    );
-  }, [structuredExam, attempt?.selected_section_ids]);
 
+    // الأقسام الإلزامية + الأقسام المختارة
+    return structuredExam.sections.filter(s => s.section_type === 'mandatory' || selectedSectionIds.includes(s.section_db_id || ''));
+  }, [structuredExam, attempt?.selected_section_ids]);
   const answers = attempt?.answers || {};
 
   // جمع الأسئلة الورقية فقط (بدون أسئلة لها فرعيات) لتجنب الاحتساب المزدوج
@@ -580,9 +461,12 @@ function GradingDialog({
   } => {
     // التحقق من وجود إجابة
     if (!studentAnswer?.answer) {
-      return { isAutoGradable: false, isCorrect: null, autoScore: 0 };
+      return {
+        isAutoGradable: false,
+        isCorrect: null,
+        autoScore: 0
+      };
     }
-
     const value = studentAnswer.answer;
 
     // 1. MCQ أو multiple_choice
@@ -596,7 +480,7 @@ function GradingDialog({
         return {
           isAutoGradable: true,
           isCorrect,
-          autoScore: isCorrect ? (question.points || 0) : 0
+          autoScore: isCorrect ? question.points || 0 : 0
         };
       }
     }
@@ -606,10 +490,9 @@ function GradingDialog({
       // تحويل إجابة الطالب
       const studentTrue = value === true || value === 'true' || value === 'صح' || value === '1';
       const studentFalse = value === false || value === 'false' || value === 'خطأ' || value === '2';
-      
+
       // الإجابة الصحيحة من choices أو correct_answer
       let correctIsTrue: boolean | null = null;
-      
       if (question.choices?.length && question.choices.length > 0) {
         const correctChoice = question.choices.find((c: any) => c.is_correct);
         if (correctChoice) {
@@ -619,18 +502,20 @@ function GradingDialog({
         const answer = String(question.correct_answer).toLowerCase();
         correctIsTrue = answer === 'true' || answer === 'صح' || answer === '1' || answer === 'صحيح';
       }
-      
       if (correctIsTrue !== null && (studentTrue || studentFalse)) {
-        const isCorrect = (studentTrue && correctIsTrue) || (studentFalse && !correctIsTrue);
+        const isCorrect = studentTrue && correctIsTrue || studentFalse && !correctIsTrue;
         return {
           isAutoGradable: true,
           isCorrect,
-          autoScore: isCorrect ? (question.points || 0) : 0
+          autoScore: isCorrect ? question.points || 0 : 0
         };
       }
     }
-
-    return { isAutoGradable: false, isCorrect: null, autoScore: 0 };
+    return {
+      isAutoGradable: false,
+      isCorrect: null,
+      autoScore: 0
+    };
   };
 
   // دالة مساعدة للتحقق من وجود إجابة صحيحة (يجب أن تكون قبل autoGradeStats)
@@ -639,24 +524,24 @@ function GradingDialog({
     if ((question.question_type === 'mcq' || question.question_type === 'multiple_choice') && question.choices) {
       return question.choices.some((c: any) => c.is_correct);
     }
-    
+
     // صح/خطأ مع إجابة
     if (question.question_type === 'true_false') {
       if (question.choices?.some((c: any) => c.is_correct)) return true;
       if (question.correct_answer) return true;
       return false;
     }
-    
+
     // جداول
     if (question.question_type === 'fill_table' && question.table_data?.correct_answers) {
       return Object.keys(question.table_data.correct_answers).length > 0;
     }
-    
+
     // فراغات
     if (question.question_type === 'fill_blank' && question.blanks) {
       return question.blanks.some((b: any) => b.correct_answer);
     }
-    
+
     // إجابة نصية
     return !!question.correct_answer;
   };
@@ -668,15 +553,13 @@ function GradingDialog({
     let wrong = 0;
     let autoGradedScore = 0;
     let unanswered = 0;
-
     allQuestions.forEach(q => {
       const questionId = q.question_db_id || '';
       const answer = answers[questionId];
-      
+
       // هل السؤال قابل للتصحيح التلقائي؟
-      const isObjective = (q.question_type === 'mcq' || q.question_type === 'multiple_choice' || q.question_type === 'true_false');
+      const isObjective = q.question_type === 'mcq' || q.question_type === 'multiple_choice' || q.question_type === 'true_false';
       const hasCorrect = hasCorrectAnswer(q);
-      
       if (isObjective && hasCorrect) {
         const result = autoGradeQuestion(q, answer);
         if (result.isAutoGradable) {
@@ -692,8 +575,13 @@ function GradingDialog({
         }
       }
     });
-
-    return { total, correct, wrong, autoGradedScore, unanswered };
+    return {
+      total,
+      correct,
+      wrong,
+      autoGradedScore,
+      unanswered
+    };
   }, [allQuestions, answers]);
 
   // دالة تحديد حالة تصحيح السؤال
@@ -702,17 +590,17 @@ function GradingDialog({
     const grade = questionGrades[questionId];
     const answer = answers[questionId];
     const autoResult = autoGradeQuestion(question, answer);
-    
+
     // إذا كانت هناك علامة يدوية
     if (grade?.manual_score !== undefined && grade?.manual_score !== null) {
       return 'manual_graded';
     }
-    
+
     // إذا تم تصحيحه تلقائياً
     if (autoResult.isAutoGradable) {
       return 'auto_graded';
     }
-    
+
     // يحتاج تصحيح يدوي
     return 'needs_manual';
   };
@@ -720,10 +608,8 @@ function GradingDialog({
   // فلترة الأسئلة حسب حالة التصحيح
   const filterQuestionsByGradingStatus = (questions: ParsedQuestion[]): ParsedQuestion[] => {
     if (gradingFilter === 'all') return questions;
-    
     return questions.filter(q => {
       const status = getQuestionGradingStatus(q);
-      
       switch (gradingFilter) {
         case 'graded':
           return status === 'auto_graded' || status === 'manual_graded';
@@ -742,15 +628,16 @@ function GradingDialog({
     let autoGraded = 0;
     let manualGraded = 0;
     let needsManual = 0;
-    
     allQuestions.forEach(q => {
       const status = getQuestionGradingStatus(q);
-      if (status === 'auto_graded') autoGraded++;
-      else if (status === 'manual_graded') manualGraded++;
-      else needsManual++;
+      if (status === 'auto_graded') autoGraded++;else if (status === 'manual_graded') manualGraded++;else needsManual++;
     });
-    
-    return { autoGraded, manualGraded, needsManual, total: allQuestions.length };
+    return {
+      autoGraded,
+      manualGraded,
+      needsManual,
+      total: allQuestions.length
+    };
   }, [allQuestions, questionGrades, answers]);
 
   // دالة تنسيق إجابة الطالب حسب نوع السؤال
@@ -758,7 +645,6 @@ function GradingDialog({
     if (!answer?.answer) {
       return <span className="text-muted-foreground italic">لم يجب</span>;
     }
-
     const value = answer.answer;
 
     // 1. إجابات الجداول
@@ -767,37 +653,26 @@ function GradingDialog({
       if (!tableData.rows || !tableData.headers) {
         return <span className="text-muted-foreground">إجابة جدول غير صالحة</span>;
       }
-      
-      return (
-        <table className="w-full border-collapse text-sm mt-2">
+      return <table className="w-full border-collapse text-sm mt-2">
           <thead>
             <tr>
-              {tableData.headers.map((h: string, i: number) => (
-                <th key={i} className="border p-2 bg-muted/30 text-right text-xs">{h}</th>
-              ))}
+              {tableData.headers.map((h: string, i: number) => <th key={i} className="border p-2 bg-muted/30 text-right text-xs">{h}</th>)}
             </tr>
           </thead>
           <tbody>
-            {tableData.rows.map((row: string[], rowIdx: number) => (
-              <tr key={rowIdx}>
+            {tableData.rows.map((row: string[], rowIdx: number) => <tr key={rowIdx}>
                 {row.map((cell: string, colIdx: number) => {
-                  const isInput = tableData.input_columns?.includes(colIdx);
-                  const studentAnswer = value[`${rowIdx}-${colIdx}`] || value[`cell_${rowIdx}_${colIdx}`];
-                  return (
-                    <td key={colIdx} className="border p-2 text-xs">
-                      {isInput ? (
-                        <span className="font-medium text-primary bg-primary/10 px-1 rounded">
+              const isInput = tableData.input_columns?.includes(colIdx);
+              const studentAnswer = value[`${rowIdx}-${colIdx}`] || value[`cell_${rowIdx}_${colIdx}`];
+              return <td key={colIdx} className="border p-2 text-xs">
+                      {isInput ? <span className="font-medium text-primary bg-primary/10 px-1 rounded">
                           {studentAnswer || '—'}
-                        </span>
-                      ) : cell}
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
+                        </span> : cell}
+                    </td>;
+            })}
+              </tr>)}
           </tbody>
-        </table>
-      );
+        </table>;
     }
 
     // 2. ملء الفراغات
@@ -806,16 +681,12 @@ function GradingDialog({
       if (entries.length === 0) {
         return <span className="text-muted-foreground italic">لم يجب</span>;
       }
-      return (
-        <div className="space-y-1">
-          {entries.map(([blankId, ans], idx) => (
-            <div key={blankId} className="flex gap-2 text-sm">
+      return <div className="space-y-1">
+          {entries.map(([blankId, ans], idx) => <div key={blankId} className="flex gap-2 text-sm">
               <span className="text-muted-foreground">فراغ {idx + 1}:</span>
               <span className="font-medium">{String(ans) || '—'}</span>
-            </div>
-          ))}
-        </div>
-      );
+            </div>)}
+        </div>;
     }
 
     // 3. MCQ - عرض الخيار المختار
@@ -823,12 +694,10 @@ function GradingDialog({
       const choiceIndex = typeof value === 'number' ? value - 1 : parseInt(value) - 1;
       const choice = question.choices[choiceIndex];
       if (choice) {
-        return (
-          <span>
+        return <span>
             <span className="text-muted-foreground">الخيار {choiceIndex + 1}:</span>{' '}
             <span className="font-medium">{choice.text}</span>
-          </span>
-        );
+          </span>;
       }
     }
 
@@ -845,13 +714,10 @@ function GradingDialog({
 
     // fallback
     if (typeof value === 'object') {
-      return (
-        <pre className="text-xs overflow-auto bg-muted/30 p-2 rounded max-h-24" dir="ltr">
+      return <pre className="text-xs overflow-auto bg-muted/30 p-2 rounded max-h-24" dir="ltr">
           {JSON.stringify(value, null, 2)}
-        </pre>
-      );
+        </pre>;
     }
-
     return <span>{String(value)}</span>;
   };
 
@@ -859,49 +725,40 @@ function GradingDialog({
   const formatCorrectAnswer = (question: ParsedQuestion): React.ReactNode => {
     // للجداول
     if (question.question_type === 'fill_table' && question.table_data?.correct_answers) {
-      const { correct_answers, headers, rows, input_columns } = question.table_data;
-      return (
-        <table className="w-full border-collapse text-sm mt-2">
+      const {
+        correct_answers,
+        headers,
+        rows,
+        input_columns
+      } = question.table_data;
+      return <table className="w-full border-collapse text-sm mt-2">
           <thead>
             <tr>
-              {headers?.map((h: string, i: number) => (
-                <th key={i} className="border p-2 bg-green-100 dark:bg-green-950/50 text-right text-xs">{h}</th>
-              ))}
+              {headers?.map((h: string, i: number) => <th key={i} className="border p-2 bg-green-100 dark:bg-green-950/50 text-right text-xs">{h}</th>)}
             </tr>
           </thead>
           <tbody>
-            {rows?.map((row: string[], rowIdx: number) => (
-              <tr key={rowIdx}>
+            {rows?.map((row: string[], rowIdx: number) => <tr key={rowIdx}>
                 {row.map((cell: string, colIdx: number) => {
-                  const isInput = input_columns?.includes(colIdx);
-                  const correctAns = correct_answers?.[`${rowIdx}-${colIdx}`] || correct_answers?.[`cell_${rowIdx}_${colIdx}`];
-                  return (
-                    <td key={colIdx} className="border p-2 text-xs">
-                      {isInput && correctAns ? (
-                        <span className="font-bold text-green-600">{correctAns}</span>
-                      ) : cell}
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
+              const isInput = input_columns?.includes(colIdx);
+              const correctAns = correct_answers?.[`${rowIdx}-${colIdx}`] || correct_answers?.[`cell_${rowIdx}_${colIdx}`];
+              return <td key={colIdx} className="border p-2 text-xs">
+                      {isInput && correctAns ? <span className="font-bold text-green-600">{correctAns}</span> : cell}
+                    </td>;
+            })}
+              </tr>)}
           </tbody>
-        </table>
-      );
+        </table>;
     }
 
     // للفراغات
     if (question.question_type === 'fill_blank' && question.blanks) {
-      return (
-        <div className="space-y-1">
-          {question.blanks.map((blank: any, i: number) => (
-            <div key={blank.id || i} className="flex gap-2 text-sm">
+      return <div className="space-y-1">
+          {question.blanks.map((blank: any, i: number) => <div key={blank.id || i} className="flex gap-2 text-sm">
               <span className="text-muted-foreground">فراغ {i + 1}:</span>
               <span className="font-bold text-green-600">{blank.correct_answer}</span>
-            </div>
-          ))}
-        </div>
-      );
+            </div>)}
+        </div>;
     }
 
     // MCQ أو multiple_choice - دعم كلا الاسمين
@@ -909,12 +766,10 @@ function GradingDialog({
       const correctChoice = question.choices.find((c: any) => c.is_correct);
       if (correctChoice) {
         const idx = question.choices.indexOf(correctChoice) + 1;
-        return (
-          <span>
+        return <span>
             <span className="text-muted-foreground">الخيار {idx}:</span>{' '}
             <span className="font-bold text-green-600">{correctChoice.text}</span>
-          </span>
-        );
+          </span>;
       }
     }
 
@@ -928,7 +783,7 @@ function GradingDialog({
           return <span className="font-bold text-green-600">{isTrue ? 'صح ✓' : 'خطأ ✗'}</span>;
         }
       }
-      
+
       // ثانياً: التحقق من correct_answer
       if (question.correct_answer) {
         const answer = String(question.correct_answer).toLowerCase();
@@ -942,7 +797,6 @@ function GradingDialog({
     if (question.correct_answer) {
       return <p className="whitespace-pre-wrap font-medium text-green-600">{question.correct_answer}</p>;
     }
-
     return null;
   };
 
@@ -950,27 +804,25 @@ function GradingDialog({
   useEffect(() => {
     const loadGrades = async () => {
       if (!shouldLoadGrades || !attemptId) return;
-      
       setIsLoadingGrades(true);
       try {
         const grades = await fetchQuestionGrades(attemptId);
         const gradesMap: Record<string, QuestionGrade> = {};
-        
+
         // أولاً: تحميل العلامات المحفوظة
         grades.forEach(g => {
           gradesMap[g.question_id] = g;
         });
-        
+
         // ثانياً: تشغيل التصحيح التلقائي للأسئلة التي لم تُصحح بعد
         allQuestions.forEach(q => {
           const questionId = q.question_db_id || '';
           const existingGrade = gradesMap[questionId];
-          
+
           // إذا لم تكن هناك علامة يدوية أو تلقائية، نحاول التصحيح التلقائي
           if (existingGrade?.manual_score === undefined && existingGrade?.auto_score === undefined) {
             const answer = answers[questionId];
             const autoResult = autoGradeQuestion(q, answer);
-            
             if (autoResult.isAutoGradable) {
               gradesMap[questionId] = {
                 ...gradesMap[questionId],
@@ -978,12 +830,11 @@ function GradingDialog({
                 question_id: questionId,
                 auto_score: autoResult.autoScore,
                 final_score: autoResult.autoScore,
-                max_score: q.points || 0,
+                max_score: q.points || 0
               };
             }
           }
         });
-        
         setQuestionGrades(gradesMap);
       } catch (error) {
         console.error('Failed to load grades', error);
@@ -991,10 +842,8 @@ function GradingDialog({
       setIsLoadingGrades(false);
       setShouldLoadGrades(false);
     };
-
     loadGrades();
   }, [shouldLoadGrades, attemptId, fetchQuestionGrades, allQuestions, answers]);
-
   const updateQuestionGrade = (questionId: string, field: string, value: any, maxScore: number) => {
     setQuestionGrades(prev => ({
       ...prev,
@@ -1003,19 +852,18 @@ function GradingDialog({
         attempt_id: attemptId,
         question_id: questionId,
         max_score: maxScore,
-        [field]: value,
-      },
+        [field]: value
+      }
     }));
   };
-
   const calculateTotalScore = () => {
     let total = 0;
     let maxTotal = 0;
-    allQuestions.forEach((q) => {
+    allQuestions.forEach(q => {
       const questionId = q.question_db_id || '';
       const grade = questionGrades[questionId];
       const answer = answers[questionId];
-      
+
       // أولوية: manual_score ثم final_score ثم auto_score ثم التصحيح التلقائي الآني
       if (grade?.manual_score !== undefined && grade?.manual_score !== null) {
         total += grade.manual_score;
@@ -1030,12 +878,14 @@ function GradingDialog({
           total += autoResult.autoScore;
         }
       }
-      
       maxTotal += q.points || 0;
     });
-    return { total, maxTotal, percentage: maxTotal > 0 ? (total / maxTotal) * 100 : 0 };
+    return {
+      total,
+      maxTotal,
+      percentage: maxTotal > 0 ? total / maxTotal * 100 : 0
+    };
   };
-
   const handleSave = () => {
     // حفظ علامات الأسئلة
     Object.values(questionGrades).forEach(grade => {
@@ -1043,13 +893,17 @@ function GradingDialog({
         saveQuestionGrade({
           ...grade,
           graded_by: userId,
-          final_score: grade.manual_score ?? grade.auto_score ?? 0,
+          final_score: grade.manual_score ?? grade.auto_score ?? 0
         });
       }
     });
 
     // حفظ المحاولة
-    const { total, maxTotal, percentage } = calculateTotalScore();
+    const {
+      total,
+      maxTotal,
+      percentage
+    } = calculateTotalScore();
     onSave({
       attemptId,
       score: total,
@@ -1058,31 +912,32 @@ function GradingDialog({
       teacherFeedback,
       gradedBy: userId,
       markAsGraded: true,
-      publishResult,
+      publishResult
     });
   };
-
   const scores = calculateTotalScore();
 
   // مكون عرض سؤال واحد (يدعم الأسئلة الفرعية)
-  const QuestionCard = ({ question, depth = 0 }: { question: ParsedQuestion; depth?: number }) => {
+  const QuestionCard = ({
+    question,
+    depth = 0
+  }: {
+    question: ParsedQuestion;
+    depth?: number;
+  }) => {
     const questionId = question.question_db_id || '';
     const answer = answers[questionId];
     const grade = questionGrades[questionId] || {};
-    
+
     // التحقق من التصحيح التلقائي
     const autoGradeResult = autoGradeQuestion(question, answer);
     const isAutoGraded = autoGradeResult.isAutoGradable;
     const hasManualScore = (grade as any).manual_score !== undefined && (grade as any).manual_score !== null;
-    
-    // القيمة المعروضة في حقل العلامة
-    const displayScore = hasManualScore 
-      ? (grade as any).manual_score 
-      : (isAutoGraded ? autoGradeResult.autoScore : '');
 
-    return (
-      <div className={depth > 0 ? 'mr-4 border-r-2 border-muted pr-4' : ''}>
-        <Card className={`${depth > 0 ? 'border-dashed' : ''} ${isAutoGraded && !hasManualScore ? (autoGradeResult.isCorrect ? 'border-green-300 dark:border-green-800' : 'border-red-300 dark:border-red-800') : ''}`}>
+    // القيمة المعروضة في حقل العلامة
+    const displayScore = hasManualScore ? (grade as any).manual_score : isAutoGraded ? autoGradeResult.autoScore : '';
+    return <div className={depth > 0 ? 'mr-4 border-r-2 border-muted pr-4' : ''}>
+        <Card className={`${depth > 0 ? 'border-dashed' : ''} ${isAutoGraded && !hasManualScore ? autoGradeResult.isCorrect ? 'border-green-300 dark:border-green-800' : 'border-red-300 dark:border-red-800' : ''}`}>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <CardTitle className="text-sm flex items-center gap-2 flex-wrap">
@@ -1092,43 +947,22 @@ function GradingDialog({
                 </Badge>
                 
                 {/* شارة التصحيح التلقائي */}
-                {isAutoGraded && !hasManualScore && (
-                  <Badge 
-                    variant={autoGradeResult.isCorrect ? "default" : "destructive"}
-                    className={`text-xs ${autoGradeResult.isCorrect ? 'bg-green-500 hover:bg-green-600' : ''}`}
-                  >
+                {isAutoGraded && !hasManualScore && <Badge variant={autoGradeResult.isCorrect ? "default" : "destructive"} className={`text-xs ${autoGradeResult.isCorrect ? 'bg-green-500 hover:bg-green-600' : ''}`}>
                     {autoGradeResult.isCorrect ? '✓ صحيح تلقائي' : '✗ خطأ تلقائي'}
-                  </Badge>
-                )}
+                  </Badge>}
               </CardTitle>
-              {question.points > 0 && (
-                <div className="flex items-center gap-2">
+              {question.points > 0 && <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">العلامة:</span>
-                  <Input
-                    type="number"
-                    min={0}
-                    max={question.points}
-                    value={displayScore}
-                    onChange={(e) => updateQuestionGrade(
-                      questionId,
-                      'manual_score',
-                      e.target.value ? parseInt(e.target.value) : null,
-                      question.points
-                    )}
-                    className={`w-20 h-8 ${isAutoGraded && !hasManualScore ? (autoGradeResult.isCorrect ? 'bg-green-50 border-green-300 dark:bg-green-950/30' : 'bg-red-50 border-red-300 dark:bg-red-950/30') : ''}`}
-                  />
+                  <Input type="number" min={0} max={question.points} value={displayScore} onChange={e => updateQuestionGrade(questionId, 'manual_score', e.target.value ? parseInt(e.target.value) : null, question.points)} className={`w-20 h-8 ${isAutoGraded && !hasManualScore ? autoGradeResult.isCorrect ? 'bg-green-50 border-green-300 dark:bg-green-950/30' : 'bg-red-50 border-red-300 dark:bg-red-950/30' : ''}`} />
                   <span className="text-sm">/ {question.points}</span>
-                </div>
-              )}
+                </div>}
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="p-3 bg-muted/50 rounded-lg">
               <p className="text-sm font-medium mb-1">السؤال:</p>
               <p className="text-sm whitespace-pre-wrap">{question.question_text}</p>
-              {question.image_url && (
-                <img src={question.image_url} alt="صورة السؤال" className="mt-2 max-h-48 rounded" />
-              )}
+              {question.image_url && <img src={question.image_url} alt="صورة السؤال" className="mt-2 max-h-48 rounded" />}
             </div>
 
             <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
@@ -1138,43 +972,27 @@ function GradingDialog({
               </div>
             </div>
 
-            {hasCorrectAnswer(question) && (
-              <div className="p-3 bg-green-50 dark:bg-green-950/30 rounded-lg">
+            {hasCorrectAnswer(question) && <div className="p-3 bg-green-50 dark:bg-green-950/30 rounded-lg">
                 <p className="text-sm font-medium mb-1">الإجابة الصحيحة:</p>
                 <div className="text-sm">
                   {formatCorrectAnswer(question)}
                 </div>
-              </div>
-            )}
+              </div>}
 
-            {question.points > 0 && (
-              <div>
+            {question.points > 0 && <div>
                 <label className="text-sm font-medium">ملاحظات على هذا السؤال:</label>
-                <Textarea
-                  value={(grade as any).teacher_feedback || ''}
-                  onChange={(e) => updateQuestionGrade(questionId, 'teacher_feedback', e.target.value, question.points)}
-                  placeholder="ملاحظات اختيارية..."
-                  className="mt-1 h-16"
-                />
-              </div>
-            )}
+                <Textarea value={(grade as any).teacher_feedback || ''} onChange={e => updateQuestionGrade(questionId, 'teacher_feedback', e.target.value, question.points)} placeholder="ملاحظات اختيارية..." className="mt-1 h-16" />
+              </div>}
           </CardContent>
         </Card>
 
         {/* الأسئلة الفرعية */}
-        {question.sub_questions && question.sub_questions.length > 0 && (
-          <div className="mt-3 space-y-3">
-            {question.sub_questions.map((subQ) => (
-              <QuestionCard key={subQ.question_db_id} question={subQ} depth={depth + 1} />
-            ))}
-          </div>
-        )}
-      </div>
-    );
+        {question.sub_questions && question.sub_questions.length > 0 && <div className="mt-3 space-y-3">
+            {question.sub_questions.map(subQ => <QuestionCard key={subQ.question_db_id} question={subQ} depth={depth + 1} />)}
+          </div>}
+      </div>;
   };
-
-  return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+  return <Dialog open={open} onOpenChange={o => !o && onClose()}>
       <DialogContent className="max-w-4xl h-[85vh] flex flex-col gap-0 p-0">
         {/* Header - Fixed */}
         <DialogHeader className="p-6 pb-4 border-b shrink-0 space-y-3">
@@ -1186,8 +1004,7 @@ function GradingDialog({
           </DialogTitle>
           
           {/* ملخص التصحيح التلقائي */}
-          {autoGradeStats.total > 0 && (
-            <Alert className="bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800">
+          {autoGradeStats.total > 0 && <Alert className="bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800">
               <CheckCircle2 className="h-4 w-4 text-blue-600" />
               <AlertDescription className="text-sm flex flex-wrap items-center gap-x-3 gap-y-1">
                 <span className="font-bold">تم تصحيح {autoGradeStats.total} سؤال تلقائياً:</span>
@@ -1198,8 +1015,7 @@ function GradingDialog({
                   ✗ {autoGradeStats.wrong} خطأ
                 </span>
               </AlertDescription>
-            </Alert>
-          )}
+            </Alert>}
           
           {/* فلتر حالة التصحيح */}
           <div className="flex items-center gap-3 flex-wrap">
@@ -1221,38 +1037,22 @@ function GradingDialog({
               </SelectContent>
             </Select>
             
-            {gradingFilter !== 'all' && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => setGradingFilter('all')}
-                className="h-8 px-2 text-muted-foreground"
-              >
+            {gradingFilter !== 'all' && <Button variant="ghost" size="sm" onClick={() => setGradingFilter('all')} className="h-8 px-2 text-muted-foreground">
                 إظهار الكل
-              </Button>
-            )}
+              </Button>}
           </div>
         </DialogHeader>
 
         {/* Scrollable Content */}
         <ScrollArea className="flex-1 min-h-0">
           <div className="p-6">
-            {isLoadingGrades ? (
-              <div className="space-y-4">
-                {[1, 2, 3].map(i => (
-                  <Skeleton key={i} className="h-32 w-full" />
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {relevantSections.length === 0 ? (
-                  <Alert>
+            {isLoadingGrades ? <div className="space-y-4">
+                {[1, 2, 3].map(i => <Skeleton key={i} className="h-32 w-full" />)}
+              </div> : <div className="space-y-6">
+                {relevantSections.length === 0 ? <Alert>
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription>لا توجد أسئلة للتصحيح</AlertDescription>
-                  </Alert>
-                ) : (
-                  relevantSections.map((section) => (
-                    <div key={section.section_db_id} className="space-y-4">
+                  </Alert> : relevantSections.map(section => <div key={section.section_db_id} className="space-y-4">
                       {/* عنوان القسم */}
                       <div className="bg-muted/50 p-4 rounded-lg border">
                         <h3 className="font-bold text-lg">
@@ -1260,63 +1060,41 @@ function GradingDialog({
                         </h3>
                         <p className="text-sm text-muted-foreground">
                           {section.total_points} علامة
-                          {section.specialization_label && (
-                            <span className="mr-2">• {section.specialization_label}</span>
-                          )}
+                          {section.specialization_label && <span className="mr-2">• {section.specialization_label}</span>}
                         </p>
-                        {section.instructions && (
-                          <p className="text-sm text-muted-foreground mt-1">{section.instructions}</p>
-                        )}
+                        {section.instructions && <p className="text-sm text-muted-foreground mt-1">{section.instructions}</p>}
                       </div>
 
                       {/* أسئلة القسم - مع الفلتر */}
                       {(() => {
-                        const filteredQuestions = filterQuestionsByGradingStatus(section.questions);
-                        if (filteredQuestions.length === 0) {
-                          return (
-                            <p className="text-sm text-muted-foreground italic py-2">
+                const filteredQuestions = filterQuestionsByGradingStatus(section.questions);
+                if (filteredQuestions.length === 0) {
+                  return <p className="text-sm text-muted-foreground italic py-2">
                               لا توجد أسئلة تطابق الفلتر في هذا القسم
-                            </p>
-                          );
-                        }
-                        return (
-                          <div className="space-y-4">
-                            {filteredQuestions.map((question) => (
-                              <QuestionCard key={question.question_db_id} question={question} />
-                            ))}
-                          </div>
-                        );
-                      })()}
-                    </div>
-                  ))
-                )}
+                            </p>;
+                }
+                return <div className="space-y-4">
+                            {filteredQuestions.map(question => <QuestionCard key={question.question_db_id} question={question} />)}
+                          </div>;
+              })()}
+                    </div>)}
 
                 <Separator />
 
                 {/* التعليق العام */}
                 <div>
                   <label className="text-sm font-medium">تعليق عام على الامتحان:</label>
-                  <Textarea
-                    value={teacherFeedback}
-                    onChange={(e) => setTeacherFeedback(e.target.value)}
-                    placeholder="تعليق عام للطالب..."
-                    className="mt-1"
-                  />
+                  <Textarea value={teacherFeedback} onChange={e => setTeacherFeedback(e.target.value)} placeholder="تعليق عام للطالب..." className="mt-1" />
                 </div>
 
                 {/* نشر النتيجة */}
                 <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="publish"
-                    checked={publishResult}
-                    onCheckedChange={(c) => setPublishResult(!!c)}
-                  />
+                  <Checkbox id="publish" checked={publishResult} onCheckedChange={c => setPublishResult(!!c)} />
                   <label htmlFor="publish" className="text-sm">
                     نشر النتيجة للطالب فوراً
                   </label>
                 </div>
-              </div>
-            )}
+              </div>}
           </div>
         </ScrollArea>
 
@@ -1326,20 +1104,15 @@ function GradingDialog({
             إلغاء
           </Button>
           <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving ? (
-              <>
+            {isSaving ? <>
                 <Loader2 className="ml-2 h-4 w-4 animate-spin" />
                 جاري الحفظ...
-              </>
-            ) : (
-              <>
+              </> : <>
                 <Save className="ml-2 h-4 w-4" />
                 حفظ التصحيح
-              </>
-            )}
+              </>}
           </Button>
         </DialogFooter>
       </DialogContent>
-    </Dialog>
-  );
+    </Dialog>;
 }
