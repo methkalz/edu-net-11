@@ -218,9 +218,9 @@ const TeacherBagrutExams: React.FC = () => {
       
       <div className="container mx-auto p-6 space-y-8 animate-fade-in">
         {/* بطاقات الإحصائيات */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
           {isLoading ? (
-            Array.from({ length: 8 }).map((_, i) => (
+            Array.from({ length: 7 }).map((_, i) => (
               <Card key={i} className="p-6">
                 <Skeleton className="h-7 w-7 mx-auto mb-3 rounded-xl" />
                 <Skeleton className="h-4 w-20 mx-auto mb-2" />
@@ -277,13 +277,6 @@ const TeacherBagrutExams: React.FC = () => {
                 value={`${stats?.averageScore || 0}%`}
                 colorClass="text-emerald-500"
                 bgClass="from-emerald-500/10 to-emerald-600/5"
-              />
-              <StatCard
-                icon={Target}
-                label="معدل النجاح"
-                value={`${stats?.passRate || 0}%`}
-                colorClass="text-rose-500"
-                bgClass="from-rose-500/10 to-rose-600/5"
               />
             </>
           )}
