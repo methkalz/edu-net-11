@@ -286,11 +286,13 @@ export default function BagrutGradingPage() {
               </div> : <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/30 hover:bg-muted/30">
-                    <TableHead className="w-12">
-                      <Checkbox checked={selectedAttempts.length === attempts.length} onCheckedChange={handleSelectAll} />
+                    <TableHead className="w-12 text-center">
+                      <div className="flex justify-center">
+                        <Checkbox checked={selectedAttempts.length === attempts.length} onCheckedChange={handleSelectAll} />
+                      </div>
                     </TableHead>
-                    <TableHead>الطالب</TableHead>
-                    <TableHead>تاريخ التقديم</TableHead>
+                    <TableHead className="text-center">الطالب</TableHead>
+                    <TableHead className="text-center">تاريخ التقديم</TableHead>
                     <TableHead className="text-center">الحالة</TableHead>
                     <TableHead className="text-center">العلامة</TableHead>
                     <TableHead className="text-center">النشر</TableHead>
@@ -299,18 +301,20 @@ export default function BagrutGradingPage() {
                 </TableHeader>
                 <TableBody>
                   {attempts.map(attempt => <TableRow key={attempt.id} className="hover:bg-accent/50 transition-colors">
-                      <TableCell>
-                        <Checkbox checked={selectedAttempts.includes(attempt.id)} onCheckedChange={checked => handleSelectAttempt(attempt.id, !!checked)} />
+                      <TableCell className="text-center">
+                        <div className="flex justify-center">
+                          <Checkbox checked={selectedAttempts.includes(attempt.id)} onCheckedChange={checked => handleSelectAttempt(attempt.id, !!checked)} />
+                        </div>
                       </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center gap-3">
                           <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
                             <User className="h-4 w-4 text-primary" />
                           </div>
                           <span className="font-medium">{attempt.student_name}</span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-muted-foreground">
+                      <TableCell className="text-center text-muted-foreground">
                         {attempt.submitted_at ? format(new Date(attempt.submitted_at), 'dd MMM yyyy HH:mm', {
                     locale: ar
                   }) : '-'}
