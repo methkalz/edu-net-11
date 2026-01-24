@@ -72,6 +72,7 @@ const StudentBagrutAttempt = React.lazy(() => import('@/pages/StudentBagrutAttem
 const StudentBagrutSubmitted = React.lazy(() => import('@/pages/StudentBagrutSubmitted'));
 const StudentBagrutResult = React.lazy(() => import('@/pages/StudentBagrutResult'));
 const BagrutGradingPage = React.lazy(() => import('@/pages/BagrutGradingPage'));
+const TeacherBagrutExams = React.lazy(() => import('@/pages/teacher/TeacherBagrutExams'));
 import { PageLoading } from "@/components/ui/LoadingComponents";
 
 /**
@@ -181,6 +182,10 @@ const App = () => {
                 <Route 
                   path="/teacher/pdf-comparison" 
                   element={<Suspense fallback={<PageLoading message="جاري تحميل مقارنة المشاريع..." />}>{React.createElement(React.lazy(() => import('@/pages/TeacherPDFComparisonPage')))}</Suspense>} 
+                />
+                <Route 
+                  path="/teacher/bagrut-exams" 
+                  element={<Suspense fallback={<PageLoading message="جاري تحميل امتحانات البجروت..." />}><TeacherBagrutExams /></Suspense>} 
                 />
                 
                 {/* PDF Comparison routes */}
