@@ -57,7 +57,7 @@ import Grade12ProjectsWidget from '@/components/teacher/Grade12ProjectsWidget';
 import ProjectNotifications from '@/components/teacher/ProjectNotifications';
 import Grade10ProjectsWidget from '@/components/teacher/Grade10ProjectsWidget';
 import { ExamsWidget } from '@/components/teacher/ExamsWidget';
-import { BagrutWidget } from '@/components/teacher/BagrutWidget';
+import BagrutWidget from '@/components/teacher/BagrutWidget';
 import ModernHeader from '@/components/shared/ModernHeader';
 import { StudentPresenceWidget } from '@/components/teacher/StudentPresenceWidget';
 import { OnlineStudentsStats } from '@/components/dashboard/OnlineStudentsStats';
