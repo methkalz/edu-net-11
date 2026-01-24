@@ -17,6 +17,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Table,
   TableBody,
   TableCell,
@@ -378,6 +385,7 @@ function GradingDialog({
   const [teacherFeedback, setTeacherFeedback] = useState(attempt?.teacher_feedback || '');
   const [publishResult, setPublishResult] = useState(attempt?.is_result_published || false);
   const [isLoadingGrades, setIsLoadingGrades] = useState(true);
+  const [gradingFilter, setGradingFilter] = useState<'all' | 'graded' | 'not_graded' | 'needs_manual'>('all');
 
   // نقل useEffect للأسفل بعد تعريف autoGradeQuestion
   const [shouldLoadGrades, setShouldLoadGrades] = useState(false);
@@ -566,6 +574,63 @@ function GradingDialog({
 
     return { total, correct, wrong, autoGradedScore, unanswered };
   }, [allQuestions, answers]);
+
+  // دالة تحديد حالة تصحيح السؤال
+  const getQuestionGradingStatus = (question: ParsedQuestion): 'auto_graded' | 'manual_graded' | 'needs_manual' => {
+    const questionId = question.question_db_id || '';
+    const grade = questionGrades[questionId];
+    const answer = answers[questionId];
+    const autoResult = autoGradeQuestion(question, answer);
+    
+    // إذا كانت هناك علامة يدوية
+    if (grade?.manual_score !== undefined && grade?.manual_score !== null) {
+      return 'manual_graded';
+    }
+    
+    // إذا تم تصحيحه تلقائياً
+    if (autoResult.isAutoGradable) {
+      return 'auto_graded';
+    }
+    
+    // يحتاج تصحيح يدوي
+    return 'needs_manual';
+  };
+
+  // فلترة الأسئلة حسب حالة التصحيح
+  const filterQuestionsByGradingStatus = (questions: ParsedQuestion[]): ParsedQuestion[] => {
+    if (gradingFilter === 'all') return questions;
+    
+    return questions.filter(q => {
+      const status = getQuestionGradingStatus(q);
+      
+      switch (gradingFilter) {
+        case 'graded':
+          return status === 'auto_graded' || status === 'manual_graded';
+        case 'not_graded':
+          return status === 'needs_manual';
+        case 'needs_manual':
+          return status === 'needs_manual';
+        default:
+          return true;
+      }
+    });
+  };
+
+  // إحصائيات الفلتر
+  const filterStats = useMemo(() => {
+    let autoGraded = 0;
+    let manualGraded = 0;
+    let needsManual = 0;
+    
+    allQuestions.forEach(q => {
+      const status = getQuestionGradingStatus(q);
+      if (status === 'auto_graded') autoGraded++;
+      else if (status === 'manual_graded') manualGraded++;
+      else needsManual++;
+    });
+    
+    return { autoGraded, manualGraded, needsManual, total: allQuestions.length };
+  }, [allQuestions, questionGrades, answers]);
 
   // دالة تنسيق إجابة الطالب حسب نوع السؤال
   const formatStudentAnswer = (question: ParsedQuestion, answer: any): React.ReactNode => {
@@ -1014,6 +1079,38 @@ function GradingDialog({
               </AlertDescription>
             </Alert>
           )}
+          
+          {/* فلتر حالة التصحيح */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-sm font-medium">عرض:</span>
+            <Select value={gradingFilter} onValueChange={(v: any) => setGradingFilter(v)}>
+              <SelectTrigger className="w-[200px] h-9 bg-background">
+                <SelectValue placeholder="جميع الأسئلة" />
+              </SelectTrigger>
+              <SelectContent className="bg-background z-50">
+                <SelectItem value="all">
+                  جميع الأسئلة ({filterStats.total})
+                </SelectItem>
+                <SelectItem value="graded">
+                  المصححة ({filterStats.autoGraded + filterStats.manualGraded})
+                </SelectItem>
+                <SelectItem value="not_graded">
+                  تحتاج تصحيح يدوي ({filterStats.needsManual})
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            
+            {gradingFilter !== 'all' && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setGradingFilter('all')}
+                className="h-8 px-2 text-muted-foreground"
+              >
+                إظهار الكل
+              </Button>
+            )}
+          </div>
         </DialogHeader>
 
         {/* Scrollable Content */}
@@ -1051,12 +1148,24 @@ function GradingDialog({
                         )}
                       </div>
 
-                      {/* أسئلة القسم */}
-                      <div className="space-y-4">
-                        {section.questions.map((question) => (
-                          <QuestionCard key={question.question_db_id} question={question} />
-                        ))}
-                      </div>
+                      {/* أسئلة القسم - مع الفلتر */}
+                      {(() => {
+                        const filteredQuestions = filterQuestionsByGradingStatus(section.questions);
+                        if (filteredQuestions.length === 0) {
+                          return (
+                            <p className="text-sm text-muted-foreground italic py-2">
+                              لا توجد أسئلة تطابق الفلتر في هذا القسم
+                            </p>
+                          );
+                        }
+                        return (
+                          <div className="space-y-4">
+                            {filteredQuestions.map((question) => (
+                              <QuestionCard key={question.question_db_id} question={question} />
+                            ))}
+                          </div>
+                        );
+                      })()}
                     </div>
                   ))
                 )}
