@@ -320,9 +320,7 @@ export default function BagrutGradingPage() {
                         </div>
                       </TableCell>
                       <TableCell className="text-center text-muted-foreground">
-                        {attempt.submitted_at ? format(new Date(attempt.submitted_at), 'dd MMM yyyy HH:mm', {
-                    locale: ar
-                  }) : '-'}
+                        {attempt.submitted_at ? format(new Date(attempt.submitted_at), 'd.M.yyyy HH:mm') : '-'}
                       </TableCell>
                       <TableCell className="text-center">
                         {attempt.status === 'graded' ? <Badge className="bg-green-500/10 text-green-600 border-green-200 dark:border-green-800 hover:bg-green-500/20">
