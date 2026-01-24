@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { GraduationCap, Plus, FileText, Loader2, Trash2, Eye, Pencil, Send, RefreshCw, CheckCircle, AlertTriangle, AlertCircle } from 'lucide-react';
+import { GraduationCap, Plus, FileText, Loader2, Trash2, Eye, Pencil, Send, RefreshCw, CheckCircle, AlertTriangle, AlertCircle, Clock, TrendingUp, Users, BookOpen, Calendar } from 'lucide-react';
 import { useBagrutStats } from '@/hooks/useBagrutStats';
-import { BagrutStatsCards } from '@/components/bagrut/BagrutStatsCards';
 import ModernHeader from '@/components/shared/ModernHeader';
 import AppFooter from '@/components/shared/AppFooter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -464,7 +463,7 @@ const BagrutManagement: React.FC = () => {
 
   // Access check
   if (userProfile?.role !== 'superadmin') {
-    return <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex items-center justify-center">
+    return <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 flex items-center justify-center">
         <div className="text-center">
           <Shield className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
           <h2 className="text-xl font-semibold mb-2">غير مصرح لك بالوصول</h2>
@@ -472,125 +471,288 @@ const BagrutManagement: React.FC = () => {
         </div>
       </div>;
   }
-  return <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
-      <ModernHeader title="إدارة امتحانات البجروت" showBackButton={true} backPath="/content-management" />
+  return <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
+      <ModernHeader 
+        title="إدارة امتحانات البجروت" 
+        showBackButton={true} 
+        backPath="/content-management"
+        onRefresh={() => { refetch(); refetchStats(); }}
+      />
       
       <main className="container mx-auto px-6 py-8 flex-1">
         {viewState === 'list' && <div className="space-y-6">
-            {/* Stats Section */}
-            <BagrutStatsCards stats={bagrutStats} loading={statsLoading} />
+            {/* Stats Section - Modern Glass Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              {/* Total Exams */}
+              <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-slate-500/10 via-slate-500/5 to-transparent backdrop-blur-sm hover:shadow-xl transition-all duration-300 group">
+                <div className="absolute inset-0 bg-gradient-to-br from-slate-500/5 to-transparent opacity-50" />
+                <CardContent className="p-5 relative">
+                  <div className="flex flex-col items-center text-center space-y-2">
+                    <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/50 backdrop-blur-sm group-hover:scale-110 transition-transform">
+                      <FileText className="h-6 w-6 text-slate-600 dark:text-slate-400" />
+                    </div>
+                    <div className="space-y-0.5">
+                      <p className="text-xs text-muted-foreground font-medium">إجمالي الامتحانات</p>
+                      <p className="text-2xl font-bold text-foreground">
+                        {statsLoading ? '...' : bagrutStats?.totalExams || 0}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-            {/* Header with Add Button */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <GraduationCap className="h-8 w-8 text-primary" />
-                <div>
-                  <h1 className="text-2xl font-bold">امتحانات البجروت</h1>
-                  <p className="text-muted-foreground">إدارة ورفع امتحانات البجروت بالذكاء الاصطناعي</p>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="icon" onClick={() => { refetch(); refetchStats(); }}>
-                  <RefreshCw className="h-4 w-4" />
-                </Button>
-                <Button onClick={() => setViewState('upload')} className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  رفع امتحان جديد
-                </Button>
-              </div>
+              {/* Published Exams */}
+              <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-green-500/10 via-green-500/5 to-transparent backdrop-blur-sm hover:shadow-xl transition-all duration-300 group">
+                <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent opacity-50" />
+                <CardContent className="p-5 relative">
+                  <div className="flex flex-col items-center text-center space-y-2">
+                    <div className="p-2.5 rounded-xl bg-green-100 dark:bg-green-900/30 backdrop-blur-sm group-hover:scale-110 transition-transform">
+                      <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+                    </div>
+                    <div className="space-y-0.5">
+                      <p className="text-xs text-muted-foreground font-medium">منشورة</p>
+                      <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                        {statsLoading ? '...' : bagrutStats?.publishedExams || 0}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Total Attempts */}
+              <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-transparent backdrop-blur-sm hover:shadow-xl transition-all duration-300 group">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-50" />
+                <CardContent className="p-5 relative">
+                  <div className="flex flex-col items-center text-center space-y-2">
+                    <div className="p-2.5 rounded-xl bg-blue-100 dark:bg-blue-900/30 backdrop-blur-sm group-hover:scale-110 transition-transform">
+                      <BookOpen className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div className="space-y-0.5">
+                      <p className="text-xs text-muted-foreground font-medium">المحاولات</p>
+                      <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                        {statsLoading ? '...' : bagrutStats?.totalAttempts || 0}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Unique Students */}
+              <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-purple-500/10 via-purple-500/5 to-transparent backdrop-blur-sm hover:shadow-xl transition-all duration-300 group">
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent opacity-50" />
+                <CardContent className="p-5 relative">
+                  <div className="flex flex-col items-center text-center space-y-2">
+                    <div className="p-2.5 rounded-xl bg-purple-100 dark:bg-purple-900/30 backdrop-blur-sm group-hover:scale-110 transition-transform">
+                      <Users className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <div className="space-y-0.5">
+                      <p className="text-xs text-muted-foreground font-medium">الطلاب</p>
+                      <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                        {statsLoading ? '...' : bagrutStats?.uniqueStudents || 0}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Participating Schools */}
+              <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-orange-500/10 via-orange-500/5 to-transparent backdrop-blur-sm hover:shadow-xl transition-all duration-300 group">
+                <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-transparent opacity-50" />
+                <CardContent className="p-5 relative">
+                  <div className="flex flex-col items-center text-center space-y-2">
+                    <div className="p-2.5 rounded-xl bg-orange-100 dark:bg-orange-900/30 backdrop-blur-sm group-hover:scale-110 transition-transform">
+                      <GraduationCap className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+                    </div>
+                    <div className="space-y-0.5">
+                      <p className="text-xs text-muted-foreground font-medium">المدارس</p>
+                      <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                        {statsLoading ? '...' : bagrutStats?.participatingSchools || 0}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Average Score */}
+              <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent backdrop-blur-sm hover:shadow-xl transition-all duration-300 group">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-50" />
+                <CardContent className="p-5 relative">
+                  <div className="flex flex-col items-center text-center space-y-2">
+                    <div className="p-2.5 rounded-xl bg-primary/10 backdrop-blur-sm group-hover:scale-110 transition-transform">
+                      <TrendingUp className="h-6 w-6 text-primary" />
+                    </div>
+                    <div className="space-y-0.5">
+                      <p className="text-xs text-muted-foreground font-medium">المعدل</p>
+                      <p className="text-2xl font-bold text-primary">
+                        {statsLoading ? '...' : `${bagrutStats?.averageScore?.toFixed(1) || 0}%`}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
+            {/* Header Card with Add Button */}
+            <Card className="bg-card/60 backdrop-blur-lg border-0 shadow-lg overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-secondary/5 -z-10" />
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between flex-wrap gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="p-4 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 shadow-inner">
+                      <GraduationCap className="h-8 w-8 text-primary" />
+                    </div>
+                    <div>
+                      <h1 className="text-2xl font-bold">امتحانات البجروت</h1>
+                      <p className="text-muted-foreground">إدارة ورفع امتحانات البجروت بالذكاء الاصطناعي</p>
+                    </div>
+                  </div>
+                  <Button 
+                    onClick={() => setViewState('upload')} 
+                    className="gap-2 bg-gradient-to-r from-primary to-primary/80 shadow-lg hover:shadow-xl transition-all"
+                    size="lg"
+                  >
+                    <Plus className="h-5 w-5" />
+                    رفع امتحان جديد
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Exams List */}
-            {isLoading ? <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-              </div> : exams && exams.length > 0 ? <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                 {exams.map(exam => <Card key={exam.id} className="hover:shadow-md transition-shadow relative group">
-                    <CardHeader className="pb-2">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center space-y-4">
+                  <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" />
+                  <p className="text-muted-foreground">جاري تحميل الامتحانات...</p>
+                </div>
+              </div>
+            ) : exams && exams.length > 0 ? (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {exams.map(exam => (
+                  <Card 
+                    key={exam.id} 
+                    className="bg-card/60 backdrop-blur-sm border-0 shadow-md hover:shadow-xl transition-all duration-300 relative group overflow-hidden"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <CardHeader className="pb-2 relative">
                       <div className="flex items-start justify-between gap-3">
                         <CardTitle className="text-lg flex items-center gap-2">
-                          <FileText className="h-5 w-5 text-primary" />
+                          <div className="p-2 rounded-lg bg-primary/10">
+                            <FileText className="h-4 w-4 text-primary" />
+                          </div>
                           <span className="line-clamp-2">{exam.title}</span>
                         </CardTitle>
-
-                        <span className="shrink-0 px-2 py-1 rounded-md text-xs bg-muted text-foreground">
+                        <Badge variant="secondary" className="shrink-0 bg-muted/80">
                           #{(exam as any).exam_number}
-                        </span>
+                        </Badge>
                       </div>
                     </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2 text-sm text-muted-foreground">
-                        <p>{exam.subject} - {exam.exam_year}</p>
-                        <p>
-                          معرف الامتحان: {(exam.exam_code || '—')}
-                        </p>
-                        <p>{exam.duration_minutes} دقيقة | {exam.total_points} علامة</p>
-                        <div className="flex items-center justify-between mt-3">
-                          <span className={`px-2 py-1 rounded-full text-xs ${exam.is_published ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'}`}>
-                            {exam.is_published ? 'منشور' : 'مسودة'}
-                          </span>
-                           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                             <Button
-                               variant="ghost"
-                               size="icon"
-                               className="h-8 w-8 text-muted-foreground hover:text-primary"
-                               onClick={() => openPublishDialog(exam)}
-                               title="إعدادات النشر"
-                             >
-                               <Send className="h-4 w-4" />
-                             </Button>
-                             <Button
-                               variant="ghost"
-                               size="icon"
-                               className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                               onClick={() => openEditIdentifierDialog(exam as any)}
-                               title="تعديل معرف الامتحان"
-                             >
-                               <Pencil className="h-4 w-4" />
-                             </Button>
-                             <Button
-                               variant="ghost"
-                               size="icon"
-                               className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                               onClick={() => handlePreviewExam(exam.id)}
-                               disabled={previewLoadingId === exam.id}
-                             >
-                               {previewLoadingId === exam.id ? (
-                                 <Loader2 className="h-4 w-4 animate-spin" />
-                               ) : (
-                                 <Eye className="h-4 w-4" />
-                               )}
-                             </Button>
-                             <Button
-                               variant="ghost"
-                               size="icon"
-                               className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                               onClick={() => openDeleteDialog(exam.id, exam.title)}
-                               disabled={deletingExamId === exam.id}
-                             >
-                               {deletingExamId === exam.id ? (
-                                 <Loader2 className="h-4 w-4 animate-spin" />
-                               ) : (
-                                 <Trash2 className="h-4 w-4" />
-                               )}
-                             </Button>
-                           </div>
+                    <CardContent className="relative">
+                      <div className="space-y-3 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-2">
+                          <BookOpen className="h-4 w-4" />
+                          <span>{exam.subject} - {exam.exam_year}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <FileText className="h-4 w-4" />
+                          <span>معرف الامتحان: {exam.exam_code || '—'}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4" />
+                          <span>{exam.duration_minutes} دقيقة | {exam.total_points} علامة</span>
+                        </div>
+                        <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/50">
+                          <Badge className={`${exam.is_published 
+                            ? 'bg-green-500/10 text-green-600 border-green-200 dark:border-green-800' 
+                            : 'bg-amber-500/10 text-amber-600 border-amber-200 dark:border-amber-800'}`}
+                          >
+                            {exam.is_published ? (
+                              <>
+                                <CheckCircle className="ml-1 h-3 w-3" />
+                                منشور
+                              </>
+                            ) : (
+                              <>
+                                <Clock className="ml-1 h-3 w-3" />
+                                مسودة
+                              </>
+                            )}
+                          </Badge>
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                              onClick={() => openPublishDialog(exam)}
+                              title="إعدادات النشر"
+                            >
+                              <Send className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted"
+                              onClick={() => openEditIdentifierDialog(exam as any)}
+                              title="تعديل معرف الامتحان"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted"
+                              onClick={() => handlePreviewExam(exam.id)}
+                              disabled={previewLoadingId === exam.id}
+                              title="معاينة الامتحان"
+                            >
+                              {previewLoadingId === exam.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Eye className="h-4 w-4" />
+                              )}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => openDeleteDialog(exam.id, exam.title)}
+                              disabled={deletingExamId === exam.id}
+                              title="حذف الامتحان"
+                            >
+                              {deletingExamId === exam.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     </CardContent>
-                  </Card>)}
-              </div> : <Card className="border-dashed">
-                <CardContent className="py-12 text-center">
-                  <GraduationCap className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-medium mb-2 text-center">لا توجد امتحانات بعد</h3>
-                  <p className="text-muted-foreground mb-4 text-center">
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <Card className="bg-card/60 backdrop-blur-lg border-dashed border-2">
+                <CardContent className="py-16 text-center">
+                  <div className="w-20 h-20 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-6">
+                    <GraduationCap className="h-10 w-10 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2">لا توجد امتحانات بعد</h3>
+                  <p className="text-muted-foreground mb-6">
                     قم برفع أول امتحان بجروت لتبدأ
                   </p>
-                  <Button onClick={() => setViewState('upload')} variant="outline" className="gap-2">
-                    <Plus className="h-4 w-4" />
-                    رفع امتحان
+                  <Button 
+                    onClick={() => setViewState('upload')} 
+                    className="gap-2 bg-gradient-to-r from-primary to-primary/80"
+                    size="lg"
+                  >
+                    <Plus className="h-5 w-5" />
+                    رفع امتحان جديد
                   </Button>
                 </CardContent>
-              </Card>}
+              </Card>
+            )}
           </div>}
 
         {viewState === 'upload' && <BagrutExamUploader onExamParsed={handleExamParsed} onCancel={() => setViewState('list')} />}
