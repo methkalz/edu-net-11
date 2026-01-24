@@ -119,7 +119,7 @@ export default function BagrutGradingPage() {
   };
   if (isLoading) {
     return <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
-        <ModernHeader title="تصحيح امتحان البجروت" showBackButton backPath="/bagrut-management" />
+        <ModernHeader title="تصحيح امتحان البجروت" showBackButton backPath="/dashboard" />
         <div className="container mx-auto px-6 py-8 space-y-6">
           <Skeleton className="h-28 w-full rounded-xl" />
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -131,7 +131,7 @@ export default function BagrutGradingPage() {
   }
   if (isError || !examId) {
     return <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
-        <ModernHeader title="تصحيح امتحان البجروت" showBackButton backPath="/bagrut-management" />
+        <ModernHeader title="تصحيح امتحان البجروت" showBackButton backPath="/dashboard" />
         <div className="container mx-auto px-6 py-8">
           <Alert variant="destructive" className="max-w-md mx-auto">
             <AlertCircle className="h-4 w-4" />
@@ -141,7 +141,7 @@ export default function BagrutGradingPage() {
       </div>;
   }
   return <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
-      <ModernHeader title="تصحيح امتحان البجروت" showBackButton backPath="/bagrut-management" onRefresh={() => window.location.reload()} />
+      <ModernHeader title="تصحيح امتحان البجروت" showBackButton backPath="/dashboard" onRefresh={() => window.location.reload()} />
       
       <div className="container mx-auto px-6 py-8 space-y-6">
         {/* Exam Info Card */}
