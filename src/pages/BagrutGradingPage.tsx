@@ -608,8 +608,24 @@ function GradingDialog({
     return mandatoryPoints + electivePoints;
   }, [relevantSections]);
 
-  // دالة تحديد حالة تصحيح السؤال
+  // دالة تحديد حالة تصحيح السؤال (تدعم الأسئلة الرئيسية والفرعية)
   const getQuestionGradingStatus = (question: ParsedQuestion): 'auto_graded' | 'manual_graded' | 'needs_manual' => {
+    // إذا كان سؤال رئيسي له أسئلة فرعية، نتحقق من حالة الفرعية
+    if (question.sub_questions && question.sub_questions.length > 0) {
+      const subStatuses = question.sub_questions.map(sq => getQuestionGradingStatus(sq));
+      
+      // إذا كل الفرعية مصححة (تلقائياً أو يدوياً) → السؤال الرئيسي مصحح
+      const allGraded = subStatuses.every(s => s === 'auto_graded' || s === 'manual_graded');
+      if (allGraded) {
+        // نُرجع 'manual_graded' إذا أي فرعي مصحح يدوياً
+        return subStatuses.some(s => s === 'manual_graded') ? 'manual_graded' : 'auto_graded';
+      }
+      
+      // إذا أي فرعي يحتاج تصحيح يدوي → الرئيسي يحتاج
+      return 'needs_manual';
+    }
+
+    // سؤال طرفي (بدون فرعيات)
     const questionId = question.question_db_id || '';
     const grade = questionGrades[questionId];
     const answer = answers[questionId];
@@ -629,21 +645,42 @@ function GradingDialog({
     return 'needs_manual';
   };
 
-  // فلترة الأسئلة حسب حالة التصحيح
+  // دالة مساعدة للتحقق من مطابقة الفلتر
+  const matchesGradingFilter = (status: 'auto_graded' | 'manual_graded' | 'needs_manual', filter: string): boolean => {
+    switch (filter) {
+      case 'graded':
+        return status === 'auto_graded' || status === 'manual_graded';
+      case 'not_graded':
+      case 'needs_manual':
+        return status === 'needs_manual';
+      default:
+        return true;
+    }
+  };
+
+  // فلترة الأسئلة حسب حالة التصحيح (تدعم الأسئلة الفرعية)
   const filterQuestionsByGradingStatus = (questions: ParsedQuestion[]): ParsedQuestion[] => {
     if (gradingFilter === 'all') return questions;
+    
     return questions.filter(q => {
       const status = getQuestionGradingStatus(q);
-      switch (gradingFilter) {
-        case 'graded':
-          return status === 'auto_graded' || status === 'manual_graded';
-        case 'not_graded':
-          return status === 'needs_manual';
-        case 'needs_manual':
-          return status === 'needs_manual';
-        default:
-          return true;
+      
+      // التحقق من السؤال نفسه
+      if (matchesGradingFilter(status, gradingFilter)) {
+        return true;
       }
+      
+      // إذا كان للسؤال أسئلة فرعية، نتحقق منها أيضاً
+      if (q.sub_questions && q.sub_questions.length > 0) {
+        const anySubMatchesFilter = q.sub_questions.some(subQ => {
+          const subStatus = getQuestionGradingStatus(subQ);
+          return matchesGradingFilter(subStatus, gradingFilter);
+        });
+        // نُبقي السؤال الرئيسي إذا أي من أبنائه يطابق الفلتر
+        if (anySubMatchesFilter) return true;
+      }
+      
+      return false;
     });
   };
 
@@ -954,13 +991,22 @@ function GradingDialog({
     const answer = answers[questionId];
     const grade = questionGrades[questionId] || {};
 
-    // التحقق من التصحيح التلقائي
-    const autoGradeResult = autoGradeQuestion(question, answer);
+    // التحقق إذا كان سؤال رئيسي له أسئلة فرعية
+    const hasSubQuestions = question.sub_questions && question.sub_questions.length > 0;
+    // سؤال رئيسي بدون إجابة مباشرة (الإجابات في الفرعيات)
+    const isParentWithNoDirectAnswer = hasSubQuestions && !answer?.answer;
+
+    // التحقق من التصحيح التلقائي (فقط للأسئلة الطرفية)
+    const autoGradeResult = !hasSubQuestions ? autoGradeQuestion(question, answer) : { isAutoGradable: false, isCorrect: null, autoScore: 0 };
     const isAutoGraded = autoGradeResult.isAutoGradable;
     const hasManualScore = (grade as any).manual_score !== undefined && (grade as any).manual_score !== null;
 
-    // القيمة المعروضة في حقل العلامة
+    // القيمة المعروضة في حقل العلامة (فقط للأسئلة الطرفية)
     const displayScore = hasManualScore ? (grade as any).manual_score : isAutoGraded ? autoGradeResult.autoScore : '';
+    
+    // للأسئلة الرئيسية: لا نعرض حقل العلامة إذا كانت لها فرعيات
+    const showGradeInput = question.points > 0 && !hasSubQuestions;
+
     return <div className={depth > 0 ? 'mr-4 border-r-2 border-muted pr-4' : ''}>
         <Card className={`${depth > 0 ? 'border-dashed' : ''} ${isAutoGraded && !hasManualScore ? autoGradeResult.isCorrect ? 'border-green-300 dark:border-green-800' : 'border-red-300 dark:border-red-800' : ''}`}>
           <CardHeader className="pb-2">
@@ -971,12 +1017,17 @@ function GradingDialog({
                   {question.question_type}
                 </Badge>
                 
-                {/* شارة التصحيح التلقائي */}
+                {/* شارة التصحيح التلقائي - فقط للأسئلة الطرفية */}
                 {isAutoGraded && !hasManualScore && <Badge variant={autoGradeResult.isCorrect ? "default" : "destructive"} className={`text-xs ${autoGradeResult.isCorrect ? 'bg-green-500 hover:bg-green-600' : ''}`}>
                     {autoGradeResult.isCorrect ? '✓ صحيح تلقائي' : '✗ خطأ تلقائي'}
                   </Badge>}
+                
+                {/* شارة للأسئلة الرئيسية */}
+                {hasSubQuestions && <Badge variant="secondary" className="text-xs">
+                    يحتوي {question.sub_questions!.length} أسئلة فرعية
+                  </Badge>}
               </CardTitle>
-              {question.points > 0 && <div className="flex items-center gap-2">
+              {showGradeInput && <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">العلامة:</span>
                   <Input type="number" min={0} max={question.points} value={displayScore} onChange={e => updateQuestionGrade(questionId, 'manual_score', e.target.value ? parseInt(e.target.value) : null, question.points)} className={`w-20 h-8 ${isAutoGraded && !hasManualScore ? autoGradeResult.isCorrect ? 'bg-green-50 border-green-300 dark:bg-green-950/30' : 'bg-red-50 border-red-300 dark:bg-red-950/30' : ''}`} />
                   <span className="text-sm">/ {question.points}</span>
@@ -990,21 +1041,24 @@ function GradingDialog({
               {question.image_url && <img src={question.image_url} alt="صورة السؤال" className="mt-2 max-h-48 rounded" />}
             </div>
 
-            <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
+            {/* إظهار قسم الإجابة فقط إذا كان السؤال له إجابة مباشرة */}
+            {!isParentWithNoDirectAnswer && <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
               <p className="text-sm font-medium mb-1">إجابة الطالب:</p>
               <div className="text-sm">
                 {formatStudentAnswer(question, answer)}
               </div>
-            </div>
+            </div>}
 
-            {hasCorrectAnswer(question) && <div className="p-3 bg-green-50 dark:bg-green-950/30 rounded-lg">
+            {/* الإجابة الصحيحة - فقط للأسئلة الطرفية */}
+            {!hasSubQuestions && hasCorrectAnswer(question) && <div className="p-3 bg-green-50 dark:bg-green-950/30 rounded-lg">
                 <p className="text-sm font-medium mb-1">الإجابة الصحيحة:</p>
                 <div className="text-sm">
                   {formatCorrectAnswer(question)}
                 </div>
               </div>}
 
-            {question.points > 0 && <div>
+            {/* ملاحظات - فقط للأسئلة الطرفية */}
+            {showGradeInput && <div>
                 <label className="text-sm font-medium">ملاحظات على هذا السؤال:</label>
                 <Textarea value={(grade as any).teacher_feedback || ''} onChange={e => updateQuestionGrade(questionId, 'teacher_feedback', e.target.value, question.points)} placeholder="ملاحظات اختيارية..." className="mt-1 h-16" />
               </div>}
@@ -1012,8 +1066,8 @@ function GradingDialog({
         </Card>
 
         {/* الأسئلة الفرعية */}
-        {question.sub_questions && question.sub_questions.length > 0 && <div className="mt-3 space-y-3">
-            {question.sub_questions.map(subQ => <QuestionCard key={subQ.question_db_id} question={subQ} depth={depth + 1} />)}
+        {hasSubQuestions && <div className="mt-3 space-y-3">
+            {question.sub_questions!.map(subQ => <QuestionCard key={subQ.question_db_id} question={subQ} depth={depth + 1} />)}
           </div>}
       </div>;
   };
