@@ -335,13 +335,20 @@ const BagrutManagement: React.FC = () => {
 
   // Recursive function to insert questions
   const insertQuestion = async (examId: string, sectionId: string, question: any, orderIndex: number, parentId: string | null) => {
-    const correctAnswerData =
-      question?.correct_answer_data ??
-      (question?.blanks?.length ? { blanks: question.blanks } : null);
+    // Build correct_answer_data including word_bank and blanks
+    const correctAnswerData: any = question?.correct_answer_data ?? {};
+    if (question?.blanks?.length) {
+      correctAnswerData.blanks = question.blanks;
+    }
+    if (question?.word_bank?.length) {
+      correctAnswerData.word_bank = question.word_bank;
+    }
 
     const safeTableData = question?.table_data ? JSON.parse(JSON.stringify(question.table_data)) : null;
     const safeChoices = question?.choices ? JSON.parse(JSON.stringify(question.choices)) : null;
-    const safeCorrectAnswerData = correctAnswerData ? JSON.parse(JSON.stringify(correctAnswerData)) : null;
+    const safeCorrectAnswerData = Object.keys(correctAnswerData).length > 0 
+      ? JSON.parse(JSON.stringify(correctAnswerData)) 
+      : null;
 
     const insertPayload: any = {
       exam_id: examId,
@@ -418,13 +425,20 @@ const BagrutManagement: React.FC = () => {
       const updatePromises = allQuestions.map(async (q) => {
         if (!q.question_db_id) return;
 
-        const correctAnswerData =
-          (q as any).correct_answer_data ??
-          ((q as any).blanks?.length ? { blanks: (q as any).blanks } : null);
+        // Build correct_answer_data including word_bank and blanks
+        const correctAnswerData: any = (q as any).correct_answer_data ?? {};
+        if ((q as any).blanks?.length) {
+          correctAnswerData.blanks = (q as any).blanks;
+        }
+        if ((q as any).word_bank?.length) {
+          correctAnswerData.word_bank = (q as any).word_bank;
+        }
 
         const safeTableData = (q as any).table_data ? JSON.parse(JSON.stringify((q as any).table_data)) : null;
         const safeChoices = (q as any).choices ? JSON.parse(JSON.stringify((q as any).choices)) : null;
-        const safeCorrectAnswerData = correctAnswerData ? JSON.parse(JSON.stringify(correctAnswerData)) : null;
+        const safeCorrectAnswerData = Object.keys(correctAnswerData).length > 0 
+          ? JSON.parse(JSON.stringify(correctAnswerData)) 
+          : null;
 
          const updatePayload: any = {
           question_text: q.question_text,
@@ -433,9 +447,13 @@ const BagrutManagement: React.FC = () => {
           correct_answer: q.correct_answer,
           correct_answer_data: safeCorrectAnswerData,
           answer_explanation: q.answer_explanation,
-           has_table: ((q as any).has_table || !!(q as any).table_data) || false,
+          has_table: ((q as any).has_table || !!(q as any).table_data) || false,
           table_data: safeTableData,
           code_content: q.code_content,
+          // حفظ معلومات الصورة
+          has_image: (q as any).has_image || false,
+          image_url: (q as any).image_url || null,
+          image_alt_text: (q as any).image_description || null,
           updated_at: new Date().toISOString()
         };
 

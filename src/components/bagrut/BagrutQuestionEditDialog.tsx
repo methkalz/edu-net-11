@@ -16,9 +16,10 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
-import { Plus, Trash2, Save, AlertCircle, GripVertical } from 'lucide-react';
+import { Plus, Trash2, Save, AlertCircle, GripVertical, ImageIcon, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import type { TableData, BlankDefinition } from '@/lib/bagrut/buildBagrutPreview';
+import BagrutImageUpload from './BagrutImageUpload';
 
 interface Choice {
   id: string;
@@ -483,6 +484,62 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
                 className="w-32"
                 min={0}
               />
+            </div>
+
+            {/* Image Upload Section */}
+            <div className="space-y-4">
+              <Separator />
+              <div className="flex items-center justify-between">
+                <Label className="text-base font-semibold flex items-center gap-2">
+                  <ImageIcon className="h-4 w-4" />
+                  صورة السؤال
+                </Label>
+                <div className="flex items-center gap-2">
+                  <Checkbox 
+                    id="has-image"
+                    checked={editedQuestion.has_image || false}
+                    onCheckedChange={(checked) => 
+                      setEditedQuestion(prev => ({...prev, has_image: !!checked}))
+                    }
+                  />
+                  <Label htmlFor="has-image" className="text-sm cursor-pointer">
+                    يحتوي على صورة
+                  </Label>
+                </div>
+              </div>
+              
+              {editedQuestion.has_image && (
+                <div className="space-y-3">
+                  {/* تحذير إذا كان السؤال يحتاج صورة ولكن لا توجد */}
+                  {!editedQuestion.image_url && (
+                    <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200">
+                      <AlertTriangle className="h-4 w-4 shrink-0" />
+                      <span className="text-sm">هذا السؤال يحتاج صورة. يرجى رفع صورة للسؤال.</span>
+                    </div>
+                  )}
+                  
+                  {/* وصف الصورة */}
+                  <div className="space-y-2">
+                    <Label htmlFor="image-desc">وصف الصورة (اختياري)</Label>
+                    <Input
+                      id="image-desc"
+                      value={editedQuestion.image_description || ''}
+                      onChange={(e) => handleTextChange('image_description' as keyof ParsedQuestion, e.target.value)}
+                      placeholder="وصف مختصر للصورة..."
+                    />
+                  </div>
+                  
+                  {/* رفع الصورة */}
+                  <BagrutImageUpload
+                    questionNumber={editedQuestion.question_number}
+                    description={editedQuestion.image_description}
+                    currentImageUrl={editedQuestion.image_url}
+                    onImageUploaded={(url) => 
+                      setEditedQuestion(prev => ({...prev, image_url: url}))
+                    }
+                  />
+                </div>
+              )}
             </div>
 
             {/* Choices for MCQ / True-False (Numeric IDs) */}
