@@ -48,8 +48,10 @@ export function useBagrutAttempt(examId: string | undefined, studentId: string |
   const [answers, setAnswers] = useState<Record<string, BagrutAnswer>>({});
   const [selectedSectionIds, setSelectedSectionIds] = useState<string[]>([]);
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const debouncedSaveRef = useRef<NodeJS.Timeout | null>(null);
   const lastSavedAnswersRef = useRef<string>('');
   const hasAutoSubmittedRef = useRef<boolean>(false);
+  const answersRef = useRef<Record<string, BagrutAnswer>>({});
 
   // جلب بيانات الامتحان والأقسام
   const examQuery = useQuery({
@@ -282,14 +284,21 @@ export function useBagrutAttempt(examId: string | undefined, studentId: string |
     },
   });
 
-  // الحفظ التلقائي
+  // تحديث ref الإجابات عند كل تغيير
+  useEffect(() => {
+    answersRef.current = answers;
+  }, [answers]);
+
+  // الحفظ التلقائي الدوري - كل 30 ثانية (مستقل عن تغييرات الإجابات)
   useEffect(() => {
     if (!attemptId) return;
 
     autoSaveTimerRef.current = setInterval(() => {
-      const currentAnswersStr = JSON.stringify(answers);
-      if (currentAnswersStr !== lastSavedAnswersRef.current) {
-        saveAnswersMutation.mutate(answers);
+      const currentAnswers = answersRef.current;
+      const currentAnswersStr = JSON.stringify(currentAnswers);
+      if (currentAnswersStr !== lastSavedAnswersRef.current && Object.keys(currentAnswers).length > 0) {
+        logger.debug('حفظ تلقائي دوري للإجابات');
+        saveAnswersMutation.mutate(currentAnswers);
       }
     }, 30000); // كل 30 ثانية
 
@@ -298,7 +307,63 @@ export function useBagrutAttempt(examId: string | undefined, studentId: string |
         clearInterval(autoSaveTimerRef.current);
       }
     };
+  }, [attemptId]); // فقط attemptId - لا يعتمد على answers
+
+  // حفظ ذكي بعد 5 ثواني من آخر تغيير (debounced)
+  useEffect(() => {
+    if (!attemptId || Object.keys(answers).length === 0) return;
+
+    // إلغاء أي حفظ مؤجل سابق
+    if (debouncedSaveRef.current) {
+      clearTimeout(debouncedSaveRef.current);
+    }
+
+    // حفظ بعد 5 ثواني من آخر تغيير
+    debouncedSaveRef.current = setTimeout(() => {
+      const currentAnswersStr = JSON.stringify(answers);
+      if (currentAnswersStr !== lastSavedAnswersRef.current) {
+        logger.debug('حفظ ذكي للإجابات بعد تغيير');
+        saveAnswersMutation.mutate(answers);
+      }
+    }, 5000);
+
+    return () => {
+      if (debouncedSaveRef.current) {
+        clearTimeout(debouncedSaveRef.current);
+      }
+    };
   }, [attemptId, answers]);
+
+  // حماية عند إغلاق الصفحة أو المتصفح
+  useEffect(() => {
+    if (!attemptId) return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      const currentAnswersStr = JSON.stringify(answersRef.current);
+      if (currentAnswersStr !== lastSavedAnswersRef.current && Object.keys(answersRef.current).length > 0) {
+        // محاولة حفظ سريعة باستخدام sendBeacon
+        const supabaseUrl = 'https://swlwhjnwycvjdhgclwlx.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN3bHdoam53eWN2amRoZ2Nsd2x4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUzMDU4MzgsImV4cCI6MjA3MDg4MTgzOH0.whMWEn_UIrxBa2QbK1leY9QTr1jeTnkUUn3g50fAKus';
+        
+        const payload = JSON.stringify({
+          answers: answersRef.current,
+          last_activity_at: new Date().toISOString()
+        });
+
+        navigator.sendBeacon?.(
+          `${supabaseUrl}/rest/v1/bagrut_attempts?id=eq.${attemptId}`,
+          new Blob([payload], { type: 'application/json' })
+        );
+
+        logger.info('محاولة حفظ طوارئ عند إغلاق الصفحة');
+        e.preventDefault();
+        e.returnValue = 'لديك إجابات غير محفوظة. هل أنت متأكد من المغادرة؟';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [attemptId]);
 
   // تحديث إجابة
   const updateAnswer = useCallback((questionId: string, answer: BagrutAnswer) => {
