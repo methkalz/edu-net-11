@@ -1,5 +1,5 @@
 // صفحة حل امتحان البجروت للطالب
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useBagrutAttempt } from '@/hooks/useBagrutAttempt';
@@ -14,6 +14,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import BagrutSectionSelector from '@/components/bagrut/BagrutSectionSelector';
 import BagrutQuestionRenderer from '@/components/bagrut/BagrutQuestionRenderer';
+import ExamAntiCopyWrapper from '@/components/bagrut/ExamAntiCopyWrapper';
+import SectionTransitionAlert from '@/components/bagrut/SectionTransitionAlert';
 import {
   AlertCircle,
   Clock,
@@ -27,7 +29,7 @@ import {
   Home,
 } from 'lucide-react';
 import { logger } from '@/lib/logging';
-import type { ParsedQuestion } from '@/lib/bagrut/buildBagrutPreview';
+import type { ParsedQuestion, ParsedSection } from '@/lib/bagrut/buildBagrutPreview';
 
 export default function StudentBagrutAttempt() {
   const { examId } = useParams<{ examId: string }>();
@@ -57,19 +59,32 @@ export default function StudentBagrutAttempt() {
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [showConfirmSubmit, setShowConfirmSubmit] = useState(false);
+  
+  // حالة تنبيه الانتقال لقسم الاختصاص
+  const [showSectionAlert, setShowSectionAlert] = useState(false);
+  const [currentAlertSection, setCurrentAlertSection] = useState<ParsedSection | null>(null);
+  const shownSectionAlertsRef = useRef<Set<string>>(new Set());
+  const lastSectionIdRef = useRef<string | null>(null);
 
-  // جمع كل الأسئلة من الأقسام المختارة
-  const allQuestions = useMemo(() => {
+  // جمع كل الأسئلة من الأقسام المختارة مع معلومات القسم
+  const questionsWithSections = useMemo(() => {
     if (!examData || selectedSectionIds.length === 0) return [];
     
-    const questions: ParsedQuestion[] = [];
+    const result: Array<{ question: ParsedQuestion; section: ParsedSection }> = [];
     examData.sections.forEach(section => {
       if (selectedSectionIds.includes(section.section_db_id!)) {
-        questions.push(...section.questions);
+        section.questions.forEach(q => {
+          result.push({ question: q, section });
+        });
       }
     });
-    return questions;
+    return result;
   }, [examData, selectedSectionIds]);
+
+  const allQuestions = useMemo(() => 
+    questionsWithSections.map(item => item.question),
+    [questionsWithSections]
+  );
 
   // المؤقت
   const timer = useExamTimer({
@@ -105,12 +120,34 @@ export default function StudentBagrutAttempt() {
     ? Math.round((answeredCount / allQuestions.length) * 100) 
     : 0;
 
-  // التنقل
+  // التنقل مع التحقق من الانتقال لقسم الاختصاص
   const goToQuestion = useCallback((index: number) => {
     if (index >= 0 && index < allQuestions.length) {
+      const targetItem = questionsWithSections[index];
+      const currentSectionId = targetItem?.section.section_db_id;
+      
+      // التحقق من الانتقال لقسم اختياري جديد
+      if (
+        currentSectionId && 
+        targetItem.section.section_type === 'elective' &&
+        currentSectionId !== lastSectionIdRef.current &&
+        !shownSectionAlertsRef.current.has(currentSectionId)
+      ) {
+        // تسجيل أن هذا القسم تم عرض التنبيه له
+        shownSectionAlertsRef.current.add(currentSectionId);
+        setCurrentAlertSection(targetItem.section);
+        setShowSectionAlert(true);
+      }
+      
+      lastSectionIdRef.current = currentSectionId || null;
       setCurrentQuestionIndex(index);
     }
-  }, [allQuestions.length]);
+  }, [allQuestions.length, questionsWithSections]);
+
+  const dismissSectionAlert = useCallback(() => {
+    setShowSectionAlert(false);
+    setCurrentAlertSection(null);
+  }, []);
 
   const goNext = () => goToQuestion(currentQuestionIndex + 1);
   const goPrev = () => goToQuestion(currentQuestionIndex - 1);
@@ -358,13 +395,15 @@ export default function StudentBagrutAttempt() {
             </div>
           </div>
 
-          {/* السؤال */}
-          <BagrutQuestionRenderer
-            question={currentQuestion}
-            answers={answers}  // ← تمرير كل الإجابات
-            onAnswerChange={updateAnswer}
-            disabled={isSubmitting}
-          />
+          {/* السؤال - محمي ضد النسخ */}
+          <ExamAntiCopyWrapper enabled={true}>
+            <BagrutQuestionRenderer
+              question={currentQuestion}
+              answers={answers}  // ← تمرير كل الإجابات
+              onAnswerChange={updateAnswer}
+              disabled={isSubmitting}
+            />
+          </ExamAntiCopyWrapper>
 
           {/* أزرار التنقل */}
           <div className="flex items-center justify-between mt-6 gap-4">
@@ -464,6 +503,18 @@ export default function StudentBagrutAttempt() {
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* تنبيه الانتقال لقسم الاختصاص */}
+      {currentAlertSection && (
+        <SectionTransitionAlert
+          open={showSectionAlert}
+          onDismiss={dismissSectionAlert}
+          sectionTitle={currentAlertSection.section_title}
+          specializationLabel={currentAlertSection.specialization_label}
+          questionsCount={currentAlertSection.questions.length}
+          totalPoints={currentAlertSection.total_points}
+        />
       )}
     </div>
   );

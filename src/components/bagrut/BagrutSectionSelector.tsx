@@ -1,4 +1,4 @@
-// مكون اختيار أقسام البجروت (للأقسام الاختيارية)
+// مكون اختيار أقسام البجروت (للأقسام الاختيارية) مع عرض إرشادات الامتحان
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,6 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 import { 
   CheckCircle2, 
   FileText, 
@@ -13,7 +14,10 @@ import {
   Award, 
   Layers,
   AlertCircle,
-  PlayCircle
+  PlayCircle,
+  BookOpen,
+  AlertTriangle,
+  Info
 } from 'lucide-react';
 import type { ParsedSection } from '@/lib/bagrut/buildBagrutPreview';
 
@@ -97,8 +101,54 @@ export default function BagrutSectionSelector({
     return mandatoryCount + selectedElectiveCount;
   }, [mandatorySections, electiveSections, selectedElectives]);
 
+  // تنسيق التعليمات كقائمة
+  const formattedInstructions = useMemo(() => {
+    if (!instructions) return [];
+    return instructions
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0);
+  }, [instructions]);
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
+      {/* إرشادات وتعليمات الامتحان - بارزة في الأعلى */}
+      {instructions && formattedInstructions.length > 0 && (
+        <Card className="border-2 border-orange-300 dark:border-orange-700 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/30 dark:to-amber-950/20 shadow-lg">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2 text-orange-700 dark:text-orange-400">
+              <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-900/50">
+                <BookOpen className="h-5 w-5" />
+              </div>
+              إرشادات وتعليمات الامتحان
+            </CardTitle>
+            <CardDescription className="text-orange-600/80 dark:text-orange-400/80">
+              يرجى قراءة التعليمات التالية بعناية قبل البدء
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {formattedInstructions.map((line, index) => (
+                <div 
+                  key={index} 
+                  className="flex items-start gap-3 p-2 rounded-lg bg-white/60 dark:bg-background/40"
+                >
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-orange-200 dark:bg-orange-800/50 text-orange-700 dark:text-orange-300 text-sm font-medium flex items-center justify-center">
+                    {index + 1}
+                  </span>
+                  <span className="text-foreground/90">{line}</span>
+                </div>
+              ))}
+            </div>
+            
+            <div className="mt-4 flex items-center gap-2 text-sm text-orange-600 dark:text-orange-400 bg-orange-100/50 dark:bg-orange-900/30 rounded-lg p-3">
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              <span>تأكد من قراءة جميع التعليمات قبل بدء الامتحان. لن تتمكن من العودة لهذه الصفحة بعد البدء.</span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* معلومات الامتحان */}
       <Card>
         <CardHeader className="text-center pb-4">
@@ -138,15 +188,6 @@ export default function BagrutSectionSelector({
               </div>
             </div>
           </div>
-
-          {instructions && (
-            <Alert className="mt-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription className="whitespace-pre-wrap">
-                {instructions}
-              </AlertDescription>
-            </Alert>
-          )}
         </CardContent>
       </Card>
 
