@@ -108,6 +108,28 @@ export default function StudentBagrutResult() {
     return false;
   }, [data]);
 
+  // حساب المجموع الكلي حسب نوع الهيكل (يجب أن يكون قبل أي early returns)
+  const totalPoints = useMemo(() => {
+    if (!data?.sections) return 100;
+    const examStructureType = data.exam?.exam_structure_type || 'standard';
+    
+    if (examStructureType === 'all_mandatory') {
+      // جمع جميع الأقسام
+      return data.sections.reduce((sum: number, s: any) => sum + (s.total_points || 0), 0);
+    }
+    // الهيكل القياسي: إلزامي + Max(اختياري)
+    let mandatoryPoints = 0;
+    let electivePoints = 0;
+    data.sections.forEach((s: any) => {
+      if (s.section_type === 'mandatory') {
+        mandatoryPoints += s.total_points || 0;
+      } else if (s.section_type === 'elective') {
+        electivePoints = Math.max(electivePoints, s.total_points || 0);
+      }
+    });
+    return mandatoryPoints + electivePoints;
+  }, [data]);
+
   if (isLoading) {
     return (
       <div className="container mx-auto p-6 max-w-4xl space-y-6">

@@ -748,8 +748,16 @@ function GradingDialog({
   }, [allQuestions, answers]);
 
   // حساب المجموع الكلي للعلامات من الأقسام الرسمية
-  // القسم الإلزامي: 60 + قسم التخصص: 40 = 100
+  // حسب نوع الهيكل: standard = إلزامي + Max(اختياري)، all_mandatory = مجموع جميع الأقسام
   const totalPoints = useMemo(() => {
+    const structureType = examData?.exam?.exam_structure_type || 'standard';
+    
+    // إذا كان all_mandatory: جمع جميع الأقسام
+    if (structureType === 'all_mandatory') {
+      return relevantSections.reduce((sum, s) => sum + (s.total_points || 0), 0);
+    }
+    
+    // الهيكل القياسي: إلزامي + Max(اختياري)
     let mandatoryPoints = 0;
     let electivePoints = 0;
     
@@ -762,7 +770,7 @@ function GradingDialog({
     });
     
     return mandatoryPoints + electivePoints;
-  }, [relevantSections]);
+  }, [relevantSections, examData]);
 
   // دالة تحديد حالة تصحيح السؤال (تدعم الأسئلة الرئيسية والفرعية)
   const getQuestionGradingStatus = (question: ParsedQuestion): 'auto_graded' | 'manual_graded' | 'needs_manual' => {

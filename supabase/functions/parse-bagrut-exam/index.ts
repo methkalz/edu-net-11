@@ -50,6 +50,23 @@ interface ParsedExam {
   total_points: number;
   instructions?: string;
   sections: ParsedSection[];
+  exam_structure_type?: 'standard' | 'all_mandatory';
+}
+
+// Detect exam structure type based on sections
+function detectExamStructure(parsedExam: ParsedExam): 'standard' | 'all_mandatory' {
+  const sections = parsedExam.sections || [];
+  
+  // If there are elective sections → standard structure
+  const hasElective = sections.some(s => s.section_type === 'elective');
+  if (hasElective) return 'standard';
+  
+  // If all sections are mandatory and there are multiple → all_mandatory
+  const allMandatory = sections.every(s => s.section_type === 'mandatory');
+  if (allMandatory && sections.length > 1) return 'all_mandatory';
+  
+  // Default to standard
+  return 'standard';
 }
 
 // Generate an educational image using AI
@@ -719,6 +736,22 @@ async function processJobInBackground(
 2. الأقسام: رقم القسم، العنوان، النوع (mandatory/elective)، التخصص إن وجد
 3. الأسئلة: الرقم، النص، النوع، العلامات، الخيارات
 
+## قواعد تحديد نوع هيكل الامتحان (exam_structure_type):
+
+1. **standard (قياسي)**: إذا وجدت كلمات مثل:
+   - "قسم اختياري" / "חלק בחירה"
+   - "اختر أحد التخصصات" / "בחר התמחות"
+   - "سؤال التخصص" / "שאלת ההתמחות"
+   → section_type = 'elective' للأقسام الاختيارية
+   → exam_structure_type = 'standard'
+
+2. **all_mandatory (جميع إلزامية)**: إذا وجدت:
+   - "الفصل الأول / الثاني / الثالث" / "פרק ראשון/שני/שלישי"
+   - جميع الأقسام بدون خيار اختيار
+   - كلمات مثل "أجب عن X من Y" (اختيار داخل الفصل وليس بين الفصول)
+   → جميع الأقسام section_type = 'mandatory'
+   → exam_structure_type = 'all_mandatory'
+
 **قواعد استخراج العلامات (مهم جداً - لا تترك علامات السؤال = 0):**
 1. ابحث عن توزيع العلامات في الملف - عادة يكون مذكوراً في:
    - بداية كل قسم (مثل: "60 علامة" أو "40 علامة")
@@ -799,6 +832,11 @@ async function processJobInBackground(
             subject: { type: 'string' },
             duration_minutes: { type: 'number' },
             total_points: { type: 'number' },
+            exam_structure_type: { 
+              type: 'string', 
+              enum: ['standard', 'all_mandatory'],
+              description: 'نوع هيكل الامتحان: standard للامتحانات مع قسم اختياري (60+40)، all_mandatory للامتحانات بدون قسم اختياري (جميع الفصول إلزامية)'
+            },
             instructions: { type: 'string' },
             sections: {
               type: 'array',
@@ -1006,6 +1044,14 @@ async function processJobInBackground(
       return;
     }
     
+    // Auto-detect exam structure type if not set by AI
+    if (!parsedExam.exam_structure_type) {
+      parsedExam.exam_structure_type = detectExamStructure(parsedExam);
+      console.log(`[Job ${jobId}] Auto-detected exam structure: ${parsedExam.exam_structure_type}`);
+    } else {
+      console.log(`[Job ${jobId}] AI-detected exam structure: ${parsedExam.exam_structure_type}`);
+    }
+
     // Normalize exam structure to avoid UI/DB regressions (e.g., missing has_table)
     await updateJobStatus(supabase, jobId, 'processing', 65, 'جاري تحسين استخراج الجداول...');
     try {
