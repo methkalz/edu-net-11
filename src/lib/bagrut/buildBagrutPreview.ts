@@ -134,6 +134,7 @@ const buildQuestionTree = (rows: QuestionRow[]): ParsedQuestion[] => {
   for (const r of rows) {
     const correctAnswerData = (r as any).correct_answer_data ?? undefined;
     const blanksFromDb = correctAnswerData?.blanks as BlankDefinition[] | undefined;
+    const wordBankFromDb = correctAnswerData?.word_bank as string[] | undefined;
 
     byId.set(r.id, {
       __id: r.id,
@@ -156,6 +157,7 @@ const buildQuestionTree = (rows: QuestionRow[]): ParsedQuestion[] => {
       answer_explanation: r.answer_explanation ?? undefined,
       topic_tags: r.topic_tags ?? undefined,
       blanks: blanksFromDb,
+      word_bank: wordBankFromDb,
       sub_questions: [],
       // Add DB ID for updates
       question_db_id: r.id
