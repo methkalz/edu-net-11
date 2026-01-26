@@ -1,5 +1,5 @@
 // صفحة تصحيح امتحانات البجروت للمعلم
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
@@ -364,6 +364,162 @@ export default function BagrutGradingPage() {
     }} attemptId={selectedAttempt} attempt={attempts.find(a => a.id === selectedAttempt)!} examData={examData} userId={user?.id || ''} onSave={updateAttempt} fetchQuestionGrades={fetchQuestionGrades} saveQuestionGrade={saveQuestionGrade} isSaving={isSaving} />}
     </div>;
 }
+
+// مكون عرض سؤال واحد (منفصل لتجنب إعادة الإنشاء عند كل render)
+interface QuestionCardProps {
+  question: ParsedQuestion;
+  depth?: number;
+  answers: Record<string, any>;
+  questionGrades: Record<string, QuestionGrade>;
+  autoGradeQuestion: (q: ParsedQuestion, answer: any) => {
+    isAutoGradable: boolean;
+    isCorrect: boolean | null;
+    autoScore: number;
+  };
+  updateQuestionGrade: (questionId: string, field: string, value: any, maxScore: number) => void;
+  formatStudentAnswer: (q: ParsedQuestion, answer: any) => React.ReactNode;
+  formatCorrectAnswer: (q: ParsedQuestion) => React.ReactNode;
+  hasCorrectAnswer: (q: ParsedQuestion) => boolean;
+}
+
+const QuestionCard = React.memo(({
+  question,
+  depth = 0,
+  answers,
+  questionGrades,
+  autoGradeQuestion,
+  updateQuestionGrade,
+  formatStudentAnswer,
+  formatCorrectAnswer,
+  hasCorrectAnswer
+}: QuestionCardProps) => {
+  const questionId = question.question_db_id || '';
+  const answer = answers[questionId];
+  const grade = questionGrades[questionId] || {};
+
+  // التحقق إذا كان سؤال رئيسي له أسئلة فرعية
+  const hasSubQuestions = question.sub_questions && question.sub_questions.length > 0;
+  // سؤال رئيسي بدون إجابة مباشرة (الإجابات في الفرعيات)
+  const isParentWithNoDirectAnswer = hasSubQuestions && !answer?.answer;
+
+  // التحقق من التصحيح التلقائي (فقط للأسئلة الطرفية)
+  const autoGradeResult = !hasSubQuestions ? autoGradeQuestion(question, answer) : { isAutoGradable: false, isCorrect: null, autoScore: 0 };
+  const isAutoGraded = autoGradeResult.isAutoGradable;
+  const hasManualScore = (grade as any).manual_score !== undefined && (grade as any).manual_score !== null;
+
+  // القيمة المعروضة في حقل العلامة (فقط للأسئلة الطرفية)
+  const displayScore = hasManualScore ? (grade as any).manual_score : isAutoGraded ? autoGradeResult.autoScore : '';
+  
+  // للأسئلة الرئيسية: لا نعرض حقل العلامة إذا كانت لها فرعيات
+  const showGradeInput = question.points > 0 && !hasSubQuestions;
+
+  return (
+    <div className={depth > 0 ? 'mr-4 border-r-2 border-muted pr-4' : ''}>
+      <Card className={`${depth > 0 ? 'border-dashed' : ''} ${isAutoGraded && !hasManualScore ? autoGradeResult.isCorrect ? 'border-green-300 dark:border-green-800' : 'border-red-300 dark:border-red-800' : ''}`}>
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <CardTitle className="text-sm flex items-center gap-2 flex-wrap">
+              <span>سؤال {question.question_number} ({question.points} علامة)</span>
+              <Badge variant="outline" className="text-xs">
+                {question.question_type}
+              </Badge>
+              
+              {/* شارة التصحيح التلقائي - فقط للأسئلة الطرفية */}
+              {isAutoGraded && !hasManualScore && (
+                <Badge variant={autoGradeResult.isCorrect ? "default" : "destructive"} className={`text-xs ${autoGradeResult.isCorrect ? 'bg-green-500 hover:bg-green-600' : ''}`}>
+                  {autoGradeResult.isCorrect ? '✓ صحيح تلقائي' : '✗ خطأ تلقائي'}
+                </Badge>
+              )}
+              
+              {/* شارة للأسئلة الرئيسية */}
+              {hasSubQuestions && (
+                <Badge variant="secondary" className="text-xs">
+                  يحتوي {question.sub_questions!.length} أسئلة فرعية
+                </Badge>
+              )}
+            </CardTitle>
+            {showGradeInput && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">العلامة:</span>
+                <Input 
+                  type="number" 
+                  min={0} 
+                  max={question.points} 
+                  value={displayScore} 
+                  onChange={e => updateQuestionGrade(questionId, 'manual_score', e.target.value ? parseInt(e.target.value) : null, question.points)} 
+                  className={`w-20 h-8 ${isAutoGraded && !hasManualScore ? autoGradeResult.isCorrect ? 'bg-green-50 border-green-300 dark:bg-green-950/30' : 'bg-red-50 border-red-300 dark:bg-red-950/30' : ''}`} 
+                />
+                <span className="text-sm">/ {question.points}</span>
+              </div>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="p-3 bg-muted/50 rounded-lg">
+            <p className="text-sm font-medium mb-1">السؤال:</p>
+            <p className="text-sm whitespace-pre-wrap">{question.question_text}</p>
+            {question.image_url && <img src={question.image_url} alt="صورة السؤال" className="mt-2 max-h-48 rounded" />}
+          </div>
+
+          {/* إظهار قسم الإجابة فقط إذا كان السؤال له إجابة مباشرة */}
+          {!isParentWithNoDirectAnswer && (
+            <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
+              <p className="text-sm font-medium mb-1">إجابة الطالب:</p>
+              <div className="text-sm">
+                {formatStudentAnswer(question, answer)}
+              </div>
+            </div>
+          )}
+
+          {/* الإجابة الصحيحة - فقط للأسئلة الطرفية */}
+          {!hasSubQuestions && hasCorrectAnswer(question) && (
+            <div className="p-3 bg-green-50 dark:bg-green-950/30 rounded-lg">
+              <p className="text-sm font-medium mb-1">الإجابة الصحيحة:</p>
+              <div className="text-sm">
+                {formatCorrectAnswer(question)}
+              </div>
+            </div>
+          )}
+
+          {/* ملاحظات - فقط للأسئلة الطرفية */}
+          {showGradeInput && (
+            <div>
+              <label className="text-sm font-medium">ملاحظات على هذا السؤال:</label>
+              <Textarea 
+                value={(grade as any).teacher_feedback || ''} 
+                onChange={e => updateQuestionGrade(questionId, 'teacher_feedback', e.target.value, question.points)} 
+                placeholder="ملاحظات اختيارية..." 
+                className="mt-1 h-16" 
+              />
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* الأسئلة الفرعية */}
+      {hasSubQuestions && (
+        <div className="mt-3 space-y-3">
+          {question.sub_questions!.map(subQ => (
+            <QuestionCard 
+              key={subQ.question_db_id} 
+              question={subQ} 
+              depth={depth + 1}
+              answers={answers}
+              questionGrades={questionGrades}
+              autoGradeQuestion={autoGradeQuestion}
+              updateQuestionGrade={updateQuestionGrade}
+              formatStudentAnswer={formatStudentAnswer}
+              formatCorrectAnswer={formatCorrectAnswer}
+              hasCorrectAnswer={hasCorrectAnswer}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+});
+
+QuestionCard.displayName = 'QuestionCard';
 
 // Dialog component for grading individual attempt
 interface GradingDialogProps {
@@ -905,7 +1061,7 @@ function GradingDialog({
     };
     loadGrades();
   }, [shouldLoadGrades, attemptId, fetchQuestionGrades, allQuestions, answers]);
-  const updateQuestionGrade = (questionId: string, field: string, value: any, maxScore: number) => {
+  const updateQuestionGrade = useCallback((questionId: string, field: string, value: any, maxScore: number) => {
     setQuestionGrades(prev => ({
       ...prev,
       [questionId]: {
@@ -916,7 +1072,7 @@ function GradingDialog({
         [field]: value
       }
     }));
-  };
+  }, [attemptId]);
   const calculateTotalScore = () => {
     let total = 0;
     
@@ -978,99 +1134,6 @@ function GradingDialog({
     });
   };
   const scores = calculateTotalScore();
-
-  // مكون عرض سؤال واحد (يدعم الأسئلة الفرعية)
-  const QuestionCard = ({
-    question,
-    depth = 0
-  }: {
-    question: ParsedQuestion;
-    depth?: number;
-  }) => {
-    const questionId = question.question_db_id || '';
-    const answer = answers[questionId];
-    const grade = questionGrades[questionId] || {};
-
-    // التحقق إذا كان سؤال رئيسي له أسئلة فرعية
-    const hasSubQuestions = question.sub_questions && question.sub_questions.length > 0;
-    // سؤال رئيسي بدون إجابة مباشرة (الإجابات في الفرعيات)
-    const isParentWithNoDirectAnswer = hasSubQuestions && !answer?.answer;
-
-    // التحقق من التصحيح التلقائي (فقط للأسئلة الطرفية)
-    const autoGradeResult = !hasSubQuestions ? autoGradeQuestion(question, answer) : { isAutoGradable: false, isCorrect: null, autoScore: 0 };
-    const isAutoGraded = autoGradeResult.isAutoGradable;
-    const hasManualScore = (grade as any).manual_score !== undefined && (grade as any).manual_score !== null;
-
-    // القيمة المعروضة في حقل العلامة (فقط للأسئلة الطرفية)
-    const displayScore = hasManualScore ? (grade as any).manual_score : isAutoGraded ? autoGradeResult.autoScore : '';
-    
-    // للأسئلة الرئيسية: لا نعرض حقل العلامة إذا كانت لها فرعيات
-    const showGradeInput = question.points > 0 && !hasSubQuestions;
-
-    return <div className={depth > 0 ? 'mr-4 border-r-2 border-muted pr-4' : ''}>
-        <Card className={`${depth > 0 ? 'border-dashed' : ''} ${isAutoGraded && !hasManualScore ? autoGradeResult.isCorrect ? 'border-green-300 dark:border-green-800' : 'border-red-300 dark:border-red-800' : ''}`}>
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <CardTitle className="text-sm flex items-center gap-2 flex-wrap">
-                <span>سؤال {question.question_number} ({question.points} علامة)</span>
-                <Badge variant="outline" className="text-xs">
-                  {question.question_type}
-                </Badge>
-                
-                {/* شارة التصحيح التلقائي - فقط للأسئلة الطرفية */}
-                {isAutoGraded && !hasManualScore && <Badge variant={autoGradeResult.isCorrect ? "default" : "destructive"} className={`text-xs ${autoGradeResult.isCorrect ? 'bg-green-500 hover:bg-green-600' : ''}`}>
-                    {autoGradeResult.isCorrect ? '✓ صحيح تلقائي' : '✗ خطأ تلقائي'}
-                  </Badge>}
-                
-                {/* شارة للأسئلة الرئيسية */}
-                {hasSubQuestions && <Badge variant="secondary" className="text-xs">
-                    يحتوي {question.sub_questions!.length} أسئلة فرعية
-                  </Badge>}
-              </CardTitle>
-              {showGradeInput && <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">العلامة:</span>
-                  <Input type="number" min={0} max={question.points} value={displayScore} onChange={e => updateQuestionGrade(questionId, 'manual_score', e.target.value ? parseInt(e.target.value) : null, question.points)} className={`w-20 h-8 ${isAutoGraded && !hasManualScore ? autoGradeResult.isCorrect ? 'bg-green-50 border-green-300 dark:bg-green-950/30' : 'bg-red-50 border-red-300 dark:bg-red-950/30' : ''}`} />
-                  <span className="text-sm">/ {question.points}</span>
-                </div>}
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="p-3 bg-muted/50 rounded-lg">
-              <p className="text-sm font-medium mb-1">السؤال:</p>
-              <p className="text-sm whitespace-pre-wrap">{question.question_text}</p>
-              {question.image_url && <img src={question.image_url} alt="صورة السؤال" className="mt-2 max-h-48 rounded" />}
-            </div>
-
-            {/* إظهار قسم الإجابة فقط إذا كان السؤال له إجابة مباشرة */}
-            {!isParentWithNoDirectAnswer && <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
-              <p className="text-sm font-medium mb-1">إجابة الطالب:</p>
-              <div className="text-sm">
-                {formatStudentAnswer(question, answer)}
-              </div>
-            </div>}
-
-            {/* الإجابة الصحيحة - فقط للأسئلة الطرفية */}
-            {!hasSubQuestions && hasCorrectAnswer(question) && <div className="p-3 bg-green-50 dark:bg-green-950/30 rounded-lg">
-                <p className="text-sm font-medium mb-1">الإجابة الصحيحة:</p>
-                <div className="text-sm">
-                  {formatCorrectAnswer(question)}
-                </div>
-              </div>}
-
-            {/* ملاحظات - فقط للأسئلة الطرفية */}
-            {showGradeInput && <div>
-                <label className="text-sm font-medium">ملاحظات على هذا السؤال:</label>
-                <Textarea value={(grade as any).teacher_feedback || ''} onChange={e => updateQuestionGrade(questionId, 'teacher_feedback', e.target.value, question.points)} placeholder="ملاحظات اختيارية..." className="mt-1 h-16" />
-              </div>}
-          </CardContent>
-        </Card>
-
-        {/* الأسئلة الفرعية */}
-        {hasSubQuestions && <div className="mt-3 space-y-3">
-            {question.sub_questions!.map(subQ => <QuestionCard key={subQ.question_db_id} question={subQ} depth={depth + 1} />)}
-          </div>}
-      </div>;
-  };
   return <Dialog open={open} onOpenChange={o => !o && onClose()}>
       <DialogContent className="max-w-4xl h-[85vh] flex flex-col gap-0 p-0">
         {/* Header - Fixed */}
@@ -1153,7 +1216,19 @@ function GradingDialog({
                             </p>;
                 }
                 return <div className="space-y-4">
-                            {filteredQuestions.map(question => <QuestionCard key={question.question_db_id} question={question} />)}
+                            {filteredQuestions.map(question => (
+                              <QuestionCard 
+                                key={question.question_db_id} 
+                                question={question}
+                                answers={answers}
+                                questionGrades={questionGrades}
+                                autoGradeQuestion={autoGradeQuestion}
+                                updateQuestionGrade={updateQuestionGrade}
+                                formatStudentAnswer={formatStudentAnswer}
+                                formatCorrectAnswer={formatCorrectAnswer}
+                                hasCorrectAnswer={hasCorrectAnswer}
+                              />
+                            ))}
                           </div>;
               })()}
                     </div>)}
