@@ -271,7 +271,7 @@ export default function ExamCalculator({ className }: ExamCalculatorProps) {
             )}
 
             {/* شبكة الأزرار */}
-            <div className="grid grid-cols-4 gap-1.5">
+            <div className="grid grid-cols-4 gap-1.5" dir="ltr">
               {buttons.map((btn, index) => (
                 <Button
                   key={index}
