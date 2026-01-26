@@ -172,10 +172,11 @@ export default function ExamCalculator({ className }: ExamCalculatorProps) {
   };
 
   // أزرار الآلة الحاسبة
+  // ترتيب الأزرار مثل آلة حاسبة ويندوز (العمليات على اليمين)
   const buttons = [
+    { label: '%', action: () => performOperation('%'), variant: 'secondary' as const },
     { label: 'C', action: clearAll, variant: 'destructive' as const },
     { label: '⌫', action: backspace, variant: 'secondary' as const },
-    { label: '%', action: () => performOperation('%'), variant: 'operator' as const },
     { label: '÷', action: () => performOperation('/'), variant: 'operator' as const },
     { label: '7', action: () => inputDigit('7'), variant: 'number' as const },
     { label: '8', action: () => inputDigit('8'), variant: 'number' as const },
