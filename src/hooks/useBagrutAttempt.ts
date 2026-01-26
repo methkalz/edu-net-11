@@ -19,6 +19,8 @@ export interface BagrutExamData {
     max_attempts: number;
     show_answers_to_students: boolean;
     allow_review_after_submit: boolean;
+    // نوع هيكل الامتحان: standard = إلزامي + اختياري، all_mandatory = جميع الأقسام إلزامية
+    exam_structure_type: 'standard' | 'all_mandatory';
   };
   sections: ParsedSection[];
   attempt: {
@@ -125,6 +127,9 @@ export function useBagrutAttempt(examId: string | undefined, studentId: string |
 
       const inProgressAttempt = (attempts || []).find(a => a.status === 'in_progress');
       const maxAttempts = exam.max_attempts || 1;
+      
+      // تحديد نوع هيكل الامتحان
+      const examStructureType = (exam as any).exam_structure_type || 'standard';
 
       return {
         exam: {
@@ -139,6 +144,7 @@ export function useBagrutAttempt(examId: string | undefined, studentId: string |
           max_attempts: maxAttempts,
           show_answers_to_students: exam.show_answers_to_students || false,
           allow_review_after_submit: exam.allow_review_after_submit ?? true,
+          exam_structure_type: examStructureType as 'standard' | 'all_mandatory',
         },
         sections: sectionsWithQuestions,
         attempt: inProgressAttempt ? {

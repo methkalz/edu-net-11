@@ -65,6 +65,8 @@ export interface ParsedExam {
   sections: ParsedSection[];
   // DB ID for updates (only present for exams loaded from database)
   exam_db_id?: string;
+  // نوع هيكل الامتحان: standard = إلزامي + اختياري، all_mandatory = جميع الأقسام إلزامية
+  exam_structure_type?: 'standard' | 'all_mandatory';
 }
 
 export interface Statistics {
@@ -75,6 +77,7 @@ export interface Statistics {
 }
 
 type ExamRow = {
+  id: string;
   title: string;
   exam_year: number;
   exam_season: string;
@@ -83,6 +86,7 @@ type ExamRow = {
   duration_minutes: number | null;
   total_points: number | null;
   instructions: string | null;
+  exam_structure_type: string | null;
 };
 
 type SectionRow = {
@@ -226,7 +230,7 @@ const tallyTypesRecursive = (questions: ParsedQuestion[], acc: Record<string, nu
 };
 
 export const buildBagrutPreviewFromDb = (args: {
-  exam: ExamRow & { id: string };
+  exam: ExamRow;
   sections: SectionRow[];
   questions: QuestionRow[];
 }): { exam: ParsedExam; statistics: Statistics } => {
@@ -268,6 +272,10 @@ export const buildBagrutPreviewFromDb = (args: {
     };
   });
 
+  // تحديد نوع هيكل الامتحان
+  const examStructureType: 'standard' | 'all_mandatory' = 
+    (exam.exam_structure_type === 'all_mandatory') ? 'all_mandatory' : 'standard';
+
   const parsedExam: ParsedExam = {
     title: exam.title,
     exam_year: exam.exam_year,
@@ -279,14 +287,15 @@ export const buildBagrutPreviewFromDb = (args: {
     instructions: exam.instructions ?? undefined,
     sections: sectionsWithQuestions,
     // Add DB ID for updates
-    exam_db_id: exam.id
+    exam_db_id: exam.id,
+    // نوع هيكل الامتحان
+    exam_structure_type: examStructureType
   };
 
   const questionsByType: Record<string, number> = {};
   let totalQuestions = 0;
 
   // حساب المجموع باستخدام العلامات الرسمية للأقسام
-  // القسم الإلزامي: 60 علامة، قسم التخصص: 40 علامة (يختار الطالب واحداً)
   let mandatoryPoints = 0;
   let maxElectivePoints = 0;
 
@@ -303,8 +312,15 @@ export const buildBagrutPreviewFromDb = (args: {
     }
   }
 
-  // المجموع = القسم الإلزامي + أعلى تخصص = 60 + 40 = 100
-  const totalPoints = mandatoryPoints + maxElectivePoints;
+  // حساب المجموع حسب نوع الهيكل
+  let totalPoints: number;
+  if (examStructureType === 'all_mandatory') {
+    // جميع الأقسام إلزامية - جمع كل الأقسام
+    totalPoints = mandatoryPoints;
+  } else {
+    // الهيكل القياسي: إلزامي + أعلى تخصص = 60 + 40 = 100
+    totalPoints = mandatoryPoints + maxElectivePoints;
+  }
 
   const statistics: Statistics = {
     totalSections: sectionsWithQuestions.length,
