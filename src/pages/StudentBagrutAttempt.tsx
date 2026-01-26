@@ -108,13 +108,27 @@ export default function StudentBagrutAttempt() {
     }
   }, [attemptId, attemptStartedAt, timer]);
 
+  // دالة للتحقق إذا كان السؤال محلولاً (مع دعم الأسئلة الفرعية)
+  const isQuestionAnswered = useCallback((question: ParsedQuestion): boolean => {
+    const qId = question.question_db_id || question.question_number;
+    
+    // إذا كان سؤال له أسئلة فرعية، نتحقق منها
+    if (question.sub_questions && question.sub_questions.length > 0) {
+      // السؤال محلول إذا تمت الإجابة على جميع أسئلته الفرعية
+      return question.sub_questions.every(subQ => {
+        const subQId = subQ.question_db_id || subQ.question_number;
+        return answers[subQId] && answers[subQId].answer;
+      });
+    }
+    
+    // للأسئلة العادية، نتحقق من الإجابة المباشرة
+    return !!(answers[qId] && answers[qId].answer);
+  }, [answers]);
+
   // إحصائيات الإجابات
   const answeredCount = useMemo(() => {
-    return allQuestions.filter(q => {
-      const qId = q.question_db_id || q.question_number;
-      return answers[qId] && answers[qId].answer;
-    }).length;
-  }, [allQuestions, answers]);
+    return allQuestions.filter(q => isQuestionAnswered(q)).length;
+  }, [allQuestions, isQuestionAnswered]);
 
   const progressPercent = allQuestions.length > 0 
     ? Math.round((answeredCount / allQuestions.length) * 100) 
@@ -334,7 +348,7 @@ export default function StudentBagrutAttempt() {
                 <div className="grid grid-cols-4 gap-2">
                   {allQuestions.map((q, index) => {
                     const qId = q.question_db_id || q.question_number;
-                    const isAnswered = answers[qId]?.answer;
+                    const isAnswered = isQuestionAnswered(q);
                     const isCurrent = index === currentQuestionIndex;
 
                     return (
@@ -373,7 +387,7 @@ export default function StudentBagrutAttempt() {
               ).map((q, i) => {
                 const actualIndex = Math.max(0, currentQuestionIndex - 2) + i;
                 const qId = q.question_db_id || q.question_number;
-                const isAnswered = answers[qId]?.answer;
+                const isAnswered = isQuestionAnswered(q);
                 const isCurrent = actualIndex === currentQuestionIndex;
                 
                 return (
