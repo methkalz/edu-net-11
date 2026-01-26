@@ -229,8 +229,9 @@ const BagrutManagement: React.FC = () => {
     setViewState('preview');
   };
 
-  // Validate exam points = 100 (mandatory 60 + one elective 40)
+  // Validate exam points = 100 based on exam structure type
   const validateExamPoints = (exam: any): { isValid: boolean; message?: string; total?: number } => {
+    const structureType = exam.exam_structure_type || 'standard';
     let mandatoryTotal = 0;
     let maxElectiveTotal = 0;
     
@@ -242,13 +243,27 @@ const BagrutManagement: React.FC = () => {
       }
     }
     
+    // التحقق حسب نوع الهيكل
+    if (structureType === 'all_mandatory') {
+      // جميع الأقسام إلزامية - المجموع = 100
+      if (mandatoryTotal !== 100) {
+        return {
+          isValid: false,
+          total: mandatoryTotal,
+          message: `مجموع الفصول الإلزامية ${mandatoryTotal} ≠ 100`
+        };
+      }
+      return { isValid: true, total: 100 };
+    }
+    
+    // الهيكل القياسي: إلزامي + اختياري = 100
     const total = mandatoryTotal + maxElectiveTotal;
     
     if (total !== 100) {
       return {
         isValid: false,
         total,
-        message: `مجموع العلامات ${total} ≠ 100. يجب أن يكون القسم الإلزامي (${mandatoryTotal}) + التخصص (${maxElectiveTotal}) = 100`
+        message: `مجموع العلامات ${total} ≠ 100 (إلزامي ${mandatoryTotal} + اختياري ${maxElectiveTotal})`
       };
     }
     
@@ -290,7 +305,8 @@ const BagrutManagement: React.FC = () => {
         instructions: parsedExam.instructions,
         status: 'ready',
         created_by: user.id,
-        ai_parsed_at: new Date().toISOString()
+        ai_parsed_at: new Date().toISOString(),
+        exam_structure_type: parsedExam.exam_structure_type || 'standard'
       }).select().single();
       if (examError) throw examError;
 

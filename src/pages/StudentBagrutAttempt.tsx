@@ -262,6 +262,9 @@ export default function StudentBagrutAttempt() {
 
   // اختيار الأقسام (إذا لم تبدأ المحاولة بعد)
   if (!attemptId) {
+    // تحديد نوع هيكل الامتحان
+    const examStructureType = examData.exam.exam_structure_type || 'standard';
+    
     return (
       <div className="container mx-auto p-6">
         <BagrutSectionSelector
@@ -272,6 +275,7 @@ export default function StudentBagrutAttempt() {
           instructions={examData.exam.instructions}
           onStart={startExam}
           isStarting={isCreatingAttempt}
+          examStructureType={examStructureType}
         />
       </div>
     );

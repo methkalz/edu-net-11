@@ -20,6 +20,7 @@ import {
   Info
 } from 'lucide-react';
 import type { ParsedSection } from '@/lib/bagrut/buildBagrutPreview';
+import AllMandatoryExamStart from './AllMandatoryExamStart';
 
 interface BagrutSectionSelectorProps {
   sections: ParsedSection[];
@@ -29,6 +30,8 @@ interface BagrutSectionSelectorProps {
   instructions: string | null;
   onStart: (selectedSectionIds: string[]) => void;
   isStarting: boolean;
+  // نوع هيكل الامتحان: standard = إلزامي + اختياري، all_mandatory = جميع الأقسام إلزامية
+  examStructureType?: 'standard' | 'all_mandatory';
 }
 
 export default function BagrutSectionSelector({
@@ -39,6 +42,7 @@ export default function BagrutSectionSelector({
   instructions,
   onStart,
   isStarting,
+  examStructureType = 'standard',
 }: BagrutSectionSelectorProps) {
   // تحديد الأقسام الإلزامية والاختيارية
   const mandatorySections = useMemo(() => 
@@ -68,6 +72,40 @@ export default function BagrutSectionSelector({
   // عدد الأقسام الاختيارية المطلوبة
   const requiredElectives = electiveSections.length > 0 ? 1 : 0; // عادةً قسم واحد
 
+  const totalQuestionsCount = useMemo(() => {
+    const mandatoryCount = mandatorySections.reduce((acc, s) => acc + s.questions.length, 0);
+    const selectedElectiveCount = electiveSections
+      .filter(s => selectedElectives.includes(s.section_db_id!))
+      .reduce((acc, s) => acc + s.questions.length, 0);
+    return mandatoryCount + selectedElectiveCount;
+  }, [mandatorySections, electiveSections, selectedElectives]);
+
+  // تنسيق التعليمات كقائمة
+  const formattedInstructions = useMemo(() => {
+    if (!instructions) return [];
+    return instructions
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0);
+  }, [instructions]);
+
+  // إذا كان الهيكل "جميع إلزامية"، نستخدم مكون AllMandatoryExamStart
+  if (examStructureType === 'all_mandatory') {
+    const allSectionIds = sections.map(s => s.section_db_id!).filter(Boolean);
+    
+    return (
+      <AllMandatoryExamStart
+        sections={sections}
+        examTitle={examTitle}
+        examDuration={examDuration}
+        totalPoints={totalPoints}
+        instructions={instructions}
+        onStart={() => onStart(allSectionIds)}
+        isStarting={isStarting}
+      />
+    );
+  }
+
   const toggleSection = (sectionId: string) => {
     setSelectedElectives(prev => {
       if (prev.includes(sectionId)) {
@@ -92,23 +130,6 @@ export default function BagrutSectionSelector({
   };
 
   const canStart = requiredElectives === 0 || selectedElectives.length >= requiredElectives;
-
-  const totalQuestionsCount = useMemo(() => {
-    const mandatoryCount = mandatorySections.reduce((acc, s) => acc + s.questions.length, 0);
-    const selectedElectiveCount = electiveSections
-      .filter(s => selectedElectives.includes(s.section_db_id!))
-      .reduce((acc, s) => acc + s.questions.length, 0);
-    return mandatoryCount + selectedElectiveCount;
-  }, [mandatorySections, electiveSections, selectedElectives]);
-
-  // تنسيق التعليمات كقائمة
-  const formattedInstructions = useMemo(() => {
-    if (!instructions) return [];
-    return instructions
-      .split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 0);
-  }, [instructions]);
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">

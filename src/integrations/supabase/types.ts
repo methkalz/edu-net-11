@@ -288,9 +288,11 @@ export type Database = {
       bagrut_exam_sections: {
         Row: {
           created_at: string | null
+          elective_group: string | null
           exam_id: string
           id: string
           instructions: string | null
+          max_points_cap: number | null
           max_questions_to_answer: number | null
           min_questions_to_answer: number | null
           order_index: number | null
@@ -303,9 +305,11 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          elective_group?: string | null
           exam_id: string
           id?: string
           instructions?: string | null
+          max_points_cap?: number | null
           max_questions_to_answer?: number | null
           min_questions_to_answer?: number | null
           order_index?: number | null
@@ -318,9 +322,11 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          elective_group?: string | null
           exam_id?: string
           id?: string
           instructions?: string | null
+          max_points_cap?: number | null
           max_questions_to_answer?: number | null
           min_questions_to_answer?: number | null
           order_index?: number | null
@@ -356,12 +362,14 @@ export type Database = {
           exam_code: string | null
           exam_number: number
           exam_season: Database["public"]["Enums"]["bagrut_exam_season"]
+          exam_structure_type: string | null
           exam_year: number
           id: string
           instructions: string | null
           is_published: boolean | null
           max_attempts: number | null
           notes: string | null
+          required_elective_sections: number | null
           show_answers_to_students: boolean | null
           show_answers_to_teachers: boolean | null
           show_explanations: boolean | null
@@ -388,12 +396,14 @@ export type Database = {
           exam_code?: string | null
           exam_number?: number
           exam_season: Database["public"]["Enums"]["bagrut_exam_season"]
+          exam_structure_type?: string | null
           exam_year: number
           id?: string
           instructions?: string | null
           is_published?: boolean | null
           max_attempts?: number | null
           notes?: string | null
+          required_elective_sections?: number | null
           show_answers_to_students?: boolean | null
           show_answers_to_teachers?: boolean | null
           show_explanations?: boolean | null
@@ -420,12 +430,14 @@ export type Database = {
           exam_code?: string | null
           exam_number?: number
           exam_season?: Database["public"]["Enums"]["bagrut_exam_season"]
+          exam_structure_type?: string | null
           exam_year?: number
           id?: string
           instructions?: string | null
           is_published?: boolean | null
           max_attempts?: number | null
           notes?: string | null
+          required_elective_sections?: number | null
           show_answers_to_students?: boolean | null
           show_answers_to_teachers?: boolean | null
           show_explanations?: boolean | null
