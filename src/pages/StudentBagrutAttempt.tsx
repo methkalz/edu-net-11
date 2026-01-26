@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import BagrutSectionSelector from '@/components/bagrut/BagrutSectionSelector';
 import BagrutQuestionRenderer from '@/components/bagrut/BagrutQuestionRenderer';
 import ExamAntiCopyWrapper from '@/components/bagrut/ExamAntiCopyWrapper';
+import ExamCalculator from '@/components/bagrut/ExamCalculator';
 import SectionTransitionAlert from '@/components/bagrut/SectionTransitionAlert';
 import {
   AlertCircle,
@@ -518,6 +519,9 @@ export default function StudentBagrutAttempt() {
           </Card>
         </div>
       )}
+
+      {/* الآلة الحاسبة */}
+      <ExamCalculator />
 
       {/* تنبيه الانتقال لقسم الاختصاص */}
       {currentAlertSection && (
