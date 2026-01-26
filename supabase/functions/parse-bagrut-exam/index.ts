@@ -918,6 +918,11 @@ async function processJobInBackground(
                                 type: 'object',
                                 additionalProperties: true
                               },
+                              word_bank: {
+                                type: 'array',
+                                items: { type: 'string' },
+                                description: 'مخزن الكلمات المساعدة للسؤال الفرعي إن وجد'
+                              },
                               table_data: {
                                 type: 'object',
                                 additionalProperties: true
