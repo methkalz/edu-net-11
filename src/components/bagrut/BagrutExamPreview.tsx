@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -106,6 +106,13 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
   const [localExam, setLocalExam] = useState(exam);
   const [editMode, setEditMode] = useState(false);
   const [hasEdits, setHasEdits] = useState(false);
+
+  // مزامنة localExam مع exam prop عندما يتغير (بعد الحفظ أو إعادة الجلب من DB)
+  // هذا يضمن بقاء ترتيب الأسئلة كما في قاعدة البيانات
+  useEffect(() => {
+    setLocalExam(exam);
+    setHasEdits(false);
+  }, [exam]);
   const [isSavingEdits, setIsSavingEdits] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<ParsedQuestion | null>(null);
   const [editingContext, setEditingContext] = useState<{ sectionIndex: number } | null>(null);
