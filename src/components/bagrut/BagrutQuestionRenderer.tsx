@@ -337,8 +337,8 @@ function FillBlankQuestion({
   showAnswer,
 }: {
   question: ParsedQuestion;
-  answer: Record<string, string> | undefined;
-  onChange: (value: Record<string, string>) => void;
+  answer: Record<string, string> | string | undefined;
+  onChange: (value: Record<string, string> | string) => void;
   disabled: boolean;
   showAnswer: boolean;
 }) {
@@ -352,9 +352,40 @@ function FillBlankQuestion({
   let blankCounter = 0;
   let match;
 
+  // فحص إذا كان النص يحتوي على markers للفراغات
+  const hasMarkers = pattern.test(text);
+  pattern.lastIndex = 0; // إعادة تعيين الـ regex بعد test
+
   const handleBlankChange = (blankId: string, value: string) => {
-    onChange({ ...(answer || {}), [blankId]: value });
+    if (typeof answer === 'string') {
+      onChange({ [blankId]: value });
+    } else {
+      onChange({ ...(answer || {}), [blankId]: value });
+    }
   };
+
+  // إذا لم يحتوي النص على markers - نعرض Textarea كـ fallback
+  if (!hasMarkers) {
+    const textAnswer = typeof answer === 'string' ? answer : (answer as Record<string, string>)?.['1'] || '';
+    return (
+      <div className="space-y-3">
+        <p className="text-foreground whitespace-pre-wrap">{text}</p>
+        <Textarea
+          value={textAnswer}
+          onChange={(e) => onChange({ '1': e.target.value })}
+          disabled={disabled}
+          placeholder="اكتب إجابتك هنا..."
+          className="min-h-[120px] resize-y"
+        />
+        {showAnswer && question.correct_answer && (
+          <div className="p-3 bg-primary/10 rounded-lg border border-primary/30">
+            <span className="font-medium text-primary">الإجابة الصحيحة: </span>
+            <pre className="text-foreground whitespace-pre-wrap mt-1" dir="ltr">{question.correct_answer}</pre>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   while ((match = pattern.exec(text)) !== null) {
     if (match.index > lastIndex) {
@@ -364,7 +395,8 @@ function FillBlankQuestion({
     blankCounter++;
     const blankId = match[2] || String(blankCounter);
     const blankDef = blanks.find((b: any) => b.id === blankId) || blanks[blankCounter - 1];
-    const currentValue = answer?.[blankId] || '';
+    const answerRecord = typeof answer === 'object' ? answer : {};
+    const currentValue = answerRecord?.[blankId] || '';
 
     parts.push(
       <span key={`blank-${blankCounter}`} className="inline-block mx-1">
