@@ -8,13 +8,15 @@ import {
   Code, 
   Play,
   Maximize2,
-  FileText
+  FileText,
+  Music
 } from 'lucide-react';
 import { Grade10LessonWithMedia, Grade10LessonMedia } from '@/hooks/useStudentGrade10Lessons';
 import MediaFullscreenView from './MediaFullscreenView';
 import Lottie from 'lottie-react';
 import GammaEmbedWrapper from './GammaEmbedWrapper';
 import HTMLEmbedWrapper from './HTMLEmbedWrapper';
+import { InlineAudioPlayer } from '@/components/ui/inline-audio-player';
 
 interface Grade10LessonContentDisplayProps {
   lesson: Grade10LessonWithMedia;
@@ -257,13 +259,24 @@ const Grade10LessonContentDisplay: React.FC<Grade10LessonContentDisplayProps> = 
 
   // Separate media by type
   const embeddedMedia = lesson.media.filter(m => ['video', 'image', 'lottie', 'code'].includes(m.media_type));
-  const otherMedia = lesson.media.filter(m => !['video', 'image', 'lottie', 'code'].includes(m.media_type));
+  const audioMedia = lesson.media.filter(m => m.media_type === 'audio');
+  const otherMedia = lesson.media.filter(m => !['video', 'image', 'lottie', 'code', 'audio'].includes(m.media_type));
 
   return (
     <div className="space-y-6">
       {!hideTitle && (
         <div className="space-y-2">
-          <h2 className="text-2xl font-bold">{lesson.title}</h2>
+          <div className="flex items-center gap-4 flex-wrap">
+            <h2 className="text-2xl font-bold flex-1">{lesson.title}</h2>
+            {/* مشغل الصوت المباشر - يظهر بجانب العنوان */}
+            {audioMedia.length > 0 && (
+              <InlineAudioPlayer
+                src={audioMedia[0].file_path}
+                title={audioMedia[0].file_name}
+                className="shrink-0"
+              />
+            )}
+          </div>
           {lesson.content && (
             <>
               <HTMLEmbedWrapper content={lesson.content} />
