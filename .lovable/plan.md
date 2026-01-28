@@ -1,105 +1,103 @@
 
 
-# خطة نقل محتوى "أساسيات الاتصال" من الصف الحادي عشر إلى العاشر
+# خطة توحيد عرض الوسائط للصف العاشر مع الصف الحادي عشر
 
-## ملخص العملية
+## المشكلة المكتشفة
 
-سننقل محتوى قسم "أساسيات الاتصال" من الصف الحادي عشر ليحل محل محتوى القسم المماثل في الصف العاشر.
+بعد نسخ محتوى "أساسيات الاتصال" من الصف الحادي عشر إلى العاشر، هناك فروقات جوهرية في طريقة عرض الوسائط:
 
-## البيانات المكتشفة
+### الفروقات الرئيسية:
 
-### القسم المصدر (الصف الحادي عشر)
-- **ID**: `0eaba634-48f2-4e7e-a8e4-e8593eee848b`
-- **العنوان**: يسודות هتكشوريت - أساسيات الاتصال
-- **المواضيع**: 11 موضوع
-- **الدروس**: 105 درس
-- **الوسائط**: 118 ملف وسائط
+| الميزة | الصف الحادي عشر | الصف العاشر |
+|--------|-----------------|-------------|
+| **عرض الكود** | TypewriterCodeBlock مع أنيميشن كتابة تلقائية | عرض بسيط في `<pre>` بدون تنسيق |
+| **عرض المحتوى** | Conditional rendering لتجنب التكرار | عرض HTML + Gamma معاً (قد يسبب تكرار) |
+| **فيديو Google Drive** | مكون Grade11VideoFix لاستخراج drive_id | استخراج بسيط قد لا يعمل مع كل الروابط |
+| **فيديو YouTube** | استخراج من metadata.video_url | استخراج من file_path فقط |
+| **Lottie** | دعم animation_data + lottie_data + سرعة متحكم بها | دعم lottie_data فقط بدون سرعة |
+| **تنظيم الوسائط** | فصل الفيديو عن البقية مع عنوان | كل الوسائط مع بطاقات موحدة |
 
-### القسم الهدف (الصف العاشر)
-- **ID**: `0c1a9fe8-bb9b-4c73-b026-76f96ac7a227`
-- **العنوان**: أساسيات الاتصال
-- **المواضيع**: 11 موضوع (سيتم حذفها واستبدالها)
-- **الدروس**: 46 درس (سيتم حذفها واستبدالها)
-- **الوسائط**: 47 ملف وسائط (سيتم حذفها واستبدالها)
+## الحل المقترح
 
-## خطوات التنفيذ
+استبدال كامل منطق عرض الوسائط في `Grade10LessonContentDisplay.tsx` ليطابق تماماً `Grade11LessonContentDisplay.tsx`.
 
-### الخطوة 1: حذف البيانات القديمة من الصف العاشر
+## التغييرات التقنية
 
-ستتم بالترتيب التالي (بسبب العلاقات بين الجداول):
+### 1. تحديث Imports
+إضافة المكونات المفقودة:
+- `CodeBlock`
+- `TypewriterCodeBlock`
+- `Grade11VideoFix`
+- `logger`
+- `useRef`, `useEffect`
 
-1. حذف جميع الوسائط المرتبطة بالدروس في قسم أساسيات الاتصال
-2. حذف جميع الدروس في المواضيع التابعة للقسم
-3. حذف جميع المواضيع في القسم
-
-### الخطوة 2: نسخ البيانات من الصف الحادي عشر
-
-ستتم بالترتيب التالي:
-
-1. نسخ جميع المواضيع من grade11_topics إلى grade10_topics (مع تغيير section_id)
-2. نسخ جميع الدروس من grade11_lessons إلى grade10_lessons (مع تحديث topic_id الجديد)
-3. نسخ جميع الوسائط من grade11_lesson_media إلى grade10_lesson_media (مع تحديث lesson_id الجديد)
-
-### الخطوة 3: التحقق من صحة البيانات
-
-التأكد من أن عدد السجلات المنسوخة صحيح.
-
-## تفاصيل تقنية
-
-### SQL لحذف البيانات القديمة
-
-```sql
--- 1. حذف الوسائط
-DELETE FROM grade10_lesson_media 
-WHERE lesson_id IN (
-  SELECT l.id FROM grade10_lessons l
-  JOIN grade10_topics t ON t.id = l.topic_id
-  WHERE t.section_id = '0c1a9fe8-bb9b-4c73-b026-76f96ac7a227'
-);
-
--- 2. حذف الدروس
-DELETE FROM grade10_lessons 
-WHERE topic_id IN (
-  SELECT id FROM grade10_topics 
-  WHERE section_id = '0c1a9fe8-bb9b-4c73-b026-76f96ac7a227'
-);
-
--- 3. حذف المواضيع
-DELETE FROM grade10_topics 
-WHERE section_id = '0c1a9fe8-bb9b-4c73-b026-76f96ac7a227';
+### 2. تحديث renderEmbeddedMedia للفيديو
+```typescript
+case 'video':
+  // دعم metadata.source_type (youtube, google_drive, upload, url)
+  if (metadata.source_type === 'youtube') {
+    // استخراج YouTube ID من metadata أو file_path
+  } else if (metadata.source_type === 'google_drive') {
+    return <Grade11VideoFix media={media} metadata={metadata} />;
+  } else {
+    // فيديو عادي
+  }
 ```
 
-### SQL لنسخ البيانات الجديدة
-
-```sql
--- 1. نسخ المواضيع مع IDs جديدة
-INSERT INTO grade10_topics (id, section_id, title, content, order_index, created_at, updated_at)
-SELECT 
-  gen_random_uuid(),
-  '0c1a9fe8-bb9b-4c73-b026-76f96ac7a227', -- section_id الجديد للصف العاشر
-  title,
-  content,
-  order_index,
-  NOW(),
-  NOW()
-FROM grade11_topics
-WHERE section_id = '0eaba634-48f2-4e7e-a8e4-e8593eee848b';
-
--- 2. إنشاء mapping table للمواضيع ثم نسخ الدروس
--- 3. إنشاء mapping table للدروس ثم نسخ الوسائط
+### 3. تحديث renderEmbeddedMedia للكود
+```typescript
+case 'code':
+  // دعم nested metadata
+  // استخدام TypewriterCodeBlock مع أنيميشن
+  // أو CodeBlock العادي
 ```
 
-## التحذيرات
+### 4. تحديث renderEmbeddedMedia للوتي
+```typescript
+case 'lottie':
+  // دعم metadata.animation_data + metadata.lottie_data
+  // دعم إعدادات السرعة
+  // استخدام LottieDisplay component
+```
 
-- هذه العملية **لا يمكن التراجع عنها** بسهولة
-- سيتم **حذف جميع البيانات الحالية** في قسم أساسيات الاتصال للصف العاشر
-- الوسائط (الصور/الفيديو) ستشير لنفس الروابط (لن يتم نسخ الملفات الفعلية)
+### 5. تحديث عرض المحتوى (Conditional Rendering)
+```typescript
+{lesson.content && (
+  <>
+    {lesson.content.includes('data-type="html-embed"') && (
+      <HTMLEmbedWrapper content={lesson.content} />
+    )}
+    
+    {lesson.content.includes('gamma.app/embed') && (
+      <GammaEmbedWrapper content={lesson.content} />
+    )}
+    
+    {/* فقط إذا لم يحتوي على HTML/Gamma */}
+    {!lesson.content.includes('data-type="html-embed"') && 
+     !lesson.content.includes('gamma.app/embed') && (
+      <div dangerouslySetInnerHTML={{ __html: lesson.content }} />
+    )}
+  </>
+)}
+```
+
+### 6. تحديث هيكل العرض
+- فصل `videoMedia` عن `otherMedia`
+- عرض الفيديوهات بشكل منفصل مع عنوان "مقاطع الفيديو"
+- إضافة LottieDisplay component للتحكم بالسرعة
+
+## ملخص الملفات المتأثرة
+
+| الملف | التغيير |
+|-------|---------|
+| `src/components/content/Grade10LessonContentDisplay.tsx` | إعادة كتابة شاملة لمطابقة Grade11 |
 
 ## النتيجة المتوقعة
 
 بعد التنفيذ:
-- قسم "أساسيات الاتصال" في الصف العاشر سيحتوي على **نفس المحتوى** الموجود في الصف الحادي عشر
-- **11 موضوع** بدلاً من 11 (نفس العدد)
-- **105 درس** بدلاً من 46
-- **118 وسائط** بدلاً من 47
+- أكواد HTML التفاعلية ستعمل بشكل صحيح
+- عروض Gamma التقديمية ستظهر بدون تكرار
+- فيديوهات YouTube و Google Drive ستعمل
+- ملفات Lottie ستعرض مع إعدادات السرعة
+- أكواد البرمجة ستظهر مع أنيميشن الطباعة
 
