@@ -1,304 +1,463 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useRef, useEffect } from 'react';
+import { Play, Image, Video, FileText, Maximize2, ExternalLink, Code } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Video, 
-  Image as ImageIcon, 
-  Code, 
-  Play,
-  Maximize2,
-  FileText,
-  Music
-} from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { InlineAudioPlayer } from '@/components/ui/inline-audio-player';
+import Lottie from 'lottie-react';
 import { Grade10LessonWithMedia, Grade10LessonMedia } from '@/hooks/useStudentGrade10Lessons';
 import MediaFullscreenView from './MediaFullscreenView';
-import Lottie from 'lottie-react';
+import CodeBlock from './CodeBlock';
+import TypewriterCodeBlock from './TypewriterCodeBlock';
+import { logger } from '@/lib/logger';
 import GammaEmbedWrapper from './GammaEmbedWrapper';
 import HTMLEmbedWrapper from './HTMLEmbedWrapper';
-import { InlineAudioPlayer } from '@/components/ui/inline-audio-player';
+import { Grade11VideoFix } from './Grade11VideoFix';
 
 interface Grade10LessonContentDisplayProps {
   lesson: Grade10LessonWithMedia;
   hideTitle?: boolean;
 }
 
-const Grade10LessonContentDisplay: React.FC<Grade10LessonContentDisplayProps> = ({ 
+const Grade10LessonContentDisplay: React.FC<Grade10LessonContentDisplayProps> = ({
   lesson,
   hideTitle = false
 }) => {
-  const [previewMedia, setPreviewMedia] = useState<Grade10LessonMedia | null>(null);
+  const [previewMedia, setPreviewMedia] = useState<any>(null);
 
-  const getMediaIcon = (type: string) => {
-    switch (type) {
-      case 'video': return <Video className="w-4 h-4" />;
-      case 'image': return <ImageIcon className="w-4 h-4" />;
-      case 'lottie': return <Play className="w-4 h-4" />;
-      case 'code': return <Code className="w-4 h-4" />;
-      default: return <FileText className="w-4 h-4" />;
+  // تحديث previewMedia عند تحديث lesson.media
+  useEffect(() => {
+    if (previewMedia && lesson.media) {
+      const updatedMedia = lesson.media.find(m => m.id === previewMedia.id);
+      if (updatedMedia && JSON.stringify(updatedMedia.metadata) !== JSON.stringify(previewMedia.metadata)) {
+        console.log('Updating preview media with new data:', updatedMedia);
+        setPreviewMedia(updatedMedia);
+      }
+    }
+  }, [lesson.media, previewMedia]);
+
+  const getMediaIcon = (mediaType: string) => {
+    switch (mediaType) {
+      case 'video':
+        return <Video className="h-6 w-6 text-primary" />;
+      case 'lottie':
+        return <Play className="h-6 w-6 text-primary" />;
+      case 'image':
+        return <Image className="h-6 w-6 text-primary" />;
+      case 'code':
+        return <Code className="h-6 w-6 text-primary" />;
+      default:
+        return <FileText className="h-6 w-6 text-primary" />;
     }
   };
 
   const getMediaTypeBadge = (type: string) => {
-    const badges = {
-      video: { label: 'فيديو', className: 'bg-blue-500/10 text-blue-700 border-blue-200' },
-      image: { label: 'صورة', className: 'bg-green-500/10 text-green-700 border-green-200' },
-      lottie: { label: 'رسوم متحركة', className: 'bg-purple-500/10 text-purple-700 border-purple-200' },
-      code: { label: 'كود', className: 'bg-orange-500/10 text-orange-700 border-orange-200' },
-      '3d_model': { label: 'نموذج 3D', className: 'bg-pink-500/10 text-pink-700 border-pink-200' }
+    const colors = {
+      video: 'bg-red-100 text-red-700 border-red-200',
+      image: 'bg-green-100 text-green-700 border-green-200',
+      lottie: 'bg-purple-100 text-purple-700 border-purple-200',
+      code: 'bg-blue-100 text-blue-700 border-blue-200'
     };
-    
-    const badge = badges[type as keyof typeof badges] || { label: type, className: 'bg-gray-500/10 text-gray-700 border-gray-200' };
-    
-    return (
-      <Badge variant="outline" className={`${badge.className} gap-1.5`}>
-        {getMediaIcon(type)}
-        {badge.label}
-      </Badge>
-    );
+    return colors[type as keyof typeof colors] || 'bg-gray-100 text-gray-700 border-gray-200';
   };
 
-  const extractYouTubeId = (url: string): string | null => {
-    const patterns = [
-      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
-      /^([a-zA-Z0-9_-]{11})$/
-    ];
-    
-    for (const pattern of patterns) {
-      const match = url.match(pattern);
-      if (match) return match[1];
-    }
-    return null;
-  };
+  const renderEmbeddedMedia = (media: any) => {
+    const metadata = media.metadata || {};
 
-  const extractGoogleDriveId = (url: string): string | null => {
-    const patterns = [
-      /\/file\/d\/([^\/]+)/,
-      /id=([^&]+)/,
-      /^([a-zA-Z0-9_-]+)$/
-    ];
-    
-    for (const pattern of patterns) {
-      const match = url.match(pattern);
-      if (match) return match[1];
-    }
-    return null;
-  };
-
-  const renderEmbeddedMedia = (media: Grade10LessonMedia) => {
-    const { media_type, file_path, file_name, metadata } = media;
-
-    switch (media_type) {
+    switch (media.media_type) {
       case 'video':
-        const youtubeId = extractYouTubeId(file_path);
-        if (youtubeId) {
+        if (metadata.source_type === 'youtube') {
+          // Extract YouTube ID from various possible formats
+          let youtubeId = metadata.youtube_id;
+          
+          if (!youtubeId && metadata.video_url) {
+            // Extract from video_url (e.g., "https://www.youtube.com/embed/vX_1Yit53Lc")
+            const urlMatch = metadata.video_url.match(/(?:embed\/|v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+            if (urlMatch) youtubeId = urlMatch[1];
+          }
+          
+          if (!youtubeId && metadata.file_path) {
+            // Extract from file_path
+            const pathMatch = metadata.file_path.match(/(?:embed\/|v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+            if (pathMatch) youtubeId = pathMatch[1];
+          }
+          
+          if (!youtubeId && media.file_path) {
+            // Extract from media.file_path
+            const pathMatch = media.file_path.match(/(?:embed\/|v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+            if (pathMatch) youtubeId = pathMatch[1];
+          }
+          
+          if (youtubeId) {
+            const embedUrl = `https://www.youtube.com/embed/${youtubeId}`;
+            
+            return (
+              <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-900" style={{ minHeight: '400px' }}>
+                <iframe
+                  src={embedUrl}
+                  title={media.file_name}
+                  className="w-full h-full"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+            );
+          }
+        } else if (metadata.source_type === 'google_drive') {
+          return <Grade11VideoFix media={media} metadata={metadata} />;
+        } else if (metadata.source_type === 'upload' || metadata.source_type === 'url') {
           return (
-            <div className="relative w-full rounded-xl overflow-hidden shadow-lg" style={{ paddingBottom: '56.25%' }}>
-              <iframe
-                className="absolute top-0 left-0 w-full h-full"
-                src={`https://www.youtube.com/embed/${youtubeId}`}
-                title={file_name}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
-            </div>
-          );
-        }
-
-        const driveId = extractGoogleDriveId(file_path);
-        if (driveId) {
-          return (
-            <div className="relative w-full rounded-xl overflow-hidden shadow-lg" style={{ paddingBottom: '56.25%' }}>
-              <iframe
-                className="absolute top-0 left-0 w-full h-full"
-                src={`https://drive.google.com/file/d/${driveId}/preview`}
-                title={file_name}
-                allow="autoplay"
-                allowFullScreen
-              />
-            </div>
-          );
-        }
-
-        return (
-              <video 
-                controls 
+            <div className="relative rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
+              <video
+                src={media.file_path}
+                title={media.file_name}
+                className="w-full max-h-[600px] object-contain"
+                controls
                 controlsList="nodownload"
-                className="w-full max-h-[600px] object-contain rounded-xl shadow-lg"
-                src={file_path}
                 preload="metadata"
               >
-                <source src={file_path} type="video/mp4" />
-                <source src={file_path} type="video/webm" />
+                <source src={media.file_path} type="video/mp4" />
+                <source src={media.file_path} type="video/webm" />
                 متصفحك لا يدعم تشغيل الفيديو
               </video>
-        );
+            </div>
+          );
+        }
+        
+        // Fallback: try to detect video type from file_path
+        if (media.file_path) {
+          // Check for YouTube
+          const ytMatch = media.file_path.match(/(?:embed\/|v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+          if (ytMatch) {
+            return (
+              <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-900" style={{ minHeight: '400px' }}>
+                <iframe
+                  src={`https://www.youtube.com/embed/${ytMatch[1]}`}
+                  title={media.file_name}
+                  className="w-full h-full"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+            );
+          }
+          
+          // Check for Google Drive
+          const driveMatch = media.file_path.match(/\/file\/d\/([a-zA-Z0-9-_]+)/);
+          if (driveMatch) {
+            return <Grade11VideoFix media={media} metadata={metadata} />;
+          }
+          
+          // Regular video file
+          return (
+            <div className="relative rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
+              <video
+                src={media.file_path}
+                title={media.file_name}
+                className="w-full max-h-[600px] object-contain"
+                controls
+                controlsList="nodownload"
+                preload="metadata"
+              >
+                <source src={media.file_path} type="video/mp4" />
+                <source src={media.file_path} type="video/webm" />
+                متصفحك لا يدعم تشغيل الفيديو
+              </video>
+            </div>
+          );
+        }
+        break;
 
       case 'image':
         return (
-          <div className="relative group">
-            <img 
-              src={file_path} 
-              alt={file_name}
-              className="w-full rounded-xl shadow-lg object-cover"
+          <div className="relative rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center min-h-[200px] max-h-[500px]">
+            <img
+              src={media.file_path}
+              alt={media.file_name}
+              className="w-full h-auto object-contain max-h-[500px]"
+              loading="lazy"
             />
-            <Button
-              variant="secondary"
-              size="sm"
-              className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity"
-              onClick={() => setPreviewMedia(media)}
-            >
-              <Maximize2 className="w-4 h-4 ml-2" />
-              عرض بملء الشاشة
-            </Button>
           </div>
         );
 
       case 'lottie':
+        console.log('=== LOTTIE DEBUG ===');
+        console.log('Media metadata:', metadata);
+        
         try {
-          const animationData = metadata?.lottie_data ? 
-            (typeof metadata.lottie_data === 'string' ? JSON.parse(metadata.lottie_data) : metadata.lottie_data) :
-            null;
-
-          if (!animationData && file_path) {
+          let animationData = null;
+          
+          // Try different ways to get animation data
+          if (metadata.animation_data) {
+            console.log('Using metadata.animation_data');
+            animationData = typeof metadata.animation_data === 'string' 
+              ? JSON.parse(metadata.animation_data) 
+              : metadata.animation_data;
+          } else if (metadata.lottie_data) {
+            console.log('Using metadata.lottie_data');
+            animationData = typeof metadata.lottie_data === 'string' 
+              ? JSON.parse(metadata.lottie_data) 
+              : metadata.lottie_data;
+          } else if (media.file_path && media.file_path.includes('.json')) {
+            console.log('Lottie file path detected, but no animation data in metadata');
             return (
-              <div className="relative group">
-                <Lottie
-                  animationData={require(`@/assets/${file_path}`)}
-                  loop={metadata?.loop !== false}
-                  className="w-full max-h-[400px] rounded-xl"
-                />
+              <div className="relative rounded-lg bg-amber-50 p-4 text-center">
+                <Play className="h-8 w-8 mx-auto mb-2 text-amber-500" />
+                <p className="text-sm text-amber-700">يتطلب تحميل ملف اللوتي من الرابط</p>
               </div>
             );
           }
 
-          if (animationData) {
-            return (
-              <div className="relative group">
-                <Lottie
-                  animationData={animationData}
-                  loop={metadata?.loop !== false}
-                  className="w-full max-h-[400px] rounded-xl"
-                />
-              </div>
-            );
+          console.log('Final animation data:', animationData);
+          
+          if (!animationData || Object.keys(animationData).length === 0) {
+            throw new Error('No valid animation data found');
           }
+
+          // Use metadata speed as single source of truth, fallback to 1
+          const speedSetting = typeof metadata.speed === 'number' ? metadata.speed : 1;
+          const loopSetting = typeof metadata.loop === 'boolean' ? metadata.loop : true;
+          
+          console.log('Speed setting:', speedSetting);
+          console.log('Loop setting:', loopSetting);
+
+          return <LottieDisplay 
+            animationData={animationData}
+            loop={loopSetting}
+            speed={speedSetting}
+          />;
         } catch (error) {
-          console.error('Error rendering Lottie:', error);
+          console.error('Lottie parsing error:', error);
+          logger.error('Error loading Lottie animation', error as Error);
+          return (
+            <div className="relative rounded-lg bg-red-50 border border-red-200 p-4 text-center">
+              <Play className="h-8 w-8 mx-auto mb-2 text-red-400" />
+              <p className="text-sm text-red-600">خطأ في تحميل الرسوم المتحركة</p>
+              <p className="text-xs text-red-500 mt-1">تحقق من صحة ملف اللوتي</p>
+            </div>
+          );
         }
-        return (
-          <div className="text-center p-8 bg-muted/30 rounded-xl">
-            <Play className="w-12 h-12 mx-auto mb-2 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">خطأ في تحميل الرسوم المتحركة</p>
-          </div>
-        );
 
       case 'code':
-        const codeContent = metadata?.code || file_path;
-        const language = metadata?.language || 'javascript';
+        // Handle both nested and non-nested metadata structures
+        let codeMetadata = metadata || {};
         
-        return (
-          <div className="relative">
-            <div className="absolute top-3 left-3 z-10">
-              <Badge variant="secondary" className="text-xs">
-                {language}
-              </Badge>
+        // Check if metadata is double-nested (metadata.metadata.code)
+        if (codeMetadata.metadata && !codeMetadata.code) {
+          logger.debug('Found nested metadata structure, extracting...');
+          codeMetadata = codeMetadata.metadata;
+        }
+        
+        const codeTitle = codeMetadata.title || media.file_name;
+        logger.debug('Code block metadata', { metadata: codeMetadata });
+        logger.debug('Code content analysis', { 
+          hasCode: !!codeMetadata.code, 
+          codeLength: codeMetadata.code?.length || 0,
+          codePreview: codeMetadata.code?.slice(0, 50) + '...' || 'No code found'
+        });
+        
+        // Check if we have actual code content
+        if (!codeMetadata.code || codeMetadata.code.trim() === '') {
+          logger.warn('No code content found in metadata', { metadata: codeMetadata });
+          return (
+            <div className="space-y-3">
+              <div className="text-center p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <Code className="h-8 w-8 mx-auto mb-2 text-yellow-600" />
+                <p className="text-sm text-yellow-700">لا يوجد محتوى كود للعرض</p>
+              </div>
             </div>
-            <pre className="bg-slate-950 text-slate-50 p-6 rounded-xl overflow-x-auto shadow-lg">
-              <code className="text-sm font-mono">
-                {codeContent}
-              </code>
-            </pre>
-          </div>
-        );
+          );
+        }
+        
+        // Always use typewriter for preview if available, fallback to regular code block
+        const shouldUseTypewriter = codeMetadata.enableTypewriter !== false;
+        
+        // Create a unique key based on metadata to force re-render on changes
+        const metadataKey = JSON.stringify({
+          theme: codeMetadata.theme,
+          language: codeMetadata.language,
+          showLineNumbers: codeMetadata.showLineNumbers,
+          typewriterSpeed: codeMetadata.typewriterSpeed,
+          code: codeMetadata.code?.substring(0, 50) // Use first 50 chars as part of key
+        });
+        
+        if (shouldUseTypewriter) {
+          logger.debug('Rendering TypewriterCodeBlock', {
+            autoStart: true,
+            autoRestart: codeMetadata.autoRestart !== false,
+            loop: codeMetadata.loop !== false,
+            speed: codeMetadata.typewriterSpeed || 50,
+            codeLength: codeMetadata.code.length
+          });
+          
+          return (
+            <TypewriterCodeBlock
+              key={`typewriter-${media.id}-${metadataKey}`}
+              code={codeMetadata.code}
+              language={codeMetadata.language || 'plaintext'}
+              fileName={codeTitle}
+              showLineNumbers={codeMetadata.showLineNumbers}
+              theme={codeMetadata.theme || 'dark'}
+              speed={codeMetadata.typewriterSpeed || 50}
+              autoStart={true}
+              autoRestart={true}
+              loop={true}
+              pauseDuration={4000}
+            />
+          );
+        } else {
+          return (
+            <CodeBlock
+              key={`code-${media.id}-${metadataKey}`}
+              code={codeMetadata.code}
+              language={codeMetadata.language || 'plaintext'}
+              fileName={codeTitle}
+              showLineNumbers={codeMetadata.showLineNumbers}
+              theme={codeMetadata.theme || 'dark'}
+            />
+          );
+        }
 
       default:
-        return (
-          <div className="text-center p-8 bg-muted/30 rounded-xl">
-            <FileText className="w-12 h-12 mx-auto mb-2 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">نوع الملف غير مدعوم</p>
-          </div>
-        );
+        return null;
     }
   };
 
-  const renderCompactMedia = (media: Grade10LessonMedia) => {
+  const renderCompactMedia = (media: any) => {
     return (
-      <Card 
-        key={media.id} 
-        className="group cursor-pointer hover:shadow-lg transition-all duration-300 overflow-hidden"
+      <div 
+        className="flex items-center gap-4 p-6 bg-gradient-to-r from-muted/30 to-muted/20 rounded-2xl border-2 border-border/30 cursor-pointer hover:from-muted/50 hover:to-muted/30 transition-all duration-300 shadow-sm hover:shadow-md"
         onClick={() => setPreviewMedia(media)}
       >
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3">
-            <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 
-              ${media.media_type === 'video' ? 'bg-blue-500/10' : 
-                media.media_type === 'image' ? 'bg-green-500/10' : 
-                media.media_type === 'lottie' ? 'bg-purple-500/10' : 
-                'bg-orange-500/10'}`}
-            >
-              <div className={`
-                ${media.media_type === 'video' ? 'text-blue-600' : 
-                  media.media_type === 'image' ? 'text-green-600' : 
-                  media.media_type === 'lottie' ? 'text-purple-600' : 
-                  'text-orange-600'}`}
-              >
-                {getMediaIcon(media.media_type)}
-              </div>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-medium text-sm truncate">{media.file_name}</p>
-              {getMediaTypeBadge(media.media_type)}
-            </div>
-            <Maximize2 className="w-5 h-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
-          </div>
-        </CardContent>
-      </Card>
+        <div className="p-3 bg-primary/10 rounded-2xl">
+          {getMediaIcon(media.media_type)}
+        </div>
+        <span className="text-lg font-bold truncate flex-1 text-foreground">{media.file_name}</span>
+        <Badge variant="outline" className={`text-base px-4 py-2 font-semibold ${getMediaTypeBadge(media.media_type)}`}>
+          {media.media_type}
+        </Badge>
+        <Button variant="ghost" size="default" className="h-10 w-10 p-0 rounded-xl">
+          <ExternalLink className="h-5 w-5" />
+        </Button>
+      </div>
     );
   };
 
-  // Separate media by type
-  const embeddedMedia = lesson.media.filter(m => ['video', 'image', 'lottie', 'code'].includes(m.media_type));
-  const audioMedia = lesson.media.filter(m => m.media_type === 'audio');
-  const otherMedia = lesson.media.filter(m => !['video', 'image', 'lottie', 'code', 'audio'].includes(m.media_type));
+  // Sort media by order_index and separate videos, audio, and other media
+  const sortedMedia = lesson.media?.sort((a, b) => a.order_index - b.order_index) || [];
+  const videoMedia = sortedMedia.filter(m => m.media_type === 'video');
+  const audioMedia = sortedMedia.filter(m => m.media_type === 'audio');
+  const otherMedia = sortedMedia.filter(m => m.media_type !== 'video' && m.media_type !== 'audio');
+
+  // Lottie Display Component with speed control
+  const LottieDisplay = ({ animationData, loop, speed }: { animationData: any, loop: boolean, speed: number }) => {
+    const lottieRef = useRef<any>(null);
+    
+    useEffect(() => {
+      if (lottieRef.current && speed !== undefined) {
+        console.log('Applying speed to Lottie:', speed);
+        lottieRef.current.setSpeed(speed);
+      }
+    }, [speed]);
+
+    return (
+      <div className="relative rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center p-4">
+        <div className="w-full max-w-2xl min-h-[200px] max-h-[600px] flex items-center justify-center">
+          <Lottie
+            lottieRef={lottieRef}
+            animationData={animationData}
+            loop={loop}
+            autoplay={true}
+            style={{ width: '100%', height: '100%', maxWidth: '100%', maxHeight: '100%' }}
+            rendererSettings={{
+              preserveAspectRatio: 'xMidYMid meet'
+            }}
+            onLoadedData={() => {
+              console.log('Lottie loaded successfully');
+              if (lottieRef.current && speed !== 1) {
+                console.log('Setting speed on load:', speed);
+                lottieRef.current.setSpeed(speed);
+              }
+            }}
+            onError={(error) => console.error('Lottie error:', error)}
+          />
+        </div>
+      </div>
+    );
+  };
 
   return (
-    <div className="space-y-6">
-      {!hideTitle && (
-        <div className="space-y-2">
-          <div className="flex items-center gap-4 flex-wrap">
-            <h2 className="text-2xl font-bold flex-1">{lesson.title}</h2>
-            {/* مشغل الصوت المباشر - يظهر بجانب العنوان */}
-            {audioMedia.length > 0 && (
-              <InlineAudioPlayer
-                src={audioMedia[0].file_path}
-                title={audioMedia[0].file_name}
-                className="shrink-0"
-              />
-            )}
-          </div>
-          {lesson.content && (
-            <>
-              <HTMLEmbedWrapper content={lesson.content} />
-              <GammaEmbedWrapper content={lesson.content} />
-            </>
+    <div className="space-y-8 w-full max-w-none">
+      {/* Lesson Content */}
+      <div className="prose max-w-none w-full">
+        <div className="flex items-center gap-4 mb-6 flex-wrap">
+          {/* العنوان */}
+          {!hideTitle && (
+            <h4 className="font-bold text-2xl text-foreground leading-relaxed flex-1 pr-4">
+              {lesson.title}
+            </h4>
+          )}
+          
+          {/* المشغل الصوتي المباشر - يظهر فقط إذا كان هناك ملف صوتي */}
+          {audioMedia.length > 0 && (
+            <InlineAudioPlayer
+              src={audioMedia[0].file_path}
+              title={audioMedia[0].file_name}
+              className="shrink-0"
+            />
           )}
         </div>
-      )}
+        
+        {lesson.content && (
+          <>
+            {lesson.content.includes('data-type="html-embed"') && (
+              <HTMLEmbedWrapper content={lesson.content} />
+            )}
+            
+            {lesson.content.includes('gamma.app/embed') && (
+              <GammaEmbedWrapper content={lesson.content} />
+            )}
+            
+            {!lesson.content.includes('data-type="html-embed"') && 
+             !lesson.content.includes('gamma.app/embed') && (
+              <div
+                className="lesson-content text-xl text-foreground/90 leading-9 break-words max-w-full p-8 bg-gradient-to-r from-muted/30 to-muted/20 rounded-3xl border-2 border-border/30 shadow-sm prose prose-lg max-w-none [&_p]:min-h-[1.5em] [&_p]:mb-2"
+                dangerouslySetInnerHTML={{ __html: lesson.content }}
+              />
+            )}
+          </>
+        )}
+      </div>
 
-      {/* Embedded Media (Videos, Images, Lottie, Code) */}
-      {embeddedMedia.length > 0 && (
-        <div className="space-y-6">
-          {embeddedMedia.map((media) => (
-            <Card key={media.id} className="overflow-hidden">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">{media.file_name}</CardTitle>
-                  {getMediaTypeBadge(media.media_type)}
+      {/* Videos - Always displayed directly under content */}
+      {videoMedia.length > 0 && (
+        <div className="space-y-8">
+          <div className="text-lg font-bold text-primary mb-4 pr-3">
+            🎥 مقاطع الفيديو ({videoMedia.length})
+          </div>
+          {videoMedia.map((media) => (
+            <Card key={media.id} className="overflow-hidden border-2 shadow-lg hover:shadow-xl transition-all duration-300">
+              <CardContent className="p-8">
+                <div className="flex items-center justify-start gap-4 mb-6">
+                  <div className="p-3 bg-primary/10 rounded-2xl">
+                    {getMediaIcon(media.media_type)}
+                  </div>
+                  <span className="text-xl font-bold flex-1 text-foreground">{media.file_name}</span>
+                  <Button
+                    variant="outline"
+                    size="default"
+                    onClick={() => setPreviewMedia(media)}
+                    className="h-10 w-10 p-0 rounded-xl"
+                    title="عرض بملء الشاشة"
+                  >
+                    <Maximize2 className="h-5 w-5" />
+                  </Button>
                 </div>
-              </CardHeader>
-              <CardContent>
-                {renderEmbeddedMedia(media)}
+                <div className="rounded-2xl overflow-hidden border border-border/30 bg-gray-900">
+                  {renderEmbeddedMedia(media)}
+                </div>
               </CardContent>
             </Card>
           ))}
@@ -307,22 +466,38 @@ const Grade10LessonContentDisplay: React.FC<Grade10LessonContentDisplayProps> = 
 
       {/* Other Media (Compact View) */}
       {otherMedia.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">ملفات إضافية</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {otherMedia.map(renderCompactMedia)}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="space-y-8">
+          {otherMedia.map((media) => (
+            <Card key={media.id} className="overflow-hidden border-2 shadow-lg hover:shadow-xl transition-all duration-300">
+              <CardContent className="p-8">
+                <div className="flex items-center justify-start gap-4 mb-6">
+                  <div className="p-3 bg-primary/10 rounded-2xl">
+                    {getMediaIcon(media.media_type)}
+                  </div>
+                  <span className="text-xl font-bold flex-1 text-foreground">{media.file_name}</span>
+                  <Button
+                    variant="outline"
+                    size="default"
+                    onClick={() => setPreviewMedia(media)}
+                    className="h-10 w-10 p-0 rounded-xl"
+                    title="عرض بملء الشاشة"
+                  >
+                    <Maximize2 className="h-5 w-5" />
+                  </Button>
+                </div>
+                <div className="rounded-2xl overflow-hidden border border-border/30">
+                  {renderEmbeddedMedia(media)}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       )}
 
-      {/* Fullscreen Media Preview */}
+      {/* Media Fullscreen View */}
       {previewMedia && (
         <MediaFullscreenView
-          media={previewMedia as any}
+          media={previewMedia}
           onClose={() => setPreviewMedia(null)}
         />
       )}
