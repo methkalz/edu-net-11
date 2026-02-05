@@ -506,6 +506,12 @@ const normalizeExamForReliability = (parsedExam: ParsedExam) => {
     } else {
       q.has_table = !!q.has_table;
     }
+    
+    // Fix multi_part questions without sub_questions - convert to open_ended
+    if (q.question_type === 'multi_part' && (!q.sub_questions || q.sub_questions.length === 0)) {
+      console.log(`Converting question ${q.question_number} from multi_part to open_ended (no sub_questions)`);
+      q.question_type = 'open_ended';
+    }
   });
 };
 
@@ -822,11 +828,17 @@ async function processJobInBackground(
 - multiple_choice: اختيار من متعدد
 - true_false: صح/خطأ
 - open_ended: سؤال مفتوح
-- multi_part: سؤال متعدد الأجزاء
+- multi_part: سؤال متعدد الأجزاء (استخدمه فقط إذا كان السؤال يحتوي على أسئلة فرعية فعلية)
 - fill_blank: ملء الفراغ
 - fill_table: إكمال جدول
 - matching: مطابقة
 - calculation: حساب
+
+**قاعدة صارمة لنوع multi_part:**
+- استخدم نوع multi_part فقط إذا كان السؤال يحتوي على أسئلة فرعية فعلية (sub_questions)
+- إذا كان السؤال بسيطاً بدون فروع حتى لو كان نصه طويلاً → استخدم open_ended أو calculation أو النوع المناسب
+- كل سؤال يجب أن يكون له مساحة للإجابة (خيارات/فراغات/textarea) إلا إذا كان حاوية لأسئلة فرعية
+- إذا لم يكن للسؤال أسئلة فرعية، لا تستخدم multi_part
 
 مهم جداً: أكمل جميع البيانات ولا تقطع الإجابة في المنتصف. استخرج جميع الجداول بدقة.`;
 
