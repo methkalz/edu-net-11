@@ -1,143 +1,234 @@
 
-# خطة تحسين نظام امتحانات البجروت - 4 تعديلات رئيسية
+# خطة إصلاح مشكلة الأسئلة بدون مساحة للإجابة - حل شامل
 
-## ملخص الطلبات
+## تحليل المشكلة
 
-1. **إرشادات الامتحان**: إتاحة تعديلها من قبل السوبر آدمن بمحرر نصوص غني (Rich Text Editor)
-2. **شرح الحل للطالب**: عرض الشرح بتنسيق متعدد الأسطر + إمكانية التعديل من السوبر آدمن
-3. **شرح الحل للمعلم**: إظهار طريقة الحل أثناء التصحيح
-4. **مشكلة الترجمة**: التأكد من عدم ترجمة النصوص العربية للإنجليزية عند الاستيراد
+### المشكلة الرئيسية
+من الصور المرفقة، يتضح أن بعض الأسئلة تظهر بنوع **"متعدد البنود"** لكن بدون أي مساحة للإجابة عليها:
+- السؤال ج وط: يظهران كـ "متعدد البنود" لكن لا يوجد خيارات أو حقل إدخال
+- السؤال أ (في الصورة الثانية): نفس المشكلة
 
----
+### السبب الجذري
+1. الـ **AI Parser** يصنف بعض الأسئلة خطأً كـ `multi_part` بدون إضافة أسئلة فرعية
+2. نوع `multi_part` مصمم ليكون "حاوية" لأسئلة فرعية - وليس له مساحة إجابة خاصة به
+3. **واجهة التعديل الحالية لا تتيح:**
+   - تغيير نوع السؤال
+   - إضافة خيارات للأسئلة التي ليست من نوع choice
+   - تحويل سؤال من نوع لآخر
 
-## التحليل التفصيلي
-
-### الوضع الحالي
-
-| العنصر | الوضع الحالي |
-|--------|-------------|
-| **إرشادات الامتحان** | نص عادي (`text`) في جدول `bagrut_exams.instructions` - يُعرض كقائمة مرقمة بفصل الأسطر |
-| **شرح الحل** | نص عادي (`text`) في جدول `bagrut_questions.answer_explanation` - يُعرض في سطر واحد |
-| **عرض الشرح للمعلم** | غير متاح حالياً أثناء التصحيح |
-| **الترجمة** | System Prompt في Edge Function لا يمنع الترجمة صراحةً |
-
-### التغييرات المطلوبة
-
----
-
-## التعديل الأول: إرشادات الامتحان بمحرر غني
-
-### المشكلة
-- السوبر آدمن لا يستطيع تعديل الإرشادات بعد استيراد الامتحان
-- لا يوجد تنسيق (حجم خط، ألوان، قوائم)
-
-### الحل
-
-**1. تعديل واجهة BagrutExamPreview.tsx:**
-- إضافة زر "تعديل الإرشادات" للسوبر آدمن
-- فتح Dialog يحتوي على `RichTextEditor`
-- حفظ الإرشادات كـ HTML
-
-**2. تعديل واجهة BagrutManagement.tsx:**
-- عند حفظ الامتحان، يتم حفظ الإرشادات كـ HTML
-- إضافة زر تعديل الإرشادات في قائمة الإجراءات
-
-**3. تعديل عرض الإرشادات للطالب:**
-- في `BagrutSectionSelector.tsx` و `AllMandatoryExamStart.tsx`
-- عرض الإرشادات باستخدام `dangerouslySetInnerHTML` بدلاً من فصل الأسطر
-- تطبيق كلاسات Tailwind للتنسيق
-
-**الملفات المتأثرة:**
-- `src/components/bagrut/BagrutExamPreview.tsx` - إضافة Dialog للتعديل
-- `src/components/bagrut/BagrutSectionSelector.tsx` - تعديل طريقة العرض
-- `src/components/bagrut/AllMandatoryExamStart.tsx` - تعديل طريقة العرض
-- `src/pages/BagrutManagement.tsx` - إضافة حفظ الإرشادات
+### أنواع الأسئلة المدعومة
+```
+multiple_choice  → خيارات متعددة (Radio)
+true_false       → صح/خطأ (Radio)
+true_false_multi → صح/خطأ متعدد
+fill_blank       → إكمال فراغات (Input fields)
+fill_table       → جدول تفاعلي
+open_ended       → نص حر (Textarea)
+calculation      → حسابي (Textarea)
+cli_command      → أوامر (Textarea)
+diagram_based    → رسم/مخطط (Textarea)
+multi_part       → حاوية لأسئلة فرعية (بدون إجابة خاصة)
+matching         → مطابقة
+ordering         → ترتيب
+```
 
 ---
 
-## التعديل الثاني: شرح الحل بتنسيق متعدد الأسطر
+## الحل المقترح - استراتيجية متعددة المستويات
 
-### المشكلة
-- `answer_explanation` يُخزن ويُعرض كنص عادي (سطر واحد)
-- لا يدعم التنسيق (أسطر متعددة، قوائم، كود)
+### المستوى الأول: تحسين Edge Function (منع المشكلة مستقبلاً)
 
-### الحل
+**الملف:** `supabase/functions/parse-bagrut-exam/index.ts`
 
-**1. تعديل BagrutQuestionEditDialog.tsx:**
-- استبدال `Textarea` العادي بـ `RichTextEditor` لحقل شرح الإجابة
-- السماح بإضافة أسطر متعددة وتنسيق النص
+**التغييرات:**
+1. إضافة تعليمات صريحة في System Prompt:
+```
+- نوع multi_part يُستخدم فقط للأسئلة التي لها أسئلة فرعية فعلية
+- إذا كان السؤال بسيطاً بدون فروع → استخدم open_ended أو النوع المناسب
+- كل سؤال يجب أن يكون له طريقة للإجابة (إلا إذا كان حاوية لأسئلة فرعية)
+```
 
-**2. تعديل Edge Function (parse-bagrut-exam):**
-- تعديل System Prompt لطلب الحفاظ على تنسيق الشرح (أسطر متعددة)
-- عدم ترجمة النصوص
-
-**3. تعديل عرض الشرح للطالب:**
-- في `BagrutQuestionRenderer.tsx` و `StudentBagrutResult.tsx`
-- عرض الشرح باستخدام `dangerouslySetInnerHTML` أو `whitespace-pre-wrap`
-
-**الملفات المتأثرة:**
-- `src/components/bagrut/BagrutQuestionEditDialog.tsx` - استخدام Rich Editor
-- `src/components/bagrut/BagrutQuestionRenderer.tsx` - تعديل العرض
-- `src/pages/StudentBagrutResult.tsx` - تعديل العرض
-- `supabase/functions/parse-bagrut-exam/index.ts` - تحديث Prompt
+2. إضافة Post-processing للتحقق من الأسئلة:
+```typescript
+// التحقق من أن كل سؤال multi_part له أسئلة فرعية
+visitQuestions(parsedExam, (q) => {
+  if (q.question_type === 'multi_part' && (!q.sub_questions || q.sub_questions.length === 0)) {
+    q.question_type = 'open_ended'; // تحويل تلقائي
+  }
+});
+```
 
 ---
 
-## التعديل الثالث: إظهار شرح الحل للمعلم أثناء التصحيح
+### المستوى الثاني: تحسين واجهة تعديل السؤال (الحل للأسئلة الموجودة)
 
-### المشكلة
-- المعلم لا يرى طريقة الحل الصحيحة أثناء تصحيح إجابات الطالب
+**الملف:** `src/components/bagrut/BagrutQuestionEditDialog.tsx`
 
-### الحل
+**التغييرات الجوهرية:**
 
-**تعديل BagrutGradingPage.tsx - مكون QuestionCard:**
-- إضافة قسم جديد لعرض `answer_explanation` تحت الإجابة الصحيحة
-- عرضه بتنسيق HTML إذا كان موجوداً
-- تصميم مميز (لون أخضر فاتح مع أيقونة)
-
-**الكود المقترح:**
+#### 1. إضافة إمكانية تغيير نوع السؤال
 ```tsx
-{/* شرح الحل - للمعلم */}
-{question.answer_explanation && (
-  <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg border border-emerald-200 dark:border-emerald-800">
-    <p className="text-sm font-medium mb-1 flex items-center gap-2">
-      <BookOpen className="h-4 w-4 text-emerald-600" />
-      طريقة الحل:
-    </p>
-    <div 
-      className="text-sm whitespace-pre-wrap prose prose-sm max-w-none"
-      dangerouslySetInnerHTML={{ __html: question.answer_explanation }}
+<FormField>
+  <Label>نوع السؤال</Label>
+  <Select 
+    value={editedQuestion.question_type}
+    onValueChange={handleQuestionTypeChange}
+  >
+    <SelectTrigger>
+      <SelectValue />
+    </SelectTrigger>
+    <SelectContent>
+      <SelectItem value="multiple_choice">اختيار من متعدد</SelectItem>
+      <SelectItem value="true_false">صح/خطأ</SelectItem>
+      <SelectItem value="open_ended">مفتوح</SelectItem>
+      <SelectItem value="fill_blank">إكمال الفراغ</SelectItem>
+      <SelectItem value="calculation">حسابي</SelectItem>
+      <SelectItem value="cli_command">أوامر CLI</SelectItem>
+      <SelectItem value="multi_part">متعدد البنود (مع أسئلة فرعية)</SelectItem>
+    </SelectContent>
+  </Select>
+</FormField>
+```
+
+#### 2. تهيئة البيانات عند تغيير النوع
+```typescript
+const handleQuestionTypeChange = (newType: string) => {
+  const updated = { ...editedQuestion, question_type: newType };
+  
+  // تهيئة الخيارات للأنواع المناسبة
+  if (newType === 'multiple_choice' && !updated.choices?.length) {
+    updated.choices = [
+      { id: '1', text: '', is_correct: false },
+      { id: '2', text: '', is_correct: false },
+      { id: '3', text: '', is_correct: false },
+      { id: '4', text: '', is_correct: false },
+    ];
+  }
+  
+  if (newType === 'true_false') {
+    updated.choices = [
+      { id: '1', text: 'صح', is_correct: false },
+      { id: '2', text: 'خطأ', is_correct: false },
+    ];
+  }
+  
+  // تفعيل الجدول لنوع fill_table
+  if (newType === 'fill_table' && !updated.table_data) {
+    updated.has_table = true;
+    updated.table_data = {
+      headers: ['عمود 1', 'عمود 2', 'عمود 3'],
+      rows: [['', '', '']],
+      input_columns: [1, 2],
+      correct_answers: {}
+    };
+  }
+  
+  setEditedQuestion(updated);
+};
+```
+
+#### 3. إضافة تنبيه للأسئلة بدون مساحة إجابة
+```tsx
+// في أعلى الـ Dialog
+{!hasAnswerMethod(editedQuestion) && (
+  <Alert variant="destructive">
+    <AlertCircle className="h-4 w-4" />
+    <AlertDescription>
+      هذا السؤال ليس له مساحة للإجابة! يرجى تغيير نوع السؤال أو إضافة أسئلة فرعية.
+    </AlertDescription>
+  </Alert>
+)}
+```
+
+#### 4. دالة التحقق من وجود مساحة إجابة
+```typescript
+const hasAnswerMethod = (q: ParsedQuestion): boolean => {
+  const type = q.question_type;
+  
+  // أنواع لها مساحة إجابة مباشرة
+  if (['open_ended', 'calculation', 'cli_command', 'diagram_based'].includes(type)) {
+    return true; // Textarea
+  }
+  
+  // أنواع تحتاج خيارات
+  if (['multiple_choice', 'true_false', 'true_false_multi'].includes(type)) {
+    return (q.choices?.length || 0) >= 2;
+  }
+  
+  // إكمال الفراغ
+  if (type === 'fill_blank') {
+    return true; // يظهر Textarea كـ fallback
+  }
+  
+  // جدول تفاعلي
+  if (type === 'fill_table' || q.has_table) {
+    return !!q.table_data?.rows?.length;
+  }
+  
+  // متعدد البنود - يحتاج أسئلة فرعية
+  if (type === 'multi_part') {
+    return (q.sub_questions?.length || 0) > 0;
+  }
+  
+  return false;
+};
+```
+
+---
+
+### المستوى الثالث: تحسين BagrutQuestionRenderer (Fallback ذكي)
+
+**الملف:** `src/components/bagrut/BagrutQuestionRenderer.tsx`
+
+**التغييرات:**
+
+#### إضافة Fallback لأي سؤال بدون مساحة إجابة
+```tsx
+// في نهاية الشروط - قبل الأسئلة الفرعية
+{/* Fallback: إذا لم يكن هناك مساحة إجابة → نعرض Textarea */}
+{!hasAnswerComponent && !hasSubQuestions && (
+  <div className="space-y-2">
+    <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 text-sm">
+      <AlertCircle className="h-4 w-4" />
+      <span>نوع السؤال غير محدد - اكتب إجابتك أدناه</span>
+    </div>
+    <Textarea
+      value={currentAnswer as string || ''}
+      onChange={(e) => handleChange(e.target.value)}
+      disabled={disabled}
+      placeholder="اكتب إجابتك هنا..."
+      className="min-h-[120px] resize-y"
     />
   </div>
 )}
 ```
 
-**الملفات المتأثرة:**
-- `src/pages/BagrutGradingPage.tsx` - إضافة عرض الشرح في QuestionCard
+#### منطق تحديد وجود مكون إجابة
+```typescript
+const hasAnswerComponent = useMemo(() => {
+  const type = question.question_type;
+  
+  // أنواع لها Textarea مباشر
+  if (['open_ended', 'calculation', 'cli_command', 'diagram_based'].includes(type)) return true;
+  
+  // fill_blank لها fallback موجود
+  if (type === 'fill_blank') return true;
+  
+  // MCQ/TF تحتاج خيارات
+  if (['multiple_choice', 'true_false', 'true_false_multi'].includes(type)) {
+    return (question.choices?.length || 0) >= 2;
+  }
+  
+  // جدول
+  if (type === 'fill_table' || question.has_table) {
+    return !!question.table_data?.rows?.length;
+  }
+  
+  return false;
+}, [question]);
 
----
-
-## التعديل الرابع: منع الترجمة في Edge Function
-
-### المشكلة
-- في بعض الحالات، الـ AI يترجم نصوصاً عربية للإنجليزية
-
-### الحل
-
-**تعديل System Prompt في parse-bagrut-exam/index.ts:**
-إضافة تعليمات صريحة:
-
+const hasSubQuestions = (question.sub_questions?.length || 0) > 0;
 ```
-**قاعدة صارمة - اللغة:**
-- لا تترجم أي نص من العربية إلى أي لغة أخرى
-- حافظ على اللغة الأصلية للنص كما هي في الملف
-- إذا كان السؤال بالعربية، يجب أن يبقى بالعربية
-- إذا كان الشرح بالعربية، يجب أن يبقى بالعربية
-- لا تستخدم مصطلحات إنجليزية بدلاً من العربية
-```
-
-**الملفات المتأثرة:**
-- `supabase/functions/parse-bagrut-exam/index.ts` - تحديث System Prompt
 
 ---
 
@@ -145,30 +236,53 @@
 
 | الملف | التعديلات |
 |-------|-----------|
-| `src/components/bagrut/BagrutExamPreview.tsx` | إضافة Dialog لتعديل الإرشادات |
-| `src/components/bagrut/BagrutSectionSelector.tsx` | عرض الإرشادات كـ HTML |
-| `src/components/bagrut/AllMandatoryExamStart.tsx` | عرض الإرشادات كـ HTML |
-| `src/components/bagrut/BagrutQuestionEditDialog.tsx` | Rich Editor لشرح الإجابة |
-| `src/components/bagrut/BagrutQuestionRenderer.tsx` | عرض الشرح بتنسيق متعدد الأسطر |
-| `src/pages/BagrutManagement.tsx` | دعم حفظ/تحديث الإرشادات |
-| `src/pages/BagrutGradingPage.tsx` | عرض شرح الحل للمعلم |
-| `src/pages/StudentBagrutResult.tsx` | عرض الشرح بتنسيق متعدد الأسطر |
-| `supabase/functions/parse-bagrut-exam/index.ts` | منع الترجمة + الحفاظ على التنسيق |
+| `supabase/functions/parse-bagrut-exam/index.ts` | تحسين System Prompt + Post-processing للتحقق |
+| `src/components/bagrut/BagrutQuestionEditDialog.tsx` | إضافة تغيير نوع السؤال + تهيئة البيانات + تنبيهات |
+| `src/components/bagrut/BagrutQuestionRenderer.tsx` | إضافة Fallback Textarea للأسئلة بدون مساحة إجابة |
+
+---
+
+## التفاصيل التقنية
+
+### تغيير نوع السؤال - الحالات المدعومة
+
+```text
+┌─────────────────────┐
+│ تحويل النوع          │
+├─────────────────────┤
+│ من:       إلى:       │
+│ multi_part → open_ended     (الأكثر شيوعاً) │
+│ multi_part → multiple_choice (إذا كان MCQ) │
+│ multi_part → true_false      (إذا كان صح/خطأ) │
+│ multi_part → fill_blank      (إذا كان فراغات) │
+│ open_ended → multiple_choice (إضافة خيارات) │
+│ multiple_choice → true_false │
+└─────────────────────┘
+```
+
+### تهيئة البيانات حسب النوع
+
+| النوع الجديد | البيانات المُهيأة |
+|-------------|------------------|
+| `multiple_choice` | 4 خيارات فارغة |
+| `true_false` | خياران (صح/خطأ) |
+| `fill_blank` | لا شيء (Fallback Textarea) |
+| `fill_table` | جدول 3×1 مع عمودين إدخال |
+| `open_ended` | لا شيء (Textarea جاهز) |
 
 ---
 
 ## ترتيب التنفيذ
 
-1. **Edge Function أولاً** - لمنع مشاكل الترجمة في الامتحانات المستقبلية
-2. **شرح الحل للمعلم** - أسرع تعديل (ملف واحد)
-3. **شرح الحل للطالب** - تعديل العرض + المحرر
-4. **إرشادات الامتحان** - التعديل الأكثر شمولاً
+1. **Edge Function** - منع المشكلة في الامتحانات المستقبلية
+2. **BagrutQuestionRenderer** - إضافة Fallback فوري للأسئلة الحالية
+3. **BagrutQuestionEditDialog** - إتاحة الإصلاح اليدوي للسوبر آدمن
 
 ---
 
-## ملاحظات تقنية
+## ملاحظات الأمان والتوافق
 
-- **التوافق العكسي**: الإرشادات القديمة (نص عادي) ستعمل مع العرض الجديد
-- **الأمان**: استخدام `prose` classes للتحكم في HTML المعروض
-- **الأداء**: لا تأثير على الأداء (تغييرات عرض فقط)
-- **قاعدة البيانات**: لا تحتاج تعديلات - الحقول موجودة (`text` يدعم HTML)
+- **التوافق العكسي**: الأسئلة الحالية ستعمل + ستحصل على Fallback
+- **لا تغييرات في DB**: البنية الحالية تدعم جميع الأنواع
+- **UX محسّن**: تنبيهات واضحة + إصلاح سهل
+- **منع مستقبلي**: Edge Function سيمنع استيراد أسئلة معطوبة
