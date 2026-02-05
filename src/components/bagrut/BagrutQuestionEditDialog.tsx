@@ -16,6 +16,14 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Plus, Trash2, Save, AlertCircle, GripVertical, ImageIcon, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import type { TableData, BlankDefinition } from '@/lib/bagrut/buildBagrutPreview';
@@ -108,6 +116,79 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
 
   const handleTextChange = (field: keyof ParsedQuestion, value: string | number) => {
     setEditedQuestion(prev => ({ ...prev, [field]: value }));
+    setValidationError(null);
+  };
+
+  // دالة التحقق من وجود مساحة إجابة
+  const hasAnswerMethod = useCallback((q: ParsedQuestion): boolean => {
+    const type = q.question_type;
+    
+    // أنواع لها مساحة إجابة مباشرة (Textarea)
+    if (['open_ended', 'calculation', 'cli_command', 'diagram_based'].includes(type)) {
+      return true;
+    }
+    
+    // أنواع تحتاج خيارات
+    if (['multiple_choice', 'true_false', 'true_false_multi'].includes(type)) {
+      return (q.choices?.length || 0) >= 2;
+    }
+    
+    // إكمال الفراغ - لها fallback
+    if (type === 'fill_blank') {
+      return true;
+    }
+    
+    // جدول تفاعلي
+    if (type === 'fill_table' || q.has_table) {
+      return !!q.table_data?.rows?.length;
+    }
+    
+    // matching/ordering - لها مكونات خاصة
+    if (['matching', 'ordering'].includes(type)) {
+      return true;
+    }
+    
+    // متعدد البنود - يحتاج أسئلة فرعية
+    if (type === 'multi_part') {
+      return (q.sub_questions?.length || 0) > 0;
+    }
+    
+    return false;
+  }, []);
+
+  // دالة تغيير نوع السؤال مع تهيئة البيانات
+  const handleQuestionTypeChange = (newType: string) => {
+    const updated = { ...editedQuestion, question_type: newType };
+    
+    // تهيئة الخيارات لأنواع الاختيار
+    if (newType === 'multiple_choice' && (!updated.choices || updated.choices.length < 2)) {
+      updated.choices = [
+        { id: '1', text: '', is_correct: false },
+        { id: '2', text: '', is_correct: false },
+        { id: '3', text: '', is_correct: false },
+        { id: '4', text: '', is_correct: false },
+      ];
+    }
+    
+    if (newType === 'true_false') {
+      updated.choices = [
+        { id: '1', text: 'صح', is_correct: false },
+        { id: '2', text: 'خطأ', is_correct: false },
+      ];
+    }
+    
+    // تفعيل الجدول لنوع fill_table
+    if (newType === 'fill_table' && !updated.table_data) {
+      updated.has_table = true;
+      updated.table_data = {
+        headers: ['عمود 1', 'عمود 2', 'عمود 3'],
+        rows: [['', '', '']],
+        input_columns: [1, 2],
+        correct_answers: {}
+      };
+    }
+    
+    setEditedQuestion(updated);
     setValidationError(null);
   };
 
@@ -461,6 +542,45 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
 
         <ScrollArea className="max-h-[60vh] pr-4">
           <div className="space-y-6 py-4">
+            {/* تنبيه للأسئلة بدون مساحة إجابة */}
+            {!hasAnswerMethod(editedQuestion) && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  هذا السؤال ليس له مساحة للإجابة! يرجى تغيير نوع السؤال أو إضافة أسئلة فرعية.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Question Type Selector */}
+            <div className="space-y-2">
+              <Label htmlFor="question-type">نوع السؤال</Label>
+              <Select
+                value={editedQuestion.question_type}
+                onValueChange={handleQuestionTypeChange}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="اختر نوع السؤال" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="open_ended">مفتوح (Textarea)</SelectItem>
+                  <SelectItem value="multiple_choice">اختيار من متعدد</SelectItem>
+                  <SelectItem value="true_false">صح/خطأ</SelectItem>
+                  <SelectItem value="calculation">حسابي</SelectItem>
+                  <SelectItem value="fill_blank">إكمال الفراغ</SelectItem>
+                  <SelectItem value="fill_table">إكمال جدول</SelectItem>
+                  <SelectItem value="cli_command">أوامر CLI</SelectItem>
+                  <SelectItem value="diagram_based">رسم/مخطط</SelectItem>
+                  <SelectItem value="multi_part">متعدد البنود (حاوية لأسئلة فرعية)</SelectItem>
+                  <SelectItem value="matching">مطابقة</SelectItem>
+                  <SelectItem value="ordering">ترتيب</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                تغيير النوع سيؤثر على طريقة عرض السؤال للطالب
+              </p>
+            </div>
+
             {/* Question Text */}
             <div className="space-y-2">
               <Label htmlFor="question-text">نص السؤال</Label>

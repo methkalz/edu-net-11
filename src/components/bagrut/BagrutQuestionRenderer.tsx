@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, Code, Image as ImageIcon } from 'lucide-react';
+import { Table, Code, Image as ImageIcon, AlertCircle } from 'lucide-react';
 import type { ParsedQuestion } from '@/lib/bagrut/buildBagrutPreview';
 import type { BagrutAnswer } from '@/hooks/useBagrutAttempt';
 
@@ -158,6 +158,15 @@ export default function BagrutQuestionRenderer({
             disabled={disabled}
           />
         )}
+
+        {/* Fallback: عرض Textarea للأسئلة التي ليس لها مساحة إجابة */}
+        <FallbackAnswerArea
+          question={question}
+          currentAnswer={currentAnswer}
+          handleChange={handleChange}
+          disabled={disabled}
+          showAnswer={showAnswer}
+        />
 
         {/* الأسئلة الفرعية */}
         {question.sub_questions && question.sub_questions.length > 0 && (
@@ -497,6 +506,74 @@ function TableQuestion({
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+// مكون Fallback لعرض Textarea للأسئلة بدون مساحة إجابة
+function FallbackAnswerArea({
+  question,
+  currentAnswer,
+  handleChange,
+  disabled,
+  showAnswer,
+}: {
+  question: ParsedQuestion;
+  currentAnswer: string | string[] | Record<string, string> | undefined;
+  handleChange: (value: string | string[] | Record<string, string>) => void;
+  disabled: boolean;
+  showAnswer: boolean;
+}) {
+  // تحديد إذا كان السؤال له مساحة إجابة
+  const hasAnswerComponent = useMemo(() => {
+    const type = question.question_type;
+    
+    // أنواع لها Textarea مباشر
+    if (['open_ended', 'calculation', 'cli_command', 'diagram_based'].includes(type)) return true;
+    
+    // fill_blank لها fallback موجود
+    if (type === 'fill_blank') return true;
+    
+    // MCQ/TF تحتاج خيارات
+    if (['multiple_choice', 'true_false', 'true_false_multi'].includes(type)) {
+      return (question.choices?.length || 0) >= 2;
+    }
+    
+    // جدول
+    if (type === 'fill_table' || question.has_table) {
+      return !!question.table_data?.rows?.length;
+    }
+    
+    // matching/ordering - لها مكونات خاصة (نفترض أنها موجودة)
+    if (['matching', 'ordering'].includes(type)) return true;
+    
+    return false;
+  }, [question]);
+
+  const hasSubQuestions = (question.sub_questions?.length || 0) > 0;
+
+  // إذا كان للسؤال مساحة إجابة أو أسئلة فرعية، لا نعرض الـ fallback
+  if (hasAnswerComponent || hasSubQuestions) return null;
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 text-sm">
+        <AlertCircle className="h-4 w-4" />
+        <span>نوع السؤال غير محدد - اكتب إجابتك أدناه</span>
+      </div>
+      <Textarea
+        value={currentAnswer as string || ''}
+        onChange={(e) => handleChange(e.target.value)}
+        disabled={disabled}
+        placeholder="اكتب إجابتك هنا..."
+        className="min-h-[120px] resize-y"
+      />
+      {showAnswer && question.correct_answer && (
+        <div className="p-3 bg-primary/10 rounded-lg border border-primary/30">
+          <span className="font-medium text-primary">الإجابة الصحيحة: </span>
+          <span className="text-foreground">{question.correct_answer}</span>
+        </div>
+      )}
     </div>
   );
 }
