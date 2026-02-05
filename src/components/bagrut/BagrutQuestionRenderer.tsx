@@ -183,7 +183,9 @@ export default function BagrutQuestionRenderer({
             {question.answer_explanation && (
               <div className="mt-2">
                 <span className="font-medium text-primary">الشرح: </span>
-                <span className="text-muted-foreground">{question.answer_explanation}</span>
+                <div className="text-muted-foreground whitespace-pre-wrap mt-1">
+                  {question.answer_explanation}
+                </div>
               </div>
             )}
           </div>

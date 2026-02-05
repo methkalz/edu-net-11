@@ -1,5 +1,6 @@
 // مكون البدء للامتحانات بجميع أقسام إلزامية (بدون قسم اختياري)
 import React, { useMemo } from 'react';
+import DOMPurify from 'dompurify';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -41,19 +42,31 @@ export default function AllMandatoryExamStart({
     return sections.reduce((acc, s) => acc + s.questions.length, 0);
   }, [sections]);
 
-  // تنسيق التعليمات كقائمة
+  // التحقق من نوع التعليمات (HTML أو نص عادي)
+  const isHtmlInstructions = useMemo(() => {
+    if (!instructions) return false;
+    return /<[a-z][\s\S]*>/i.test(instructions);
+  }, [instructions]);
+
+  // تنسيق التعليمات كقائمة (للنص العادي فقط)
   const formattedInstructions = useMemo(() => {
-    if (!instructions) return [];
+    if (!instructions || isHtmlInstructions) return [];
     return instructions
       .split('\n')
       .map(line => line.trim())
       .filter(line => line.length > 0);
-  }, [instructions]);
+  }, [instructions, isHtmlInstructions]);
+
+  // تنظيف HTML للعرض الآمن
+  const sanitizedHtmlInstructions = useMemo(() => {
+    if (!instructions || !isHtmlInstructions) return '';
+    return DOMPurify.sanitize(instructions);
+  }, [instructions, isHtmlInstructions]);
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* إرشادات وتعليمات الامتحان */}
-      {instructions && formattedInstructions.length > 0 && (
+      {instructions && (isHtmlInstructions || formattedInstructions.length > 0) && (
         <Card className="border-2 border-orange-300 dark:border-orange-700 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/30 dark:to-amber-950/20 shadow-lg">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2 text-orange-700 dark:text-orange-400">
@@ -67,20 +80,27 @@ export default function AllMandatoryExamStart({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              {formattedInstructions.map((line, index) => (
-                <div 
-                  key={index} 
-                  className="flex items-start gap-3 p-2 rounded-lg bg-white/60 dark:bg-background/40"
-                >
-                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-orange-200 dark:bg-orange-800/50 text-orange-700 dark:text-orange-300 text-sm font-medium flex items-center justify-center">
-                    {index + 1}
-                  </span>
-                  <span className="text-foreground/90">{line}</span>
-                </div>
-              ))}
-            </div>
-            
+            {isHtmlInstructions ? (
+              <div 
+                className="prose prose-sm max-w-none dark:prose-invert prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-1"
+                dangerouslySetInnerHTML={{ __html: sanitizedHtmlInstructions }}
+              />
+            ) : (
+              <div className="space-y-2">
+                {formattedInstructions.map((line, index) => (
+                  <div 
+                    key={index} 
+                    className="flex items-start gap-3 p-2 rounded-lg bg-white/60 dark:bg-background/40"
+                  >
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-orange-200 dark:bg-orange-800/50 text-orange-700 dark:text-orange-300 text-sm font-medium flex items-center justify-center">
+                      {index + 1}
+                    </span>
+                    <span className="text-foreground/90">{line}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <div className="mt-4 flex items-center gap-2 text-sm text-orange-600 dark:text-orange-400 bg-orange-100/50 dark:bg-orange-900/30 rounded-lg p-3">
               <AlertTriangle className="h-4 w-4 shrink-0" />
               <span>تأكد من قراءة جميع التعليمات قبل بدء الامتحان. لن تتمكن من العودة لهذه الصفحة بعد البدء.</span>
