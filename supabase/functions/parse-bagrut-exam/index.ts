@@ -476,16 +476,27 @@ const normalizeTableRows = (tableData: any) => {
   };
 };
 
+// Recursive helper to visit a question and all its nested sub-questions
+const visitQuestionsRecursive = (
+  question: any,
+  visitor: (q: any) => void
+) => {
+  visitor(question);
+  if (Array.isArray(question.sub_questions)) {
+    for (const sub of question.sub_questions) {
+      visitQuestionsRecursive(sub, visitor);
+    }
+  }
+};
+
+// Visit all questions in the exam (supports unlimited nesting depth)
 const visitQuestions = (
   parsedExam: ParsedExam,
   visitor: (q: any) => void
 ) => {
   for (const section of parsedExam.sections || []) {
     for (const q of section.questions || []) {
-      visitor(q);
-      if (Array.isArray(q.sub_questions)) {
-        for (const sub of q.sub_questions) visitor(sub);
-      }
+      visitQuestionsRecursive(q, visitor);
     }
   }
 };
@@ -515,8 +526,78 @@ const normalizeExamForReliability = (parsedExam: ParsedExam) => {
   });
 };
 
+// Count leaf questions recursively (questions without sub-questions)
+const countLeavesRecursive = (questions: any[]): number => {
+  let count = 0;
+  for (const q of questions) {
+    if (q.sub_questions && q.sub_questions.length > 0) {
+      count += countLeavesRecursive(q.sub_questions);
+    } else {
+      count += 1;
+    }
+  }
+  return count;
+};
+
+// Distribute points recursively to leaf questions
+const distributePointsToLeaves = (questions: any[], totalPoints: number) => {
+  const leafCount = countLeavesRecursive(questions);
+  if (leafCount === 0) return;
+  
+  const pointsPerLeaf = totalPoints / leafCount;
+  
+  for (const q of questions) {
+    if (q.sub_questions && q.sub_questions.length > 0) {
+      // Parent gets 0 points - only leaf questions get points
+      const parentOriginalPoints = q.points || 0;
+      q.points = 0;
+      
+      // Recursively distribute the parent's points (or proportional share) to children
+      const childLeafCount = countLeavesRecursive(q.sub_questions);
+      const pointsForThisBranch = parentOriginalPoints > 0 ? parentOriginalPoints : (pointsPerLeaf * childLeafCount);
+      distributePointsToLeaves(q.sub_questions, pointsForThisBranch);
+    } else {
+      // Leaf question - assign points if not already set
+      if (!q.points || q.points === 0) {
+        q.points = pointsPerLeaf;
+      }
+    }
+  }
+};
+
+// Distribute points within a question and its sub-questions recursively
+const distributePointsRecursive = (question: any) => {
+  if (!question.sub_questions || question.sub_questions.length === 0) {
+    return; // Leaf question, nothing to distribute
+  }
+  
+  const parentPoints = question.points || 0;
+  const subQuestions = question.sub_questions;
+  
+  // Check if sub-questions need points distribution
+  const subWithZero = subQuestions.filter((s: any) => !s.points || s.points === 0);
+  const assignedSubPoints = subQuestions.reduce((sum: number, s: any) => sum + (s.points || 0), 0);
+  
+  if (subWithZero.length > 0 && parentPoints > assignedSubPoints) {
+    const remaining = parentPoints - assignedSubPoints;
+    const perSub = remaining / subWithZero.length;
+    subWithZero.forEach((s: any) => { s.points = perSub; });
+  }
+  
+  // Recursively handle deeper levels
+  for (const sub of subQuestions) {
+    distributePointsRecursive(sub);
+  }
+  
+  // After distributing to children, parent should have 0 to avoid double counting
+  if (question.sub_questions.length > 0) {
+    question.points = 0;
+  }
+};
+
 // Distribute points automatically to questions with 0 points
 // Smart point distribution: allows decimals internally for accurate grading
+// Supports unlimited nesting depth
 const distributePoints = (parsedExam: ParsedExam) => {
   for (const section of parsedExam.sections || []) {
     const questions = section.questions || [];
@@ -528,32 +609,8 @@ const distributePoints = (parsedExam: ParsedExam) => {
     const allMainQuestionsZero = questions.every(q => !q.points || q.points === 0);
     
     if (allMainQuestionsZero && sectionPoints > 0) {
-      // Count total "leaf" items (questions without sub-questions + all sub-questions)
-      let leafCount = 0;
-      for (const q of questions) {
-        if (q.sub_questions && q.sub_questions.length > 0) {
-          leafCount += q.sub_questions.length;
-        } else {
-          leafCount += 1;
-        }
-      }
-      
-      if (leafCount > 0) {
-        // Distribute section points equally to leaves (allowing decimals)
-        const pointsPerLeaf = sectionPoints / leafCount;
-        
-        for (const q of questions) {
-          if (q.sub_questions && q.sub_questions.length > 0) {
-            // Parent gets ZERO - points are ONLY on leaves to prevent double counting
-            q.points = 0;
-            for (const sub of q.sub_questions) {
-              sub.points = pointsPerLeaf;
-            }
-          } else {
-            q.points = pointsPerLeaf;
-          }
-        }
-      }
+      // Distribute section points to all leaf questions recursively
+      distributePointsToLeaves(questions, sectionPoints);
     } else {
       // Some questions have explicit points - distribute remaining to those with zero
       const questionsWithZero = questions.filter(q => !q.points || q.points === 0);
@@ -565,34 +622,9 @@ const distributePoints = (parsedExam: ParsedExam) => {
         questionsWithZero.forEach(q => { q.points = perQuestion; });
       }
       
-      // 3. Handle sub-questions - distribute parent points to children
+      // Recursively handle sub-questions at all levels
       for (const q of questions) {
-        if (q.sub_questions && q.sub_questions.length > 0) {
-          const parentPoints = q.points || 0;
-          const subWithZero = q.sub_questions.filter(s => !s.points || s.points === 0);
-          const assignedSubPoints = q.sub_questions.reduce((sum, s) => sum + (s.points || 0), 0);
-          
-          if (subWithZero.length > 0 && parentPoints > assignedSubPoints) {
-            const remainingSub = parentPoints - assignedSubPoints;
-            const perSub = remainingSub / subWithZero.length;
-            subWithZero.forEach(s => { s.points = perSub; });
-          }
-          
-          // Handle deeper nested sub_questions
-          for (const sub of q.sub_questions) {
-            if (sub.sub_questions && sub.sub_questions.length > 0) {
-              const subParentPoints = sub.points || 0;
-              const deepWithZero = sub.sub_questions.filter(d => !d.points || d.points === 0);
-              const assignedDeep = sub.sub_questions.reduce((sum, d) => sum + (d.points || 0), 0);
-              
-              if (deepWithZero.length > 0 && subParentPoints > assignedDeep) {
-                const remainingDeep = subParentPoints - assignedDeep;
-                const perDeep = remainingDeep / deepWithZero.length;
-                deepWithZero.forEach(d => { d.points = perDeep; });
-              }
-            }
-          }
-        }
+        distributePointsRecursive(q);
       }
     }
   }
@@ -840,6 +872,16 @@ async function processJobInBackground(
 - كل سؤال يجب أن يكون له مساحة للإجابة (خيارات/فراغات/textarea) إلا إذا كان حاوية لأسئلة فرعية
 - إذا لم يكن للسؤال أسئلة فرعية، لا تستخدم multi_part
 
+**قاعدة صارمة للأسئلة متعددة المستويات (مهم جداً):**
+- السؤال الذي يحتوي على بنود فرعية (مثل 23-أ الذي فيه 3 بنود صح/خطأ) يكون من نوع multi_part
+- البنود الفرعية تُخزن في sub_questions
+- يمكن أن يكون هناك تداخل متعدد المستويات:
+  - سؤال 23 (multi_part) → أ، ب، ج
+  - سؤال 23-أ (multi_part) → 1، 2، 3 (true_false)
+- إذا رأيت سؤالاً فرعياً (مثل أ أو ب) وفيه عدة بنود للإجابة → اجعله multi_part وضع البنود في sub_questions
+- توزيع العلامات: علامة السؤال الأب تُوزع على أبنائه
+  - مثال: سؤال 23-أ = 4 علامات، فيه 3 بنود → كل بند ≈ 1.33 علامة
+
 مهم جداً: أكمل جميع البيانات ولا تقطع الإجابة في المنتصف. استخرج جميع الجداول بدقة.`;
 
     // Simplified tool schema for better completion rates
@@ -957,6 +999,7 @@ async function processJobInBackground(
                         },
                         sub_questions: {
                           type: 'array',
+                          description: 'أسئلة فرعية - يمكن أن تتداخل لمستويات متعددة (سؤال 23 → أ → 1، 2، 3)',
                           items: {
                             type: 'object',
                             properties: {
@@ -964,8 +1007,15 @@ async function processJobInBackground(
                               question_text: { type: 'string' },
                               question_type: { type: 'string' },
                               points: { type: 'number' },
+                              has_image: { type: 'boolean' },
+                              has_table: { type: 'boolean' },
+                              has_code: { type: 'boolean' },
                               correct_answer: { type: 'string' },
                               answer_explanation: { type: 'string' },
+                              table_data: {
+                                type: 'object',
+                                additionalProperties: true
+                              },
                               blanks: {
                                 type: 'array',
                                 items: {
@@ -987,10 +1037,6 @@ async function processJobInBackground(
                                 items: { type: 'string' },
                                 description: 'مخزن الكلمات المساعدة للسؤال الفرعي إن وجد'
                               },
-                              table_data: {
-                                type: 'object',
-                                additionalProperties: true
-                              },
                               choices: {
                                 type: 'array',
                                 items: {
@@ -999,6 +1045,38 @@ async function processJobInBackground(
                                     id: { type: 'string' },
                                     text: { type: 'string' },
                                     is_correct: { type: 'boolean' }
+                                  }
+                                }
+                              },
+                              // تداخل عودي - مستوى ثاني (مثل 23-أ → 1، 2، 3)
+                              sub_questions: {
+                                type: 'array',
+                                description: 'أسئلة فرعية داخل فرعية (مستوى ثاني من التداخل)',
+                                items: {
+                                  type: 'object',
+                                  properties: {
+                                    question_number: { type: 'string' },
+                                    question_text: { type: 'string' },
+                                    question_type: { type: 'string' },
+                                    points: { type: 'number' },
+                                    has_image: { type: 'boolean' },
+                                    has_table: { type: 'boolean' },
+                                    correct_answer: { type: 'string' },
+                                    answer_explanation: { type: 'string' },
+                                    choices: {
+                                      type: 'array',
+                                      items: {
+                                        type: 'object',
+                                        properties: {
+                                          id: { type: 'string' },
+                                          text: { type: 'string' },
+                                          is_correct: { type: 'boolean' }
+                                        }
+                                      }
+                                    },
+                                    table_data: { type: 'object', additionalProperties: true },
+                                    blanks: { type: 'array', items: { type: 'object' } },
+                                    correct_answer_data: { type: 'object', additionalProperties: true }
                                   }
                                 }
                               }
