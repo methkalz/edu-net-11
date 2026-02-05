@@ -1,234 +1,156 @@
 
-# خطة إصلاح مشكلة الأسئلة بدون مساحة للإجابة - حل شامل
+# خطة دعم الأسئلة الفرعية المتداخلة (Nested Sub-questions)
 
-## تحليل المشكلة
+## تشخيص المشكلة
 
-### المشكلة الرئيسية
-من الصور المرفقة، يتضح أن بعض الأسئلة تظهر بنوع **"متعدد البنود"** لكن بدون أي مساحة للإجابة عليها:
-- السؤال ج وط: يظهران كـ "متعدد البنود" لكن لا يوجد خيارات أو حقل إدخال
-- السؤال أ (في الصورة الثانية): نفس المشكلة
+من الصورة المرفقة، السؤال 23-أ يحتوي على 3 بنود فرعية (صح/خطأ) وليس سؤالاً واحداً. هذا يعني:
 
-### السبب الجذري
-1. الـ **AI Parser** يصنف بعض الأسئلة خطأً كـ `multi_part` بدون إضافة أسئلة فرعية
-2. نوع `multi_part` مصمم ليكون "حاوية" لأسئلة فرعية - وليس له مساحة إجابة خاصة به
-3. **واجهة التعديل الحالية لا تتيح:**
-   - تغيير نوع السؤال
-   - إضافة خيارات للأسئلة التي ليست من نوع choice
-   - تحويل سؤال من نوع لآخر
-
-### أنواع الأسئلة المدعومة
 ```
-multiple_choice  → خيارات متعددة (Radio)
-true_false       → صح/خطأ (Radio)
-true_false_multi → صح/خطأ متعدد
-fill_blank       → إكمال فراغات (Input fields)
-fill_table       → جدول تفاعلي
-open_ended       → نص حر (Textarea)
-calculation      → حسابي (Textarea)
-cli_command      → أوامر (Textarea)
-diagram_based    → رسم/مخطط (Textarea)
-multi_part       → حاوية لأسئلة فرعية (بدون إجابة خاصة)
-matching         → مطابقة
-ordering         → ترتيب
+سؤال 23 (multi_part - حاوية)
+├── سؤال 23-أ (multi_part - حاوية أيضاً!)
+│   ├── بند 1: صح/خطأ
+│   ├── بند 2: صح/خطأ  
+│   └── بند 3: صح/خطأ
+├── سؤال 23-ب
+├── سؤال 23-ج
+└── ...
+```
+
+## التحليل التقني
+
+| المكون | دعم التداخل | الحالة |
+|--------|------------|--------|
+| قاعدة البيانات (`parent_question_id`) | غير محدود | يعمل |
+| `buildQuestionTree` | غير محدود (recursive) | يعمل |
+| `mapDbQuestionToParsed` | غير محدود (recursive) | يعمل |
+| `BagrutQuestionRenderer` | غير محدود (recursive) | يعمل |
+| `insertQuestion` في BagrutManagement | غير محدود (recursive) | يعمل |
+| **Tool Schema في Edge Function** | **مستوى واحد فقط!** | المشكلة |
+| `visitQuestions` في Edge Function | **مستوى واحد فقط!** | يحتاج تعديل |
+| `distributePoints` في Edge Function | **مستويان فقط** | يحتاج تحسين |
+
+### المشكلة المحددة في Tool Schema
+
+الـ Schema الحالي:
+```javascript
+sub_questions: {
+  type: 'array',
+  items: {
+    properties: {
+      question_number, question_text, question_type, points, ...
+      // لا يوجد sub_questions هنا!
+    }
+  }
+}
+```
+
+يجب أن يكون:
+```javascript
+sub_questions: {
+  type: 'array',
+  items: {
+    properties: {
+      question_number, question_text, question_type, points, ...
+      sub_questions: { ... } // تداخل عودي!
+    }
+  }
+}
 ```
 
 ---
 
-## الحل المقترح - استراتيجية متعددة المستويات
+## التعديلات المطلوبة
 
-### المستوى الأول: تحسين Edge Function (منع المشكلة مستقبلاً)
+### التعديل 1: تحديث Tool Schema في Edge Function
 
 **الملف:** `supabase/functions/parse-bagrut-exam/index.ts`
 
 **التغييرات:**
-1. إضافة تعليمات صريحة في System Prompt:
-```
-- نوع multi_part يُستخدم فقط للأسئلة التي لها أسئلة فرعية فعلية
-- إذا كان السؤال بسيطاً بدون فروع → استخدم open_ended أو النوع المناسب
-- كل سؤال يجب أن يكون له طريقة للإجابة (إلا إذا كان حاوية لأسئلة فرعية)
+1. جعل `sub_questions` تدعم مستوى إضافي من التداخل
+2. إضافة كل الخصائص اللازمة (choices, has_image, has_table, etc.) للمستوى الثاني
+
+**السبب:** لكي يتمكن الـ AI من استخراج أسئلة مثل:
+- سؤال 23 → أ، ب، ج، ...
+- سؤال 23-أ → 1، 2، 3 (صح/خطأ)
+
+---
+
+### التعديل 2: تحديث دالة `visitQuestions` لتكون عودية بالكامل
+
+**الملف:** `supabase/functions/parse-bagrut-exam/index.ts`
+
+**الكود الحالي:**
+```typescript
+const visitQuestions = (parsedExam, visitor) => {
+  for (const section of parsedExam.sections) {
+    for (const q of section.questions) {
+      visitor(q);
+      if (q.sub_questions) {
+        for (const sub of q.sub_questions) visitor(sub);
+      }
+    }
+  }
+};
 ```
 
-2. إضافة Post-processing للتحقق من الأسئلة:
+**الكود المطلوب:**
 ```typescript
-// التحقق من أن كل سؤال multi_part له أسئلة فرعية
-visitQuestions(parsedExam, (q) => {
-  if (q.question_type === 'multi_part' && (!q.sub_questions || q.sub_questions.length === 0)) {
-    q.question_type = 'open_ended'; // تحويل تلقائي
+const visitQuestionsRecursive = (question, visitor) => {
+  visitor(question);
+  if (question.sub_questions) {
+    for (const sub of question.sub_questions) {
+      visitQuestionsRecursive(sub, visitor);
+    }
   }
-});
+};
+
+const visitQuestions = (parsedExam, visitor) => {
+  for (const section of parsedExam.sections) {
+    for (const q of section.questions) {
+      visitQuestionsRecursive(q, visitor);
+    }
+  }
+};
 ```
 
 ---
 
-### المستوى الثاني: تحسين واجهة تعديل السؤال (الحل للأسئلة الموجودة)
+### التعديل 3: تحديث دالة `distributePoints` لدعم التداخل العميق
+
+**الملف:** `supabase/functions/parse-bagrut-exam/index.ts`
+
+**التغييرات:**
+- جعل توزيع العلامات عودياً لأي عمق من التداخل
+- السؤال الأب يحصل على 0 علامة إذا كان له أسئلة فرعية
+- العلامات تُوزع على الأسئلة "الطرفية" (leaf questions) فقط
+
+---
+
+### التعديل 4: تحسين System Prompt للتعامل مع الأسئلة المتداخلة
+
+**الملف:** `supabase/functions/parse-bagrut-exam/index.ts`
+
+**إضافة تعليمات:**
+```
+**قاعدة صارمة للأسئلة متعددة المستويات:**
+- السؤال الذي يحتوي على بنود فرعية (مثل 23-أ الذي فيه 3 بنود صح/خطأ) يكون من نوع multi_part
+- البنود الفرعية تُخزن في sub_questions
+- يمكن أن يكون هناك تداخل: سؤال 23 → أ (multi_part) → 1، 2، 3 (true_false)
+- توزيع العلامات: علامة السؤال الأب تُوزع على أبنائه
+  - مثال: سؤال 23-أ = 4 علامات، فيه 3 بنود → كل بند ≈ 1.33 علامة
+```
+
+---
+
+### التعديل 5: التأكد من توافق واجهة التعديل
 
 **الملف:** `src/components/bagrut/BagrutQuestionEditDialog.tsx`
 
-**التغييرات الجوهرية:**
+**التحقق:**
+- الواجهة تدعم عرض الأسئلة الفرعية للتعديل
+- يجب التأكد من إمكانية إضافة أسئلة فرعية للأسئلة الفرعية
 
-#### 1. إضافة إمكانية تغيير نوع السؤال
-```tsx
-<FormField>
-  <Label>نوع السؤال</Label>
-  <Select 
-    value={editedQuestion.question_type}
-    onValueChange={handleQuestionTypeChange}
-  >
-    <SelectTrigger>
-      <SelectValue />
-    </SelectTrigger>
-    <SelectContent>
-      <SelectItem value="multiple_choice">اختيار من متعدد</SelectItem>
-      <SelectItem value="true_false">صح/خطأ</SelectItem>
-      <SelectItem value="open_ended">مفتوح</SelectItem>
-      <SelectItem value="fill_blank">إكمال الفراغ</SelectItem>
-      <SelectItem value="calculation">حسابي</SelectItem>
-      <SelectItem value="cli_command">أوامر CLI</SelectItem>
-      <SelectItem value="multi_part">متعدد البنود (مع أسئلة فرعية)</SelectItem>
-    </SelectContent>
-  </Select>
-</FormField>
-```
-
-#### 2. تهيئة البيانات عند تغيير النوع
-```typescript
-const handleQuestionTypeChange = (newType: string) => {
-  const updated = { ...editedQuestion, question_type: newType };
-  
-  // تهيئة الخيارات للأنواع المناسبة
-  if (newType === 'multiple_choice' && !updated.choices?.length) {
-    updated.choices = [
-      { id: '1', text: '', is_correct: false },
-      { id: '2', text: '', is_correct: false },
-      { id: '3', text: '', is_correct: false },
-      { id: '4', text: '', is_correct: false },
-    ];
-  }
-  
-  if (newType === 'true_false') {
-    updated.choices = [
-      { id: '1', text: 'صح', is_correct: false },
-      { id: '2', text: 'خطأ', is_correct: false },
-    ];
-  }
-  
-  // تفعيل الجدول لنوع fill_table
-  if (newType === 'fill_table' && !updated.table_data) {
-    updated.has_table = true;
-    updated.table_data = {
-      headers: ['عمود 1', 'عمود 2', 'عمود 3'],
-      rows: [['', '', '']],
-      input_columns: [1, 2],
-      correct_answers: {}
-    };
-  }
-  
-  setEditedQuestion(updated);
-};
-```
-
-#### 3. إضافة تنبيه للأسئلة بدون مساحة إجابة
-```tsx
-// في أعلى الـ Dialog
-{!hasAnswerMethod(editedQuestion) && (
-  <Alert variant="destructive">
-    <AlertCircle className="h-4 w-4" />
-    <AlertDescription>
-      هذا السؤال ليس له مساحة للإجابة! يرجى تغيير نوع السؤال أو إضافة أسئلة فرعية.
-    </AlertDescription>
-  </Alert>
-)}
-```
-
-#### 4. دالة التحقق من وجود مساحة إجابة
-```typescript
-const hasAnswerMethod = (q: ParsedQuestion): boolean => {
-  const type = q.question_type;
-  
-  // أنواع لها مساحة إجابة مباشرة
-  if (['open_ended', 'calculation', 'cli_command', 'diagram_based'].includes(type)) {
-    return true; // Textarea
-  }
-  
-  // أنواع تحتاج خيارات
-  if (['multiple_choice', 'true_false', 'true_false_multi'].includes(type)) {
-    return (q.choices?.length || 0) >= 2;
-  }
-  
-  // إكمال الفراغ
-  if (type === 'fill_blank') {
-    return true; // يظهر Textarea كـ fallback
-  }
-  
-  // جدول تفاعلي
-  if (type === 'fill_table' || q.has_table) {
-    return !!q.table_data?.rows?.length;
-  }
-  
-  // متعدد البنود - يحتاج أسئلة فرعية
-  if (type === 'multi_part') {
-    return (q.sub_questions?.length || 0) > 0;
-  }
-  
-  return false;
-};
-```
-
----
-
-### المستوى الثالث: تحسين BagrutQuestionRenderer (Fallback ذكي)
-
-**الملف:** `src/components/bagrut/BagrutQuestionRenderer.tsx`
-
-**التغييرات:**
-
-#### إضافة Fallback لأي سؤال بدون مساحة إجابة
-```tsx
-// في نهاية الشروط - قبل الأسئلة الفرعية
-{/* Fallback: إذا لم يكن هناك مساحة إجابة → نعرض Textarea */}
-{!hasAnswerComponent && !hasSubQuestions && (
-  <div className="space-y-2">
-    <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 text-sm">
-      <AlertCircle className="h-4 w-4" />
-      <span>نوع السؤال غير محدد - اكتب إجابتك أدناه</span>
-    </div>
-    <Textarea
-      value={currentAnswer as string || ''}
-      onChange={(e) => handleChange(e.target.value)}
-      disabled={disabled}
-      placeholder="اكتب إجابتك هنا..."
-      className="min-h-[120px] resize-y"
-    />
-  </div>
-)}
-```
-
-#### منطق تحديد وجود مكون إجابة
-```typescript
-const hasAnswerComponent = useMemo(() => {
-  const type = question.question_type;
-  
-  // أنواع لها Textarea مباشر
-  if (['open_ended', 'calculation', 'cli_command', 'diagram_based'].includes(type)) return true;
-  
-  // fill_blank لها fallback موجود
-  if (type === 'fill_blank') return true;
-  
-  // MCQ/TF تحتاج خيارات
-  if (['multiple_choice', 'true_false', 'true_false_multi'].includes(type)) {
-    return (question.choices?.length || 0) >= 2;
-  }
-  
-  // جدول
-  if (type === 'fill_table' || question.has_table) {
-    return !!question.table_data?.rows?.length;
-  }
-  
-  return false;
-}, [question]);
-
-const hasSubQuestions = (question.sub_questions?.length || 0) > 0;
-```
+**ملاحظة:** بناءً على فحص الكود، التعديل الأخير على واجهة التعديل **لا يتعارض** مع التداخل، لكن قد نحتاج لتحسينها لاحقاً لإضافة أسئلة فرعية داخل فرعية.
 
 ---
 
@@ -236,53 +158,99 @@ const hasSubQuestions = (question.sub_questions?.length || 0) > 0;
 
 | الملف | التعديلات |
 |-------|-----------|
-| `supabase/functions/parse-bagrut-exam/index.ts` | تحسين System Prompt + Post-processing للتحقق |
-| `src/components/bagrut/BagrutQuestionEditDialog.tsx` | إضافة تغيير نوع السؤال + تهيئة البيانات + تنبيهات |
-| `src/components/bagrut/BagrutQuestionRenderer.tsx` | إضافة Fallback Textarea للأسئلة بدون مساحة إجابة |
+| `supabase/functions/parse-bagrut-exam/index.ts` | Tool Schema + visitQuestions + distributePoints + System Prompt |
 
 ---
 
 ## التفاصيل التقنية
 
-### تغيير نوع السؤال - الحالات المدعومة
+### Tool Schema المحدث لـ sub_questions
 
-```text
-┌─────────────────────┐
-│ تحويل النوع          │
-├─────────────────────┤
-│ من:       إلى:       │
-│ multi_part → open_ended     (الأكثر شيوعاً) │
-│ multi_part → multiple_choice (إذا كان MCQ) │
-│ multi_part → true_false      (إذا كان صح/خطأ) │
-│ multi_part → fill_blank      (إذا كان فراغات) │
-│ open_ended → multiple_choice (إضافة خيارات) │
-│ multiple_choice → true_false │
-└─────────────────────┘
+```javascript
+sub_questions: {
+  type: 'array',
+  items: {
+    type: 'object',
+    properties: {
+      question_number: { type: 'string' },
+      question_text: { type: 'string' },
+      question_type: { type: 'string' },
+      points: { type: 'number' },
+      has_image: { type: 'boolean' },
+      has_table: { type: 'boolean' },
+      has_code: { type: 'boolean' },
+      table_data: { type: 'object', additionalProperties: true },
+      choices: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            text: { type: 'string' },
+            is_correct: { type: 'boolean' }
+          }
+        }
+      },
+      correct_answer: { type: 'string' },
+      answer_explanation: { type: 'string' },
+      // تداخل عودي - مستوى ثاني
+      sub_questions: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            question_number: { type: 'string' },
+            question_text: { type: 'string' },
+            question_type: { type: 'string' },
+            points: { type: 'number' },
+            choices: { type: 'array', items: { type: 'object' } },
+            correct_answer: { type: 'string' }
+          }
+        }
+      }
+    }
+  }
+}
 ```
 
-### تهيئة البيانات حسب النوع
+### دالة توزيع العلامات العودية
 
-| النوع الجديد | البيانات المُهيأة |
-|-------------|------------------|
-| `multiple_choice` | 4 خيارات فارغة |
-| `true_false` | خياران (صح/خطأ) |
-| `fill_blank` | لا شيء (Fallback Textarea) |
-| `fill_table` | جدول 3×1 مع عمودين إدخال |
-| `open_ended` | لا شيء (Textarea جاهز) |
+```typescript
+const distributePointsRecursive = (questions: any[], totalPoints: number) => {
+  // حساب الأسئلة الطرفية (بدون فرعية)
+  const leafCount = countLeaves(questions);
+  
+  if (leafCount === 0) return;
+  
+  const pointsPerLeaf = totalPoints / leafCount;
+  
+  for (const q of questions) {
+    if (q.sub_questions && q.sub_questions.length > 0) {
+      // الأب يحصل على 0 - العلامات على الأطراف فقط
+      q.points = 0;
+      distributePointsRecursive(q.sub_questions, q.points || pointsPerLeaf * countLeaves([q]));
+    } else {
+      q.points = pointsPerLeaf;
+    }
+  }
+};
+```
 
 ---
 
-## ترتيب التنفيذ
+## التوافق مع التعديلات السابقة
 
-1. **Edge Function** - منع المشكلة في الامتحانات المستقبلية
-2. **BagrutQuestionRenderer** - إضافة Fallback فوري للأسئلة الحالية
-3. **BagrutQuestionEditDialog** - إتاحة الإصلاح اليدوي للسوبر آدمن
+| التعديل السابق | التوافق |
+|---------------|---------|
+| `FallbackAnswerArea` | متوافق - يتحقق من `hasSubQuestions` |
+| `normalizeExamForReliability` | يحتاج تعديل ليكون عودياً |
+| `hasAnswerMethod` في EditDialog | متوافق |
 
 ---
 
-## ملاحظات الأمان والتوافق
+## ملاحظات مهمة
 
-- **التوافق العكسي**: الأسئلة الحالية ستعمل + ستحصل على Fallback
-- **لا تغييرات في DB**: البنية الحالية تدعم جميع الأنواع
-- **UX محسّن**: تنبيهات واضحة + إصلاح سهل
-- **منع مستقبلي**: Edge Function سيمنع استيراد أسئلة معطوبة
+1. **الأداء**: التداخل العودي لن يؤثر على الأداء (عادة 2-3 مستويات كحد أقصى)
+2. **قاعدة البيانات**: لا تحتاج تعديلات - `parent_question_id` يدعم أي عمق
+3. **عرض الطالب**: `BagrutQuestionRenderer` عودي بالفعل - يعمل
+4. **التصحيح**: منطق جمع العلامات في `buildBagrutPreview` يستخدم `sumPointsLeafOnly` العودي - يعمل
