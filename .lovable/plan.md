@@ -1,103 +1,174 @@
 
+# خطة تحسين نظام امتحانات البجروت - 4 تعديلات رئيسية
 
-# خطة توحيد عرض الوسائط للصف العاشر مع الصف الحادي عشر
+## ملخص الطلبات
 
-## المشكلة المكتشفة
+1. **إرشادات الامتحان**: إتاحة تعديلها من قبل السوبر آدمن بمحرر نصوص غني (Rich Text Editor)
+2. **شرح الحل للطالب**: عرض الشرح بتنسيق متعدد الأسطر + إمكانية التعديل من السوبر آدمن
+3. **شرح الحل للمعلم**: إظهار طريقة الحل أثناء التصحيح
+4. **مشكلة الترجمة**: التأكد من عدم ترجمة النصوص العربية للإنجليزية عند الاستيراد
 
-بعد نسخ محتوى "أساسيات الاتصال" من الصف الحادي عشر إلى العاشر، هناك فروقات جوهرية في طريقة عرض الوسائط:
+---
 
-### الفروقات الرئيسية:
+## التحليل التفصيلي
 
-| الميزة | الصف الحادي عشر | الصف العاشر |
-|--------|-----------------|-------------|
-| **عرض الكود** | TypewriterCodeBlock مع أنيميشن كتابة تلقائية | عرض بسيط في `<pre>` بدون تنسيق |
-| **عرض المحتوى** | Conditional rendering لتجنب التكرار | عرض HTML + Gamma معاً (قد يسبب تكرار) |
-| **فيديو Google Drive** | مكون Grade11VideoFix لاستخراج drive_id | استخراج بسيط قد لا يعمل مع كل الروابط |
-| **فيديو YouTube** | استخراج من metadata.video_url | استخراج من file_path فقط |
-| **Lottie** | دعم animation_data + lottie_data + سرعة متحكم بها | دعم lottie_data فقط بدون سرعة |
-| **تنظيم الوسائط** | فصل الفيديو عن البقية مع عنوان | كل الوسائط مع بطاقات موحدة |
+### الوضع الحالي
 
-## الحل المقترح
+| العنصر | الوضع الحالي |
+|--------|-------------|
+| **إرشادات الامتحان** | نص عادي (`text`) في جدول `bagrut_exams.instructions` - يُعرض كقائمة مرقمة بفصل الأسطر |
+| **شرح الحل** | نص عادي (`text`) في جدول `bagrut_questions.answer_explanation` - يُعرض في سطر واحد |
+| **عرض الشرح للمعلم** | غير متاح حالياً أثناء التصحيح |
+| **الترجمة** | System Prompt في Edge Function لا يمنع الترجمة صراحةً |
 
-استبدال كامل منطق عرض الوسائط في `Grade10LessonContentDisplay.tsx` ليطابق تماماً `Grade11LessonContentDisplay.tsx`.
+### التغييرات المطلوبة
 
-## التغييرات التقنية
+---
 
-### 1. تحديث Imports
-إضافة المكونات المفقودة:
-- `CodeBlock`
-- `TypewriterCodeBlock`
-- `Grade11VideoFix`
-- `logger`
-- `useRef`, `useEffect`
+## التعديل الأول: إرشادات الامتحان بمحرر غني
 
-### 2. تحديث renderEmbeddedMedia للفيديو
-```typescript
-case 'video':
-  // دعم metadata.source_type (youtube, google_drive, upload, url)
-  if (metadata.source_type === 'youtube') {
-    // استخراج YouTube ID من metadata أو file_path
-  } else if (metadata.source_type === 'google_drive') {
-    return <Grade11VideoFix media={media} metadata={metadata} />;
-  } else {
-    // فيديو عادي
-  }
-```
+### المشكلة
+- السوبر آدمن لا يستطيع تعديل الإرشادات بعد استيراد الامتحان
+- لا يوجد تنسيق (حجم خط، ألوان، قوائم)
 
-### 3. تحديث renderEmbeddedMedia للكود
-```typescript
-case 'code':
-  // دعم nested metadata
-  // استخدام TypewriterCodeBlock مع أنيميشن
-  // أو CodeBlock العادي
-```
+### الحل
 
-### 4. تحديث renderEmbeddedMedia للوتي
-```typescript
-case 'lottie':
-  // دعم metadata.animation_data + metadata.lottie_data
-  // دعم إعدادات السرعة
-  // استخدام LottieDisplay component
-```
+**1. تعديل واجهة BagrutExamPreview.tsx:**
+- إضافة زر "تعديل الإرشادات" للسوبر آدمن
+- فتح Dialog يحتوي على `RichTextEditor`
+- حفظ الإرشادات كـ HTML
 
-### 5. تحديث عرض المحتوى (Conditional Rendering)
-```typescript
-{lesson.content && (
-  <>
-    {lesson.content.includes('data-type="html-embed"') && (
-      <HTMLEmbedWrapper content={lesson.content} />
-    )}
-    
-    {lesson.content.includes('gamma.app/embed') && (
-      <GammaEmbedWrapper content={lesson.content} />
-    )}
-    
-    {/* فقط إذا لم يحتوي على HTML/Gamma */}
-    {!lesson.content.includes('data-type="html-embed"') && 
-     !lesson.content.includes('gamma.app/embed') && (
-      <div dangerouslySetInnerHTML={{ __html: lesson.content }} />
-    )}
-  </>
+**2. تعديل واجهة BagrutManagement.tsx:**
+- عند حفظ الامتحان، يتم حفظ الإرشادات كـ HTML
+- إضافة زر تعديل الإرشادات في قائمة الإجراءات
+
+**3. تعديل عرض الإرشادات للطالب:**
+- في `BagrutSectionSelector.tsx` و `AllMandatoryExamStart.tsx`
+- عرض الإرشادات باستخدام `dangerouslySetInnerHTML` بدلاً من فصل الأسطر
+- تطبيق كلاسات Tailwind للتنسيق
+
+**الملفات المتأثرة:**
+- `src/components/bagrut/BagrutExamPreview.tsx` - إضافة Dialog للتعديل
+- `src/components/bagrut/BagrutSectionSelector.tsx` - تعديل طريقة العرض
+- `src/components/bagrut/AllMandatoryExamStart.tsx` - تعديل طريقة العرض
+- `src/pages/BagrutManagement.tsx` - إضافة حفظ الإرشادات
+
+---
+
+## التعديل الثاني: شرح الحل بتنسيق متعدد الأسطر
+
+### المشكلة
+- `answer_explanation` يُخزن ويُعرض كنص عادي (سطر واحد)
+- لا يدعم التنسيق (أسطر متعددة، قوائم، كود)
+
+### الحل
+
+**1. تعديل BagrutQuestionEditDialog.tsx:**
+- استبدال `Textarea` العادي بـ `RichTextEditor` لحقل شرح الإجابة
+- السماح بإضافة أسطر متعددة وتنسيق النص
+
+**2. تعديل Edge Function (parse-bagrut-exam):**
+- تعديل System Prompt لطلب الحفاظ على تنسيق الشرح (أسطر متعددة)
+- عدم ترجمة النصوص
+
+**3. تعديل عرض الشرح للطالب:**
+- في `BagrutQuestionRenderer.tsx` و `StudentBagrutResult.tsx`
+- عرض الشرح باستخدام `dangerouslySetInnerHTML` أو `whitespace-pre-wrap`
+
+**الملفات المتأثرة:**
+- `src/components/bagrut/BagrutQuestionEditDialog.tsx` - استخدام Rich Editor
+- `src/components/bagrut/BagrutQuestionRenderer.tsx` - تعديل العرض
+- `src/pages/StudentBagrutResult.tsx` - تعديل العرض
+- `supabase/functions/parse-bagrut-exam/index.ts` - تحديث Prompt
+
+---
+
+## التعديل الثالث: إظهار شرح الحل للمعلم أثناء التصحيح
+
+### المشكلة
+- المعلم لا يرى طريقة الحل الصحيحة أثناء تصحيح إجابات الطالب
+
+### الحل
+
+**تعديل BagrutGradingPage.tsx - مكون QuestionCard:**
+- إضافة قسم جديد لعرض `answer_explanation` تحت الإجابة الصحيحة
+- عرضه بتنسيق HTML إذا كان موجوداً
+- تصميم مميز (لون أخضر فاتح مع أيقونة)
+
+**الكود المقترح:**
+```tsx
+{/* شرح الحل - للمعلم */}
+{question.answer_explanation && (
+  <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg border border-emerald-200 dark:border-emerald-800">
+    <p className="text-sm font-medium mb-1 flex items-center gap-2">
+      <BookOpen className="h-4 w-4 text-emerald-600" />
+      طريقة الحل:
+    </p>
+    <div 
+      className="text-sm whitespace-pre-wrap prose prose-sm max-w-none"
+      dangerouslySetInnerHTML={{ __html: question.answer_explanation }}
+    />
+  </div>
 )}
 ```
 
-### 6. تحديث هيكل العرض
-- فصل `videoMedia` عن `otherMedia`
-- عرض الفيديوهات بشكل منفصل مع عنوان "مقاطع الفيديو"
-- إضافة LottieDisplay component للتحكم بالسرعة
+**الملفات المتأثرة:**
+- `src/pages/BagrutGradingPage.tsx` - إضافة عرض الشرح في QuestionCard
+
+---
+
+## التعديل الرابع: منع الترجمة في Edge Function
+
+### المشكلة
+- في بعض الحالات، الـ AI يترجم نصوصاً عربية للإنجليزية
+
+### الحل
+
+**تعديل System Prompt في parse-bagrut-exam/index.ts:**
+إضافة تعليمات صريحة:
+
+```
+**قاعدة صارمة - اللغة:**
+- لا تترجم أي نص من العربية إلى أي لغة أخرى
+- حافظ على اللغة الأصلية للنص كما هي في الملف
+- إذا كان السؤال بالعربية، يجب أن يبقى بالعربية
+- إذا كان الشرح بالعربية، يجب أن يبقى بالعربية
+- لا تستخدم مصطلحات إنجليزية بدلاً من العربية
+```
+
+**الملفات المتأثرة:**
+- `supabase/functions/parse-bagrut-exam/index.ts` - تحديث System Prompt
+
+---
 
 ## ملخص الملفات المتأثرة
 
-| الملف | التغيير |
-|-------|---------|
-| `src/components/content/Grade10LessonContentDisplay.tsx` | إعادة كتابة شاملة لمطابقة Grade11 |
+| الملف | التعديلات |
+|-------|-----------|
+| `src/components/bagrut/BagrutExamPreview.tsx` | إضافة Dialog لتعديل الإرشادات |
+| `src/components/bagrut/BagrutSectionSelector.tsx` | عرض الإرشادات كـ HTML |
+| `src/components/bagrut/AllMandatoryExamStart.tsx` | عرض الإرشادات كـ HTML |
+| `src/components/bagrut/BagrutQuestionEditDialog.tsx` | Rich Editor لشرح الإجابة |
+| `src/components/bagrut/BagrutQuestionRenderer.tsx` | عرض الشرح بتنسيق متعدد الأسطر |
+| `src/pages/BagrutManagement.tsx` | دعم حفظ/تحديث الإرشادات |
+| `src/pages/BagrutGradingPage.tsx` | عرض شرح الحل للمعلم |
+| `src/pages/StudentBagrutResult.tsx` | عرض الشرح بتنسيق متعدد الأسطر |
+| `supabase/functions/parse-bagrut-exam/index.ts` | منع الترجمة + الحفاظ على التنسيق |
 
-## النتيجة المتوقعة
+---
 
-بعد التنفيذ:
-- أكواد HTML التفاعلية ستعمل بشكل صحيح
-- عروض Gamma التقديمية ستظهر بدون تكرار
-- فيديوهات YouTube و Google Drive ستعمل
-- ملفات Lottie ستعرض مع إعدادات السرعة
-- أكواد البرمجة ستظهر مع أنيميشن الطباعة
+## ترتيب التنفيذ
 
+1. **Edge Function أولاً** - لمنع مشاكل الترجمة في الامتحانات المستقبلية
+2. **شرح الحل للمعلم** - أسرع تعديل (ملف واحد)
+3. **شرح الحل للطالب** - تعديل العرض + المحرر
+4. **إرشادات الامتحان** - التعديل الأكثر شمولاً
+
+---
+
+## ملاحظات تقنية
+
+- **التوافق العكسي**: الإرشادات القديمة (نص عادي) ستعمل مع العرض الجديد
+- **الأمان**: استخدام `prose` classes للتحكم في HTML المعروض
+- **الأداء**: لا تأثير على الأداء (تغييرات عرض فقط)
+- **قاعدة البيانات**: لا تحتاج تعديلات - الحقول موجودة (`text` يدعم HTML)
