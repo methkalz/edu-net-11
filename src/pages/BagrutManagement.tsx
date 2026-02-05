@@ -410,6 +410,35 @@ const BagrutManagement: React.FC = () => {
     setParsedExam(updatedExam as any);
   };
 
+  // Save instructions update to database
+  const handleInstructionsUpdate = async (instructions: string) => {
+    if (!parsedExam?.exam_db_id) {
+      toast.error('لا يمكن حفظ الإرشادات: معرف الامتحان مفقود');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('bagrut_exams')
+        .update({ 
+          instructions,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', parsedExam.exam_db_id);
+
+      if (error) throw error;
+
+      toast.success('تم حفظ الإرشادات بنجاح!');
+      
+      // Update local state
+      setParsedExam((prev: any) => ({ ...prev, instructions }));
+    } catch (error) {
+      console.error('Error saving instructions:', error);
+      toast.error('فشل في حفظ الإرشادات');
+      throw error;
+    }
+  };
+
   // Save edits to existing exam in database
   const handleSaveEditsToDb = async (updatedExam: ParsedExam) => {
     if (!updatedExam.exam_db_id) {
@@ -960,7 +989,7 @@ const BagrutManagement: React.FC = () => {
         setStatistics(null);
         setAnswersReport(null);
         setPointsReport(null);
-      }} onExamUpdate={handleExamUpdate} onSaveEdits={handleSaveEditsToDb} showSaveButton={false} />}
+      }} onExamUpdate={handleExamUpdate} onSaveEdits={handleSaveEditsToDb} onInstructionsUpdate={handleInstructionsUpdate} showSaveButton={false} />}
       </main>
       
       <AppFooter />

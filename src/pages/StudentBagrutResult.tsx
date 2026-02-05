@@ -358,6 +358,15 @@ export default function StudentBagrutResult() {
                           </div>
                         )}
 
+                        {question.answer_explanation && (
+                          <div className="mt-2 p-2 bg-emerald-50 dark:bg-emerald-950/30 rounded border border-emerald-200 dark:border-emerald-800">
+                            <span className="font-medium text-emerald-700 dark:text-emerald-400">طريقة الحل: </span>
+                            <div className="text-foreground/80 whitespace-pre-wrap mt-1 text-sm">
+                              {question.answer_explanation}
+                            </div>
+                          </div>
+                        )}
+
                         {grade?.teacher_feedback && (
                           <div className="mt-2 p-2 bg-muted rounded text-sm">
                             <span className="font-medium">ملاحظة: </span>

@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
+import DOMPurify from 'dompurify';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -6,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { 
   Eye, 
   EyeOff, 
@@ -17,11 +19,13 @@ import {
   Layers,
   HelpCircle,
   Table,
-  Pencil
+  Pencil,
+  BookOpen
 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import BagrutImageUpload from './BagrutImageUpload';
 import BagrutQuestionEditDialog from './BagrutQuestionEditDialog';
+import RichTextEditor from '@/components/content/RichTextEditor';
 
 import type { ParsedQuestion, ParsedSection, ParsedExam, Statistics } from '@/lib/bagrut/buildBagrutPreview';
 
@@ -35,6 +39,7 @@ interface BagrutExamPreviewProps {
   onCancel: () => void;
   onExamUpdate?: (updatedExam: ParsedExam) => void;
   onSaveEdits?: (updatedExam: ParsedExam) => Promise<void>;
+  onInstructionsUpdate?: (instructions: string) => Promise<void>;
   isSaving?: boolean;
   showSaveButton?: boolean;
 }
@@ -98,6 +103,7 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
   onCancel,
   onExamUpdate,
   onSaveEdits,
+  onInstructionsUpdate,
   isSaving = false,
   showSaveButton = true
 }) => {
@@ -106,6 +112,9 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
   const [localExam, setLocalExam] = useState(exam);
   const [editMode, setEditMode] = useState(false);
   const [hasEdits, setHasEdits] = useState(false);
+  const [instructionsDialogOpen, setInstructionsDialogOpen] = useState(false);
+  const [editingInstructions, setEditingInstructions] = useState(exam.instructions || '');
+  const [isSavingInstructions, setIsSavingInstructions] = useState(false);
 
   // مزامنة localExam مع exam prop عندما يتغير (بعد الحفظ أو إعادة الجلب من DB)
   // هذا يضمن بقاء ترتيب الأسئلة كما في قاعدة البيانات
@@ -116,6 +125,34 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
   const [isSavingEdits, setIsSavingEdits] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<ParsedQuestion | null>(null);
   const [editingContext, setEditingContext] = useState<{ sectionIndex: number } | null>(null);
+
+  // التحقق من نوع التعليمات (HTML أو نص عادي)
+  const isHtmlInstructions = useMemo(() => {
+    if (!localExam.instructions) return false;
+    return /<[a-z][\s\S]*>/i.test(localExam.instructions);
+  }, [localExam.instructions]);
+
+  // تنظيف HTML للعرض الآمن
+  const sanitizedInstructions = useMemo(() => {
+    if (!localExam.instructions) return '';
+    if (isHtmlInstructions) {
+      return DOMPurify.sanitize(localExam.instructions);
+    }
+    return localExam.instructions;
+  }, [localExam.instructions, isHtmlInstructions]);
+
+  // حفظ الإرشادات
+  const handleSaveInstructions = async () => {
+    if (!onInstructionsUpdate) return;
+    setIsSavingInstructions(true);
+    try {
+      await onInstructionsUpdate(editingInstructions);
+      setLocalExam(prev => ({ ...prev, instructions: editingInstructions }));
+      setInstructionsDialogOpen(false);
+    } finally {
+      setIsSavingInstructions(false);
+    }
+  };
 
   // Handle image upload for a question
   const handleImageUploaded = useCallback((sectionIndex: number, questionNumber: string, imageUrl: string) => {
@@ -284,11 +321,54 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
             ))}
           </div>
 
-          {exam.instructions && (
-            <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg text-sm">
-              <p className="font-medium mb-1">تعليمات الامتحان:</p>
-              <p className="text-muted-foreground">{exam.instructions}</p>
+          {/* تعليمات الامتحان */}
+          {localExam.instructions && (
+            <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg text-sm relative group">
+              <div className="flex items-center justify-between mb-1">
+                <p className="font-medium flex items-center gap-2">
+                  <BookOpen className="h-4 w-4" />
+                  تعليمات الامتحان:
+                </p>
+                {onInstructionsUpdate && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => {
+                      setEditingInstructions(localExam.instructions || '');
+                      setInstructionsDialogOpen(true);
+                    }}
+                  >
+                    <Pencil className="h-3 w-3 ml-1" />
+                    تعديل
+                  </Button>
+                )}
+              </div>
+              {isHtmlInstructions ? (
+                <div 
+                  className="prose prose-sm max-w-none dark:prose-invert text-muted-foreground"
+                  dangerouslySetInnerHTML={{ __html: sanitizedInstructions }}
+                />
+              ) : (
+                <p className="text-muted-foreground whitespace-pre-wrap">{localExam.instructions}</p>
+              )}
             </div>
+          )}
+          
+          {/* زر إضافة تعليمات إذا لم تكن موجودة */}
+          {!localExam.instructions && onInstructionsUpdate && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-4"
+              onClick={() => {
+                setEditingInstructions('');
+                setInstructionsDialogOpen(true);
+              }}
+            >
+              <BookOpen className="h-4 w-4 ml-1" />
+              إضافة تعليمات الامتحان
+            </Button>
           )}
         </CardContent>
       </Card>
@@ -401,6 +481,33 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
           onSubmit={handleQuestionUpdate}
         />
       )}
+
+      {/* Instructions Edit Dialog */}
+      <Dialog open={instructionsDialogOpen} onOpenChange={setInstructionsDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh]" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <BookOpen className="h-5 w-5" />
+              تعديل إرشادات الامتحان
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <RichTextEditor
+              content={editingInstructions}
+              onChange={setEditingInstructions}
+              placeholder="أدخل تعليمات الامتحان هنا..."
+            />
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setInstructionsDialogOpen(false)}>
+              إلغاء
+            </Button>
+            <Button onClick={handleSaveInstructions} disabled={isSavingInstructions}>
+              {isSavingInstructions ? 'جاري الحفظ...' : 'حفظ الإرشادات'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
