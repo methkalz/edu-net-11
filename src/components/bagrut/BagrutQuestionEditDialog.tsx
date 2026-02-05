@@ -15,6 +15,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
@@ -78,6 +79,173 @@ const questionTypeLabels: Record<string, string> = {
   cli_command: 'أوامر CLI',
   open_ended: 'مفتوح',
   multi_part: 'متعدد البنود'
+};
+
+// مكون تحرير سؤال فرعي - عودي لدعم التداخل العميق
+const SubQuestionEditor: React.FC<{
+  subQuestion: ParsedQuestion;
+  index: number;
+  onUpdate: (updated: ParsedQuestion) => void;
+  depth?: number;
+}> = ({ subQuestion, index, onUpdate, depth = 1 }) => {
+  const [expanded, setExpanded] = useState(false);
+  
+  const handleFieldChange = (field: keyof ParsedQuestion, value: any) => {
+    onUpdate({ ...subQuestion, [field]: value });
+  };
+  
+  const handleChoiceChange = (choiceIndex: number, text: string) => {
+    const newChoices = [...(subQuestion.choices || [])];
+    newChoices[choiceIndex] = { ...newChoices[choiceIndex], text };
+    onUpdate({ ...subQuestion, choices: newChoices });
+  };
+  
+  const handleCorrectChange = (choiceId: string) => {
+    const newChoices = (subQuestion.choices || []).map(c => ({
+      ...c,
+      is_correct: c.id === choiceId
+    }));
+    onUpdate({ ...subQuestion, choices: newChoices, correct_answer: choiceId });
+  };
+  
+  const isChoiceType = ['multiple_choice', 'true_false', 'true_false_multi'].includes(subQuestion.question_type);
+  const hasNestedSubs = subQuestion.sub_questions && subQuestion.sub_questions.length > 0;
+  
+  return (
+    <Card className={`border-dashed ${depth > 1 ? 'ml-2' : ''}`}>
+      <CardHeader className="pb-2 cursor-pointer" onClick={() => setExpanded(!expanded)}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="font-medium text-sm">
+              سؤال فرعي {subQuestion.question_number}
+            </span>
+            <Badge variant="outline" className="text-xs">
+              {questionTypeLabels[subQuestion.question_type] || subQuestion.question_type}
+            </Badge>
+            <Badge variant="secondary" className="text-xs">
+              {subQuestion.points} علامة
+            </Badge>
+            {hasNestedSubs && (
+              <Badge variant="default" className="text-xs bg-primary/20 text-primary">
+                {subQuestion.sub_questions!.length} فرعي
+              </Badge>
+            )}
+          </div>
+          <Button variant="ghost" size="sm">
+            {expanded ? '▼' : '◀'}
+          </Button>
+        </div>
+      </CardHeader>
+      
+      {expanded && (
+        <CardContent className="space-y-4 pt-2">
+          {/* نوع السؤال الفرعي */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>نوع السؤال</Label>
+              <Select
+                value={subQuestion.question_type}
+                onValueChange={(val) => handleFieldChange('question_type', val)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="open_ended">مفتوح</SelectItem>
+                  <SelectItem value="multiple_choice">اختيار من متعدد</SelectItem>
+                  <SelectItem value="true_false">صح/خطأ</SelectItem>
+                  <SelectItem value="calculation">حسابي</SelectItem>
+                  <SelectItem value="multi_part">متعدد البنود</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>العلامات</Label>
+              <Input
+                type="number"
+                value={subQuestion.points}
+                onChange={(e) => handleFieldChange('points', Number(e.target.value))}
+                min={0}
+              />
+            </div>
+          </div>
+          
+          {/* نص السؤال */}
+          <div className="space-y-2">
+            <Label>نص السؤال</Label>
+            <Textarea
+              value={subQuestion.question_text}
+              onChange={(e) => handleFieldChange('question_text', e.target.value)}
+              className="min-h-[60px]"
+            />
+          </div>
+          
+          {/* الخيارات للأسئلة الموضوعية */}
+          {isChoiceType && subQuestion.choices && (
+            <div className="space-y-2">
+              <Label>الخيارات</Label>
+              <RadioGroup
+                value={subQuestion.correct_answer || subQuestion.choices.find(c => c.is_correct)?.id || ''}
+                onValueChange={handleCorrectChange}
+                className="space-y-2"
+              >
+                {subQuestion.choices.map((choice, cIdx) => (
+                  <div key={choice.id || cIdx} className="flex items-center gap-2">
+                    <RadioGroupItem value={choice.id} id={`sub-${index}-choice-${cIdx}`} />
+                    <Input
+                      value={choice.text}
+                      onChange={(e) => handleChoiceChange(cIdx, e.target.value)}
+                      placeholder={`خيار ${cIdx + 1}`}
+                      className="flex-1"
+                    />
+                    {choice.is_correct && (
+                      <Badge variant="default" className="bg-green-500 text-xs">صحيح</Badge>
+                    )}
+                  </div>
+                ))}
+              </RadioGroup>
+            </div>
+          )}
+          
+          {/* الإجابة الصحيحة للأسئلة المفتوحة */}
+          {!isChoiceType && !hasNestedSubs && (
+            <div className="space-y-2">
+              <Label>الإجابة الصحيحة</Label>
+              <Textarea
+                value={subQuestion.correct_answer || ''}
+                onChange={(e) => handleFieldChange('correct_answer', e.target.value)}
+                className="min-h-[60px]"
+                placeholder="الإجابة الصحيحة..."
+              />
+            </div>
+          )}
+          
+          {/* الأسئلة الفرعية المتداخلة (مستوى ثاني) */}
+          {hasNestedSubs && (
+            <div className="space-y-3 mr-3 border-r-2 border-muted pr-3">
+              <Label className="text-sm font-medium">
+                أسئلة فرعية ({subQuestion.sub_questions!.length})
+              </Label>
+              {subQuestion.sub_questions!.map((nestedSub, nIdx) => (
+                <SubQuestionEditor
+                  key={nestedSub.question_db_id || nIdx}
+                  subQuestion={nestedSub}
+                  index={nIdx}
+                  depth={depth + 1}
+                  onUpdate={(updated) => {
+                    const newNested = [...(subQuestion.sub_questions || [])];
+                    newNested[nIdx] = updated;
+                    onUpdate({ ...subQuestion, sub_questions: newNested });
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </CardContent>
+      )}
+    </Card>
+  );
 };
 
 const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
@@ -988,6 +1156,33 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
                 dir="rtl"
               />
             </div>
+
+            {/* عرض الأسئلة الفرعية للتحرير (متداخلة) */}
+            {editedQuestion.sub_questions && editedQuestion.sub_questions.length > 0 && (
+              <div className="space-y-4">
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <Label className="text-base font-semibold">
+                    الأسئلة الفرعية ({editedQuestion.sub_questions.length})
+                  </Label>
+                </div>
+                
+                <div className="mr-4 border-r-2 border-primary/30 pr-4 space-y-4">
+                  {editedQuestion.sub_questions.map((subQ, index) => (
+                    <SubQuestionEditor
+                      key={subQ.question_db_id || index}
+                      subQuestion={subQ}
+                      index={index}
+                      onUpdate={(updated) => {
+                        const newSubs = [...(editedQuestion.sub_questions || [])];
+                        newSubs[index] = updated;
+                        setEditedQuestion(prev => ({ ...prev, sub_questions: newSubs }));
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Validation Error */}
             {validationError && (
