@@ -201,7 +201,10 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
   }, []);
 
   const handleQuestionUpdate = useCallback((updatedQuestion: ParsedQuestion) => {
-    if (!editingContext) return;
+    if (!editingContext || !editingQuestion) return;
+
+    // استخدام الرقم القديم للبحث (قبل التعديل) لأن السؤال في المصفوفة لا يزال يحمل الرقم القديم
+    const originalQuestionNumber = editingQuestion.question_number;
 
     setLocalExam(prev => {
       const updated = { ...prev };
@@ -211,7 +214,7 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
           ...section,
           questions: updateQuestionInSection(
             section.questions,
-            updatedQuestion.question_number,
+            originalQuestionNumber,
             () => updatedQuestion
           )
         };
