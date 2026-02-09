@@ -56,7 +56,7 @@ const fetchTopicGame = async (topicId: string): Promise<LessonGameState | null> 
   const { data: progressData } = await (supabase as any)
     .from('player_game_progress')
     .select('is_unlocked, is_completed, best_score')
-    .eq('user_id', user.id)
+    .eq('player_id', user.id)
     .eq('game_id', gameData.id)
     .maybeSingle();
 
@@ -77,7 +77,7 @@ const fetchTopicGame = async (topicId: string): Promise<LessonGameState | null> 
       const { data: completedGames } = await (supabase as any)
         .from('player_game_progress')
         .select('game_id')
-        .eq('user_id', user.id)
+        .eq('player_id', user.id)
         .eq('is_completed', true)
         .in('game_id', prevGameIds);
 
@@ -105,10 +105,10 @@ export const useLessonGame = (topicId: string) => {
     queryKey: ['lesson-game', topicId],
     queryFn: () => fetchTopicGame(topicId),
     enabled: !!topicId,
-    staleTime: CACHE_TIMES.LONG,
+    staleTime: 30_000,
     gcTime: CACHE_TIMES.VERY_LONG,
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    refetchOnMount: true,
   });
 
   return {
