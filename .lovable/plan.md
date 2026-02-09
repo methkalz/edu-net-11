@@ -1,177 +1,64 @@
 
 
-# خطة ربط بطاقات ألعاب المطابقة بالدروس - كخانة مميزة تحت الدرس
+# Fix: Correct Game-to-Topic Mappings in Database
 
-## الفكرة المحدّثة
+## The Problem
 
-بدلاً من بانر داخل نافذة الدرس، ستظهر **خانة لعبة** بعد الدروس مباشرة في قائمة الدروس (بنفس الشكل لكن بلون مميز - تدرج برتقالي/ذهبي). عند الضغط عليها يفتح Dialog منفصل يحتوي اللعبة - خفيف ولا يثقل الصفحة.
+The SQL migration inserted **wrong topic IDs** for 3 out of 8 game mappings. This causes:
+1. "مقدمة في شبكات الحاسوب" (first topic) shows a **locked** Topology game instead of showing nothing
+2. "الطوبولوجيا الفيزيائية والمنطقية" (correct topic) has **no game** linked to it
+3. Same issue for LAN/WAN and Cables topics
 
-```text
-📁 موضوع: مركبات الاتصال الأساسية
-├── 📖 مقدمه                          (بنفسجي - درس)
-├── 📖 مضيف (Host)                    (بنفسجي - درس)
-├── 📖 وسائط النقل                    (بنفسجي - درس)
-├── 📖 البنية التحتية للشبكة           (بنفسجي - درس)
-├── 📖 أجهزة الشبكة                   (بنفسجي - درس)
-├── ...
-└── 🎮 تحدي: مطابقة مركبات الاتصال     (برتقالي/ذهبي - لعبة)
-```
+## Correct Mappings (After Fix)
 
----
+| # | Topic (Correct) | Topic ID | Game | Level |
+|---|----------------|----------|------|-------|
+| 1 | مركبات الاتصال الأساسية | `78a29295-...` | مطابقة مركبات الاتصال الأساسية | L1-S1 |
+| 2 | الطوبولوجيا الفيزيائية والمنطقية | `bf25e397-...` | مطابقة الطوبولوجيا | L1-S2 |
+| 3 | LAN, WAN, WLAN, Internet | `39489500-...` | مطابقة أنواع الشبكات | L1-S3 |
+| 4 | البروتوكولات الأساسية | `db2d8e62-...` | مطابقة البروتوكولات | L1-S5 |
+| 5 | العنوان المنطقي (IP Address) | `4295cd31-...` | مطابقة عناوين IP | L1-S6 |
+| 6 | أنواع الكابلات والموصلات | `f8daff33-...` | مطابقة الكابلات | L1-S7 |
+| 7 | أمان WLAN وطرق التشفير | `23877110-...` | مطابقة مفاهيم الأمان | L1-S8 |
+| 8 | نموذج OSI | `8328e392-...` | مطابقة طبقات نموذج OSI | L2-S5 |
 
-## خريطة الربط: المواضيع والبطاقات المناسبة
+## What Changed (3 rows to fix)
 
-بناءً على مقارنة المحتوى التعليمي مع عناوين البطاقات:
+| Wrong Topic ID | Wrong Topic | Correct Topic ID | Correct Topic |
+|---|---|---|---|
+| `57b88a37` | مقدمة في شبكات الحاسوب | `bf25e397` | الطوبولوجيا الفيزيائية والمنطقية |
+| `944d7533` | Ethernet LANs | `39489500` | LAN, WAN, WLAN, Internet |
+| `fa1b588e` | العنوان الفيزيائي MAC | `f8daff33` | أنواع الكابلات والموصلات |
 
-| # | الموضوع (Topic) | البطاقة المناسبة | المستوى |
-|---|-----------------|-----------------|---------|
-| 1 | مركبات الاتصال الأساسية | مطابقة مركبات الاتصال الأساسية | L1-S1 |
-| 2 | الطوبولوجيا الفيزيائية والمنطقية | مطابقة الطوبولوجيا الفيزيائية والمنطقية | L1-S2 |
-| 3 | LAN, WAN, WLAN, Internet | مطابقة أنواع الشبكات LAN WAN Internet | L1-S3 |
-| 4 | أنواع الكابلات والموصلات في الشبكات | مطابقة الكابلات وأنواعها | L1-S7 |
-| 5 | العنوان المنطقي (IP Address) | مطابقة عناوين IP الأساسية | L1-S6 |
-| 6 | البروتوكولات (قسم البروتوكولات) | مطابقة البروتوكولات الأساسية | L1-S5 |
-| 7 | طبقات نموذج OSI | مطابقة طبقات نموذج OSI | L2-S5 |
-| 8 | أمان الشبكات | مطابقة مفاهيم الأمان الأساسية | L1-S8 |
+## Technical Implementation
 
-**المجموع: 8 خانات لعبة ستظهر تحت الدروس في 8 مواضيع مختلفة.**
-
----
-
-## التصميم المرئي لخانة اللعبة
-
-```text
-┌─────────────────────────────────────────────────────────────────┐
-│  🎮  تحدي: مطابقة مركبات الاتصال الأساسية                       │
-│      اختبر فهمك لهذا الموضوع!                                    │
-│                                                    [ابدأ التحدي] │
-└─────────────────────────────────────────────────────────────────┘
-  اللون: تدرج من orange-50 إلى amber-50 مع حدود amber-200
-  (مقابل اللون البنفسجي للدروس العادية)
-```
-
-### الحالات الثلاث:
-
-| الحالة | الأيقونة | اللون | النص | الزر |
-|--------|---------|-------|------|------|
-| مفتوحة | Gamepad2 | برتقالي/ذهبي | "اختبر فهمك لهذا الموضوع!" | "ابدأ التحدي" |
-| مقفلة | Lock | رمادي | "أكمل X بطاقات سابقة لفتح التحدي" | "عرض البطاقات" (يذهب لصفحة الألعاب) |
-| مكتملة | Trophy | أخضر/ذهبي | "أحسنت! العب مجدداً لتحسين نتيجتك" | "العب مجدداً" |
-
----
-
-## التعديلات التقنية المطلوبة
-
-### 1. إنشاء Hook: `useLessonGame.ts`
-
-**الملف:** `src/hooks/useLessonGame.ts`
-
-**الوظائف:**
-- جلب اللعبة المرتبطة بالموضوع (topic) من جدول `grade11_content_games`
-- جلب تقدم الطالب من `player_game_progress`
-- حساب عدد البطاقات المطلوبة لفتح اللعبة (prerequisite check)
-- إرجاع: `{ linkedGame, isLocked, isCompleted, bestScore, remainingPrereqs, loading }`
-
-```typescript
-export const useLessonGame = (topicId: string) => {
-  // 1. جلب الربط من grade11_content_games (topic_id -> game_id)
-  // 2. جلب بيانات اللعبة من pair_matching_games
-  // 3. جلب تقدم الطالب من player_game_progress
-  // 4. حساب البطاقات السابقة غير المكتملة
-};
-```
-
-### 2. إنشاء مكون: `GameChallengeCard.tsx`
-
-**الملف:** `src/components/student/GameChallengeCard.tsx`
-
-**التصميم:**
-- يشبه `LessonCard` في الشكل لكن بألوان مختلفة (برتقالي/ذهبي)
-- أيقونة Gamepad2 بدل BookOpen
-- عند الضغط: يفتح Dialog يحتوي `PairMatchingGame`
-- Dialog بحجم `max-w-7xl` مع `overflow-y-auto`
-- عند إغلاق Dialog: الصفحة الأساسية محفوظة كما كانت (لا إعادة تحميل)
-
-### 3. تعديل: `StudentGrade11Content.tsx`
-
-**التعديل الوحيد:** بعد عرض الدروس في كل موضوع (بعد حلقة `loadedTopics[topic.id].map`)، إضافة `GameChallengeCard` إذا كان هناك لعبة مرتبطة بهذا الموضوع.
-
-```tsx
-{/* الدروس الحالية */}
-{(loadedTopics[topic.id] || []).map(lesson => (
-  <LessonCard key={lesson.id} lesson={lesson} onClick={...} />
-))}
-
-{/* خانة اللعبة - تظهر أسفل الدروس */}
-<GameChallengeCard topicId={topic.id} />
-```
-
-### 4. إدخال بيانات الربط في `grade11_content_games`
+### Step 1: SQL Migration
+Update the 3 incorrect rows in `grade11_content_games`:
 
 ```sql
--- 8 سجلات ربط بين المواضيع والبطاقات
-INSERT INTO grade11_content_games (topic_id, game_id, is_active) VALUES
-  ('78a29295-...', '1c8feb5e-...', true),  -- مركبات الاتصال
-  ('bf25e397-...', 'edaaf78e-...', true),  -- الطوبولوجيا
-  ('39489500-...', 'e69492d3-...', true),  -- LAN WAN Internet
-  ('f8daff33-...', '157aad63-...', true),  -- الكابلات
-  ('4295cd31-...', '9ac5b621-...', true),  -- عناوين IP
-  -- وهكذا...
+UPDATE grade11_content_games 
+SET topic_id = 'bf25e397-0d9e-49fc-9006-683487076f94'
+WHERE game_id = 'edaaf78e-a93a-4abf-a169-7baf09576b48';
+
+UPDATE grade11_content_games 
+SET topic_id = '39489500-d531-4c9d-970e-c3ec69711aed'
+WHERE game_id = 'e69492d3-a2a6-499b-81cb-5f7e5a463a55';
+
+UPDATE grade11_content_games 
+SET topic_id = 'f8daff33-91ff-4861-b826-94f9c175a682'
+WHERE game_id = '157aad63-0e10-43c3-b1f3-8d4e7fa690c3';
 ```
 
----
+### Step 2: Verify Hook Logic
+The `useLessonGame` hook's prerequisite logic is correct:
+- L1-S1 (first game) has no prerequisites, so it's always unlocked
+- Each subsequent game requires all previous level/stage games to be completed
+- No code changes needed -- only the data was wrong
 
-## سيناريوهات المعالجة
+## Expected Result After Fix
 
-### السيناريو 1: الطالب يفتح موضوعاً فيه لعبة مفتوحة
-1. يرى الدروس + خانة اللعبة بالأسفل بلون برتقالي
-2. يضغط على خانة اللعبة
-3. يفتح Dialog مع اللعبة (الصفحة الأساسية محفوظة)
-4. يلعب ويكمل
-5. يغلق Dialog ويرجع لنفس الموضوع المفتوح
-
-### السيناريو 2: اللعبة مقفلة
-1. يرى خانة اللعبة بلون رمادي مع أيقونة قفل
-2. يظهر نص "أكمل 3 بطاقات سابقة لفتح هذا التحدي"
-3. زر "عرض البطاقات" يفتح صفحة `/pair-matching` في tab جديد
-
-### السيناريو 3: اللعبة مكتملة سابقاً
-1. خانة اللعبة بلون أخضر/ذهبي مع أيقونة كأس
-2. نص "أحسنت! أفضل نتيجة: 95%"
-3. زر "العب مجدداً" يفتح Dialog
-
-### السيناريو 4: لا توجد لعبة مرتبطة
-1. لا يظهر شيء إضافي - الدروس كالمعتاد
-
-### السيناريو 5: الطالب يغلق Dialog أثناء اللعب
-1. Dialog يغلق
-2. الصفحة الأساسية محفوظة (state كامل)
-3. عند فتح اللعبة مجدداً: تبدأ من جديد (البطاقات عشوائية)
-
----
-
-## الملفات المتأثرة
-
-| الملف | التعديل |
-|-------|---------|
-| `src/hooks/useLessonGame.ts` | **جديد** - Hook لجلب اللعبة المرتبطة |
-| `src/components/student/GameChallengeCard.tsx` | **جديد** - مكون خانة اللعبة |
-| `src/components/student/StudentGrade11Content.tsx` | تعديل بسيط - إضافة `GameChallengeCard` بعد الدروس |
-| Database Migration | إدخال 8 سجلات في `grade11_content_games` |
-
----
-
-## ملاحظات الأداء
-
-- `useLessonGame` يستخدم `useQuery` مع `staleTime` طويل (لا طلبات متكررة)
-- `GameChallengeCard` يجلب البيانات فقط عند فتح الموضوع (lazy)
-- `PairMatchingGame` يُحمّل فقط عند فتح Dialog (لا يثقل الصفحة)
-- عند إغلاق Dialog: المكون يُزال من DOM (لا يبقى في الذاكرة)
-
-## ترتيب التنفيذ
-
-1. إنشاء `useLessonGame.ts`
-2. إنشاء `GameChallengeCard.tsx`
-3. تعديل `StudentGrade11Content.tsx`
-4. إدخال بيانات الربط في قاعدة البيانات
+In section "أساسيات الاتصال":
+- Topic "مركبات الاتصال الأساسية" (order 3) shows L1-S1 game -- **always unlocked** (first game)
+- Topic "الطوبولوجيا" (order 8) shows L1-S2 -- locked until L1-S1 is completed
+- Topics without matching games show no card at all (e.g., "مقدمة في شبكات الحاسوب")
 
