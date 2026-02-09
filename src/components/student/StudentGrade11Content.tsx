@@ -16,6 +16,7 @@ import { useVideoInfoCards } from '@/hooks/useVideoInfoCards';
 import VideoInfoCard from '../content/VideoInfoCard';
 import type { Grade11LessonWithMedia } from '@/hooks/useStudentGrade11Content';
 import { useDebouncedCallback } from 'use-debounce';
+import GameChallengeCard from './GameChallengeCard';
 
 // Helper function to strip HTML tags from content
 const stripHtml = (html: string): string => {
@@ -366,6 +367,8 @@ export const StudentGrade11Content: React.FC = () => {
                                           onClick={() => handleLessonClick(lesson)}
                                         />
                                       ))}
+                                      {/* Game challenge card after lessons */}
+                                      <GameChallengeCard topicId={topic.id} />
                                     </div>
                                   )}
                                 </CardContent>
