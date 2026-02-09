@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useBagrutGrading, QuestionGrade } from '@/hooks/useBagrutGrading';
 import { supabase } from '@/integrations/supabase/client';
 import { buildBagrutPreviewFromDb, type ParsedQuestion, type ParsedSection } from '@/lib/bagrut/buildBagrutPreview';
+import SafeHtml from '@/components/bagrut/SafeHtml';
 import ModernHeader from '@/components/shared/ModernHeader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -457,7 +458,7 @@ const QuestionCard = React.memo(({
         <CardContent className="space-y-3">
           <div className="p-3 bg-muted/50 rounded-lg">
             <p className="text-sm font-medium mb-1">السؤال:</p>
-            <p className="text-sm whitespace-pre-wrap">{question.question_text}</p>
+            <SafeHtml html={question.question_text} />
             {question.image_url && <img src={question.image_url} alt="صورة السؤال" className="mt-2 max-h-48 rounded" />}
           </div>
 
@@ -488,9 +489,7 @@ const QuestionCard = React.memo(({
                 <BookOpen className="h-4 w-4" />
                 طريقة الحل:
               </p>
-              <div className="text-sm whitespace-pre-wrap text-foreground/80">
-                {question.answer_explanation}
-              </div>
+              <SafeHtml html={question.answer_explanation} className="text-foreground/80" />
             </div>
           )}
 
@@ -1033,7 +1032,7 @@ function GradingDialog({
 
     // نص عادي
     if (question.correct_answer) {
-      return <p className="whitespace-pre-wrap font-medium text-green-600">{question.correct_answer}</p>;
+      return <SafeHtml html={question.correct_answer} className="font-medium text-green-600" />;
     }
     return null;
   };
