@@ -19,11 +19,8 @@ const GameChallengeCard: React.FC<GameChallengeCardProps> = ({ topicId }) => {
   if (loading || !linkedGame) return null;
 
   const handleClick = () => {
-    if (isLocked) {
-      window.open('/pair-matching', '_blank');
-    } else {
-      setShowGame(true);
-    }
+    if (isLocked) return; // Do nothing for locked games
+    setShowGame(true);
   };
 
   // Determine visual state
@@ -52,7 +49,7 @@ const GameChallengeCard: React.FC<GameChallengeCardProps> = ({ topicId }) => {
   return (
     <>
       <div
-        className={`flex items-center justify-between p-5 bg-gradient-to-br ${cardStyles} rounded-2xl border hover:shadow-md transition-all cursor-pointer group`}
+        className={`flex items-center justify-between p-5 bg-gradient-to-br ${cardStyles} rounded-2xl border ${isLocked ? 'cursor-not-allowed' : 'hover:shadow-md cursor-pointer'} transition-all group`}
         onClick={handleClick}
       >
         <div className="flex items-center gap-5">
