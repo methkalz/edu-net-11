@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, Code, Image as ImageIcon, AlertCircle } from 'lucide-react';
+import SafeHtml from './SafeHtml';
 import type { ParsedQuestion } from '@/lib/bagrut/buildBagrutPreview';
 import type { BagrutAnswer } from '@/hooks/useBagrutAttempt';
 
@@ -79,7 +80,7 @@ export default function BagrutQuestionRenderer({
               showAnswer={showAnswer}
             />
           ) : (
-            <p>{question.question_text}</p>
+            <SafeHtml html={question.question_text} />
           )}
         </div>
 
@@ -188,13 +189,11 @@ export default function BagrutQuestionRenderer({
         {showAnswer && question.correct_answer && (
           <div className="mt-4 p-3 bg-primary/10 rounded-lg border border-primary/30">
             <span className="font-medium text-primary">الإجابة الصحيحة: </span>
-            <span className="text-foreground">{question.correct_answer}</span>
+            <SafeHtml html={question.correct_answer} />
             {question.answer_explanation && (
               <div className="mt-2">
                 <span className="font-medium text-primary">الشرح: </span>
-                <div className="text-muted-foreground whitespace-pre-wrap mt-1">
-                  {question.answer_explanation}
-                </div>
+                <SafeHtml html={question.answer_explanation} className="text-muted-foreground mt-1" />
               </div>
             )}
           </div>
@@ -247,7 +246,7 @@ function MultipleChoiceQuestion({
             } ${isCorrect ? 'border-green-500 bg-green-50 dark:bg-green-950/30' : ''}`}
           >
             <RadioGroupItem value={choice.id || choice.text} id={choiceId} />
-            <span className="flex-1">{choice.text}</span>
+            <span className="flex-1 whitespace-pre-wrap">{choice.text}</span>
             {showAnswer && isCorrect && (
               <Badge variant="default" className="bg-green-500">صحيح</Badge>
             )}

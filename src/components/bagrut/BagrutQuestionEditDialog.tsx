@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import RichTextEditor from '@/components/content/RichTextEditor';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -174,10 +175,9 @@ const SubQuestionEditor: React.FC<{
           {/* نص السؤال */}
           <div className="space-y-2">
             <Label>نص السؤال</Label>
-            <Textarea
-              value={subQuestion.question_text}
-              onChange={(e) => handleFieldChange('question_text', e.target.value)}
-              className="min-h-[60px]"
+            <RichTextEditor
+              content={subQuestion.question_text || ''}
+              onChange={(val) => handleFieldChange('question_text', val)}
             />
           </div>
           
@@ -212,11 +212,9 @@ const SubQuestionEditor: React.FC<{
           {!isChoiceType && !hasNestedSubs && (
             <div className="space-y-2">
               <Label>الإجابة الصحيحة</Label>
-              <Textarea
-                value={subQuestion.correct_answer || ''}
-                onChange={(e) => handleFieldChange('correct_answer', e.target.value)}
-                className="min-h-[60px]"
-                placeholder="الإجابة الصحيحة..."
+              <RichTextEditor
+                content={subQuestion.correct_answer || ''}
+                onChange={(val) => handleFieldChange('correct_answer', val)}
               />
             </div>
           )}
@@ -720,6 +718,21 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
               </Alert>
             )}
 
+            {/* Question Number (editable) */}
+            <div className="space-y-2">
+              <Label htmlFor="question-number">معرّف السؤال</Label>
+              <Input
+                id="question-number"
+                value={editedQuestion.question_number}
+                onChange={(e) => handleTextChange('question_number', e.target.value)}
+                className="w-48"
+                dir="ltr"
+              />
+              <p className="text-xs text-muted-foreground">
+                مثال: 3 أو 3-a أو 3 أ)
+              </p>
+            </div>
+
             {/* Question Type Selector */}
             <div className="space-y-2">
               <Label htmlFor="question-type">نوع السؤال</Label>
@@ -752,12 +765,9 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
             {/* Question Text */}
             <div className="space-y-2">
               <Label htmlFor="question-text">نص السؤال</Label>
-              <Textarea
-                id="question-text"
-                value={editedQuestion.question_text}
-                onChange={(e) => handleTextChange('question_text', e.target.value)}
-                className="min-h-[100px]"
-                dir="rtl"
+              <RichTextEditor
+                content={editedQuestion.question_text || ''}
+                onChange={(val) => handleTextChange('question_text', val)}
               />
             </div>
 
@@ -1144,16 +1154,25 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
               </div>
             )}
 
+            {/* Correct Answer (for non-choice, non-multi_part questions) */}
+            {!isChoiceQuestion && !isFillBlank && editedQuestion.question_type !== 'multi_part' && (
+              <div className="space-y-2">
+                <Separator />
+                <Label>الإجابة الصحيحة</Label>
+                <RichTextEditor
+                  content={editedQuestion.correct_answer || ''}
+                  onChange={(val) => handleTextChange('correct_answer', val)}
+                />
+              </div>
+            )}
+
             {/* Answer Explanation */}
             <div className="space-y-2">
               <Separator />
               <Label htmlFor="explanation">شرح الإجابة (اختياري)</Label>
-              <Textarea
-                id="explanation"
-                value={editedQuestion.answer_explanation || ''}
-                onChange={(e) => handleTextChange('answer_explanation', e.target.value)}
-                className="min-h-[80px]"
-                dir="rtl"
+              <RichTextEditor
+                content={editedQuestion.answer_explanation || ''}
+                onChange={(val) => handleTextChange('answer_explanation', val)}
               />
             </div>
 

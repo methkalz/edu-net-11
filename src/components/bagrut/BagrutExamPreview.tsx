@@ -26,6 +26,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import BagrutImageUpload from './BagrutImageUpload';
 import BagrutQuestionEditDialog from './BagrutQuestionEditDialog';
 import RichTextEditor from '@/components/content/RichTextEditor';
+import SafeHtml from './SafeHtml';
 
 import type { ParsedQuestion, ParsedSection, ParsedExam, Statistics } from '@/lib/bagrut/buildBagrutPreview';
 
@@ -671,7 +672,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
           {renderFillBlankText(question.question_text, question.blanks, showAnswers)}
         </p>
       ) : (
-        <p className="text-foreground whitespace-pre-wrap">{question.question_text}</p>
+        <SafeHtml html={question.question_text} />
       )}
 
       {/* Open-ended Answer Area */}
@@ -821,7 +822,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                         <span className="text-sm font-medium text-muted-foreground">
                           {index + 1}.
                         </span>
-                        <span className="text-sm text-foreground">{choice.text}</span>
+                        <span className="text-sm text-foreground whitespace-pre-wrap">{choice.text}</span>
                       </div>
                     </div>
                     {correct && (
@@ -850,13 +851,13 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
           {question.correct_answer && (
             <div>
               <span className="font-medium text-foreground">الإجابة الصحيحة: </span>
-              <span className="text-foreground">{question.correct_answer}</span>
+              <SafeHtml html={question.correct_answer} className="inline" />
             </div>
           )}
           {question.answer_explanation && (
             <div>
               <span className="font-medium text-foreground">الشرح: </span>
-              <span className="text-muted-foreground">{question.answer_explanation}</span>
+              <SafeHtml html={question.answer_explanation} />
             </div>
           )}
         </div>
