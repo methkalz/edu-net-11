@@ -121,7 +121,8 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
   // هذا يضمن بقاء ترتيب الأسئلة كما في قاعدة البيانات
   useEffect(() => {
     setLocalExam(exam);
-    setHasEdits(false);
+    // لا نعيد تعيين hasEdits هنا لتجنب race condition
+    // يتم تعيينها false فقط بعد الحفظ الناجح في handleSaveEditsClick
   }, [exam]);
   const [isSavingEdits, setIsSavingEdits] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<ParsedQuestion | null>(null);
@@ -165,7 +166,7 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
           ...section,
           questions: section.questions.map(q => 
             q.question_number === questionNumber 
-              ? { ...q, image_url: imageUrl }
+              ? { ...q, image_url: imageUrl, has_image: true }
               : q
           )
         };
