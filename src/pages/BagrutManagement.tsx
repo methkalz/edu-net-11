@@ -486,6 +486,7 @@ const BagrutManagement: React.FC = () => {
           : null;
 
          const updatePayload: any = {
+          question_number: q.question_number,
           question_text: q.question_text,
           points: Math.round(q.points || 0),
           choices: safeChoices,
