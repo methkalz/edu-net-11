@@ -173,6 +173,7 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
       onExamUpdate?.(updated);
       return updated;
     });
+    setHasEdits(true);
   }, [onExamUpdate]);
 
   // Update a question in the exam (supports sub_questions recursively)
