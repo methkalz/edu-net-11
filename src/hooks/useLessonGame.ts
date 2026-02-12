@@ -9,101 +9,114 @@ export interface LinkedGame {
   stage_number: number;
 }
 
-export interface LessonGameState {
-  linkedGame: LinkedGame | null;
+export interface GameState {
+  game: LinkedGame;
   isLocked: boolean;
   isCompleted: boolean;
   bestScore: number;
   remainingPrereqs: number;
+}
+
+export interface LessonGamesResult {
+  games: GameState[];
   loading: boolean;
 }
 
-const fetchTopicGame = async (topicId: string): Promise<LessonGameState | null> => {
-  // 1. Get linked game from grade11_content_games
+const fetchTopicGames = async (topicId: string): Promise<GameState[]> => {
+  // 1. Get all linked games from grade11_content_games
   const { data: linkData, error: linkError } = await supabase
     .from('grade11_content_games')
     .select('game_id')
     .eq('topic_id', topicId)
-    .eq('is_active', true)
-    .maybeSingle();
+    .eq('is_active', true);
 
-  if (linkError || !linkData?.game_id) return null;
+  if (linkError || !linkData || linkData.length === 0) return [];
 
-  // 2. Get game details
-  const { data: gameData, error: gameError } = await supabase
+  const gameIds = linkData.map(l => l.game_id);
+
+  // 2. Get game details for all linked games
+  const { data: gamesData, error: gamesError } = await supabase
     .from('pair_matching_games')
     .select('id, title, level_number, stage_number')
-    .eq('id', linkData.game_id)
+    .in('id', gameIds)
     .eq('is_active', true)
-    .maybeSingle();
+    .order('level_number')
+    .order('stage_number');
 
-  if (gameError || !gameData) return null;
+  if (gamesError || !gamesData || gamesData.length === 0) return [];
 
   // 3. Get current user
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
-    return {
-      linkedGame: gameData,
+    return gamesData.map(game => ({
+      game,
       isLocked: true,
       isCompleted: false,
       bestScore: 0,
       remainingPrereqs: 0,
-      loading: false,
-    };
+    }));
   }
 
-  // 4. Get player progress for this specific game
+  // 4. Get player progress for all these games
   const { data: progressData } = await (supabase as any)
     .from('player_game_progress')
-    .select('is_unlocked, is_completed, best_score')
+    .select('game_id, is_unlocked, is_completed, best_score')
     .eq('player_id', user.id)
-    .eq('game_id', gameData.id)
-    .maybeSingle();
+    .in('game_id', gameIds);
 
-  // 5. Calculate prerequisites - count incomplete games before this one
+  const progressMap = new Map(
+    (progressData || []).map((p: any) => [p.game_id, p])
+  );
+
+  // 5. For prerequisite calculation, get all games before the highest level in our set
+  const maxLevel = Math.max(...gamesData.map(g => g.level_number));
   const { data: allGames } = await (supabase as any)
     .from('pair_matching_games')
     .select('id, level_number, stage_number')
     .eq('is_active', true)
-    .lt('level_number', gameData.level_number + 1);
+    .lt('level_number', maxLevel + 1);
 
-  let remainingPrereqs = 0;
-  if (allGames && allGames.length > 0) {
-    const prevGameIds = allGames
-      .filter((g: any) => g.level_number < gameData.level_number || (g.level_number === gameData.level_number && g.stage_number < gameData.stage_number))
-      .map((g: any) => g.id);
-
-    if (prevGameIds.length > 0) {
-      const { data: completedGames } = await (supabase as any)
-        .from('player_game_progress')
-        .select('game_id')
-        .eq('player_id', user.id)
-        .eq('is_completed', true)
-        .in('game_id', prevGameIds);
-
-      const completedIds = new Set((completedGames || []).map((g: any) => g.game_id));
-      remainingPrereqs = prevGameIds.filter((id: string) => !completedIds.has(id)).length;
-    }
+  // 6. Get completed games for the user
+  const allGameIds = (allGames || []).map((g: any) => g.id);
+  let completedIds = new Set<string>();
+  if (allGameIds.length > 0) {
+    const { data: completedGames } = await (supabase as any)
+      .from('player_game_progress')
+      .select('game_id')
+      .eq('player_id', user.id)
+      .eq('is_completed', true)
+      .in('game_id', allGameIds);
+    completedIds = new Set((completedGames || []).map((g: any) => g.game_id));
   }
 
+  // 7. Build state for each game
+  return gamesData.map(game => {
+    const progress = progressMap.get(game.id) as any;
 
-  const isUnlocked = progressData?.is_unlocked ?? (gameData.level_number === 1 && gameData.stage_number === 1);
-  const isCompleted = progressData?.is_completed ?? false;
+    // Calculate remaining prerequisites
+    const prevGames = (allGames || []).filter((g: any) =>
+      g.level_number < game.level_number ||
+      (g.level_number === game.level_number && g.stage_number < game.stage_number)
+    );
+    const remainingPrereqs = prevGames.filter((g: any) => !completedIds.has(g.id)).length;
 
-  return {
-    linkedGame: gameData,
-    isLocked: !isUnlocked,
-    isCompleted,
-    bestScore: progressData?.best_score ?? 0,
-    remainingPrereqs,
-    loading: false,
-  };
+    const isUnlocked = progress?.is_unlocked ?? (game.level_number === 1 && game.stage_number === 1);
+    const isCompleted = progress?.is_completed ?? false;
+
+    return {
+      game,
+      isLocked: !isUnlocked,
+      isCompleted,
+      bestScore: progress?.best_score ?? 0,
+      remainingPrereqs,
+    };
+  });
 };
 
-export const useLessonGame = (topicId: string) => {
+export const useLessonGames = (topicId: string) => {
   const { data, isLoading } = useQuery({
-    queryKey: ['lesson-game', topicId],
-    queryFn: () => fetchTopicGame(topicId),
+    queryKey: ['lesson-games', topicId],
+    queryFn: () => fetchTopicGames(topicId),
     enabled: !!topicId,
     staleTime: 30_000,
     gcTime: CACHE_TIMES.VERY_LONG,
@@ -112,11 +125,21 @@ export const useLessonGame = (topicId: string) => {
   });
 
   return {
-    linkedGame: data?.linkedGame ?? null,
-    isLocked: data?.isLocked ?? false,
-    isCompleted: data?.isCompleted ?? false,
-    bestScore: data?.bestScore ?? 0,
-    remainingPrereqs: data?.remainingPrereqs ?? 0,
+    games: data ?? [],
     loading: isLoading,
+  };
+};
+
+// Backward compatibility
+export const useLessonGame = (topicId: string) => {
+  const { games, loading } = useLessonGames(topicId);
+  const first = games[0];
+  return {
+    linkedGame: first?.game ?? null,
+    isLocked: first?.isLocked ?? false,
+    isCompleted: first?.isCompleted ?? false,
+    bestScore: first?.bestScore ?? 0,
+    remainingPrereqs: first?.remainingPrereqs ?? 0,
+    loading,
   };
 };
