@@ -15,19 +15,29 @@ const SafeHtml: React.FC<SafeHtmlProps> = ({ html, className = '' }) => {
 
   const isHtml = /<[a-z][\s\S]*>/i.test(html);
 
+  const wrapStyle: React.CSSProperties = {
+    overflowWrap: 'break-word',
+    wordBreak: 'break-word',
+    maxWidth: '100%',
+  };
+
   if (!isHtml) {
-    return <div className={`whitespace-pre-wrap ${className}`}>{html}</div>;
+    return <div className={`whitespace-pre-wrap ${className}`} style={wrapStyle}>{html}</div>;
   }
 
   const sanitized = DOMPurify.sanitize(html, {
-    ADD_TAGS: ['table', 'thead', 'tbody', 'tr', 'th', 'td', 'colgroup', 'col'],
+    ADD_TAGS: ['table', 'thead', 'tbody', 'tr', 'th', 'td', 'colgroup', 'col', 'style'],
     ADD_ATTR: ['style', 'colspan', 'rowspan', 'dir'],
   });
+
+  // Inject table constraint styles before the content
+  const styledHtml = `<style>table{table-layout:fixed;width:100%;border-collapse:collapse}td,th{overflow-wrap:break-word;word-break:break-word}</style>${sanitized}`;
 
   return (
     <div
       className={`prose prose-sm max-w-none dark:prose-invert ${className}`}
-      dangerouslySetInnerHTML={{ __html: sanitized }}
+      style={wrapStyle}
+      dangerouslySetInnerHTML={{ __html: styledHtml }}
     />
   );
 };
