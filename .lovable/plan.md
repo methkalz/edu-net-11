@@ -1,40 +1,43 @@
 
-# اصلاح فشل رفع الصور عبر BagrutImageUpload
+# تحسين مساحة العمل وإصلاح اختفاء زر الحفظ في حوار تعديل أسئلة البجروت
 
 ## المشكلة
-مكون `BagrutImageUpload` يستخدم رقم السؤال (`questionNumber`) مباشرة في اسم الملف عند الرفع:
-```
-const fileName = `q${questionNumber}_${Date.now()}.${fileExt}`;
-```
-عندما يحتوي رقم السؤال على احرف عربية (مثل "ز" او "23-ط")، يرفض Supabase Storage الملف بسبب خطأ `InvalidKey` لان الاحرف العربية غير مسموحة في مسارات التخزين.
-
-بينما `uploadImageToStorage` في `BagrutQuestionEditDialog` (المستخدمة من داخل المحرر) تعمل بشكل صحيح لانها تستخدم اسماء ملفات آمنة بدون احرف عربية:
-```
-const fileName = `editor_${Date.now()}_${Math.random()...}.${fileExt}`;
-```
+1. مساحة العمل في حوار التعديل صغيرة (max-w-3xl + ScrollArea بارتفاع 60vh فقط)
+2. زر "حفظ التعديلات" يختفي عند إضافة محتوى طويل لأن المحتوى يدفع الزر خارج الشاشة
 
 ## الحل
-تعديل `BagrutImageUpload.tsx` لتنظيف رقم السؤال من الاحرف العربية قبل استخدامه في اسم الملف.
 
-### التعديل في ملف واحد: `src/components/bagrut/BagrutImageUpload.tsx`
+### تعديل ملف واحد: `src/components/bagrut/BagrutQuestionEditDialog.tsx`
 
-اضافة دالة تحويل الاحرف العربية الى حروف لاتينية في اسم الملف:
+**1. توسيع الحوار وتطبيق تخطيط Flex صارم:**
+
+- توسيع `DialogContent` من `max-w-3xl` الى `max-w-5xl` لمساحة عمل أكبر
+- تطبيق `flex flex-col` على `DialogContent` مع `max-h-[90vh]` لضمان أن الحوار لا يتجاوز الشاشة أبداً
+
+**2. جعل منطقة المحتوى مرنة والفوتر ثابت:**
+
+- إزالة `max-h-[60vh]` من `ScrollArea` واستبدالها بـ `flex-1 min-h-0` (تأخذ كل المساحة المتبقية بين الهيدر والفوتر)
+- جعل `DialogHeader` بـ `shrink-0` (لا يتقلص أبداً)
+- جعل `DialogFooter` بـ `shrink-0` مع `border-t pt-4` لفصل بصري واضح
+
+**3. إضافة اختصار لوحة مفاتيح Ctrl+S:**
+
+- إضافة `useEffect` يستمع لـ `Ctrl+S` / `Cmd+S` لحفظ التعديلات سريعاً بدون الحاجة للوصول للزر
 
 ```text
-أ → a, ب → b, ت → t, ث → th, ج → j, ح → h, خ → kh,
-د → d, ذ → dh, ر → r, ز → z, س → s, ش → sh, ص → s2,
-ض → d2, ط → t2, ظ → z2, ع → e, غ → gh, ف → f, ق → q,
-ك → k, ل → l, م → m, ن → n, هـ → h2, و → w, ي → y
+التخطيط الحالي:
+  DialogContent [max-h-90vh, no flex]
+    DialogHeader
+    ScrollArea [max-h-60vh] ← محدود بشكل مصطنع
+      ...content...
+    DialogFooter ← يُدفع خارج الشاشة
+
+التخطيط الجديد:
+  DialogContent [max-h-90vh, flex flex-col]
+    DialogHeader [shrink-0]
+    ScrollArea [flex-1 min-h-0] ← يأخذ كل المساحة المتبقية
+      ...content...
+    DialogFooter [shrink-0, border-t] ← ثابت دائماً في الأسفل
 ```
 
-تغيير سطر 41 من:
-```
-const fileName = `q${questionNumber}_${Date.now()}.${fileExt}`;
-```
-الى:
-```
-const sanitized = sanitizeForFilename(questionNumber);
-const fileName = `q${sanitized}_${Date.now()}.${fileExt}`;
-```
-
-هذا يضمن ان اسم الملف يحتوي فقط على احرف لاتينية وارقام، مما يمنع خطأ `InvalidKey` من Supabase Storage.
+هذا الحل يضمن بنسبة 100% بقاء زر الحفظ مرئياً مهما كان طول المحتوى، ويوفر مساحة عمل أكبر بنسبة ~40%.
