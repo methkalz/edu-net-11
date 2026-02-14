@@ -760,6 +760,8 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
   const [isSaving, setIsSaving] = useState(false);
 
   const validateAndSubmit = async () => {
+    console.log('[DEBUG] validateAndSubmit called, isSaving:', isSaving);
+    
     // Validation for choice questions
     if (isChoiceQuestion) {
       const currentChoices = editedQuestion.choices || [];
@@ -780,15 +782,18 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
       return;
     }
 
+    console.log('[DEBUG] Validation passed, starting sanitization');
     // Sanitize base64 images before saving
     setIsSaving(true);
     try {
       const sanitized = await sanitizeQuestionFields(editedQuestion);
+      console.log('[DEBUG] Sanitization complete, calling onSubmit');
       onSubmit(sanitized);
+      console.log('[DEBUG] onSubmit called successfully');
       onOpenChange(false);
       toast.success('تم حفظ التعديلات');
     } catch (err) {
-      console.error('Error sanitizing images:', err);
+      console.error('[DEBUG] Error in sanitizeQuestionFields:', err);
       toast.error('حدث خطأ أثناء معالجة الصور');
     } finally {
       setIsSaving(false);
