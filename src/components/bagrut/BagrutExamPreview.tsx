@@ -647,13 +647,13 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
     isChoiceQuestion && (!question.choices || question.choices.length === 0);
 
   return (
-    <div className="border rounded-lg p-4 space-y-3 relative group overflow-visible">
+    <div className="border rounded-lg p-4 space-y-3 relative group overflow-hidden max-w-full" style={{ overflowWrap: 'break-word', wordBreak: 'break-word' }}>
       {/* Edit Button */}
       {editMode && onEdit && (
         <Button
           variant="ghost"
           size="icon"
-          className="sticky top-2 float-left z-10 h-8 w-8 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 shadow-sm"
+          className="absolute top-2 left-2 z-50 h-8 w-8 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 shadow-sm"
           onClick={() => onEdit(question)}
         >
           <Pencil className="h-4 w-4" />
@@ -827,7 +827,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                         <span className="text-sm font-medium text-muted-foreground">
                           {index + 1}.
                         </span>
-                        <span className="text-sm text-foreground whitespace-pre-wrap">{choice.text}</span>
+                        <span className="text-sm text-foreground whitespace-pre-wrap break-words">{choice.text}</span>
                       </div>
                     </div>
                     {correct && (
@@ -852,7 +852,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
 
       {/* Answer & Explanation */}
       {showAnswers && (question.correct_answer || question.answer_explanation) && (
-        <div className="mt-3 p-3 bg-accent/30 rounded-lg border border-border space-y-2">
+        <div className="mt-3 p-3 bg-accent/30 rounded-lg border border-border space-y-2 overflow-hidden">
           {question.correct_answer && (
             <div>
               <span className="font-medium text-foreground">الإجابة الصحيحة: </span>
@@ -870,7 +870,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
 
       {/* Sub Questions */}
       {question.sub_questions && question.sub_questions.length > 0 && (
-        <div className="mr-4 border-r-2 border-muted pr-4 space-y-3">
+        <div className="mr-4 border-r-2 border-muted pr-4 space-y-3 overflow-hidden max-w-full">
           {question.sub_questions.map((subQ, subIndex) => (
             <QuestionCard 
               key={subIndex} 
