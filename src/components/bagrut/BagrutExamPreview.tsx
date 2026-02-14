@@ -156,42 +156,18 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
     }
   };
 
-  // Recursive helper: find and update a question by db_id or question_number
-  const updateQuestionRecursive = useCallback((
-    questions: ParsedQuestion[],
-    identifier: { dbId?: string; questionNumber: string },
-    updater: (q: ParsedQuestion) => ParsedQuestion
-  ): ParsedQuestion[] => {
-    return questions.map(q => {
-      // Match by db_id first (unique), fallback to question_number
-      const match = identifier.dbId
-        ? q.question_db_id === identifier.dbId
-        : q.question_number === identifier.questionNumber;
-      if (match) {
-        return updater(q);
-      }
-      if (q.sub_questions && q.sub_questions.length > 0) {
-        return {
-          ...q,
-          sub_questions: updateQuestionRecursive(q.sub_questions, identifier, updater)
-        };
-      }
-      return q;
-    });
-  }, []);
-
-  // Handle image upload for a question (recursive - works for sub-questions too)
-  const handleImageUploaded = useCallback((sectionIndex: number, questionNumber: string, imageUrl: string, questionDbId?: string) => {
+  // Handle image upload for a question
+  const handleImageUploaded = useCallback((sectionIndex: number, questionNumber: string, imageUrl: string) => {
     setLocalExam(prev => {
       const updated = { ...prev };
       updated.sections = prev.sections.map((section, sIdx) => {
         if (sIdx !== sectionIndex) return section;
         return {
           ...section,
-          questions: updateQuestionRecursive(
-            section.questions,
-            { dbId: questionDbId, questionNumber },
-            (q) => ({ ...q, image_url: imageUrl, has_image: true })
+          questions: section.questions.map(q => 
+            q.question_number === questionNumber 
+              ? { ...q, image_url: imageUrl, has_image: true }
+              : q
           )
         };
       });
@@ -199,7 +175,27 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
       return updated;
     });
     setHasEdits(true);
-  }, [onExamUpdate, updateQuestionRecursive]);
+  }, [onExamUpdate]);
+
+  // Update a question in the exam (supports sub_questions recursively)
+  const updateQuestionInSection = useCallback((
+    questions: ParsedQuestion[],
+    questionNumber: string,
+    updater: (q: ParsedQuestion) => ParsedQuestion
+  ): ParsedQuestion[] => {
+    return questions.map(q => {
+      if (q.question_number === questionNumber) {
+        return updater(q);
+      }
+      if (q.sub_questions && q.sub_questions.length > 0) {
+        return {
+          ...q,
+          sub_questions: updateQuestionInSection(q.sub_questions, questionNumber, updater)
+        };
+      }
+      return q;
+    });
+  }, []);
 
   const handleQuestionEdit = useCallback((question: ParsedQuestion, sectionIndex: number) => {
     setEditingQuestion(question);
@@ -209,10 +205,8 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
   const handleQuestionUpdate = useCallback((updatedQuestion: ParsedQuestion) => {
     if (!editingContext || !editingQuestion) return;
 
-    const identifier = {
-      dbId: editingQuestion.question_db_id,
-      questionNumber: editingQuestion.question_number
-    };
+    // استخدام الرقم القديم للبحث (قبل التعديل) لأن السؤال في المصفوفة لا يزال يحمل الرقم القديم
+    const originalQuestionNumber = editingQuestion.question_number;
 
     setLocalExam(prev => {
       const updated = { ...prev };
@@ -220,9 +214,9 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
         if (sIdx !== editingContext.sectionIndex) return section;
         return {
           ...section,
-          questions: updateQuestionRecursive(
+          questions: updateQuestionInSection(
             section.questions,
-            identifier,
+            originalQuestionNumber,
             () => updatedQuestion
           )
         };
@@ -234,7 +228,7 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
     setHasEdits(true);
     setEditingQuestion(null);
     setEditingContext(null);
-  }, [editingContext, editingQuestion, updateQuestionRecursive, onExamUpdate]);
+  }, [editingContext, updateQuestionInSection, onExamUpdate]);
 
   const handleSaveEditsClick = async () => {
     if (!onSaveEdits) return;
@@ -620,7 +614,7 @@ interface QuestionCardProps {
   question: ParsedQuestion;
   showAnswers: boolean;
   sectionIndex: number;
-  onImageUploaded: (sectionIndex: number, questionNumber: string, imageUrl: string, questionDbId?: string) => void;
+  onImageUploaded: (sectionIndex: number, questionNumber: string, imageUrl: string) => void;
   editMode?: boolean;
   onEdit?: (question: ParsedQuestion) => void;
 }
@@ -724,7 +718,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
           questionNumber={question.question_number}
           description={question.image_description}
           currentImageUrl={question.image_url}
-          onImageUploaded={(url) => onImageUploaded(sectionIndex, question.question_number, url, question.question_db_id)}
+          onImageUploaded={(url) => onImageUploaded(sectionIndex, question.question_number, url)}
         />
       )}
 
