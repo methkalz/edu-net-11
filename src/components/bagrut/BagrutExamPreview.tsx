@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import DOMPurify from 'dompurify';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -156,26 +157,63 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
     }
   };
 
-  // Handle image upload for a question
-  const handleImageUploaded = useCallback((sectionIndex: number, questionNumber: string, imageUrl: string) => {
+  // Recursively update a question's image in the questions tree
+  const updateImageInQuestions = useCallback((questions: ParsedQuestion[], questionNumber: string, imageUrl: string): ParsedQuestion[] => {
+    return questions.map(q => {
+      if (q.question_number === questionNumber) {
+        return { ...q, image_url: imageUrl, has_image: true };
+      }
+      if (q.sub_questions && q.sub_questions.length > 0) {
+        return { ...q, sub_questions: updateImageInQuestions(q.sub_questions, questionNumber, imageUrl) };
+      }
+      return q;
+    });
+  }, []);
+
+  // Find question_db_id recursively
+  const findQuestionDbId = useCallback((questions: ParsedQuestion[], questionNumber: string): string | undefined => {
+    for (const q of questions) {
+      if (q.question_number === questionNumber) return q.question_db_id;
+      if (q.sub_questions?.length) {
+        const found = findQuestionDbId(q.sub_questions, questionNumber);
+        if (found) return found;
+      }
+    }
+    return undefined;
+  }, []);
+
+  // Handle image upload for a question - updates state AND saves directly to DB
+  const handleImageUploaded = useCallback(async (sectionIndex: number, questionNumber: string, imageUrl: string) => {
+    // 1. Update local state recursively
     setLocalExam(prev => {
       const updated = { ...prev };
       updated.sections = prev.sections.map((section, sIdx) => {
         if (sIdx !== sectionIndex) return section;
         return {
           ...section,
-          questions: section.questions.map(q => 
-            q.question_number === questionNumber 
-              ? { ...q, image_url: imageUrl, has_image: true }
-              : q
-          )
+          questions: updateImageInQuestions(section.questions, questionNumber, imageUrl)
         };
       });
       onExamUpdate?.(updated);
       return updated;
     });
     setHasEdits(true);
-  }, [onExamUpdate]);
+
+    // 2. Save directly to DB so it persists even without clicking "save"
+    const section = localExam.sections[sectionIndex];
+    if (section) {
+      const dbId = findQuestionDbId(section.questions, questionNumber);
+      if (dbId) {
+        const { error } = await supabase
+          .from('bagrut_questions')
+          .update({ image_url: imageUrl, has_image: true, updated_at: new Date().toISOString() })
+          .eq('id', dbId);
+        if (error) {
+          console.error('Failed to save image URL to DB:', error);
+        }
+      }
+    }
+  }, [onExamUpdate, updateImageInQuestions, findQuestionDbId, localExam.sections]);
 
   // Update a question in the exam (supports sub_questions recursively)
   const updateQuestionInSection = useCallback((
