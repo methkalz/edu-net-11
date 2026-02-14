@@ -62,6 +62,7 @@ interface RichTextEditorProps {
   content: string;
   onChange: (content: string) => void;
   placeholder?: string;
+  onImageUpload?: (file: File) => Promise<string | null>;
 }
 
 // Extension مخصص لحجم الخط
@@ -85,7 +86,7 @@ const FontSize = TextStyle.extend({
   },
 });
 
-const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, placeholder }) => {
+const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, placeholder, onImageUpload }) => {
   const [customColor, setCustomColor] = useState('#000000');
   const [fontSize, setFontSize] = useState('14px');
   const [showTableDialog, setShowTableDialog] = useState(false);
@@ -220,6 +221,41 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
           }
           return true;
         }
+
+        // Intercept pasted HTML containing base64 images and upload them
+        if (onImageUpload) {
+          const html = event.clipboardData?.getData('text/html');
+          if (html && /src=["']data:image\//i.test(html)) {
+            event.preventDefault();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const imgs = doc.querySelectorAll('img[src^="data:image/"]');
+            
+            const processImages = async () => {
+              for (const img of Array.from(imgs)) {
+                const src = img.getAttribute('src');
+                if (!src) continue;
+                try {
+                  const res = await fetch(src);
+                  const blob = await res.blob();
+                  const file = new File([blob], `pasted-${Date.now()}.png`, { type: blob.type });
+                  const url = await onImageUpload(file);
+                  if (url) {
+                    img.setAttribute('src', url);
+                  }
+                } catch (e) {
+                  console.error('Failed to upload pasted base64 image:', e);
+                }
+              }
+              // Insert the cleaned HTML
+              const cleanedHtml = doc.body.innerHTML;
+              editor?.commands.insertContent(cleanedHtml);
+            };
+            processImages();
+            return true;
+          }
+        }
+
         return false;
       },
     },
@@ -308,7 +344,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
     setShowTableDialog(false);
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -326,6 +362,26 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
 
     setUploadingImage(true);
 
+    // If onImageUpload prop is provided, upload to storage instead of base64
+    if (onImageUpload) {
+      try {
+        const url = await onImageUpload(file);
+        if (url) {
+          editor.chain().focus().setImage({ src: url }).run();
+          toast.success('تم رفع الصورة وإضافتها بنجاح');
+        } else {
+          toast.error('فشل في رفع الصورة');
+        }
+      } catch (err) {
+        console.error('Image upload error:', err);
+        toast.error('حدث خطأ في رفع الصورة');
+      } finally {
+        setUploadingImage(false);
+      }
+      return;
+    }
+
+    // Fallback: base64 (for other usages without onImageUpload)
     const reader = new FileReader();
     reader.onload = (event) => {
       const base64 = event.target?.result as string;
