@@ -1,47 +1,54 @@
 
 
-# اصلاح مشكلة النص الطويل الذي يمنع ظهور زر القلم
+# اصلاح مشكلة الصور المضمنة كـ base64 في نص السؤال
 
-## السبب الجذري
-النصوص الطويلة بدون مسافات (مثل جمل HTML طويلة او نصوص منسوخة من Word على سطر واحد) تتسبب في تمدد الحاوية افقيا الى ما لا نهاية. هذا يدفع زر القلم خارج المنطقة المرئية حتى مع `sticky`.
+## المشكلة
+عند اضافة صورة من خلال محرر النصوص الغني (RichTextEditor) في حوار تعديل سؤال البجروت، يتم تخزين الصورة كنص base64 داخل حقل `question_text`. سلسلة base64 لصورة واحدة يمكن ان تكون مئات الالاف من الاحرف، مما يسبب:
+- تمدد الصفحة افقيا بشكل هائل
+- بطء شديد في الاداء
+- اختفاء زر القلم وعناصر اخرى
 
-## الحل: 3 تعديلات في ملفين
+## الحل: رفع الصورة الى Supabase Storage بدلا من تضمينها كـ base64
 
-### التعديل 1: حاوية QuestionCard - منع التمدد
-**الملف:** `src/components/bagrut/BagrutExamPreview.tsx` (سطر 650)
+### التعديل 1: تعديل RichTextEditor لدعم رفع الصور للتخزين
+**الملف:** `src/components/content/RichTextEditor.tsx`
 
-تغيير حاوية QuestionCard من `overflow-visible` الى:
-```
-overflow-hidden max-w-full
-```
-مع اضافة CSS utilities للتحكم بكسر النص:
-```
-[style: overflow-wrap: break-word; word-break: break-word]
-```
+- اضافة prop اختياري `onImageUpload?: (file: File) => Promise<string | null>` للمكون
+- عند توفر هذا الـ prop، يتم رفع الصورة عبره والحصول على URL حقيقي بدلا من base64
+- عند عدم توفره، يبقى السلوك الحالي (base64) للتوافق مع الاستخدامات الاخرى
 
-وتغيير زر القلم من `sticky float-left` الى `absolute top-2 left-2` مع `z-50` لانه مع `overflow-hidden` لن يختفي لان الحاوية نفسها لن تتمدد.
+### التعديل 2: توفير دالة رفع الصور في حوار تعديل البجروت
+**الملف:** `src/components/bagrut/BagrutQuestionEditDialog.tsx`
 
-### التعديل 2: SafeHtml - منع النص من التمدد
+- اضافة دالة `uploadImageToStorage` ترفع الصورة الى bucket `bagrut-exam-images` وتعيد الرابط العام
+- تمرير هذه الدالة كـ `onImageUpload` prop لكل مكون `RichTextEditor` في الحوار
+
+### التعديل 3: حماية SafeHtml من base64 المتبقي
 **الملف:** `src/components/bagrut/SafeHtml.tsx`
 
-اضافة `overflow-wrap: break-word; word-break: break-word; max-width: 100%;` على div الحاوية في كلا الحالتين (HTML وغير HTML). وكذلك اضافة CSS مخصص للجداول داخل SafeHtml:
-```css
-table { table-layout: fixed; width: 100%; }
-td, th { overflow-wrap: break-word; word-break: break-word; }
-```
+- اضافة معالجة للصور المضمنة كـ base64: تحويل `<img src="data:image/...">` الى صورة محدودة الحجم مع `max-width: 100%` و `display: block`
+- اضافة CSS لمنع اي عنصر من تجاوز عرض الحاوية: `img { max-width: 100%; height: auto; }`
 
-### التعديل 3: عناصر اضافية في QuestionCard
-**الملف:** `src/components/bagrut/BagrutExamPreview.tsx`
+### التعديل 4: تنظيف الـ paste من base64
+**الملف:** `src/components/content/RichTextEditor.tsx`
 
-- خيارات الاختيار (سطر 830): اضافة `break-words` على نص الخيار
-- الاجابة الصحيحة والشرح (سطر 855-868): اضافة `overflow-hidden` على الحاوية
-- حاوية الاسئلة الفرعية (سطر 873): اضافة `overflow-hidden max-w-full`
+- عند لصق محتوى يحتوي على صور base64 (مثل النسخ من Word)، يتم اعتراضها ورفعها ايضا عبر `onImageUpload` اذا توفر
+
+---
 
 ## التفاصيل التقنية
 
+```text
+التدفق الحالي (المشكلة):
+  ملف صورة → FileReader → base64 string → question_text (مئات الالاف من الاحرف)
+
+التدفق الجديد:
+  ملف صورة → Supabase Storage → URL قصير → question_text (رابط عادي)
+```
+
 الملفات المتأثرة:
-- `src/components/bagrut/BagrutExamPreview.tsx` - QuestionCard container + edit button + sub-elements
-- `src/components/bagrut/SafeHtml.tsx` - اضافة word-break وtable-layout
+- `src/components/content/RichTextEditor.tsx` - اضافة prop لرفع الصور + اعتراض اللصق
+- `src/components/bagrut/BagrutQuestionEditDialog.tsx` - توفير دالة الرفع
+- `src/components/bagrut/SafeHtml.tsx` - حماية CSS اضافية للصور
 
-المبدأ: بدلا من محاولة ابقاء الزر مرئيا رغم التمدد، نمنع التمدد اصلا عبر اجبار النص على الالتفاف وتقييد عرض الجداول.
-
+هذا الحل يعالج السبب الجذري (منع تخزين base64) ويحمي من البيانات الموجودة مسبقا عبر CSS.
