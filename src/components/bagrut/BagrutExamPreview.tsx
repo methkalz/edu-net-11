@@ -548,8 +548,16 @@ const renderFillBlankText = (
   blanks?: Array<{ id: string; correct_answer: string; placeholder?: string }>,
   showAnswers?: boolean
 ) => {
+  // Strip HTML tags from rich text editor content, keeping only text
+  const stripHtml = (html: string): string => {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || html;
+  };
+  const cleanText = stripHtml(text);
+  
   // First, normalize old numbered format to new format
-  let normalizedText = text.replace(/____(\d+)____/g, '[فراغ:$1]');
+  let normalizedText = cleanText.replace(/____(\d+)____/g, '[فراغ:$1]');
   
   // Combined pattern: new format OR general blanks
   const combinedPattern = /(\[فراغ:(\d+)\])|(_+|\.{3,}|…+|\[\.+\]|\(\s*\))/g;
