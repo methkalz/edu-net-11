@@ -11,6 +11,21 @@ interface BagrutImageUploadProps {
   onImageUploaded: (url: string) => void;
 }
 
+const arabicToLatin: Record<string, string> = {
+  'أ': 'a', 'ا': 'a', 'ب': 'b', 'ت': 't', 'ث': 'th', 'ج': 'j', 'ح': 'h', 'خ': 'kh',
+  'د': 'd', 'ذ': 'dh', 'ر': 'r', 'ز': 'z', 'س': 's', 'ش': 'sh', 'ص': 's2',
+  'ض': 'd2', 'ط': 't2', 'ظ': 'z2', 'ع': 'e', 'غ': 'gh', 'ف': 'f', 'ق': 'q2',
+  'ك': 'k', 'ل': 'l', 'م': 'm', 'ن': 'n', 'ه': 'h2', 'هـ': 'h2', 'و': 'w', 'ي': 'y'
+};
+
+const sanitizeForFilename = (input: string): string => {
+  let result = '';
+  for (const char of input) {
+    result += arabicToLatin[char] || char;
+  }
+  return result.replace(/[^a-zA-Z0-9_-]/g, '') || 'unknown';
+};
+
 const BagrutImageUpload: React.FC<BagrutImageUploadProps> = ({
   questionNumber,
   description,
@@ -38,7 +53,8 @@ const BagrutImageUpload: React.FC<BagrutImageUploadProps> = ({
     setIsUploading(true);
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `q${questionNumber}_${Date.now()}.${fileExt}`;
+      const sanitized = sanitizeForFilename(questionNumber);
+      const fileName = `q${sanitized}_${Date.now()}.${fileExt}`;
       const filePath = `manual/${fileName}`;
 
       const { data, error } = await supabase.storage
