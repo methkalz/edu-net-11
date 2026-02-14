@@ -83,13 +83,79 @@ const questionTypeLabels: Record<string, string> = {
   multi_part: 'متعدد البنود'
 };
 
+// دالة تنظيف صور base64 من HTML ورفعها إلى Storage
+const sanitizeBase64Images = async (html: string): Promise<string> => {
+  if (!html || !html.includes('data:image')) return html;
+
+  const imgRegex = /<img([^>]*)src="data:image\/([^;]+);base64,([^"]+)"([^>]*)>/g;
+  let result = html;
+  let match: RegExpExecArray | null;
+  const matches: { fullMatch: string; mimeType: string; base64Data: string }[] = [];
+
+  while ((match = imgRegex.exec(html)) !== null) {
+    matches.push({
+      fullMatch: match[0],
+      mimeType: match[2],
+      base64Data: match[3],
+    });
+  }
+
+  for (const m of matches) {
+    try {
+      const byteChars = atob(m.base64Data);
+      const byteArray = new Uint8Array(byteChars.length);
+      for (let i = 0; i < byteChars.length; i++) {
+        byteArray[i] = byteChars.charCodeAt(i);
+      }
+      const blob = new Blob([byteArray], { type: `image/${m.mimeType}` });
+      const ext = m.mimeType === 'jpeg' ? 'jpg' : m.mimeType;
+      const fileName = `inline/sanitized_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${ext}`;
+
+      const { data, error } = await supabase.storage
+        .from('bagrut-exam-images')
+        .upload(fileName, blob, { cacheControl: '3600', upsert: true });
+
+      if (error) {
+        console.error('Failed to upload sanitized image:', error);
+        continue;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from('bagrut-exam-images')
+        .getPublicUrl(data.path);
+
+      result = result.replace(m.fullMatch, m.fullMatch.replace(`data:image/${m.mimeType};base64,${m.base64Data}`, urlData.publicUrl));
+    } catch (err) {
+      console.error('Error sanitizing base64 image:', err);
+    }
+  }
+
+  return result;
+};
+
+// تنظيف جميع حقول النص في سؤال بشكل عودي
+const sanitizeQuestionFields = async (q: ParsedQuestion): Promise<ParsedQuestion> => {
+  const cleaned = { ...q };
+  cleaned.question_text = await sanitizeBase64Images(cleaned.question_text || '');
+  cleaned.correct_answer = await sanitizeBase64Images(cleaned.correct_answer || '');
+  cleaned.answer_explanation = await sanitizeBase64Images(cleaned.answer_explanation || '');
+
+  if (cleaned.sub_questions?.length) {
+    cleaned.sub_questions = await Promise.all(
+      cleaned.sub_questions.map(sub => sanitizeQuestionFields(sub))
+    );
+  }
+  return cleaned;
+};
+
 // مكون تحرير سؤال فرعي - عودي لدعم التداخل العميق
 const SubQuestionEditor: React.FC<{
   subQuestion: ParsedQuestion;
   index: number;
   onUpdate: (updated: ParsedQuestion) => void;
+  onImageUpload?: (file: File) => Promise<string | null>;
   depth?: number;
-}> = ({ subQuestion, index, onUpdate, depth = 1 }) => {
+}> = ({ subQuestion, index, onUpdate, onImageUpload, depth = 1 }) => {
   const [expanded, setExpanded] = useState(false);
   
   const handleFieldChange = (field: keyof ParsedQuestion, value: any) => {
@@ -179,6 +245,7 @@ const SubQuestionEditor: React.FC<{
             <RichTextEditor
               content={subQuestion.question_text || ''}
               onChange={(val) => handleFieldChange('question_text', val)}
+              onImageUpload={onImageUpload}
             />
           </div>
           
@@ -216,6 +283,7 @@ const SubQuestionEditor: React.FC<{
               <RichTextEditor
                 content={subQuestion.correct_answer || ''}
                 onChange={(val) => handleFieldChange('correct_answer', val)}
+                onImageUpload={onImageUpload}
               />
             </div>
           )}
@@ -232,6 +300,7 @@ const SubQuestionEditor: React.FC<{
                   subQuestion={nestedSub}
                   index={nIdx}
                   depth={depth + 1}
+                  onImageUpload={onImageUpload}
                   onUpdate={(updated) => {
                     const newNested = [...(subQuestion.sub_questions || [])];
                     newNested[nIdx] = updated;
@@ -688,7 +757,9 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
   };
 
   // ========== Validation & Submit ==========
-  const validateAndSubmit = () => {
+  const [isSaving, setIsSaving] = useState(false);
+
+  const validateAndSubmit = async () => {
     // Validation for choice questions
     if (isChoiceQuestion) {
       const currentChoices = editedQuestion.choices || [];
@@ -709,9 +780,19 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
       return;
     }
 
-    onSubmit(editedQuestion);
-    onOpenChange(false);
-    toast.success('تم حفظ التعديلات');
+    // Sanitize base64 images before saving
+    setIsSaving(true);
+    try {
+      const sanitized = await sanitizeQuestionFields(editedQuestion);
+      onSubmit(sanitized);
+      onOpenChange(false);
+      toast.success('تم حفظ التعديلات');
+    } catch (err) {
+      console.error('Error sanitizing images:', err);
+      toast.error('حدث خطأ أثناء معالجة الصور');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const colCount = tableData.headers?.length || (tableData.rows?.[0]?.length || 0);
@@ -1233,6 +1314,7 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
                       key={subQ.question_db_id || index}
                       subQuestion={subQ}
                       index={index}
+                      onImageUpload={uploadImageToStorage}
                       onUpdate={(updated) => {
                         const newSubs = [...(editedQuestion.sub_questions || [])];
                         newSubs[index] = updated;
@@ -1255,9 +1337,18 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
         </ScrollArea>
 
         <DialogFooter className="shrink-0 border-t pt-4 flex-row-reverse gap-2">
-          <Button onClick={validateAndSubmit} className="gap-2">
-            <Save className="h-4 w-4" />
-            حفظ التعديلات
+          <Button onClick={validateAndSubmit} className="gap-2" disabled={isSaving}>
+            {isSaving ? (
+              <>
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                جاري المعالجة...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4" />
+                حفظ التعديلات
+              </>
+            )}
           </Button>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             إلغاء
