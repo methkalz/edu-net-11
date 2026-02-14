@@ -352,7 +352,13 @@ function FillBlankQuestion({
   disabled: boolean;
   showAnswer: boolean;
 }) {
-  const text = question.question_text;
+  // Strip HTML tags from rich text editor content
+  const stripHtml = (html: string): string => {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || html;
+  };
+  const text = stripHtml(question.question_text);
   const blanks = question.blanks || [];
   
   // تحديد الفراغات في النص
