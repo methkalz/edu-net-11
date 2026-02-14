@@ -716,10 +716,23 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
 
   const colCount = tableData.headers?.length || (tableData.rows?.[0]?.length || 0);
 
+  // Ctrl+S / Cmd+S shortcut
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        validateAndSubmit();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [open, editedQuestion]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh]" dir="rtl">
-        <DialogHeader>
+      <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col" dir="rtl">
+        <DialogHeader className="shrink-0">
           <DialogTitle className="flex items-center gap-2">
             تحرير السؤال {question.question_number}
             <Badge variant="secondary">
@@ -731,7 +744,7 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="max-h-[60vh] pr-4">
+        <ScrollArea className="flex-1 min-h-0 pr-4">
           <div className="space-y-6 py-4">
             {/* تنبيه للأسئلة بدون مساحة إجابة */}
             {!hasAnswerMethod(editedQuestion) && (
@@ -1241,7 +1254,7 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
           </div>
         </ScrollArea>
 
-        <DialogFooter className="flex-row-reverse gap-2">
+        <DialogFooter className="shrink-0 border-t pt-4 flex-row-reverse gap-2">
           <Button onClick={validateAndSubmit} className="gap-2">
             <Save className="h-4 w-4" />
             حفظ التعديلات
