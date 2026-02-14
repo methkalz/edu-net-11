@@ -24,6 +24,8 @@ import {
   BookOpen
 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ChevronDown } from 'lucide-react';
 import BagrutImageUpload from './BagrutImageUpload';
 import BagrutQuestionEditDialog from './BagrutQuestionEditDialog';
 import RichTextEditor from '@/components/content/RichTextEditor';
@@ -117,6 +119,7 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
   const [instructionsDialogOpen, setInstructionsDialogOpen] = useState(false);
   const [editingInstructions, setEditingInstructions] = useState(exam.instructions || '');
   const [isSavingInstructions, setIsSavingInstructions] = useState(false);
+  const [infoExpanded, setInfoExpanded] = useState(true);
 
   // مزامنة localExam مع exam prop عندما يتغير (بعد الحفظ أو إعادة الجلب من DB)
   // هذا يضمن بقاء ترتيب الأسئلة كما في قاعدة البيانات
@@ -285,45 +288,54 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <Card>
-        <CardHeader className="pb-4">
-          <div className="flex items-start justify-between">
-            <div>
-              <CardTitle className="text-2xl">{exam.title}</CardTitle>
-              <p className="text-muted-foreground mt-1">
-                {exam.subject} - {seasonLabels[exam.exam_season] || exam.exam_season} {exam.exam_year}
-                {exam.exam_code && ` (${exam.exam_code})`}
-              </p>
-            </div>
-            <div className="flex items-center gap-4">
-              {/* Edit Mode Toggle */}
-              <div className="flex items-center gap-2">
-                <Switch
-                  id="edit-mode"
-                  checked={editMode}
-                  onCheckedChange={setEditMode}
-                />
-                <Label htmlFor="edit-mode" className="flex items-center gap-1">
-                  <Pencil className="h-4 w-4" />
-                  وضع التعديل
-                </Label>
+      <Collapsible open={infoExpanded} onOpenChange={setInfoExpanded}>
+        <Card>
+          <CardHeader className="pb-4">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+                    <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${infoExpanded ? '' : '-rotate-90'}`} />
+                  </Button>
+                </CollapsibleTrigger>
+                <div>
+                  <CardTitle className="text-2xl">{exam.title}</CardTitle>
+                  <p className="text-muted-foreground mt-1">
+                    {exam.subject} - {seasonLabels[exam.exam_season] || exam.exam_season} {exam.exam_year}
+                    {exam.exam_code && ` (${exam.exam_code})`}
+                  </p>
+                </div>
               </div>
-              
-              <div className="flex items-center gap-2">
-                <Switch
-                  id="show-answers"
-                  checked={showAnswers}
-                  onCheckedChange={setShowAnswers}
-                />
-                <Label htmlFor="show-answers" className="flex items-center gap-1">
-                  {showAnswers ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                  {showAnswers ? 'إخفاء الإجابات' : 'إظهار الإجابات'}
-                </Label>
+              <div className="flex items-center gap-4">
+                {/* Edit Mode Toggle */}
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="edit-mode"
+                    checked={editMode}
+                    onCheckedChange={setEditMode}
+                  />
+                  <Label htmlFor="edit-mode" className="flex items-center gap-1">
+                    <Pencil className="h-4 w-4" />
+                    وضع التعديل
+                  </Label>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="show-answers"
+                    checked={showAnswers}
+                    onCheckedChange={setShowAnswers}
+                  />
+                  <Label htmlFor="show-answers" className="flex items-center gap-1">
+                    {showAnswers ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                    {showAnswers ? 'إخفاء الإجابات' : 'إظهار الإجابات'}
+                  </Label>
+                </div>
               </div>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent>
+          </CardHeader>
+          <CollapsibleContent>
+          <CardContent>
           {/* Stats Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
@@ -415,11 +427,13 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
             </Button>
           )}
         </CardContent>
-      </Card>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
 
       {/* Sections */}
       <Tabs value={activeSection} onValueChange={setActiveSection}>
-        <TabsList className="w-full justify-start">
+        <TabsList className="w-full justify-start sticky top-0 z-10 bg-background">
           {localExam.sections.map((section, index) => (
             <TabsTrigger key={index} value={String(index)}>
               {section.section_title}
@@ -450,21 +464,19 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
                 )}
               </CardHeader>
               <CardContent>
-                <ScrollArea className="h-[500px] pr-4">
-                  <div className="space-y-4">
-                    {section.questions.map((question, qIndex) => (
-                      <QuestionCard 
-                        key={qIndex} 
-                        question={question} 
-                        showAnswers={showAnswers}
-                        sectionIndex={sectionIndex}
-                        onImageUploaded={handleImageUploaded}
-                        editMode={editMode}
-                        onEdit={(q) => handleQuestionEdit(q, sectionIndex)}
-                      />
-                    ))}
-                  </div>
-                </ScrollArea>
+                <div className="space-y-4">
+                  {section.questions.map((question, qIndex) => (
+                    <QuestionCard 
+                      key={qIndex} 
+                      question={question} 
+                      showAnswers={showAnswers}
+                      sectionIndex={sectionIndex}
+                      onImageUploaded={handleImageUploaded}
+                      editMode={editMode}
+                      onEdit={(q) => handleQuestionEdit(q, sectionIndex)}
+                    />
+                  ))}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
