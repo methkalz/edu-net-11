@@ -1,62 +1,47 @@
 
 
-# اصلاح مشاكل تعديل اسئلة التخصص ورفع الصور في امتحانات البجروت
+# اصلاح مشكلة النص الطويل الذي يمنع ظهور زر القلم
 
-## المشاكل المكتشفة
+## السبب الجذري
+النصوص الطويلة بدون مسافات (مثل جمل HTML طويلة او نصوص منسوخة من Word على سطر واحد) تتسبب في تمدد الحاوية افقيا الى ما لا نهاية. هذا يدفع زر القلم خارج المنطقة المرئية حتى مع `sticky`.
 
-### المشكلة الاولى: تعديل السؤال الخاطئ (السبب الرئيسي)
-دالة `updateQuestionInSection` في `BagrutExamPreview.tsx` تبحث عن السؤال بواسطة `question_number`. في قسم التخصص، السؤال 23 يحتوي على اسئلة فرعية (أ، ب، ج...) وكل منها يحتوي على اسئلة فرعية اخرى مرقمة (1، 2، 3). هذا يعني ان الرقم "1" موجود عدة مرات في شجرة الاسئلة (تحت أ وتحت ح وتحت ط وتحت ي). عند تعديل سؤال فرعي، الدالة تجد اول تطابق وتحدثه - وقد يكون السؤال الخاطئ. هذا يسبب فشل التعديل او تعديل سؤال غير المطلوب.
+## الحل: 3 تعديلات في ملفين
 
-### المشكلة الثانية: رفع الصور لا يعمل للاسئلة الفرعية
-دالة `handleImageUploaded` تبحث فقط في الاسئلة الرئيسية (المستوى الاول) ولا تدخل في الاسئلة الفرعية. بما ان جميع اسئلة التخصص هي فرعية تحت السؤال 23، فان رفع الصور لا يعمل لاي منها.
+### التعديل 1: حاوية QuestionCard - منع التمدد
+**الملف:** `src/components/bagrut/BagrutExamPreview.tsx` (سطر 650)
 
----
-
-## الحل
-
-### التعديل 1: استخدام `question_db_id` بدلا من `question_number` للبحث
-
-**الملف:** `src/components/bagrut/BagrutExamPreview.tsx`
-
-تعديل دالة `updateQuestionInSection` للبحث باستخدام `question_db_id` (المعرف الفريد من قاعدة البيانات) بدلا من `question_number` الذي قد يتكرر. وكذلك تحديث `handleQuestionUpdate` لاستخدام `question_db_id` الاصلي.
-
-```text
-قبل:
-  updateQuestionInSection(questions, questionNumber, updater)
-    -> يبحث بـ q.question_number === questionNumber
-
-بعد:
-  updateQuestionInSection(questions, questionDbId, questionNumber, updater)
-    -> يبحث بـ q.question_db_id === questionDbId اولا
-    -> fallback: q.question_number === questionNumber (للامتحانات غير المحفوظة)
+تغيير حاوية QuestionCard من `overflow-visible` الى:
+```
+overflow-hidden max-w-full
+```
+مع اضافة CSS utilities للتحكم بكسر النص:
+```
+[style: overflow-wrap: break-word; word-break: break-word]
 ```
 
-### التعديل 2: جعل `handleImageUploaded` عودية (Recursive)
+وتغيير زر القلم من `sticky float-left` الى `absolute top-2 left-2` مع `z-50` لانه مع `overflow-hidden` لن يختفي لان الحاوية نفسها لن تتمدد.
 
-**الملف:** `src/components/bagrut/BagrutExamPreview.tsx`
+### التعديل 2: SafeHtml - منع النص من التمدد
+**الملف:** `src/components/bagrut/SafeHtml.tsx`
 
-تعديل `handleImageUploaded` لتبحث في الاسئلة الفرعية بشكل عودي بدلا من المستوى الاول فقط. ايضا استخدام `question_db_id` عند توفره.
-
-```text
-قبل:
-  questions.map(q => q.question_number === questionNumber ? ... : q)
-
-بعد:
-  updateQuestionRecursive(questions, identifier) - يبحث عوديا في كل المستويات
+اضافة `overflow-wrap: break-word; word-break: break-word; max-width: 100%;` على div الحاوية في كلا الحالتين (HTML وغير HTML). وكذلك اضافة CSS مخصص للجداول داخل SafeHtml:
+```css
+table { table-layout: fixed; width: 100%; }
+td, th { overflow-wrap: break-word; word-break: break-word; }
 ```
 
-### التعديل 3: تمرير معرف فريد في `onImageUploaded`
-
+### التعديل 3: عناصر اضافية في QuestionCard
 **الملف:** `src/components/bagrut/BagrutExamPreview.tsx`
 
-تحديث `QuestionCard` و`handleImageUploaded` لتمرير `question_db_id` (ان وجد) مع `question_number` لضمان تحديد السؤال الصحيح.
-
----
+- خيارات الاختيار (سطر 830): اضافة `break-words` على نص الخيار
+- الاجابة الصحيحة والشرح (سطر 855-868): اضافة `overflow-hidden` على الحاوية
+- حاوية الاسئلة الفرعية (سطر 873): اضافة `overflow-hidden max-w-full`
 
 ## التفاصيل التقنية
 
 الملفات المتأثرة:
-- `src/components/bagrut/BagrutExamPreview.tsx` - التعديلات الثلاثة اعلاه
+- `src/components/bagrut/BagrutExamPreview.tsx` - QuestionCard container + edit button + sub-elements
+- `src/components/bagrut/SafeHtml.tsx` - اضافة word-break وtable-layout
 
-التعديلات محصورة في ملف واحد وتحافظ على التوافق مع الامتحانات غير المحفوظة (التي ليس لها `question_db_id`) عبر fallback للبحث بـ `question_number`.
+المبدأ: بدلا من محاولة ابقاء الزر مرئيا رغم التمدد، نمنع التمدد اصلا عبر اجبار النص على الالتفاف وتقييد عرض الجداول.
 
