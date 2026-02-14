@@ -269,7 +269,7 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
     setHasEdits(true);
     setEditingQuestion(null);
     setEditingContext(null);
-  }, [editingContext, updateQuestionInSection, onExamUpdate]);
+  }, [editingContext, editingQuestion, updateQuestionInSection, onExamUpdate]);
 
   const handleSaveEditsClick = async () => {
     if (!onSaveEdits) return;
