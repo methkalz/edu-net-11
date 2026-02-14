@@ -30,8 +30,8 @@ const SafeHtml: React.FC<SafeHtmlProps> = ({ html, className = '' }) => {
     ADD_ATTR: ['style', 'colspan', 'rowspan', 'dir'],
   });
 
-  // Inject table constraint styles before the content
-  const styledHtml = `<style>table{table-layout:fixed;width:100%;border-collapse:collapse}td,th{overflow-wrap:break-word;word-break:break-word}</style>${sanitized}`;
+  // Inject table + image constraint styles before the content
+  const styledHtml = `<style>table{table-layout:fixed;width:100%;border-collapse:collapse}td,th{overflow-wrap:break-word;word-break:break-word}img{max-width:100%;height:auto;display:block}</style>${sanitized}`;
 
   return (
     <div

@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/select';
 import { Plus, Trash2, Save, AlertCircle, GripVertical, ImageIcon, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 import type { TableData, BlankDefinition } from '@/lib/bagrut/buildBagrutPreview';
 import BagrutImageUpload from './BagrutImageUpload';
 
@@ -255,6 +256,30 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
 }) => {
   const [editedQuestion, setEditedQuestion] = useState<ParsedQuestion>(question);
   const [validationError, setValidationError] = useState<string | null>(null);
+
+  // Upload image to Supabase Storage instead of embedding as base64
+  const uploadImageToStorage = useCallback(async (file: File): Promise<string | null> => {
+    try {
+      const fileExt = file.name.split('.').pop() || 'png';
+      const fileName = `editor_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+      const filePath = `inline/${fileName}`;
+
+      const { data, error } = await supabase.storage
+        .from('bagrut-exam-images')
+        .upload(filePath, file, { cacheControl: '3600', upsert: true });
+
+      if (error) throw error;
+
+      const { data: urlData } = supabase.storage
+        .from('bagrut-exam-images')
+        .getPublicUrl(data.path);
+
+      return urlData.publicUrl;
+    } catch (err) {
+      console.error('Failed to upload image to storage:', err);
+      return null;
+    }
+  }, []);
 
   // Reset state when question changes
   useEffect(() => {
@@ -768,6 +793,7 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
               <RichTextEditor
                 content={editedQuestion.question_text || ''}
                 onChange={(val) => handleTextChange('question_text', val)}
+                onImageUpload={uploadImageToStorage}
               />
             </div>
 
@@ -1162,6 +1188,7 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
                 <RichTextEditor
                   content={editedQuestion.correct_answer || ''}
                   onChange={(val) => handleTextChange('correct_answer', val)}
+                  onImageUpload={uploadImageToStorage}
                 />
               </div>
             )}
@@ -1173,6 +1200,7 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
               <RichTextEditor
                 content={editedQuestion.answer_explanation || ''}
                 onChange={(val) => handleTextChange('answer_explanation', val)}
+                onImageUpload={uploadImageToStorage}
               />
             </div>
 
