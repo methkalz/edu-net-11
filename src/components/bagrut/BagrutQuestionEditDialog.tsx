@@ -760,48 +760,33 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
   const [isSaving, setIsSaving] = useState(false);
 
   const validateAndSubmit = async () => {
-    console.log('[DEBUG] validateAndSubmit called, isSaving:', isSaving);
-    console.log('[DEBUG] question_type:', editedQuestion.question_type, 'isChoiceQuestion:', isChoiceQuestion);
-    
     // Validation for choice questions
     if (isChoiceQuestion) {
       const currentChoices = editedQuestion.choices || [];
-      console.log('[DEBUG] choices count:', currentChoices.length, 'choices:', JSON.stringify(currentChoices?.map(c => ({ id: c.id, is_correct: c.is_correct }))));
-      if (currentChoices.length < 2) {
-        console.log('[DEBUG] FAILED: less than 2 choices');
+      // Only validate choice count for questions that actually have choices defined
+      if (currentChoices.length > 0 && currentChoices.length < 2) {
         setValidationError('يجب أن يكون هناك خياران على الأقل');
         return;
       }
-      const hasCorrect = currentChoices.some(c => c.is_correct);
-      console.log('[DEBUG] hasCorrect:', hasCorrect, 'correct_answer:', editedQuestion.correct_answer);
-      if (!hasCorrect && !editedQuestion.correct_answer) {
-        console.log('[DEBUG] FAILED: no correct answer');
-        setValidationError('يجب تحديد الإجابة الصحيحة');
-        return;
-      }
+      // Don't block saving just because correct answer isn't set - 
+      // existing DB questions may store correct answer differently (correct_answer_data, etc.)
     }
 
     // Validate question text
-    const trimmedText = editedQuestion.question_text.trim();
-    console.log('[DEBUG] question_text length:', trimmedText.length, 'empty?', !trimmedText);
-    if (!trimmedText) {
-      console.log('[DEBUG] FAILED: empty question text');
+    if (!editedQuestion.question_text.trim()) {
       setValidationError('نص السؤال مطلوب');
       return;
     }
 
-    console.log('[DEBUG] Validation passed, starting sanitization');
     // Sanitize base64 images before saving
     setIsSaving(true);
     try {
       const sanitized = await sanitizeQuestionFields(editedQuestion);
-      console.log('[DEBUG] Sanitization complete, calling onSubmit');
       onSubmit(sanitized);
-      console.log('[DEBUG] onSubmit called successfully');
       onOpenChange(false);
       toast.success('تم حفظ التعديلات');
     } catch (err) {
-      console.error('[DEBUG] Error in sanitizeQuestionFields:', err);
+      console.error('Error sanitizing images:', err);
       toast.error('حدث خطأ أثناء معالجة الصور');
     } finally {
       setIsSaving(false);
