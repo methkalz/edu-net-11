@@ -647,13 +647,13 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
     isChoiceQuestion && (!question.choices || question.choices.length === 0);
 
   return (
-    <div className="border rounded-lg p-4 space-y-3 relative group">
+    <div className="border rounded-lg p-4 space-y-3 relative group overflow-visible">
       {/* Edit Button */}
       {editMode && onEdit && (
         <Button
           variant="ghost"
           size="icon"
-          className="absolute top-2 left-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 hover:bg-accent"
+          className="sticky top-2 float-left z-10 h-8 w-8 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 shadow-sm"
           onClick={() => onEdit(question)}
         >
           <Pencil className="h-4 w-4" />
