@@ -352,11 +352,17 @@ function FillBlankQuestion({
   disabled: boolean;
   showAnswer: boolean;
 }) {
-  // Strip HTML tags from rich text editor content
+  // Strip HTML tags but preserve line breaks from block elements
   const stripHtml = (html: string): string => {
+    let processed = html
+      .replace(/<\/p>\s*<p[^>]*>/gi, '\n')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/div>\s*<div[^>]*>/gi, '\n')
+      .replace(/<\/(p|div|h[1-6]|li)>/gi, '\n');
     const tmp = document.createElement('div');
-    tmp.innerHTML = html;
-    return tmp.textContent || tmp.innerText || html;
+    tmp.innerHTML = processed;
+    const text = tmp.textContent || tmp.innerText || html;
+    return text.replace(/\n{3,}/g, '\n\n').trim();
   };
   const text = stripHtml(question.question_text);
   const blanks = question.blanks || [];
