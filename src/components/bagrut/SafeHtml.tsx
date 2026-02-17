@@ -21,13 +21,22 @@ const SafeHtml: React.FC<SafeHtmlProps> = ({ html, className = '' }) => {
     maxWidth: '100%',
   };
 
+  // Shared bidi CSS injected into all HTML content
+  const bidiCss = `
+    [dir="rtl"] code, [dir="rtl"] pre, [dir="rtl"] kbd, [dir="rtl"] samp {
+      direction: ltr;
+      unicode-bidi: isolate;
+    }
+  `;
+
   if (!isHtml) {
     const withBreaks = DOMPurify.sanitize(html.replace(/\n/g, '<br>'));
     return (
       <div
+        dir="rtl"
         className={`prose prose-sm max-w-none dark:prose-invert ${className}`}
         style={wrapStyle}
-        dangerouslySetInnerHTML={{ __html: withBreaks }}
+        dangerouslySetInnerHTML={{ __html: `<style>${bidiCss}</style>${withBreaks}` }}
       />
     );
   }
@@ -37,11 +46,12 @@ const SafeHtml: React.FC<SafeHtmlProps> = ({ html, className = '' }) => {
     ADD_ATTR: ['style', 'class', 'colspan', 'rowspan', 'dir'],
   });
 
-  // Inject table + image constraint styles before the content
-  const styledHtml = `<style>table{table-layout:fixed;width:100%;border-collapse:collapse}td,th{overflow-wrap:break-word;word-break:break-word}img{max-width:100%;height:auto;display:block}</style>${sanitized}`;
+  // Inject table + image + bidi constraint styles before the content
+  const styledHtml = `<style>table{table-layout:fixed;width:100%;border-collapse:collapse}td,th{overflow-wrap:break-word;word-break:break-word}img{max-width:100%;height:auto;display:block}${bidiCss}</style>${sanitized}`;
 
   return (
     <div
+      dir="rtl"
       className={`prose prose-sm max-w-none dark:prose-invert ${className}`}
       style={wrapStyle}
       dangerouslySetInnerHTML={{ __html: styledHtml }}
