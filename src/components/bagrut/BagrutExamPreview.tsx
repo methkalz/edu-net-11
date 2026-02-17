@@ -592,7 +592,7 @@ const isInputCell = (cellValue: string, columnIndex?: number, inputColumns?: num
 };
 
 // Helper function to render fill_blank text with input fields
-// Supports both new format [فراغ:X] and old format ____X____ and general blanks
+// Supports [BLANK:X], legacy [فراغ:X], old format ____X____ and general blanks
 const renderFillBlankText = (
   text: string, 
   blanks?: Array<{ id: string; correct_answer: string; placeholder?: string }>,
@@ -600,25 +600,25 @@ const renderFillBlankText = (
 ) => {
   // Strip HTML tags but preserve line breaks from block elements
   const stripHtml = (html: string): string => {
-    // Convert block-level elements to newlines before stripping
     let processed = html
-      .replace(/<\/p>\s*<p[^>]*>/gi, '\n')  // </p><p> → newline
-      .replace(/<br\s*\/?>/gi, '\n')          // <br> → newline
-      .replace(/<\/div>\s*<div[^>]*>/gi, '\n') // </div><div> → newline
-      .replace(/<\/(p|div|h[1-6]|li)>/gi, '\n'); // closing block tags → newline
+      .replace(/<\/p>\s*<p[^>]*>/gi, '\n')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/div>\s*<div[^>]*>/gi, '\n')
+      .replace(/<\/(p|div|h[1-6]|li)>/gi, '\n');
     const tmp = document.createElement('div');
     tmp.innerHTML = processed;
     const text = tmp.textContent || tmp.innerText || html;
-    // Clean up multiple consecutive newlines
     return text.replace(/\n{3,}/g, '\n\n').trim();
   };
   const cleanText = stripHtml(text);
   
   // First, normalize old numbered format to new format
-  let normalizedText = cleanText.replace(/____(\d+)____/g, '[فراغ:$1]');
+  let normalizedText = cleanText.replace(/____(\d+)____/g, '[BLANK:$1]');
+  // Also normalize legacy Arabic format
+  normalizedText = normalizedText.replace(/\[فراغ:(\d+)\]/g, '[BLANK:$1]');
   
   // Combined pattern: new format OR general blanks
-  const combinedPattern = /(\[فراغ:(\d+)\])|(_+|\.{3,}|…+|\[\.+\]|\(\s*\))/g;
+  const combinedPattern = /(\[BLANK:(\d+)\])|(_+|\.{3,}|…+|\[\.+\]|\(\s*\))/g;
   
   const parts: React.ReactNode[] = [];
   let lastIndex = 0;
@@ -635,7 +635,7 @@ const renderFillBlankText = (
     let blankDef: typeof blanks extends Array<infer T> ? T : never | undefined;
     
     if (match[2]) {
-      // Numbered format [فراغ:X]
+      // Numbered format [BLANK:X]
       blankId = parseInt(match[2]);
       blankDef = blanks?.find(b => parseInt(b.id) === blankId);
     } else {

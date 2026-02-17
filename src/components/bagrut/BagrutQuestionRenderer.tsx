@@ -368,7 +368,7 @@ function FillBlankQuestion({
   const blanks = question.blanks || [];
   
   // تحديد الفراغات في النص
-  const pattern = /(\[فراغ:(\d+)\])|(_+|\.{3,}|…+)/g;
+  const pattern = /(\[(?:BLANK|فراغ):(\d+)\])|(_+|\.{3,}|…+)/g;
   const parts: React.ReactNode[] = [];
   let lastIndex = 0;
   let blankCounter = 0;
@@ -433,7 +433,7 @@ function FillBlankQuestion({
             onChange={(e) => handleBlankChange(blankId, e.target.value)}
             disabled={disabled}
             className="w-28 inline-block px-2 py-1 h-8 text-center"
-            placeholder={blankDef?.placeholder || `فراغ ${blankId}`}
+            placeholder={blankDef?.placeholder || `BLANK ${blankId}`}
           />
         )}
       </span>
