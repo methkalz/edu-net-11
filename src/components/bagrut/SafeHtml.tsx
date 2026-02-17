@@ -34,7 +34,7 @@ const SafeHtml: React.FC<SafeHtmlProps> = ({ html, className = '' }) => {
 
   const sanitized = DOMPurify.sanitize(html, {
     ADD_TAGS: ['table', 'thead', 'tbody', 'tr', 'th', 'td', 'colgroup', 'col', 'style'],
-    ADD_ATTR: ['style', 'colspan', 'rowspan', 'dir'],
+    ADD_ATTR: ['style', 'class', 'colspan', 'rowspan', 'dir'],
   });
 
   // Inject table + image constraint styles before the content

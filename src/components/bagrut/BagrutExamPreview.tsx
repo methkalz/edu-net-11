@@ -598,11 +598,19 @@ const renderFillBlankText = (
   blanks?: Array<{ id: string; correct_answer: string; placeholder?: string }>,
   showAnswers?: boolean
 ) => {
-  // Strip HTML tags from rich text editor content, keeping only text
+  // Strip HTML tags but preserve line breaks from block elements
   const stripHtml = (html: string): string => {
+    // Convert block-level elements to newlines before stripping
+    let processed = html
+      .replace(/<\/p>\s*<p[^>]*>/gi, '\n')  // </p><p> → newline
+      .replace(/<br\s*\/?>/gi, '\n')          // <br> → newline
+      .replace(/<\/div>\s*<div[^>]*>/gi, '\n') // </div><div> → newline
+      .replace(/<\/(p|div|h[1-6]|li)>/gi, '\n'); // closing block tags → newline
     const tmp = document.createElement('div');
-    tmp.innerHTML = html;
-    return tmp.textContent || tmp.innerText || html;
+    tmp.innerHTML = processed;
+    const text = tmp.textContent || tmp.innerText || html;
+    // Clean up multiple consecutive newlines
+    return text.replace(/\n{3,}/g, '\n\n').trim();
   };
   const cleanText = stripHtml(text);
   
