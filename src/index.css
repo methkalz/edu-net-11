@@ -1389,3 +1389,28 @@ All colors MUST be HSL.
   scrollbar-width: thin;
   scrollbar-color: hsl(var(--primary) / 0.3) hsl(var(--muted));
 }
+
+/* Modern scrollbar */
+.scrollbar-modern {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--primary) / 0.25) transparent;
+}
+
+.scrollbar-modern::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-modern::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 8px 0;
+}
+
+.scrollbar-modern::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary) / 0.25);
+  border-radius: 9999px;
+  transition: background 0.2s;
+}
+
+.scrollbar-modern::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.45);
+}

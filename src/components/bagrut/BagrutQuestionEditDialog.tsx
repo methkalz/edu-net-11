@@ -823,7 +823,7 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 min-h-0 overflow-y-auto pr-4">
+        <div className="flex-1 min-h-0 overflow-y-auto pl-4 ml-1 scrollbar-modern" dir="rtl">
           <div className="space-y-6 py-4">
             {/* تنبيه للأسئلة بدون مساحة إجابة */}
             {!hasAnswerMethod(editedQuestion) && (
