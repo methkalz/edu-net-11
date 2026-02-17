@@ -810,7 +810,7 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col" dir="rtl">
+      <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col overflow-hidden" dir="rtl">
         <DialogHeader className="shrink-0">
           <DialogTitle className="flex items-center gap-2">
             تحرير السؤال {question.question_number}
