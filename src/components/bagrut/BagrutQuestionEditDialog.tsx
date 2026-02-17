@@ -614,8 +614,8 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
   const extractBlanksFromText = useCallback((text: string, existingBlanks?: BlankDefinition[]): BlankDefinition[] => {
     const foundBlanks: BlankDefinition[] = [];
     
-    // Pattern 1: New format [فراغ:X]
-    const newFormatPattern = /\[فراغ:(\d+)\]/g;
+    // Pattern 1: New format [BLANK:X] or legacy [فراغ:X]
+    const newFormatPattern = /\[(?:BLANK|فراغ):(\d+)\]/g;
     // Pattern 2: Old numbered format ____X____
     const oldNumberedPattern = /____(\d+)____/g;
     // Pattern 3: General blanks (unnamed) - ____, ..., etc.
@@ -692,7 +692,7 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
   // Check if a blank marker exists in the text
   const isBlankInText = (blankId: string): boolean => {
     const text = editedQuestion.question_text;
-    const newFormat = new RegExp(`\\[فراغ:${blankId}\\]`);
+    const newFormat = new RegExp(`\\[(?:BLANK|فراغ):${blankId}\\]`);
     const oldFormat = new RegExp(`____${blankId}____`);
     return newFormat.test(text) || oldFormat.test(text);
   };
@@ -719,7 +719,7 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
     
     // Also remove the marker from text if exists
     let updatedText = editedQuestion.question_text;
-    updatedText = updatedText.replace(new RegExp(`\\[فراغ:${blankToRemove.id}\\]`, 'g'), '____');
+    updatedText = updatedText.replace(new RegExp(`\\[(?:BLANK|فراغ):${blankToRemove.id}\\]`, 'g'), '____');
     updatedText = updatedText.replace(new RegExp(`____${blankToRemove.id}____`, 'g'), '____');
     
     setEditedQuestion(prev => ({ ...prev, blanks: reIdBlanks, question_text: updatedText }));
@@ -732,8 +732,8 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
   };
 
   const handleInsertBlankMarker = (blankId: string) => {
-    // Use new format: [فراغ:X]
-    const marker = `[فراغ:${blankId}]`;
+    // Use new format: [BLANK:X]
+    const marker = `[BLANK:${blankId}]`;
     setEditedQuestion(prev => ({
       ...prev,
       question_text: prev.question_text + ' ' + marker
@@ -1050,7 +1050,7 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
                 )}
                 
                 <p className="text-sm text-muted-foreground">
-                  أضف الفراغات ثم انقر "إدراج" لوضع علامة الفراغ في نص السؤال. الصيغة: [فراغ:1]
+                  أضف الفراغات ثم انقر "إدراج" لوضع علامة الفراغ في نص السؤال. الصيغة: [BLANK:1]
                 </p>
 
                 <div className="space-y-3">
