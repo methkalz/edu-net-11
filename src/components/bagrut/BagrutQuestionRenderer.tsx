@@ -70,7 +70,7 @@ export default function BagrutQuestionRenderer({
       </CardHeader>
       <CardContent className="space-y-4">
         {/* نص السؤال */}
-        <div className="text-foreground whitespace-pre-wrap leading-relaxed">
+        <div className="text-foreground leading-relaxed">
           {question.question_type === 'fill_blank' ? (
             <FillBlankQuestion
               question={question}
@@ -246,7 +246,7 @@ function MultipleChoiceQuestion({
             } ${isCorrect ? 'border-green-500 bg-green-50 dark:bg-green-950/30' : ''}`}
           >
             <RadioGroupItem value={choice.id || choice.text} id={choiceId} />
-            <span className="flex-1 whitespace-pre-wrap">{choice.text}</span>
+            <SafeHtml html={choice.text} className="flex-1" />
             {showAnswer && isCorrect && (
               <Badge variant="default" className="bg-green-500">صحيح</Badge>
             )}

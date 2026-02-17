@@ -22,7 +22,14 @@ const SafeHtml: React.FC<SafeHtmlProps> = ({ html, className = '' }) => {
   };
 
   if (!isHtml) {
-    return <div className={`whitespace-pre-wrap ${className}`} style={wrapStyle}>{html}</div>;
+    const withBreaks = DOMPurify.sanitize(html.replace(/\n/g, '<br>'));
+    return (
+      <div
+        className={`prose prose-sm max-w-none dark:prose-invert ${className}`}
+        style={wrapStyle}
+        dangerouslySetInnerHTML={{ __html: withBreaks }}
+      />
+    );
   }
 
   const sanitized = DOMPurify.sanitize(html, {
