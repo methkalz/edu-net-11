@@ -885,7 +885,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                         <span className="text-sm font-medium text-muted-foreground">
                           {index + 1}.
                         </span>
-                        <span className="text-sm text-foreground whitespace-pre-wrap break-words">{choice.text}</span>
+                        <SafeHtml html={choice.text} className="text-sm text-foreground" />
                       </div>
                     </div>
                     {correct && (
