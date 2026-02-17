@@ -810,7 +810,7 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col overflow-hidden" dir="rtl">
+      <DialogContent className="max-w-5xl max-h-[90vh] !flex flex-col overflow-hidden" dir="rtl">
         <DialogHeader className="shrink-0">
           <DialogTitle className="flex items-center gap-2">
             تحرير السؤال {question.question_number}
@@ -823,7 +823,7 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 min-h-0 pr-4">
+        <div className="flex-1 min-h-0 overflow-y-auto pr-4">
           <div className="space-y-6 py-4">
             {/* تنبيه للأسئلة بدون مساحة إجابة */}
             {!hasAnswerMethod(editedQuestion) && (
@@ -1332,7 +1332,7 @@ const BagrutQuestionEditDialog: React.FC<BagrutQuestionEditDialogProps> = ({
               </div>
             )}
           </div>
-        </ScrollArea>
+        </div>
 
         <DialogFooter className="shrink-0 border-t pt-4 flex-row-reverse gap-2">
           <Button onClick={validateAndSubmit} className="gap-2" disabled={isSaving}>
