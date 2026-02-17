@@ -70,7 +70,7 @@ export default function BagrutQuestionRenderer({
       </CardHeader>
       <CardContent className="space-y-4">
         {/* نص السؤال */}
-        <div className="text-foreground leading-relaxed" dir="auto">
+        <div className="text-foreground leading-relaxed">
           {question.question_type === 'fill_blank' ? (
             <FillBlankQuestion
               question={question}

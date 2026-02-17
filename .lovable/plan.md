@@ -1,90 +1,79 @@
 
 
-## اصلاح مشكلة اتجاه النصوص المختلطة (RTL/LTR) في نظام البجروت
+## اصلاح عرض تنسيق نص السؤال في نظام البجروت
 
 ### المشكلة
-النصوص التي تحتوي على أوامر تقنية (مثل CLI commands) او نصوص انجليزية تظهر بترتيب خاطئ لأن المكون يفرض `dir="rtl"` على كل المحتوى. كذلك عند تعيين محاذاة يسارية من محرر النصوص (text-align: left)، لا يتم احترامها.
+نص السؤال يظهر بدون تنسيق (بدون فقرات، سطور جديدة، خط عريض، الخ) بينما شرح الاجابة يظهر بشكل صحيح. كلاهما يستخدم مكون `SafeHtml` لكن المشكلة في مكانين:
+
+1. **نصوص الاسئلة المخزنة كنص عادي** (بدون HTML): تحتوي على `\n` للأسطر الجديدة لكن `SafeHtml` لا يحولها الى `<br>` عند العرض.
+2. **خيارات الاجابة في المعاينة**: تُعرض كنص عادي `{choice.text}` بدون استخدام `SafeHtml`، فلا يظهر اي تنسيق.
+3. **عرض السؤال للطالب** (`BagrutQuestionRenderer.tsx`): ملفوف في `div` مع `whitespace-pre-wrap` ما قد يتعارض مع تنسيقات `prose` في `SafeHtml`.
 
 ### الحل
 
-#### 1. استخدام `dir="auto"` بدلا من `dir="rtl"` في SafeHtml
+#### 1. تحسين مكون `SafeHtml` لدعم النصوص العادية بشكل افضل
 **ملف**: `src/components/bagrut/SafeHtml.tsx`
+- عندما يكون النص عادي (غير HTML)، تحويل `\n` الى `<br>` قبل العرض بدلاً من الاعتماد على `whitespace-pre-wrap` فقط.
+- هذا يضمن ظهور الاسطر الجديدة بشكل صحيح في جميع السياقات.
 
-`dir="auto"` يجعل المتصفح يحدد الاتجاه تلقائيا بناء على اول حرف قوي (strong character) في النص. هذا يعني:
-- نص يبدا بالعربية → يعرض RTL
-- نص يبدا بالانجليزية (مثل `R1(config)#`) → يعرض LTR
+#### 2. اصلاح عرض الخيارات في معاينة السوبر ادمن
+**ملف**: `src/components/bagrut/BagrutExamPreview.tsx` (سطر 888)
+- استبدال `{choice.text}` بـ `<SafeHtml html={choice.text} />` لدعم التنسيق في نصوص الخيارات.
 
-بالاضافة لذلك، نضيف CSS قاعدة `unicode-bidi: plaintext` التي تجعل كل فقرة تحدد اتجاهها بشكل مستقل حسب محتواها، وهي الطريقة الموصى بها من W3C للمحتوى المختلط.
+#### 3. ازالة التعارض في عرض الطالب
+**ملف**: `src/components/bagrut/BagrutQuestionRenderer.tsx` (سطر 73)
+- ازالة `whitespace-pre-wrap` من الـ `div` الذي يلف `SafeHtml`، لأن `SafeHtml` يتولى التنسيق داخلياً.
 
-#### 2. تحسين CSS للتعامل مع المحتوى المختلط
-اضافة قواعد CSS تضمن:
-- الفقرات التي تبدا بنص انجليزي/تقني تعرض LTR تلقائيا
-- احترام `text-align` و `direction` المحددين من محرر النصوص
-- عزل عناصر الكود (`code`, `pre`) في سياق LTR دائما
-
-#### 3. اصلاح عرض fill_blank للنصوص التقنية
-**ملف**: `src/components/bagrut/BagrutExamPreview.tsx`
-
-تغيير الحاوية من `dir="rtl"` ثابت الى `dir="auto"` مع `whitespace-pre-wrap` للحفاظ على التنسيق.
-
-#### 4. اصلاح نفس المشكلة في مكون الطالب
+#### 4. اصلاح عرض الخيارات في مكون الطالب
 **ملف**: `src/components/bagrut/BagrutQuestionRenderer.tsx`
-
-نفس التعديلات على حاوية النص.
+- البحث عن اي مكان يعرض `choice.text` كنص عادي واستبداله بـ `SafeHtml`.
 
 ### التفاصيل التقنية
 
-**تعديل `SafeHtml.tsx`** - التعديل الرئيسي:
+**تعديل `SafeHtml.tsx`**:
 ```typescript
-// CSS محسّن للتعامل مع المحتوى المختلط
-const bidiCss = `
-  .safe-html-content {
-    unicode-bidi: plaintext;
-  }
-  .safe-html-content p,
-  .safe-html-content div,
-  .safe-html-content li {
-    unicode-bidi: plaintext;
-  }
-  .safe-html-content code,
-  .safe-html-content pre,
-  .safe-html-content kbd,
-  .safe-html-content samp {
-    direction: ltr;
-    unicode-bidi: isolate;
-    text-align: left;
-  }
-`;
+// قبل
+if (!isHtml) {
+  return <div className={`whitespace-pre-wrap ${className}`} style={wrapStyle}>{html}</div>;
+}
 
-// استبدال dir="rtl" بـ dir="auto" في جميع الاماكن
-<div
-  dir="auto"
-  className={`safe-html-content prose prose-sm max-w-none dark:prose-invert ${className}`}
-  style={wrapStyle}
-  dangerouslySetInnerHTML={{ __html: `<style>${bidiCss}</style>${content}` }}
-/>
+// بعد
+if (!isHtml) {
+  // تحويل الاسطر الجديدة الى <br> للعرض كـ HTML
+  const withBreaks = html.replace(/\n/g, '<br>');
+  const sanitized = DOMPurify.sanitize(withBreaks);
+  return (
+    <div
+      className={`prose prose-sm max-w-none dark:prose-invert ${className}`}
+      style={wrapStyle}
+      dangerouslySetInnerHTML={{ __html: sanitized }}
+    />
+  );
+}
 ```
 
-**تعديل `BagrutExamPreview.tsx`** - حاوية fill_blank:
+**تعديل `BagrutExamPreview.tsx` سطر 888**:
 ```typescript
-// تغيير من dir ثابت الى auto
-<p className="text-foreground whitespace-pre-wrap leading-8" dir="auto">
-  {renderFillBlankText(...)}
-</p>
+// قبل
+<span className="text-sm text-foreground whitespace-pre-wrap break-words">{choice.text}</span>
+
+// بعد
+<SafeHtml html={choice.text} className="text-sm text-foreground" />
 ```
 
-**تعديل `BagrutQuestionRenderer.tsx`** - حاوية النص:
+**تعديل `BagrutQuestionRenderer.tsx` سطر 73**:
 ```typescript
-<div className="text-foreground leading-relaxed" dir="auto">
-```
+// قبل
+<div className="text-foreground whitespace-pre-wrap leading-relaxed">
 
-### لماذا `dir="auto"` + `unicode-bidi: plaintext`؟
-- **`dir="auto"`**: يحدد الاتجاه الاساسي تلقائيا بناء على اول حرف قوي
-- **`unicode-bidi: plaintext`**: يجعل كل فقرة/عنصر داخلي يحدد اتجاهه بشكل مستقل حسب محتواه - هذا هو المعيار الذهبي الموصى به من W3C للمحتوى المعروض من مصادر خارجية
-- النتيجة: سطر يبدا بـ `R1(config)#` يعرض LTR تلقائيا، وسطر يبدا بـ "اكتب الأمر" يعرض RTL تلقائيا
+// بعد
+<div className="text-foreground leading-relaxed">
+```
 
 ### الملفات المتأثرة
-- `src/components/bagrut/SafeHtml.tsx` - التعديل الرئيسي
-- `src/components/bagrut/BagrutExamPreview.tsx` - fill_blank container
-- `src/components/bagrut/BagrutQuestionRenderer.tsx` - question text container
+- `src/components/bagrut/SafeHtml.tsx` - تحسين معالجة النصوص العادية
+- `src/components/bagrut/BagrutExamPreview.tsx` - تنسيق الخيارات
+- `src/components/bagrut/BagrutQuestionRenderer.tsx` - ازالة تعارض CSS وتنسيق الخيارات
 
+### النتيجة
+جميع النصوص (اسئلة، خيارات، اجابات، شروحات) ستظهر بالتنسيق الصحيح سواء كانت مخزنة كـ HTML او كنص عادي، في جميع واجهات النظام (سوبر ادمن، معلم، طالب).

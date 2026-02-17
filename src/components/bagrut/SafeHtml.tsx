@@ -21,24 +21,11 @@ const SafeHtml: React.FC<SafeHtmlProps> = ({ html, className = '' }) => {
     maxWidth: '100%',
   };
 
-  // Shared bidi CSS: unicode-bidi:plaintext lets each paragraph auto-detect its direction
+  // Shared bidi CSS injected into all HTML content
   const bidiCss = `
-    .safe-html-content {
-      unicode-bidi: plaintext;
-    }
-    .safe-html-content p,
-    .safe-html-content div,
-    .safe-html-content li,
-    .safe-html-content span {
-      unicode-bidi: plaintext;
-    }
-    .safe-html-content code,
-    .safe-html-content pre,
-    .safe-html-content kbd,
-    .safe-html-content samp {
+    [dir="rtl"] code, [dir="rtl"] pre, [dir="rtl"] kbd, [dir="rtl"] samp {
       direction: ltr;
       unicode-bidi: isolate;
-      text-align: left;
     }
   `;
 
@@ -46,8 +33,8 @@ const SafeHtml: React.FC<SafeHtmlProps> = ({ html, className = '' }) => {
     const withBreaks = DOMPurify.sanitize(html.replace(/\n/g, '<br>'));
     return (
       <div
-        dir="auto"
-        className={`safe-html-content prose prose-sm max-w-none dark:prose-invert ${className}`}
+        dir="rtl"
+        className={`prose prose-sm max-w-none dark:prose-invert ${className}`}
         style={wrapStyle}
         dangerouslySetInnerHTML={{ __html: `<style>${bidiCss}</style>${withBreaks}` }}
       />
@@ -64,8 +51,8 @@ const SafeHtml: React.FC<SafeHtmlProps> = ({ html, className = '' }) => {
 
   return (
     <div
-      dir="auto"
-      className={`safe-html-content prose prose-sm max-w-none dark:prose-invert ${className}`}
+      dir="rtl"
+      className={`prose prose-sm max-w-none dark:prose-invert ${className}`}
       style={wrapStyle}
       dangerouslySetInnerHTML={{ __html: styledHtml }}
     />

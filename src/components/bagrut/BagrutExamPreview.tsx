@@ -739,7 +739,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
 
       {/* Question Text - with fill blanks support */}
       {question.question_type === 'fill_blank' ? (
-        <p className="text-foreground whitespace-pre-wrap leading-8" dir="auto">
+        <p className="text-foreground whitespace-pre-wrap leading-8">
           {renderFillBlankText(question.question_text, question.blanks, showAnswers)}
         </p>
       ) : (
