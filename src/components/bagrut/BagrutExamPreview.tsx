@@ -598,25 +598,45 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
             </Button>
             <Button
               className="bg-green-600 hover:bg-green-700 text-white"
-              onClick={() => {
+              disabled={isSavingEdits}
+              onClick={async () => {
                 if (!fixPreview) return;
-                setLocalExam(fixPreview.exam);
-                onExamUpdate?.(fixPreview.exam);
-                setHasEdits(true);
-                const newReport = runIntegrityCheck(fixPreview.exam);
+                const updatedExam = fixPreview.exam;
+                setLocalExam(updatedExam);
+                onExamUpdate?.(updatedExam);
+                const newReport = runIntegrityCheck(updatedExam);
                 setIntegrityReport(newReport);
-                const msgs = fixPreview.details.map(d => {
-                  if (d.fixType === 'choose_n_of_m') {
-                    return `القسم ${d.sectionNumber}: تم تعيين "اختر ${d.n} من ${d.m}"`;
+
+                // Save directly to DB
+                if (onSaveEdits) {
+                  setIsSavingEdits(true);
+                  try {
+                    await onSaveEdits(updatedExam);
+                    setHasEdits(false);
+                    const msgs = fixPreview.details.map(d => {
+                      if (d.fixType === 'choose_n_of_m') {
+                        return `القسم ${d.sectionNumber}: تم تعيين "اختر ${d.n} من ${d.m}"`;
+                      }
+                      return `القسم ${d.sectionNumber}: تم تطبيع العلامات (${d.before} → ${d.after})`;
+                    });
+                    toast.success('تم الإصلاح والحفظ بنجاح ✓\n' + msgs.join('\n'), { duration: 6000 });
+                  } catch (err) {
+                    console.error('Failed to save auto-fix:', err);
+                    toast.error('فشل حفظ التصحيح - حاول مرة أخرى');
+                    setHasEdits(true);
+                  } finally {
+                    setIsSavingEdits(false);
                   }
-                  return `القسم ${d.sectionNumber}: تم تطبيع العلامات (${d.before} → ${d.after})`;
-                });
-                toast.success(msgs.join('\n'), { duration: 6000 });
+                } else {
+                  setHasEdits(true);
+                  toast.success('تم تطبيق الإصلاح');
+                }
+
                 setFixConfirmOpen(false);
                 setFixPreview(null);
               }}
             >
-              موافقة
+              {isSavingEdits ? 'جاري الحفظ...' : 'موافقة وحفظ'}
             </Button>
           </DialogFooter>
         </DialogContent>
