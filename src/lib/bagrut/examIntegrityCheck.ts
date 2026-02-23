@@ -205,12 +205,15 @@ const checkSectionPoints = (sections: ParsedSection[]): IntegrityIssue[] => {
   const issues: IntegrityIssue[] = [];
   for (const sec of sections) {
     const calculated = sumLeafPoints(sec.questions);
-    if (calculated !== sec.total_points && calculated > 0) {
+    const leaves = collectLeafQuestions(sec.questions);
+    if (calculated === 0) continue; // لم يتم تعيين علامات بعد
+    if (calculated !== sec.total_points) {
+      const diff = Math.abs(calculated - sec.total_points);
       issues.push({
-        level: 'warning',
+        level: diff > 5 ? 'warning' : 'info',
         category: 'مجموع العلامات',
-        message: `القسم ${sec.section_number}: مجموع علامات الأسئلة (${calculated}) ≠ المعلن (${sec.total_points})`,
-        details: sec.section_title
+        message: `القسم ${sec.section_number}: مجموع علامات الأسئلة (${calculated}) ≠ المعلن (${sec.total_points}) - فرق ${diff}`,
+        details: `${sec.section_title} - ${leaves.length} سؤال طرفي`
       });
     }
   }
@@ -223,15 +226,26 @@ const checkEmptyText = (sections: ParsedSection[]): IntegrityIssue[] => {
   const walk = (qs: ParsedQuestion[], secNum: number) => {
     for (const q of qs) {
       const cleanText = stripHtml(q.question_text || '');
+      const hasSubs = q.sub_questions && q.sub_questions.length > 0;
       if (!cleanText || cleanText.length === 0) {
-        issues.push({
-          level: 'critical',
-          category: 'نص فارغ',
-          message: `سؤال ${q.question_number} بدون نص`,
-          details: `القسم ${secNum}`
-        });
+        if (hasSubs) {
+          // سؤال أب فارغ مع فرعيات - طبيعي تماماً
+          issues.push({
+            level: 'info',
+            category: 'سؤال أب بدون نص',
+            message: `سؤال ${q.question_number} (متعدد الأجزاء) بدون نص رئيسي - المحتوى في الأسئلة الفرعية`,
+            details: `القسم ${secNum}`
+          });
+        } else {
+          issues.push({
+            level: 'critical',
+            category: 'نص فارغ',
+            message: `سؤال ${q.question_number} بدون نص`,
+            details: `القسم ${secNum} - نوع: ${q.question_type}`
+          });
+        }
       }
-      if (q.sub_questions?.length) walk(q.sub_questions, secNum);
+      if (hasSubs) walk(q.sub_questions!, secNum);
     }
   };
   for (const sec of sections) walk(sec.questions, sec.section_number);
@@ -248,7 +262,7 @@ const checkZeroPoints = (sections: ParsedSection[]): IntegrityIssue[] => {
         issues.push({
           level: 'info',
           category: 'علامات صفرية',
-          message: `سؤال ${q.question_number} بـ 0 علامات`,
+          message: `سؤال ${q.question_number} (${q.question_type}) بـ 0 علامات`,
           details: `القسم ${sec.section_number}`
         });
       }
@@ -257,7 +271,30 @@ const checkZeroPoints = (sections: ParsedSection[]): IntegrityIssue[] => {
   return issues;
 };
 
-/** 9. Question count summary per section */
+/** 9. Parent-subquestion points consistency */
+const checkParentSubPointsConsistency = (sections: ParsedSection[]): IntegrityIssue[] => {
+  const issues: IntegrityIssue[] = [];
+  const walk = (qs: ParsedQuestion[], secNum: number) => {
+    for (const q of qs) {
+      if (q.sub_questions && q.sub_questions.length > 0 && q.points > 0) {
+        const subsTotal = sumLeafPoints(q.sub_questions);
+        if (subsTotal > 0 && subsTotal !== q.points) {
+          issues.push({
+            level: 'warning',
+            category: 'تناسق علامات',
+            message: `سؤال ${q.question_number}: مجموع علامات الفرعيات (${subsTotal}) ≠ علامات الأب (${q.points})`,
+            details: `القسم ${secNum}`
+          });
+        }
+        walk(q.sub_questions, secNum);
+      }
+    }
+  };
+  for (const sec of sections) walk(sec.questions, sec.section_number);
+  return issues;
+};
+
+/** 10. Question count summary per section */
 const buildSummaryInfo = (sections: ParsedSection[]): IntegrityIssue[] => {
   return sections.map(sec => {
     const total = countAll(sec.questions);
@@ -284,6 +321,7 @@ export const runIntegrityCheck = (exam: ParsedExam): IntegrityReport => {
     ...checkMultiPartEmpty(exam.sections),
     ...checkSectionPoints(exam.sections),
     ...checkZeroPoints(exam.sections),
+    ...checkParentSubPointsConsistency(exam.sections),
     ...buildSummaryInfo(exam.sections),
   ];
 
