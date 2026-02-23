@@ -257,7 +257,9 @@ export default function BagrutSectionSelector({
                     <div>
                       <p className="font-medium">{section.section_title}</p>
                       <p className="text-sm text-muted-foreground">
-                        {section.questions.length} سؤال
+                        {(section as any).max_questions_to_answer && (section as any).max_questions_to_answer < section.questions.length
+                          ? `أجب عن ${(section as any).max_questions_to_answer} من ${section.questions.length} سؤال`
+                          : `${section.questions.length} سؤال`}
                       </p>
                     </div>
                   </div>
