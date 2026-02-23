@@ -627,6 +627,36 @@ const distributePoints = (parsedExam: ParsedExam) => {
         distributePointsRecursive(q);
       }
     }
+
+    // ── Normalization step: ensure leaf sum == section.total_points ──
+    if (sectionPoints > 0) {
+      const leaves: any[] = [];
+      const collectLeaves = (qs: any[]) => {
+        for (const q of qs) {
+          if (q.sub_questions && q.sub_questions.length > 0) {
+            collectLeaves(q.sub_questions);
+          } else {
+            leaves.push(q);
+          }
+        }
+      };
+      collectLeaves(questions);
+
+      const currentSum = leaves.reduce((s: number, q: any) => s + (q.points || 0), 0);
+      if (currentSum > 0 && currentSum !== sectionPoints) {
+        const factor = sectionPoints / currentSum;
+        for (const leaf of leaves) {
+          leaf.points = Math.round(leaf.points * factor * 2) / 2; // round to 0.5
+        }
+        // Fix remainder on last leaf
+        const newSum = leaves.reduce((s: number, q: any) => s + q.points, 0);
+        const remainder = Math.round((sectionPoints - newSum) * 2) / 2;
+        if (remainder !== 0 && leaves.length > 0) {
+          leaves[leaves.length - 1].points = Math.round((leaves[leaves.length - 1].points + remainder) * 2) / 2;
+        }
+        console.log(`Section ${section.section_number}: normalized ${currentSum} → ${sectionPoints}`);
+      }
+    }
   }
 };
 
