@@ -21,6 +21,22 @@ export interface IntegrityReport {
 
 // ── helpers ──────────────────────────────────────────────────────────
 
+/** Strip HTML tags and decode common entities to get clean readable text */
+const stripHtml = (html: string): string => {
+  return html
+    .replace(/<br\s*\/?>/gi, ' ')
+    .replace(/<\/(p|div|li|tr)>/gi, ' ')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
 const collectLeafQuestions = (questions: ParsedQuestion[]): ParsedQuestion[] => {
   const leaves: ParsedQuestion[] = [];
   const walk = (qs: ParsedQuestion[]) => {
@@ -58,7 +74,7 @@ const checkDuplicateSubQuestions = (sections: ParsedSection[]): IntegrityIssue[]
 
     const walkParent = (parentNum: string, subs: ParsedQuestion[]) => {
       for (const sub of subs) {
-        const norm = sub.question_text.trim().replace(/\s+/g, ' ');
+        const norm = stripHtml(sub.question_text);
         if (norm.length < 5) continue; // skip trivially short
         const arr = textToParents.get(norm) || [];
         arr.push(parentNum);
@@ -78,7 +94,7 @@ const checkDuplicateSubQuestions = (sections: ParsedSection[]): IntegrityIssue[]
           level: 'critical',
           category: 'أسئلة فرعية مكررة',
           message: `نص فرعي مكرر تحت الأسئلة: ${unique.join('، ')}`,
-          details: `القسم ${sec.section_number} — "${text.slice(0, 60)}…"`
+          details: `القسم ${sec.section_number} — "${text.slice(0, 80)}${text.length > 80 ? '…' : ''}"`
         });
       }
     }
@@ -206,7 +222,8 @@ const checkEmptyText = (sections: ParsedSection[]): IntegrityIssue[] => {
   const issues: IntegrityIssue[] = [];
   const walk = (qs: ParsedQuestion[], secNum: number) => {
     for (const q of qs) {
-      if (!q.question_text || q.question_text.trim().length === 0) {
+      const cleanText = stripHtml(q.question_text || '');
+      if (!cleanText || cleanText.length === 0) {
         issues.push({
           level: 'critical',
           category: 'نص فارغ',
