@@ -126,13 +126,26 @@ export default function StudentBagrutAttempt() {
     return !!(answers[qId] && answers[qId].answer);
   }, [answers]);
 
-  // إحصائيات الإجابات
+  // إحصائيات الإجابات - مع مراعاة max_questions_to_answer
   const answeredCount = useMemo(() => {
     return allQuestions.filter(q => isQuestionAnswered(q)).length;
   }, [allQuestions, isQuestionAnswered]);
 
-  const progressPercent = allQuestions.length > 0 
-    ? Math.round((answeredCount / allQuestions.length) * 100) 
+  // العدد المطلوب للإجابة (مع مراعاة "اختر N من M")
+  const requiredAnswerCount = useMemo(() => {
+    if (!examData || selectedSectionIds.length === 0) return allQuestions.length;
+    let required = 0;
+    examData.sections.forEach(section => {
+      if (selectedSectionIds.includes(section.section_db_id!)) {
+        const maxQ = (section as any).max_questions_to_answer;
+        required += maxQ && maxQ < section.questions.length ? maxQ : section.questions.length;
+      }
+    });
+    return required;
+  }, [examData, selectedSectionIds, allQuestions.length]);
+
+  const progressPercent = requiredAnswerCount > 0 
+    ? Math.min(100, Math.round((answeredCount / requiredAnswerCount) * 100)) 
     : 0;
 
   // التنقل مع التحقق من الانتقال لقسم الاختصاص
@@ -174,11 +187,11 @@ export default function StudentBagrutAttempt() {
   }, [submitExam, isSubmitting]);
 
   const confirmSubmit = () => {
-    const unansweredCount = allQuestions.length - answeredCount;
-    if (unansweredCount > 0) {
+    const unansweredNeeded = Math.max(0, requiredAnswerCount - answeredCount);
+    if (unansweredNeeded > 0) {
       toast({
-        title: `⚠️ ${unansweredCount} سؤال بدون إجابة`,
-        description: 'هل أنت متأكد من تقديم الامتحان؟',
+        title: `⚠️ يُنصح بالإجابة عن ${unansweredNeeded} سؤال إضافي`,
+        description: `أجبت عن ${answeredCount} من ${requiredAnswerCount} المطلوبة. هل تريد التقديم؟`,
         variant: 'destructive',
       });
     }
@@ -320,7 +333,7 @@ export default function StudentBagrutAttempt() {
             {/* التقدم */}
             <div className="flex items-center gap-3">
               <span className="text-sm text-muted-foreground hidden sm:inline">
-                {answeredCount}/{allQuestions.length}
+                {answeredCount}/{requiredAnswerCount}
               </span>
               <Progress value={progressPercent} className="w-24" />
               <Badge variant={isSaving ? 'secondary' : 'outline'} className="hidden sm:flex gap-1">
@@ -382,9 +395,23 @@ export default function StudentBagrutAttempt() {
         <main className="flex-1 max-w-3xl">
           {/* رقم السؤال الحالي */}
           <div className="flex items-center justify-between mb-4">
-            <Badge variant="outline" className="text-lg px-4 py-2">
-              السؤال {currentQuestionIndex + 1} من {allQuestions.length}
-            </Badge>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Badge variant="outline" className="text-lg px-4 py-2">
+                السؤال {currentQuestionIndex + 1} من {allQuestions.length}
+              </Badge>
+              {(() => {
+                const currentSection = questionsWithSections[currentQuestionIndex]?.section;
+                const maxQ = currentSection && (currentSection as any).max_questions_to_answer;
+                if (maxQ && maxQ < (currentSection?.questions.length || 0)) {
+                  return (
+                    <Badge variant="secondary" className="text-xs">
+                      أجب عن {maxQ} من {currentSection!.questions.length} في هذا القسم
+                    </Badge>
+                  );
+                }
+                return null;
+              })()}
+            </div>
             <div className="flex gap-2 lg:hidden">
               {allQuestions.slice(
                 Math.max(0, currentQuestionIndex - 2),

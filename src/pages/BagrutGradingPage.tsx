@@ -1096,28 +1096,66 @@ function GradingDialog({
   const calculateTotalScore = () => {
     let total = 0;
     
-    allQuestions.forEach(q => {
-      const questionId = q.question_db_id || '';
-      const grade = questionGrades[questionId];
-      const answer = answers[questionId];
-
-      // أولوية: manual_score ثم final_score ثم auto_score ثم التصحيح التلقائي الآني
-      if (grade?.manual_score !== undefined && grade?.manual_score !== null) {
-        total += grade.manual_score;
-      } else if (grade?.final_score !== undefined && grade?.final_score !== null) {
-        total += grade.final_score;
-      } else if (grade?.auto_score !== undefined && grade?.auto_score !== null) {
-        total += grade.auto_score;
+    // حساب العلامة لكل قسم على حدة مع مراعاة max_questions_to_answer
+    relevantSections.forEach(section => {
+      const maxQ = (section as any).max_questions_to_answer;
+      
+      if (maxQ && maxQ < section.questions.length) {
+        // نمط "اختر N من M": حساب علامة كل سؤال جذري ثم أخذ الأفضل N
+        const rootScores: number[] = section.questions.map(rootQ => {
+          // حساب علامة السؤال الجذري (مجموع فرعياته أو علامته المباشرة)
+          const getQuestionScore = (q: ParsedQuestion): number => {
+            const questionId = q.question_db_id || '';
+            if (q.sub_questions && q.sub_questions.length > 0) {
+              return q.sub_questions.reduce((sum, sq) => sum + getQuestionScore(sq), 0);
+            }
+            const grade = questionGrades[questionId];
+            const answer = answers[questionId];
+            if (grade?.manual_score !== undefined && grade?.manual_score !== null) return grade.manual_score;
+            if (grade?.final_score !== undefined && grade?.final_score !== null) return grade.final_score;
+            if (grade?.auto_score !== undefined && grade?.auto_score !== null) return grade.auto_score;
+            const autoResult = autoGradeQuestion(q, answer);
+            if (autoResult.isAutoGradable && autoResult.isCorrect) return autoResult.autoScore;
+            return 0;
+          };
+          return getQuestionScore(rootQ);
+        });
+        
+        // ترتيب تنازلي وأخذ الأفضل N
+        rootScores.sort((a, b) => b - a);
+        const bestN = rootScores.slice(0, maxQ);
+        total += bestN.reduce((s, v) => s + v, 0);
       } else {
-        // التصحيح التلقائي الآني للأسئلة التي لم تُحفظ بعد
-        const autoResult = autoGradeQuestion(q, answer);
-        if (autoResult.isAutoGradable && autoResult.isCorrect) {
-          total += autoResult.autoScore;
-        }
+        // بدون max_questions_to_answer: جمع كل الأسئلة الطرفية كالمعتاد
+        const sectionLeaves: ParsedQuestion[] = [];
+        const collectLeaves = (qs: ParsedQuestion[]) => {
+          qs.forEach(q => {
+            if (q.sub_questions?.length) collectLeaves(q.sub_questions);
+            else sectionLeaves.push(q);
+          });
+        };
+        collectLeaves(section.questions);
+        
+        sectionLeaves.forEach(q => {
+          const questionId = q.question_db_id || '';
+          const grade = questionGrades[questionId];
+          const answer = answers[questionId];
+          if (grade?.manual_score !== undefined && grade?.manual_score !== null) {
+            total += grade.manual_score;
+          } else if (grade?.final_score !== undefined && grade?.final_score !== null) {
+            total += grade.final_score;
+          } else if (grade?.auto_score !== undefined && grade?.auto_score !== null) {
+            total += grade.auto_score;
+          } else {
+            const autoResult = autoGradeQuestion(q, answer);
+            if (autoResult.isAutoGradable && autoResult.isCorrect) {
+              total += autoResult.autoScore;
+            }
+          }
+        });
       }
     });
     
-    // استخدام المجموع الرسمي من الأقسام (60 + 40 = 100)
     return {
       total,
       maxTotal: totalPoints,
@@ -1223,6 +1261,11 @@ function GradingDialog({
                         <p className="text-sm text-muted-foreground">
                           {section.total_points} علامة
                           {section.specialization_label && <span className="mr-2">• {section.specialization_label}</span>}
+                          {(section as any).max_questions_to_answer && (
+                            <span className="mr-2 font-medium text-primary">
+                              • يجيب عن {(section as any).max_questions_to_answer} من {section.questions.length} سؤال (الأفضل يُحتسب)
+                            </span>
+                          )}
                         </p>
                         {section.instructions && <p className="text-sm text-muted-foreground mt-1">{section.instructions}</p>}
                       </div>
