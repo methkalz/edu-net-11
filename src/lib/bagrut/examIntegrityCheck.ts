@@ -94,7 +94,7 @@ const checkDuplicateSubQuestions = (sections: ParsedSection[]): IntegrityIssue[]
           level: 'critical',
           category: 'أسئلة فرعية مكررة',
           message: `نص فرعي مكرر تحت الأسئلة: ${unique.join('، ')}`,
-          details: `القسم ${sec.section_number} — "${text.slice(0, 80)}${text.length > 80 ? '…' : ''}"`
+          details: `القسم ${sec.section_number} - "${text.slice(0, 80)}${text.length > 80 ? '…' : ''}"`
         });
       }
     }
