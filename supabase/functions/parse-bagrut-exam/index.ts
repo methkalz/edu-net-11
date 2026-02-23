@@ -628,7 +628,7 @@ const distributePoints = (parsedExam: ParsedExam) => {
       }
     }
 
-    // ── Normalization step: ensure leaf sum == section.total_points ──
+    // ── Smart normalization: detect "Choose N of M" vs actual weight errors ──
     if (sectionPoints > 0) {
       const leaves: any[] = [];
       const collectLeaves = (qs: any[]) => {
@@ -643,18 +643,58 @@ const distributePoints = (parsedExam: ParsedExam) => {
       collectLeaves(questions);
 
       const currentSum = leaves.reduce((s: number, q: any) => s + (q.points || 0), 0);
+      
       if (currentSum > 0 && currentSum !== sectionPoints) {
-        const factor = sectionPoints / currentSum;
-        for (const leaf of leaves) {
-          leaf.points = Math.round(leaf.points * factor * 2) / 2; // round to 0.5
+        // Check for "Choose N of M" pattern: all root questions have same effective weight
+        const rootWeights = questions.map((q: any) => {
+          if (q.sub_questions && q.sub_questions.length > 0) {
+            const subLeaves: any[] = [];
+            collectLeaves(q.sub_questions);
+            // Recalculate for this specific root
+            let w = 0;
+            const walkSub = (subs: any[]) => {
+              for (const s of subs) {
+                if (s.sub_questions && s.sub_questions.length > 0) walkSub(s.sub_questions);
+                else w += (s.points || 0);
+              }
+            };
+            walkSub(q.sub_questions);
+            return w;
+          }
+          return q.points || 0;
+        });
+        
+        const allSameWeight = rootWeights.length >= 2 && rootWeights.every((w: number) => w > 0 && w === rootWeights[0]);
+        const n = allSameWeight ? sectionPoints / rootWeights[0] : 0;
+        
+        if (allSameWeight && currentSum > sectionPoints && Number.isInteger(n) && n >= 1) {
+          // "Choose N of M" — don't change individual weights, set max_questions_to_answer
+          (section as any).max_questions_to_answer = n;
+          console.log(`Section ${section.section_number}: detected "choose ${n} of ${questions.length}" pattern — weights preserved`);
+        } else {
+          // Actual weight mismatch — proportional scaling with min 0.5
+          const factor = sectionPoints / currentSum;
+          for (const leaf of leaves) {
+            leaf.points = Math.max(0.5, Math.round(leaf.points * factor * 2) / 2);
+          }
+          // Smart remainder distribution
+          let newSum = leaves.reduce((s: number, q: any) => s + q.points, 0);
+          let diff = Math.round((sectionPoints - newSum) * 2) / 2;
+          if (diff !== 0) {
+            const sorted = [...leaves].sort((a: any, b: any) => b.points - a.points);
+            const step = diff > 0 ? 0.5 : -0.5;
+            let iterations = Math.abs(diff / 0.5);
+            for (let i = 0; iterations > 0 && i < sorted.length * 3; i++) {
+              const target = sorted[i % sorted.length];
+              const newVal = target.points + step;
+              if (newVal >= 0.5) {
+                target.points = Math.round(newVal * 2) / 2;
+                iterations--;
+              }
+            }
+          }
+          console.log(`Section ${section.section_number}: normalized ${currentSum} → ${sectionPoints}`);
         }
-        // Fix remainder on last leaf
-        const newSum = leaves.reduce((s: number, q: any) => s + q.points, 0);
-        const remainder = Math.round((sectionPoints - newSum) * 2) / 2;
-        if (remainder !== 0 && leaves.length > 0) {
-          leaves[leaves.length - 1].points = Math.round((leaves[leaves.length - 1].points + remainder) * 2) / 2;
-        }
-        console.log(`Section ${section.section_number}: normalized ${currentSum} → ${sectionPoints}`);
       }
     }
   }

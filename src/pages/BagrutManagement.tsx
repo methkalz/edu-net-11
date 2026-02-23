@@ -324,6 +324,7 @@ const BagrutManagement: React.FC = () => {
           specialization: section.specialization,
           specialization_label: section.specialization_label,
           instructions: section.instructions,
+          max_questions_to_answer: section.max_questions_to_answer ?? null,
           order_index: section.section_number - 1
         }).select().single();
         if (sectionError) throw sectionError;
@@ -466,6 +467,17 @@ const BagrutManagement: React.FC = () => {
         allQuestions.push(...collectQuestionsToUpdate(section.questions));
       }
 
+      // Update sections (for max_questions_to_answer changes)
+      const sectionUpdatePromises = updatedExam.sections
+        .filter(s => s.section_db_id)
+        .map(async (s) => {
+          const { error } = await supabase
+            .from('bagrut_exam_sections')
+            .update({ max_questions_to_answer: s.max_questions_to_answer ?? null })
+            .eq('id', s.section_db_id!);
+          if (error) throw error;
+        });
+
       // Update questions in parallel batches
       const updatePromises = allQuestions.map(async (q) => {
         if (!q.question_db_id) return;
@@ -510,7 +522,7 @@ const BagrutManagement: React.FC = () => {
         if (error) throw error;
       });
 
-      await Promise.all(updatePromises);
+      await Promise.all([...sectionUpdatePromises, ...updatePromises]);
 
       toast.success('تم حفظ التعديلات بنجاح!');
       
