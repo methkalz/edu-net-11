@@ -8,7 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { Progress } from '@/components/ui/progress';
 import { 
   Eye, 
   EyeOff, 
@@ -993,52 +994,95 @@ const IntegrityCheckDialog: React.FC<{
     return 'bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800';
   };
 
+  const totalIssues = report.summary.critical + report.summary.warnings + report.summary.info;
+  const safetyScore = totalIssues === 0 ? 100 : Math.max(0, 100 - (report.summary.critical * 30) - (report.summary.warnings * 10));
+
+  const criticalIssues = report.issues.filter(i => i.level === 'critical');
+  const warningIssues = report.issues.filter(i => i.level === 'warning');
+  const infoIssues = report.issues.filter(i => i.level === 'info');
+
+  const renderSection = (title: string, issues: typeof report.issues, icon: React.ReactNode) => {
+    if (issues.length === 0) return null;
+    return (
+      <div className="space-y-2">
+        <h4 className="text-sm font-semibold flex items-center gap-2 sticky top-0 bg-background py-1 z-10">
+          {icon} {title} ({issues.length})
+        </h4>
+        {issues.map((issue, i) => (
+          <div key={i} className={`p-3 rounded-lg border text-sm ${levelBg(issue.level)}`}>
+            <div className="flex items-start gap-2">
+              {levelIcon(issue.level)}
+              <div className="min-w-0 flex-1">
+                <span className="font-semibold">{issue.category}</span>
+                <p className="mt-0.5 leading-relaxed">{issue.message}</p>
+                {issue.details && (
+                  <p className="text-xs text-muted-foreground mt-1 opacity-80">{issue.details}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5" />
-            تقرير فحص سلامة الامتحان
-          </DialogTitle>
-        </DialogHeader>
+      <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col p-0 gap-0 overflow-hidden">
+        {/* Header */}
+        <div className="p-6 pb-4 border-b">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <ShieldCheck className="h-6 w-6" />
+              تقرير فحص سلامة الامتحان
+            </DialogTitle>
+            <DialogDescription className="text-xs mt-1">
+              يتم فحص البيانات المحلية الحالية — أي تعديل تقوم به ينعكس فوراً عند إعادة الفحص
+            </DialogDescription>
+          </DialogHeader>
 
-        {/* Summary bar */}
-        <div className="flex gap-3 flex-wrap">
-          <Badge variant={report.summary.critical > 0 ? 'destructive' : 'secondary'} className="gap-1">
-            <XCircle className="h-3 w-3" /> حرج: {report.summary.critical}
-          </Badge>
-          <Badge variant="secondary" className="gap-1 bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200">
-            <AlertTriangle className="h-3 w-3" /> تحذير: {report.summary.warnings}
-          </Badge>
-          <Badge variant="secondary" className="gap-1">
-            <Info className="h-3 w-3" /> معلومة: {report.summary.info}
-          </Badge>
+          {/* Score + Summary */}
+          <div className="mt-4 flex items-center gap-4">
+            <div className={`text-3xl font-bold ${safetyScore >= 70 ? 'text-green-600' : safetyScore >= 40 ? 'text-orange-500' : 'text-red-500'}`}>
+              {safetyScore}%
+            </div>
+            <div className="flex-1 space-y-1.5">
+              <Progress value={safetyScore} className={`h-2.5 ${safetyScore >= 70 ? '[&>div]:bg-green-600' : safetyScore >= 40 ? '[&>div]:bg-orange-500' : '[&>div]:bg-red-500'}`} />
+              <div className="flex gap-4 text-xs">
+                {report.summary.critical > 0 && (
+                  <span className="flex items-center gap-1 text-red-600 font-medium">
+                    <XCircle className="h-3 w-3" /> {report.summary.critical} حرج
+                  </span>
+                )}
+                {report.summary.warnings > 0 && (
+                  <span className="flex items-center gap-1 text-orange-600 font-medium">
+                    <AlertTriangle className="h-3 w-3" /> {report.summary.warnings} تحذير
+                  </span>
+                )}
+                <span className="flex items-center gap-1 text-muted-foreground">
+                  <Info className="h-3 w-3" /> {report.summary.info} معلومة
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {report.passed && report.summary.warnings === 0 && (
-          <div className="p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg text-green-700 dark:text-green-300 flex items-center gap-2 text-sm font-medium">
-            <CheckCircle className="h-5 w-5" />
-            الامتحان سليم — لم يتم العثور على مشاكل ✓
-          </div>
-        )}
-
-        <ScrollArea className="flex-1 -mx-6 px-6">
-          <div className="space-y-2 pb-2">
-            {report.issues.map((issue, i) => (
-              <div key={i} className={`p-3 rounded-lg border text-sm ${levelBg(issue.level)}`}>
-                <div className="flex items-start gap-2">
-                  {levelIcon(issue.level)}
-                  <div className="min-w-0">
-                    <span className="font-medium">[{issue.category}]</span>{' '}
-                    <span>{issue.message}</span>
-                    {issue.details && (
-                      <p className="text-xs text-muted-foreground mt-1">{issue.details}</p>
-                    )}
-                  </div>
+        {/* Body */}
+        <ScrollArea className="flex-1 min-h-0">
+          <div className="p-6 space-y-5">
+            {report.passed && report.summary.warnings === 0 && (
+              <div className="p-4 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-xl text-green-700 dark:text-green-300 flex items-center gap-3 font-medium">
+                <CheckCircle className="h-6 w-6 shrink-0" />
+                <div>
+                  <p className="text-base">الامتحان سليم ✓</p>
+                  <p className="text-xs font-normal opacity-80 mt-0.5">لم يتم العثور على أي مشاكل في هيكل الامتحان</p>
                 </div>
               </div>
-            ))}
+            )}
+
+            {renderSection('مشاكل حرجة', criticalIssues, <XCircle className="h-4 w-4 text-red-500" />)}
+            {renderSection('تحذيرات', warningIssues, <AlertTriangle className="h-4 w-4 text-orange-500" />)}
+            {renderSection('معلومات', infoIssues, <Info className="h-4 w-4 text-blue-500" />)}
           </div>
         </ScrollArea>
       </DialogContent>
