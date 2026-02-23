@@ -29,6 +29,8 @@ import {
   XCircle
 } from 'lucide-react';
 import { runIntegrityCheck, type IntegrityReport } from '@/lib/bagrut/examIntegrityCheck';
+import { normalizeExamPoints } from '@/lib/bagrut/normalizeExamPoints';
+import { toast } from 'sonner';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronDown } from 'lucide-react';
@@ -545,6 +547,20 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
         open={integrityDialogOpen}
         onOpenChange={setIntegrityDialogOpen}
         report={integrityReport}
+        onFixPoints={() => {
+          const result = normalizeExamPoints(localExam);
+          if (result.sectionsFixed === 0) {
+            toast.info('العلامات متطابقة بالفعل - لا حاجة للتصحيح');
+            return;
+          }
+          setLocalExam(result.exam);
+          onExamUpdate?.(result.exam);
+          setHasEdits(true);
+          // Re-run integrity check
+          const newReport = runIntegrityCheck(result.exam);
+          setIntegrityReport(newReport);
+          toast.success(`تم تصحيح العلامات في ${result.sectionsFixed} قسم/أقسام`);
+        }}
       />
 
       {/* Instructions Edit Dialog */}
@@ -979,7 +995,8 @@ const IntegrityCheckDialog: React.FC<{
   open: boolean;
   onOpenChange: (v: boolean) => void;
   report: IntegrityReport | null;
-}> = ({ open, onOpenChange, report }) => {
+  onFixPoints?: () => void;
+}> = ({ open, onOpenChange, report, onFixPoints }) => {
   if (!report) return null;
 
   const levelIcon = (level: string) => {
@@ -1082,6 +1099,21 @@ const IntegrityCheckDialog: React.FC<{
 
             {renderSection('مشاكل حرجة', criticalIssues, <XCircle className="h-4 w-4 text-red-500" />)}
             {renderSection('تحذيرات', warningIssues, <AlertTriangle className="h-4 w-4 text-orange-500" />)}
+
+            {/* Fix Points Button - shown when there are points mismatch issues */}
+            {onFixPoints && report.issues.some(i => i.category === 'مجموع العلامات' || i.category === 'تناسق علامات') && (
+              <div className="p-4 bg-accent/50 border border-border rounded-xl flex items-center justify-between gap-3">
+                <div className="text-sm">
+                  <p className="font-medium">تم اكتشاف تناقض في توزيع العلامات</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">يمكن تصحيح العلامات تلقائياً لتتوافق مع المجموع المعلن لكل قسم</p>
+                </div>
+                <Button size="sm" onClick={onFixPoints} className="shrink-0 gap-1">
+                  <Award className="h-4 w-4" />
+                  إصلاح تلقائي
+                </Button>
+              </div>
+            )}
+
             {renderSection('معلومات', infoIssues, <Info className="h-4 w-4 text-blue-500" />)}
           </div>
         </div>
