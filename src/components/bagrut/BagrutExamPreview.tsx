@@ -1037,7 +1037,7 @@ const IntegrityCheckDialog: React.FC<{
               تقرير فحص سلامة الامتحان
             </DialogTitle>
             <DialogDescription className="text-xs mt-1">
-              يتم فحص البيانات المحلية الحالية — أي تعديل تقوم به ينعكس فوراً عند إعادة الفحص
+              يتم فحص البيانات المحلية الحالية - أي تعديل تقوم به ينعكس فوراً عند إعادة الفحص
             </DialogDescription>
           </DialogHeader>
 
@@ -1068,7 +1068,7 @@ const IntegrityCheckDialog: React.FC<{
         </div>
 
         {/* Body */}
-        <ScrollArea className="flex-1 min-h-0">
+        <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-rounded scrollbar-thumb-muted-foreground/20 hover:scrollbar-thumb-muted-foreground/40">
           <div className="p-6 space-y-5">
             {report.passed && report.summary.warnings === 0 && (
               <div className="p-4 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-xl text-green-700 dark:text-green-300 flex items-center gap-3 font-medium">
@@ -1084,7 +1084,7 @@ const IntegrityCheckDialog: React.FC<{
             {renderSection('تحذيرات', warningIssues, <AlertTriangle className="h-4 w-4 text-orange-500" />)}
             {renderSection('معلومات', infoIssues, <Info className="h-4 w-4 text-blue-500" />)}
           </div>
-        </ScrollArea>
+        </div>
       </DialogContent>
     </Dialog>
   );
