@@ -200,21 +200,64 @@ const checkMultiPartEmpty = (sections: ParsedSection[]): IntegrityIssue[] => {
   return issues;
 };
 
-/** 6. Section points mismatch */
+/** Helper: get effective weight of a root question */
+const getRootQuestionWeight = (q: ParsedQuestion): number => {
+  if (q.sub_questions && q.sub_questions.length > 0) {
+    return collectLeafQuestions(q.sub_questions).reduce((s, leaf) => s + (leaf.points || 0), 0);
+  }
+  return q.points || 0;
+};
+
+/** Detect "Choose N of M" pattern */
+const detectChooseNofM = (sec: ParsedSection): { detected: boolean; n?: number; m?: number; weight?: number } => {
+  const roots = sec.questions;
+  if (roots.length < 2) return { detected: false };
+  const weights = roots.map(getRootQuestionWeight);
+  const allSame = weights.every(w => w > 0 && w === weights[0]);
+  if (!allSame) return { detected: false };
+  const leafSum = collectLeafQuestions(roots).reduce((s, q) => s + (q.points || 0), 0);
+  if (leafSum <= sec.total_points) return { detected: false };
+  const n = sec.total_points / weights[0];
+  if (!Number.isInteger(n) || n < 1) return { detected: false };
+  return { detected: true, n, m: roots.length, weight: weights[0] };
+};
+
+/** 6. Section points mismatch — with "Choose N of M" awareness */
 const checkSectionPoints = (sections: ParsedSection[]): IntegrityIssue[] => {
   const issues: IntegrityIssue[] = [];
   for (const sec of sections) {
     const calculated = sumLeafPoints(sec.questions);
     const leaves = collectLeafQuestions(sec.questions);
-    if (calculated === 0) continue; // لم يتم تعيين علامات بعد
+    if (calculated === 0) continue;
     if (calculated !== sec.total_points) {
-      const diff = Math.abs(calculated - sec.total_points);
-      issues.push({
-        level: diff > 5 ? 'warning' : 'info',
-        category: 'مجموع العلامات',
-        message: `القسم ${sec.section_number}: مجموع علامات الأسئلة (${calculated}) ≠ المعلن (${sec.total_points}) - فرق ${diff}`,
-        details: `${sec.section_title} - ${leaves.length} سؤال طرفي`
-      });
+      // Check for "Choose N of M" pattern
+      const chooseResult = detectChooseNofM(sec);
+      if (chooseResult.detected) {
+        // Already has max_questions_to_answer set? → just info
+        if (sec.max_questions_to_answer === chooseResult.n) {
+          issues.push({
+            level: 'info',
+            category: 'اختيار من أسئلة',
+            message: `القسم ${sec.section_number}: الطالب يجيب عن ${chooseResult.n} من ${chooseResult.m} سؤال (${chooseResult.weight} علامات/سؤال) ✓`,
+            details: sec.section_title
+          });
+        } else {
+          issues.push({
+            level: 'info',
+            category: 'اختيار من أسئلة',
+            message: `القسم ${sec.section_number}: يبدو أن الطالب يختار ${chooseResult.n} من ${chooseResult.m} سؤال (${chooseResult.weight} علامات/سؤال) — يحتاج تعيين max_questions_to_answer`,
+            details: `${sec.section_title} — مجموع كل الأسئلة ${calculated} لكن المطلوب ${sec.total_points}`
+          });
+        }
+      } else {
+        const diff = Math.abs(calculated - sec.total_points);
+        issues.push({
+          level: diff > 5 ? 'warning' : 'info',
+          category: 'مجموع العلامات',
+          message: `القسم ${sec.section_number}: مجموع علامات الأسئلة (${calculated}) ≠ المعلن (${sec.total_points}) - فرق ${diff}`,
+          details: `${sec.section_title} - ${leaves.length} سؤال طرفي`
+        });
+      }
     }
   }
   return issues;

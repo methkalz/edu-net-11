@@ -559,7 +559,14 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
           // Re-run integrity check
           const newReport = runIntegrityCheck(result.exam);
           setIntegrityReport(newReport);
-          toast.success(`تم تصحيح العلامات في ${result.sectionsFixed} قسم/أقسام`);
+          // Build descriptive message
+          const msgs = result.details.map(d => {
+            if (d.fixType === 'choose_n_of_m') {
+              return `القسم ${d.sectionNumber}: تم تعيين "اختر ${d.n} من ${d.m}" (العلامات الفردية صحيحة)`;
+            }
+            return `القسم ${d.sectionNumber}: تم تطبيع العلامات (${d.before} → ${d.after})`;
+          });
+          toast.success(msgs.join('\n'), { duration: 6000 });
         }}
       />
 
@@ -1101,11 +1108,15 @@ const IntegrityCheckDialog: React.FC<{
             {renderSection('تحذيرات', warningIssues, <AlertTriangle className="h-4 w-4 text-orange-500" />)}
 
             {/* Fix Points Button - shown when there are points mismatch issues */}
-            {onFixPoints && report.issues.some(i => i.category === 'مجموع العلامات' || i.category === 'تناسق علامات') && (
+            {onFixPoints && report.issues.some(i => i.category === 'مجموع العلامات' || i.category === 'تناسق علامات' || i.category === 'اختيار من أسئلة') && (
               <div className="p-4 bg-accent/50 border border-border rounded-xl flex items-center justify-between gap-3">
                 <div className="text-sm">
                   <p className="font-medium">تم اكتشاف تناقض في توزيع العلامات</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">يمكن تصحيح العلامات تلقائياً لتتوافق مع المجموع المعلن لكل قسم</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {report.issues.some(i => i.category === 'اختيار من أسئلة')
+                      ? 'يبدو أن بعض الأقسام تتبع نمط "اختر N من M" — سيتم تعيين عدد الأسئلة المطلوبة بدلاً من تغيير العلامات'
+                      : 'يمكن تصحيح العلامات تلقائياً لتتوافق مع المجموع المعلن لكل قسم'}
+                  </p>
                 </div>
                 <Button size="sm" onClick={onFixPoints} className="shrink-0 gap-1">
                   <Award className="h-4 w-4" />

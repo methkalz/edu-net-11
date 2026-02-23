@@ -49,6 +49,8 @@ export interface ParsedSection {
   specialization_label?: string;
   instructions?: string;
   questions: ParsedQuestion[];
+  // عدد الأسئلة المطلوب الإجابة عنها (في حالة "اختر N من M")
+  max_questions_to_answer?: number;
   // DB ID for updates (only present for exams loaded from database)
   section_db_id?: string;
 }
@@ -99,6 +101,7 @@ type SectionRow = {
   specialization_label: string | null;
   instructions: string | null;
   order_index: number | null;
+  max_questions_to_answer: number | null;
 };
 
 const toSectionType = (value: string): 'mandatory' | 'elective' =>
@@ -245,6 +248,7 @@ export const buildBagrutPreviewFromDb = (args: {
     specialization?: string;
     specialization_label?: string;
     instructions?: string;
+    max_questions_to_answer?: number;
   }> = sortByOrderIndex(sections).map((s) => ({
     id: s.id,
     section_number: s.section_number,
@@ -253,7 +257,8 @@ export const buildBagrutPreviewFromDb = (args: {
     total_points: s.total_points,
     specialization: s.specialization ?? undefined,
     specialization_label: s.specialization_label ?? undefined,
-    instructions: s.instructions ?? undefined
+    instructions: s.instructions ?? undefined,
+    max_questions_to_answer: s.max_questions_to_answer ?? undefined,
   }));
 
   const sectionsWithQuestions: ParsedSection[] = sortedSections.map((s): ParsedSection => {
@@ -266,8 +271,8 @@ export const buildBagrutPreviewFromDb = (args: {
       specialization: s.specialization,
       specialization_label: s.specialization_label,
       instructions: s.instructions,
+      max_questions_to_answer: s.max_questions_to_answer,
       questions: buildQuestionTree(sectionQuestions),
-      // Add DB ID for updates
       section_db_id: s.id
     };
   });
