@@ -21,8 +21,13 @@ import {
   HelpCircle,
   Table,
   Pencil,
-  BookOpen
+  BookOpen,
+  ShieldCheck,
+  AlertTriangle,
+  Info,
+  XCircle
 } from 'lucide-react';
+import { runIntegrityCheck, type IntegrityReport } from '@/lib/bagrut/examIntegrityCheck';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronDown } from 'lucide-react';
@@ -131,6 +136,14 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
   const [isSavingEdits, setIsSavingEdits] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<ParsedQuestion | null>(null);
   const [editingContext, setEditingContext] = useState<{ sectionIndex: number } | null>(null);
+  const [integrityReport, setIntegrityReport] = useState<IntegrityReport | null>(null);
+  const [integrityDialogOpen, setIntegrityDialogOpen] = useState(false);
+
+  const handleIntegrityCheck = useCallback(() => {
+    const report = runIntegrityCheck(localExam);
+    setIntegrityReport(report);
+    setIntegrityDialogOpen(true);
+  }, [localExam]);
 
   // التحقق من نوع التعليمات (HTML أو نص عادي)
   const isHtmlInstructions = useMemo(() => {
@@ -316,6 +329,10 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
                     {showAnswers ? 'إخفاء الإجابات' : 'إظهار الإجابات'}
                   </Label>
                 </div>
+                <Button variant="outline" size="sm" onClick={handleIntegrityCheck} className="gap-1">
+                  <ShieldCheck className="h-4 w-4" />
+                  فحص السلامة
+                </Button>
               </div>
             </div>
           </CardHeader>
@@ -522,6 +539,12 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
           onSubmit={handleQuestionUpdate}
         />
       )}
+      {/* Integrity Check Dialog */}
+      <IntegrityCheckDialog
+        open={integrityDialogOpen}
+        onOpenChange={setIntegrityDialogOpen}
+        report={integrityReport}
+      />
 
       {/* Instructions Edit Dialog */}
       <Dialog open={instructionsDialogOpen} onOpenChange={setInstructionsDialogOpen}>
@@ -947,6 +970,79 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
         </div>
       )}
     </div>
+  );
+};
+
+// ── Integrity Check Dialog ────────────────────────────────────────────
+const IntegrityCheckDialog: React.FC<{
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  report: IntegrityReport | null;
+}> = ({ open, onOpenChange, report }) => {
+  if (!report) return null;
+
+  const levelIcon = (level: string) => {
+    if (level === 'critical') return <XCircle className="h-4 w-4 text-red-500 shrink-0" />;
+    if (level === 'warning') return <AlertTriangle className="h-4 w-4 text-orange-500 shrink-0" />;
+    return <Info className="h-4 w-4 text-blue-500 shrink-0" />;
+  };
+
+  const levelBg = (level: string) => {
+    if (level === 'critical') return 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800';
+    if (level === 'warning') return 'bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-800';
+    return 'bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800';
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5" />
+            تقرير فحص سلامة الامتحان
+          </DialogTitle>
+        </DialogHeader>
+
+        {/* Summary bar */}
+        <div className="flex gap-3 flex-wrap">
+          <Badge variant={report.summary.critical > 0 ? 'destructive' : 'secondary'} className="gap-1">
+            <XCircle className="h-3 w-3" /> حرج: {report.summary.critical}
+          </Badge>
+          <Badge variant="secondary" className="gap-1 bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200">
+            <AlertTriangle className="h-3 w-3" /> تحذير: {report.summary.warnings}
+          </Badge>
+          <Badge variant="secondary" className="gap-1">
+            <Info className="h-3 w-3" /> معلومة: {report.summary.info}
+          </Badge>
+        </div>
+
+        {report.passed && report.summary.warnings === 0 && (
+          <div className="p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg text-green-700 dark:text-green-300 flex items-center gap-2 text-sm font-medium">
+            <CheckCircle className="h-5 w-5" />
+            الامتحان سليم — لم يتم العثور على مشاكل ✓
+          </div>
+        )}
+
+        <ScrollArea className="flex-1 -mx-6 px-6">
+          <div className="space-y-2 pb-2">
+            {report.issues.map((issue, i) => (
+              <div key={i} className={`p-3 rounded-lg border text-sm ${levelBg(issue.level)}`}>
+                <div className="flex items-start gap-2">
+                  {levelIcon(issue.level)}
+                  <div className="min-w-0">
+                    <span className="font-medium">[{issue.category}]</span>{' '}
+                    <span>{issue.message}</span>
+                    {issue.details && (
+                      <p className="text-xs text-muted-foreground mt-1">{issue.details}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
   );
 };
 
