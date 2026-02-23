@@ -160,33 +160,21 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
     }
   };
 
-  // Recursively update a question's image in the questions tree
-  const updateImageInQuestions = useCallback((questions: ParsedQuestion[], questionNumber: string, imageUrl: string): ParsedQuestion[] => {
+  // Recursively update a question's image in the questions tree (by UUID)
+  const updateImageInQuestions = useCallback((questions: ParsedQuestion[], questionDbId: string, imageUrl: string): ParsedQuestion[] => {
     return questions.map(q => {
-      if (q.question_number === questionNumber) {
+      if (q.question_db_id === questionDbId) {
         return { ...q, image_url: imageUrl, has_image: true };
       }
       if (q.sub_questions && q.sub_questions.length > 0) {
-        return { ...q, sub_questions: updateImageInQuestions(q.sub_questions, questionNumber, imageUrl) };
+        return { ...q, sub_questions: updateImageInQuestions(q.sub_questions, questionDbId, imageUrl) };
       }
       return q;
     });
   }, []);
 
-  // Find question_db_id recursively
-  const findQuestionDbId = useCallback((questions: ParsedQuestion[], questionNumber: string): string | undefined => {
-    for (const q of questions) {
-      if (q.question_number === questionNumber) return q.question_db_id;
-      if (q.sub_questions?.length) {
-        const found = findQuestionDbId(q.sub_questions, questionNumber);
-        if (found) return found;
-      }
-    }
-    return undefined;
-  }, []);
-
-  // Handle image upload for a question - updates state AND saves directly to DB
-  const handleImageUploaded = useCallback(async (sectionIndex: number, questionNumber: string, imageUrl: string) => {
+  // Handle image upload for a question - updates state AND saves directly to DB (by UUID)
+  const handleImageUploaded = useCallback(async (sectionIndex: number, questionDbId: string, imageUrl: string) => {
     // 1. Update local state recursively
     setLocalExam(prev => {
       const updated = { ...prev };
@@ -194,7 +182,7 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
         if (sIdx !== sectionIndex) return section;
         return {
           ...section,
-          questions: updateImageInQuestions(section.questions, questionNumber, imageUrl)
+          questions: updateImageInQuestions(section.questions, questionDbId, imageUrl)
         };
       });
       onExamUpdate?.(updated);
@@ -203,35 +191,31 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
     setHasEdits(true);
 
     // 2. Save directly to DB so it persists even without clicking "save"
-    const section = localExam.sections[sectionIndex];
-    if (section) {
-      const dbId = findQuestionDbId(section.questions, questionNumber);
-      if (dbId) {
-        const { error } = await supabase
-          .from('bagrut_questions')
-          .update({ image_url: imageUrl, has_image: true, updated_at: new Date().toISOString() })
-          .eq('id', dbId);
-        if (error) {
-          console.error('Failed to save image URL to DB:', error);
-        }
+    if (questionDbId) {
+      const { error } = await supabase
+        .from('bagrut_questions')
+        .update({ image_url: imageUrl, has_image: true, updated_at: new Date().toISOString() })
+        .eq('id', questionDbId);
+      if (error) {
+        console.error('Failed to save image URL to DB:', error);
       }
     }
-  }, [onExamUpdate, updateImageInQuestions, findQuestionDbId, localExam.sections]);
+  }, [onExamUpdate, updateImageInQuestions]);
 
-  // Update a question in the exam (supports sub_questions recursively)
+  // Update a question in the exam (supports sub_questions recursively, by UUID)
   const updateQuestionInSection = useCallback((
     questions: ParsedQuestion[],
-    questionNumber: string,
+    questionDbId: string,
     updater: (q: ParsedQuestion) => ParsedQuestion
   ): ParsedQuestion[] => {
     return questions.map(q => {
-      if (q.question_number === questionNumber) {
+      if (q.question_db_id === questionDbId) {
         return updater(q);
       }
       if (q.sub_questions && q.sub_questions.length > 0) {
         return {
           ...q,
-          sub_questions: updateQuestionInSection(q.sub_questions, questionNumber, updater)
+          sub_questions: updateQuestionInSection(q.sub_questions, questionDbId, updater)
         };
       }
       return q;
@@ -246,8 +230,9 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
   const handleQuestionUpdate = useCallback((updatedQuestion: ParsedQuestion) => {
     if (!editingContext || !editingQuestion) return;
 
-    // استخدام الرقم القديم للبحث (قبل التعديل) لأن السؤال في المصفوفة لا يزال يحمل الرقم القديم
-    const originalQuestionNumber = editingQuestion.question_number;
+    // استخدام UUID الفريد للبحث عن السؤال بدقة
+    const questionDbId = editingQuestion.question_db_id;
+    if (!questionDbId) return;
 
     setLocalExam(prev => {
       const updated = { ...prev };
@@ -257,7 +242,7 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
           ...section,
           questions: updateQuestionInSection(
             section.questions,
-            originalQuestionNumber,
+            questionDbId,
             () => updatedQuestion
           )
         };
@@ -435,7 +420,7 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
       <Tabs value={activeSection} onValueChange={setActiveSection}>
         <TabsList className="w-full justify-start sticky top-0 z-10 bg-background">
           {localExam.sections.map((section, index) => (
-            <TabsTrigger key={index} value={String(index)}>
+            <TabsTrigger key={section.section_db_id || `sec-${index}`} value={String(index)}>
               {section.section_title}
               {section.section_type === 'elective' && (
                 <Badge variant="outline" className="mr-2 text-xs">اختياري</Badge>
@@ -445,7 +430,7 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
         </TabsList>
 
         {localExam.sections.map((section, sectionIndex) => (
-          <TabsContent key={sectionIndex} value={String(sectionIndex)}>
+          <TabsContent key={section.section_db_id || `sec-${sectionIndex}`} value={String(sectionIndex)}>
             <Card>
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
@@ -467,7 +452,7 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
                 <div className="space-y-4">
                   {section.questions.map((question, qIndex) => (
                     <QuestionCard 
-                      key={qIndex} 
+                      key={question.question_db_id || `q-${qIndex}`} 
                       question={question} 
                       showAnswers={showAnswers}
                       sectionIndex={sectionIndex}
@@ -680,7 +665,7 @@ interface QuestionCardProps {
   question: ParsedQuestion;
   showAnswers: boolean;
   sectionIndex: number;
-  onImageUploaded: (sectionIndex: number, questionNumber: string, imageUrl: string) => void;
+  onImageUploaded: (sectionIndex: number, questionDbId: string, imageUrl: string) => void;
   editMode?: boolean;
   onEdit?: (question: ParsedQuestion) => void;
 }
@@ -784,7 +769,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
           questionNumber={question.question_number}
           description={question.image_description}
           currentImageUrl={question.image_url}
-          onImageUploaded={(url) => onImageUploaded(sectionIndex, question.question_number, url)}
+          onImageUploaded={(url) => onImageUploaded(sectionIndex, question.question_db_id || question.question_number, url)}
         />
       )}
 
@@ -939,7 +924,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
         <div className="mr-4 border-r-2 border-muted pr-4 space-y-3 overflow-hidden max-w-full">
           {question.sub_questions.map((subQ, subIndex) => (
             <QuestionCard 
-              key={subIndex} 
+              key={subQ.question_db_id || `sub-${subIndex}`} 
               question={subQ} 
               showAnswers={showAnswers}
               sectionIndex={sectionIndex}
