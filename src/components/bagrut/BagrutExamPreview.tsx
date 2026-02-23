@@ -29,7 +29,7 @@ import {
   XCircle
 } from 'lucide-react';
 import { runIntegrityCheck, type IntegrityReport } from '@/lib/bagrut/examIntegrityCheck';
-import { normalizeExamPoints } from '@/lib/bagrut/normalizeExamPoints';
+import { normalizeExamPoints, type NormalizeResult } from '@/lib/bagrut/normalizeExamPoints';
 import { toast } from 'sonner';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -141,6 +141,8 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
   const [editingContext, setEditingContext] = useState<{ sectionIndex: number } | null>(null);
   const [integrityReport, setIntegrityReport] = useState<IntegrityReport | null>(null);
   const [integrityDialogOpen, setIntegrityDialogOpen] = useState(false);
+  const [fixConfirmOpen, setFixConfirmOpen] = useState(false);
+  const [fixPreview, setFixPreview] = useState<NormalizeResult | null>(null);
 
   const handleIntegrityCheck = useCallback(() => {
     const report = runIntegrityCheck(localExam);
@@ -553,22 +555,72 @@ const BagrutExamPreview: React.FC<BagrutExamPreviewProps> = ({
             toast.info('العلامات متطابقة بالفعل - لا حاجة للتصحيح');
             return;
           }
-          setLocalExam(result.exam);
-          onExamUpdate?.(result.exam);
-          setHasEdits(true);
-          // Re-run integrity check
-          const newReport = runIntegrityCheck(result.exam);
-          setIntegrityReport(newReport);
-          // Build descriptive message
-          const msgs = result.details.map(d => {
-            if (d.fixType === 'choose_n_of_m') {
-              return `القسم ${d.sectionNumber}: تم تعيين "اختر ${d.n} من ${d.m}" (العلامات الفردية صحيحة)`;
-            }
-            return `القسم ${d.sectionNumber}: تم تطبيع العلامات (${d.before} → ${d.after})`;
-          });
-          toast.success(msgs.join('\n'), { duration: 6000 });
+          // Show confirmation dialog instead of applying directly
+          setFixPreview(result);
+          setFixConfirmOpen(true);
         }}
       />
+
+      {/* Fix Confirmation Dialog */}
+      <Dialog open={fixConfirmOpen} onOpenChange={setFixConfirmOpen}>
+        <DialogContent className="max-w-lg" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              تأكيد الإصلاح التلقائي للعلامات
+            </DialogTitle>
+            <DialogDescription>
+              مراجعة التغييرات المقترحة قبل التطبيق
+            </DialogDescription>
+          </DialogHeader>
+          {fixPreview && (
+            <div className="space-y-3 py-2">
+              {fixPreview.details.map((d, i) => (
+                <div key={i} className="p-3 rounded-lg border bg-muted/30 space-y-1">
+                  <div className="font-medium text-sm">القسم {d.sectionNumber}</div>
+                  <div className="text-sm text-muted-foreground">
+                    <span className="font-medium text-foreground">الوضع الحالي: </span>
+                    مجموع العلامات {d.before} بدلاً من {d.after}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    <span className="font-medium text-foreground">الحل: </span>
+                    {d.fixType === 'choose_n_of_m'
+                      ? `سيتم تعيين أن الطالب يجيب عن ${d.n} من ${d.m} سؤال (العلامات الفردية لن تتغير)`
+                      : `سيتم ضبط العلامات نسبياً (${d.before} → ${d.after}) مع حد أدنى 0.5 لكل سؤال`}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setFixConfirmOpen(false)}>
+              رفض
+            </Button>
+            <Button
+              className="bg-green-600 hover:bg-green-700 text-white"
+              onClick={() => {
+                if (!fixPreview) return;
+                setLocalExam(fixPreview.exam);
+                onExamUpdate?.(fixPreview.exam);
+                setHasEdits(true);
+                const newReport = runIntegrityCheck(fixPreview.exam);
+                setIntegrityReport(newReport);
+                const msgs = fixPreview.details.map(d => {
+                  if (d.fixType === 'choose_n_of_m') {
+                    return `القسم ${d.sectionNumber}: تم تعيين "اختر ${d.n} من ${d.m}"`;
+                  }
+                  return `القسم ${d.sectionNumber}: تم تطبيع العلامات (${d.before} → ${d.after})`;
+                });
+                toast.success(msgs.join('\n'), { duration: 6000 });
+                setFixConfirmOpen(false);
+                setFixPreview(null);
+              }}
+            >
+              موافقة
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Instructions Edit Dialog */}
       <Dialog open={instructionsDialogOpen} onOpenChange={setInstructionsDialogOpen}>

@@ -137,7 +137,7 @@ export default function StudentBagrutAttempt() {
     let required = 0;
     examData.sections.forEach(section => {
       if (selectedSectionIds.includes(section.section_db_id!)) {
-        const maxQ = (section as any).max_questions_to_answer;
+        const maxQ = section.max_questions_to_answer;
         required += maxQ && maxQ < section.questions.length ? maxQ : section.questions.length;
       }
     });
@@ -401,7 +401,7 @@ export default function StudentBagrutAttempt() {
               </Badge>
               {(() => {
                 const currentSection = questionsWithSections[currentQuestionIndex]?.section;
-                const maxQ = currentSection && (currentSection as any).max_questions_to_answer;
+                const maxQ = currentSection?.max_questions_to_answer;
                 if (maxQ && maxQ < (currentSection?.questions.length || 0)) {
                   return (
                     <Badge variant="secondary" className="text-xs">

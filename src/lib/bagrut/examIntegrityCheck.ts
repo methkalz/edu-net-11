@@ -233,7 +233,7 @@ const checkSectionPoints = (sections: ParsedSection[]): IntegrityIssue[] => {
       // Check for "Choose N of M" pattern
       const chooseResult = detectChooseNofM(sec);
       if (chooseResult.detected) {
-        // Already has max_questions_to_answer set? → just info
+        // Already has max_questions_to_answer set? → just info (resolved)
         if (sec.max_questions_to_answer === chooseResult.n) {
           issues.push({
             level: 'info',
@@ -242,17 +242,19 @@ const checkSectionPoints = (sections: ParsedSection[]): IntegrityIssue[] => {
             details: sec.section_title
           });
         } else {
+          // Pattern detected but NOT set yet → warning
           issues.push({
-            level: 'info',
+            level: 'warning',
             category: 'اختيار من أسئلة',
             message: `القسم ${sec.section_number}: يبدو أن الطالب يختار ${chooseResult.n} من ${chooseResult.m} سؤال (${chooseResult.weight} علامات/سؤال) — يحتاج تعيين max_questions_to_answer`,
             details: `${sec.section_title} — مجموع كل الأسئلة ${calculated} لكن المطلوب ${sec.total_points}`
           });
         }
       } else {
+        // Any points mismatch without a clear pattern → always warning
         const diff = Math.abs(calculated - sec.total_points);
         issues.push({
-          level: diff > 5 ? 'warning' : 'info',
+          level: 'warning',
           category: 'مجموع العلامات',
           message: `القسم ${sec.section_number}: مجموع علامات الأسئلة (${calculated}) ≠ المعلن (${sec.total_points}) - فرق ${diff}`,
           details: `${sec.section_title} - ${leaves.length} سؤال طرفي`
