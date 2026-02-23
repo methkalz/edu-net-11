@@ -1,0 +1,2 @@
+ALTER TABLE bagrut_questions 
+ALTER COLUMN points TYPE NUMERIC(6,2) USING points::NUMERIC(6,2);
