@@ -514,6 +514,9 @@ const BagrutManagement: React.FC = () => {
 
       toast.success('تم حفظ التعديلات بنجاح!');
       
+      // Invalidate cache to ensure fresh data everywhere
+      await refetch();
+      
       // Refresh the exam data
       if (updatedExam.exam_db_id) {
         await handlePreviewExam(updatedExam.exam_db_id);
