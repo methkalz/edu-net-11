@@ -1,0 +1,3 @@
+UPDATE bagrut_questions
+SET question_type = 'fill_table', has_table = true, table_data = '{"headers": ["أمر SHOW", "وصف المُخرج"], "input_columns": [1], "rows": [["show ip interface brief", "?"], ["show running-config", "?"], ["show ip route", "?"], ["show vlan brief", "?"], ["show interfaces", "?"]], "correct_answers": {}, "descriptions": ["يعرض جدول التوجيه", "يعرض ملخص حالة الواجهات وعناوين IP", "يعرض الإعدادات الحالية للجهاز", "يعرض معلومات تفصيلية عن الواجهات", "يعرض قائمة شبكات VLAN", "يعرض جدول عناوين MAC"]}'::jsonb
+WHERE id = '7a132e1e-b504-4824-b2ef-e54de0170a79';
