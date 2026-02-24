@@ -38,14 +38,15 @@ async function generateBatch(
 - اجعل الخيارات الخاطئة معقولة لكن خاطئة بوضوح
 - قدم تفسيرات مختصرة وواضحة (1-2 جملة)
 - استخدم اللغة العربية الفصحى الواضحة
-- التزم بالعدد المطلوب بدقة تامة`;
+- التزم بالعدد المطلوب بدقة تامة
+- المحتوى المقدم قد يتضمن عدة دروس مفصولة بعلامة "---". يجب تحليل النص كاملاً واستخراج الدروس المختلفة، ثم توزيع الأسئلة بالتساوي على جميع الدروس الموجودة. لا تركز على درس واحد وتتجاهل البقية.`;
 
   const userPrompt = `الصف: ${gradeLevel}
 القسم: ${sectionName}
 الموضوع: ${topicName}
 
 محتوى الدرس:
-${lessonContent.substring(0, 8000)}
+${lessonContent}
 ${existingQuestionsText}
 ${previousQuestionsText}
 
@@ -117,7 +118,7 @@ ${previousQuestionsText}
                         },
                         description: 'قائمة الخيارات'
                       },
-                      correct_answer_text: { type: 'string', description: 'نص الإجابة الصحيحة' },
+                      correct_answer_text: { type: 'string', description: 'نص الإجابة الصحيحة. لأسئلة صح/خطأ يجب أن تكون القيمة "صح" أو "خطأ" فقط بدون أي كلمات اضافية' },
                       explanation: { type: 'string', description: 'تفسير الإجابة' }
                     },
                     required: ['question_text', 'question_type', 'difficulty_level', 'choices', 'correct_answer_text', 'explanation']
@@ -315,7 +316,9 @@ ${existingQuestions.map((q, i) => `${i + 1}. ${q.question_text}`).join('\n')}
       // Find correct answer ID by matching text or index
       let correctChoice;
       if (q.question_type === 'true_false') {
-        correctChoice = q.correct_answer_index === 0 ? choicesWithIds[0] : choicesWithIds[1];
+        const answerText = q.correct_answer_text?.trim();
+        const isTrue = answerText === 'صح' || answerText === 'صحيح' || answerText === 'true';
+        correctChoice = isTrue ? choicesWithIds[0] : choicesWithIds[1];
       } else {
         correctChoice = choicesWithIds.find((c: any) => 
           c.text.trim().toLowerCase() === q.correct_answer_text.trim().toLowerCase()
@@ -327,7 +330,10 @@ ${existingQuestions.map((q, i) => `${i + 1}. ${q.question_text}`).join('\n')}
         question_type: q.question_type,
         difficulty_level: q.difficulty_level,
         choices: choicesWithIds,
-        correct_answer: correctChoice?.id || choicesWithIds[0].id, // Fallback to first choice
+        correct_answer: correctChoice?.id || (() => {
+          console.warn('⚠️ Could not match correct answer for:', q.question_text, 'answer:', q.correct_answer_text);
+          return choicesWithIds[0].id;
+        })(),
         explanation: q.explanation,
         section_name: sectionName,
         topic_name: topicName,
