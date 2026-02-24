@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BookOpen, Plus, Search, Edit2, Trash2, Filter, RotateCcw, Check, ChevronRight, ChevronLeft } from 'lucide-react';
+import { BookOpen, Plus, Search, Edit2, Trash2, Filter, RotateCcw, Check, ChevronRight, ChevronLeft, Bot } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { MultiSelect } from '@/components/ui/multi-select';
 import { useExamBankManager } from '@/hooks/useExamBankManager';
 import { QuestionForm } from '@/components/exam/QuestionForm';
@@ -16,6 +17,7 @@ import { Question } from '@/types/exam';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 const ITEMS_PER_PAGE = 30;
 const ExamBankManagement = () => {
+  const navigate = useNavigate();
   const [filters, setFilters] = useState({
     gradeLevel: 'all',
     sectionName: 'all',
@@ -186,6 +188,10 @@ const ExamBankManagement = () => {
                 <Button onClick={() => setIsSmartGeneratorOpen(true)} variant="default" className="gap-2">
                   <Check className="w-4 h-4" />
                   نظام توليد الأسئلة الذكي   
+                </Button>
+                <Button onClick={() => navigate('/tf-fix')} variant="outline" className="gap-2">
+                  <Bot className="w-4 h-4" />
+                  إصلاح صح/خطأ بالذكاء الاصطناعي
                 </Button>
                 <Button onClick={handleAddQuestion} variant="outline" className="gap-2">
                   <Plus className="w-4 h-4" />

@@ -35,3 +35,6 @@ verify_jwt = false
 
 [functions.check-bagrut-job]
 verify_jwt = false
+
+[functions.fix-true-false-questions]
+verify_jwt = false

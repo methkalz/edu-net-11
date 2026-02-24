@@ -73,6 +73,7 @@ const StudentBagrutSubmitted = React.lazy(() => import('@/pages/StudentBagrutSub
 const StudentBagrutResult = React.lazy(() => import('@/pages/StudentBagrutResult'));
 const BagrutGradingPage = React.lazy(() => import('@/pages/BagrutGradingPage'));
 const TeacherBagrutExams = React.lazy(() => import('@/pages/teacher/TeacherBagrutExams'));
+const TrueFalseFixPage = React.lazy(() => import('@/pages/TrueFalseFixPage'));
 import { PageLoading } from "@/components/ui/LoadingComponents";
 
 /**
@@ -218,6 +219,10 @@ const App = () => {
                <Route 
                  path="/exam-bank-management" 
                  element={<Suspense fallback={<PageLoading message="جاري تحميل بنك الأسئلة..." />}><ExamBankManagement /></Suspense>} 
+               />
+               <Route 
+                 path="/tf-fix" 
+                 element={<Suspense fallback={<PageLoading message="جاري تحميل أداة الإصلاح..." />}><TrueFalseFixPage /></Suspense>} 
                />
                
                {/* Bagrut Exams Management route */}
