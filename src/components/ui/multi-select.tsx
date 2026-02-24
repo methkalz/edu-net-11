@@ -38,20 +38,20 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
   };
   return <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" role="combobox" aria-expanded={open} className={cn('w-full justify-between min-h-[40px] h-auto', className)}>
-          {value.length === 0 ? <span className="text-muted-foreground">{placeholder}</span> : <div className="flex gap-1 flex-wrap">
+        <Button variant="outline" role="combobox" aria-expanded={open} className={cn('w-full justify-between min-h-[40px] h-auto max-h-[120px] overflow-hidden', className)}>
+          {value.length === 0 ? <span className="text-muted-foreground">{placeholder}</span> : <div className="flex gap-1 flex-wrap max-h-[80px] overflow-y-auto pr-1">
               {value.map(v => {
             const option = options.find(o => o.value === v);
-            return option ? <Badge key={v} variant="secondary" className="flex items-center gap-1 bg-[sidebar-primary-foreground] bg-slate-600">
-                    {option.label}
-                    <X className="h-3 w-3 cursor-pointer hover:text-destructive" onClick={e => handleRemove(v, e)} />
+            return option ? <Badge key={v} variant="secondary" className="flex items-center gap-1 bg-slate-600 text-white text-xs shrink-0">
+                    <span className="max-w-[150px] truncate">{option.label}</span>
+                    <X className="h-3 w-3 cursor-pointer hover:text-destructive shrink-0" onClick={e => handleRemove(v, e)} />
                   </Badge> : null;
           })}
             </div>}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0" align="start">
+      <PopoverContent className="w-full p-0 z-50 bg-popover" align="start">
         <Command>
           <CommandInput placeholder={searchPlaceholder} />
           <CommandEmpty>{emptyText}</CommandEmpty>
