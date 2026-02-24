@@ -1,55 +1,84 @@
 
+# اصلاح نظام توليد الأسئلة الذكية (نسخة محسّنة)
 
-## تنفيذ الإصلاحات الثلاثة الشاملة لنظام البجروت
+## ملخص التغييرات
 
----
+تعديل ملف واحد فقط: `supabase/functions/generate-smart-questions/index.ts`
 
-### النقطة 1: فرض حد "اختر N من M" على الطالب
-
-**ملف `src/hooks/useBagrutAttempt.ts`** — تعديل دالة `updateAnswer` (سطر 374-380):
-- قبل قبول الإجابة، البحث عن القسم الذي ينتمي له السؤال (بحث عودي يشمل الأسئلة الفرعية)
-- إذا القسم لديه `max_questions_to_answer`: حساب عدد الأسئلة الجذر المجابة
-- السماح بـ: تعديل إجابة موجودة، حذف إجابة
-- الرفض مع toast إذا: عدد الأسئلة الجذر المجابة >= الحد الأقصى والسؤال الحالي ليس من ضمن المجابة
-
-**ملف `src/pages/StudentBagrutAttempt.tsx`** — عرض حالة القفل في واجهة الطالب:
-- إضافة دالة `isQuestionLocked(question)` تتحقق إذا القسم وصل لحده والسؤال غير مجاب
-- تمرير `disabled={isQuestionLocked(currentQuestion) || isSubmitting}` لمكون `BagrutQuestionRenderer`
-- عرض `Alert` تنبيهي واضح فوق السؤال المقفل يشرح للطالب ماذا يفعل
-- تلوين أزرار الأسئلة المقفلة في الشريط الجانبي بلون مميز (رمادي مع قفل)
+لا تأثير على الأسئلة المخزنة أو الامتحانات الحالية - التغييرات تطال عملية التوليد فقط.
 
 ---
 
-### النقطة 2: إصلاح التصحيح التلقائي لأسئلة MCQ
+## التغيير 1: ازالة قص المحتوى بالكامل
 
-**ملف `src/pages/BagrutGradingPage.tsx`** — تعديل سطور 647-661:
-- استبدال المقارنة الحالية `parseInt(value)` بمنطق ثلاثي:
-  1. مقارنة مباشرة: `String(value) === String(correctChoice.id)`
-  2. مقارنة نصية: `String(value) === String(correctChoice.text)`
-  3. fallback رقمي: `parseInt(value) === indexOf(correctChoice) + 1`
-- هذا يضمن عمل التصحيح مع المعرفات النصية ("a","b","أ","ب") والرقمية
+**الوضع الحالي:** سطر 48 يقص المحتوى عند 8000 حرف
+```
+lessonContent.substring(0, 8000)
+```
 
----
-
-### النقطة 3: عرض الأسئلة المتداخلة عودياً في صفحة النتائج
-
-**ملف `src/pages/StudentBagrutResult.tsx`** — إعادة كتابة قسم عرض تفاصيل الأسئلة:
-- إضافة دالة `buildQuestionTree(flatQuestions)` تحول القائمة المسطحة لشجرة متداخلة عبر `parent_question_id`
-- إضافة مكون عودي `ResultQuestionNode` يعرض سؤالاً واحداً ثم يستدعي نفسه لكل سؤال فرعي
-  - يدعم N مستويات تداخل بدون حد
-  - الأسئلة الأم تعرض مجموع علامات أبنائها
-  - الأسئلة الطرفية تعرض إجابة الطالب والإجابة الصحيحة
-  - مسافة بادئة متزايدة حسب العمق
-- استبدال `questions.map(...)` المسطح بـ `questionTree.map(rootQ => <ResultQuestionNode />)`
+**التغيير:** ازالة `.substring(0, 8000)` وارسال `lessonContent` كاملاً بدون أي قص.
 
 ---
 
-### الملفات المتأثرة
+## التغيير 2: تحسين System Prompt لتغطية جميع الدروس
 
-| الملف | التعديل |
-|-------|---------|
-| `src/hooks/useBagrutAttempt.ts` | فرض حد N في `updateAnswer` |
-| `src/pages/StudentBagrutAttempt.tsx` | عرض قفل الأسئلة + تنبيه |
-| `src/pages/BagrutGradingPage.tsx` | إصلاح مقارنة MCQ |
-| `src/pages/StudentBagrutResult.tsx` | شجرة أسئلة عودية |
+اضافة تعليمات صريحة في الـ System Prompt:
+```text
+"المحتوى المقدم قد يتضمن عدة دروس. يجب تحليل النص كاملاً واستخراج الدروس المختلفة، ثم توزيع الأسئلة بالتساوي على جميع الدروس الموجودة. لا تركز على درس واحد وتتجاهل البقية."
+```
 
+---
+
+## التغيير 3: اصلاح منطق صح/خطأ
+
+### 3a: تقييد الـ Schema بـ enum
+
+في تعريف الـ Tool Schema (سطر 120)، تغيير وصف `correct_answer_text`:
+
+```javascript
+correct_answer_text: { 
+  type: 'string', 
+  description: 'نص الإجابة الصحيحة. لأسئلة صح/خطأ يجب أن تكون القيمة "صح" أو "خطأ" فقط بدون أي كلمات اضافية'
+}
+```
+
+### 3b: استخدام مطابقة تامة بدل includes
+
+استبدال سطر 318:
+```javascript
+// قبل (خاطئ)
+correctChoice = q.correct_answer_index === 0 ? choicesWithIds[0] : choicesWithIds[1];
+
+// بعد (صحيح)
+const answerText = q.correct_answer_text?.trim();
+const isTrue = answerText === 'صح' || answerText === 'صحيح' || answerText === 'true';
+correctChoice = isTrue ? choicesWithIds[0] : choicesWithIds[1];
+```
+
+ملاحظة: نضيف `'صحيح'` و `'true'` كاحتياط فقط مع المطابقة التامة (===) وليس includes، لأن النموذج قد يستخدمها رغم التعليمات. هذا لا يسبب False Positives لأن المطابقة تامة.
+
+### 3c: تحسين الـ Fallback
+
+استبدال سطر 330:
+```javascript
+// قبل (خطير - يختار الأول صامتاً)
+correct_answer: correctChoice?.id || choicesWithIds[0].id,
+
+// بعد (يسجل تحذير عند الفشل)
+correct_answer: correctChoice?.id || (() => {
+  console.warn('⚠️ Could not match correct answer for:', q.question_text, 'answer:', q.correct_answer_text);
+  return choicesWithIds[0].id;
+})(),
+```
+
+---
+
+## ملخص الملفات المتأثرة
+
+| الملف | نوع التغيير |
+|---|---|
+| `supabase/functions/generate-smart-questions/index.ts` | تعديل (ازالة القص + اصلاح صح/خطأ + تحسين prompt) |
+
+## التأثير على البيانات الحالية
+
+لا يوجد أي تأثير. التغييرات تطال فقط عملية توليد أسئلة جديدة. جميع الأسئلة والامتحانات المخزنة تبقى كما هي.
