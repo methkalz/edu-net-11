@@ -1180,7 +1180,7 @@ const IntegrityCheckDialog: React.FC<{
             {renderSection('تحذيرات', warningIssues, <AlertTriangle className="h-4 w-4 text-orange-500" />)}
 
             {/* Fix Points Button - shown when there are points mismatch issues */}
-            {onFixPoints && report.issues.some(i => i.category === 'مجموع العلامات' || i.category === 'تناسق علامات' || i.category === 'اختيار من أسئلة') && (
+            {onFixPoints && report.issues.some(i => (i.category === 'مجموع العلامات' || i.category === 'تناسق علامات' || i.category === 'اختيار من أسئلة') && i.level !== 'info') && (
               <div className="p-4 bg-accent/50 border border-border rounded-xl flex items-center justify-between gap-3">
                 <div className="text-sm">
                   <p className="font-medium">تم اكتشاف تناقض في توزيع العلامات</p>
