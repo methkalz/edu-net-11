@@ -451,6 +451,9 @@ const checkPointAnomaly = (sections: ParsedSection[]): IntegrityIssue[] => {
   for (const sec of sections) {
     const leaves = collectLeafQuestions(sec.questions);
     if (leaves.length === 0) continue;
+    const calculatedPoints = sumLeafPoints(sec.questions);
+    // إذا المجموع متطابق مع المطلوب — لا حاجة لتحذير شذوذ
+    if (calculatedPoints === sec.total_points) continue;
     const avg = sec.total_points / leaves.length;
     // Flag if average is unreasonably low or high
     if (avg < 0.5) {
@@ -510,6 +513,9 @@ const checkQuestionCountConsistency = (sections: ParsedSection[]): IntegrityIssu
   for (const sec of sections) {
     const leaves = collectLeafQuestions(sec.questions);
     if (leaves.length === 0) continue;
+    const calculatedPoints = sumLeafPoints(sec.questions);
+    // إذا المجموع متطابق — لا حاجة للتحذير عن توزيع غير معياري
+    if (calculatedPoints === sec.total_points) continue;
     const avg = sec.total_points / leaves.length;
     // Check if average is close to any common weight
     const closestWeight = COMMON_WEIGHTS.reduce((prev, curr) =>
