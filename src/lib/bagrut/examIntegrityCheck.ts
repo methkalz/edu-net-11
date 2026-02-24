@@ -354,6 +354,89 @@ const buildSummaryInfo = (sections: ParsedSection[]): IntegrityIssue[] => {
   });
 };
 
+/** 11. Point-per-question anomaly detection */
+const checkPointAnomaly = (sections: ParsedSection[]): IntegrityIssue[] => {
+  const issues: IntegrityIssue[] = [];
+  for (const sec of sections) {
+    const leaves = collectLeafQuestions(sec.questions);
+    if (leaves.length === 0) continue;
+    const avg = sec.total_points / leaves.length;
+    // Flag if average is unreasonably low or high
+    if (avg < 0.5) {
+      issues.push({
+        level: 'warning',
+        category: 'شذوذ في العلامات',
+        message: `القسم ${sec.section_number}: متوسط العلامة لكل سؤال (${avg.toFixed(2)}) منخفض جداً — قد يكون هناك أسئلة زائدة أو مفقودة`,
+        details: `${leaves.length} سؤال طرفي ÷ ${sec.total_points} علامة`
+      });
+    } else if (avg > 15) {
+      issues.push({
+        level: 'warning',
+        category: 'شذوذ في العلامات',
+        message: `القسم ${sec.section_number}: متوسط العلامة لكل سؤال (${avg.toFixed(2)}) مرتفع جداً — قد تكون بعض الأسئلة مفقودة من الاستيراد`,
+        details: `${leaves.length} سؤال طرفي ÷ ${sec.total_points} علامة`
+      });
+    }
+    // Check for zero-point leaves that aren't bonus
+    for (const q of leaves) {
+      if (q.points === 0) {
+        issues.push({
+          level: 'critical',
+          category: 'سؤال بدون علامات',
+          message: `سؤال ${q.question_number} (${q.question_type}) بـ 0 علامات — مؤشر على خطأ في الاستيراد`,
+          details: `القسم ${sec.section_number} — يجب مراجعة هذا السؤال فوراً`
+        });
+      }
+    }
+  }
+  return issues;
+};
+
+/** 12. Leaf question with empty text = possible import failure */
+const checkOrphanLeaves = (sections: ParsedSection[]): IntegrityIssue[] => {
+  const issues: IntegrityIssue[] = [];
+  for (const sec of sections) {
+    const leaves = collectLeafQuestions(sec.questions);
+    for (const q of leaves) {
+      const cleanText = stripHtml(q.question_text || '');
+      if ((!cleanText || cleanText.length < 3) && q.points === 0) {
+        issues.push({
+          level: 'critical',
+          category: 'سؤال مفقود',
+          message: `سؤال ${q.question_number} بدون نص وبدون علامات — فشل محتمل في الاستيراد`,
+          details: `القسم ${sec.section_number} — هذا السؤال يحتاج حذف أو إعادة استيراد`
+        });
+      }
+    }
+  }
+  return issues;
+};
+
+/** 13. Question count vs total_points consistency */
+const checkQuestionCountConsistency = (sections: ParsedSection[]): IntegrityIssue[] => {
+  const issues: IntegrityIssue[] = [];
+  const COMMON_WEIGHTS = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6, 8, 10];
+  for (const sec of sections) {
+    const leaves = collectLeafQuestions(sec.questions);
+    if (leaves.length === 0) continue;
+    const avg = sec.total_points / leaves.length;
+    // Check if average is close to any common weight
+    const closestWeight = COMMON_WEIGHTS.reduce((prev, curr) =>
+      Math.abs(curr - avg) < Math.abs(prev - avg) ? curr : prev
+    );
+    const deviation = Math.abs(avg - closestWeight);
+    if (deviation > 0.5 && avg > 0.5) {
+      issues.push({
+        level: 'info',
+        category: 'توزيع غير معياري',
+        message: `القسم ${sec.section_number}: متوسط العلامة (${avg.toFixed(2)}) لا يتطابق مع أي وزن معياري — قد يكون عدد الأسئلة غير متطابق مع التوزيع الأصلي`,
+        details: `أقرب وزن معياري: ${closestWeight} — ${leaves.length} سؤال طرفي`
+      });
+    }
+  }
+  return issues;
+};
+
 // ── main ─────────────────────────────────────────────────────────────
 
 export const runIntegrityCheck = (exam: ParsedExam): IntegrityReport => {
@@ -367,6 +450,9 @@ export const runIntegrityCheck = (exam: ParsedExam): IntegrityReport => {
     ...checkSectionPoints(exam.sections),
     ...checkZeroPoints(exam.sections),
     ...checkParentSubPointsConsistency(exam.sections),
+    ...checkPointAnomaly(exam.sections),
+    ...checkOrphanLeaves(exam.sections),
+    ...checkQuestionCountConsistency(exam.sections),
     ...buildSummaryInfo(exam.sections),
   ];
 
