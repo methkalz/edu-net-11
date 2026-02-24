@@ -1,75 +1,59 @@
 
-# إضافة سجل العمليات ولوحة إحصائيات لصفحة إصلاح صح/خطأ
+
+# إضافة اسم الدرس في بطاقة السؤال المولّد
 
 ## الفكرة
 
-إضافة قسم **"سجل العمليات المنفذة"** في صفحة `/tf-fix` يعرض للسوبر أدمن:
-- ملخص الوضع الحالي لقاعدة البيانات (كم سؤال صح، كم خطأ، كم مكسور)
-- سجل بكل عملية إصلاح تمت سابقاً (التاريخ، عدد المُصحح، عدد المُوحّد، إلخ)
-- مقارنة "قبل وبعد" توضح التحسن الذي حدث
+عند عرض الأسئلة المولّدة في مرحلة المراجعة، يظهر حالياً نوع السؤال (صح/خطأ أو اختيار متعدد) ومستوى الصعوبة فقط. المطلوب إضافة مستطيل (Badge) يعرض **اسم الدرس** الذي تم توليد السؤال منه.
 
-## آلية التنفيذ
+## التغييرات المطلوبة
 
-### 1. حفظ سجل العمليات في قاعدة البيانات
+### 1. تحديث Edge Function لإرجاع اسم الدرس
 
-سنستخدم جدول `audit_log` الموجود بالفعل لتسجيل كل عملية إصلاح. عند انتهاء Edge Function من المعالجة، يتم إدراج سطر في `audit_log` بالتفاصيل:
+ملف: `supabase/functions/generate-smart-questions/index.ts`
+
+- إضافة حقل `lesson_name` إلى Tool Schema (بجانب question_text، question_type، إلخ)
+- وصفه: "اسم الدرس الذي تم استخراج السؤال منه، يجب أن يكون من عناوين الدروس الموجودة في المحتوى"
+- إضافته إلى `required`
+
+### 2. تحديث واجهة GeneratedQuestion
+
+ملف: `src/components/exam/GeneratedQuestionCard.tsx`
+
+- إضافة حقل اختياري `lesson_name?: string` إلى interface `GeneratedQuestion`
+- عرض Badge جديد بجانب نوع السؤال يحتوي اسم الدرس (بلون مميز مثل أزرق فاتح)
+
+### 3. لا تغيير على SmartQuestionGenerator
+
+البيانات تأتي من الـ Edge Function مباشرة وتُمرر كما هي إلى `GeneratedQuestionCard`، فلا حاجة لتعديل إضافي.
+
+## التفاصيل التقنية
+
+### التغيير في Tool Schema (Edge Function)
 
 ```text
-entity: "true_false_fix"
-action: "auto_fix" أو "dry_run"
-payload_json: {
-  summary: { total, confirmed, corrected, normalized, skipped, dryRun },
-  results: [ ... تفاصيل كل سؤال ... ]
-}
+إضافة حقل جديد في properties:
+  lesson_name: { type: 'string', description: 'اسم الدرس المصدر للسؤال' }
+
+إضافته في required
 ```
 
-### 2. تحديث Edge Function
+### التغيير في البطاقة
 
-تعديل `supabase/functions/fix-true-false-questions/index.ts`:
-- بعد انتهاء المعالجة، إدراج سجل في جدول `audit_log` يحتوي الملخص والنتائج
+```text
+بجانب:
+  <Badge variant="outline">{TYPE_LABELS[question.question_type]}</Badge>
 
-### 3. إضافة قسم "الوضع الحالي + سجل العمليات" في الصفحة
-
-تعديل `src/pages/TrueFalseFixPage.tsx`:
-
-**قسم جديد في أعلى الصفحة - "الوضع الحالي":**
-- إجمالي أسئلة صح/خطأ: 178
-- إجابتها "صح": 76
-- إجابتها "خطأ": 97
-- صيغ مكسورة: 5
-- نسبة التوزيع (صح/خطأ) بشريط بياني
-
-**قسم "سجل العمليات السابقة":**
-- جدول يعرض كل عملية إصلاح تمت:
-  - التاريخ والوقت
-  - النوع (إصلاح فعلي / معاينة)
-  - عدد الأسئلة المعالجة
-  - عدد المُصحّح / المُوحّد / المُؤكّد / المتخطى
-  - إمكانية عرض التفاصيل الكاملة
-
-**قسم "ملخص الإنجازات":**
-- بطاقة تلخيصية تعرض إجمالي ما تم إنجازه عبر جميع العمليات:
-  - إجمالي الأسئلة المُصحّحة
-  - إجمالي الصيغ المُوحّدة
-  - آخر عملية إصلاح ومتى تمت
-
-### 4. إنشاء Hook لجلب السجل
-
-ملف جديد: `src/hooks/useTrueFalseFixHistory.ts`
-- جلب سجلات العمليات من `audit_log` حيث `entity = 'true_false_fix'`
-- جلب إحصائيات الوضع الحالي من `question_bank`
-- حساب الإجماليات التراكمية
+يُضاف:
+  {question.lesson_name && (
+    <Badge className="bg-blue-100 text-blue-800">اسم الدرس</Badge>
+  )}
+```
 
 ## الملفات المتأثرة
 
-| الملف | العملية |
+| الملف | التعديل |
 |---|---|
-| `supabase/functions/fix-true-false-questions/index.ts` | تعديل - إضافة تسجيل في audit_log |
-| `src/pages/TrueFalseFixPage.tsx` | تعديل - إضافة أقسام الإحصائيات والسجل |
-| `src/hooks/useTrueFalseFixHistory.ts` | إنشاء جديد |
+| `supabase/functions/generate-smart-questions/index.ts` | إضافة `lesson_name` للـ Tool Schema |
+| `src/components/exam/GeneratedQuestionCard.tsx` | إضافة الحقل للـ interface + عرض Badge |
 
-## التأثير
-
-- لا تأثير على بيانات الأسئلة أو الامتحانات
-- يُضاف فقط سطر واحد في `audit_log` عند كل عملية إصلاح
-- البيانات المعروضة للقراءة فقط (read-only)
