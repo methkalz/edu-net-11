@@ -119,9 +119,10 @@ ${previousQuestionsText}
                         description: 'قائمة الخيارات'
                       },
                       correct_answer_text: { type: 'string', description: 'نص الإجابة الصحيحة. لأسئلة صح/خطأ يجب أن تكون القيمة "صح" أو "خطأ" فقط بدون أي كلمات اضافية' },
-                      explanation: { type: 'string', description: 'تفسير الإجابة' }
+                      explanation: { type: 'string', description: 'تفسير الإجابة' },
+                      lesson_name: { type: 'string', description: 'اسم الدرس الذي تم استخراج السؤال منه. يجب أن يكون من عناوين الدروس الموجودة في المحتوى المقدم' }
                     },
-                    required: ['question_text', 'question_type', 'difficulty_level', 'choices', 'correct_answer_text', 'explanation']
+                    required: ['question_text', 'question_type', 'difficulty_level', 'choices', 'correct_answer_text', 'explanation', 'lesson_name']
                   }
                 }
               },
@@ -335,6 +336,7 @@ ${existingQuestions.map((q, i) => `${i + 1}. ${q.question_text}`).join('\n')}
           return choicesWithIds[0].id;
         })(),
         explanation: q.explanation,
+        lesson_name: q.lesson_name || '',
         section_name: sectionName,
         topic_name: topicName,
         grade_level: gradeLevel,

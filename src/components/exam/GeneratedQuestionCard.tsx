@@ -20,6 +20,7 @@ export interface GeneratedQuestion {
   topic_name: string;
   grade_level: string;
   points: number;
+  lesson_name?: string;
   similarityWarning?: {
     found: boolean;
     match?: string;
@@ -102,6 +103,11 @@ export function GeneratedQuestionCard({
             {DIFFICULTY_LABELS[question.difficulty_level].label}
           </Badge>
           <Badge variant="outline">{TYPE_LABELS[question.question_type]}</Badge>
+          {question.lesson_name && (
+            <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+              📖 {question.lesson_name}
+            </Badge>
+          )}
           {isApproved && (
             <Badge className="bg-green-600 text-white">
               <CheckCircle2 className="w-3 h-3 mr-1" />
