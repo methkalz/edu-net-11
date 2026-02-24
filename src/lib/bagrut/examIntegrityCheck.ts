@@ -339,19 +339,110 @@ const checkParentSubPointsConsistency = (sections: ParsedSection[]): IntegrityIs
   return issues;
 };
 
-/** 10. Question count summary per section */
+/** 10. Detailed section summary with positive confirmations */
 const buildSummaryInfo = (sections: ParsedSection[]): IntegrityIssue[] => {
-  return sections.map(sec => {
+  const issues: IntegrityIssue[] = [];
+  
+  for (const sec of sections) {
     const total = countAll(sec.questions);
     const roots = sec.questions.length;
     const subs = total - roots;
-    return {
-      level: 'info' as const,
+    const leaves = collectLeafQuestions(sec.questions);
+    const calculatedPoints = sumLeafPoints(sec.questions);
+
+    // Question count summary
+    issues.push({
+      level: 'info',
       category: 'ملخص الأسئلة',
-      message: `القسم ${sec.section_number}: ${roots} أسئلة رئيسية${subs > 0 ? ` + ${subs} فرعية` : ''}`,
+      message: `القسم ${sec.section_number}: ${roots} أسئلة رئيسية${subs > 0 ? ` + ${subs} فرعية` : ''} (${leaves.length} سؤال طرفي)`,
       details: sec.section_title
-    };
-  });
+    });
+
+    // Points match confirmation
+    if (calculatedPoints === sec.total_points) {
+      issues.push({
+        level: 'info',
+        category: 'مجموع العلامات',
+        message: `القسم ${sec.section_number}: مجموع العلامات ${calculatedPoints}/${sec.total_points} ✓`,
+        details: `${leaves.length} سؤال طرفي — متوسط ${(sec.total_points / leaves.length).toFixed(1)} علامة/سؤال`
+      });
+    }
+
+    // Points distribution details
+    if (leaves.length > 0) {
+      const pointValues = leaves.map(q => q.points);
+      const uniquePoints = [...new Set(pointValues)].sort((a, b) => a - b);
+      const minPoints = Math.min(...pointValues);
+      const maxPoints = Math.max(...pointValues);
+      
+      if (uniquePoints.length === 1) {
+        issues.push({
+          level: 'info',
+          category: 'توزيع العلامات',
+          message: `القسم ${sec.section_number}: جميع الأسئلة بوزن موحد ${uniquePoints[0]} علامة ✓`,
+          details: sec.section_title
+        });
+      } else {
+        issues.push({
+          level: 'info',
+          category: 'توزيع العلامات',
+          message: `القسم ${sec.section_number}: أوزان الأسئلة من ${minPoints} إلى ${maxPoints} علامة (${uniquePoints.length} أوزان مختلفة)`,
+          details: `الأوزان: ${uniquePoints.join('، ')}`
+        });
+      }
+    }
+
+    // max_questions_to_answer confirmation
+    if (sec.max_questions_to_answer && sec.max_questions_to_answer > 0) {
+      issues.push({
+        level: 'info',
+        category: 'اختيار من أسئلة',
+        message: `القسم ${sec.section_number}: مطلوب الإجابة عن ${sec.max_questions_to_answer} من ${roots} سؤال ✓`,
+        details: sec.section_title
+      });
+    }
+
+    // Question types breakdown
+    const typeCount = new Map<string, number>();
+    for (const q of leaves) {
+      typeCount.set(q.question_type, (typeCount.get(q.question_type) || 0) + 1);
+    }
+    if (typeCount.size > 0) {
+      const typeLabels: Record<string, string> = {
+        'multiple_choice': 'اختيار من متعدد',
+        'open_ended': 'مفتوح',
+        'fill_in_blank': 'ملء فراغ',
+        'true_false': 'صح/خطأ',
+        'matching': 'مطابقة',
+        'multi_part': 'متعدد الأجزاء',
+        'code': 'برمجة',
+      };
+      const parts = [...typeCount.entries()].map(([type, count]) => 
+        `${typeLabels[type] || type}: ${count}`
+      );
+      issues.push({
+        level: 'info',
+        category: 'أنواع الأسئلة',
+        message: `القسم ${sec.section_number}: ${parts.join(' | ')}`,
+        details: sec.section_title
+      });
+    }
+  }
+
+  // Total exam summary
+  if (sections.length > 1) {
+    const totalPoints = sections.reduce((s, sec) => s + sec.total_points, 0);
+    const totalLeaves = sections.reduce((s, sec) => s + collectLeafQuestions(sec.questions).length, 0);
+    const totalAll = sections.reduce((s, sec) => s + countAll(sec.questions), 0);
+    issues.push({
+      level: 'info',
+      category: 'ملخص الامتحان',
+      message: `إجمالي: ${sections.length} أقسام | ${totalAll} سؤال (${totalLeaves} طرفي) | ${totalPoints} علامة`,
+      details: totalPoints === 100 ? 'المجموع الكلي 100 علامة ✓' : `المجموع الكلي ${totalPoints} علامة`
+    });
+  }
+
+  return issues;
 };
 
 /** 11. Point-per-question anomaly detection */
