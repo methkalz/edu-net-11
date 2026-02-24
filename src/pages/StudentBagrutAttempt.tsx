@@ -28,6 +28,7 @@ import {
   Circle,
   Loader2,
   Home,
+  Lock,
 } from 'lucide-react';
 import { logger } from '@/lib/logging';
 import type { ParsedQuestion, ParsedSection } from '@/lib/bagrut/buildBagrutPreview';
@@ -56,6 +57,10 @@ export default function StudentBagrutAttempt() {
     isSubmitting,
     isSubmitted,
     isTimeExpired,
+    // دوال مساعدة لحد N-of-M
+    findSectionForQuestion,
+    getAnsweredRootCountInSection,
+    collectAllSubIds,
   } = useBagrutAttempt(examId, user?.id);
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -113,18 +118,31 @@ export default function StudentBagrutAttempt() {
   const isQuestionAnswered = useCallback((question: ParsedQuestion): boolean => {
     const qId = question.question_db_id || question.question_number;
     
-    // إذا كان سؤال له أسئلة فرعية، نتحقق منها
     if (question.sub_questions && question.sub_questions.length > 0) {
-      // السؤال محلول إذا تمت الإجابة على جميع أسئلته الفرعية
       return question.sub_questions.every(subQ => {
         const subQId = subQ.question_db_id || subQ.question_number;
         return answers[subQId] && answers[subQId].answer;
       });
     }
     
-    // للأسئلة العادية، نتحقق من الإجابة المباشرة
     return !!(answers[qId] && answers[qId].answer);
   }, [answers]);
+
+  // دالة للتحقق إذا كان السؤال مقفلاً (وصل القسم لحد N والسؤال غير مجاب)
+  const isQuestionLocked = useCallback((question: ParsedQuestion): boolean => {
+    const section = findSectionForQuestion(question.question_db_id || question.question_number);
+    if (!section || !section.max_questions_to_answer) return false;
+    
+    const maxQ = section.max_questions_to_answer;
+    const answeredCount = getAnsweredRootCountInSection(section, answers);
+    
+    if (answeredCount < maxQ) return false;
+    
+    // تحقق إذا السؤال الحالي (أو أي من فرعياته) مجاب — إذا نعم فليس مقفلاً
+    const allIds = collectAllSubIds(question);
+    const hasAnswer = allIds.some(id => answers[id]?.answer);
+    return !hasAnswer;
+  }, [findSectionForQuestion, getAnsweredRootCountInSection, collectAllSubIds, answers]);
 
   // إحصائيات الإجابات - مع مراعاة max_questions_to_answer
   const answeredCount = useMemo(() => {
@@ -368,6 +386,7 @@ export default function StudentBagrutAttempt() {
                     const qId = q.question_db_id || q.question_number;
                     const isAnswered = isQuestionAnswered(q);
                     const isCurrent = index === currentQuestionIndex;
+                    const locked = isQuestionLocked(q);
 
                     return (
                       <button
@@ -378,10 +397,13 @@ export default function StudentBagrutAttempt() {
                             ? 'bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2'
                             : isAnswered
                             ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                            : locked
+                            ? 'bg-muted/50 text-muted-foreground opacity-50'
                             : 'bg-muted hover:bg-muted/80'
                         }`}
+                        title={locked ? 'مقفل — وصلت للحد الأقصى' : undefined}
                       >
-                        {index + 1}
+                        {locked && !isAnswered ? <Lock className="h-3 w-3" /> : index + 1}
                       </button>
                     );
                   })}
@@ -441,13 +463,23 @@ export default function StudentBagrutAttempt() {
             </div>
           </div>
 
+          {/* تنبيه القفل إذا وصل الطالب لحد N */}
+          {isQuestionLocked(currentQuestion) && (
+            <Alert className="mb-4 border-orange-300 bg-orange-50 dark:bg-orange-950/20 dark:border-orange-800">
+              <Lock className="h-4 w-4 text-orange-600" />
+              <AlertDescription className="text-orange-700 dark:text-orange-400">
+                لقد أجبت على العدد المسموح من الأسئلة في هذا القسم. لتعديل اختيارك، احذف إجابة سؤال آخر أولاً.
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* السؤال - محمي ضد النسخ */}
           <ExamAntiCopyWrapper enabled={true}>
             <BagrutQuestionRenderer
               question={currentQuestion}
-              answers={answers}  // ← تمرير كل الإجابات
+              answers={answers}
               onAnswerChange={updateAnswer}
-              disabled={isSubmitting}
+              disabled={isSubmitting || isQuestionLocked(currentQuestion)}
             />
           </ExamAntiCopyWrapper>
 

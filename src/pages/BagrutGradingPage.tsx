@@ -648,10 +648,17 @@ function GradingDialog({
     if ((question.question_type === 'mcq' || question.question_type === 'multiple_choice') && question.choices) {
       const correctChoice = question.choices.find((c: any) => c.is_correct);
       if (correctChoice) {
-        // الخيار المختار من الطالب (رقم 1-based)
-        const choiceIndex = typeof value === 'number' ? value : parseInt(value);
-        const correctIndex = question.choices.indexOf(correctChoice) + 1;
-        const isCorrect = choiceIndex === correctIndex;
+        const strValue = String(value).trim();
+        // مقارنة مباشرة بمعرف الخيار أو نصه
+        let isCorrect = strValue === String(correctChoice.id) || strValue === String(correctChoice.text);
+        // fallback: مقارنة رقمية (1-based index)
+        if (!isCorrect) {
+          const numValue = parseInt(strValue);
+          if (!isNaN(numValue)) {
+            const correctIndex = question.choices.indexOf(correctChoice) + 1;
+            isCorrect = numValue === correctIndex;
+          }
+        }
         return {
           isAutoGradable: true,
           isCorrect,
