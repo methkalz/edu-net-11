@@ -371,13 +371,106 @@ export function useBagrutAttempt(examId: string | undefined, studentId: string |
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [attemptId]);
 
-  // تحديث إجابة
-  const updateAnswer = useCallback((questionId: string, answer: BagrutAnswer) => {
-    setAnswers(prev => ({
-      ...prev,
-      [questionId]: answer,
-    }));
+  // دالة مساعدة: إيجاد القسم الذي ينتمي له سؤال (بحث عودي يشمل الأسئلة الفرعية)
+  const findSectionForQuestion = useCallback((questionId: string): ParsedSection | null => {
+    if (!examQuery.data) return null;
+    const findInQuestions = (questions: ParsedQuestion[]): boolean => {
+      for (const q of questions) {
+        if ((q.question_db_id || q.question_number) === questionId) return true;
+        if (q.sub_questions && findInQuestions(q.sub_questions)) return true;
+      }
+      return false;
+    };
+    for (const section of examQuery.data.sections) {
+      if (selectedSectionIds.includes(section.section_db_id!) && findInQuestions(section.questions)) {
+        return section;
+      }
+    }
+    return null;
+  }, [examQuery.data, selectedSectionIds]);
+
+  // دالة مساعدة: إيجاد السؤال الجذر لسؤال فرعي
+  const findRootQuestionId = useCallback((questionId: string, section: ParsedSection): string | null => {
+    const findRoot = (questions: ParsedQuestion[], rootId: string | null): string | null => {
+      for (const q of questions) {
+        const qId = q.question_db_id || q.question_number;
+        const currentRoot = rootId || qId;
+        if (qId === questionId) return currentRoot;
+        if (q.sub_questions) {
+          const found = findRoot(q.sub_questions, currentRoot);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+    return findRoot(section.questions, null);
   }, []);
+
+  // دالة مساعدة: جمع كل IDs الأسئلة الفرعية لسؤال جذر
+  const collectAllSubIds = useCallback((question: ParsedQuestion): string[] => {
+    const ids: string[] = [];
+    const collect = (q: ParsedQuestion) => {
+      ids.push(q.question_db_id || q.question_number);
+      q.sub_questions?.forEach(collect);
+    };
+    collect(question);
+    return ids;
+  }, []);
+
+  // دالة مساعدة: حساب عدد الأسئلة الجذر المجابة في قسم معين
+  const getAnsweredRootCountInSection = useCallback((section: ParsedSection, currentAnswers: Record<string, BagrutAnswer>): number => {
+    let count = 0;
+    for (const rootQ of section.questions) {
+      const allIds = collectAllSubIds(rootQ);
+      // السؤال الجذر محسوب إذا تمت الإجابة على أي من أسئلته (هو أو فرعياته)
+      const hasAnyAnswer = allIds.some(id => currentAnswers[id]?.answer);
+      if (hasAnyAnswer) count++;
+    }
+    return count;
+  }, [collectAllSubIds]);
+
+  // تحديث إجابة مع فرض حد N-of-M
+  const updateAnswer = useCallback((questionId: string, answer: BagrutAnswer) => {
+    setAnswers(prev => {
+      const section = findSectionForQuestion(questionId);
+      const maxQ = section?.max_questions_to_answer;
+
+      // إذا لا يوجد حد، أو الإجابة فارغة (حذف)، نسمح دائماً
+      if (!section || !maxQ || !answer.answer) {
+        return { ...prev, [questionId]: answer };
+      }
+
+      // إيجاد السؤال الجذر لهذا السؤال
+      const rootId = findRootQuestionId(questionId, section);
+
+      // التحقق إذا السؤال الجذر مجاب مسبقاً (تعديل وليس إضافة جديدة)
+      if (rootId) {
+        const rootQ = section.questions.find(q => (q.question_db_id || q.question_number) === rootId);
+        if (rootQ) {
+          const allIds = collectAllSubIds(rootQ);
+          const alreadyAnswered = allIds.some(id => prev[id]?.answer);
+          if (alreadyAnswered) {
+            // تعديل إجابة موجودة — مسموح
+            return { ...prev, [questionId]: answer };
+          }
+        }
+      }
+
+      // حساب عدد الأسئلة الجذر المجابة حالياً
+      const answeredCount = getAnsweredRootCountInSection(section, prev);
+      if (answeredCount >= maxQ) {
+        // وصلنا للحد — نرفض
+        toast({
+          title: `⚠️ وصلت للحد الأقصى (${maxQ} أسئلة)`,
+          description: 'لإضافة إجابة جديدة، احذف إجابة سؤال آخر في هذا القسم أولاً',
+          variant: 'destructive',
+        });
+        return prev; // لا تغيير
+      }
+
+      return { ...prev, [questionId]: answer };
+    });
+  }, [findSectionForQuestion, findRootQuestionId, collectAllSubIds, getAnsweredRootCountInSection, toast]);
 
   // بدء الامتحان
   const startExam = useCallback((sectionIds: string[]) => {
@@ -452,6 +545,10 @@ export function useBagrutAttempt(examId: string | undefined, studentId: string |
     isSubmitted: submitExamMutation.isSuccess,
     isTimeExpired,
     remainingSeconds,
+    // دوال مساعدة لحد N-of-M (تُستخدم في واجهة الطالب)
+    findSectionForQuestion,
+    getAnsweredRootCountInSection,
+    collectAllSubIds,
   };
 }
 
