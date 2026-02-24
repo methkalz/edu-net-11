@@ -6,78 +6,17 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Bot, Play, Eye, RotateCcw, CheckCircle2, AlertTriangle, XCircle, Wrench } from 'lucide-react';
+import { Bot, Play, Eye, RotateCcw, CheckCircle2, AlertTriangle, XCircle, Wrench, History, BarChart3, Trophy } from 'lucide-react';
 import { useTrueFalseAutoFix, FixResult } from '@/hooks/useTrueFalseAutoFix';
-
-const confidenceColors: Record<string, string> = {
-  high: 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20',
-  medium: 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/20',
-  low: 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20',
-};
-
-const confidenceLabels: Record<string, string> = {
-  high: 'عالية',
-  medium: 'متوسطة',
-  low: 'منخفضة',
-};
-
-const statusIcons: Record<string, React.ReactNode> = {
-  confirmed: <CheckCircle2 className="w-4 h-4 text-green-600" />,
-  corrected: <Wrench className="w-4 h-4 text-blue-600" />,
-  normalized: <AlertTriangle className="w-4 h-4 text-yellow-600" />,
-  skipped: <XCircle className="w-4 h-4 text-red-600" />,
-};
-
-const statusLabels: Record<string, string> = {
-  confirmed: 'مُؤكّد',
-  corrected: 'مُصحّح',
-  normalized: 'مُوحّد',
-  skipped: 'تم تخطيه',
-};
-
-function QuestionCard({ result }: { result: FixResult }) {
-  return (
-    <Card className="mb-3">
-      <CardContent className="pt-4 pb-3 space-y-2">
-        <div className="flex items-start justify-between gap-2">
-          <p className="text-sm font-medium leading-relaxed flex-1">{result.question_text}</p>
-          <div className="flex items-center gap-1.5 shrink-0">
-            {statusIcons[result.status]}
-            <Badge variant="outline" className="text-xs">
-              {statusLabels[result.status]}
-            </Badge>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 text-xs">
-          {result.status === 'corrected' && (
-            <>
-              <span className="line-through text-destructive">{result.old_answer}</span>
-              <span>→</span>
-              <span className="font-bold text-green-700 dark:text-green-400">{result.new_answer}</span>
-            </>
-          )}
-          {result.status === 'confirmed' && (
-            <span className="text-green-700 dark:text-green-400 font-medium">الإجابة: {result.new_answer}</span>
-          )}
-          {result.status === 'normalized' && (
-            <span className="text-yellow-700 dark:text-yellow-400 font-medium">تم توحيد الصيغة → {result.new_answer}</span>
-          )}
-          <Badge variant="outline" className={confidenceColors[result.confidence]}>
-            ثقة {confidenceLabels[result.confidence]}
-          </Badge>
-        </div>
-
-        {result.explanation && (
-          <p className="text-xs text-muted-foreground bg-muted/50 rounded-md p-2">{result.explanation}</p>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
+import { useTrueFalseFixHistory } from '@/hooks/useTrueFalseFixHistory';
+import QuestionCard from '@/components/true-false-fix/QuestionCard';
+import CurrentStatsSection from '@/components/true-false-fix/CurrentStatsSection';
+import HistorySection from '@/components/true-false-fix/HistorySection';
+import CumulativeStatsCard from '@/components/true-false-fix/CumulativeStatsCard';
 
 export default function TrueFalseFixPage() {
   const { status, response, error, runFix, reset } = useTrueFalseAutoFix();
+  const { history, stats, cumulativeStats, isLoading: historyLoading, refetch } = useTrueFalseFixHistory();
   const [activeTab, setActiveTab] = useState('all');
 
   const summary = response?.summary;
@@ -87,11 +26,24 @@ export default function TrueFalseFixPage() {
     ? results
     : results.filter((r) => r.status === activeTab);
 
+  const handleRunFix = async (dryRun: boolean) => {
+    await runFix(dryRun);
+    refetch();
+  };
+
   return (
     <div className="min-h-screen bg-background" dir="rtl">
       <ModernHeader title="إصلاح أسئلة صح/خطأ بالذكاء الاصطناعي" showBackButton backPath="/exam-bank-management" />
 
       <div className="container mx-auto px-4 py-8 space-y-6 max-w-4xl">
+        {/* Current Stats */}
+        <CurrentStatsSection stats={stats} isLoading={historyLoading} />
+
+        {/* Cumulative Achievements */}
+        {cumulativeStats.totalOperations > 0 && (
+          <CumulativeStatsCard cumulativeStats={cumulativeStats} />
+        )}
+
         {/* Control Card */}
         <Card>
           <CardHeader>
@@ -127,11 +79,11 @@ export default function TrueFalseFixPage() {
             <div className="flex gap-3 flex-wrap">
               {status === 'idle' && (
                 <>
-                  <Button onClick={() => runFix(true)} variant="outline" className="gap-2">
+                  <Button onClick={() => handleRunFix(true)} variant="outline" className="gap-2">
                     <Eye className="w-4 h-4" />
                     معاينة (بدون تعديل)
                   </Button>
-                  <Button onClick={() => runFix(false)} className="gap-2">
+                  <Button onClick={() => handleRunFix(false)} className="gap-2">
                     <Play className="w-4 h-4" />
                     بدء الإصلاح
                   </Button>
@@ -221,6 +173,9 @@ export default function TrueFalseFixPage() {
             </CardContent>
           </Card>
         )}
+
+        {/* History */}
+        <HistorySection history={history} isLoading={historyLoading} />
       </div>
     </div>
   );

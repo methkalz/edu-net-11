@@ -338,6 +338,29 @@ serve(async (req) => {
 
     console.log("Fix complete:", summary);
 
+    // Log to audit_log
+    try {
+      await supabase.from("audit_log").insert({
+        action: dryRun ? "dry_run" : "auto_fix",
+        entity: "true_false_fix",
+        actor_user_id: "system",
+        payload_json: {
+          summary,
+          results: allResults.map((r) => ({
+            question_id: r.question_id,
+            question_text: r.question_text,
+            old_answer: r.old_answer,
+            new_answer: r.new_answer,
+            status: r.status,
+            explanation: r.explanation,
+            confidence: r.confidence,
+          })),
+        },
+      });
+    } catch (auditErr) {
+      console.error("Failed to write audit log:", auditErr);
+    }
+
     return new Response(
       JSON.stringify({ summary, results: allResults }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
