@@ -935,12 +935,23 @@ function GradingDialog({
 
     // 3. MCQ - عرض الخيار المختار
     if ((question.question_type === 'mcq' || question.question_type === 'multiple_choice') && question.choices) {
-      const choiceIndex = typeof value === 'number' ? value - 1 : parseInt(value) - 1;
-      const choice = question.choices[choiceIndex];
-      if (choice) {
+      const strValue = String(value).trim().toLowerCase();
+      // أولاً: البحث بالمعرف أو النص
+      let matchedChoice = question.choices.find((c: any) => 
+        String(c.id).toLowerCase() === strValue || String(c.text).trim().toLowerCase() === strValue
+      );
+      // fallback: البحث بالفهرس الرقمي
+      if (!matchedChoice) {
+        const numVal = parseInt(String(value));
+        if (!isNaN(numVal) && numVal >= 1 && numVal <= question.choices.length) {
+          matchedChoice = question.choices[numVal - 1];
+        }
+      }
+      if (matchedChoice) {
+        const idx = question.choices.indexOf(matchedChoice) + 1;
         return <span>
-            <span className="text-muted-foreground">الخيار {choiceIndex + 1}:</span>{' '}
-            <span className="font-medium">{choice.text}</span>
+            <span className="text-muted-foreground">الخيار {idx}:</span>{' '}
+            <span className="font-medium">{matchedChoice.text}</span>
           </span>;
       }
     }
