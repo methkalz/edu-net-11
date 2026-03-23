@@ -1034,7 +1034,7 @@ function GradingDialog({
       if (question.choices && question.choices.length > 0) {
         const correctChoice = question.choices.find((c: any) => c.is_correct);
         if (correctChoice) {
-          const isTrue = correctChoice.text === 'صح' || String(correctChoice.id) === '1';
+          const isTrue = correctChoice.text === 'صح' || String(correctChoice.id) === '1' || String(correctChoice.id) === 'choice_true' || String(correctChoice.id) === 'true';
           return <span className="font-bold text-green-600">{isTrue ? 'صح ✓' : 'خطأ ✗'}</span>;
         }
       }
