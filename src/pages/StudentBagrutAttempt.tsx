@@ -144,23 +144,44 @@ export default function StudentBagrutAttempt() {
     return !hasAnswer;
   }, [findSectionForQuestion, getAnsweredRootCountInSection, collectAllSubIds, answers]);
 
-  // إحصائيات الإجابات - مع مراعاة max_questions_to_answer
-  const answeredCount = useMemo(() => {
-    return allQuestions.filter(q => isQuestionAnswered(q)).length;
-  }, [allQuestions, isQuestionAnswered]);
+  // دالة مساعدة لحساب الأسئلة الطرفية (leaf) عودياً
+  const countLeafQuestions = useCallback((question: ParsedQuestion): number => {
+    if (question.sub_questions && question.sub_questions.length > 0) {
+      return question.sub_questions.reduce((sum, sq) => sum + countLeafQuestions(sq), 0);
+    }
+    return 1;
+  }, []);
 
-  // العدد المطلوب للإجابة (مع مراعاة "اختر N من M")
+  const countAnsweredLeaves = useCallback((question: ParsedQuestion): number => {
+    if (question.sub_questions && question.sub_questions.length > 0) {
+      return question.sub_questions.reduce((sum, sq) => sum + countAnsweredLeaves(sq), 0);
+    }
+    const qId = question.question_db_id || question.question_number;
+    return (answers[qId] && answers[qId].answer) ? 1 : 0;
+  }, [answers]);
+
+  // إحصائيات الإجابات - على مستوى الأسئلة الطرفية (leaf)
+  const answeredCount = useMemo(() => {
+    return allQuestions.reduce((sum, q) => sum + countAnsweredLeaves(q), 0);
+  }, [allQuestions, countAnsweredLeaves]);
+
+  // العدد المطلوب للإجابة (مع مراعاة "اختر N من M") على مستوى leaf
   const requiredAnswerCount = useMemo(() => {
-    if (!examData || selectedSectionIds.length === 0) return allQuestions.length;
+    if (!examData || selectedSectionIds.length === 0) {
+      return allQuestions.reduce((sum, q) => sum + countLeafQuestions(q), 0);
+    }
     let required = 0;
     examData.sections.forEach(section => {
       if (selectedSectionIds.includes(section.section_db_id!)) {
         const maxQ = section.max_questions_to_answer;
-        required += maxQ && maxQ < section.questions.length ? maxQ : section.questions.length;
+        const questionsToCount = maxQ && maxQ < section.questions.length
+          ? section.questions.slice(0, maxQ)
+          : section.questions;
+        required += questionsToCount.reduce((sum, q) => sum + countLeafQuestions(q), 0);
       }
     });
     return required;
-  }, [examData, selectedSectionIds, allQuestions.length]);
+  }, [examData, selectedSectionIds, allQuestions, countLeafQuestions]);
 
   const progressPercent = requiredAnswerCount > 0 
     ? Math.min(100, Math.round((answeredCount / requiredAnswerCount) * 100)) 
