@@ -678,7 +678,7 @@ function GradingDialog({
       if (question.choices?.length && question.choices.length > 0) {
         const correctChoice = question.choices.find((c: any) => c.is_correct);
         if (correctChoice) {
-          correctIsTrue = correctChoice.text === 'صح' || String(correctChoice.id) === '1';
+          correctIsTrue = correctChoice.text === 'صح' || String(correctChoice.id) === '1' || String(correctChoice.id) === 'choice_true' || String(correctChoice.id) === 'true';
         }
       } else if (question.correct_answer) {
         const answer = String(question.correct_answer).toLowerCase();
