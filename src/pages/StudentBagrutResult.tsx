@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
+import SafeHtml from '@/components/bagrut/SafeHtml';
 
 // ====== بناء شجرة الأسئلة المتداخلة (N مستويات) ======
 interface QuestionTreeNode {
