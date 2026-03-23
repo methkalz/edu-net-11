@@ -432,7 +432,7 @@ function FillBlankQuestion({
             value={currentValue}
             onChange={(e) => handleBlankChange(blankId, e.target.value)}
             disabled={disabled}
-            className="w-28 inline-block px-2 py-1 h-8 text-center"
+            className="min-w-[7rem] w-auto max-w-[20rem] inline-block px-2 py-1 h-8 text-center"
             placeholder={blankDef?.placeholder || `BLANK ${blankId}`}
           />
         )}
