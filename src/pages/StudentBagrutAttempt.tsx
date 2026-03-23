@@ -408,24 +408,52 @@ export default function StudentBagrutAttempt() {
                     const isAnswered = isQuestionAnswered(q);
                     const isCurrent = index === currentQuestionIndex;
                     const locked = isQuestionLocked(q);
+                    const hasSubs = q.sub_questions && q.sub_questions.length > 0;
 
                     return (
-                      <button
-                        key={qId}
-                        onClick={() => goToQuestion(index)}
-                        className={`w-10 h-10 rounded-lg text-sm font-medium transition-all flex items-center justify-center ${
-                          isCurrent
-                            ? 'bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2'
-                            : isAnswered
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                            : locked
-                            ? 'bg-muted/50 text-muted-foreground opacity-50'
-                            : 'bg-muted hover:bg-muted/80'
-                        }`}
-                        title={locked ? 'مقفل — وصلت للحد الأقصى' : undefined}
-                      >
-                        {locked && !isAnswered ? <Lock className="h-3 w-3" /> : index + 1}
-                      </button>
+                      <React.Fragment key={qId}>
+                        <button
+                          onClick={() => goToQuestion(index)}
+                          className={`w-10 h-10 rounded-lg text-sm font-medium transition-all flex items-center justify-center ${
+                            isCurrent
+                              ? 'bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2'
+                              : isAnswered
+                              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                              : locked
+                              ? 'bg-muted/50 text-muted-foreground opacity-50'
+                              : 'bg-muted hover:bg-muted/80'
+                          }`}
+                          title={locked ? 'مقفل — وصلت للحد الأقصى' : undefined}
+                        >
+                          {locked && !isAnswered ? <Lock className="h-3 w-3" /> : index + 1}
+                        </button>
+                        {/* مربعات فرعية عند تحديد سؤال ذو أسئلة فرعية */}
+                        {isCurrent && hasSubs && (
+                          <div className="col-span-4 flex flex-wrap gap-1 py-1">
+                            {q.sub_questions!.map((subQ, si) => {
+                              const subId = subQ.question_db_id || subQ.question_number;
+                              const subAnswered = !!(answers[subId] && answers[subId].answer);
+                              return (
+                                <button
+                                  key={subId}
+                                  onClick={() => {
+                                    const el = document.getElementById(`sub-q-${subId}`);
+                                    el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                  }}
+                                  className={`w-7 h-7 rounded text-xs font-medium transition-all flex items-center justify-center ${
+                                    subAnswered
+                                      ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                      : 'bg-muted hover:bg-muted/80'
+                                  }`}
+                                  title={subQ.sub_question_label || `فرعي ${si + 1}`}
+                                >
+                                  {subQ.sub_question_label || String.fromCharCode(1571 + si)}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </React.Fragment>
                     );
                   })}
                 </div>
