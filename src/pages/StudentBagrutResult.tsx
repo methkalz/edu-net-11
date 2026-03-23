@@ -126,7 +126,7 @@ function ResultQuestionNode({
           </Badge>
         </div>
 
-        <p className="text-sm mb-2 text-muted-foreground">{question.question_text}</p>
+        <SafeHtml html={question.question_text} className="text-sm mb-2 text-muted-foreground" />
 
         {!isParent && (
           <div className="grid gap-1.5 text-sm">

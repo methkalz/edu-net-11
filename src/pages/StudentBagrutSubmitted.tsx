@@ -33,7 +33,14 @@ export default function StudentBagrutSubmitted() {
   useEffect(() => {
     queryClient.invalidateQueries({ queryKey: ['bagrut-exam-attempt'] });
     queryClient.invalidateQueries({ queryKey: ['student-bagrut-exams'] });
-  }, [queryClient]);
+    // منع الرجوع للامتحان المُسلّم عبر زر الخلف
+    window.history.replaceState(null, '', window.location.href);
+    const handlePopState = () => {
+      navigate('/student/bagrut-exams', { replace: true });
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [queryClient, navigate]);
 
   // جلب بيانات الامتحان والمحاولة إذا لم تكن موجودة في state
   const { data, isLoading } = useQuery({

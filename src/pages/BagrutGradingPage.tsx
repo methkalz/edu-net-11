@@ -1211,7 +1211,7 @@ function GradingDialog({
   };
   const scores = calculateTotalScore();
   return <Dialog open={open} onOpenChange={o => !o && onClose()}>
-      <DialogContent className="max-w-4xl h-[85vh] flex flex-col gap-0 p-0">
+      <DialogContent className="max-w-6xl h-[92vh] flex flex-col gap-0 p-0">
         {/* Header - Fixed */}
         <DialogHeader className="p-6 pb-4 border-b shrink-0 space-y-3">
           <DialogTitle className="flex items-center justify-between">
