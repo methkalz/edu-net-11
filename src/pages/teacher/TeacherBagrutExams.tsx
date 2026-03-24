@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import ModernHeader from '@/components/shared/ModernHeader';
 import { useTeacherBagrutStats, BagrutExamForTeacher } from '@/hooks/useTeacherBagrutStats';
+import TeacherExamPreviewDialog from '@/components/bagrut/TeacherExamPreviewDialog';
 import { useTeacherContentAccess } from '@/hooks/useTeacherContentAccess';
 import {
   GraduationCap,
