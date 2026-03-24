@@ -128,6 +128,8 @@ const ExamCard: React.FC<ExamCardProps> = ({ exam, onView }) => {
               </div>
             )}
             
+            <TeacherExamPreviewDialog examId={exam.id} examTitle={exam.title} />
+            
             <Button 
               variant={hasPending ? "default" : "outline"} 
               size="sm"
