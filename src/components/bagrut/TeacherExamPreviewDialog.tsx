@@ -4,9 +4,10 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Eye, Loader2 } from 'lucide-react';
+import { Eye } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { buildBagrutPreviewFromDb, type ParsedExam } from '@/lib/bagrut/buildBagrutPreview';
+import { supabase } from '@/integrations/supabase/client';
+import { buildBagrutPreviewFromDb } from '@/lib/bagrut/buildBagrutPreview';
 import BagrutQuestionRenderer from '@/components/bagrut/BagrutQuestionRenderer';
 
 interface Props {
@@ -17,9 +18,22 @@ interface Props {
 export default function TeacherExamPreviewDialog({ examId, examTitle }: Props) {
   const [open, setOpen] = useState(false);
 
-  const { data: preview, isLoading } = useQuery<ParsedExam | null>({
+  const { data: preview, isLoading } = useQuery({
     queryKey: ['bagrut-teacher-preview', examId],
-    queryFn: () => buildBagrutPreviewFromDb(examId),
+    queryFn: async () => {
+      const [examRes, sectionsRes, questionsRes] = await Promise.all([
+        supabase.from('bagrut_exams').select('*').eq('id', examId).single(),
+        supabase.from('bagrut_exam_sections').select('*').eq('exam_id', examId).order('order_index'),
+        supabase.from('bagrut_questions').select('*').eq('exam_id', examId).order('order_index'),
+      ]);
+      if (!examRes.data) return null;
+      const result = buildBagrutPreviewFromDb({
+        exam: examRes.data as any,
+        sections: (sectionsRes.data || []) as any[],
+        questions: (questionsRes.data || []) as any[],
+      });
+      return result.exam;
+    },
     enabled: open,
   });
 
@@ -70,6 +84,8 @@ export default function TeacherExamPreviewDialog({ examId, examTitle }: Props) {
                       <BagrutQuestionRenderer
                         key={q.question_db_id || qi}
                         question={q}
+                        answers={{}}
+                        onAnswerChange={() => {}}
                         showAnswer={true}
                         disabled={true}
                       />
