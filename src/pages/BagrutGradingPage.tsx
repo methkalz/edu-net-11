@@ -678,7 +678,7 @@ function GradingDialog({
       if (question.choices?.length && question.choices.length > 0) {
         const correctChoice = question.choices.find((c: any) => c.is_correct);
         if (correctChoice) {
-          correctIsTrue = correctChoice.text === 'صح' || String(correctChoice.id) === '1';
+          correctIsTrue = correctChoice.text === 'صح' || String(correctChoice.id) === '1' || String(correctChoice.id) === 'choice_true' || String(correctChoice.id) === 'true';
         }
       } else if (question.correct_answer) {
         const answer = String(question.correct_answer).toLowerCase();
@@ -935,12 +935,23 @@ function GradingDialog({
 
     // 3. MCQ - عرض الخيار المختار
     if ((question.question_type === 'mcq' || question.question_type === 'multiple_choice') && question.choices) {
-      const choiceIndex = typeof value === 'number' ? value - 1 : parseInt(value) - 1;
-      const choice = question.choices[choiceIndex];
-      if (choice) {
+      const strValue = String(value).trim().toLowerCase();
+      // أولاً: البحث بالمعرف أو النص
+      let matchedChoice = question.choices.find((c: any) => 
+        String(c.id).toLowerCase() === strValue || String(c.text).trim().toLowerCase() === strValue
+      );
+      // fallback: البحث بالفهرس الرقمي
+      if (!matchedChoice) {
+        const numVal = parseInt(String(value));
+        if (!isNaN(numVal) && numVal >= 1 && numVal <= question.choices.length) {
+          matchedChoice = question.choices[numVal - 1];
+        }
+      }
+      if (matchedChoice) {
+        const idx = question.choices.indexOf(matchedChoice) + 1;
         return <span>
-            <span className="text-muted-foreground">الخيار {choiceIndex + 1}:</span>{' '}
-            <span className="font-medium">{choice.text}</span>
+            <span className="text-muted-foreground">الخيار {idx}:</span>{' '}
+            <span className="font-medium">{matchedChoice.text}</span>
           </span>;
       }
     }
@@ -1023,7 +1034,7 @@ function GradingDialog({
       if (question.choices && question.choices.length > 0) {
         const correctChoice = question.choices.find((c: any) => c.is_correct);
         if (correctChoice) {
-          const isTrue = correctChoice.text === 'صح' || String(correctChoice.id) === '1';
+          const isTrue = correctChoice.text === 'صح' || String(correctChoice.id) === '1' || String(correctChoice.id) === 'choice_true' || String(correctChoice.id) === 'true';
           return <span className="font-bold text-green-600">{isTrue ? 'صح ✓' : 'خطأ ✗'}</span>;
         }
       }
@@ -1200,7 +1211,7 @@ function GradingDialog({
   };
   const scores = calculateTotalScore();
   return <Dialog open={open} onOpenChange={o => !o && onClose()}>
-      <DialogContent className="max-w-4xl h-[85vh] flex flex-col gap-0 p-0">
+      <DialogContent className="max-w-6xl h-[92vh] flex flex-col gap-0 p-0">
         {/* Header - Fixed */}
         <DialogHeader className="p-6 pb-4 border-b shrink-0 space-y-3">
           <DialogTitle className="flex items-center justify-between">

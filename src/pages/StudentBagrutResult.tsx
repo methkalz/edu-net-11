@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
+import SafeHtml from '@/components/bagrut/SafeHtml';
 
 // ====== بناء شجرة الأسئلة المتداخلة (N مستويات) ======
 interface QuestionTreeNode {
@@ -126,7 +127,7 @@ function ResultQuestionNode({
           </Badge>
         </div>
 
-        <p className="text-sm mb-2 text-muted-foreground">{question.question_text}</p>
+        <SafeHtml html={question.question_text} className="text-sm mb-2 text-muted-foreground" />
 
         {!isParent && (
           <div className="grid gap-1.5 text-sm">

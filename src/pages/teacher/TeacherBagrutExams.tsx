@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import ModernHeader from '@/components/shared/ModernHeader';
 import { useTeacherBagrutStats, BagrutExamForTeacher } from '@/hooks/useTeacherBagrutStats';
+import TeacherExamPreviewDialog from '@/components/bagrut/TeacherExamPreviewDialog';
 import { useTeacherContentAccess } from '@/hooks/useTeacherContentAccess';
 import {
   GraduationCap,
@@ -126,6 +127,8 @@ const ExamCard: React.FC<ExamCardProps> = ({ exam, onView }) => {
                 <span className="font-medium">{exam.averageScore}%</span>
               </div>
             )}
+            
+            <TeacherExamPreviewDialog examId={exam.id} examTitle={exam.title} />
             
             <Button 
               variant={hasPending ? "default" : "outline"} 
