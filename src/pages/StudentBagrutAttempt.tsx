@@ -445,9 +445,9 @@ export default function StudentBagrutAttempt() {
                                       ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                                       : 'bg-muted hover:bg-muted/80'
                                   }`}
-                                  title={subQ.sub_question_label || `فرعي ${si + 1}`}
+                                  title={subQ.question_number || `فرعي ${si + 1}`}
                                 >
-                                  {subQ.sub_question_label || String.fromCharCode(1571 + si)}
+                                  {subQ.question_number || String.fromCharCode(1571 + si)}
                                 </button>
                               );
                             })}
