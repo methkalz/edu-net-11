@@ -1,19 +1,19 @@
 project_id = "swlwhjnwycvjdhgclwlx"
 
 [functions.create-google-doc]
-verify_jwt = false
+verify_jwt = true
 
 [functions.list-drive-files]
-verify_jwt = false
+verify_jwt = true
 
 [functions.test-google-connection]
-verify_jwt = false
+verify_jwt = true
 
 [functions.create-drive-folder]
-verify_jwt = false
+verify_jwt = true
 
 [functions.track-login]
-verify_jwt = false
+verify_jwt = true
 
 [functions.pdf-extract-text]
 verify_jwt = true
@@ -31,10 +31,10 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.parse-bagrut-exam]
-verify_jwt = false
+verify_jwt = true
 
 [functions.check-bagrut-job]
-verify_jwt = false
+verify_jwt = true
 
 [functions.fix-true-false-questions]
-verify_jwt = false
+verify_jwt = true

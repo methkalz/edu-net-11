@@ -7007,6 +7007,7 @@ export type Database = {
         Args: { p_exam_id: string; p_student_id: string }
         Returns: Json
       }
+      get_own_role: { Args: never; Returns: string }
       get_school_active_package: {
         Args: { school_uuid: string }
         Returns: Json
