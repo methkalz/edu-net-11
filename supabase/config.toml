@@ -31,10 +31,10 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.parse-bagrut-exam]
-verify_jwt = false
+verify_jwt = true
 
 [functions.check-bagrut-job]
-verify_jwt = false
+verify_jwt = true
 
 [functions.fix-true-false-questions]
-verify_jwt = false
+verify_jwt = true
