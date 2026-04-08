@@ -1,16 +1,16 @@
 project_id = "swlwhjnwycvjdhgclwlx"
 
 [functions.create-google-doc]
-verify_jwt = false
+verify_jwt = true
 
 [functions.list-drive-files]
-verify_jwt = false
+verify_jwt = true
 
 [functions.test-google-connection]
-verify_jwt = false
+verify_jwt = true
 
 [functions.create-drive-folder]
-verify_jwt = false
+verify_jwt = true
 
 [functions.track-login]
 verify_jwt = true
