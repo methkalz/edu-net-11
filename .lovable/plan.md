@@ -1,74 +1,51 @@
 
 
-# خطة تنفيذ الفحص الأمني 13.4.2026
+# خطة التنفيذ المصححة — تأمين جدول students
 
-## ملخص العمليات
+## المرحلة 1: تعديل RLS على جدول students (بدون تغيير)
 
-3 مراحل: migration واحد لقاعدة البيانات + تعديل ملفين في الكود + حذف مكتبة
+```sql
+-- حذف السياسة الواسعة الخطيرة
+DROP POLICY "School members can view their school students" ON public.students;
 
----
+-- حذف السياسة المكررة
+DROP POLICY "Users can view their own student record" ON public.students;
 
-## المرحلة 1: Migration قاعدة البيانات
+-- سياسة للطاقم فقط
+CREATE POLICY "Staff can view school students" ON public.students
+FOR SELECT TO authenticated
+USING (
+  (school_id = get_user_school_id() 
+   AND get_user_role() IN ('teacher'::app_role, 'school_admin'::app_role))
+  OR get_user_role() = 'superadmin'::app_role
+);
 
-### التغيير 1 — حذف سياسة USING(true) من bagrut_parsing_jobs
-- **الوضع الحالي**: سياسة `"Service role can update all jobs"` — UPDATE — `USING(true), WITH CHECK(true)`
-- **الإجراء**: `DROP POLICY`
-- **للتراجع**: `CREATE POLICY "Service role can update all jobs" ON bagrut_parsing_jobs FOR UPDATE USING (true) WITH CHECK (true);`
+-- "Students can view their own record" تبقى كما هي
+```
 
-### التغيير 2 — حذف سياسة WITH CHECK(true) من teacher_notifications
-- **الوضع الحالي**: سياسة `"Allow insert from triggers and functions"` — INSERT — `WITH CHECK(true)`
-- **الإجراء**: `DROP POLICY`
-- **للتراجع**: `CREATE POLICY "Allow insert from triggers and functions" ON teacher_notifications FOR INSERT WITH CHECK (true);`
+## المرحلة 2: إنشاء View آمن (مصحح حسب ملاحظة الخبير)
 
-### التغيير 3 — تقييد Materialized View: superadmin_school_stats
-- **الوضع الحالي**: لا توجد صلاحيات ممنوحة صراحة، لكنها مكشوفة عبر PostgREST API
-- **الإجراء**: `REVOKE ALL` من PUBLIC/anon/authenticated + `GRANT SELECT` لـ service_role فقط
-- **للتراجع**: `GRANT SELECT ON public.superadmin_school_stats TO authenticated;`
+```sql
+-- View بدون security_invoker — يتجاوز RLS لكن مقيد بـ WHERE
+CREATE OR REPLACE VIEW public.secure_students_view AS 
+SELECT id, full_name, school_id, created_at_utc 
+FROM public.students
+WHERE school_id = get_user_school_id();
 
-### التغيير 4 — تقييد Materialized View: student_current_streaks
-- **الوضع الحالي**: مكشوفة عبر API، تُستخدم فقط من دالة `get_student_dashboard_stats` (SECURITY DEFINER)
-- **الإجراء**: `REVOKE ALL` + `GRANT SELECT` لـ service_role فقط
-- **للتراجع**: `GRANT SELECT ON public.student_current_streaks TO authenticated;`
+GRANT SELECT ON public.secure_students_view TO authenticated;
+```
 
-### التغيير 5 — إنشاء secure_schools_view
-- **الوضع الحالي**: جدول schools يكشف أعمدة Stripe (`stripe_customer_id`, `stripe_subscription_id`, `subscription_status`)
-- **الإجراء**: إنشاء View يحتوي فقط على `id, name, city, plan, created_at, updated_at_utc` مع `security_invoker = on`
-- **للتراجع**: `DROP VIEW IF EXISTS public.secure_schools_view;`
+**لماذا هذا أفضل**: الـ View يعمل بصلاحيات مالكه (يتجاوز RLS)، لكن `WHERE school_id = get_user_school_id()` يضمن أن كل مستخدم يرى فقط طلاب مدرسته. لا يوجد email أو phone في الأعمدة المختارة. جاهز للوحة متصدرين مستقبلية.
 
----
+## المرحلة 3: لا تغييرات في الكود
 
-## المرحلة 2: تعديل الكود (ملفان)
+لا يوجد أي مكون طلابي يقرأ بيانات طلاب آخرين حالياً.
 
-### التغيير 6 — useGrade12Projects.ts (سطر 263)
-- **الحالي**: `from('schools').select('name')`
-- **الجديد**: `from('secure_schools_view').select('name')`
-- **للتراجع**: إعادة `'schools'`
+## الملفات المتأثرة
+- Migration جديد واحد فقط (SQL)
+- صفر تغييرات في ملفات TypeScript
 
-### التغيير 7 — useGrade10MiniProjects.ts (سطر 124)
-- **الحالي**: `from('schools').select('name')`
-- **الجديد**: `from('secure_schools_view').select('name')`
-- **للتراجع**: إعادة `'schools'`
-
----
-
-## المرحلة 3: حذف مكتبة jspdf
-
-### التغيير 8 — package.json (سطر 85)
-- **الحالي**: `"jspdf": "^3.0.1"` موجودة في dependencies
-- **الإجراء**: حذف السطر
-- **للتراجع**: إعادة إضافة `"jspdf": "^3.0.1"` إلى dependencies
-
----
-
-## ملاحظات أمان
-
-- الملفات التي تبقى تقرأ من `schools` مباشرة (SchoolManagement, SchoolAdminManagement, Dashboard, PackageManagement, TeacherContentSettingsForm, useTeacherPresence, useSecureOperations) — كلها تعمل بصلاحية **سوبر آدمن** حصراً ومحمية بسياسات RLS خاصة
-- الـ View الآمن يرث RLS من الجدول الأصلي بفضل `security_invoker = on`
-
-## التقنية
-
-- Migration واحد يشمل التغييرات 1-5
-- تعديل ملفين للتغييرات 6-7
-- حذف سطر من package.json للتغيير 8
-- سيتم إنشاء تقرير موثق في `/mnt/documents/`
+## التأثير
+- سوبر آدمن / مدير / معلم: بدون تغيير
+- طالب: يرى سجله فقط من `students`، يرى أسماء زملاء مدرسته من `secure_students_view` (بدون PII)
 
