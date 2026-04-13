@@ -260,7 +260,7 @@ export const useGrade12Projects = () => {
         // جلب اسم المدرسة
         if (userProfile.school_id) {
           const { data: schoolData } = await supabase
-            .from('schools')
+            .from('secure_schools_view')
             .select('name')
             .eq('id', userProfile.school_id)
             .maybeSingle();
