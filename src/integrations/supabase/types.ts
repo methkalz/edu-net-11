@@ -946,6 +946,13 @@ export type Database = {
             foreignKeyName: "class_students_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
+            referencedRelation: "secure_students_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_students_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
             referencedRelation: "students"
             referencedColumns: ["id"]
           },
@@ -1368,6 +1375,13 @@ export type Database = {
             foreignKeyName: "drive_folders_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
+            referencedRelation: "secure_students_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drive_folders_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
             referencedRelation: "students"
             referencedColumns: ["id"]
           },
@@ -1414,6 +1428,13 @@ export type Database = {
           updated_at_utc?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "email_logs_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "secure_students_view"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "email_logs_student_id_fkey"
             columns: ["student_id"]
@@ -6221,6 +6242,13 @@ export type Database = {
             foreignKeyName: "student_presence_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: true
+            referencedRelation: "secure_students_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_presence_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: true
             referencedRelation: "students"
             referencedColumns: ["id"]
           },
@@ -6986,6 +7014,49 @@ export type Database = {
           updated_at_utc?: string | null
         }
         Relationships: []
+      }
+      secure_students_view: {
+        Row: {
+          created_at_utc: string | null
+          full_name: string | null
+          id: string | null
+          school_id: string | null
+        }
+        Insert: {
+          created_at_utc?: string | null
+          full_name?: string | null
+          id?: string | null
+          school_id?: string | null
+        }
+        Update: {
+          created_at_utc?: string | null
+          full_name?: string | null
+          id?: string | null
+          school_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "students_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "students_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "secure_schools_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "students_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "superadmin_school_stats"
+            referencedColumns: ["school_id"]
+          },
+        ]
       }
       student_current_streaks: {
         Row: {
