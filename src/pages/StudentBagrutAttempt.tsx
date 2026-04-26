@@ -353,7 +353,7 @@ export default function StudentBagrutAttempt() {
       {/* banner المعاينة */}
       {isPreview && (
         <div className="bg-amber-500 text-white text-center py-2 px-4 font-medium text-sm">
-          وضع المعاينة — هذا ليس امتحان حقيقي ولن يتم حفظ أي إجابات
+          وضع المعاينة - هذا ليس امتحان حقيقي
         </div>
       )}
       {/* شريط المؤقت والمعلومات */}
