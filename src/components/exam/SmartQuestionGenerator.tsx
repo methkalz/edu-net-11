@@ -527,7 +527,7 @@ export function SmartQuestionGenerator({
                     <Loader2 className="w-4 h-4 ml-2 animate-spin" />
                     جاري التوليد...
                   </> : <>
-                    <Sparkles className="w-4 h-4 ml-2" />
+                    <Router className="w-4 h-4 ml-2" />
                     توليد الأسئلة
                   </>}
               </Button>
