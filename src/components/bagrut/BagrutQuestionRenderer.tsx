@@ -115,14 +115,16 @@ export default function BagrutQuestionRenderer({
 
         {/* مخزن الكلمات */}
         {question.word_bank && question.word_bank.length > 0 && (
-          <div className="mt-4 p-3 bg-accent/50 rounded-lg border border-border">
-            <p className="text-sm font-bold mb-3 text-foreground">مخزن الكلمات:</p>
-            <div className="flex flex-wrap gap-2">
-              {question.word_bank.map((word: string, index: number) => (
-                <Badge key={index} variant="outline" className="text-sm bg-background">
-                  {word}
-                </Badge>
-              ))}
+          <div className="mt-6 pt-4 border-t border-border">
+            <p className="text-base font-bold mb-3 text-foreground">مخزن الكلمات:</p>
+            <div className="p-3 bg-accent/50 rounded-lg border border-border">
+              <div className="flex flex-wrap gap-2">
+                {question.word_bank.map((word: string, index: number) => (
+                  <Badge key={index} variant="outline" className="text-sm px-3 py-1 bg-background">
+                    {word}
+                  </Badge>
+                ))}
+              </div>
             </div>
           </div>
         )}
@@ -432,7 +434,7 @@ function FillBlankQuestion({
             value={currentValue}
             onChange={(e) => handleBlankChange(blankId, e.target.value)}
             disabled={disabled}
-            className="min-w-[7rem] w-auto max-w-[20rem] inline-block px-2 py-1 h-8 text-center"
+            className="min-w-[7rem] w-auto max-w-[40rem] inline-block px-2 py-1 h-8 text-center overflow-x-auto"
             placeholder={blankDef?.placeholder || `BLANK ${blankId}`}
           />
         )}

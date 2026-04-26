@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { GraduationCap, Plus, FileText, Loader2, Trash2, Eye, Pencil, Send, RefreshCw, CheckCircle, AlertTriangle, AlertCircle, Clock, TrendingUp, Users, BookOpen, Calendar } from 'lucide-react';
+import { GraduationCap, Plus, FileText, Loader2, Trash2, Eye, Pencil, Send, RefreshCw, CheckCircle, AlertTriangle, AlertCircle, Clock, TrendingUp, Users, BookOpen, Calendar, MonitorPlay } from 'lucide-react';
 import { useBagrutStats } from '@/hooks/useBagrutStats';
 import ModernHeader from '@/components/shared/ModernHeader';
 import AppFooter from '@/components/shared/AppFooter';
@@ -790,6 +790,15 @@ const BagrutManagement: React.FC = () => {
                               ) : (
                                 <Eye className="h-4 w-4" />
                               )}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                              onClick={() => window.open(`/student/bagrut-attempt/${exam.id}?preview=true`, '_blank')}
+                              title="معاينة كطالب"
+                            >
+                              <MonitorPlay className="h-4 w-4" />
                             </Button>
                             <Button
                               variant="ghost"

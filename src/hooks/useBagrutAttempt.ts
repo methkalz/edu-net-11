@@ -42,7 +42,7 @@ export interface BagrutAnswer {
   time_spent_seconds?: number;
 }
 
-export function useBagrutAttempt(examId: string | undefined, studentId: string | undefined) {
+export function useBagrutAttempt(examId: string | undefined, studentId: string | undefined, previewMode = false) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [attemptId, setAttemptId] = useState<string | null>(null);
@@ -64,12 +64,14 @@ export function useBagrutAttempt(examId: string | undefined, studentId: string |
       logger.debug('جلب بيانات امتحان البجروت للحل', { examId, studentId });
 
       // جلب الامتحان
-      const { data: exam, error: examError } = await supabase
+      let examQuery = supabase
         .from('bagrut_exams')
         .select('*')
-        .eq('id', examId)
-        .eq('is_published', true)
-        .single();
+        .eq('id', examId);
+      if (!previewMode) {
+        examQuery = examQuery.eq('is_published', true);
+      }
+      const { data: exam, error: examError } = await examQuery.single();
 
       if (examError) throw examError;
       if (!exam) throw new Error('الامتحان غير موجود أو غير منشور');
@@ -113,20 +115,25 @@ export function useBagrutAttempt(examId: string | undefined, studentId: string |
         };
       });
 
-      // جلب محاولات الطالب
-      const { data: attempts } = await supabase
-        .from('bagrut_attempts')
-        .select('*')
-        .eq('exam_id', examId)
-        .eq('student_id', studentId)
-        .order('created_at', { ascending: false });
-
-      const submittedCount = (attempts || []).filter(
-        a => a.status === 'submitted' || a.status === 'graded'
-      ).length;
-
-      const inProgressAttempt = (attempts || []).find(a => a.status === 'in_progress');
+      // جلب محاولات الطالب (يتجاهل في وضع المعاينة)
+      let submittedCount = 0;
+      let inProgressAttempt: any = null;
       const maxAttempts = exam.max_attempts || 1;
+
+      if (!previewMode) {
+        const { data: attempts } = await supabase
+          .from('bagrut_attempts')
+          .select('*')
+          .eq('exam_id', examId)
+          .eq('student_id', studentId)
+          .order('created_at', { ascending: false });
+
+        submittedCount = (attempts || []).filter(
+          a => a.status === 'submitted' || a.status === 'graded'
+        ).length;
+
+        inProgressAttempt = (attempts || []).find(a => a.status === 'in_progress');
+      }
       
       // تحديد نوع هيكل الامتحان
       const examStructureType = (exam as any).exam_structure_type || 'standard';
@@ -156,7 +163,7 @@ export function useBagrutAttempt(examId: string | undefined, studentId: string |
           answers: (inProgressAttempt.answers as Record<string, any>) || {},
           time_spent_seconds: inProgressAttempt.time_spent_seconds || 0,
         } : null,
-        can_start: submittedCount < maxAttempts || !!inProgressAttempt,
+        can_start: previewMode || submittedCount < maxAttempts || !!inProgressAttempt,
         attempts_used: submittedCount,
         attempts_remaining: Math.max(0, maxAttempts - submittedCount),
       };
@@ -297,7 +304,7 @@ export function useBagrutAttempt(examId: string | undefined, studentId: string |
 
   // الحفظ التلقائي الدوري - كل 30 ثانية (مستقل عن تغييرات الإجابات)
   useEffect(() => {
-    if (!attemptId) return;
+    if (!attemptId || previewMode) return;
 
     autoSaveTimerRef.current = setInterval(() => {
       const currentAnswers = answersRef.current;
@@ -317,7 +324,7 @@ export function useBagrutAttempt(examId: string | undefined, studentId: string |
 
   // حفظ ذكي بعد 5 ثواني من آخر تغيير (debounced)
   useEffect(() => {
-    if (!attemptId || Object.keys(answers).length === 0) return;
+    if (!attemptId || previewMode || Object.keys(answers).length === 0) return;
 
     // إلغاء أي حفظ مؤجل سابق
     if (debouncedSaveRef.current) {
@@ -475,18 +482,25 @@ export function useBagrutAttempt(examId: string | undefined, studentId: string |
   // بدء الامتحان
   const startExam = useCallback((sectionIds: string[]) => {
     setSelectedSectionIds(sectionIds);
-    createAttemptMutation.mutate(sectionIds);
-  }, [createAttemptMutation]);
+    if (previewMode) {
+      setAttemptId('preview');
+      setAttemptStartedAt(new Date().toISOString());
+    } else {
+      createAttemptMutation.mutate(sectionIds);
+    }
+  }, [createAttemptMutation, previewMode]);
 
   // تقديم الامتحان
   const submitExam = useCallback(() => {
+    if (previewMode) return;
     submitExamMutation.mutate();
-  }, [submitExamMutation]);
+  }, [submitExamMutation, previewMode]);
 
   // حفظ يدوي
   const saveAnswers = useCallback(() => {
+    if (previewMode) return;
     saveAnswersMutation.mutate(answers);
-  }, [answers, saveAnswersMutation]);
+  }, [answers, saveAnswersMutation, previewMode]);
 
   // حساب إذا انتهى وقت المحاولة (يستمر حتى لو خرج الطالب من الصفحة)
   const isTimeExpired = useMemo(() => {
@@ -509,6 +523,7 @@ export function useBagrutAttempt(examId: string | undefined, studentId: string |
 
   // تقديم تلقائي عند انتهاء الوقت
   const autoSubmitOnTimeExpired = useCallback(() => {
+    if (previewMode) return;
     if (isTimeExpired && attemptId && !hasAutoSubmittedRef.current && !submitExamMutation.isPending) {
       hasAutoSubmittedRef.current = true;
       logger.info('تقديم تلقائي - انتهى وقت الامتحان');
@@ -545,6 +560,7 @@ export function useBagrutAttempt(examId: string | undefined, studentId: string |
     isSubmitted: submitExamMutation.isSuccess,
     isTimeExpired,
     remainingSeconds,
+    previewMode,
     // دوال مساعدة لحد N-of-M (تُستخدم في واجهة الطالب)
     findSectionForQuestion,
     getAnsweredRootCountInSection,

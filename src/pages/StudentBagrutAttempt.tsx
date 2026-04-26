@@ -1,6 +1,6 @@
 // صفحة حل امتحان البجروت للطالب
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useBagrutAttempt } from '@/hooks/useBagrutAttempt';
 import { useExamTimer } from '@/hooks/useExamTimer';
@@ -36,6 +36,8 @@ import type { ParsedQuestion, ParsedSection } from '@/lib/bagrut/buildBagrutPrev
 export default function StudentBagrutAttempt() {
   const { examId } = useParams<{ examId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isPreview = searchParams.get('preview') === 'true';
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -61,7 +63,7 @@ export default function StudentBagrutAttempt() {
     findSectionForQuestion,
     getAnsweredRootCountInSection,
     collectAllSubIds,
-  } = useBagrutAttempt(examId, user?.id);
+  } = useBagrutAttempt(examId, user?.id, isPreview);
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [showConfirmSubmit, setShowConfirmSubmit] = useState(false);
@@ -251,14 +253,14 @@ export default function StudentBagrutAttempt() {
       navigate(`/student/bagrut-submitted/${examId}`, {
         state: {
           answeredCount,
-          totalQuestions: allQuestions.length,
+          totalQuestions: requiredAnswerCount,
           timeSpentSeconds: calculateTimeSpent(),
           attemptNumber: examData?.attempt?.attempt_number || 1,
           examTitle: examData?.exam.title,
         },
       });
     }
-  }, [isSubmitted, attemptId, examId, navigate, answeredCount, allQuestions.length, calculateTimeSpent, examData]);
+  }, [isSubmitted, attemptId, examId, navigate, answeredCount, requiredAnswerCount, calculateTimeSpent, examData]);
 
   // Loading
   if (isLoading) {
@@ -348,6 +350,12 @@ export default function StudentBagrutAttempt() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* banner المعاينة */}
+      {isPreview && (
+        <div className="bg-amber-500 text-white text-center py-2 px-4 font-medium text-sm">
+          وضع المعاينة — هذا ليس امتحان حقيقي ولن يتم حفظ أي إجابات
+        </div>
+      )}
       {/* شريط المؤقت والمعلومات */}
       <div className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border">
         <div className="container mx-auto px-4 py-3">
@@ -427,8 +435,8 @@ export default function StudentBagrutAttempt() {
                         >
                           {locked && !isAnswered ? <Lock className="h-3 w-3" /> : index + 1}
                         </button>
-                        {/* مربعات فرعية عند تحديد سؤال ذو أسئلة فرعية */}
-                        {isCurrent && hasSubs && (
+                        {/* مربعات فرعية — تظهر دائماً */}
+                        {hasSubs && (
                           <div className="col-span-4 flex flex-wrap gap-1 py-1">
                             {q.sub_questions!.map((subQ, si) => {
                               const subId = subQ.question_db_id || subQ.question_number;
@@ -437,12 +445,17 @@ export default function StudentBagrutAttempt() {
                                 <button
                                   key={subId}
                                   onClick={() => {
-                                    const el = document.getElementById(`sub-q-${subId}`);
-                                    el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    goToQuestion(index);
+                                    setTimeout(() => {
+                                      const el = document.getElementById(`sub-q-${subId}`);
+                                      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    }, 100);
                                   }}
                                   className={`w-7 h-7 rounded text-xs font-medium transition-all flex items-center justify-center ${
                                     subAnswered
                                       ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                      : isCurrent
+                                      ? 'bg-primary/20 text-primary hover:bg-primary/30'
                                       : 'bg-muted hover:bg-muted/80'
                                   }`}
                                   title={subQ.question_number || `فرعي ${si + 1}`}
@@ -523,7 +536,7 @@ export default function StudentBagrutAttempt() {
           )}
 
           {/* السؤال - محمي ضد النسخ */}
-          <ExamAntiCopyWrapper enabled={true}>
+          <ExamAntiCopyWrapper enabled={!isPreview}>
             <BagrutQuestionRenderer
               question={currentQuestion}
               answers={answers}
@@ -556,14 +569,23 @@ export default function StudentBagrutAttempt() {
               </Button>
 
               {currentQuestionIndex === allQuestions.length - 1 ? (
-                <Button
-                  onClick={confirmSubmit}
-                  disabled={isSubmitting}
-                  className="gap-2 bg-green-600 hover:bg-green-700"
-                >
-                  <Send className="h-4 w-4" />
-                  تقديم الامتحان
-                </Button>
+                isPreview ? (
+                  <Button
+                    onClick={() => window.close()}
+                    className="gap-2 bg-amber-500 hover:bg-amber-600"
+                  >
+                    إغلاق المعاينة
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={confirmSubmit}
+                    disabled={isSubmitting}
+                    className="gap-2 bg-green-600 hover:bg-green-700"
+                  >
+                    <Send className="h-4 w-4" />
+                    تقديم الامتحان
+                  </Button>
+                )
               ) : (
                 <Button onClick={goNext} className="gap-2">
                   التالي

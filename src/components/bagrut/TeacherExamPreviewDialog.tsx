@@ -4,7 +4,9 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Eye } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { buildBagrutPreviewFromDb } from '@/lib/bagrut/buildBagrutPreview';
@@ -17,6 +19,7 @@ interface Props {
 
 export default function TeacherExamPreviewDialog({ examId, examTitle }: Props) {
   const [open, setOpen] = useState(false);
+  const [showAnswers, setShowAnswers] = useState(true);
 
   const { data: preview, isLoading } = useQuery({
     queryKey: ['bagrut-teacher-preview', examId],
@@ -51,7 +54,20 @@ export default function TeacherExamPreviewDialog({ examId, examTitle }: Props) {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-5xl h-[90vh] flex flex-col gap-0 p-0">
           <DialogHeader className="p-6 pb-4 border-b shrink-0">
-            <DialogTitle>معاينة: {examTitle}</DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle>معاينة: {examTitle}</DialogTitle>
+              <div className="flex items-center gap-2">
+                {showAnswers ? <Eye className="h-4 w-4 text-muted-foreground" /> : <EyeOff className="h-4 w-4 text-muted-foreground" />}
+                <Label htmlFor="show-answers-toggle" className="text-sm text-muted-foreground cursor-pointer">
+                  {showAnswers ? 'إخفاء الإجابات' : 'إظهار الإجابات'}
+                </Label>
+                <Switch
+                  id="show-answers-toggle"
+                  checked={showAnswers}
+                  onCheckedChange={setShowAnswers}
+                />
+              </div>
+            </div>
           </DialogHeader>
 
           <ScrollArea className="flex-1 min-h-0">
@@ -86,7 +102,7 @@ export default function TeacherExamPreviewDialog({ examId, examTitle }: Props) {
                         question={q}
                         answers={{}}
                         onAnswerChange={() => {}}
-                        showAnswer={true}
+                        showAnswer={showAnswers}
                         disabled={true}
                       />
                     ))}

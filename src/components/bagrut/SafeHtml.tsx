@@ -34,7 +34,7 @@ const SafeHtml: React.FC<SafeHtmlProps> = ({ html, className = '' }) => {
     return (
       <div
         dir="rtl"
-        className={`prose prose-sm max-w-none dark:prose-invert ${className}`}
+        className={`prose prose-sm max-w-none dark:prose-invert whitespace-pre-line ${className}`}
         style={wrapStyle}
         dangerouslySetInnerHTML={{ __html: `<style>${bidiCss}</style>${withBreaks}` }}
       />
@@ -42,7 +42,7 @@ const SafeHtml: React.FC<SafeHtmlProps> = ({ html, className = '' }) => {
   }
 
   const sanitized = DOMPurify.sanitize(html, {
-    ADD_TAGS: ['table', 'thead', 'tbody', 'tr', 'th', 'td', 'colgroup', 'col', 'style'],
+    ADD_TAGS: ['table', 'thead', 'tbody', 'tr', 'th', 'td', 'colgroup', 'col', 'style', 'p', 'div', 'br', 'span'],
     ADD_ATTR: ['style', 'class', 'colspan', 'rowspan', 'dir'],
   });
 
