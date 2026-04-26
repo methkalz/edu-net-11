@@ -1170,6 +1170,35 @@ All colors MUST be HSL.
   100% { transform: rotate(360deg); }
 }
 
+/* ===== Auto-Sizing Blank Input ===== */
+
+/* الـ ghost span: مخفي ويستخدم لقياس عرض النص بدقة
+   يجب أن يطابق ستايل الـ input بالضبط (font, padding, border, letter-spacing) */
+.auto-blank-ghost {
+  position: absolute;
+  top: 0;
+  left: 0;
+  visibility: hidden;
+  pointer-events: none;
+  white-space: pre;          /* لمنع التفاف النص أثناء القياس */
+  padding: 0.25rem 0.5rem;   /* نفس py-1 px-2 */
+  border: 1px solid transparent; /* لحساب عرض الـ border في الـ input */
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.auto-blank-input {
+  display: inline-block;
+  /* الحدود: لا يقل عن 7rem ولا يتعدى 40rem حتى لو كبر النص */
+  min-width: 7rem;
+  max-width: 40rem;
+  transition: width 0.15s ease-out;
+}
+
 /* Feature Icons Animations */
 @keyframes feature-float-1 {
   0%, 100% { 
