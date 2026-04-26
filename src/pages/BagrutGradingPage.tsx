@@ -144,7 +144,7 @@ export default function BagrutGradingPage() {
   return <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
       <ModernHeader title="تصحيح امتحان البجروت" showBackButton backPath="/dashboard" onRefresh={() => window.location.reload()} />
       
-      <div className="container mx-auto px-6 py-8 space-y-6">
+      <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
         {/* Exam Info Card */}
         {examData?.exam && <Card className="bg-card/60 backdrop-blur-lg border-0 shadow-lg overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-secondary/5 -z-10" />
@@ -455,7 +455,7 @@ const QuestionCard = React.memo(({
             )}
           </div>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-3 overflow-x-auto">
           <div className="p-3 bg-muted/50 rounded-lg">
             <p className="text-sm font-medium mb-1">السؤال:</p>
             <SafeHtml html={question.question_text} />
@@ -673,16 +673,16 @@ function GradingDialog({
       const studentTrue = value === true || value === 'true' || value === 'صح' || value === '1';
       const studentFalse = value === false || value === 'false' || value === 'خطأ' || value === '2';
 
-      // الإجابة الصحيحة من choices أو correct_answer
+      // الإجابة الصحيحة: correct_answer أولاً (المصدر الموثوق)، ثم choices كـ fallback
       let correctIsTrue: boolean | null = null;
-      if (question.choices?.length && question.choices.length > 0) {
+      if (question.correct_answer) {
+        const answer = String(question.correct_answer).toLowerCase();
+        correctIsTrue = answer === 'true' || answer === 'صح' || answer === '1' || answer === 'صحيح';
+      } else if (question.choices?.length && question.choices.length > 0) {
         const correctChoice = question.choices.find((c: any) => c.is_correct);
         if (correctChoice) {
           correctIsTrue = correctChoice.text === 'صح' || String(correctChoice.id) === '1' || String(correctChoice.id) === 'choice_true' || String(correctChoice.id) === 'true';
         }
-      } else if (question.correct_answer) {
-        const answer = String(question.correct_answer).toLowerCase();
-        correctIsTrue = answer === 'true' || answer === 'صح' || answer === '1' || answer === 'صحيح';
       }
       if (correctIsTrue !== null && (studentTrue || studentFalse)) {
         const isCorrect = studentTrue && correctIsTrue || studentFalse && !correctIsTrue;
@@ -693,6 +693,52 @@ function GradingDialog({
         };
       }
     }
+
+    // 3. ملء الفراغات — مقارنة case-insensitive مع trim
+    if (question.question_type === 'fill_blank' && question.blanks && typeof value === 'object') {
+      const blanksWithAnswers = question.blanks.filter((b: any) => b.correct_answer);
+      if (blanksWithAnswers.length > 0) {
+        let correctCount = 0;
+        blanksWithAnswers.forEach((blank: any) => {
+          const studentAns = String(value[blank.id] || '').trim().toLowerCase().normalize('NFC');
+          const correctAns = String(blank.correct_answer).trim().toLowerCase().normalize('NFC');
+          if (studentAns === correctAns) correctCount++;
+        });
+        const allCorrect = correctCount === blanksWithAnswers.length;
+        const partialScore = blanksWithAnswers.length > 0
+          ? Math.round(((question.points || 0) * correctCount) / blanksWithAnswers.length * 100) / 100
+          : 0;
+        return {
+          isAutoGradable: true,
+          isCorrect: allCorrect,
+          autoScore: partialScore
+        };
+      }
+    }
+
+    // 4. جداول — مقارنة case-insensitive مع trim
+    if (question.question_type === 'fill_table' && typeof value === 'object' && question.table_data?.correct_answers) {
+      const correctAnswers = question.table_data.correct_answers;
+      const correctKeys = Object.keys(correctAnswers);
+      if (correctKeys.length > 0) {
+        let correctCount = 0;
+        correctKeys.forEach(key => {
+          const studentAns = String(value[key] || '').trim().toLowerCase().normalize('NFC');
+          const correctAns = String(correctAnswers[key]).trim().toLowerCase().normalize('NFC');
+          if (studentAns === correctAns) correctCount++;
+        });
+        const allCorrect = correctCount === correctKeys.length;
+        const partialScore = correctKeys.length > 0
+          ? Math.round(((question.points || 0) * correctCount) / correctKeys.length * 100) / 100
+          : 0;
+        return {
+          isAutoGradable: true,
+          isCorrect: allCorrect,
+          autoScore: partialScore
+        };
+      }
+    }
+
     return {
       isAutoGradable: false,
       isCorrect: null,
@@ -709,8 +755,8 @@ function GradingDialog({
 
     // صح/خطأ مع إجابة
     if (question.question_type === 'true_false') {
-      if (question.choices?.some((c: any) => c.is_correct)) return true;
       if (question.correct_answer) return true;
+      if (question.choices?.some((c: any) => c.is_correct)) return true;
       return false;
     }
 
@@ -740,7 +786,7 @@ function GradingDialog({
       const answer = answers[questionId];
 
       // هل السؤال قابل للتصحيح التلقائي؟
-      const isObjective = q.question_type === 'mcq' || q.question_type === 'multiple_choice' || q.question_type === 'true_false';
+      const isObjective = q.question_type === 'mcq' || q.question_type === 'multiple_choice' || q.question_type === 'true_false' || q.question_type === 'fill_blank' || q.question_type === 'fill_table';
       const hasCorrect = hasCorrectAnswer(q);
       if (isObjective && hasCorrect) {
         const result = autoGradeQuestion(q, answer);
@@ -748,10 +794,10 @@ function GradingDialog({
           total++;
           if (result.isCorrect) {
             correct++;
-            autoGradedScore += result.autoScore;
           } else {
             wrong++;
           }
+          autoGradedScore += result.autoScore;
         } else if (!answer?.answer) {
           unanswered++;
         }
@@ -1028,23 +1074,20 @@ function GradingDialog({
       }
     }
 
-    // صح/خطأ - دعم جميع الصيغ
+    // صح/خطأ - دعم جميع الصيغ (correct_answer أولاً كمصدر موثوق)
     if (question.question_type === 'true_false') {
-      // أولاً: التحقق من choices إذا كانت موجودة
+      if (question.correct_answer) {
+        const answer = String(question.correct_answer).toLowerCase();
+        const isTrue = answer === 'true' || answer === 'صح' || answer === '1' || answer === 'صحيح';
+        return <span className="font-bold text-green-600">{isTrue ? 'صح ✓' : 'خطأ ✗'}</span>;
+      }
+
       if (question.choices && question.choices.length > 0) {
         const correctChoice = question.choices.find((c: any) => c.is_correct);
         if (correctChoice) {
           const isTrue = correctChoice.text === 'صح' || String(correctChoice.id) === '1' || String(correctChoice.id) === 'choice_true' || String(correctChoice.id) === 'true';
           return <span className="font-bold text-green-600">{isTrue ? 'صح ✓' : 'خطأ ✗'}</span>;
         }
-      }
-
-      // ثانياً: التحقق من correct_answer
-      if (question.correct_answer) {
-        const answer = String(question.correct_answer).toLowerCase();
-        // دعم: "صح", "خطأ", "true", "false", "1", "2", "صحيح", "غير صحيح"
-        const isTrue = answer === 'true' || answer === 'صح' || answer === '1' || answer === 'صحيح';
-        return <span className="font-bold text-green-600">{isTrue ? 'صح ✓' : 'خطأ ✗'}</span>;
       }
     }
 
@@ -1133,7 +1176,7 @@ function GradingDialog({
             if (grade?.final_score !== undefined && grade?.final_score !== null) return grade.final_score;
             if (grade?.auto_score !== undefined && grade?.auto_score !== null) return grade.auto_score;
             const autoResult = autoGradeQuestion(q, answer);
-            if (autoResult.isAutoGradable && autoResult.isCorrect) return autoResult.autoScore;
+            if (autoResult.isAutoGradable) return autoResult.autoScore;
             return 0;
           };
           return getQuestionScore(rootQ);
@@ -1166,7 +1209,7 @@ function GradingDialog({
             total += grade.auto_score;
           } else {
             const autoResult = autoGradeQuestion(q, answer);
-            if (autoResult.isAutoGradable && autoResult.isCorrect) {
+            if (autoResult.isAutoGradable) {
               total += autoResult.autoScore;
             }
           }

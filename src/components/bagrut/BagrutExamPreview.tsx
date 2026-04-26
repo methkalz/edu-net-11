@@ -93,10 +93,31 @@ const seasonLabels: Record<string, string> = {
 
 const normalizeComparable = (value?: string) => (value || '').trim().toLowerCase();
 
+const trueFalseMapping: Record<string, string[]> = {
+  'صح': ['choice_true', 'true', '1'],
+  'صحيح': ['choice_true', 'true', '1'],
+  'true': ['choice_true', '1'],
+  '1': ['choice_true', 'true'],
+  'خطأ': ['choice_false', 'false', '2'],
+  'غير صحيح': ['choice_false', 'false', '2'],
+  'false': ['choice_false', '2'],
+  '2': ['choice_false', 'false'],
+};
+
 const isCorrectChoice = (
   question: ParsedQuestion,
   choice: { id: string; text: string; is_correct?: boolean }
 ) => {
+  // correct_answer أولاً كمصدر موثوق لأسئلة صح/خطأ
+  if (question.question_type === 'true_false' && question.correct_answer) {
+    const correct = normalizeComparable(question.correct_answer);
+    const choiceId = normalizeComparable(choice.id);
+    const choiceText = normalizeComparable(choice.text);
+    if (choiceId === correct || choiceText === correct) return true;
+    const equivalents = trueFalseMapping[correct] || [];
+    return equivalents.some(eq => eq === choiceId || eq === choiceText);
+  }
+
   if (choice?.is_correct) return true;
 
   const correct = normalizeComparable(question.correct_answer);
@@ -939,14 +960,16 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
 
       {/* Word Bank - مخزن الكلمات */}
       {question.word_bank && question.word_bank.length > 0 && (
-        <div className="mt-3 p-3 bg-accent/50 rounded-lg border border-border">
-          <p className="text-sm font-medium mb-2 text-foreground">مخزن الكلمات:</p>
-          <div className="flex flex-wrap gap-2">
-            {question.word_bank.map((word: string, index: number) => (
-              <Badge key={index} variant="outline" className="text-sm bg-background border-border">
-                {word}
-              </Badge>
-            ))}
+        <div className="mt-6 pt-4 border-t border-border">
+          <p className="text-base font-bold mb-3 text-foreground">مخزن الكلمات:</p>
+          <div className="p-3 bg-accent/50 rounded-lg border border-border">
+            <div className="flex flex-wrap gap-2">
+              {question.word_bank.map((word: string, index: number) => (
+                <Badge key={index} variant="outline" className="text-sm px-3 py-1 bg-background border-border">
+                  {word}
+                </Badge>
+              ))}
+            </div>
           </div>
         </div>
       )}

@@ -36,7 +36,7 @@ export default function StudentBagrutSubmitted() {
     // منع الرجوع للامتحان المُسلّم عبر زر الخلف
     window.history.replaceState(null, '', window.location.href);
     const handlePopState = () => {
-      navigate('/student/bagrut-exams', { replace: true });
+      navigate('/dashboard', { replace: true });
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
