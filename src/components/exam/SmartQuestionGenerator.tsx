@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { MultiSelect } from '@/components/ui/multi-select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, Loader2, AlertCircle, ExternalLink, Filter, Check } from 'lucide-react';
+import { Router, Loader2, AlertCircle, ExternalLink, Filter, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { useGradeSections } from '@/hooks/useGradeSections';
 import { useSectionTopics } from '@/hooks/useSectionTopics';
