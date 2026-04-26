@@ -45,6 +45,7 @@
     "@supabase/supabase-js": "^2.57.2",
     "@tanstack/react-query": "^5.83.0",
     "@tinymce/tinymce-react": "^6.3.0",
+    "@tiptap/core": "^3.22.4",
     "@tiptap/extension-bold": "^3.4.3",
     "@tiptap/extension-bubble-menu": "^3.6.5",
     "@tiptap/extension-bullet-list": "^3.4.3",
@@ -82,7 +83,6 @@
     "file-saver": "^2.0.5",
     "html2canvas": "^1.4.1",
     "input-otp": "^1.4.2",
-    
     "lottie-react": "^2.4.1",
     "lucide-react": "^0.462.0",
     "next-themes": "^0.3.0",
