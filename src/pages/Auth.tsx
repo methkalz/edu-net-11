@@ -2,30 +2,22 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { AuthErrorHandler } from '@/components/auth/AuthErrorHandler';
-import {
-  BookOpen, Eye, EyeOff, LogIn, Lock, Mail,
-  GraduationCap, Lightbulb, BarChart3, Rocket,
-} from 'lucide-react';
+import { BookOpen, Eye, EyeOff, Shield, Lock, Mail, GraduationCap, Sparkles, PenLine } from 'lucide-react';
 import { sessionMonitor } from '@/lib/auth/session-monitor';
-
-const features = [
-  { icon: Lightbulb, title: 'مسارات تعليمية ذكية', desc: 'محتوى مخصص لكل طالب حسب مستواه' },
-  { icon: BarChart3, title: 'متابعة مستمرة', desc: 'تقارير أداء لحظية للطلاب والمعلمين' },
-  { icon: Rocket, title: 'نتائج فورية', desc: 'تصحيح تلقائي وتحليل ذكي للإجابات' },
-];
 
 const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [mounted, setMounted] = useState(false);
-  const [focusedField, setFocusedField] = useState<string | null>(null);
 
   const { user } = useAuth();
   const {
     enhancedSignIn,
+    retrySignIn,
     authError,
     loading,
     clearError,
@@ -34,7 +26,7 @@ const Auth = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    requestAnimationFrame(() => setMounted(true));
+    setMounted(true);
   }, []);
 
   useEffect(() => {
@@ -46,7 +38,9 @@ const Auth = () => {
     }
 
     if (recentLogout) {
-      setTimeout(() => localStorage.removeItem('recent_manual_logout'), 2000);
+      setTimeout(() => {
+        localStorage.removeItem('recent_manual_logout');
+      }, 2000);
     }
 
     sessionMonitor.stopMonitoring();
@@ -58,13 +52,15 @@ const Auth = () => {
         localStorage.removeItem('recent_manual_logout');
       }
     };
+
     cleanupInvalidSession();
   }, [user, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     clearError();
-    await enhancedSignIn(loginData.email, loginData.password);
+    const result = await enhancedSignIn(loginData.email, loginData.password);
+    if (result.success) return;
   };
 
   const handleRetry = () => {
@@ -72,170 +68,146 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row" dir="rtl">
+    <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden" dir="rtl">
+      {/* خلفية متدرجة متحركة */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-indigo-50/50 to-purple-50/30 dark:from-slate-950 dark:via-indigo-950/30 dark:to-slate-950" />
 
-      {/* ===== الجانب الأيمن — البراندينج ===== */}
-      <div className="auth-brand-panel relative lg:w-[58%] flex flex-col justify-center overflow-hidden">
-        {/* الأشكال الهندسية العائمة */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="auth-orb auth-orb-1" />
-          <div className="auth-orb auth-orb-2" />
-          <div className="auth-orb auth-orb-3" />
-          <div className="auth-grid-overlay" />
-        </div>
-
-        {/* المحتوى */}
-        <div className="relative z-10 px-8 py-12 lg:px-16 lg:py-0">
-          {/* اللوجو */}
-          <div className={`flex items-center gap-3 mb-10 lg:mb-14 transition-all duration-700 ${mounted ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'}`}>
-            <div className="w-11 h-11 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center border border-white/10">
-              <BookOpen className="h-6 w-6 text-white" />
-            </div>
-            <span className="text-white/90 font-bold text-lg">EduNet</span>
-          </div>
-
-          {/* العنوان الرئيسي */}
-          <div className={`mb-10 lg:mb-14 transition-all duration-700 delay-150 ${mounted ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'}`}>
-            <h1 className="text-3xl lg:text-[2.75rem] font-bold text-white leading-tight mb-4">
-              منصة التعليم
-              <br />
-              <span className="auth-text-gradient">الذكية</span>
-            </h1>
-            <p className="text-white/50 text-base lg:text-lg max-w-md leading-relaxed">
-              بيئة تعليمية متكاملة تجمع بين التكنولوجيا والتعليم لتحقيق أفضل النتائج
-            </p>
-          </div>
-
-          {/* نقاط الميزات */}
-          <div className="space-y-5 hidden lg:block">
-            {features.map((feat, i) => (
-              <div
-                key={i}
-                className={`flex items-start gap-4 transition-all duration-700 ${mounted ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'}`}
-                style={{ transitionDelay: `${350 + i * 120}ms` }}
-              >
-                <div className="w-10 h-10 rounded-lg bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/5 shrink-0 mt-0.5">
-                  <feat.icon className="h-5 w-5 text-sky-300" />
-                </div>
-                <div>
-                  <h3 className="text-white/90 font-semibold text-[15px] mb-0.5">{feat.title}</h3>
-                  <p className="text-white/40 text-sm leading-relaxed">{feat.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* تذييل البراندينج */}
-        <div className={`relative z-10 px-8 lg:px-16 pb-8 lg:pb-10 mt-auto transition-all duration-700 delay-700 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
-          <div className="flex items-center gap-3 text-white/25 text-xs">
-            <GraduationCap className="h-4 w-4" />
-            <span>نظام تعليمي متطور لجميع المراحل</span>
-          </div>
-        </div>
+      {/* أشكال هندسية عائمة */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="auth-floating-shape auth-shape-1" />
+        <div className="auth-floating-shape auth-shape-2" />
+        <div className="auth-floating-shape auth-shape-3" />
+        <div className="auth-floating-shape auth-shape-4" />
+        <div className="auth-floating-shape auth-shape-5" />
       </div>
 
-      {/* ===== الجانب الأيسر — نموذج الدخول ===== */}
-      <div className="flex-1 flex items-center justify-center bg-background px-6 py-10 lg:px-12">
-        <div className={`w-full max-w-[380px] transition-all duration-700 delay-300 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
+      {/* شبكة نقاط خفيفة */}
+      <div className="absolute inset-0 auth-dot-grid" />
 
-          {/* ترحيب */}
-          <div className="mb-9">
-            <h2 className={`text-2xl font-bold text-foreground mb-2 transition-all duration-500 delay-400 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
-              مرحباً بعودتك
-            </h2>
-            <p className={`text-muted-foreground text-sm transition-all duration-500 delay-500 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
-              سجّل دخولك للمتابعة إلى لوحة التحكم
+      {/* المحتوى الرئيسي */}
+      <div className={`relative z-10 w-full max-w-[440px] transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+
+        {/* أيقونات تعليمية عائمة فوق الكارد */}
+        <div className="relative h-20 mb-2">
+          <div className="auth-edu-icon auth-edu-icon-1">
+            <GraduationCap className="h-5 w-5 text-blue-500/60" />
+          </div>
+          <div className="auth-edu-icon auth-edu-icon-2">
+            <PenLine className="h-4 w-4 text-indigo-500/60" />
+          </div>
+          <div className="auth-edu-icon auth-edu-icon-3">
+            <Sparkles className="h-4 w-4 text-purple-500/60" />
+          </div>
+        </div>
+
+        {/* الكارد الرئيسي */}
+        <div className="auth-card rounded-2xl p-8 pb-6">
+          {/* الهيدر */}
+          <div className="text-center mb-8">
+            <div className={`auth-logo-ring mx-auto mb-5 transition-all duration-700 delay-200 ${mounted ? 'opacity-100 scale-100' : 'opacity-0 scale-75'}`}>
+              <div className="w-[72px] h-[72px] rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/25">
+                <BookOpen className="h-9 w-9 text-white" />
+              </div>
+            </div>
+            <h1 className={`text-2xl font-bold text-foreground mb-1.5 transition-all duration-700 delay-300 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+              مرحباً بك
+            </h1>
+            <p className={`text-sm text-muted-foreground transition-all duration-700 delay-400 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+              سجّل دخولك إلى منصة التعليم الذكية
             </p>
           </div>
 
-          {/* النموذج */}
+          {/* الفورم */}
           <form onSubmit={handleLogin} className="space-y-5">
-            {/* البريد الإلكتروني */}
-            <div className={`transition-all duration-500 delay-[550ms] ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-              <label htmlFor="login-email" className="block text-sm font-medium text-foreground mb-2">
-                البريد الإلكتروني
-              </label>
-              <div className={`auth-input-wrapper ${focusedField === 'email' ? 'auth-input-active' : ''}`}>
-                <Mail className="auth-input-icon" />
-                <Input
-                  id="login-email"
-                  type="email"
-                  value={loginData.email}
-                  onChange={e => setLoginData(prev => ({ ...prev, email: e.target.value }))}
-                  onFocus={() => setFocusedField('email')}
-                  onBlur={() => setFocusedField(null)}
-                  required
-                  className="auth-input"
-                  placeholder="example@email.com"
-                  dir="ltr"
-                />
+            <div className={`space-y-4 transition-all duration-700 delay-500 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+              {/* البريد الإلكتروني */}
+              <div className="space-y-2">
+                <Label htmlFor="login-email" className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <Mail className="h-3.5 w-3.5 text-blue-500" />
+                  البريد الإلكتروني
+                </Label>
+                <div className="relative group">
+                  <Input
+                    id="login-email"
+                    type="email"
+                    value={loginData.email}
+                    onChange={e => setLoginData(prev => ({ ...prev, email: e.target.value }))}
+                    required
+                    className="h-11 bg-muted/40 border-border/40 focus:border-blue-500 focus:bg-background focus:ring-2 focus:ring-blue-500/10 transition-all duration-300 rounded-xl pl-4 pr-4"
+                    placeholder="example@email.com"
+                    dir="ltr"
+                  />
+                  <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-500/0 via-blue-500/0 to-indigo-500/0 group-focus-within:from-blue-500/5 group-focus-within:to-indigo-500/5 pointer-events-none transition-all duration-500" />
+                </div>
               </div>
-            </div>
 
-            {/* كلمة المرور */}
-            <div className={`transition-all duration-500 delay-[650ms] ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-              <label htmlFor="login-password" className="block text-sm font-medium text-foreground mb-2">
-                كلمة المرور
-              </label>
-              <div className={`auth-input-wrapper ${focusedField === 'password' ? 'auth-input-active' : ''}`}>
-                <Lock className="auth-input-icon" />
-                <Input
-                  id="login-password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={loginData.password}
-                  onChange={e => setLoginData(prev => ({ ...prev, password: e.target.value }))}
-                  onFocus={() => setFocusedField('password')}
-                  onBlur={() => setFocusedField(null)}
-                  required
-                  className="auth-input !pl-10"
-                  placeholder="••••••••"
-                  dir="ltr"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-muted-foreground transition-colors"
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
+              {/* كلمة المرور */}
+              <div className="space-y-2">
+                <Label htmlFor="login-password" className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <Lock className="h-3.5 w-3.5 text-blue-500" />
+                  كلمة المرور
+                </Label>
+                <div className="relative group">
+                  <Input
+                    id="login-password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={loginData.password}
+                    onChange={e => setLoginData(prev => ({ ...prev, password: e.target.value }))}
+                    required
+                    className="h-11 bg-muted/40 border-border/40 focus:border-blue-500 focus:bg-background focus:ring-2 focus:ring-blue-500/10 transition-all duration-300 rounded-xl pl-11 pr-4"
+                    placeholder="••••••••"
+                    dir="ltr"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-foreground transition-colors duration-200 p-0.5"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                  <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-500/0 via-blue-500/0 to-indigo-500/0 group-focus-within:from-blue-500/5 group-focus-within:to-indigo-500/5 pointer-events-none transition-all duration-500" />
+                </div>
               </div>
             </div>
 
             {/* الأخطاء */}
             {authError && (
-              <AuthErrorHandler error={authError} onRetry={handleRetry} loading={loading} />
+              <AuthErrorHandler
+                error={authError}
+                onRetry={handleRetry}
+                loading={loading}
+              />
             )}
 
             {/* زر الدخول */}
-            <div className={`pt-1 transition-all duration-500 delay-[750ms] ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+            <div className={`transition-all duration-700 delay-[600ms] ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
               <Button
                 type="submit"
+                className="w-full h-11 text-base font-medium rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-all duration-300 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60 disabled:hover:scale-100"
                 disabled={loading}
-                className="auth-submit-btn w-full"
               >
                 {loading ? (
-                  <span className="flex items-center gap-2.5">
-                    <span className="auth-spinner" />
-                    جاري الدخول...
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    جاري تسجيل الدخول...
+                  </div>
                 ) : (
-                  <span className="flex items-center gap-2">
-                    <LogIn className="h-4 w-4" />
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-4 w-4" />
                     تسجيل الدخول
-                  </span>
+                  </div>
                 )}
               </Button>
             </div>
           </form>
 
           {/* الفوتر */}
-          <div className={`mt-10 pt-6 border-t border-border/30 transition-all duration-500 delay-[850ms] ${mounted ? 'opacity-100' : 'opacity-0'}`}>
-            <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground/35">
+          <div className={`mt-6 pt-4 border-t border-border/20 transition-all duration-700 delay-700 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+            <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground/40">
               <Lock className="h-3 w-3" />
               <button
                 onClick={() => navigate('/super-admin-auth')}
-                className="hover:text-muted-foreground/50 transition-colors"
+                className="hover:text-muted-foreground/60 transition-colors duration-200"
               >
                 محمي بأعلى معايير الأمان
               </button>
