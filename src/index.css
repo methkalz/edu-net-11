@@ -1053,138 +1053,121 @@ All colors MUST be HSL.
   50% { opacity: 0.12; }
 }
 
-/* ===== Auth Page — Split Screen ===== */
+/* ===== Auth Page Styles ===== */
 
-.auth-brand-panel {
-  background: linear-gradient(160deg, #0f172a 0%, #1e293b 35%, #1a1f4b 70%, #0f172a 100%);
-  min-height: 240px;
-}
-@media (min-width: 1024px) {
-  .auth-brand-panel { min-height: 100vh; }
-}
-
-.auth-text-gradient {
-  background: linear-gradient(135deg, #38bdf8, #818cf8, #c084fc);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+.auth-card {
+  background: hsl(var(--card) / 0.85);
+  backdrop-filter: blur(20px) saturate(1.5);
+  border: 1px solid hsl(var(--border) / 0.15);
+  box-shadow:
+    0 0 0 1px hsl(var(--border) / 0.05),
+    0 4px 24px hsl(var(--foreground) / 0.06),
+    0 24px 48px hsl(var(--foreground) / 0.04);
 }
 
-/* خلفية شبكة خفيفة */
-.auth-grid-overlay {
-  position: absolute; inset: 0;
-  background:
-    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px),
-    linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black, transparent);
+.auth-dot-grid {
+  background-image: radial-gradient(circle, hsl(var(--primary) / 0.07) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, black 20%, transparent 70%);
 }
 
-/* كرات متوهجة عائمة */
-.auth-orb {
+.auth-floating-shape {
   position: absolute;
   border-radius: 50%;
-  filter: blur(80px);
+  filter: blur(60px);
   will-change: transform;
 }
-.auth-orb-1 {
-  width: 400px; height: 400px;
-  top: -10%; right: -5%;
-  background: rgba(56, 189, 248, 0.12);
-  animation: auth-orb-move 16s ease-in-out infinite;
+
+.auth-shape-1 {
+  width: 320px; height: 320px;
+  top: 10%; right: 10%;
+  background: hsl(214 80% 60% / 0.12);
+  animation: auth-float-1 14s ease-in-out infinite;
 }
-.auth-orb-2 {
-  width: 300px; height: 300px;
-  bottom: -5%; left: 10%;
-  background: rgba(129, 140, 248, 0.10);
-  animation: auth-orb-move 20s ease-in-out 3s infinite reverse;
+.auth-shape-2 {
+  width: 240px; height: 240px;
+  bottom: 15%; left: 10%;
+  background: hsl(260 70% 60% / 0.10);
+  animation: auth-float-2 18s ease-in-out infinite;
 }
-.auth-orb-3 {
+.auth-shape-3 {
+  width: 180px; height: 180px;
+  top: 50%; left: 30%;
+  background: hsl(190 70% 55% / 0.08);
+  animation: auth-float-3 12s ease-in-out infinite;
+}
+.auth-shape-4 {
+  width: 140px; height: 140px;
+  top: 20%; left: 55%;
+  background: hsl(214 80% 60% / 0.06);
+  animation: auth-float-1 20s ease-in-out infinite reverse;
+}
+.auth-shape-5 {
   width: 200px; height: 200px;
-  top: 40%; left: 40%;
-  background: rgba(192, 132, 252, 0.07);
-  animation: auth-orb-move 14s ease-in-out 1s infinite;
+  bottom: 30%; right: 25%;
+  background: hsl(260 60% 55% / 0.06);
+  animation: auth-float-2 16s ease-in-out infinite reverse;
 }
 
-@keyframes auth-orb-move {
+@keyframes auth-float-1 {
   0%, 100% { transform: translate(0, 0) scale(1); }
-  30% { transform: translate(25px, -35px) scale(1.1); }
-  60% { transform: translate(-20px, 20px) scale(0.93); }
+  33% { transform: translate(30px, -40px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.95); }
+}
+@keyframes auth-float-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  40% { transform: translate(-35px, 25px) scale(1.08); }
+  80% { transform: translate(25px, -30px) scale(0.92); }
+}
+@keyframes auth-float-3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(20px, -35px) scale(1.12); }
 }
 
-/* حقول الإدخال */
-.auth-input-wrapper {
-  position: relative;
-  border-radius: 12px;
-  border: 1.5px solid hsl(var(--border) / 0.5);
-  background: hsl(var(--muted) / 0.3);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.auth-input-wrapper.auth-input-active {
-  border-color: hsl(214 80% 55%);
-  box-shadow: 0 0 0 3px hsl(214 80% 55% / 0.1);
-  background: hsl(var(--background));
-}
-.auth-input-icon {
+/* أيقونات تعليمية عائمة */
+.auth-edu-icon {
   position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 16px; height: 16px;
-  color: hsl(var(--muted-foreground) / 0.45);
-  transition: color 0.3s;
-  z-index: 1;
-}
-.auth-input-active .auth-input-icon {
-  color: hsl(214 80% 55%);
-}
-.auth-input {
-  height: 46px;
-  border: none !important;
-  box-shadow: none !important;
-  background: transparent !important;
-  padding-right: 40px;
-  font-size: 0.925rem;
-}
-.auth-input:focus {
-  outline: none !important;
-  ring: none !important;
-}
-
-/* زر الدخول */
-.auth-submit-btn {
-  height: 46px;
-  font-size: 0.95rem;
-  font-weight: 600;
+  padding: 10px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #3b82f6, #6366f1) !important;
-  color: white !important;
-  border: none;
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: hsl(var(--card) / 0.7);
+  backdrop-filter: blur(8px);
+  border: 1px solid hsl(var(--border) / 0.15);
+  box-shadow: 0 2px 12px hsl(var(--foreground) / 0.04);
 }
-.auth-submit-btn:hover:not(:disabled) {
-  box-shadow: 0 6px 24px rgba(59, 130, 246, 0.4);
-  transform: translateY(-1px);
+.auth-edu-icon-1 {
+  left: 15%; top: 0;
+  animation: auth-icon-bob 4s ease-in-out infinite;
 }
-.auth-submit-btn:active:not(:disabled) {
-  transform: translateY(0);
+.auth-edu-icon-2 {
+  right: 20%; top: 10px;
+  animation: auth-icon-bob 5s ease-in-out 1s infinite;
 }
-.auth-submit-btn:disabled {
-  opacity: 0.6;
+.auth-edu-icon-3 {
+  left: 45%; top: 5px;
+  animation: auth-icon-bob 4.5s ease-in-out 0.5s infinite;
 }
 
-/* سبينر التحميل */
-.auth-spinner {
-  display: inline-block;
-  width: 16px; height: 16px;
-  border: 2px solid rgba(255,255,255,0.25);
-  border-top-color: white;
-  border-radius: 50%;
-  animation: auth-spin 0.7s linear infinite;
+@keyframes auth-icon-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
 }
-@keyframes auth-spin {
-  to { transform: rotate(360deg); }
+
+.auth-logo-ring {
+  position: relative;
+  width: fit-content;
+}
+.auth-logo-ring::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 20px;
+  border: 2px dashed hsl(var(--primary) / 0.15);
+  animation: auth-ring-spin 20s linear infinite;
+}
+
+@keyframes auth-ring-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 /* Feature Icons Animations */
