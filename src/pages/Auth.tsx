@@ -3,54 +3,48 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { AuthErrorHandler } from '@/components/auth/AuthErrorHandler';
-import { BookOpen, Eye, EyeOff, Shield, Lock, Users, GraduationCap } from 'lucide-react';
+import { BookOpen, Eye, EyeOff, Shield, Lock, Mail, GraduationCap, Sparkles, PenLine } from 'lucide-react';
 import { sessionMonitor } from '@/lib/auth/session-monitor';
+
 const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const [loginData, setLoginData] = useState({
-    email: '',
-    password: ''
-  });
-  
+  const [loginData, setLoginData] = useState({ email: '', password: '' });
+  const [mounted, setMounted] = useState(false);
+
   const { user } = useAuth();
-  const { 
-    enhancedSignIn, 
-    retrySignIn, 
-    authError, 
-    loading, 
-    clearError 
-  } = useEnhancedAuth({
-    maxRetries: 3,
-    retryDelay: 1000,
-    timeoutMs: 15000
-  });
-  
+  const {
+    enhancedSignIn,
+    retrySignIn,
+    authError,
+    loading,
+    clearError,
+  } = useEnhancedAuth({ maxRetries: 3, retryDelay: 1000, timeoutMs: 15000 });
+
   const navigate = useNavigate();
-  
+
   useEffect(() => {
-    // Don't auto-redirect if logout is in progress or recently completed
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
     const logoutInProgress = localStorage.getItem('logout_in_progress');
     const recentLogout = localStorage.getItem('recent_manual_logout');
-    
+
     if (user && !logoutInProgress && !recentLogout) {
       navigate('/dashboard');
     }
-    
-    // Clear recent logout flag after a short delay
+
     if (recentLogout) {
       setTimeout(() => {
         localStorage.removeItem('recent_manual_logout');
       }, 2000);
     }
 
-    // إيقاف مراقبة الجلسة في صفحة المصادقة
     sessionMonitor.stopMonitoring();
-    
-    // تنظيف البيانات في حال وصل المستخدم هنا بسبب جلسة منتهية
+
     const cleanupInvalidSession = async () => {
       const isInvalid = await sessionMonitor.isInvalidSessionState();
       if (isInvalid) {
@@ -58,7 +52,7 @@ const Auth = () => {
         localStorage.removeItem('recent_manual_logout');
       }
     };
-    
+
     cleanupInvalidSession();
   }, [user, navigate]);
 
@@ -66,150 +60,163 @@ const Auth = () => {
     e.preventDefault();
     clearError();
     const result = await enhancedSignIn(loginData.email, loginData.password);
-    
-    if (result.success) {
-      // Success is handled by useAuth context
-      return;
-    }
-    // Error is handled by AuthErrorHandler component
+    if (result.success) return;
   };
 
   const handleRetry = () => {
     handleLogin({ preventDefault: () => {} } as React.FormEvent);
   };
+
   return (
-    <div className="min-h-screen relative flex items-center justify-center p-6 overflow-hidden" dir="rtl">
-      {/* Modern Minimalist Animated Background */}
-      <div className="absolute inset-0">
-        {/* Gradient Mesh Base */}
-        <div className="absolute inset-0 minimal-mesh"></div>
-        
-        {/* Animated Grid Overlay */}
-        <div className="absolute inset-0 animated-grid opacity-40"></div>
-        
-        {/* Subtle Floating Dots */}
-        <div className="absolute inset-0 floating-dots opacity-30"></div>
-        
-        {/* Decorative gradient blobs */}
-        <div className="absolute top-20 right-20 w-96 h-96 bg-primary/5 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 left-20 w-80 h-80 bg-secondary/4 rounded-full blur-3xl"></div>
+    <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden" dir="rtl">
+      {/* خلفية متدرجة متحركة */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-indigo-50/50 to-purple-50/30 dark:from-slate-950 dark:via-indigo-950/30 dark:to-slate-950" />
+
+      {/* أشكال هندسية عائمة */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="auth-floating-shape auth-shape-1" />
+        <div className="auth-floating-shape auth-shape-2" />
+        <div className="auth-floating-shape auth-shape-3" />
+        <div className="auth-floating-shape auth-shape-4" />
+        <div className="auth-floating-shape auth-shape-5" />
       </div>
 
-      {/* Main Login Card */}
-      <Card className="w-full max-w-md modern-card relative z-10 animate-scale-in overflow-hidden">
+      {/* شبكة نقاط خفيفة */}
+      <div className="absolute inset-0 auth-dot-grid" />
 
-        <CardHeader className="text-center pb-6 pt-12">
-          <div className="w-24 h-24 mx-auto mb-6 gradient-blue rounded-full flex items-center justify-center shadow-lg">
-            <BookOpen className="h-12 w-12 text-white" />
+      {/* المحتوى الرئيسي */}
+      <div className={`relative z-10 w-full max-w-[440px] transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+
+        {/* أيقونات تعليمية عائمة فوق الكارد */}
+        <div className="relative h-20 mb-2">
+          <div className="auth-edu-icon auth-edu-icon-1">
+            <GraduationCap className="h-5 w-5 text-blue-500/60" />
           </div>
-          <CardTitle className="text-3xl font-bold font-cairo mb-2 text-foreground text-center">
-            مرحباً بك
-          </CardTitle>
-          <CardDescription className="text-base text-muted-foreground mb-2 text-center">
-            دخول المستخدمين - منصة التعليم الذكية
-          </CardDescription>
-          
-        </CardHeader>
+          <div className="auth-edu-icon auth-edu-icon-2">
+            <PenLine className="h-4 w-4 text-indigo-500/60" />
+          </div>
+          <div className="auth-edu-icon auth-edu-icon-3">
+            <Sparkles className="h-4 w-4 text-purple-500/60" />
+          </div>
+        </div>
 
-        <CardContent className="space-y-6">
-          <form onSubmit={handleLogin} className="space-y-6">
-            <div className="space-y-4">
-              {/* Email Field */}
-              <div>
-                <Label htmlFor="login-email" className="font-cairo text-base text-foreground flex items-center gap-2">
-                  <Users className="h-4 w-4 text-primary" />
+        {/* الكارد الرئيسي */}
+        <div className="auth-card rounded-2xl p-8 pb-6">
+          {/* الهيدر */}
+          <div className="text-center mb-8">
+            <div className={`auth-logo-ring mx-auto mb-5 transition-all duration-700 delay-200 ${mounted ? 'opacity-100 scale-100' : 'opacity-0 scale-75'}`}>
+              <div className="w-[72px] h-[72px] rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/25">
+                <BookOpen className="h-9 w-9 text-white" />
+              </div>
+            </div>
+            <h1 className={`text-2xl font-bold text-foreground mb-1.5 transition-all duration-700 delay-300 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+              مرحباً بك
+            </h1>
+            <p className={`text-sm text-muted-foreground transition-all duration-700 delay-400 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+              سجّل دخولك إلى منصة التعليم الذكية
+            </p>
+          </div>
+
+          {/* الفورم */}
+          <form onSubmit={handleLogin} className="space-y-5">
+            <div className={`space-y-4 transition-all duration-700 delay-500 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+              {/* البريد الإلكتروني */}
+              <div className="space-y-2">
+                <Label htmlFor="login-email" className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <Mail className="h-3.5 w-3.5 text-blue-500" />
                   البريد الإلكتروني
                 </Label>
-                <Input 
-                  id="login-email" 
-                  type="email" 
-                  value={loginData.email} 
-                  onChange={e => setLoginData(prev => ({
-                    ...prev,
-                    email: e.target.value
-                  }))} 
-                  required 
-                  className="mt-2 h-12 text-lg bg-background/50 backdrop-blur-sm border-border/50 focus:border-primary ltr-content transition-all duration-300 focus:shadow-lg" 
-                  placeholder="أدخل بريدك الإلكتروني" 
-                  dir="ltr" 
-                />
+                <div className="relative group">
+                  <Input
+                    id="login-email"
+                    type="email"
+                    value={loginData.email}
+                    onChange={e => setLoginData(prev => ({ ...prev, email: e.target.value }))}
+                    required
+                    className="h-11 bg-muted/40 border-border/40 focus:border-blue-500 focus:bg-background focus:ring-2 focus:ring-blue-500/10 transition-all duration-300 rounded-xl pl-4 pr-4"
+                    placeholder="example@email.com"
+                    dir="ltr"
+                  />
+                  <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-500/0 via-blue-500/0 to-indigo-500/0 group-focus-within:from-blue-500/5 group-focus-within:to-indigo-500/5 pointer-events-none transition-all duration-500" />
+                </div>
               </div>
 
-              {/* Password Field */}
-              <div>
-                <Label htmlFor="login-password" className="font-cairo text-base text-foreground flex items-center gap-2">
-                  <Lock className="h-4 w-4 text-primary" />
+              {/* كلمة المرور */}
+              <div className="space-y-2">
+                <Label htmlFor="login-password" className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <Lock className="h-3.5 w-3.5 text-blue-500" />
                   كلمة المرور
                 </Label>
-                <div className="relative">
-                  <Input 
-                    id="login-password" 
-                    type={showPassword ? "text" : "password"} 
-                    value={loginData.password} 
-                    onChange={e => setLoginData(prev => ({
-                      ...prev,
-                      password: e.target.value
-                    }))} 
-                    required 
-                    className="mt-2 h-12 text-lg bg-background/50 backdrop-blur-sm border-border/50 focus:border-primary ltr-content transition-all duration-300 focus:shadow-lg pl-12" 
-                    placeholder="أدخل كلمة المرور" 
-                    dir="ltr" 
+                <div className="relative group">
+                  <Input
+                    id="login-password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={loginData.password}
+                    onChange={e => setLoginData(prev => ({ ...prev, password: e.target.value }))}
+                    required
+                    className="h-11 bg-muted/40 border-border/40 focus:border-blue-500 focus:bg-background focus:ring-2 focus:ring-blue-500/10 transition-all duration-300 rounded-xl pl-11 pr-4"
+                    placeholder="••••••••"
+                    dir="ltr"
                   />
-                  <button 
-                    type="button" 
-                    onClick={() => setShowPassword(!showPassword)} 
-                    className="absolute left-3 top-1/2 transform -translate-y-1/2 mt-1 text-muted-foreground hover:text-foreground transition-colors duration-200"
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-foreground transition-colors duration-200 p-0.5"
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
+                  <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-500/0 via-blue-500/0 to-indigo-500/0 group-focus-within:from-blue-500/5 group-focus-within:to-indigo-500/5 pointer-events-none transition-all duration-500" />
                 </div>
               </div>
             </div>
 
-            {/* Error Handler */}
+            {/* الأخطاء */}
             {authError && (
-              <AuthErrorHandler 
-                error={authError} 
+              <AuthErrorHandler
+                error={authError}
                 onRetry={handleRetry}
                 loading={loading}
               />
             )}
 
-            {/* Login Button */}
-            <Button 
-              type="submit" 
-              className="w-full gradient-blue hover:shadow-lg text-white h-12 text-lg font-cairo rounded-xl transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-70" 
-              disabled={loading}
-            >
-              {loading ? (
-                <div className="flex items-center gap-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                  جاري تسجيل الدخول...
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <Shield className="h-4 w-4" />
-                  دخول آمن
-                </div>
-              )}
-            </Button>
+            {/* زر الدخول */}
+            <div className={`transition-all duration-700 delay-[600ms] ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+              <Button
+                type="submit"
+                className="w-full h-11 text-base font-medium rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-all duration-300 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60 disabled:hover:scale-100"
+                disabled={loading}
+              >
+                {loading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    جاري تسجيل الدخول...
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-4 w-4" />
+                    تسجيل الدخول
+                  </div>
+                )}
+              </Button>
+            </div>
           </form>
 
-          {/* Footer Info */}
-          <div className="text-center pt-4 border-t border-border/30">
-            <div className="flex items-center justify-center gap-1 mt-2 text-xs text-muted-foreground/50">
+          {/* الفوتر */}
+          <div className={`mt-6 pt-4 border-t border-border/20 transition-all duration-700 delay-700 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+            <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground/40">
               <Lock className="h-3 w-3" />
-              <button 
-                onClick={() => navigate('/super-admin-auth')} 
-                className="hover:text-muted-foreground/70 transition-colors duration-200"
+              <button
+                onClick={() => navigate('/super-admin-auth')}
+                className="hover:text-muted-foreground/60 transition-colors duration-200"
               >
                 محمي بأعلى معايير الأمان
               </button>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 };
+
 export default Auth;
