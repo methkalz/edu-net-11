@@ -315,7 +315,7 @@ export default function StudentBagrutResult() {
   return (
     <div className="container mx-auto p-6 max-w-4xl space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/student/bagrut-exams')}>
+        <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard')}>
           <ArrowRight className="h-5 w-5" />
         </Button>
         <div>
