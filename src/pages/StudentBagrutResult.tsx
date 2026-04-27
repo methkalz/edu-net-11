@@ -221,9 +221,25 @@ export default function StudentBagrutResult() {
     enabled: !!examId && !!user?.id,
   });
 
-  const questionTree = useMemo(() => {
+  // بناء شجرة الأسئلة مجمعة حسب الأقسام للحفاظ على الترتيب الصحيح
+  const sectionsWithTrees = useMemo(() => {
+    if (!data?.questions || !data?.sections) return [];
+    const sortedSections = [...data.sections].sort(
+      (a: any, b: any) => (a.order_index ?? 0) - (b.order_index ?? 0)
+    );
+    return sortedSections.map((section: any) => ({
+      section,
+      tree: buildQuestionTree(
+        data.questions.filter((q: any) => q.section_id === section.id)
+      ),
+    }));
+  }, [data?.questions, data?.sections]);
+
+  // الأسئلة بدون قسم (احتياطياً)
+  const orphanTree = useMemo(() => {
     if (!data?.questions) return [];
-    return buildQuestionTree(data.questions);
+    const orphans = data.questions.filter((q: any) => !q.section_id);
+    return buildQuestionTree(orphans);
   }, [data?.questions]);
 
   const canViewResults = useMemo(() => {
@@ -359,16 +375,43 @@ export default function StudentBagrutResult() {
             <CardDescription>مراجعة إجاباتك مع الإجابات الصحيحة</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              {questionTree.map(rootNode => (
-                <ResultQuestionNode
-                  key={rootNode.question.id}
-                  node={rootNode}
-                  depth={0}
-                  gradesMap={gradesMap}
-                  answers={attemptAnswers}
-                />
+            <div className="space-y-6">
+              {sectionsWithTrees.map(({ section, tree }) => (
+                tree.length > 0 && (
+                  <div key={section.id} className="space-y-2">
+                    <div className="flex items-center gap-2 pb-2 border-b">
+                      <Badge variant="outline" className="text-sm">
+                        قسم {section.section_number}
+                      </Badge>
+                      <h3 className="font-semibold">{section.section_title}</h3>
+                    </div>
+                    <div className="space-y-2">
+                      {tree.map(rootNode => (
+                        <ResultQuestionNode
+                          key={rootNode.question.id}
+                          node={rootNode}
+                          depth={0}
+                          gradesMap={gradesMap}
+                          answers={attemptAnswers}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )
               ))}
+              {orphanTree.length > 0 && (
+                <div className="space-y-2">
+                  {orphanTree.map(rootNode => (
+                    <ResultQuestionNode
+                      key={rootNode.question.id}
+                      node={rootNode}
+                      depth={0}
+                      gradesMap={gradesMap}
+                      answers={attemptAnswers}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
