@@ -221,9 +221,25 @@ export default function StudentBagrutResult() {
     enabled: !!examId && !!user?.id,
   });
 
-  const questionTree = useMemo(() => {
+  // بناء شجرة الأسئلة مجمعة حسب الأقسام للحفاظ على الترتيب الصحيح
+  const sectionsWithTrees = useMemo(() => {
+    if (!data?.questions || !data?.sections) return [];
+    const sortedSections = [...data.sections].sort(
+      (a: any, b: any) => (a.order_index ?? 0) - (b.order_index ?? 0)
+    );
+    return sortedSections.map((section: any) => ({
+      section,
+      tree: buildQuestionTree(
+        data.questions.filter((q: any) => q.section_id === section.id)
+      ),
+    }));
+  }, [data?.questions, data?.sections]);
+
+  // الأسئلة بدون قسم (احتياطياً)
+  const orphanTree = useMemo(() => {
     if (!data?.questions) return [];
-    return buildQuestionTree(data.questions);
+    const orphans = data.questions.filter((q: any) => !q.section_id);
+    return buildQuestionTree(orphans);
   }, [data?.questions]);
 
   const canViewResults = useMemo(() => {
