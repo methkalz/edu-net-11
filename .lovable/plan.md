@@ -1,44 +1,72 @@
-## المشكلة
+# خطة التنفيذ — 4 تحسينات مؤكدة وآمنة
 
-في امتحانات البجروت — أسئلة "إكمال الفراغ" (مثل سؤال ي-أ في الصورة):
-- **في وضع الآدمن (المعاينة)**: يظهر السؤال صحيحاً — نص السؤال على سطر، والإجابات (مع الفراغات) في فقرات منفصلة كما حددها الآدمن في المحرر. ✅
-- **في واجهة الطالب أثناء حل الامتحان**: تختفي فواصل الفقرات ويظهر كل شيء (السؤال + الإجابات + حقول الفراغات) ملتصقاً على سطر واحد متواصل. ❌
+هذه التحسينات **آمنة** ولا تمس منطق التصحيح أو البجروت أو RLS. لا تغييرات في قاعدة البيانات.
 
-## السبب الجذري
+---
 
-في `src/components/bagrut/BagrutQuestionRenderer.tsx` (مكون `FillBlankQuestion`):
+## 1. تنظيف Console Logs الحساسة في `useAuth.tsx`
 
-1. الدالة `stripHtml` تحوّل `</p><p>` و `<br>` إلى `\n` بشكل صحيح (سطر 359-367).
-2. لكن النص يُقطّع إلى أجزاء `<span>` ثم تُلصق داخل:
-   ```tsx
-   <div className="leading-10">{parts}</div>   // ← السطر 451
-   ```
-3. هذا الـ `<div>` **لا يحتوي على `whitespace-pre-wrap`** — لذلك يتجاهل المتصفح أحرف `\n` ويعرض كل النص على سطر واحد.
+**المشكلة:** يتم طباعة `user.id` ومعلومات تسجيل الدخول في console المتصفح بشكل مكشوف (أسطر ~157-200) — تظهر حتى في الإنتاج.
 
-للمقارنة، نفس المنطق في `BagrutExamPreview.tsx` (وضع الآدمن) يستخدم:
-```tsx
-<p className="text-foreground whitespace-pre-wrap leading-8">   // ← السطر 867
-```
-ولهذا يعمل بشكل صحيح هناك.
+**الإجراء:**
+- إزالة جميع `console.log('🔵 ...')` و `console.error('🔴 ...')` من تتبع تسجيل الدخول.
+- استبدال الأخطاء فقط بـ `logger.error(...)` من `@/lib/logger` (موجود بالفعل ولا يطبع IDs في الإنتاج).
+- الإبقاء على المنطق الوظيفي (تحديث `login_count` و `last_login_at`) كما هو دون تغيير.
 
-## الحل
+---
 
-تعديل سطر واحد في `src/components/bagrut/BagrutQuestionRenderer.tsx` — السطر 451:
+## 2. توحيد عرض HTML عبر `SafeHtml`
 
-**قبل:**
-```tsx
-return <div className="leading-10">{parts}</div>;
-```
+**المشكلة:** 18 ملف يستخدم `dangerouslySetInnerHTML` مباشرة بدل مكون `SafeHtml` الموجود (الذي يستخدم DOMPurify).
 
-**بعد:**
-```tsx
-return <div className="leading-10 whitespace-pre-wrap">{parts}</div>;
-```
+**الإجراء (دفعة آمنة فقط):** استبدال الاستخدامات في الملفات المتعلقة بعرض محتوى المستخدم/الدروس فقط:
+- `src/components/content/Grade10LessonContentDisplay.tsx`
+- `src/components/content/Grade11LessonContentDisplay.tsx`
+- `src/components/student/ComputerStructureLessons.tsx`
 
-هذا سيجعل واجهة الطالب تحترم فواصل الفقرات تماماً كما يراها الآدمن في المعاينة، فيظهر:
-- نص السؤال في الأعلى على سطر منفصل.
-- كل فراغ + النص المحيط به في سطر منفصل (حسب الفقرات التي حددها الآدمن).
+**استثناءات (لا تُمس):**
+- `chart.tsx` — ينتج CSS داخلي موثوق (shadcn).
+- `HTMLEmbedWrapper.tsx`, `GammaEmbedWrapper.tsx` — تستخدم `srcdoc` ضمن iframes معزولة (سياسة الذاكرة الحالية).
+- محررات Tiptap/A4 — تتعامل مع HTML أثناء التحرير وليس العرض فقط.
+- `SafeHtml.tsx` نفسه.
 
-## الملفات المعدّلة
+---
 
-- `src/components/bagrut/BagrutQuestionRenderer.tsx` — تعديل className في سطر واحد فقط.
+## 3. حماية المسارات بـ `ErrorBoundary` على مستوى Suspense
+
+**المشكلة:** `App.tsx` يحتوي على `ErrorBoundary` خارجي واحد فقط، فأي خطأ داخل صفحة lazy-loaded يُسقط الشاشة بأكملها.
+
+**الإجراء:**
+- لف `<Suspense>` الداخلي في `App.tsx` (السطر ~101) داخل `<ErrorBoundary>` إضافي مع `SimpleErrorBoundary` (موجود بالفعل في `src/lib/error-boundary.tsx`) حتى يبقى الـ Header/Providers يعمل عند فشل صفحة واحدة.
+- لا تغييرات في `error-boundary.tsx` نفسه.
+
+---
+
+## 4. إصلاح warning الـ `forwardRef` في `BagrutSectionSelector`
+
+**المشكلة (من console logs الحالية):** `Badge` يُستخدم داخل مكون يحاول تمرير `ref` إليه — يولّد warnings متكررة في console.
+
+**الإجراء:**
+- فحص `src/components/ui/badge.tsx` وإذا كان function component بدون `forwardRef`، تحويله إلى `React.forwardRef` (تغيير ميكانيكي بسيط، شائع في shadcn).
+- لا تغيير في API الاستخدام.
+
+> ملاحظة: الادعاء الأصلي في التقرير حول `JSON.stringify` في `useEffect` بـ `Grade11Content.tsx` لم يتأكد بدقة في الملف. استبدلته بإصلاح warning حقيقي ظاهر في console الآن وأكثر فائدة.
+
+---
+
+## ما لن يُنفّذ (وأسبابه)
+
+- ❌ تعديل `AdminAccessBanner` URL params — RLS يحمي البيانات فعلاً.
+- ❌ تعديل imports الخاصة بـ `lucide-react` — Vite يعالج tree-shaking تلقائياً.
+- ❌ تقسيم `ExamsWidget.tsx` (3252 سطر) — refactor كبير ومخاطر عالية، يحتاج جلسة منفصلة.
+- ❌ استبدال 586 `: any` — مشروع ضخم منفصل.
+- ❌ أي تعديل على منطق التصحيح/البجروت/PDF comparison (قاعدة الذاكرة: precision critical).
+
+---
+
+## التحقق بعد التنفيذ
+
+1. تسجيل دخول/خروج → التأكد من غياب IDs في console.
+2. زيارة درس Grade 10/11 → التأكد من عرض المحتوى المنسق كما هو.
+3. فتح `/student/bagrut-attempt/...` → غياب warning الـ Badge.
+4. لا أخطاء جديدة في console.
