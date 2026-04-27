@@ -1,51 +1,44 @@
+## المشكلة
 
+في امتحانات البجروت — أسئلة "إكمال الفراغ" (مثل سؤال ي-أ في الصورة):
+- **في وضع الآدمن (المعاينة)**: يظهر السؤال صحيحاً — نص السؤال على سطر، والإجابات (مع الفراغات) في فقرات منفصلة كما حددها الآدمن في المحرر. ✅
+- **في واجهة الطالب أثناء حل الامتحان**: تختفي فواصل الفقرات ويظهر كل شيء (السؤال + الإجابات + حقول الفراغات) ملتصقاً على سطر واحد متواصل. ❌
 
-# خطة التنفيذ المصححة — تأمين جدول students
+## السبب الجذري
 
-## المرحلة 1: تعديل RLS على جدول students (بدون تغيير)
+في `src/components/bagrut/BagrutQuestionRenderer.tsx` (مكون `FillBlankQuestion`):
 
-```sql
--- حذف السياسة الواسعة الخطيرة
-DROP POLICY "School members can view their school students" ON public.students;
+1. الدالة `stripHtml` تحوّل `</p><p>` و `<br>` إلى `\n` بشكل صحيح (سطر 359-367).
+2. لكن النص يُقطّع إلى أجزاء `<span>` ثم تُلصق داخل:
+   ```tsx
+   <div className="leading-10">{parts}</div>   // ← السطر 451
+   ```
+3. هذا الـ `<div>` **لا يحتوي على `whitespace-pre-wrap`** — لذلك يتجاهل المتصفح أحرف `\n` ويعرض كل النص على سطر واحد.
 
--- حذف السياسة المكررة
-DROP POLICY "Users can view their own student record" ON public.students;
+للمقارنة، نفس المنطق في `BagrutExamPreview.tsx` (وضع الآدمن) يستخدم:
+```tsx
+<p className="text-foreground whitespace-pre-wrap leading-8">   // ← السطر 867
+```
+ولهذا يعمل بشكل صحيح هناك.
 
--- سياسة للطاقم فقط
-CREATE POLICY "Staff can view school students" ON public.students
-FOR SELECT TO authenticated
-USING (
-  (school_id = get_user_school_id() 
-   AND get_user_role() IN ('teacher'::app_role, 'school_admin'::app_role))
-  OR get_user_role() = 'superadmin'::app_role
-);
+## الحل
 
--- "Students can view their own record" تبقى كما هي
+تعديل سطر واحد في `src/components/bagrut/BagrutQuestionRenderer.tsx` — السطر 451:
+
+**قبل:**
+```tsx
+return <div className="leading-10">{parts}</div>;
 ```
 
-## المرحلة 2: إنشاء View آمن (مصحح حسب ملاحظة الخبير)
-
-```sql
--- View بدون security_invoker — يتجاوز RLS لكن مقيد بـ WHERE
-CREATE OR REPLACE VIEW public.secure_students_view AS 
-SELECT id, full_name, school_id, created_at_utc 
-FROM public.students
-WHERE school_id = get_user_school_id();
-
-GRANT SELECT ON public.secure_students_view TO authenticated;
+**بعد:**
+```tsx
+return <div className="leading-10 whitespace-pre-wrap">{parts}</div>;
 ```
 
-**لماذا هذا أفضل**: الـ View يعمل بصلاحيات مالكه (يتجاوز RLS)، لكن `WHERE school_id = get_user_school_id()` يضمن أن كل مستخدم يرى فقط طلاب مدرسته. لا يوجد email أو phone في الأعمدة المختارة. جاهز للوحة متصدرين مستقبلية.
+هذا سيجعل واجهة الطالب تحترم فواصل الفقرات تماماً كما يراها الآدمن في المعاينة، فيظهر:
+- نص السؤال في الأعلى على سطر منفصل.
+- كل فراغ + النص المحيط به في سطر منفصل (حسب الفقرات التي حددها الآدمن).
 
-## المرحلة 3: لا تغييرات في الكود
+## الملفات المعدّلة
 
-لا يوجد أي مكون طلابي يقرأ بيانات طلاب آخرين حالياً.
-
-## الملفات المتأثرة
-- Migration جديد واحد فقط (SQL)
-- صفر تغييرات في ملفات TypeScript
-
-## التأثير
-- سوبر آدمن / مدير / معلم: بدون تغيير
-- طالب: يرى سجله فقط من `students`، يرى أسماء زملاء مدرسته من `secure_students_view` (بدون PII)
-
+- `src/components/bagrut/BagrutQuestionRenderer.tsx` — تعديل className في سطر واحد فقط.

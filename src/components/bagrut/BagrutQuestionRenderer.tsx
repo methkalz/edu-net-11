@@ -448,7 +448,7 @@ function FillBlankQuestion({
     parts.push(<span key="text-end">{text.slice(lastIndex)}</span>);
   }
 
-  return <div className="leading-10">{parts}</div>;
+  return <div className="leading-10 whitespace-pre-wrap">{parts}</div>;
 }
 
 // مكون أسئلة الجدول
