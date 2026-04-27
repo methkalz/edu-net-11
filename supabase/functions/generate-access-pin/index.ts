@@ -72,9 +72,9 @@ Deno.serve(async (req) => {
     // Generate 6-digit PIN
     const pinCode = Math.floor(100000 + Math.random() * 900000).toString()
 
-    // Set expiration time (15 minutes from now)
+    // Set expiration time (5 minutes from now — short window to limit brute force)
     const expiresAt = new Date()
-    expiresAt.setMinutes(expiresAt.getMinutes() + 15)
+    expiresAt.setMinutes(expiresAt.getMinutes() + 5)
 
     // Clean up expired PINs first
     await supabase.rpc('cleanup_expired_pins')
