@@ -422,8 +422,17 @@ function FillBlankQuestion({
     const answerRecord = typeof answer === 'object' ? answer : {};
     const currentValue = answerRecord?.[blankId] || '';
 
+    const MAX_BLANK_LENGTH = 40;
+    const placeholderText = blankDef?.placeholder || `BLANK ${blankId}`;
+    // العرض الديناميكي: يكبر مع النص لكن لا يتجاوز 40 حرف
+    const displayLength = Math.max(
+      8, // حد أدنى لعرض الـ placeholder
+      Math.min(MAX_BLANK_LENGTH, currentValue.length + 2),
+      placeholderText.length
+    );
+
     parts.push(
-      <span key={`blank-${blankCounter}`} className="inline-block mx-1">
+      <span key={`blank-${blankCounter}`} className="inline-block mx-1 align-middle">
         {showAnswer && blankDef?.correct_answer ? (
           <span className="px-2 py-1 bg-primary/10 border-b-2 border-primary text-primary font-medium rounded">
             {blankDef.correct_answer}
@@ -432,10 +441,14 @@ function FillBlankQuestion({
           <Input
             type="text"
             value={currentValue}
-            onChange={(e) => handleBlankChange(blankId, e.target.value)}
+            onChange={(e) => handleBlankChange(blankId, e.target.value.slice(0, MAX_BLANK_LENGTH))}
             disabled={disabled}
-            className="min-w-[7rem] w-auto max-w-[40rem] inline-block px-2 py-1 h-8 text-center overflow-x-auto"
-            placeholder={blankDef?.placeholder || `BLANK ${blankId}`}
+            maxLength={MAX_BLANK_LENGTH}
+            size={displayLength}
+            style={{ width: `${displayLength + 2}ch` }}
+            className="inline-block px-2 py-1 h-8 text-center transition-[width] duration-150 ease-out"
+            placeholder={placeholderText}
+            title={`الحد الأقصى ${MAX_BLANK_LENGTH} حرف`}
           />
         )}
       </span>
