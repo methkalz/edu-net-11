@@ -358,19 +358,17 @@ export default function StudentBagrutResult() {
             <CardDescription>مراجعة إجاباتك مع الإجابات الصحيحة</CardDescription>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="max-h-[500px]">
-              <div className="space-y-2">
-                {questionTree.map(rootNode => (
-                  <ResultQuestionNode
-                    key={rootNode.question.id}
-                    node={rootNode}
-                    depth={0}
-                    gradesMap={gradesMap}
-                    answers={attemptAnswers}
-                  />
-                ))}
-              </div>
-            </ScrollArea>
+            <div className="space-y-2">
+              {questionTree.map(rootNode => (
+                <ResultQuestionNode
+                  key={rootNode.question.id}
+                  node={rootNode}
+                  depth={0}
+                  gradesMap={gradesMap}
+                  answers={attemptAnswers}
+                />
+              ))}
+            </div>
           </CardContent>
         </Card>
       )}
