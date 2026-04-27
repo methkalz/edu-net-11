@@ -277,7 +277,8 @@ const App = () => {
               {/* IMPORTANT: Keep catch-all route last - handles 404 errors */}
               <Route path="*" element={<NotFound />} />
           </Routes>
-        </Suspense>
+          </Suspense>
+        </ErrorBoundary>
         </TooltipProvider>
     </ErrorBoundary>
   );
