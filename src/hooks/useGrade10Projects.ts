@@ -221,7 +221,6 @@ export const useGrade10Projects = () => {
         due_date: projectData.due_date || null,
         student_id: userProfile.user_id,
         school_id: userProfile.school_id || null,
-        created_by: userProfile.user_id,
       };
 
       const { data, error } = await supabase
