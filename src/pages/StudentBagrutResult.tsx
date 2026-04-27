@@ -27,6 +27,7 @@ import {
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import SafeHtml from '@/components/bagrut/SafeHtml';
+import { formatStudentAnswer, formatCorrectAnswer, hasCorrectAnswer } from '@/lib/bagrut/formatBagrutAnswers';
 
 // ====== بناء شجرة الأسئلة المتداخلة (N مستويات) ======
 interface QuestionTreeNode {
