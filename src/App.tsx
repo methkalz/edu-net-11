@@ -97,9 +97,10 @@ const App = () => {
         {/* Toast notification systems - dual system for flexibility */}
         <Toaster />
         <Sonner />
-        {/* Suspense boundary for lazy-loaded components */}
-        <Suspense fallback={<PageLoading message="Loading..." />}>
-          <Routes>
+        {/* Inner ErrorBoundary keeps providers/toaster alive if a route crashes */}
+        <ErrorBoundary>
+          <Suspense fallback={<PageLoading message="Loading..." />}>
+            <Routes>
               {/* Public routes */}
               <Route path="/" element={<Suspense fallback={<PageLoading message="لحظة.. منجهزلك الصفحة" />}><LandingPage /></Suspense>} />
               <Route path="/index2" element={<Index />} />
