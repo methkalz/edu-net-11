@@ -768,6 +768,34 @@ export default function StudentExamAttempt() {
                 )}
               </div>
             </div>
+
+            {/* زر التقديم السريع - ظاهر دائماً */}
+            <div className="mt-4 pt-4 border-t border-border/40 flex items-center justify-between gap-3">
+              <div className="text-sm text-muted-foreground">
+                <span className="font-semibold text-foreground">{answeredQuestions.size}</span>
+                <span className="mx-1">/</span>
+                <span>{examData.questions.length}</span>
+                <span className="mr-2">سؤال مُجاب</span>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                onClick={handleSubmitClick}
+                disabled={!allQuestionsAnswered || submitExamMutation.isPending}
+                className={`gap-2 ${
+                  allQuestionsAnswered
+                    ? 'bg-green-600 hover:bg-green-700 text-white'
+                    : 'bg-orange-500/80 hover:bg-orange-500 text-white'
+                }`}
+              >
+                {submitExamMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <CheckCircle2 className="w-4 h-4" />
+                )}
+                تقديم الامتحان
+              </Button>
+            </div>
           </CardHeader>
         </Card>
       </div>
