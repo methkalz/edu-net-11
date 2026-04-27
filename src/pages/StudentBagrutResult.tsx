@@ -315,7 +315,7 @@ export default function StudentBagrutResult() {
   return (
     <div className="container mx-auto p-6 max-w-4xl space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/student/bagrut-exams')}>
+        <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard')}>
           <ArrowRight className="h-5 w-5" />
         </Button>
         <div>
@@ -358,26 +358,24 @@ export default function StudentBagrutResult() {
             <CardDescription>مراجعة إجاباتك مع الإجابات الصحيحة</CardDescription>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="max-h-[500px]">
-              <div className="space-y-2">
-                {questionTree.map(rootNode => (
-                  <ResultQuestionNode
-                    key={rootNode.question.id}
-                    node={rootNode}
-                    depth={0}
-                    gradesMap={gradesMap}
-                    answers={attemptAnswers}
-                  />
-                ))}
-              </div>
-            </ScrollArea>
+            <div className="space-y-2">
+              {questionTree.map(rootNode => (
+                <ResultQuestionNode
+                  key={rootNode.question.id}
+                  node={rootNode}
+                  depth={0}
+                  gradesMap={gradesMap}
+                  answers={attemptAnswers}
+                />
+              ))}
+            </div>
           </CardContent>
         </Card>
       )}
 
       <div className="flex gap-4 justify-center">
-        <Button variant="outline" onClick={() => navigate('/student/bagrut-exams')}>
-          <ArrowRight className="ml-2 h-4 w-4" /> العودة للقائمة
+        <Button variant="outline" onClick={() => navigate('/dashboard')}>
+          <ArrowRight className="ml-2 h-4 w-4" /> العودة للوحة التحكم
         </Button>
         {data.exam.max_attempts > attempts.length && (
           <Button onClick={() => navigate(`/student/bagrut-attempt/${examId}`)}>محاولة جديدة</Button>
