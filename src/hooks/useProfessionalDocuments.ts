@@ -11,27 +11,14 @@ export interface ProfessionalDocument {
   plain_text?: string;
   word_count: number;
   page_count: number;
-  owner_id: string;
+  user_id: string;
   school_id?: string;
   status: 'draft' | 'published' | 'archived' | 'submitted';
-  visibility: 'private' | 'school' | 'public';
-  allow_comments: boolean;
-  allow_suggestions: boolean;
-  version_number: number;
+  document_type?: string;
+  google_doc_id?: string;
   created_at: string;
   updated_at: string;
   last_saved_at: string;
-  settings: {
-    page_format: string;
-    margins: {
-      top: number;
-      bottom: number;
-      left: number;
-      right: number;
-    };
-    font_family: string;
-    font_size: number;
-  };
   metadata: any;
 }
 
