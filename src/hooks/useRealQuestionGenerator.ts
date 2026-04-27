@@ -212,11 +212,10 @@ export const useRealQuestionGenerator = () => {
             choices: question.choices,
             correct_answer: question.correct_answer,
             lesson_id: null, // يمكن ربطها بدروس لاحقاً
-            difficulty: determineDifficulty({
+            difficulty_level: determineDifficulty({
               question_text: question.question_text,
               choices: question.choices
             }),
-            category: question.category,
             explanation: question.explanation
           }]);
 
