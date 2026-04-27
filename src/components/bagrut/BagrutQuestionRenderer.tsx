@@ -423,7 +423,7 @@ function FillBlankQuestion({
     const currentValue = answerRecord?.[blankId] || '';
 
     const MAX_BLANK_LENGTH = 40;
-    const placeholderText = blankDef?.placeholder || `BLANK ${blankId}`;
+    const placeholderText = blankDef?.placeholder || `فراغ ${blankId}`;
     // العرض الديناميكي: يكبر مع النص لكن لا يتجاوز 40 حرف
     const displayLength = Math.max(
       8, // حد أدنى لعرض الـ placeholder
