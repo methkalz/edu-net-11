@@ -369,9 +369,11 @@ Edu-Net.me`
   // تحديث المشروع
   const updateProject = async (projectId: string, updates: Partial<Grade12FinalProject>) => {
     try {
+      // Strip client-only fields not present in DB
+      const { student_profile, ...dbUpdates } = updates as any;
       const { data, error } = await supabase
         .from('grade12_final_projects')
-        .update(updates)
+        .update(dbUpdates)
         .eq('id', projectId)
         .select()
         .single();

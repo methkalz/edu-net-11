@@ -221,7 +221,6 @@ export const useGrade10Projects = () => {
         due_date: projectData.due_date || null,
         student_id: userProfile.user_id,
         school_id: userProfile.school_id || null,
-        created_by: userProfile.user_id,
       };
 
       const { data, error } = await supabase
@@ -256,9 +255,11 @@ export const useGrade10Projects = () => {
   // تحديث المشروع
   const updateProject = async (projectId: string, updates: Partial<Grade10MiniProject>) => {
     try {
+      // Strip client-only fields not present in DB
+      const { ...dbUpdates } = updates as any;
       const { data, error } = await supabase
         .from('grade10_mini_projects')
-        .update(updates)
+        .update(dbUpdates)
         .eq('id', projectId)
         .select()
         .single();

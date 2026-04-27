@@ -4,14 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Grade11Lesson, Grade11LessonMedia } from '@/hooks/useGrade11Content';
+import { Grade11Lesson, Grade11LessonMedia, Grade11LessonWithMedia } from '@/hooks/useGrade11Content';
 import Grade11LessonMediaManager from './Grade11LessonMediaManager';
 import RichTextEditor from './RichTextEditor';
 
 interface Grade11LessonFormProps {
-  lesson?: Grade11Lesson;
+  lesson?: Grade11LessonWithMedia;
   topicId: string;
-  onSave: (lessonData: Omit<Grade11Lesson, 'id' | 'created_at' | 'updated_at' | 'media'>) => void;
+  onSave: (lessonData: Omit<Grade11Lesson, 'id' | 'created_at' | 'updated_at'>) => void;
   onAddMedia?: (mediaData: Omit<Grade11LessonMedia, 'id' | 'created_at'>) => Promise<any>;
   onDeleteMedia?: (mediaId: string) => Promise<void>;
   onUpdateMedia?: (mediaId: string, updates: Partial<Grade11LessonMedia>) => Promise<void>;

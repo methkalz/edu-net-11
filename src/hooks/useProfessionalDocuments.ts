@@ -11,27 +11,14 @@ export interface ProfessionalDocument {
   plain_text?: string;
   word_count: number;
   page_count: number;
-  owner_id: string;
+  user_id: string;
   school_id?: string;
   status: 'draft' | 'published' | 'archived' | 'submitted';
-  visibility: 'private' | 'school' | 'public';
-  allow_comments: boolean;
-  allow_suggestions: boolean;
-  version_number: number;
+  document_type?: string;
+  google_doc_id?: string;
   created_at: string;
   updated_at: string;
   last_saved_at: string;
-  settings: {
-    page_format: string;
-    margins: {
-      top: number;
-      bottom: number;
-      left: number;
-      right: number;
-    };
-    font_family: string;
-    font_size: number;
-  };
   metadata: any;
 }
 
@@ -153,21 +140,6 @@ export const useProfessionalDocuments = () => {
         user_id: user.id,
         school_id: user.user_metadata?.school_id || null,
         status: 'draft' as const,
-        visibility: 'private' as const,
-        allow_comments: true,
-        allow_suggestions: true,
-        version_number: 1,
-        settings: {
-          page_format: 'A4',
-          margins: {
-            top: 72,
-            bottom: 72,
-            left: 72,
-            right: 72
-          },
-          font_family: 'Cairo',
-          font_size: 12
-        },
         metadata: {}
       };
 
