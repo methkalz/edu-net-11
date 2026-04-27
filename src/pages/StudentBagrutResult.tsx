@@ -16,6 +16,7 @@ import {
   AlertCircle,
   ArrowRight,
   Award,
+  BookOpen,
   CheckCircle2,
   Clock,
   FileText,
@@ -163,14 +164,14 @@ function ResultQuestionNode({
               </div>
             )}
 
-            {/* طريقة الحل */}
+            {/* طريقة الحل - بنفس تنسيق لوحة المعلم */}
             {question.answer_explanation && (
-              <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 rounded-md border border-emerald-200 dark:border-emerald-800">
-                <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400 mb-1">طريقة الحل:</p>
-                <SafeHtml
-                  html={question.answer_explanation}
-                  className="text-sm text-foreground/80 prose prose-sm max-w-none dark:prose-invert"
-                />
+              <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg border border-emerald-200 dark:border-emerald-800">
+                <p className="text-sm font-medium mb-1 flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
+                  <BookOpen className="h-4 w-4" />
+                  طريقة الحل:
+                </p>
+                <SafeHtml html={question.answer_explanation} className="text-foreground/80" />
               </div>
             )}
 
