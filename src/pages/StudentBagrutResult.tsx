@@ -374,8 +374,8 @@ export default function StudentBagrutResult() {
       )}
 
       <div className="flex gap-4 justify-center">
-        <Button variant="outline" onClick={() => navigate('/student/bagrut-exams')}>
-          <ArrowRight className="ml-2 h-4 w-4" /> العودة للقائمة
+        <Button variant="outline" onClick={() => navigate('/dashboard')}>
+          <ArrowRight className="ml-2 h-4 w-4" /> العودة للوحة التحكم
         </Button>
         {data.exam.max_attempts > attempts.length && (
           <Button onClick={() => navigate(`/student/bagrut-attempt/${examId}`)}>محاولة جديدة</Button>
