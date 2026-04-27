@@ -150,9 +150,10 @@ function ResultQuestionNode({
             {question.answer_explanation && (
               <div className="mt-2 p-2 bg-emerald-50 dark:bg-emerald-950/30 rounded border border-emerald-200 dark:border-emerald-800">
                 <span className="font-medium text-emerald-700 dark:text-emerald-400">طريقة الحل: </span>
-                <div className="text-foreground/80 whitespace-pre-wrap mt-1 text-sm">
-                  {question.answer_explanation}
-                </div>
+                <SafeHtml
+                  html={question.answer_explanation}
+                  className="text-foreground/80 mt-1 text-sm prose prose-sm max-w-none dark:prose-invert"
+                />
               </div>
             )}
 
