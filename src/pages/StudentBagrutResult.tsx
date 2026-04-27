@@ -27,6 +27,7 @@ import {
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import SafeHtml from '@/components/bagrut/SafeHtml';
+import { formatStudentAnswer, formatCorrectAnswer, hasCorrectAnswer } from '@/lib/bagrut/formatBagrutAnswers';
 
 // ====== بناء شجرة الأسئلة المتداخلة (N مستويات) ======
 interface QuestionTreeNode {
@@ -96,71 +97,88 @@ function ResultQuestionNode({
   const isPartial = score > 0 && score < max;
 
   return (
-    <div style={{ marginRight: depth * 20 }}>
+    <div style={{ marginRight: depth * 16 }}>
       <div
-        className={`p-3 rounded-lg border mb-2 ${
-          depth === 0 ? 'border-border' : 'border-border/50'
+        className={`p-4 rounded-lg border mb-3 ${
+          depth === 0 ? 'border-border shadow-sm' : 'border-border/50'
         } ${
           isCorrect
-            ? 'bg-green-50/50 dark:bg-green-950/20 border-green-200 dark:border-green-800'
+            ? 'bg-green-50/40 dark:bg-green-950/20 border-green-200 dark:border-green-800'
             : isPartial
-            ? 'bg-orange-50/50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-800'
-            : 'bg-red-50/50 dark:bg-red-950/20 border-red-200 dark:border-red-800'
+            ? 'bg-orange-50/40 dark:bg-orange-950/20 border-orange-200 dark:border-orange-800'
+            : 'bg-red-50/30 dark:bg-red-950/15 border-red-200 dark:border-red-800'
         }`}
       >
-        <div className="flex items-start justify-between mb-2">
-          <div className="flex items-center gap-2">
+        {/* رأس السؤال */}
+        <div className="flex items-start justify-between gap-2 mb-3 flex-wrap">
+          <div className="flex items-center gap-2 min-w-0">
             {isCorrect ? (
-              <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
+              <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
             ) : isPartial ? (
-              <AlertCircle className="h-4 w-4 text-orange-500 flex-shrink-0" />
+              <AlertCircle className="h-5 w-5 text-orange-500 flex-shrink-0" />
             ) : (
-              <XCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
+              <XCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
             )}
-            <span className={`font-medium ${depth > 0 ? 'text-sm' : ''}`}>
+            <span className={`font-semibold ${depth > 0 ? 'text-sm' : 'text-base'}`}>
               سؤال {question.question_number}
               {question.sub_question_label ? ` (${question.sub_question_label})` : ''}
             </span>
+            {question.question_type && !isParent && (
+              <Badge variant="outline" className="text-[10px]">
+                {question.question_type}
+              </Badge>
+            )}
           </div>
-          <Badge variant={isCorrect ? 'default' : isPartial ? 'secondary' : 'destructive'} className="text-xs">
+          <Badge variant={isCorrect ? 'default' : isPartial ? 'secondary' : 'destructive'} className="text-xs font-mono">
             {score} / {max}
           </Badge>
         </div>
 
-        <SafeHtml html={question.question_text} className="text-sm mb-2 text-muted-foreground" />
+        {/* نص السؤال */}
+        <div className="p-3 bg-muted/40 rounded-md mb-3">
+          <p className="text-xs font-medium text-muted-foreground mb-1">السؤال:</p>
+          <SafeHtml html={question.question_text} className="text-sm" />
+          {question.image_url && (
+            <img src={question.image_url} alt="صورة السؤال" className="mt-2 max-h-48 rounded" />
+          )}
+        </div>
 
         {!isParent && (
-          <div className="grid gap-1.5 text-sm">
-            <div className="flex gap-2">
-              <span className="font-medium min-w-[80px] text-muted-foreground">إجابتك:</span>
-              <span className="text-foreground">
-                {typeof studentAnswer?.answer === 'object'
-                  ? JSON.stringify(studentAnswer.answer)
-                  : studentAnswer?.answer || <span className="text-muted-foreground italic">لم تجب</span>}
-              </span>
+          <div className="space-y-2">
+            {/* إجابة الطالب */}
+            <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-md border border-blue-100 dark:border-blue-900">
+              <p className="text-xs font-medium text-blue-700 dark:text-blue-400 mb-1">إجابتك:</p>
+              <div className="text-sm text-foreground">
+                {formatStudentAnswer(question, studentAnswer)}
+              </div>
             </div>
 
-            {question.correct_answer && (
-              <div className="flex gap-2">
-                <span className="font-medium min-w-[80px] text-muted-foreground">الصحيحة:</span>
-                <span className="text-green-600 dark:text-green-400">{question.correct_answer}</span>
+            {/* الإجابة الصحيحة */}
+            {hasCorrectAnswer(question) && (
+              <div className="p-3 bg-green-50 dark:bg-green-950/30 rounded-md border border-green-200 dark:border-green-800">
+                <p className="text-xs font-medium text-green-700 dark:text-green-400 mb-1">الإجابة الصحيحة:</p>
+                <div className="text-sm">
+                  {formatCorrectAnswer(question)}
+                </div>
               </div>
             )}
 
+            {/* طريقة الحل */}
             {question.answer_explanation && (
-              <div className="mt-2 p-2 bg-emerald-50 dark:bg-emerald-950/30 rounded border border-emerald-200 dark:border-emerald-800">
-                <span className="font-medium text-emerald-700 dark:text-emerald-400">طريقة الحل: </span>
+              <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 rounded-md border border-emerald-200 dark:border-emerald-800">
+                <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400 mb-1">طريقة الحل:</p>
                 <SafeHtml
                   html={question.answer_explanation}
-                  className="text-foreground/80 mt-1 text-sm prose prose-sm max-w-none dark:prose-invert"
+                  className="text-sm text-foreground/80 prose prose-sm max-w-none dark:prose-invert"
                 />
               </div>
             )}
 
+            {/* ملاحظة المعلم */}
             {grade?.teacher_feedback && (
-              <div className="mt-2 p-2 bg-muted rounded text-sm">
-                <span className="font-medium">ملاحظة: </span>
-                {grade.teacher_feedback}
+              <div className="p-3 bg-amber-50 dark:bg-amber-950/30 rounded-md border border-amber-200 dark:border-amber-800">
+                <p className="text-xs font-medium text-amber-700 dark:text-amber-400 mb-1">ملاحظة المعلم:</p>
+                <p className="text-sm whitespace-pre-wrap">{grade.teacher_feedback}</p>
               </div>
             )}
           </div>
