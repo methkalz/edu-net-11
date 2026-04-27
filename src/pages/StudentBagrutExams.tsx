@@ -170,7 +170,7 @@ export default function StudentBagrutExams() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
-      <ModernHeader title="امتحانات البجروت" showBackButton backPath="/student/dashboard" />
+      <ModernHeader title="امتحانات البجروت" showBackButton backPath="/dashboard" />
 
       <main className="container mx-auto px-4 py-8">
         {/* إحصائيات سريعة */}
