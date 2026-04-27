@@ -85,8 +85,7 @@ Deno.serve(async (req) => {
 
     // Get the correct app URL (not Supabase URL)
     const appUrl = Deno.env.get('APP_URL') || 'http://localhost:5173';
-    console.log(`Using app URL for redirect: ${appUrl}`);
-    
+
     // Generate magic link for direct login
     const { data: magicLink, error: linkError } = await supabase.auth.admin.generateLink({
       type: 'magiclink',
@@ -97,14 +96,13 @@ Deno.serve(async (req) => {
     })
 
     if (linkError || !magicLink) {
-      console.error('Magic link generation error:', linkError)
       return new Response(
         JSON.stringify({ error: 'Failed to generate login link' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    // Log the PIN usage in audit log
+    // Log the PIN usage in audit log (no PII in console)
     await supabase
       .from('audit_log')
       .insert({
@@ -120,8 +118,6 @@ Deno.serve(async (req) => {
           pin_created_at: pinData.created_at
         }
       })
-
-    console.log(`PIN ${pinCode} used successfully for user ${pinData.target_user_id}`)
 
     return new Response(
       JSON.stringify({
@@ -142,7 +138,6 @@ Deno.serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Login with PIN error:', error)
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

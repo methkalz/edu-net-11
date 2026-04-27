@@ -1,72 +1,86 @@
-# خطة التنفيذ — 4 تحسينات مؤكدة وآمنة
+# خطة إصلاح الثغرات الأمنية المتعلقة بالآدمن
 
-هذه التحسينات **آمنة** ولا تمس منطق التصحيح أو البجروت أو RLS. لا تغييرات في قاعدة البيانات.
+## الثغرات المؤكدة بعد الفحص
 
----
+### 🔴 1. ثغرة حرجة — `impersonate-user` Edge Function
+**الملف:** `supabase/functions/impersonate-user/index.ts`
 
-## 1. تنظيف Console Logs الحساسة في `useAuth.tsx`
+- لا يتحقق إطلاقاً من JWT المُرسل، يقرأ `adminUserId` من **body الطلب**.
+- أي مستخدم مسجّل (طالب/معلم) يستطيع إرسال `adminUserId` لأي superadmin معروف، فيقوم Edge Function بإصدار **magic link جاهز للدخول** كأي مستخدم في النظام.
+- نتيجة الاستغلال: استيلاء كامل على أي حساب (سيناريو privilege escalation كامل).
 
-**المشكلة:** يتم طباعة `user.id` ومعلومات تسجيل الدخول في console المتصفح بشكل مكشوف (أسطر ~157-200) — تظهر حتى في الإنتاج.
+### 🟠 2. ثغرة متوسطة — `login-with-pin` Edge Function
+**الملف:** `supabase/functions/login-with-pin/index.ts`
 
-**الإجراء:**
-- إزالة جميع `console.log('🔵 ...')` و `console.error('🔴 ...')` من تتبع تسجيل الدخول.
-- استبدال الأخطاء فقط بـ `logger.error(...)` من `@/lib/logger` (موجود بالفعل ولا يطبع IDs في الإنتاج).
-- الإبقاء على المنطق الوظيفي (تحديث `login_count` و `last_login_at`) كما هو دون تغيير.
+- نقطة عامة بلا أي rate-limiting.
+- PIN من 6 أرقام (مليون احتمال) صالح 15 دقيقة → عرضة لـ brute force عبر سكربت بسيط.
 
----
+### 🟠 3. مشكلة معمارية — ثقة بـ URL parameters للحالة الإدارية
+**الملفات:** `AdminAccessBanner.tsx` (نسختان), `useImpersonation.ts`, `ImpersonationBanner.tsx`
 
-## 2. توحيد عرض HTML عبر `SafeHtml`
+- `?admin_access=true&impersonated=true` تستخدم لتحديد حالة "تصفح كمستخدم آخر"، لكن هذه قيم تجميلية فقط. الحماية الحقيقية على RLS موجودة، لكن البانر يمكن إخفاؤه بإزالة الـ query string.
+- البديل الموجود `useImpersonation` يقرأ من `localStorage` ويُسبّب **حالة UI متضاربة** (الـ hook يعرض بيانات وهمية لمستخدم منتحَل بينما الجلسة الفعلية في Supabase تخص حساب الآدمن أو حساب الضحية).
 
-**المشكلة:** 18 ملف يستخدم `dangerouslySetInnerHTML` مباشرة بدل مكون `SafeHtml` الموجود (الذي يستخدم DOMPurify).
-
-**الإجراء (دفعة آمنة فقط):** استبدال الاستخدامات في الملفات المتعلقة بعرض محتوى المستخدم/الدروس فقط:
-- `src/components/content/Grade10LessonContentDisplay.tsx`
-- `src/components/content/Grade11LessonContentDisplay.tsx`
-- `src/components/student/ComputerStructureLessons.tsx`
-
-**استثناءات (لا تُمس):**
-- `chart.tsx` — ينتج CSS داخلي موثوق (shadcn).
-- `HTMLEmbedWrapper.tsx`, `GammaEmbedWrapper.tsx` — تستخدم `srcdoc` ضمن iframes معزولة (سياسة الذاكرة الحالية).
-- محررات Tiptap/A4 — تتعامل مع HTML أثناء التحرير وليس العرض فقط.
-- `SafeHtml.tsx` نفسه.
+### 🟡 4. حساسية في Audit log
+- جميع الـ edge functions تستخدم `console.log` لطباعة معرفات المستخدمين. تفصيل بسيط لكن نُنظفه ضمن نفس التغيير.
 
 ---
 
-## 3. حماية المسارات بـ `ErrorBoundary` على مستوى Suspense
+## ما سيُنفّذ
 
-**المشكلة:** `App.tsx` يحتوي على `ErrorBoundary` خارجي واحد فقط، فأي خطأ داخل صفحة lazy-loaded يُسقط الشاشة بأكملها.
+### تغيير 1: تحصين `impersonate-user`
+- إزالة `adminUserId` من الـ body بالكامل.
+- استخراج المستدعي من `Authorization` header عبر `supabase.auth.getClaims(token)`.
+- التحقق أن `claims.sub` يعود لمستخدم بـ `role = 'superadmin'` في `profiles` (مع `search_path` آمن).
+- منع انتحال superadmin آخر (`targetUser.role !== 'superadmin'` أو على الأقل تسجيل المحاولة بمستوى CRITICAL).
+- إبقاء واجهة الاستدعاء من العميل كما هي (نُحدّث `useImpersonation`/زر الانتحال ليستخدم session token تلقائياً عبر `supabase.functions.invoke` بدون تمرير `adminUserId`).
 
-**الإجراء:**
-- لف `<Suspense>` الداخلي في `App.tsx` (السطر ~101) داخل `<ErrorBoundary>` إضافي مع `SimpleErrorBoundary` (موجود بالفعل في `src/lib/error-boundary.tsx`) حتى يبقى الـ Header/Providers يعمل عند فشل صفحة واحدة.
-- لا تغييرات في `error-boundary.tsx` نفسه.
+### تغيير 2: تحصين `login-with-pin` ضد brute force
+- إضافة rate-limiting بسيط داخل الفانكشن: محاولة فاشلة تُسجَّل في جدول `pin_login_attempts` (نُنشئه عبر migration) مع `ip` و`attempted_at`.
+- بعد 5 محاولات خاطئة من نفس IP خلال 10 دقائق → 429.
+- إبقاء التدفق الناجح كما هو 100% (نفس الـ magic link، نفس الـ redirect).
 
----
+### تغيير 3: إزالة الاعتماد على query params كمصدر حقيقة
+- `AdminAccessBanner` (في `src/components/admin/` و`src/components/shared/`): تحويلها لقراءة الحالة من `useImpersonation` فقط، وإلغاء التحقق من `?admin_access=true` كـ "دليل" على الجلسة الإدارية. يُبقى البانر يظهر بصرياً فقط لأن RLS هو الحامي الفعلي.
+- توحيد المنطق: حذف نسخة `src/components/shared/AdminAccessBanner.tsx` المكررة والإبقاء على نسخة `src/components/admin/` (موحّدة مع `ImpersonationBanner`).
 
-## 4. إصلاح warning الـ `forwardRef` في `BagrutSectionSelector`
-
-**المشكلة (من console logs الحالية):** `Badge` يُستخدم داخل مكون يحاول تمرير `ref` إليه — يولّد warnings متكررة في console.
-
-**الإجراء:**
-- فحص `src/components/ui/badge.tsx` وإذا كان function component بدون `forwardRef`، تحويله إلى `React.forwardRef` (تغيير ميكانيكي بسيط، شائع في shadcn).
-- لا تغيير في API الاستخدام.
-
-> ملاحظة: الادعاء الأصلي في التقرير حول `JSON.stringify` في `useEffect` بـ `Grade11Content.tsx` لم يتأكد بدقة في الملف. استبدلته بإصلاح warning حقيقي ظاهر في console الآن وأكثر فائدة.
+### تغيير 4: تنظيف console.log من معرفات
+- إزالة `console.log` التي تطبع `userId`/`pinCode` من الفانكشنز الثلاث، استبدال بسجلات عامة بدون PII.
+- الاحتفاظ بـ `audit_log` كما هو (هذا الجدول هو السجل الرسمي).
 
 ---
 
 ## ما لن يُنفّذ (وأسبابه)
 
-- ❌ تعديل `AdminAccessBanner` URL params — RLS يحمي البيانات فعلاً.
-- ❌ تعديل imports الخاصة بـ `lucide-react` — Vite يعالج tree-shaking تلقائياً.
-- ❌ تقسيم `ExamsWidget.tsx` (3252 سطر) — refactor كبير ومخاطر عالية، يحتاج جلسة منفصلة.
-- ❌ استبدال 586 `: any` — مشروع ضخم منفصل.
-- ❌ أي تعديل على منطق التصحيح/البجروت/PDF comparison (قاعدة الذاكرة: precision critical).
+- ❌ تغيير منطق التصحيح/البجروت/PDF — لا علاقة لها بالأمان الإداري (قاعدة الذاكرة: precision critical).
+- ❌ تعديل RLS policies الحالية على `profiles` — لا توجد ثغرة فيها (تم تأمينها سابقاً عبر `get_own_role()`).
+- ❌ إزالة ميزة الانتحال — مطلوبة وظيفياً للسوبرآدمن.
+- ❌ تعديل الـ build errors في Tiptap (`HTMLEmbed`/`GammaEmbed`) — موجودة قبل هذا الطلب وخارج نطاقه.
 
 ---
 
 ## التحقق بعد التنفيذ
 
-1. تسجيل دخول/خروج → التأكد من غياب IDs في console.
-2. زيارة درس Grade 10/11 → التأكد من عرض المحتوى المنسق كما هو.
-3. فتح `/student/bagrut-attempt/...` → غياب warning الـ Badge.
-4. لا أخطاء جديدة في console.
+1. **اختبار حقيقي للثغرة الأولى:** محاولة استدعاء `impersonate-user` بحساب طالب ممرّراً `adminUserId` لسوبرآدمن → يجب أن يعيد 401/403.
+2. **اختبار PIN:** 6 محاولات خاطئة متتالية من نفس الجهاز → 429.
+3. **تدفق ناجح:** سوبرآدمن يولّد PIN ويستخدمه/يدخل كمستخدم → يعمل بدون أي تغيير ظاهر.
+4. **بانر الانتحال:** يظهر فقط أثناء جلسة انتحال حقيقية، ولا يظهر بإضافة `?admin_access=true` يدوياً.
+
+---
+
+## Migration مطلوبة (تغيير 2)
+
+جدول واحد جديد:
+```sql
+CREATE TABLE public.pin_login_attempts (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  ip_address text NOT NULL,
+  success boolean NOT NULL,
+  attempted_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_pin_attempts_ip_time ON public.pin_login_attempts(ip_address, attempted_at DESC);
+ALTER TABLE public.pin_login_attempts ENABLE ROW LEVEL SECURITY;
+-- لا policies = لا أحد يقرأ/يكتب من العميل، فقط service role من الفانكشن.
+```
+
+بدون أي تعديل على جداول الأعمال أو RLS الحالية.

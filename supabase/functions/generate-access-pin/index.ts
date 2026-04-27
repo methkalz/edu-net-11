@@ -72,9 +72,9 @@ Deno.serve(async (req) => {
     // Generate 6-digit PIN
     const pinCode = Math.floor(100000 + Math.random() * 900000).toString()
 
-    // Set expiration time (15 minutes from now)
+    // Set expiration time (5 minutes from now — short window to limit brute force)
     const expiresAt = new Date()
-    expiresAt.setMinutes(expiresAt.getMinutes() + 15)
+    expiresAt.setMinutes(expiresAt.getMinutes() + 5)
 
     // Clean up expired PINs first
     await supabase.rpc('cleanup_expired_pins')
@@ -92,7 +92,6 @@ Deno.serve(async (req) => {
       .single()
 
     if (pinError) {
-      console.error('PIN generation error:', pinError)
       throw new Error('Failed to generate PIN')
     }
 
@@ -113,8 +112,6 @@ Deno.serve(async (req) => {
         }
       })
 
-    console.log(`PIN generated for user ${targetUserId} by superadmin ${user.id}`)
-
     return new Response(
       JSON.stringify({
         success: true,
@@ -130,7 +127,6 @@ Deno.serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Generate PIN error:', error)
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
