@@ -140,21 +140,6 @@ export const useProfessionalDocuments = () => {
         user_id: user.id,
         school_id: user.user_metadata?.school_id || null,
         status: 'draft' as const,
-        visibility: 'private' as const,
-        allow_comments: true,
-        allow_suggestions: true,
-        version_number: 1,
-        settings: {
-          page_format: 'A4',
-          margins: {
-            top: 72,
-            bottom: 72,
-            left: 72,
-            right: 72
-          },
-          font_family: 'Cairo',
-          font_size: 12
-        },
         metadata: {}
       };
 
