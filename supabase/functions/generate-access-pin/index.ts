@@ -92,7 +92,6 @@ Deno.serve(async (req) => {
       .single()
 
     if (pinError) {
-      console.error('PIN generation error:', pinError)
       throw new Error('Failed to generate PIN')
     }
 
@@ -112,8 +111,6 @@ Deno.serve(async (req) => {
           generated_at: new Date().toISOString()
         }
       })
-
-    console.log(`PIN generated for user ${targetUserId} by superadmin ${user.id}`)
 
     return new Response(
       JSON.stringify({
