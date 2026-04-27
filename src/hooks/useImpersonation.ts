@@ -116,6 +116,7 @@ export const useImpersonation = () => {
         points: impersonatedUser.points,
         level: impersonatedUser.level,
         is_primary_admin: false,
+        is_active: true,
         created_at: '',
         updated_at: '',
         phone: null,
