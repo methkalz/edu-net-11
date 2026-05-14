@@ -77,6 +77,7 @@ const ComparisonUploadZone = ({ gradeLevel, onBatchComplete }: ComparisonUploadZ
     }
 
     setIsComparing(true);
+    if (files.length > 1) setIsDispatching(true);
 
     // إذا كان ملف واحد فقط، استخدم المقارنة العادية
     if (files.length === 1) {
