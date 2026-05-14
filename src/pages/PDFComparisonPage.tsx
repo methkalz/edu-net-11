@@ -129,7 +129,7 @@ const PDFComparisonPage = () => {
                 <BatchProgressTracker
                   gradeLevel={gradeLevel}
                   newBatchId={lastBatchId}
-                  onViewResults={() => setActiveTab('history')}
+                  onViewResults={(batchId) => { setViewingBatchId(batchId); setActiveTab('history'); }}
                 />
                 <ComparisonUploadZone
                   gradeLevel={gradeLevel}
@@ -140,7 +140,11 @@ const PDFComparisonPage = () => {
           </TabsContent>
 
           <TabsContent value="history" className="animate-fade-in">
-            <ComparisonHistory gradeLevel={gradeLevel} />
+            <ComparisonHistory
+              gradeLevel={gradeLevel}
+              batchId={viewingBatchId}
+              onBackToAll={() => setViewingBatchId(null)}
+            />
           </TabsContent>
 
           <TabsContent value="repository" className="animate-fade-in">
