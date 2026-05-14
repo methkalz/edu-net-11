@@ -211,7 +211,27 @@ const ComparisonUploadZone = ({ gradeLevel, onBatchComplete }: ComparisonUploadZ
           }}
         />
       )}
-      
+
+      {/* Dispatching warning banner */}
+      {isDispatching && (
+        <Card className="border-2 border-amber-500/60 bg-amber-50 dark:bg-amber-950/30 shadow-md animate-in fade-in slide-in-from-top-2">
+          <CardContent className="p-4 flex items-start gap-3">
+            <div className="p-2 rounded-lg bg-amber-500/20 shrink-0">
+              <AlertTriangle className="h-5 w-5 text-amber-700 dark:text-amber-400" />
+            </div>
+            <div className="space-y-1 text-sm">
+              <p className="font-bold text-amber-900 dark:text-amber-200">
+                ⚠️ جارٍ رفع الملفات وإنشاء مهام المقارنة...
+              </p>
+              <p className="text-amber-800 dark:text-amber-300/90 leading-relaxed">
+                <strong>لا تُغلق الصفحة ولا تُحدّثها</strong> حتى يكتمل الرفع وتظهر بطاقة التقدم في الأعلى.
+                بعد ذلك يمكنك مغادرة الصفحة بأمان وستستمر المعالجة في الخلفية.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Files List */}
       {files.length > 0 && (
         <Card className="border border-border/50 bg-card/80 backdrop-blur-sm hover:shadow-lg transition-all duration-300">
