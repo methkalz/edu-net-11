@@ -7210,6 +7210,10 @@ export type Database = {
       }
     }
     Functions: {
+      _setup_pdf_cron: {
+        Args: { _headers: string; _url: string }
+        Returns: string
+      }
       calculate_daily_activity_stats: {
         Args: { target_date: string; target_school_id: string }
         Returns: undefined
