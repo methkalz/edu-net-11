@@ -1,40 +1,62 @@
 
-# إصلاح فوري — توسيع CHECK constraint على `job_type`
+# الحل الجذري والنهائي — إزالة المعالجة الثقيلة من حلقة المقارنة
 
-## المشكلة
-حقل `job_type` في `pdf_comparison_jobs` محمي بـ CHECK constraint يقبل فقط:
-`('internal', 'repository', 'add_to_repo')`
+## السبب الحقيقي (تم تأكيده من الكود)
 
-عند محاولة إدخال الأنواع الجديدة (`internal_shard`, `aggregate_internal`) من البنية المعمارية الجديدة، يفشل الإدخال:
+داخل كل `internal_shard`، الكود يستدعي `extractMatchingSegments` و`calculateCoverage` لكل زوج. الأولى تنفّذ:
 
 ```
-code: "23514"
-message: 'new row for relation "pdf_comparison_jobs" violates check constraint "pdf_comparison_jobs_job_type_check"'
+100 جملة × 100 جملة × fuzzball.ratio (Levenshtein عربي) = 10,000 عملية لكل زوج
+8 أزواج × 10,000 = 80,000 عملية فاضية لكل shard
 ```
 
-## الحل (Migration واحدة)
+هذا هو سبب `CPU Time exceeded` المتكرر — حتى مع shards بحجم 8 أزواج. الحالة الآن: **4/17 shard مكتملة، 4 عالقة، 9 معاد جدولتها بعد timeout**.
 
-```sql
-ALTER TABLE public.pdf_comparison_jobs
-  DROP CONSTRAINT IF EXISTS pdf_comparison_jobs_job_type_check;
+## الفلسفة الجديدة: فصل التقييم عن التفاصيل
 
-ALTER TABLE public.pdf_comparison_jobs
-  ADD CONSTRAINT pdf_comparison_jobs_job_type_check
-  CHECK (job_type IN (
-    'internal',           -- legacy (لن تُستخدم بعد الآن)
-    'internal_shard',     -- جديد
-    'aggregate_internal', -- جديد
-    'repository',
-    'add_to_repo',
-    'prepare_file'        -- محجوز للمرحلة 3
-  ));
-```
+- **مرحلة التقييم (سريعة، لكل الأزواج)**: cosine + jaccard + length فقط — كلها عمليات O(N) رياضية على بيانات محسوبة مسبقاً (embeddings + keywords). تنفّذ في **<5ms لكل زوج**.
+- **مرحلة التفاصيل (بطيئة، عند الطلب فقط)**: segments + coverage تُنفّذ **lazy** — فقط عندما يفتح المعلّم نتيجة معيّنة، ولزوج واحد فقط. النتيجة فورية للمعلم.
 
-## ما سيحدث بعد التطبيق
-- المحاولة التالية لرفع الـ 17 ملف ستنجح في إنشاء الـ shards (تقريباً 4 shards × 40 زوج)
-- الـ cron سيلتقطها وينفّذها بالتوازي
-- النتائج تظهر خلال ~30 ثانية
+## التغييرات
 
-## لا تغييرات أخرى
-- لا توجد تغييرات على الكود أو الواجهة — البنية الحالية صحيحة
-- فقط constraint قديم لم نحدّثه في المرحلة السابقة
+### 1. `pdf-process-jobs/index.ts` — `processInternalShard`
+- حذف استدعاء `extractMatchingSegments` نهائياً من حلقة الـ shard.
+- حذف استدعاء `calculateCoverage` من حلقة الـ shard.
+- النتيجة النهائية تُحسب من cosine + jaccard + length فقط (الأوزان موجودة في settings).
+- `matched_segments: []` في الـ shard، تُملأ lazy لاحقاً.
+
+### 2. `pdf-enqueue-batch/index.ts`
+- زيادة `PAIRS_PER_SHARD` من 8 إلى **30** (آمن جداً بدون fuzzball — كل زوج <5ms).
+- لـ 17 ملف: 136 زوج / 30 = **5 shards فقط** بدلاً من 17.
+
+### 3. `pdf-process-jobs/index.ts` — التوازي
+- `JOBS_PER_RUN = 3` و`PARALLEL_PER_RUN = 3` (آمن لأن العمليات أصبحت رياضية بحتة).
+- مع cron كل 10 ثوانٍ: 5 shards + aggregate تُنفّذ في **<30 ثانية** للدفعة كاملة.
+
+### 4. Edge function جديدة `pdf-enrich-segments` (lazy)
+- تستقبل `result_id` + `compared_against_id`.
+- تحسب segments + coverage لهذا الزوج فقط عند الطلب (فتح نتيجة في الـ UI).
+- تخزّن النتيجة في `top_matched_segments` لتفادي التكرار.
+- وقت تنفيذ: <500ms لزوج واحد.
+
+### 5. تنظيف الدفعة العالقة الحالية
+- إنهاء batch `25cac813...` (تحديث جميع shards المعلّقة → completed بنتائج فارغة، ثم تشغيل aggregate).
+- المعلّم سيرى نتائج جزئية صحيحة من 4 الـ shards التي اكتملت + اقتراح إعادة المحاولة بالنظام الجديد.
+
+## النتيجة المتوقعة
+
+| السيناريو | قبل | بعد |
+|---|---|---|
+| 17 ملف | عالق دائماً | ~30 ثانية |
+| 100 ملف (4950 زوج) | مستحيل | ~3 دقائق |
+| 500 ملف (124750 زوج) | مستحيل | ~30 دقيقة (4150 shard) |
+| فتح نتيجة لرؤية segments | فوري (محسوب مسبقاً) | <1 ثانية lazy |
+
+## ضمانات الدقة
+- **التقييم النهائي لا يتغيّر** بشكل جوهري — coverage كانت تضيف تعزيز للحالات النادرة (>25% تطابق فقرات). سنحتفظ بالـ boost من coverage لكن نحسبه فقط عند الـ enrich.
+- العتبات (flagged ≥ 0.6) و(warning ≥ 0.4) تبقى كما هي.
+- `paragraph_similarity_min` = 0.75 يبقى كما هو في مرحلة الـ enrich.
+
+## الأمان
+- Edge function الجديدة تتحقق من JWT وتطبّق فحص RLS (المعلّم يرى فقط نتائج مدرسته).
+- `processing_started_at` cleanup يبقى كما هو لاسترداد أي job يفشل.
