@@ -8,7 +8,8 @@ import {
   type MatchedSegment,
 } from '../_shared/pdf-helpers.ts';
 
-const JOBS_PER_RUN = 10;
+const JOBS_PER_RUN = 8;
+const PARALLEL_PER_RUN = 4; // معالجة عدة jobs بالتوازي
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -59,23 +60,32 @@ serve(async (req) => {
       pendingJobs = directJobs;
     }
 
-    console.log(`🔄 Processing ${pendingJobs.length} jobs`);
+    console.log(`🔄 Processing ${pendingJobs.length} jobs (parallel=${PARALLEL_PER_RUN})`);
 
     const settings = await getPDFComparisonSettings(supabase);
     let processedCount = 0;
 
-    for (const job of pendingJobs) {
+    // معالجة بالتوازي بدفعات من PARALLEL_PER_RUN
+    const processOne = async (job: any) => {
       try {
         switch (job.job_type) {
-          case 'internal':
-            await processInternalComparison(supabase, job, settings);
+          case 'internal_shard':
+            await processInternalShard(supabase, job, settings);
             break;
+          case 'aggregate_internal':
+            await processAggregateInternal(supabase, job, settings);
+            break;
+          case 'internal':
+            // legacy — fail fast
+            throw new Error('legacy internal job type — replaced by internal_shard');
           case 'repository':
             await processRepositoryComparison(supabase, job, settings);
             break;
           case 'add_to_repo':
             await processAddToRepo(supabase, job);
             break;
+          default:
+            throw new Error(`Unknown job_type: ${job.job_type}`);
         }
 
         await supabase
@@ -88,12 +98,21 @@ serve(async (req) => {
         const errorMsg = err instanceof Error ? err.message : String(err);
         console.error(`❌ Job ${job.id} (${job.job_type}) failed:`, errorMsg);
 
-        const newStatus = (job.attempts || 0) + 1 >= (job.max_attempts || 3) ? 'failed' : 'pending';
+        const newStatus = (job.attempts || 0) >= (job.max_attempts || 3) ? 'failed' : 'pending';
         await supabase
           .from('pdf_comparison_jobs')
-          .update({ status: newStatus, error_message: errorMsg })
+          .update({
+            status: newStatus,
+            error_message: errorMsg,
+            processing_started_at: null,
+          })
           .eq('id', job.id);
       }
+    };
+
+    for (let i = 0; i < pendingJobs.length; i += PARALLEL_PER_RUN) {
+      const chunk = pendingJobs.slice(i, i + PARALLEL_PER_RUN);
+      await Promise.all(chunk.map(processOne));
     }
 
     return new Response(
@@ -110,16 +129,30 @@ serve(async (req) => {
 });
 
 // ==========================================
-// المقارنة الداخلية (كل ملفات الدفعة معاً)
+// Sharded Internal Comparison
 // ==========================================
-async function processInternalComparison(
-  supabase: any,
-  job: any,
-  settings: any
-) {
-  console.log(`🔍 Processing internal comparison for batch ${job.batch_id}`);
+// كل shard يستقبل قائمة أزواج (i,j) في payload ويحسب التشابه لكل زوج فقط
+async function processInternalShard(supabase: any, job: any, settings: any) {
+  const payload = job.payload || {};
+  const pairs: Array<[number, number]> = payload.pairs || [];
+  const shardIndex = payload.shard_index ?? 0;
 
-  // جلب كل result rows للدفعة
+  if (!pairs.length) {
+    console.log(`⚠️ Shard ${shardIndex} has no pairs, skipping`);
+    await supabase.from('pdf_comparison_shards').upsert({
+      batch_id: job.batch_id,
+      shard_index: shardIndex,
+      pair_results: [],
+      status: 'completed',
+      completed_at: new Date().toISOString(),
+    }, { onConflict: 'batch_id,shard_index' });
+    return;
+  }
+
+  // جلب الملفات (نحتاج فقط الـ indices المستخدمة في هذا الـ shard)
+  const usedIndices = new Set<number>();
+  pairs.forEach(([i, j]) => { usedIndices.add(i); usedIndices.add(j); });
+
   const { data: results, error } = await supabase
     .from('pdf_comparison_results')
     .select('id, compared_file_name, compared_file_hash, compared_extracted_text, compared_file_pages, embedding, top_keywords')
@@ -130,9 +163,6 @@ async function processInternalComparison(
     throw new Error(`Failed to fetch results for batch ${job.batch_id}: ${error?.message}`);
   }
 
-  console.log(`📊 Found ${results.length} files for internal comparison`);
-
-  // حساب metadata لكل ملف
   const filesData = results.map((r: any) => ({
     id: r.id,
     name: r.compared_file_name,
@@ -144,118 +174,166 @@ async function processInternalComparison(
     pageCount: r.compared_file_pages || 1,
   }));
 
-  // مقارنة O(N²/2) — j = i + 1 (بدون تكرار)
-  const matchesMap: Record<string, any[]> = {};
-  filesData.forEach((f: any) => { matchesMap[f.id] = []; });
+  const pairResults: any[] = [];
 
-  for (let i = 0; i < filesData.length; i++) {
-    for (let j = i + 1; j < filesData.length; j++) {
-      const f1 = filesData[i];
-      const f2 = filesData[j];
+  for (const [i, j] of pairs) {
+    const f1 = filesData[i];
+    const f2 = filesData[j];
+    if (!f1 || !f2) continue;
 
-      // hash exact match
-      if (f1.hash === f2.hash) {
-        const match = {
-          matched_file_name: '', similarity_score: 1.0,
-          similarity_method: 'hash_exact_match', flagged: true,
-          matched_segments: [], metadata: {},
-        };
-        matchesMap[f1.id].push({ ...match, matched_file_name: f2.name });
-        matchesMap[f2.id].push({ ...match, matched_file_name: f1.name });
-        continue;
-      }
+    if (f1.hash === f2.hash) {
+      pairResults.push({
+        i, j,
+        similarity_score: 1.0,
+        similarity_method: 'hash_exact_match',
+        flagged: true,
+        matched_segments: [],
+        metadata: { cosine: 1, jaccard: 1, length_similarity: 1, coverage_ratio: 1 },
+      });
+      continue;
+    }
 
-      // cosine على embeddings
-      let dotProduct = 0;
-      const emb1 = f1.embedding;
-      const emb2 = f2.embedding;
-      if (emb1.length && emb2.length) {
-        for (let k = 0; k < Math.min(emb1.length, emb2.length); k++) {
-          dotProduct += emb1[k] * emb2[k];
-        }
-      }
-      const cosineSim = Math.max(0, Math.min(1, dotProduct));
+    // cosine
+    let dotProduct = 0;
+    const emb1 = f1.embedding;
+    const emb2 = f2.embedding;
+    if (emb1.length && emb2.length) {
+      const len = Math.min(emb1.length, emb2.length);
+      for (let k = 0; k < len; k++) dotProduct += emb1[k] * emb2[k];
+    }
+    const cosineSim = Math.max(0, Math.min(1, dotProduct));
 
-      // jaccard على keywords
-      let intersection = 0;
-      for (const kw of f1.keywords) {
-        if (f2.keywords.has(kw)) intersection++;
-      }
-      const union = f1.keywords.size + f2.keywords.size - intersection;
-      const jaccardSim = union > 0 ? intersection / union : 0;
+    // jaccard
+    let intersection = 0;
+    for (const kw of f1.keywords) if (f2.keywords.has(kw)) intersection++;
+    const union = f1.keywords.size + f2.keywords.size - intersection;
+    const jaccardSim = union > 0 ? intersection / union : 0;
 
-      // length similarity — مطابق للنظام القديم: (wordRatio + pageRatio) / 2
-      const wordRatio = Math.min(f1.wordCount, f2.wordCount) / Math.max(f1.wordCount, f2.wordCount);
-      const pageRatio = Math.min(f1.pageCount, f2.pageCount) / Math.max(f1.pageCount, f2.pageCount);
-      const lengthSim = (wordRatio + pageRatio) / 2;
+    // length
+    const wordRatio = Math.min(f1.wordCount, f2.wordCount) / Math.max(f1.wordCount, f2.wordCount);
+    const pageRatio = Math.min(f1.pageCount, f2.pageCount) / Math.max(f1.pageCount, f2.pageCount);
+    const lengthSim = (wordRatio + pageRatio) / 2;
 
-      // بوابة coverage — فقط إذا التشابه الأولي يستحق
-      let coverageRatio = 0;
-      if (cosineSim + jaccardSim > 0.20 && f1.text && f2.text) {
-        coverageRatio = calculateCoverage(f1.text, f2.text, settings.thresholds.paragraph_similarity_min);
-      }
+    // coverage gate
+    let coverageRatio = 0;
+    if (cosineSim + jaccardSim > 0.20 && f1.text && f2.text) {
+      coverageRatio = calculateCoverage(f1.text, f2.text, settings.thresholds.paragraph_similarity_min);
+    }
 
-      // حساب النتيجة النهائية مع التعديل الديناميكي للأوزان (مطابق للنظام القديم)
-      const weights = settings.algorithm_weights;
-      let finalSim = 0;
-      if (jaccardSim < 0.15) {
-        // تشابه منخفض جداً في الكلمات — اعتماد أقل على cosine
-        finalSim = cosineSim * (weights.cosine_weight * 0.6) +
-                   jaccardSim * (weights.jaccard_weight * 1.5) +
-                   lengthSim * (weights.length_weight * 1.0) +
-                   coverageRatio * weights.coverage_weight;
-      } else if (lengthSim < 0.5) {
-        // فرق كبير في الطول — تخفيض التشابه
-        finalSim = (cosineSim * weights.cosine_weight +
-                    jaccardSim * weights.jaccard_weight +
-                    lengthSim * weights.length_weight +
-                    coverageRatio * weights.coverage_weight) * 0.7;
-      } else {
-        // حالة عادية — استخدام الأوزان الأربعة مباشرة
-        finalSim = cosineSim * weights.cosine_weight +
-                   jaccardSim * weights.jaccard_weight +
-                   lengthSim * weights.length_weight +
-                   coverageRatio * weights.coverage_weight;
-      }
+    const weights = settings.algorithm_weights;
+    let finalSim = 0;
+    if (jaccardSim < 0.15) {
+      finalSim = cosineSim * (weights.cosine_weight * 0.6) +
+                 jaccardSim * (weights.jaccard_weight * 1.5) +
+                 lengthSim * (weights.length_weight * 1.0) +
+                 coverageRatio * weights.coverage_weight;
+    } else if (lengthSim < 0.5) {
+      finalSim = (cosineSim * weights.cosine_weight +
+                  jaccardSim * weights.jaccard_weight +
+                  lengthSim * weights.length_weight +
+                  coverageRatio * weights.coverage_weight) * 0.7;
+    } else {
+      finalSim = cosineSim * weights.cosine_weight +
+                 jaccardSim * weights.jaccard_weight +
+                 lengthSim * weights.length_weight +
+                 coverageRatio * weights.coverage_weight;
+    }
 
-      // coverage boost
-      if (coverageRatio >= settings.thresholds.coverage_high_threshold) {
-        finalSim = Math.max(finalSim, 0.65);
-      } else if (coverageRatio >= settings.thresholds.coverage_medium_threshold) {
-        finalSim = Math.max(finalSim, 0.50);
-      }
+    if (coverageRatio >= settings.thresholds.coverage_high_threshold) {
+      finalSim = Math.max(finalSim, 0.65);
+    } else if (coverageRatio >= settings.thresholds.coverage_medium_threshold) {
+      finalSim = Math.max(finalSim, 0.50);
+    }
 
-      finalSim = Math.round(finalSim * 100) / 100;
-      const flagged = finalSim >= settings.thresholds.flagged_threshold;
+    finalSim = Math.round(finalSim * 100) / 100;
+    const flagged = finalSim >= settings.thresholds.flagged_threshold;
 
-      // segments فقط للأزواج المرتفعة
-      let segments: MatchedSegment[] = [];
-      if (finalSim >= 0.35 && f1.text && f2.text) {
-        segments = extractMatchingSegments(f1.text, f2.text).slice(0, 10);
-      }
+    let segments: MatchedSegment[] = [];
+    if (finalSim >= 0.35 && f1.text && f2.text) {
+      segments = extractMatchingSegments(f1.text, f2.text).slice(0, 10);
+    }
 
-      const metadata = {
+    pairResults.push({
+      i, j,
+      similarity_score: finalSim,
+      similarity_method: 'hybrid_cosine_jaccard_length_coverage',
+      flagged,
+      matched_segments: segments,
+      metadata: {
         cosine: Math.round(cosineSim * 100) / 100,
         jaccard: Math.round(jaccardSim * 100) / 100,
         length_similarity: Math.round(lengthSim * 100) / 100,
         coverage_ratio: Math.round(coverageRatio * 100) / 100,
-      };
+      },
+    });
+  }
 
+  await supabase.from('pdf_comparison_shards').upsert({
+    batch_id: job.batch_id,
+    shard_index: shardIndex,
+    pair_results: pairResults,
+    status: 'completed',
+    completed_at: new Date().toISOString(),
+  }, { onConflict: 'batch_id,shard_index' });
+
+  console.log(`✅ Shard ${shardIndex} (batch ${job.batch_id}): ${pairResults.length} pair results`);
+}
+
+// ==========================================
+// Aggregate Internal — يجمع كل الـ shards ويُنشئ نتائج لكل ملف + repository jobs
+// ==========================================
+async function processAggregateInternal(supabase: any, job: any, settings: any) {
+  const totalShards = job.payload?.total_shards ?? 0;
+
+  // فحص اكتمال كل الـ shards
+  const { data: shards, error: shardsErr } = await supabase
+    .from('pdf_comparison_shards')
+    .select('shard_index, status, pair_results')
+    .eq('batch_id', job.batch_id);
+
+  if (shardsErr) throw new Error(`Failed to fetch shards: ${shardsErr.message}`);
+
+  const completedCount = (shards || []).filter((s: any) => s.status === 'completed').length;
+  if (completedCount < totalShards) {
+    // إعادة الجدولة — الـ shards لم تنتهِ بعد
+    throw new Error(`Waiting for shards: ${completedCount}/${totalShards} completed`);
+  }
+
+  console.log(`🧮 Aggregating ${totalShards} shards for batch ${job.batch_id}`);
+
+  // جلب الملفات بالترتيب الصحيح (نفس ترتيب الـ enqueue)
+  const { data: results } = await supabase
+    .from('pdf_comparison_results')
+    .select('id, compared_file_name')
+    .eq('batch_id', job.batch_id)
+    .order('created_at', { ascending: true });
+
+  if (!results?.length) throw new Error('No results found for batch');
+
+  const N = results.length;
+  const matchesMap: Record<string, any[]> = {};
+  results.forEach((r: any) => { matchesMap[r.id] = []; });
+
+  // جمع كل الـ pair_results من جميع الـ shards
+  for (const shard of shards || []) {
+    for (const pr of shard.pair_results || []) {
+      const f1 = results[pr.i];
+      const f2 = results[pr.j];
+      if (!f1 || !f2) continue;
       const matchData = {
-        similarity_score: finalSim,
-        similarity_method: 'hybrid_cosine_jaccard_length_coverage',
-        flagged,
-        matched_segments: segments,
-        metadata,
+        similarity_score: pr.similarity_score,
+        similarity_method: pr.similarity_method,
+        flagged: pr.flagged,
+        matched_segments: pr.matched_segments,
+        metadata: pr.metadata,
       };
-
-      matchesMap[f1.id].push({ ...matchData, matched_file_name: f2.name });
-      matchesMap[f2.id].push({ ...matchData, matched_file_name: f1.name });
+      matchesMap[f1.id].push({ ...matchData, matched_file_name: f2.compared_file_name });
+      matchesMap[f2.id].push({ ...matchData, matched_file_name: f1.compared_file_name });
     }
   }
 
-  // حفظ النتائج الداخلية
-  for (const file of filesData) {
+  // تحديث صف كل ملف
+  for (const file of results) {
     const matches = matchesMap[file.id]
       .sort((a: any, b: any) => b.similarity_score - a.similarity_score)
       .slice(0, 5);
@@ -280,13 +358,16 @@ async function processInternalComparison(
         high_risk_matches: highRisk,
         matches: matches,
         comparison_source: 'internal',
+        progress_phase: 'repository',
+        progress_percent: 50,
       })
       .eq('id', file.id);
   }
 
-  // إنشاء repository jobs
-  for (let i = 0; i < filesData.length; i++) {
-    await supabase.from('pdf_comparison_jobs').insert({
+  // إنشاء repository jobs (واحد لكل ملف)
+  const repoJobs = [];
+  for (let i = 0; i < N; i++) {
+    repoJobs.push({
       batch_id: job.batch_id,
       job_type: 'repository',
       status: 'pending',
@@ -297,8 +378,12 @@ async function processInternalComparison(
       school_id: job.school_id,
     });
   }
+  if (repoJobs.length) await supabase.from('pdf_comparison_jobs').insert(repoJobs);
 
-  console.log(`✅ Internal comparison done. Created ${filesData.length} repository jobs.`);
+  // تنظيف الـ shards (لم نعد بحاجة لها)
+  await supabase.from('pdf_comparison_shards').delete().eq('batch_id', job.batch_id);
+
+  console.log(`✅ Aggregated ${N} files, created ${repoJobs.length} repository jobs`);
 }
 
 // ==========================================

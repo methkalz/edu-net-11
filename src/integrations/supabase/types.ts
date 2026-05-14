@@ -4967,11 +4967,14 @@ export type Database = {
           id: string
           job_type: string
           max_attempts: number | null
+          payload: Json | null
+          processing_started_at: string | null
           requested_by: string
           school_id: string | null
           started_at: string | null
           status: string
           updated_at: string | null
+          worker_id: string | null
         }
         Insert: {
           attempts?: number | null
@@ -4985,11 +4988,14 @@ export type Database = {
           id?: string
           job_type: string
           max_attempts?: number | null
+          payload?: Json | null
+          processing_started_at?: string | null
           requested_by: string
           school_id?: string | null
           started_at?: string | null
           status?: string
           updated_at?: string | null
+          worker_id?: string | null
         }
         Update: {
           attempts?: number | null
@@ -5003,11 +5009,14 @@ export type Database = {
           id?: string
           job_type?: string
           max_attempts?: number | null
+          payload?: Json | null
+          processing_started_at?: string | null
           requested_by?: string
           school_id?: string | null
           started_at?: string | null
           status?: string
           updated_at?: string | null
+          worker_id?: string | null
         }
         Relationships: []
       }
@@ -5194,6 +5203,8 @@ export type Database = {
           matches: Json
           max_similarity_score: number | null
           processing_time_ms: number | null
+          progress_percent: number | null
+          progress_phase: string | null
           repository_file_id: string | null
           repository_high_risk_count: number | null
           repository_matches: Json | null
@@ -5240,6 +5251,8 @@ export type Database = {
           matches?: Json
           max_similarity_score?: number | null
           processing_time_ms?: number | null
+          progress_percent?: number | null
+          progress_phase?: string | null
           repository_file_id?: string | null
           repository_high_risk_count?: number | null
           repository_matches?: Json | null
@@ -5286,6 +5299,8 @@ export type Database = {
           matches?: Json
           max_similarity_score?: number | null
           processing_time_ms?: number | null
+          progress_percent?: number | null
+          progress_phase?: string | null
           repository_file_id?: string | null
           repository_high_risk_count?: number | null
           repository_matches?: Json | null
@@ -5409,6 +5424,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pdf_comparison_shards: {
+        Row: {
+          batch_id: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          pair_results: Json
+          shard_index: number
+          status: string
+        }
+        Insert: {
+          batch_id: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          pair_results?: Json
+          shard_index: number
+          status?: string
+        }
+        Update: {
+          batch_id?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          pair_results?: Json
+          shard_index?: number
+          status?: string
+        }
+        Relationships: []
+      }
+      pdf_comparison_texts: {
+        Row: {
+          batch_id: string
+          created_at: string
+          embedding: string | null
+          extracted_text: string
+          result_id: string
+          top_keywords: string[] | null
+          word_count: number | null
+        }
+        Insert: {
+          batch_id: string
+          created_at?: string
+          embedding?: string | null
+          extracted_text: string
+          result_id: string
+          top_keywords?: string[] | null
+          word_count?: number | null
+        }
+        Update: {
+          batch_id?: string
+          created_at?: string
+          embedding?: string | null
+          extracted_text?: string
+          result_id?: string
+          top_keywords?: string[] | null
+          word_count?: number | null
+        }
+        Relationships: []
       }
       pdf_matched_segments: {
         Row: {
@@ -7261,11 +7336,14 @@ export type Database = {
           id: string
           job_type: string
           max_attempts: number | null
+          payload: Json | null
+          processing_started_at: string | null
           requested_by: string
           school_id: string | null
           started_at: string | null
           status: string
           updated_at: string | null
+          worker_id: string | null
         }[]
         SetofOptions: {
           from: "*"
@@ -7276,6 +7354,20 @@ export type Database = {
       }
       cleanup_expired_pins: { Args: never; Returns: undefined }
       cleanup_expired_quiz_sessions: { Args: never; Returns: undefined }
+      compute_batch_progress: {
+        Args: { p_batch_id: string }
+        Returns: {
+          completed_files: number
+          completed_jobs: number
+          current_phase: string
+          failed_jobs: number
+          pending_jobs: number
+          processing_jobs: number
+          progress_percent: number
+          total_files: number
+          total_jobs: number
+        }[]
+      }
       count_active_students_last_30_days: {
         Args: { p_school_id?: string }
         Returns: number

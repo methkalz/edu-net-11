@@ -104,25 +104,67 @@ serve(async (req) => {
 
     console.log(`✅ Inserted ${resultIds.length} result rows`);
 
-    // إدخال job واحد للمقارنة الداخلية
-    const { error: jobError } = await supabase
-      .from('pdf_comparison_jobs')
-      .insert({
+    // ============ Sharded Architecture ============
+    // قسّم أزواج المقارنة (N*(N-1)/2) إلى shards من 40 زوج كحد أقصى
+    // كل shard ينفّذ في < 1 ثانية → لا CPU timeout مهما كان عدد الملفات
+    const PAIRS_PER_SHARD = 40;
+    const N = resultIds.length;
+    const allPairs: Array<[number, number]> = [];
+    for (let i = 0; i < N; i++) {
+      for (let j = i + 1; j < N; j++) {
+        allPairs.push([i, j]);
+      }
+    }
+
+    const shardJobs: any[] = [];
+    if (allPairs.length === 0) {
+      // ملف واحد فقط — لا مقارنة داخلية، اذهب مباشرة لـ aggregate
+      shardJobs.push({
         batch_id: batchId,
-        job_type: 'internal',
+        job_type: 'aggregate_internal',
         status: 'pending',
         grade_level: gradeLevel,
         comparison_type: comparisonType,
         requested_by: userId,
         school_id: schoolId,
+        payload: { total_shards: 0 },
       });
-
-    if (jobError) {
-      console.error('❌ Failed to create internal job:', jobError);
-      throw new Error('فشل إنشاء مهمة المقارنة');
+    } else {
+      const totalShards = Math.ceil(allPairs.length / PAIRS_PER_SHARD);
+      for (let s = 0; s < totalShards; s++) {
+        const slice = allPairs.slice(s * PAIRS_PER_SHARD, (s + 1) * PAIRS_PER_SHARD);
+        shardJobs.push({
+          batch_id: batchId,
+          job_type: 'internal_shard',
+          status: 'pending',
+          grade_level: gradeLevel,
+          comparison_type: comparisonType,
+          requested_by: userId,
+          school_id: schoolId,
+          payload: { shard_index: s, total_shards: totalShards, pairs: slice },
+        });
+      }
+      // job التجميع (يبقى pending حتى تنتهي كل الـ shards)
+      shardJobs.push({
+        batch_id: batchId,
+        job_type: 'aggregate_internal',
+        status: 'pending',
+        grade_level: gradeLevel,
+        comparison_type: comparisonType,
+        requested_by: userId,
+        school_id: schoolId,
+        payload: { total_shards: totalShards },
+      });
     }
 
-    console.log(`✅ Enqueued batch ${batchId} with 1 internal job`);
+    const { error: jobError } = await supabase.from('pdf_comparison_jobs').insert(shardJobs);
+
+    if (jobError) {
+      console.error('❌ Failed to create shard jobs:', jobError);
+      throw new Error('فشل إنشاء مهام المقارنة');
+    }
+
+    console.log(`✅ Enqueued batch ${batchId} with ${shardJobs.length} jobs (${allPairs.length} pairs)`);
 
     return new Response(
       JSON.stringify({
