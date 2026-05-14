@@ -214,56 +214,38 @@ async function processInternalShard(supabase: any, job: any, settings: any) {
     const pageRatio = Math.min(f1.pageCount, f2.pageCount) / Math.max(f1.pageCount, f2.pageCount);
     const lengthSim = (wordRatio + pageRatio) / 2;
 
-    // coverage gate
-    let coverageRatio = 0;
-    if (cosineSim + jaccardSim > 0.20 && f1.text && f2.text) {
-      coverageRatio = calculateCoverage(f1.text, f2.text, settings.thresholds.paragraph_similarity_min);
-    }
-
+    // ⚡ مرحلة التقييم السريعة: cosine + jaccard + length فقط
+    // calculateCoverage و extractMatchingSegments أُجِّلت إلى pdf-enrich-segments (lazy)
     const weights = settings.algorithm_weights;
     let finalSim = 0;
     if (jaccardSim < 0.15) {
       finalSim = cosineSim * (weights.cosine_weight * 0.6) +
                  jaccardSim * (weights.jaccard_weight * 1.5) +
-                 lengthSim * (weights.length_weight * 1.0) +
-                 coverageRatio * weights.coverage_weight;
+                 lengthSim * (weights.length_weight * 1.0);
     } else if (lengthSim < 0.5) {
       finalSim = (cosineSim * weights.cosine_weight +
                   jaccardSim * weights.jaccard_weight +
-                  lengthSim * weights.length_weight +
-                  coverageRatio * weights.coverage_weight) * 0.7;
+                  lengthSim * weights.length_weight) * 0.7;
     } else {
       finalSim = cosineSim * weights.cosine_weight +
                  jaccardSim * weights.jaccard_weight +
-                 lengthSim * weights.length_weight +
-                 coverageRatio * weights.coverage_weight;
-    }
-
-    if (coverageRatio >= settings.thresholds.coverage_high_threshold) {
-      finalSim = Math.max(finalSim, 0.65);
-    } else if (coverageRatio >= settings.thresholds.coverage_medium_threshold) {
-      finalSim = Math.max(finalSim, 0.50);
+                 lengthSim * weights.length_weight;
     }
 
     finalSim = Math.round(finalSim * 100) / 100;
     const flagged = finalSim >= settings.thresholds.flagged_threshold;
 
-    let segments: MatchedSegment[] = [];
-    if (finalSim >= 0.35 && f1.text && f2.text) {
-      segments = extractMatchingSegments(f1.text, f2.text).slice(0, 10);
-    }
-
     pairResults.push({
       i, j,
       similarity_score: finalSim,
-      similarity_method: 'hybrid_cosine_jaccard_length_coverage',
+      similarity_method: 'fast_cosine_jaccard_length',
       flagged,
-      matched_segments: segments,
+      matched_segments: [], // lazy — تُحسب عند فتح النتيجة
       metadata: {
         cosine: Math.round(cosineSim * 100) / 100,
         jaccard: Math.round(jaccardSim * 100) / 100,
         length_similarity: Math.round(lengthSim * 100) / 100,
-        coverage_ratio: Math.round(coverageRatio * 100) / 100,
+        coverage_ratio: 0, // lazy
       },
     });
   }
