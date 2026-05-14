@@ -190,7 +190,19 @@ export const usePDFComparison = () => {
         }
       );
 
-      if (enqueueError || !enqueueResult?.success) {
+      if (enqueueError) {
+        console.error('❌ pdf-enqueue-batch error:', enqueueError);
+        let msg = 'فشل تسجيل المهمة';
+        try {
+          if (enqueueError.context) {
+            const body = await enqueueError.context.json();
+            msg = body?.error || msg;
+          }
+        } catch {}
+        throw new Error(msg);
+      }
+
+      if (!enqueueResult?.success) {
         throw new Error(enqueueResult?.error || 'فشل تسجيل المهمة');
       }
 
