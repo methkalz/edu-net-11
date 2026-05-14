@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Progress } from '@/components/ui/progress';
-import { RefreshCw, FileText, AlertTriangle, AlertCircle, CheckCircle, Eye, Clock, TrendingUp, Target, BookOpen, ArrowRight, ChevronDown, ChevronUp } from 'lucide-react';
+import { RefreshCw, FileText, AlertTriangle, AlertCircle, CheckCircle, Eye, Clock, TrendingUp, Target, BookOpen, ArrowRight, ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
 import { usePDFComparison, type GradeLevel, type ComparisonResult, type ComparisonMatch } from '@/hooks/usePDFComparison';
 import { formatDistanceToNow, format } from 'date-fns';
 import { ar } from 'date-fns/locale';
@@ -14,9 +14,13 @@ import { cn } from '@/lib/utils';
 import { AIAnalysisSection } from './AIAnalysisSection';
 interface ComparisonHistoryProps {
   gradeLevel?: GradeLevel;
+  batchId?: string | null;
+  onBackToAll?: () => void;
 }
 const ComparisonHistory = ({
-  gradeLevel
+  gradeLevel,
+  batchId,
+  onBackToAll
 }: ComparisonHistoryProps) => {
   const {
     getComparisonHistory
@@ -29,13 +33,13 @@ const ComparisonHistory = ({
   const [isMatchDetailOpen, setIsMatchDetailOpen] = useState(false);
   const loadHistory = async () => {
     setIsLoading(true);
-    const data = await getComparisonHistory(gradeLevel);
+    const data = await getComparisonHistory(gradeLevel, batchId);
     setHistory(data);
     setIsLoading(false);
   };
   useEffect(() => {
     loadHistory();
-  }, [gradeLevel]);
+  }, [gradeLevel, batchId]);
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'flagged':
