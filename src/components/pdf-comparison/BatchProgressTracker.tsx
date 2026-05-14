@@ -32,15 +32,14 @@ interface BatchProgressTrackerProps {
 const STATUS_VALUE: Record<BatchFileStatus, number> = {
   pending: 0,
   internal_done: 1,
-  repository_done: 2,
+  repository_done: 3, // نهائي فعلياً (لا توجد add_to_repo jobs)
   completed: 3,
 };
 
 // تسمية المرحلة حسب أدنى حالة بين ملفات الدفعة
 const getPhaseLabel = (minStatus: number): string => {
   if (minStatus < 1) return 'في قائمة الانتظار للمعالجة...';
-  if (minStatus < 2) return 'جاري المقارنة الداخلية ومع المستودع...';
-  if (minStatus < 3) return 'جاري الإضافة إلى المستودع...';
+  if (minStatus < 3) return 'جاري المقارنة الداخلية ومع المستودع...';
   return 'اكتملت المعالجة';
 };
 
