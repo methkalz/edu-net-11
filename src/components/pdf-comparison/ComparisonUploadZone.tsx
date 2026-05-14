@@ -1,9 +1,9 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
-import { Upload, FileText, X, Loader2 } from 'lucide-react';
+import { Upload, FileText, X, Loader2, AlertTriangle } from 'lucide-react';
 import { usePDFComparison, type GradeLevel, type ComparisonResult } from '@/hooks/usePDFComparison';
 import ComparisonResultCard from './ComparisonResultCard';
 import BatchComparisonResult from './BatchComparisonResult';
