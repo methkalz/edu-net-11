@@ -85,7 +85,7 @@ const PDFComparisonPage = () => {
         </Card>
 
         {/* Main Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <Tabs value={activeTab} onValueChange={(v) => { if (v === 'history') setViewingBatchId(null); setActiveTab(v); }} className="space-y-6">
           <Card className="border-0 bg-card/50 backdrop-blur-sm">
             <CardContent className="p-6">
               <TabsList className="grid w-full grid-cols-3 h-auto p-1 bg-muted/50">
