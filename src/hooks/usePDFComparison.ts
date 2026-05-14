@@ -120,77 +120,50 @@ export const usePDFComparison = () => {
   }> => {
     try {
       console.log(`🚀 Starting batch comparison for ${files.length} files`);
-      
-      // الخطوة 1: رفع واستخراج النص من جميع الملفات
-      const filesData = [];
-      
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        onProgress?.(i, 10, 'upload');
-        
-        // رفع الملف
-        const filePath = await uploadFile(file, gradeLevel);
-        if (!filePath) {
-          throw new Error(`فشل رفع الملف: ${file.name}`);
-        }
-        
-        onProgress?.(i, 40, 'extraction');
-        
-        // التحقق من صحة المعاملات قبل الاستدعاء
-        if (!filePath || filePath.trim() === '') {
-          throw new Error(`مسار الملف غير صالح للملف: ${file.name}`);
-        }
 
-        console.log(`📤 Calling pdf-extract-text for ${file.name} with:`, {
-          filePath,
-          bucket: 'pdf-comparison-temp'
-        });
-        
-        // استخراج النص
-        const { data: extractResult, error: extractError } = await supabase.functions.invoke(
-          'pdf-extract-text',
-          {
-            body: { 
-              filePath,
-              bucket: 'pdf-comparison-temp',
-            },
-          }
+      // الخطوة 1: رفع واستخراج النص بالتوازي (دفعات من 5)
+      const CONCURRENCY = 5;
+      const filesData: any[] = [];
+
+      for (let batch = 0; batch < files.length; batch += CONCURRENCY) {
+        const chunk = files.slice(batch, batch + CONCURRENCY);
+        const chunkResults = await Promise.all(
+          chunk.map(async (file, chunkIdx) => {
+            const idx = batch + chunkIdx;
+            onProgress?.(idx, 10, 'upload');
+
+            const filePath = await uploadFile(file, gradeLevel);
+            if (!filePath) throw new Error(`فشل رفع الملف: ${file.name}`);
+
+            onProgress?.(idx, 40, 'extraction');
+
+            const { data: extractResult, error: extractError } = await supabase.functions.invoke(
+              'pdf-extract-text',
+              { body: { filePath, bucket: 'pdf-comparison-temp' } }
+            );
+
+            if (extractError || !extractResult?.success || !extractResult?.text) {
+              throw new Error(`فشل استخراج النص من: ${file.name}`);
+            }
+
+            onProgress?.(idx, 60, 'extraction_complete');
+            return {
+              fileName: file.name, filePath,
+              fileText: extractResult.text,
+              fileHash: extractResult.hash,
+              filePages: extractResult.pageCount,
+              fileSize: file.size,
+            };
+          })
         );
-
-        console.log(`📄 Extracted text from ${file.name}:`, {
-          success: extractResult?.success,
-          hasText: !!extractResult?.text,
-          textLength: extractResult?.text?.length,
-          hash: extractResult?.hash,
-          pages: extractResult?.pageCount,
-        });
-
-        if (extractError || !extractResult?.success) {
-          throw new Error(extractResult?.error || 'فشل استخراج النص');
-        }
-
-        // ✅ تحقق إضافي من وجود text
-        if (!extractResult.text) {
-          throw new Error(`فشل استخراج النص من الملف: ${file.name} - البيانات غير مكتملة`);
-        }
-
-        filesData.push({
-          fileName: file.name,
-          filePath,
-          fileText: extractResult.text,
-          fileHash: extractResult.hash,
-          filePages: extractResult.pageCount,
-          fileSize: file.size, // ✅ إضافة حجم الملف الفعلي
-        });
-        
-        onProgress?.(i, 60, 'extraction_complete');
+        filesData.push(...chunkResults);
       }
 
-      // الخطوة 2: المقارنة الشاملة (internal + repository)
-      onProgress?.(0, 70, 'comparison');
-      
-      const { data: batchResult, error: batchError } = await supabase.functions.invoke(
-        'pdf-compare-batch',
+      // الخطوة 2: تسجيل المهمة في الطابور (سريع — ثوانٍ فقط)
+      onProgress?.(0, 70, 'enqueuing');
+
+      const { data: enqueueResult, error: enqueueError } = await supabase.functions.invoke(
+        'pdf-enqueue-batch',
         {
           body: {
             files: filesData,
@@ -202,16 +175,16 @@ export const usePDFComparison = () => {
         }
       );
 
-      if (batchError || !batchResult?.success) {
-        throw new Error(batchResult?.error || 'فشلت المقارنة الشاملة');
+      if (enqueueError || !enqueueResult?.success) {
+        throw new Error(enqueueResult?.error || 'فشل تسجيل المهمة');
       }
 
-      onProgress?.(files.length - 1, 100, 'completed');
+      onProgress?.(files.length - 1, 100, 'enqueued');
 
       return {
         success: true,
-        results: batchResult.results,
-        batchId: batchResult.batchId,
+        batchId: enqueueResult.batchId,
+        results: [],
       };
     } catch (error) {
       console.error('❌ Batch comparison error:', error);
@@ -421,6 +394,7 @@ export const usePDFComparison = () => {
       let query = supabase
         .from('pdf_comparison_results')
         .select('*')
+        .eq('requested_by', userProfile?.user_id)
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -660,12 +634,29 @@ export const usePDFComparison = () => {
     }
   };
 
+  const watchBatchResults = (batchId: string, onUpdate: (result: any) => void) => {
+    return supabase
+      .channel(`batch-${batchId}`)
+      .on(
+        'postgres_changes' as any,
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'pdf_comparison_results',
+          filter: `batch_id=eq.${batchId}`,
+        },
+        (payload: any) => onUpdate(payload.new)
+      )
+      .subscribe();
+  };
+
   return {
     isLoading,
     uploadProgress,
     uploadFile,
     compareFile,
     compareBatchFiles,
+    watchBatchResults,
     getComparisonHistory,
     getRepositoryFiles,
     addToRepository,

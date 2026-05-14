@@ -1,5 +1,5 @@
 // مكون عرض سؤال البجروت للطالب أثناء الحل
-import React, { useMemo } from 'react';
+import React, { useMemo, useLayoutEffect, useRef, useState } from 'react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
@@ -340,6 +340,61 @@ function OpenEndedQuestion({
   );
 }
 
+/**
+ * حقل إدخال بعرض ديناميكي يكبر تلقائياً مع طول النص
+ * يستخدم ghost span مخفي لقياس عرض النص الفعلي بدقة
+ */
+function AutoSizeBlankInput({
+  value,
+  onChange,
+  placeholder,
+  disabled,
+  maxLength,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  disabled?: boolean;
+  maxLength?: number;
+}) {
+  const ghostRef = useRef<HTMLSpanElement>(null);
+  const [width, setWidth] = useState<number>(0);
+
+  // النص المستخدم للقياس: القيمة الفعلية أو placeholder عند الفراغ
+  const measureText = value || placeholder || '';
+
+  useLayoutEffect(() => {
+    if (ghostRef.current) {
+      // إضافة 4px كـ buffer لتفادي قطع آخر حرف بسبب cursor
+      setWidth(ghostRef.current.offsetWidth + 4);
+    }
+  }, [measureText]);
+
+  return (
+    <span className="auto-blank-wrapper inline-flex relative align-middle">
+      {/* Ghost span مخفي للقياس — نفس ستايل الـ input بالضبط */}
+      <span
+        ref={ghostRef}
+        aria-hidden="true"
+        className="auto-blank-ghost"
+      >
+        {measureText}
+      </span>
+      <Input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        placeholder={placeholder}
+        maxLength={maxLength}
+        title={maxLength ? `الحد الأقصى ${maxLength} حرف` : undefined}
+        className="auto-blank-input px-2 py-1 h-8 text-center"
+        style={{ width: `${width}px` }}
+      />
+    </span>
+  );
+}
+
 // مكون أسئلة إكمال الفراغ
 function FillBlankQuestion({
   question,
@@ -424,12 +479,6 @@ function FillBlankQuestion({
 
     const MAX_BLANK_LENGTH = 40;
     const placeholderText = blankDef?.placeholder || `فراغ ${blankId}`;
-    // العرض الديناميكي: يكبر مع النص لكن لا يتجاوز 40 حرف
-    const displayLength = Math.max(
-      8, // حد أدنى لعرض الـ placeholder
-      Math.min(MAX_BLANK_LENGTH, currentValue.length + 2),
-      placeholderText.length
-    );
 
     parts.push(
       <span key={`blank-${blankCounter}`} className="inline-block mx-1 align-middle">
@@ -438,17 +487,12 @@ function FillBlankQuestion({
             {blankDef.correct_answer}
           </span>
         ) : (
-          <Input
-            type="text"
+          <AutoSizeBlankInput
             value={currentValue}
-            onChange={(e) => handleBlankChange(blankId, e.target.value.slice(0, MAX_BLANK_LENGTH))}
+            onChange={(v) => handleBlankChange(blankId, v.slice(0, MAX_BLANK_LENGTH))}
             disabled={disabled}
             maxLength={MAX_BLANK_LENGTH}
-            size={displayLength}
-            style={{ width: `${displayLength + 2}ch` }}
-            className="inline-block px-2 py-1 h-8 text-center transition-[width] duration-150 ease-out"
             placeholder={placeholderText}
-            title={`الحد الأقصى ${MAX_BLANK_LENGTH} حرف`}
           />
         )}
       </span>
