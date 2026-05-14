@@ -107,7 +107,7 @@ serve(async (req) => {
     // ============ Sharded Architecture ============
     // قسّم أزواج المقارنة (N*(N-1)/2) إلى shards من 40 زوج كحد أقصى
     // كل shard ينفّذ في < 1 ثانية → لا CPU timeout مهما كان عدد الملفات
-    const PAIRS_PER_SHARD = 40;
+    const PAIRS_PER_SHARD = 8;
     const N = resultIds.length;
     const allPairs: Array<[number, number]> = [];
     for (let i = 0; i < N; i++) {
