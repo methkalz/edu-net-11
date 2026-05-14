@@ -1,86 +1,77 @@
-# خطة إصلاح الثغرات الأمنية المتعلقة بالآدمن
 
-## الثغرات المؤكدة بعد الفحص
+## نتائج الفحص الفعلي للمشروع
 
-### 🔴 1. ثغرة حرجة — `impersonate-user` Edge Function
-**الملف:** `supabase/functions/impersonate-user/index.ts`
+| البند | الحالة |
+|---|---|
+| ملف migration `20260514120000_pdf_comparison_jobs_queue.sql` موجود في الكود | ✅ |
+| **جدول `pdf_comparison_jobs` في قاعدة البيانات** | ❌ غير موجود |
+| **أعمدة `batch_status`, `embedding`, `top_keywords`** على `pdf_comparison_results` | ❌ مفقودة (فقط `batch_id` موجود) |
+| **Extensions `pg_cron` و `pg_net`** | ❌ غير مفعّلتين (schema `cron` غير موجود) |
+| **Cron job `process-pdf-comparison-jobs`** | ❌ غير مجدول |
+| **RPC `claim_pdf_jobs`** | ❌ غير موجود |
+| RPC `match_documents_hybrid` | ✅ موجود |
+| Realtime على `pdf_comparison_results` | ✅ مُضاف للـ publication |
+| Edge functions `pdf-enqueue-batch`, `pdf-process-jobs`, `pdf-add-to-repository` | ✅ موجودة في الكود (تُنشر تلقائياً) |
 
-- لا يتحقق إطلاقاً من JWT المُرسل، يقرأ `adminUserId` من **body الطلب**.
-- أي مستخدم مسجّل (طالب/معلم) يستطيع إرسال `adminUserId` لأي superadmin معروف، فيقوم Edge Function بإصدار **magic link جاهز للدخول** كأي مستخدم في النظام.
-- نتيجة الاستغلال: استيلاء كامل على أي حساب (سيناريو privilege escalation كامل).
-
-### 🟠 2. ثغرة متوسطة — `login-with-pin` Edge Function
-**الملف:** `supabase/functions/login-with-pin/index.ts`
-
-- نقطة عامة بلا أي rate-limiting.
-- PIN من 6 أرقام (مليون احتمال) صالح 15 دقيقة → عرضة لـ brute force عبر سكربت بسيط.
-
-### 🟠 3. مشكلة معمارية — ثقة بـ URL parameters للحالة الإدارية
-**الملفات:** `AdminAccessBanner.tsx` (نسختان), `useImpersonation.ts`, `ImpersonationBanner.tsx`
-
-- `?admin_access=true&impersonated=true` تستخدم لتحديد حالة "تصفح كمستخدم آخر"، لكن هذه قيم تجميلية فقط. الحماية الحقيقية على RLS موجودة، لكن البانر يمكن إخفاؤه بإزالة الـ query string.
-- البديل الموجود `useImpersonation` يقرأ من `localStorage` ويُسبّب **حالة UI متضاربة** (الـ hook يعرض بيانات وهمية لمستخدم منتحَل بينما الجلسة الفعلية في Supabase تخص حساب الآدمن أو حساب الضحية).
-
-### 🟡 4. حساسية في Audit log
-- جميع الـ edge functions تستخدم `console.log` لطباعة معرفات المستخدمين. تفصيل بسيط لكن نُنظفه ضمن نفس التغيير.
+**الخلاصة:** الـ migration الموجود في المستودع لم يُنفَّذ على قاعدة البيانات إطلاقاً. كل البنية التحتية للطابور مفقودة. بالإضافة إلى ذلك، الـ migration الأصلي يحتوي على ثغرتين يجب إصلاحهما قبل التطبيق.
 
 ---
 
-## ما سيُنفّذ
+## مشاكل يجب إصلاحها في الـ migration الأصلي
 
-### تغيير 1: تحصين `impersonate-user`
-- إزالة `adminUserId` من الـ body بالكامل.
-- استخراج المستدعي من `Authorization` header عبر `supabase.auth.getClaims(token)`.
-- التحقق أن `claims.sub` يعود لمستخدم بـ `role = 'superadmin'` في `profiles` (مع `search_path` آمن).
-- منع انتحال superadmin آخر (`targetUser.role !== 'superadmin'` أو على الأقل تسجيل المحاولة بمستوى CRITICAL).
-- إبقاء واجهة الاستدعاء من العميل كما هي (نُحدّث `useImpersonation`/زر الانتحال ليستخدم session token تلقائياً عبر `supabase.functions.invoke` بدون تمرير `adminUserId`).
-
-### تغيير 2: تحصين `login-with-pin` ضد brute force
-- إضافة rate-limiting بسيط داخل الفانكشن: محاولة فاشلة تُسجَّل في جدول `pin_login_attempts` (نُنشئه عبر migration) مع `ip` و`attempted_at`.
-- بعد 5 محاولات خاطئة من نفس IP خلال 10 دقائق → 429.
-- إبقاء التدفق الناجح كما هو 100% (نفس الـ magic link، نفس الـ redirect).
-
-### تغيير 3: إزالة الاعتماد على query params كمصدر حقيقة
-- `AdminAccessBanner` (في `src/components/admin/` و`src/components/shared/`): تحويلها لقراءة الحالة من `useImpersonation` فقط، وإلغاء التحقق من `?admin_access=true` كـ "دليل" على الجلسة الإدارية. يُبقى البانر يظهر بصرياً فقط لأن RLS هو الحامي الفعلي.
-- توحيد المنطق: حذف نسخة `src/components/shared/AdminAccessBanner.tsx` المكررة والإبقاء على نسخة `src/components/admin/` (موحّدة مع `ImpersonationBanner`).
-
-### تغيير 4: تنظيف console.log من معرفات
-- إزالة `console.log` التي تطبع `userId`/`pinCode` من الفانكشنز الثلاث، استبدال بسجلات عامة بدون PII.
-- الاحتفاظ بـ `audit_log` كما هو (هذا الجدول هو السجل الرسمي).
+1. **جدولة cron داخل migration بقيم `current_setting('app.settings.supabase_url')`** — هذه الإعدادات غير مضبوطة، لذلك ستفشل الجدولة بصمت (مغلّفة بـ `EXCEPTION WHEN OTHERS`). يجب إخراج جدولة الـ cron من الـ migration نهائياً وتنفيذها عبر أداة `insert` بقيم صريحة (per project conventions: لا نضع URL/service_role_key في migrations لأنها تُنسخ للمشاريع المستنسخة).
+2. **عدم وجود `claim_pdf_jobs`** — الـ edge function يعتمد على fallback أقل أماناً عند تشغيلات cron متزامنة.
 
 ---
 
-## ما لن يُنفّذ (وأسبابه)
+## الخطة
 
-- ❌ تغيير منطق التصحيح/البجروت/PDF — لا علاقة لها بالأمان الإداري (قاعدة الذاكرة: precision critical).
-- ❌ تعديل RLS policies الحالية على `profiles` — لا توجد ثغرة فيها (تم تأمينها سابقاً عبر `get_own_role()`).
-- ❌ إزالة ميزة الانتحال — مطلوبة وظيفياً للسوبرآدمن.
-- ❌ تعديل الـ build errors في Tiptap (`HTMLEmbed`/`GammaEmbed`) — موجودة قبل هذا الطلب وخارج نطاقه.
+### 1) تطبيق migration بنيوي معدّل (عبر أداة migration)
 
----
+ينشئ كل ما يلي:
+- جدول `pdf_comparison_jobs` + الفهارس الثلاثة + trigger `updated_at` + RLS policies (`users_view_own_jobs`, `users_insert_own_jobs`)
+- إضافة `batch_status`, `embedding FLOAT8[]`, `top_keywords TEXT[]` على `pdf_comparison_results`
+- تفعيل extensions: `pg_cron`, `pg_net`
+- إنشاء **`claim_pdf_jobs(max_jobs INT)`** مع `FOR UPDATE SKIP LOCKED` لمنع race conditions
+- **بدون** `cron.schedule` (يُنفَّذ في الخطوة 2 منفصلاً)
 
-## التحقق بعد التنفيذ
+### 2) جدولة cron عبر أداة insert (لا migration)
 
-1. **اختبار حقيقي للثغرة الأولى:** محاولة استدعاء `impersonate-user` بحساب طالب ممرّراً `adminUserId` لسوبرآدمن → يجب أن يعيد 401/403.
-2. **اختبار PIN:** 6 محاولات خاطئة متتالية من نفس الجهاز → 429.
-3. **تدفق ناجح:** سوبرآدمن يولّد PIN ويستخدمه/يدخل كمستخدم → يعمل بدون أي تغيير ظاهر.
-4. **بانر الانتحال:** يظهر فقط أثناء جلسة انتحال حقيقية، ولا يظهر بإضافة `?admin_access=true` يدوياً.
+تنفيذ صريح بـ URL + service_role_key مباشرة — مطابق لإرشادات Lovable لجدولة المهام:
 
----
-
-## Migration مطلوبة (تغيير 2)
-
-جدول واحد جديد:
 ```sql
-CREATE TABLE public.pin_login_attempts (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  ip_address text NOT NULL,
-  success boolean NOT NULL,
-  attempted_at timestamptz NOT NULL DEFAULT now()
+SELECT cron.schedule(
+  'process-pdf-comparison-jobs',
+  '10 seconds',
+  $$SELECT net.http_post(
+    url := 'https://swlwhjnwycvjdhgclwlx.supabase.co/functions/v1/pdf-process-jobs',
+    headers := '{"Authorization":"Bearer <SERVICE_ROLE_KEY>","Content-Type":"application/json"}'::jsonb,
+    body := '{}'::jsonb
+  )$$
 );
-CREATE INDEX idx_pin_attempts_ip_time ON public.pin_login_attempts(ip_address, attempted_at DESC);
-ALTER TABLE public.pin_login_attempts ENABLE ROW LEVEL SECURITY;
--- لا policies = لا أحد يقرأ/يكتب من العميل، فقط service role من الفانكشن.
 ```
 
-بدون أي تعديل على جداول الأعمال أو RLS الحالية.
+ملاحظة: إذا لم يدعم plan الحالي صياغة `'10 seconds'`، نسقط تلقائياً إلى `'* * * * *'` (كل دقيقة).
+
+### 3) تحديث ملف الـ migration الأصلي في المستودع
+
+تعديل `20260514120000_pdf_comparison_jobs_queue.sql` لحذف بلوك `cron.schedule` وإضافة `claim_pdf_jobs` — حتى يبقى المستودع متّسقاً مع ما طُبِّق فعلياً (ولا يُعاد تنفيذ migration معطوب لاحقاً).
+
+### 4) تحقق نهائي
+
+- `SELECT * FROM cron.job;` — تأكيد جدولة الـ job
+- `SELECT * FROM cron.job_run_details ORDER BY start_time DESC LIMIT 5;` — مراقبة التنفيذ بعد ~30 ثانية
+- استدعاء `pdf-enqueue-batch` تجريبياً ومراقبة `pdf_comparison_jobs.status` ينتقل من `pending` → `processing` → `completed`
+- التحقق من logs الـ edge function `pdf-process-jobs`
+
+---
+
+## ما لن يتغيّر
+
+- لن يُمَس كود `pdf-add-to-repository`, `pdf-enqueue-batch`, `pdf-process-jobs` — جميعها موجودة وتعمل، نحتاج فقط البنية التحتية.
+- لن تُمَس RLS أو policies على `pdf_comparison_results` أو الجداول الأخرى.
+- لن يُمَس Realtime — مُفعَّل مسبقاً.
+
+## السرّ المطلوب
+
+`SUPABASE_SERVICE_ROLE_KEY` يجب وضعه نصياً داخل أمر `cron.schedule` (هذه ممارسة Supabase الموصى بها لأن `pg_cron` يعمل داخل قاعدة البيانات نفسها ولا يستطيع قراءة env vars). سأستخرجه من إعدادات المشروع وقت التنفيذ.
