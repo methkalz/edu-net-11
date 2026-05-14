@@ -17,6 +17,7 @@ const TeacherPDFComparisonPage = () => {
   const [activeTab, setActiveTab] = useState('compare');
   const [gradeLevel, setGradeLevel] = useState<GradeLevel>('12');
   const [lastBatchId, setLastBatchId] = useState<string | null>(null);
+  const [viewingBatchId, setViewingBatchId] = useState<string | null>(null);
 
   useEffect(() => {
     // التحقق من صلاحية الوصول - المعلمون فقط
@@ -70,7 +71,7 @@ const TeacherPDFComparisonPage = () => {
               </Button>
               <Button
                 variant={activeTab === 'history' ? 'default' : 'outline'}
-                onClick={() => setActiveTab('history')}
+                onClick={() => { setViewingBatchId(null); setActiveTab('history'); }}
                 className="flex-1 md:flex-none min-w-32 gap-2"
               >
                 <History className="h-4 w-4" />
@@ -87,7 +88,7 @@ const TeacherPDFComparisonPage = () => {
               <BatchProgressTracker
                 gradeLevel={gradeLevel}
                 newBatchId={lastBatchId}
-                onViewResults={() => setActiveTab('history')}
+                onViewResults={(batchId) => { setViewingBatchId(batchId); setActiveTab('history'); }}
               />
               <ComparisonUploadZone
                 gradeLevel={gradeLevel}
@@ -95,7 +96,13 @@ const TeacherPDFComparisonPage = () => {
               />
             </>
           )}
-          {activeTab === 'history' && <ComparisonHistory gradeLevel={gradeLevel} />}
+          {activeTab === 'history' && (
+            <ComparisonHistory
+              gradeLevel={gradeLevel}
+              batchId={viewingBatchId}
+              onBackToAll={() => setViewingBatchId(null)}
+            />
+          )}
         </div>
       </div>
     </div>

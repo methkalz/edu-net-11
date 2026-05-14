@@ -1,9 +1,9 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
-import { Upload, FileText, X, Loader2 } from 'lucide-react';
+import { Upload, FileText, X, Loader2, AlertTriangle } from 'lucide-react';
 import { usePDFComparison, type GradeLevel, type ComparisonResult } from '@/hooks/usePDFComparison';
 import ComparisonResultCard from './ComparisonResultCard';
 import BatchComparisonResult from './BatchComparisonResult';
@@ -33,7 +33,20 @@ const ComparisonUploadZone = ({ gradeLevel, onBatchComplete }: ComparisonUploadZ
   const { compareFile, compareBatchFiles, isLoading } = usePDFComparison();
   const [files, setFiles] = useState<FileWithResult[]>([]);
   const [isComparing, setIsComparing] = useState(false);
+  const [isDispatching, setIsDispatching] = useState(false);
   const [globalError, setGlobalError] = useState<Error | null>(null);
+
+  // منع إغلاق الصفحة أثناء رفع/إرسال الدفعة
+  useEffect(() => {
+    if (!isDispatching) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+      return '';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [isDispatching]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const newFiles: FileWithResult[] = acceptedFiles.map(file => ({
@@ -64,6 +77,7 @@ const ComparisonUploadZone = ({ gradeLevel, onBatchComplete }: ComparisonUploadZ
     }
 
     setIsComparing(true);
+    if (files.length > 1) setIsDispatching(true);
 
     // إذا كان ملف واحد فقط، استخدم المقارنة العادية
     if (files.length === 1) {
@@ -135,16 +149,12 @@ const ComparisonUploadZone = ({ gradeLevel, onBatchComplete }: ComparisonUploadZ
 
         if (result.success && result.batchId) {
           // نظام الطابور: النتائج ستأتي تدريجياً عبر Realtime
-          // الرسالة الدائمة تظهر في BatchProgressTracker — لا toast منبثق
-          setFiles(prev => prev.map(f => ({
-            ...f,
-            status: 'completed' as const,
-            progress: 100,
-          })));
-
           if (onBatchComplete) {
             onBatchComplete(result.batchId);
           }
+          // تنظيف قائمة الملفات تلقائياً — البطاقة تظهر التقدم بدلاً منها
+          toast.success('تم إرسال الملفات للمعالجة في الخلفية');
+          setTimeout(() => setFiles([]), 800);
         } else if (result.success && result.results && result.results.length === files.length) {
           // النمط القديم: نتائج فورية
           setFiles(prev => prev.map((f, idx) => ({
@@ -180,6 +190,7 @@ const ComparisonUploadZone = ({ gradeLevel, onBatchComplete }: ComparisonUploadZ
     }
 
     setIsComparing(false);
+    setIsDispatching(false);
   };
 
   const handleClear = () => {
@@ -200,7 +211,27 @@ const ComparisonUploadZone = ({ gradeLevel, onBatchComplete }: ComparisonUploadZ
           }}
         />
       )}
-      
+
+      {/* Dispatching warning banner */}
+      {isDispatching && (
+        <Card className="border-2 border-amber-500/60 bg-amber-50 dark:bg-amber-950/30 shadow-md animate-in fade-in slide-in-from-top-2">
+          <CardContent className="p-4 flex items-start gap-3">
+            <div className="p-2 rounded-lg bg-amber-500/20 shrink-0">
+              <AlertTriangle className="h-5 w-5 text-amber-700 dark:text-amber-400" />
+            </div>
+            <div className="space-y-1 text-sm">
+              <p className="font-bold text-amber-900 dark:text-amber-200">
+                ⚠️ جارٍ رفع الملفات وإنشاء مهام المقارنة...
+              </p>
+              <p className="text-amber-800 dark:text-amber-300/90 leading-relaxed">
+                <strong>لا تُغلق الصفحة ولا تُحدّثها</strong> حتى يكتمل الرفع وتظهر بطاقة التقدم في الأعلى.
+                بعد ذلك يمكنك مغادرة الصفحة بأمان وستستمر المعالجة في الخلفية.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Files List */}
       {files.length > 0 && (
         <Card className="border border-border/50 bg-card/80 backdrop-blur-sm hover:shadow-lg transition-all duration-300">

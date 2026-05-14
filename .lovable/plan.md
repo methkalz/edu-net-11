@@ -1,62 +1,59 @@
 
-# الحل الجذري والنهائي — إزالة المعالجة الثقيلة من حلقة المقارنة
+# تحسين تجربة المقارنة — 4 تحسينات متناسقة
 
-## السبب الحقيقي (تم تأكيده من الكود)
+## 1. تنظيف قائمة الملفات المرفوعة بعد اكتمال الدفعة
 
-داخل كل `internal_shard`، الكود يستدعي `extractMatchingSegments` و`calculateCoverage` لكل زوج. الأولى تنفّذ:
+`ComparisonUploadZone.tsx`:
+- بعد نجاح إرسال الـ batch (`onBatchComplete` يُستدعى)، نُفرّغ `setFiles([])` بعد ثانية واحدة (toast قصير: "تم إرسال الملفات للمعالجة في الخلفية").
+- هذا يُفرّغ منطقة الرفع تلقائياً، فيرى المعلم بطاقة التقدم فقط بدون قائمة الملفات المكدّسة.
 
-```
-100 جملة × 100 جملة × fuzzball.ratio (Levenshtein عربي) = 10,000 عملية لكل زوج
-8 أزواج × 10,000 = 80,000 عملية فاضية لكل shard
-```
+## 2. "عرض النتائج" يفلتر حسب الـ batch، "سجل المقارنات" يعرض الكل
 
-هذا هو سبب `CPU Time exceeded` المتكرر — حتى مع shards بحجم 8 أزواج. الحالة الآن: **4/17 shard مكتملة، 4 عالقة، 9 معاد جدولتها بعد timeout**.
+### تعديل `getComparisonHistory` في `usePDFComparison.ts`
+- يقبل وسيطاً ثانياً اختيارياً: `batchId?: string`. عند تمريره، يضيف `.eq('batch_id', batchId)` ويزيل قيد `.limit(50)`.
 
-## الفلسفة الجديدة: فصل التقييم عن التفاصيل
+### تعديل `ComparisonHistory.tsx`
+- يضيف prop `batchId?: string` و`onBackToAll?: () => void`.
+- يمرّر `batchId` إلى `getComparisonHistory`.
+- إذا تم تمرير `batchId`: يعرض شريط أعلى الجدول "نتائج هذه الجلسة (17 ملف) — [عرض كامل السجل]" — زر يستدعي `onBackToAll`.
+- العنوان في الـ header يصبح "نتائج هذه المقارنة" بدل "سجل المقارنات".
 
-- **مرحلة التقييم (سريعة، لكل الأزواج)**: cosine + jaccard + length فقط — كلها عمليات O(N) رياضية على بيانات محسوبة مسبقاً (embeddings + keywords). تنفّذ في **<5ms لكل زوج**.
-- **مرحلة التفاصيل (بطيئة، عند الطلب فقط)**: segments + coverage تُنفّذ **lazy** — فقط عندما يفتح المعلّم نتيجة معيّنة، ولزوج واحد فقط. النتيجة فورية للمعلم.
+### تعديل `TeacherPDFComparisonPage.tsx` (و`PDFComparisonPage.tsx` بنفس النمط)
+- حالة جديدة `viewingBatchId: string | null`.
+- زر "عرض النتائج" في `BatchProgressTracker` → `setViewingBatchId(batch.batchId)` ثم `setActiveTab('history')`.
+- الضغط على تاب "سجل المقارنات" يدوياً → `setViewingBatchId(null)`.
+- يمرّر `batchId={viewingBatchId}` و`onBackToAll={() => setViewingBatchId(null)}` إلى `ComparisonHistory`.
 
-## التغييرات
+### تعديل `BatchProgressTracker.tsx`
+- `onViewResults` يستقبل `batchId` بدلاً من بدون وسيط: `onViewResults?: (batchId: string) => void`.
 
-### 1. `pdf-process-jobs/index.ts` — `processInternalShard`
-- حذف استدعاء `extractMatchingSegments` نهائياً من حلقة الـ shard.
-- حذف استدعاء `calculateCoverage` من حلقة الـ shard.
-- النتيجة النهائية تُحسب من cosine + jaccard + length فقط (الأوزان موجودة في settings).
-- `matched_segments: []` في الـ shard، تُملأ lazy لاحقاً.
+## 3. عدّاد "X من Y اكتمل" يتقدّم تدريجياً
 
-### 2. `pdf-enqueue-batch/index.ts`
-- زيادة `PAIRS_PER_SHARD` من 8 إلى **30** (آمن جداً بدون fuzzball — كل زوج <5ms).
-- لـ 17 ملف: 136 زوج / 30 = **5 shards فقط** بدلاً من 17.
+المشكلة الحالية: العداد يحسب فقط الملفات التي وصلت قيمة 3 (نهائية). أثناء التقدم تكون كل الملفات في `internal_done` (1) أو `repository_done` (3 الآن)، فيظهر إما 0 أو 17.
 
-### 3. `pdf-process-jobs/index.ts` — التوازي
-- `JOBS_PER_RUN = 3` و`PARALLEL_PER_RUN = 3` (آمن لأن العمليات أصبحت رياضية بحتة).
-- مع cron كل 10 ثوانٍ: 5 shards + aggregate تُنفّذ في **<30 ثانية** للدفعة كاملة.
+### الحل في `BatchProgressTracker.tsx` — `computeBatchView`
+- نُغيّر مفهوم "completed counter": ملف يُعتبر مكتملاً عند `repository_done` فما فوق (قيمة ≥ 3 — وهي الحالة النهائية الفعلية كما اتفقنا).
+- نضيف عداداً وسطياً اختياري: `processedAtLeastInternal = values.filter(v => v >= 1).length` ونعرض "X من Y تمت المقارنة الداخلية" أثناء المرحلة الأولى.
+- النص يصبح ديناميكياً:
+  - إذا `completed === 0 && processedAtLeastInternal > 0`: "تمت مقارنة X من Y داخلياً..."
+  - وإلا: "X من Y ملف اكتمل" (كما هو).
+- العدّاد سيتدرّج فعلاً لأن كل ملف ينتقل من 0 → 1 → 3 بشكل مستقل (الـ aggregate يحدّث الـ batch_status لكل ملف على حدة).
 
-### 4. Edge function جديدة `pdf-enrich-segments` (lazy)
-- تستقبل `result_id` + `compared_against_id`.
-- تحسب segments + coverage لهذا الزوج فقط عند الطلب (فتح نتيجة في الـ UI).
-- تخزّن النتيجة في `top_matched_segments` لتفادي التكرار.
-- وقت تنفيذ: <500ms لزوج واحد.
+## 4. تحذير "لا تُغلق الصفحة" أثناء الرفع + الإرسال
 
-### 5. تنظيف الدفعة العالقة الحالية
-- إنهاء batch `25cac813...` (تحديث جميع shards المعلّقة → completed بنتائج فارغة، ثم تشغيل aggregate).
-- المعلّم سيرى نتائج جزئية صحيحة من 4 الـ shards التي اكتملت + اقتراح إعادة المحاولة بالنظام الجديد.
+### في `ComparisonUploadZone.tsx`
+- عند الضغط على "بدء المقارنة" وقبل اكتمال إرسال الدفعة (أي بين `setIsComparing(true)` و`onBatchComplete`):
+  - نعرض **بانر بارز** أعلى منطقة الرفع (خلفية صفراء/ambar):
+    - أيقونة `AlertTriangle`
+    - النص: "⚠️ جارٍ رفع الملفات وإنشاء مهام المقارنة... **لا تُغلق الصفحة ولا تُحدّثها** حتى يكتمل الرفع وتظهر بطاقة التقدم. ستتمكن بعدها من مغادرة الصفحة بأمان."
+  - نضيف `useEffect` يربط `beforeunload` خلال هذه المرحلة فقط لمنع الإغلاق غير المقصود.
+- بعد ظهور بطاقة التقدم (batch صار في DB)، نُزيل البانر والـ beforeunload — التحذير يبقى خفيفاً داخل البطاقة نفسها كما هو.
 
-## النتيجة المتوقعة
+## ملخص الملفات المُعدّلة
 
-| السيناريو | قبل | بعد |
-|---|---|---|
-| 17 ملف | عالق دائماً | ~30 ثانية |
-| 100 ملف (4950 زوج) | مستحيل | ~3 دقائق |
-| 500 ملف (124750 زوج) | مستحيل | ~30 دقيقة (4150 shard) |
-| فتح نتيجة لرؤية segments | فوري (محسوب مسبقاً) | <1 ثانية lazy |
-
-## ضمانات الدقة
-- **التقييم النهائي لا يتغيّر** بشكل جوهري — coverage كانت تضيف تعزيز للحالات النادرة (>25% تطابق فقرات). سنحتفظ بالـ boost من coverage لكن نحسبه فقط عند الـ enrich.
-- العتبات (flagged ≥ 0.6) و(warning ≥ 0.4) تبقى كما هي.
-- `paragraph_similarity_min` = 0.75 يبقى كما هو في مرحلة الـ enrich.
-
-## الأمان
-- Edge function الجديدة تتحقق من JWT وتطبّق فحص RLS (المعلّم يرى فقط نتائج مدرسته).
-- `processing_started_at` cleanup يبقى كما هو لاسترداد أي job يفشل.
+1. `src/components/pdf-comparison/ComparisonUploadZone.tsx` — تنظيف الملفات + بانر التحذير + beforeunload
+2. `src/components/pdf-comparison/BatchProgressTracker.tsx` — عداد ديناميكي + تمرير batchId في onViewResults
+3. `src/components/pdf-comparison/ComparisonHistory.tsx` — props جديدة (batchId, onBackToAll) + شريط "عرض كامل السجل"
+4. `src/hooks/usePDFComparison.ts` — `getComparisonHistory(gradeLevel?, batchId?)`
+5. `src/pages/TeacherPDFComparisonPage.tsx` — حالة `viewingBatchId` + ربط الأزرار
+6. `src/pages/PDFComparisonPage.tsx` — نفس التعديل لصفحة الـ admin

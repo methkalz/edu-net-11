@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Progress } from '@/components/ui/progress';
-import { RefreshCw, FileText, AlertTriangle, AlertCircle, CheckCircle, Eye, Clock, TrendingUp, Target, BookOpen, ArrowRight, ChevronDown, ChevronUp } from 'lucide-react';
+import { RefreshCw, FileText, AlertTriangle, AlertCircle, CheckCircle, Eye, Clock, TrendingUp, Target, BookOpen, ArrowRight, ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
 import { usePDFComparison, type GradeLevel, type ComparisonResult, type ComparisonMatch } from '@/hooks/usePDFComparison';
 import { formatDistanceToNow, format } from 'date-fns';
 import { ar } from 'date-fns/locale';
@@ -14,9 +14,13 @@ import { cn } from '@/lib/utils';
 import { AIAnalysisSection } from './AIAnalysisSection';
 interface ComparisonHistoryProps {
   gradeLevel?: GradeLevel;
+  batchId?: string | null;
+  onBackToAll?: () => void;
 }
 const ComparisonHistory = ({
-  gradeLevel
+  gradeLevel,
+  batchId,
+  onBackToAll
 }: ComparisonHistoryProps) => {
   const {
     getComparisonHistory
@@ -29,13 +33,13 @@ const ComparisonHistory = ({
   const [isMatchDetailOpen, setIsMatchDetailOpen] = useState(false);
   const loadHistory = async () => {
     setIsLoading(true);
-    const data = await getComparisonHistory(gradeLevel);
+    const data = await getComparisonHistory(gradeLevel, batchId);
     setHistory(data);
     setIsLoading(false);
   };
   useEffect(() => {
     loadHistory();
-  }, [gradeLevel]);
+  }, [gradeLevel, batchId]);
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'flagged':
@@ -99,16 +103,26 @@ const ComparisonHistory = ({
             </div>
             <div>
               <CardTitle className="text-xl font-semibold text-foreground">
-                سجل المقارنات
+                {batchId ? 'نتائج هذه المقارنة' : 'سجل المقارنات'}
               </CardTitle>
               <CardDescription className="text-sm mt-1">
-                {gradeLevel && `الصف ${gradeLevel === '12' ? '12' : '10'}`}
+                {batchId
+                  ? `جلسة مقارنة محددة${history.length > 0 ? ` · ${history.length} ملف` : ''}`
+                  : (gradeLevel && `الصف ${gradeLevel === '12' ? '12' : '10'}`)}
               </CardDescription>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={loadHistory} disabled={isLoading} className="hover:shadow-sm transition-all duration-200">
-            <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
-          </Button>
+          <div className="flex items-center gap-2">
+            {batchId && onBackToAll && (
+              <Button variant="outline" size="sm" onClick={onBackToAll} className="gap-1.5">
+                <ArrowLeft className="h-4 w-4" />
+                عرض كامل السجل
+              </Button>
+            )}
+            <Button variant="outline" size="sm" onClick={loadHistory} disabled={isLoading} className="hover:shadow-sm transition-all duration-200">
+              <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="p-6">

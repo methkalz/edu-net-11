@@ -18,6 +18,7 @@ const PDFComparisonPage = () => {
   const [activeTab, setActiveTab] = useState('compare');
   const [gradeLevel, setGradeLevel] = useState<GradeLevel>('12');
   const [lastBatchId, setLastBatchId] = useState<string | null>(null);
+  const [viewingBatchId, setViewingBatchId] = useState<string | null>(null);
 
   useEffect(() => {
     // التحقق من صلاحية الوصول
@@ -84,7 +85,7 @@ const PDFComparisonPage = () => {
         </Card>
 
         {/* Main Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <Tabs value={activeTab} onValueChange={(v) => { if (v === 'history') setViewingBatchId(null); setActiveTab(v); }} className="space-y-6">
           <Card className="border-0 bg-card/50 backdrop-blur-sm">
             <CardContent className="p-6">
               <TabsList className="grid w-full grid-cols-3 h-auto p-1 bg-muted/50">
@@ -128,7 +129,7 @@ const PDFComparisonPage = () => {
                 <BatchProgressTracker
                   gradeLevel={gradeLevel}
                   newBatchId={lastBatchId}
-                  onViewResults={() => setActiveTab('history')}
+                  onViewResults={(batchId) => { setViewingBatchId(batchId); setActiveTab('history'); }}
                 />
                 <ComparisonUploadZone
                   gradeLevel={gradeLevel}
@@ -139,7 +140,11 @@ const PDFComparisonPage = () => {
           </TabsContent>
 
           <TabsContent value="history" className="animate-fade-in">
-            <ComparisonHistory gradeLevel={gradeLevel} />
+            <ComparisonHistory
+              gradeLevel={gradeLevel}
+              batchId={viewingBatchId}
+              onBackToAll={() => setViewingBatchId(null)}
+            />
           </TabsContent>
 
           <TabsContent value="repository" className="animate-fade-in">

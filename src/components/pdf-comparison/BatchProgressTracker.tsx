@@ -26,7 +26,7 @@ import { toast } from 'sonner';
 interface BatchProgressTrackerProps {
   gradeLevel: GradeLevel;
   newBatchId?: string | null;
-  onViewResults?: () => void;
+  onViewResults?: (batchId: string) => void;
 }
 
 const STATUS_VALUE: Record<BatchFileStatus, number> = {
@@ -37,16 +37,20 @@ const STATUS_VALUE: Record<BatchFileStatus, number> = {
 };
 
 // تسمية المرحلة حسب أدنى حالة بين ملفات الدفعة
-const getPhaseLabel = (minStatus: number): string => {
+const getPhaseLabel = (minStatus: number, internalDone: number, total: number): string => {
+  if (minStatus >= 3) return 'اكتملت المعالجة';
+  if (internalDone > 0 && internalDone < total) {
+    return `جاري المقارنة... (${internalDone} من ${total} انتهى من المقارنة الداخلية)`;
+  }
   if (minStatus < 1) return 'في قائمة الانتظار للمعالجة...';
-  if (minStatus < 3) return 'جاري المقارنة الداخلية ومع المستودع...';
-  return 'اكتملت المعالجة';
+  return 'جاري المقارنة الداخلية ومع المستودع...';
 };
 
 interface BatchView {
   batchId: string;
   total: number;
   completed: number;
+  internalDone: number;
   progressPercent: number;
   phaseLabel: string;
   isComplete: boolean;
@@ -55,7 +59,8 @@ interface BatchView {
 const computeBatchView = (batch: ActiveBatch): BatchView => {
   const total = batch.files.length;
   const values = batch.files.map((f) => STATUS_VALUE[f.batchStatus] ?? 0);
-  const completed = values.filter((v) => v === 3).length;
+  const completed = values.filter((v) => v >= 3).length;
+  const internalDone = values.filter((v) => v >= 1).length;
   const sum = values.reduce((a, b) => a + b, 0);
   const progressPercent = total > 0 ? Math.round((sum / (total * 3)) * 100) : 0;
   const minStatus = total > 0 ? Math.min(...values) : 0;
@@ -63,8 +68,9 @@ const computeBatchView = (batch: ActiveBatch): BatchView => {
     batchId: batch.batchId,
     total,
     completed,
+    internalDone,
     progressPercent,
-    phaseLabel: getPhaseLabel(minStatus),
+    phaseLabel: getPhaseLabel(minStatus, internalDone, total),
     isComplete: total > 0 && completed === total,
   };
 };
@@ -184,7 +190,7 @@ const BatchProgressTracker = ({
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={onViewResults}
+                      onClick={() => onViewResults(view.batchId)}
                       className="gap-1.5"
                     >
                       عرض النتائج
@@ -209,7 +215,11 @@ const BatchProgressTracker = ({
                 <Progress value={view.progressPercent} className="h-2" />
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <span>
-                    {view.completed} من {view.total} ملف اكتمل
+                    {view.isComplete
+                      ? `${view.completed} من ${view.total} ملف اكتمل`
+                      : view.internalDone > 0
+                        ? `${view.internalDone} من ${view.total} انتهى من المقارنة الداخلية · ${view.completed} اكتمل نهائياً`
+                        : `بدء المعالجة... 0 من ${view.total}`}
                   </span>
                   <span>{view.progressPercent}%</span>
                 </div>
