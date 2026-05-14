@@ -39,8 +39,7 @@ const STATUS_VALUE: Record<BatchFileStatus, number> = {
 // تسمية المرحلة حسب أدنى حالة بين ملفات الدفعة
 const getPhaseLabel = (minStatus: number): string => {
   if (minStatus < 1) return 'في قائمة الانتظار للمعالجة...';
-  if (minStatus < 2) return 'جاري المقارنة الداخلية ومع المستودع...';
-  if (minStatus < 3) return 'جاري الإضافة إلى المستودع...';
+  if (minStatus < 3) return 'جاري المقارنة الداخلية ومع المستودع...';
   return 'اكتملت المعالجة';
 };
 
