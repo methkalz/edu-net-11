@@ -32,7 +32,7 @@ interface BatchProgressTrackerProps {
 const STATUS_VALUE: Record<BatchFileStatus, number> = {
   pending: 0,
   internal_done: 1,
-  repository_done: 2,
+  repository_done: 3, // نهائي فعلياً (لا توجد add_to_repo jobs)
   completed: 3,
 };
 
