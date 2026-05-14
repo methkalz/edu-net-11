@@ -8,7 +8,8 @@ import {
   type MatchedSegment,
 } from '../_shared/pdf-helpers.ts';
 
-const JOBS_PER_RUN = 10;
+const JOBS_PER_RUN = 8;
+const PARALLEL_PER_RUN = 4; // معالجة عدة jobs بالتوازي
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
