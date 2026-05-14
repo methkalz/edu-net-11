@@ -33,7 +33,20 @@ const ComparisonUploadZone = ({ gradeLevel, onBatchComplete }: ComparisonUploadZ
   const { compareFile, compareBatchFiles, isLoading } = usePDFComparison();
   const [files, setFiles] = useState<FileWithResult[]>([]);
   const [isComparing, setIsComparing] = useState(false);
+  const [isDispatching, setIsDispatching] = useState(false);
   const [globalError, setGlobalError] = useState<Error | null>(null);
+
+  // منع إغلاق الصفحة أثناء رفع/إرسال الدفعة
+  useEffect(() => {
+    if (!isDispatching) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+      return '';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [isDispatching]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const newFiles: FileWithResult[] = acceptedFiles.map(file => ({
