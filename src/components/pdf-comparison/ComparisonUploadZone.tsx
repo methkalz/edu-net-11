@@ -149,16 +149,12 @@ const ComparisonUploadZone = ({ gradeLevel, onBatchComplete }: ComparisonUploadZ
 
         if (result.success && result.batchId) {
           // نظام الطابور: النتائج ستأتي تدريجياً عبر Realtime
-          // الرسالة الدائمة تظهر في BatchProgressTracker — لا toast منبثق
-          setFiles(prev => prev.map(f => ({
-            ...f,
-            status: 'completed' as const,
-            progress: 100,
-          })));
-
           if (onBatchComplete) {
             onBatchComplete(result.batchId);
           }
+          // تنظيف قائمة الملفات تلقائياً — البطاقة تظهر التقدم بدلاً منها
+          toast.success('تم إرسال الملفات للمعالجة في الخلفية');
+          setTimeout(() => setFiles([]), 800);
         } else if (result.success && result.results && result.results.length === files.length) {
           // النمط القديم: نتائج فورية
           setFiles(prev => prev.map((f, idx) => ({
