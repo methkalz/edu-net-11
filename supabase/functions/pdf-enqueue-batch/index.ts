@@ -64,7 +64,7 @@ serve(async (req) => {
         compared_extracted_text: file.fileText,
         grade_level: gradeLevel,
         comparison_type: comparisonType,
-        comparison_source: 'pending',
+        comparison_source: 'internal',
         embedding: file.embedding,
         top_keywords: file.keywords,
         batch_status: 'pending',
