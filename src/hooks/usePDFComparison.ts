@@ -416,14 +416,19 @@ export const usePDFComparison = () => {
   };
 
   // جلب سجل المقارنات
-  const getComparisonHistory = async (gradeLevel?: GradeLevel): Promise<ComparisonResult[]> => {
+  const getComparisonHistory = async (gradeLevel?: GradeLevel, batchId?: string | null): Promise<ComparisonResult[]> => {
     try {
       let query = supabase
         .from('pdf_comparison_results')
         .select('*')
         .eq('requested_by', userProfile?.user_id)
-        .order('created_at', { ascending: false })
-        .limit(50);
+        .order('created_at', { ascending: false });
+
+      if (batchId) {
+        query = query.eq('batch_id', batchId);
+      } else {
+        query = query.limit(50);
+      }
 
       if (gradeLevel) {
         query = query.eq('grade_level', gradeLevel);
