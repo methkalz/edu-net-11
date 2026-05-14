@@ -5179,6 +5179,7 @@ export type Database = {
           compared_extracted_text: string | null
           compared_file_hash: string | null
           compared_file_name: string
+          compared_file_pages: number | null
           compared_file_path: string
           comparison_source: string | null
           comparison_type: string
@@ -5224,6 +5225,7 @@ export type Database = {
           compared_extracted_text?: string | null
           compared_file_hash?: string | null
           compared_file_name: string
+          compared_file_pages?: number | null
           compared_file_path: string
           comparison_source?: string | null
           comparison_type: string
@@ -5269,6 +5271,7 @@ export type Database = {
           compared_extracted_text?: string | null
           compared_file_hash?: string | null
           compared_file_name?: string
+          compared_file_pages?: number | null
           compared_file_path?: string
           comparison_source?: string | null
           comparison_type?: string
