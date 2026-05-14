@@ -97,6 +97,21 @@ export interface RepositoryFile {
   created_at: string;
 }
 
+export type BatchFileStatus = 'pending' | 'internal_done' | 'repository_done' | 'completed';
+
+export interface ActiveBatchFile {
+  id: string;
+  name: string;
+  batchStatus: BatchFileStatus;
+}
+
+export interface ActiveBatch {
+  batchId: string;
+  gradeLevel: GradeLevel;
+  createdAt: string;
+  files: ActiveBatchFile[];
+}
+
 export const usePDFComparison = () => {
   const { userProfile } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
@@ -650,6 +665,51 @@ export const usePDFComparison = () => {
       .subscribe();
   };
 
+  // جلب الدفعات قيد المعالجة (غير المكتملة) للمعلم الحالي — مجمّعة حسب batch_id
+  const getActiveBatches = async (gradeLevel?: GradeLevel): Promise<ActiveBatch[]> => {
+    try {
+      if (!userProfile?.user_id) return [];
+
+      let query = supabase
+        .from('pdf_comparison_results')
+        .select('id, batch_id, batch_status, compared_file_name, created_at, grade_level')
+        .eq('requested_by', userProfile.user_id)
+        .neq('batch_status', 'completed')
+        .order('created_at', { ascending: false });
+
+      if (gradeLevel) {
+        query = query.eq('grade_level', gradeLevel);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      // تجميع حسب batch_id
+      const batchMap = new Map<string, ActiveBatch>();
+      (data || []).forEach((row: any) => {
+        if (!row.batch_id) return;
+        if (!batchMap.has(row.batch_id)) {
+          batchMap.set(row.batch_id, {
+            batchId: row.batch_id,
+            gradeLevel: row.grade_level,
+            createdAt: row.created_at,
+            files: [],
+          });
+        }
+        batchMap.get(row.batch_id)!.files.push({
+          id: row.id,
+          name: row.compared_file_name,
+          batchStatus: row.batch_status || 'pending',
+        });
+      });
+
+      return Array.from(batchMap.values());
+    } catch (error: any) {
+      console.error('Active batches fetch error:', error);
+      return [];
+    }
+  };
+
   return {
     isLoading,
     uploadProgress,
@@ -657,6 +717,7 @@ export const usePDFComparison = () => {
     compareFile,
     compareBatchFiles,
     watchBatchResults,
+    getActiveBatches,
     getComparisonHistory,
     getRepositoryFiles,
     addToRepository,

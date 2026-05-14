@@ -62,6 +62,7 @@ serve(async (req) => {
         compared_file_path: file.filePath,
         compared_file_hash: file.fileHash,
         compared_extracted_text: file.fileText,
+        compared_file_pages: file.filePages || 1,
         grade_level: gradeLevel,
         comparison_type: comparisonType,
         comparison_source: 'internal',

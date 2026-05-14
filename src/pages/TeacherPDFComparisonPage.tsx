@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { FileSearch, History, Upload, Sparkles, GraduationCap, BookOpen } from 'lucide-react';
 import ComparisonUploadZone from '@/components/pdf-comparison/ComparisonUploadZone';
 import ComparisonHistory from '@/components/pdf-comparison/ComparisonHistory';
+import BatchProgressTracker from '@/components/pdf-comparison/BatchProgressTracker';
 import { useAuth } from '@/hooks/useAuth';
 import ModernHeader from '@/components/shared/ModernHeader';
 import type { GradeLevel } from '@/hooks/usePDFComparison';
@@ -15,6 +16,7 @@ const TeacherPDFComparisonPage = () => {
   const { userProfile } = useAuth();
   const [activeTab, setActiveTab] = useState('compare');
   const [gradeLevel, setGradeLevel] = useState<GradeLevel>('12');
+  const [lastBatchId, setLastBatchId] = useState<string | null>(null);
 
   useEffect(() => {
     // التحقق من صلاحية الوصول - المعلمون فقط
@@ -80,7 +82,19 @@ const TeacherPDFComparisonPage = () => {
 
         {/* Content Area */}
         <div className="space-y-4">
-          {activeTab === 'compare' && <ComparisonUploadZone gradeLevel={gradeLevel} />}
+          {activeTab === 'compare' && (
+            <>
+              <BatchProgressTracker
+                gradeLevel={gradeLevel}
+                newBatchId={lastBatchId}
+                onViewResults={() => setActiveTab('history')}
+              />
+              <ComparisonUploadZone
+                gradeLevel={gradeLevel}
+                onBatchComplete={(batchId) => setLastBatchId(batchId)}
+              />
+            </>
+          )}
           {activeTab === 'history' && <ComparisonHistory gradeLevel={gradeLevel} />}
         </div>
       </div>
