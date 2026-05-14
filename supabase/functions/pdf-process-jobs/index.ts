@@ -60,23 +60,32 @@ serve(async (req) => {
       pendingJobs = directJobs;
     }
 
-    console.log(`🔄 Processing ${pendingJobs.length} jobs`);
+    console.log(`🔄 Processing ${pendingJobs.length} jobs (parallel=${PARALLEL_PER_RUN})`);
 
     const settings = await getPDFComparisonSettings(supabase);
     let processedCount = 0;
 
-    for (const job of pendingJobs) {
+    // معالجة بالتوازي بدفعات من PARALLEL_PER_RUN
+    const processOne = async (job: any) => {
       try {
         switch (job.job_type) {
-          case 'internal':
-            await processInternalComparison(supabase, job, settings);
+          case 'internal_shard':
+            await processInternalShard(supabase, job, settings);
             break;
+          case 'aggregate_internal':
+            await processAggregateInternal(supabase, job, settings);
+            break;
+          case 'internal':
+            // legacy — fail fast
+            throw new Error('legacy internal job type — replaced by internal_shard');
           case 'repository':
             await processRepositoryComparison(supabase, job, settings);
             break;
           case 'add_to_repo':
             await processAddToRepo(supabase, job);
             break;
+          default:
+            throw new Error(`Unknown job_type: ${job.job_type}`);
         }
 
         await supabase
@@ -89,12 +98,21 @@ serve(async (req) => {
         const errorMsg = err instanceof Error ? err.message : String(err);
         console.error(`❌ Job ${job.id} (${job.job_type}) failed:`, errorMsg);
 
-        const newStatus = (job.attempts || 0) + 1 >= (job.max_attempts || 3) ? 'failed' : 'pending';
+        const newStatus = (job.attempts || 0) >= (job.max_attempts || 3) ? 'failed' : 'pending';
         await supabase
           .from('pdf_comparison_jobs')
-          .update({ status: newStatus, error_message: errorMsg })
+          .update({
+            status: newStatus,
+            error_message: errorMsg,
+            processing_started_at: null,
+          })
           .eq('id', job.id);
       }
+    };
+
+    for (let i = 0; i < pendingJobs.length; i += PARALLEL_PER_RUN) {
+      const chunk = pendingJobs.slice(i, i + PARALLEL_PER_RUN);
+      await Promise.all(chunk.map(processOne));
     }
 
     return new Response(
