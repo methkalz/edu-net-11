@@ -3,17 +3,16 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Shield, LogOut, User } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useImpersonation } from '@/hooks/useImpersonation';
 
 export const AdminAccessBanner: React.FC = () => {
   const { signOut } = useAuth();
-  
-  // Check if this is an admin access session
-  const isAdminAccess = new URLSearchParams(window.location.search).get('admin_access') === 'true';
-  
-  if (!isAdminAccess) return null;
+  const { isImpersonating } = useImpersonation();
+
+  // Only show if there's a real impersonation session — never trust URL params alone.
+  if (!isImpersonating) return null;
 
   const handleReturnToAdmin = async () => {
-    // Sign out with automatic redirection to auth page
     await signOut();
   };
 
@@ -27,9 +26,9 @@ export const AdminAccessBanner: React.FC = () => {
             أنت تتصفح كمستخدم آخر - وضع المراجعة الإدارية نشط
           </span>
         </div>
-        <Button 
-          size="sm" 
-          variant="outline" 
+        <Button
+          size="sm"
+          variant="outline"
           onClick={handleReturnToAdmin}
           className="flex items-center gap-1"
         >

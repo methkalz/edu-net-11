@@ -197,7 +197,7 @@ export const useStudentPresence = () => {
     fetchStudentPresence(false);
 
     const channel = supabase
-      .channel('student-presence-changes')
+      .channel(`student-presence-changes-${Math.random().toString(36).slice(2)}`)
       .on(
         'postgres_changes',
         {

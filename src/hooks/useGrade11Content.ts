@@ -31,7 +31,6 @@ export interface Grade11Lesson {
   order_index: number;
   created_at: string;
   updated_at: string;
-  media?: Grade11LessonMedia[];
 }
 
 export interface Grade11LessonMedia {

@@ -353,7 +353,7 @@ export default function StudentBagrutAttempt() {
       {/* banner المعاينة */}
       {isPreview && (
         <div className="bg-amber-500 text-white text-center py-2 px-4 font-medium text-sm">
-          وضع المعاينة — هذا ليس امتحان حقيقي ولن يتم حفظ أي إجابات
+          وضع المعاينة - هذا ليس امتحان حقيقي
         </div>
       )}
       {/* شريط المؤقت والمعلومات */}
@@ -396,6 +396,32 @@ export default function StudentBagrutAttempt() {
                   </>
                 )}
               </Badge>
+            </div>
+
+            {/* أزرار الحفظ والتقديم - ظاهرة دائماً */}
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={saveAnswers}
+                disabled={isSaving}
+                className="gap-1.5"
+              >
+                <Save className="h-4 w-4" />
+                <span className="hidden sm:inline">حفظ</span>
+              </Button>
+              {!isPreview && (
+                <Button
+                  size="sm"
+                  onClick={confirmSubmit}
+                  disabled={isSubmitting}
+                  className="gap-1.5 bg-green-600 hover:bg-green-700"
+                >
+                  <Send className="h-4 w-4" />
+                  <span className="hidden sm:inline">تقديم الامتحان</span>
+                  <span className="sm:hidden">تقديم</span>
+                </Button>
+              )}
             </div>
           </div>
         </div>

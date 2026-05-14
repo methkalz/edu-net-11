@@ -70,7 +70,7 @@ const Grade11Content = () => {
   const [showInfoCardForm, setShowInfoCardForm] = useState(false);
   const [editingSection, setEditingSection] = useState<Grade11Section | undefined>();
   const [editingTopic, setEditingTopic] = useState<Grade11Topic | undefined>();
-  const [editingLesson, setEditingLesson] = useState<Grade11Lesson | undefined>();
+  const [editingLesson, setEditingLesson] = useState<Grade11LessonWithMedia | undefined>();
   const [editingDocument, setEditingDocument] = useState<any>(null);
   const [editingVideo, setEditingVideo] = useState<any>(null);
   const [editingInfoCard, setEditingInfoCard] = useState<any>(null);
@@ -113,7 +113,7 @@ const Grade11Content = () => {
             const updatedMediaStr = JSON.stringify(updatedLesson.media || []);
             if (currentMediaStr !== updatedMediaStr) {
               console.log('Syncing editingLesson with updated data from sections');
-              setEditingLesson(updatedLesson as Grade11Lesson);
+              setEditingLesson(updatedLesson as Grade11LessonWithMedia);
             }
             return;
           }
@@ -227,7 +227,7 @@ const Grade11Content = () => {
     setEditingLesson(undefined);
     setShowLessonForm(true);
   };
-  const handleEditLesson = (lesson: Grade11Lesson) => {
+  const handleEditLesson = (lesson: Grade11LessonWithMedia) => {
     setEditingLesson(lesson);
     setSelectedTopicId(lesson.topic_id);
     setShowLessonForm(true);

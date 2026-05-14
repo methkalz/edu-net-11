@@ -32,10 +32,7 @@ export const DirectImpersonationButton: React.FC<DirectImpersonationButtonProps>
     try {
       // Call the impersonate-user function
       const { data, error } = await supabase.functions.invoke('impersonate-user', {
-        body: {
-          targetUserId,
-          adminUserId: user.id
-        }
+        body: { targetUserId }
       });
 
       if (error) {

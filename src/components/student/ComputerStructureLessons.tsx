@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import SafeHtml from '@/components/bagrut/SafeHtml';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -408,9 +409,9 @@ export const ComputerStructureLessons: React.FC = () => {
                 <div className="prose max-w-none">
                   <div className="bg-muted/20 p-6 rounded-lg border">
                     <h4 className="text-lg font-semibold mb-3 text-foreground">محتوى الدرس:</h4>
-                    <div 
+                    <SafeHtml
+                      html={selectedLesson.content}
                       className="lesson-content text-muted-foreground leading-relaxed prose prose-lg max-w-none"
-                      dangerouslySetInnerHTML={{ __html: selectedLesson.content }}
                     />
                   </div>
                 </div>

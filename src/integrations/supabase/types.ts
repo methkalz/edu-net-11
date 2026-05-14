@@ -5557,6 +5557,7 @@ export type Database = {
           email: string | null
           font_size: string | null
           full_name: string
+          is_active: boolean
           is_primary_admin: boolean | null
           last_login_at: string | null
           level: number | null
@@ -5576,6 +5577,7 @@ export type Database = {
           email?: string | null
           font_size?: string | null
           full_name: string
+          is_active?: boolean
           is_primary_admin?: boolean | null
           last_login_at?: string | null
           level?: number | null
@@ -5595,6 +5597,7 @@ export type Database = {
           email?: string | null
           font_size?: string | null
           full_name?: string
+          is_active?: boolean
           is_primary_admin?: boolean | null
           last_login_at?: string | null
           level?: number | null
@@ -5958,10 +5961,13 @@ export type Database = {
       }
       schools: {
         Row: {
+          address: string | null
           city: string | null
           created_at: string | null
+          email: string | null
           id: string
           name: string
+          phone: string | null
           plan: Database["public"]["Enums"]["school_plan"] | null
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
@@ -5969,10 +5975,13 @@ export type Database = {
           updated_at_utc: string
         }
         Insert: {
+          address?: string | null
           city?: string | null
           created_at?: string | null
+          email?: string | null
           id?: string
           name: string
+          phone?: string | null
           plan?: Database["public"]["Enums"]["school_plan"] | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
@@ -5980,10 +5989,13 @@ export type Database = {
           updated_at_utc?: string
         }
         Update: {
+          address?: string | null
           city?: string | null
           created_at?: string | null
+          email?: string | null
           id?: string
           name?: string
+          phone?: string | null
           plan?: Database["public"]["Enums"]["school_plan"] | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null

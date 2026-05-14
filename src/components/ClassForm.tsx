@@ -710,7 +710,6 @@ export const ClassForm: React.FC<ClassFormProps> = ({ editingClass, onSuccess, o
                 username: student.email || null, // Use email as username
                 email: student.email || null,
                 phone: student.phone || null,
-                password_hash: student.password || generatePassword()
               })
               .select()
               .single();

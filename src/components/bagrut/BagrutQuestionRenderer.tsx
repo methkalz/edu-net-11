@@ -349,11 +349,13 @@ function AutoSizeBlankInput({
   onChange,
   placeholder,
   disabled,
+  maxLength,
 }: {
   value: string;
   onChange: (value: string) => void;
   placeholder: string;
   disabled?: boolean;
+  maxLength?: number;
 }) {
   const ghostRef = useRef<HTMLSpanElement>(null);
   const [width, setWidth] = useState<number>(0);
@@ -384,6 +386,8 @@ function AutoSizeBlankInput({
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
         placeholder={placeholder}
+        maxLength={maxLength}
+        title={maxLength ? `الحد الأقصى ${maxLength} حرف` : undefined}
         className="auto-blank-input px-2 py-1 h-8 text-center"
         style={{ width: `${width}px` }}
       />
@@ -473,8 +477,11 @@ function FillBlankQuestion({
     const answerRecord = typeof answer === 'object' ? answer : {};
     const currentValue = answerRecord?.[blankId] || '';
 
+    const MAX_BLANK_LENGTH = 40;
+    const placeholderText = blankDef?.placeholder || `فراغ ${blankId}`;
+
     parts.push(
-      <span key={`blank-${blankCounter}`} className="inline-block mx-1">
+      <span key={`blank-${blankCounter}`} className="inline-block mx-1 align-middle">
         {showAnswer && blankDef?.correct_answer ? (
           <span className="px-2 py-1 bg-primary/10 border-b-2 border-primary text-primary font-medium rounded">
             {blankDef.correct_answer}
@@ -482,9 +489,10 @@ function FillBlankQuestion({
         ) : (
           <AutoSizeBlankInput
             value={currentValue}
-            onChange={(v) => handleBlankChange(blankId, v)}
+            onChange={(v) => handleBlankChange(blankId, v.slice(0, MAX_BLANK_LENGTH))}
             disabled={disabled}
-            placeholder={blankDef?.placeholder || `BLANK ${blankId}`}
+            maxLength={MAX_BLANK_LENGTH}
+            placeholder={placeholderText}
           />
         )}
       </span>
@@ -497,7 +505,7 @@ function FillBlankQuestion({
     parts.push(<span key="text-end">{text.slice(lastIndex)}</span>);
   }
 
-  return <div className="leading-10">{parts}</div>;
+  return <div className="leading-10 whitespace-pre-wrap">{parts}</div>;
 }
 
 // مكون أسئلة الجدول
