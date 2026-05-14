@@ -190,6 +190,7 @@ const ComparisonUploadZone = ({ gradeLevel, onBatchComplete }: ComparisonUploadZ
     }
 
     setIsComparing(false);
+    setIsDispatching(false);
   };
 
   const handleClear = () => {
