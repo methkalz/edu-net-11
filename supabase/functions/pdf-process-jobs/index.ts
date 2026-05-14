@@ -122,7 +122,7 @@ async function processInternalComparison(
   // جلب كل result rows للدفعة
   const { data: results, error } = await supabase
     .from('pdf_comparison_results')
-    .select('id, compared_file_name, compared_file_hash, compared_extracted_text, embedding, top_keywords')
+    .select('id, compared_file_name, compared_file_hash, compared_extracted_text, compared_file_pages, embedding, top_keywords')
     .eq('batch_id', job.batch_id)
     .order('created_at', { ascending: true });
 
@@ -141,6 +141,7 @@ async function processInternalComparison(
     embedding: r.embedding || [],
     keywords: new Set<string>(r.top_keywords || []),
     wordCount: (r.compared_extracted_text || '').split(/\s+/).length,
+    pageCount: r.compared_file_pages || 1,
   }));
 
   // مقارنة O(N²/2) — j = i + 1 (بدون تكرار)
@@ -183,9 +184,10 @@ async function processInternalComparison(
       const union = f1.keywords.size + f2.keywords.size - intersection;
       const jaccardSim = union > 0 ? intersection / union : 0;
 
-      // length similarity
+      // length similarity — مطابق للنظام القديم: (wordRatio + pageRatio) / 2
       const wordRatio = Math.min(f1.wordCount, f2.wordCount) / Math.max(f1.wordCount, f2.wordCount);
-      const lengthSim = wordRatio;
+      const pageRatio = Math.min(f1.pageCount, f2.pageCount) / Math.max(f1.pageCount, f2.pageCount);
+      const lengthSim = (wordRatio + pageRatio) / 2;
 
       // بوابة coverage — فقط إذا التشابه الأولي يستحق
       let coverageRatio = 0;
@@ -193,12 +195,28 @@ async function processInternalComparison(
         coverageRatio = calculateCoverage(f1.text, f2.text, settings.thresholds.paragraph_similarity_min);
       }
 
-      // حساب النتيجة النهائية
+      // حساب النتيجة النهائية مع التعديل الديناميكي للأوزان (مطابق للنظام القديم)
       const weights = settings.algorithm_weights;
-      let finalSim = cosineSim * weights.cosine_weight +
-                     jaccardSim * weights.jaccard_weight +
-                     lengthSim * weights.length_weight +
-                     coverageRatio * weights.coverage_weight;
+      let finalSim = 0;
+      if (jaccardSim < 0.15) {
+        // تشابه منخفض جداً في الكلمات — اعتماد أقل على cosine
+        finalSim = cosineSim * (weights.cosine_weight * 0.6) +
+                   jaccardSim * (weights.jaccard_weight * 1.5) +
+                   lengthSim * (weights.length_weight * 1.0) +
+                   coverageRatio * weights.coverage_weight;
+      } else if (lengthSim < 0.5) {
+        // فرق كبير في الطول — تخفيض التشابه
+        finalSim = (cosineSim * weights.cosine_weight +
+                    jaccardSim * weights.jaccard_weight +
+                    lengthSim * weights.length_weight +
+                    coverageRatio * weights.coverage_weight) * 0.7;
+      } else {
+        // حالة عادية — استخدام الأوزان الأربعة مباشرة
+        finalSim = cosineSim * weights.cosine_weight +
+                   jaccardSim * weights.jaccard_weight +
+                   lengthSim * weights.length_weight +
+                   coverageRatio * weights.coverage_weight;
+      }
 
       // coverage boost
       if (coverageRatio >= settings.thresholds.coverage_high_threshold) {
@@ -294,7 +312,7 @@ async function processRepositoryComparison(
   // جلب result row لهذا الملف
   const { data: results } = await supabase
     .from('pdf_comparison_results')
-    .select('id, compared_file_name, compared_file_hash, compared_extracted_text, embedding, top_keywords')
+    .select('id, compared_file_name, compared_file_hash, compared_extracted_text, compared_file_pages, embedding, top_keywords')
     .eq('batch_id', job.batch_id)
     .order('created_at', { ascending: true });
 
@@ -307,19 +325,20 @@ async function processRepositoryComparison(
   const queryKeywords = result.top_keywords || [];
   const fileText = result.compared_extracted_text || '';
   const wordCount = fileText.split(/\s+/).length;
+  const pageCount = result.compared_file_pages || 1;
 
-  // بحث pgvector — أقرب 25 candidate
+  // بحث pgvector — أقرب 100 candidate (مطابق للنظام القديم)
   const { data: matches, error: rpcError } = await supabase.rpc(
     'match_documents_hybrid',
     {
       query_embedding: queryEmbedding,
       query_keywords: queryKeywords,
       match_threshold: settings.thresholds.repository_display * 0.7,
-      match_count: 25,
+      match_count: 100,
       p_grade_level: job.grade_level,
       p_project_type: job.comparison_type,
       jaccard_threshold: settings.thresholds.repository_display * 0.6,
-      p_page_count: 1,
+      p_page_count: pageCount,
       p_word_count: wordCount,
     }
   );

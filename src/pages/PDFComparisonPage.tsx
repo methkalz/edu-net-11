@@ -7,6 +7,7 @@ import { FileSearch, History, Database, Settings } from 'lucide-react';
 import ComparisonUploadZone from '@/components/pdf-comparison/ComparisonUploadZone';
 import ComparisonHistory from '@/components/pdf-comparison/ComparisonHistory';
 import RepositoryManager from '@/components/pdf-comparison/RepositoryManager';
+import BatchProgressTracker from '@/components/pdf-comparison/BatchProgressTracker';
 import { useAuth } from '@/hooks/useAuth';
 import ModernHeader from '@/components/shared/ModernHeader';
 import type { GradeLevel } from '@/hooks/usePDFComparison';
@@ -16,6 +17,7 @@ const PDFComparisonPage = () => {
   const { userProfile } = useAuth();
   const [activeTab, setActiveTab] = useState('compare');
   const [gradeLevel, setGradeLevel] = useState<GradeLevel>('12');
+  const [lastBatchId, setLastBatchId] = useState<string | null>(null);
 
   useEffect(() => {
     // التحقق من صلاحية الوصول
@@ -122,8 +124,16 @@ const PDFComparisonPage = () => {
                   اختر ملف PDF واحد أو أكثر للمقارنة مع المستودع (حجم أقصى: 50MB لكل ملف)
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <ComparisonUploadZone gradeLevel={gradeLevel} />
+              <CardContent className="space-y-4">
+                <BatchProgressTracker
+                  gradeLevel={gradeLevel}
+                  newBatchId={lastBatchId}
+                  onViewResults={() => setActiveTab('history')}
+                />
+                <ComparisonUploadZone
+                  gradeLevel={gradeLevel}
+                  onBatchComplete={(batchId) => setLastBatchId(batchId)}
+                />
               </CardContent>
             </Card>
           </TabsContent>

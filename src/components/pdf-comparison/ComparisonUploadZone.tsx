@@ -135,13 +135,12 @@ const ComparisonUploadZone = ({ gradeLevel, onBatchComplete }: ComparisonUploadZ
 
         if (result.success && result.batchId) {
           // نظام الطابور: النتائج ستأتي تدريجياً عبر Realtime
+          // الرسالة الدائمة تظهر في BatchProgressTracker — لا toast منبثق
           setFiles(prev => prev.map(f => ({
             ...f,
             status: 'completed' as const,
             progress: 100,
           })));
-
-          toast.success(`تم تسجيل ${files.length} ملف للمقارنة. النتائج ستظهر تدريجياً.`);
 
           if (onBatchComplete) {
             onBatchComplete(result.batchId);
