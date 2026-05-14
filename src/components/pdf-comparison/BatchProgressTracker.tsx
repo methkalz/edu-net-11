@@ -2,7 +2,17 @@ import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Loader2, CheckCircle, Clock, ArrowLeft } from 'lucide-react';
+import { Loader2, CheckCircle, Clock, ArrowLeft, X } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import {
   usePDFComparison,
@@ -11,6 +21,7 @@ import {
   type BatchFileStatus,
 } from '@/hooks/usePDFComparison';
 import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 
 interface BatchProgressTrackerProps {
   gradeLevel: GradeLevel;
@@ -64,21 +75,35 @@ const BatchProgressTracker = ({
   newBatchId,
   onViewResults,
 }: BatchProgressTrackerProps) => {
-  const { getActiveBatches } = usePDFComparison();
+  const { getActiveBatches, cancelBatch } = usePDFComparison();
   const { userProfile } = useAuth();
   const [batches, setBatches] = useState<ActiveBatch[]>([]);
+  const [batchToCancel, setBatchToCancel] = useState<string | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   const refresh = useCallback(async () => {
     const active = await getActiveBatches(gradeLevel);
     setBatches(active);
   }, [gradeLevel, userProfile?.user_id]);
 
+  const handleConfirmCancel = async () => {
+    if (!batchToCancel) return;
+    setIsCancelling(true);
+    const success = await cancelBatch(batchToCancel);
+    if (success) {
+      setBatches((prev) => prev.filter((b) => b.batchId !== batchToCancel));
+      toast.success('تم إلغاء عملية المقارنة');
+    }
+    setIsCancelling(false);
+    setBatchToCancel(null);
+  };
+
   // جلب الدفعات قيد المعالجة عند التحميل أو تغيّر الصف أو وصول دفعة جديدة
   useEffect(() => {
     refresh();
   }, [refresh, newBatchId]);
 
-  // Realtime — تحديث حالة الملفات لحظياً
+  // Realtime - تحديث حالة الملفات لحظياً
   useEffect(() => {
     if (!userProfile?.user_id) return;
 
@@ -99,7 +124,7 @@ const BatchProgressTracker = ({
           setBatches((prev) => {
             const idx = prev.findIndex((b) => b.batchId === updated.batch_id);
             if (idx === -1) {
-              // دفعة جديدة لم تكن في القائمة — أعد الجلب
+              // دفعة جديدة لم تكن في القائمة - أعد الجلب
               refresh();
               return prev;
             }
@@ -155,17 +180,30 @@ const BatchProgressTracker = ({
                     </p>
                   </div>
                 </div>
-                {view.isComplete && onViewResults && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={onViewResults}
-                    className="gap-1.5 shrink-0"
-                  >
-                    عرض النتائج
-                    <ArrowLeft className="h-3.5 w-3.5" />
-                  </Button>
-                )}
+                <div className="flex items-center gap-2 shrink-0">
+                  {view.isComplete && onViewResults && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={onViewResults}
+                      className="gap-1.5"
+                    >
+                      عرض النتائج
+                      <ArrowLeft className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
+                  {!view.isComplete && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setBatchToCancel(view.batchId)}
+                      className="gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                      إلغاء
+                    </Button>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-1.5">
@@ -180,13 +218,41 @@ const BatchProgressTracker = ({
 
               {!view.isComplete && (
                 <p className="text-[11px] text-muted-foreground/70">
-                  يمكنك مغادرة الصفحة — ستستمر المعالجة في الخلفية وتظهر النتائج تلقائياً.
+                  يمكنك مغادرة الصفحة - ستستمر المعالجة في الخلفية وتظهر النتائج تلقائياً.
                 </p>
               )}
             </CardContent>
           </Card>
         );
       })}
+
+      <AlertDialog
+        open={batchToCancel !== null}
+        onOpenChange={(open) => !open && setBatchToCancel(null)}
+      >
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>هل أنت متأكد من إلغاء العملية؟</AlertDialogTitle>
+            <AlertDialogDescription>
+              سيتم إيقاف معالجة هذه الدفعة وحذف جميع بياناتها نهائياً. لا يمكن
+              التراجع عن هذا الإجراء.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isCancelling}>تراجع</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleConfirmCancel();
+              }}
+              disabled={isCancelling}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isCancelling ? 'جاري الإلغاء...' : 'نعم، إلغاء العملية'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

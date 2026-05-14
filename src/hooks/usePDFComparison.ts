@@ -710,6 +710,34 @@ export const usePDFComparison = () => {
     }
   };
 
+  // إلغاء دفعة قيد المعالجة — حذف مهامها ونتائجها
+  const cancelBatch = async (batchId: string): Promise<boolean> => {
+    try {
+      if (!userProfile?.user_id) return false;
+
+      // حذف مهام الدفعة من الطابور (يوقف المعالجة الخلفية)
+      await supabase
+        .from('pdf_comparison_jobs')
+        .delete()
+        .eq('batch_id', batchId)
+        .eq('requested_by', userProfile.user_id);
+
+      // حذف نتائج الدفعة
+      const { error } = await supabase
+        .from('pdf_comparison_results')
+        .delete()
+        .eq('batch_id', batchId)
+        .eq('requested_by', userProfile.user_id);
+
+      if (error) throw error;
+      return true;
+    } catch (error: any) {
+      console.error('Cancel batch error:', error);
+      toast.error('فشل إلغاء العملية');
+      return false;
+    }
+  };
+
   return {
     isLoading,
     uploadProgress,
@@ -718,6 +746,7 @@ export const usePDFComparison = () => {
     compareBatchFiles,
     watchBatchResults,
     getActiveBatches,
+    cancelBatch,
     getComparisonHistory,
     getRepositoryFiles,
     addToRepository,
