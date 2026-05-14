@@ -215,7 +215,11 @@ const BatchProgressTracker = ({
                 <Progress value={view.progressPercent} className="h-2" />
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <span>
-                    {view.completed} من {view.total} ملف اكتمل
+                    {view.isComplete
+                      ? `${view.completed} من ${view.total} ملف اكتمل`
+                      : view.internalDone > 0
+                        ? `${view.internalDone} من ${view.total} انتهى من المقارنة الداخلية · ${view.completed} اكتمل نهائياً`
+                        : `بدء المعالجة... 0 من ${view.total}`}
                   </span>
                   <span>{view.progressPercent}%</span>
                 </div>
