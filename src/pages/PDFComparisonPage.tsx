@@ -18,6 +18,7 @@ const PDFComparisonPage = () => {
   const [activeTab, setActiveTab] = useState('compare');
   const [gradeLevel, setGradeLevel] = useState<GradeLevel>('12');
   const [lastBatchId, setLastBatchId] = useState<string | null>(null);
+  const [viewingBatchId, setViewingBatchId] = useState<string | null>(null);
 
   useEffect(() => {
     // التحقق من صلاحية الوصول
