@@ -190,7 +190,7 @@ const BatchProgressTracker = ({
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={onViewResults}
+                      onClick={() => onViewResults(view.batchId)}
                       className="gap-1.5"
                     >
                       عرض النتائج
