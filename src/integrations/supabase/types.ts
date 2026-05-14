@@ -4954,6 +4954,63 @@ export type Database = {
           },
         ]
       }
+      pdf_comparison_jobs: {
+        Row: {
+          attempts: number | null
+          batch_id: string
+          comparison_type: string
+          completed_at: string | null
+          created_at: string | null
+          error_message: string | null
+          file_index: number | null
+          grade_level: string
+          id: string
+          job_type: string
+          max_attempts: number | null
+          requested_by: string
+          school_id: string | null
+          started_at: string | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          attempts?: number | null
+          batch_id: string
+          comparison_type: string
+          completed_at?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          file_index?: number | null
+          grade_level: string
+          id?: string
+          job_type: string
+          max_attempts?: number | null
+          requested_by: string
+          school_id?: string | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          attempts?: number | null
+          batch_id?: string
+          comparison_type?: string
+          completed_at?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          file_index?: number | null
+          grade_level?: string
+          id?: string
+          job_type?: string
+          max_attempts?: number | null
+          requested_by?: string
+          school_id?: string | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       pdf_comparison_performance_log: {
         Row: {
           created_at: string | null
@@ -5118,6 +5175,7 @@ export type Database = {
           algorithm_used: string | null
           avg_similarity_score: number | null
           batch_id: string | null
+          batch_status: string | null
           compared_extracted_text: string | null
           compared_file_hash: string | null
           compared_file_name: string
@@ -5125,6 +5183,7 @@ export type Database = {
           comparison_source: string | null
           comparison_type: string
           created_at: string | null
+          embedding: number[] | null
           grade_level: string
           high_risk_matches: number | null
           id: string
@@ -5150,6 +5209,7 @@ export type Database = {
           segments_processed_at: string | null
           segments_processing_status: string | null
           status: string | null
+          top_keywords: string[] | null
           top_matched_segments: Json | null
           total_files_compared: number | null
           total_matches_found: number | null
@@ -5160,6 +5220,7 @@ export type Database = {
           algorithm_used?: string | null
           avg_similarity_score?: number | null
           batch_id?: string | null
+          batch_status?: string | null
           compared_extracted_text?: string | null
           compared_file_hash?: string | null
           compared_file_name: string
@@ -5167,6 +5228,7 @@ export type Database = {
           comparison_source?: string | null
           comparison_type: string
           created_at?: string | null
+          embedding?: number[] | null
           grade_level: string
           high_risk_matches?: number | null
           id?: string
@@ -5192,6 +5254,7 @@ export type Database = {
           segments_processed_at?: string | null
           segments_processing_status?: string | null
           status?: string | null
+          top_keywords?: string[] | null
           top_matched_segments?: Json | null
           total_files_compared?: number | null
           total_matches_found?: number | null
@@ -5202,6 +5265,7 @@ export type Database = {
           algorithm_used?: string | null
           avg_similarity_score?: number | null
           batch_id?: string | null
+          batch_status?: string | null
           compared_extracted_text?: string | null
           compared_file_hash?: string | null
           compared_file_name?: string
@@ -5209,6 +5273,7 @@ export type Database = {
           comparison_source?: string | null
           comparison_type?: string
           created_at?: string | null
+          embedding?: number[] | null
           grade_level?: string
           high_risk_matches?: number | null
           id?: string
@@ -5234,6 +5299,7 @@ export type Database = {
           segments_processed_at?: string | null
           segments_processing_status?: string | null
           status?: string | null
+          top_keywords?: string[] | null
           top_matched_segments?: Json | null
           total_files_compared?: number | null
           total_matches_found?: number | null
@@ -7173,6 +7239,33 @@ export type Database = {
           window_minutes?: number
         }
         Returns: boolean
+      }
+      claim_pdf_jobs: {
+        Args: { max_jobs: number }
+        Returns: {
+          attempts: number | null
+          batch_id: string
+          comparison_type: string
+          completed_at: string | null
+          created_at: string | null
+          error_message: string | null
+          file_index: number | null
+          grade_level: string
+          id: string
+          job_type: string
+          max_attempts: number | null
+          requested_by: string
+          school_id: string | null
+          started_at: string | null
+          status: string
+          updated_at: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "pdf_comparison_jobs"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       cleanup_expired_pins: { Args: never; Returns: undefined }
       cleanup_expired_quiz_sessions: { Args: never; Returns: undefined }
