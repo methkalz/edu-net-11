@@ -103,16 +103,26 @@ const ComparisonHistory = ({
             </div>
             <div>
               <CardTitle className="text-xl font-semibold text-foreground">
-                سجل المقارنات
+                {batchId ? 'نتائج هذه المقارنة' : 'سجل المقارنات'}
               </CardTitle>
               <CardDescription className="text-sm mt-1">
-                {gradeLevel && `الصف ${gradeLevel === '12' ? '12' : '10'}`}
+                {batchId
+                  ? `جلسة مقارنة محددة${history.length > 0 ? ` · ${history.length} ملف` : ''}`
+                  : (gradeLevel && `الصف ${gradeLevel === '12' ? '12' : '10'}`)}
               </CardDescription>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={loadHistory} disabled={isLoading} className="hover:shadow-sm transition-all duration-200">
-            <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
-          </Button>
+          <div className="flex items-center gap-2">
+            {batchId && onBackToAll && (
+              <Button variant="outline" size="sm" onClick={onBackToAll} className="gap-1.5">
+                <ArrowLeft className="h-4 w-4" />
+                عرض كامل السجل
+              </Button>
+            )}
+            <Button variant="outline" size="sm" onClick={loadHistory} disabled={isLoading} className="hover:shadow-sm transition-all duration-200">
+              <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="p-6">
