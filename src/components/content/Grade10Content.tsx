@@ -5,7 +5,7 @@ import Grade10VideoLibrary from './Grade10VideoLibrary';
 import Grade10MiniProjects from './Grade10MiniProjects';
 import Grade10ThreeDModelManager from './Grade10ThreeDModelManager';
 import Grade10LessonsAdmin from './Grade10LessonsAdmin';
-import KnowledgeAdventureRealContent from '../games/KnowledgeAdventureRealContent';
+import KnowledgeAdventureGrade10Content from '../games/KnowledgeAdventureGrade10Content';
 import { useGrade10Files } from '@/hooks/useGrade10Files';
 
 const Grade10Content: React.FC = () => {
