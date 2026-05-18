@@ -2294,6 +2294,240 @@ export type Database = {
         }
         Relationships: []
       }
+      grade10_ka_achievements: {
+        Row: {
+          achievement_data: Json
+          achievement_type: string
+          created_at: string
+          id: string
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          achievement_data?: Json
+          achievement_type: string
+          created_at?: string
+          id?: string
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          achievement_data?: Json
+          achievement_type?: string
+          created_at?: string
+          id?: string
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      grade10_ka_lessons: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          order_index: number
+          title: string
+          topic_id: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          order_index?: number
+          title: string
+          topic_id: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          order_index?: number
+          title?: string
+          topic_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grade10_ka_lessons_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "grade10_ka_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      grade10_ka_progress: {
+        Row: {
+          attempts: number
+          completed_at: string | null
+          created_at: string
+          id: string
+          lesson_id: string
+          max_score: number
+          points_earned: number
+          score: number
+          unlocked: boolean
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          lesson_id: string
+          max_score?: number
+          points_earned?: number
+          score?: number
+          unlocked?: boolean
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          lesson_id?: string
+          max_score?: number
+          points_earned?: number
+          score?: number
+          unlocked?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
+      grade10_ka_questions: {
+        Row: {
+          choices: Json
+          correct_answer: string
+          created_at: string
+          created_by: string | null
+          difficulty_level: string
+          explanation: string | null
+          id: string
+          lesson_id: string
+          points: number
+          question_text: string
+          question_type: string
+          section_id: string | null
+          topic_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          choices?: Json
+          correct_answer: string
+          created_at?: string
+          created_by?: string | null
+          difficulty_level?: string
+          explanation?: string | null
+          id?: string
+          lesson_id: string
+          points?: number
+          question_text: string
+          question_type?: string
+          section_id?: string | null
+          topic_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          choices?: Json
+          correct_answer?: string
+          created_at?: string
+          created_by?: string | null
+          difficulty_level?: string
+          explanation?: string | null
+          id?: string
+          lesson_id?: string
+          points?: number
+          question_text?: string
+          question_type?: string
+          section_id?: string | null
+          topic_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grade10_ka_questions_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "grade10_ka_lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      grade10_ka_sections: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          order_index: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          order_index?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          order_index?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      grade10_ka_topics: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: string
+          order_index: number
+          section_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          order_index?: number
+          section_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          order_index?: number
+          section_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grade10_ka_topics_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "grade10_ka_sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       grade10_lesson_media: {
         Row: {
           created_at: string
