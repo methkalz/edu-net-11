@@ -50,7 +50,7 @@ const Grade10Content: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="knowledge-adventure" className="mt-6">
-          <KnowledgeAdventureRealContent />
+          <KnowledgeAdventureGrade10Content />
         </TabsContent>
 
         <TabsContent value="projects" className="mt-6">
