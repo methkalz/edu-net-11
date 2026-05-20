@@ -438,7 +438,7 @@ export const useGrade10Game = () => {
     fetchLessonsWithQuestions();
     fetchProgress();
     fetchAchievements();
-  }, []);
+  }, [user?.id]);
 
   return {
     lessons,
