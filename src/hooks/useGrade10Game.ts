@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { logger } from '@/lib/logger';
+import { useAuth } from '@/hooks/useAuth';
 
 export interface GameQuestion {
   id: string;
@@ -54,6 +55,7 @@ export interface Achievement {
 const DIFFICULTY_ORDER: Record<string, number> = { easy: 0, medium: 1, hard: 2 };
 
 export const useGrade10Game = () => {
+  const { user } = useAuth();
   const [lessons, setLessons] = useState<GameLesson[]>([]);
   const [progress, setProgress] = useState<Record<string, PlayerProgress>>({});
   const [achievements, setAchievements] = useState<Achievement[]>([]);
@@ -181,9 +183,15 @@ export const useGrade10Game = () => {
 
   const fetchProgress = async () => {
     try {
+      if (!user?.id) {
+        setProgress({});
+        return;
+      }
+
       const { data, error } = await (supabase as any)
         .from('grade10_ka_progress')
-        .select('*');
+        .select('*')
+        .eq('user_id', user.id);
       if (error) throw error;
 
       const progressMap: Record<string, PlayerProgress> = {};
@@ -205,9 +213,15 @@ export const useGrade10Game = () => {
 
   const fetchAchievements = async () => {
     try {
+      if (!user?.id) {
+        setAchievements([]);
+        return;
+      }
+
       const { data, error } = await (supabase as any)
         .from('grade10_ka_achievements')
         .select('*')
+        .eq('user_id', user.id)
         .order('unlocked_at', { ascending: false });
       if (error) throw error;
       setAchievements(data || []);
