@@ -10,6 +10,7 @@ import { StudentGrade10Lessons } from './StudentGrade10Lessons';
 import { ComputerStructureLessons } from './ComputerStructureLessons';
 import StudentGrade12Content from './StudentGrade12Content';
 import KnowledgeAdventureRealContent from '../games/KnowledgeAdventureRealContent';
+import KnowledgeAdventureGrade10Content from '../games/KnowledgeAdventureGrade10Content';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { LottieLoader } from '@/components/ui/LottieLoader';
@@ -873,7 +874,8 @@ export const StudentGradeContent: React.FC<{ defaultTab?: string }> = ({ default
           <TabsContent key={tab.id} value={tab.id} className="mt-8">
             {/* Special handling for Grade 10 sections */}
             {tab.id === 'knowledge_adventure' && assignedGrade === '10' ? (
-              <KnowledgeAdventureRealContent />
+              <KnowledgeAdventureGrade10Content />
+
             ) : tab.id === 'communication_basics' && assignedGrade === '10' ? (
               <StudentGrade10Lessons />
             ) : tab.id === 'computer_structure' && assignedGrade === '10' ? (
