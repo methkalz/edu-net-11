@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import KnowledgeAdventureRealContent from '@/components/games/KnowledgeAdventureRealContent';
+import KnowledgeAdventureGrade10Content from '@/components/games/KnowledgeAdventureGrade10Content';
+import { useStudentAssignedGrade } from '@/hooks/useStudentAssignedGrade';
 import { Card, CardContent } from '@/components/ui/card';
 
 /**
