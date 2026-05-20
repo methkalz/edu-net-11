@@ -110,6 +110,27 @@ export const usePlayerProfile = () => {
       setLoading(true);
       setError(null);
 
+      const { data: { user: authenticatedUser } } = await supabase.auth.getUser();
+      if (authenticatedUser?.id && authenticatedUser.id !== user.id) {
+        setPlayerProfile({
+          id: `impersonated-${user.id}`,
+          user_id: user.id,
+          game_id: NETWORKS_GAME_ID,
+          player_name: userProfile.full_name || userProfile.email || 'لاعب جديد',
+          level: 1,
+          coins: 100,
+          streak_days: 0,
+          avatar_id: 'student1',
+          total_xp: 0,
+          last_played: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+        setCompletedLessonsCount(0);
+        setUnlockedAchievements([]);
+        return;
+      }
+
       // البحث عن الملف الشخصي الموجود
       let { data: existingProfile, error: fetchError } = await supabase
         .from('grade11_player_profiles')

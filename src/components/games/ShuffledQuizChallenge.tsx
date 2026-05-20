@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 interface ShuffledQuizChallengeProps {
   lessonId: string;
   lessons?: Array<{id: string; title: string; order_index: number}>;
+  gameSource?: 'grade10' | 'grade11';
   onComplete: (results: {
     finalScore: number;
     maxScore: number;
@@ -23,7 +24,7 @@ interface ShuffledQuizChallengeProps {
   onNextLesson?: (nextLessonId: string) => void;
 }
 
-export function ShuffledQuizChallenge({ lessonId, lessons, onComplete, onBack, onNextLesson }: ShuffledQuizChallengeProps) {
+export function ShuffledQuizChallenge({ lessonId, lessons, gameSource = 'grade11', onComplete, onBack, onNextLesson }: ShuffledQuizChallengeProps) {
   const [selectedAnswer, setSelectedAnswer] = useState<string>('');
   const [showFeedback, setShowFeedback] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
@@ -50,7 +51,7 @@ export function ShuffledQuizChallenge({ lessonId, lessons, onComplete, onBack, o
     progress,
     timeRemaining,
     isCompleted
-  } = useShuffledQuizSession();
+  } = useShuffledQuizSession(gameSource);
 
   // Helper functions for lesson navigation
   const getCurrentLesson = () => lessons?.find(l => l.id === lessonId);
