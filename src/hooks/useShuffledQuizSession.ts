@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/useAuth';
 import { logger } from '@/lib/logger';
+
+type GameSource = 'grade10' | 'grade11';
 
 // أنواع البيانات
 interface GameQuestion {
@@ -50,13 +51,12 @@ interface QuizConfig {
   timeLimit?: number;
 }
 
-export function useShuffledQuizSession() {
+export function useShuffledQuizSession(gameSource: GameSource = 'grade11') {
   const [session, setSession] = useState<QuizSession | null>(null);
   const [questions, setQuestions] = useState<GameQuestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState<ShuffledQuestion | null>(null);
   const { toast } = useToast();
-  const { user } = useAuth();
 
   // إعداد افتراضي للاختبار
   const defaultConfig: QuizConfig = {
@@ -138,7 +138,7 @@ export function useShuffledQuizSession() {
     
     // العثور على الإجابة الصحيحة الجديدة
     const correctChoiceIndex = shuffledChoices.findIndex(
-      choice => choice.text === question.correct_answer
+      choice => choice.originalId === question.correct_answer || choice.text === question.correct_answer
     );
     const newCorrectAnswer = String.fromCharCode(65 + correctChoiceIndex);
     
@@ -150,8 +150,9 @@ export function useShuffledQuizSession() {
 
   // جلب الأسئلة من قاعدة البيانات
   const fetchQuestions = useCallback(async (lessonId: string): Promise<GameQuestion[]> => {
-    const { data, error } = await supabase
-      .from('grade11_game_questions')
+    const questionTable = gameSource === 'grade10' ? 'grade10_ka_questions' : 'grade11_game_questions';
+    const { data, error } = await (supabase as any)
+      .from(questionTable)
       .select('*')
       .eq('lesson_id', lessonId);
 
@@ -160,7 +161,7 @@ export function useShuffledQuizSession() {
       throw error;
     }
 
-    return data.map(q => ({
+    return (data || []).map((q: any) => ({
       id: q.id,
       question_text: q.question_text,
       choices: typeof q.choices === 'string' ? JSON.parse(q.choices) : q.choices,
@@ -169,14 +170,16 @@ export function useShuffledQuizSession() {
       difficulty_level: q.difficulty_level as 'easy' | 'medium' | 'hard',
       points: q.points || 10
     }));
-  }, []);
+  }, [gameSource]);
 
   // إنشاء جلسة جديدة
   const createSession = useCallback(async (
     lessonId: string,
     config: QuizConfig = defaultConfig
   ): Promise<void> => {
-    if (!user) {
+    const { data: { user: authenticatedUser } } = await supabase.auth.getUser();
+
+    if (!authenticatedUser) {
       toast({
         title: "خطأ",
         description: "يجب تسجيل الدخول أولاً",
@@ -216,7 +219,7 @@ export function useShuffledQuizSession() {
       const { data: sessionData, error: sessionError } = await supabase
         .from('grade11_quiz_sessions')
         .insert([{
-          user_id: user.id,
+          user_id: authenticatedUser.id,
           lesson_id: lessonId,
           quiz_config: config as any,
           shuffled_questions: shuffledQuestions as any,
@@ -261,7 +264,7 @@ export function useShuffledQuizSession() {
     } finally {
       setLoading(false);
     }
-  }, [user, fetchQuestions, selectQuestionsByDifficulty, shuffleChoicesAndTrackCorrect, toast, defaultConfig]);
+  }, [fetchQuestions, selectQuestionsByDifficulty, shuffleChoicesAndTrackCorrect, toast, defaultConfig]);
 
   // الانتقال للسؤال التالي
   const nextQuestion = useCallback(async () => {
