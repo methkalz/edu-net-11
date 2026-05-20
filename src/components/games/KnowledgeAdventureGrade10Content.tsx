@@ -196,6 +196,7 @@ const KnowledgeAdventureGrade10Content: React.FC = () => {
                 <ShuffledQuizChallenge
                   lessonId={selectedLesson}
                   lessons={lessons as any}
+                  gameSource="grade10"
                   onComplete={handleShuffledQuizComplete}
                   onBack={() => setSelectedLesson(null)}
                   onNextLesson={(nextLessonId) => setSelectedLesson(nextLessonId)}
