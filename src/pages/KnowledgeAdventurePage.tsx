@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import KnowledgeAdventureRealContent from '@/components/games/KnowledgeAdventureRealContent';
+import KnowledgeAdventureGrade10Content from '@/components/games/KnowledgeAdventureGrade10Content';
+import { useStudentAssignedGrade } from '@/hooks/useStudentAssignedGrade';
 import { Card, CardContent } from '@/components/ui/card';
 
 /**
@@ -13,6 +15,7 @@ import { Card, CardContent } from '@/components/ui/card';
  */
 const KnowledgeAdventurePage: React.FC = () => {
   const navigate = useNavigate();
+  const { assignedGrade } = useStudentAssignedGrade();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50" dir="rtl">
@@ -51,7 +54,7 @@ const KnowledgeAdventurePage: React.FC = () => {
         <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl">
           <CardContent className="p-2">
             <div className="min-h-[calc(100vh-200px)]">
-              <KnowledgeAdventureRealContent />
+              {assignedGrade === '10' ? <KnowledgeAdventureGrade10Content /> : <KnowledgeAdventureRealContent />}
             </div>
           </CardContent>
         </Card>
