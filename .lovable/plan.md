@@ -1,102 +1,48 @@
-# خطة تنفيذ لعبة المعرفة للصف العاشر
+## السبب
 
-## الهدف
-فصل لعبة المعرفة للصف العاشر عن الحادي عشر بنسخة مستقلة كاملة، مع:
-- استبعاد بطاقات "حذف" والبطاقات الوهمية (placeholders)
-- إصلاح العناوين المكررة/الناقصة مثل "مقدمة" و"مقدمه افتار"
-- ترتيب صحيح: قسم ← موضوع ← درس
-- فتح البطاقات واحدة تلو الأخرى حسب التسلسل (نفس سيستم الحادي عشر)
+عند فحص قاعدة البيانات تبيّن أن جداول `grade10_ka_lessons` / `grade10_ka_topics` / `grade10_ka_sections` / `grade10_ka_questions` تم إنشاؤها **بدون مفاتيح خارجية (Foreign Keys)**.
 
-## الأرقام المتوقعة
-- الحادي عشر: 28 بطاقة (بدون تغيير)
-- العاشر بعد التنفيذ: 17 بطاقة نظيفة ومرتبة
+الـ Hook `useGrade10Game` يستخدم استعلام PostgREST بصيغة embedded join:
+```ts
+.select(`..., grade10_ka_topics!inner ( ..., grade10_ka_sections!inner (...) )`)
+```
+هذه الصيغة تتطلّب وجود علاقات FK مُعرَّفة في القاعدة. لعدم وجودها، يُرجع PostgREST خطأ، فيُعرض للطالبة "حدث خطأ في تحميل الدروس".
 
----
+البيانات نفسها موجودة (426 درس، 280 سؤال، 88 موضوع، 17 قسم) و RLS صحيحة (قراءة مفتوحة للموثَّقين).
 
-## المرحلة 1 — Migration: تجهيز جداول الصف العاشر
+## الإصلاح
 
-استخدام `supabase--migration` لـ:
+### 1) Migration: إضافة Foreign Keys
 
-1. مطابقة `grade10_sections` / `grade10_topics` / `grade10_lessons` مع نظيراتها بالحادي عشر (إضافة أعمدة ناقصة مثل `media`, `media_metadata`, `order_index` إذا لزم).
-2. مطابقة `grade10_game_questions` مع `grade11_game_questions` (نفس الأعمدة: `lesson_id`, `question_text`, `choices`, `correct_answer`, `difficulty_level`, `points`, `explanation`).
-3. إنشاء `grade10_content_games` (لربط الألعاب لاحقاً إن لزم).
-4. سياسات RLS: قراءة عامة للطلاب، تعديل لـ Superadmin/School Admin/Teacher حسب النمط المتبع في الحادي عشر.
+```sql
+ALTER TABLE public.grade10_ka_topics
+  ADD CONSTRAINT grade10_ka_topics_section_id_fkey
+  FOREIGN KEY (section_id) REFERENCES public.grade10_ka_sections(id) ON DELETE CASCADE;
 
-> ملاحظة: لا أي تغيير على جداول الحادي عشر.
+ALTER TABLE public.grade10_ka_lessons
+  ADD CONSTRAINT grade10_ka_lessons_topic_id_fkey
+  FOREIGN KEY (topic_id) REFERENCES public.grade10_ka_topics(id) ON DELETE CASCADE;
 
----
+ALTER TABLE public.grade10_ka_questions
+  ADD CONSTRAINT grade10_ka_questions_lesson_id_fkey
+  FOREIGN KEY (lesson_id) REFERENCES public.grade10_ka_lessons(id) ON DELETE CASCADE;
 
-## المرحلة 2 — نسخ المحتوى (SQL Data Migration)
+ALTER TABLE public.grade10_ka_questions
+  ADD CONSTRAINT grade10_ka_questions_topic_id_fkey
+  FOREIGN KEY (topic_id) REFERENCES public.grade10_ka_topics(id) ON DELETE CASCADE;
 
-ضمن نفس الـ migration أو insert tool، نسخ مرتب باستخدام جدول mapping (old_id → new_id):
+ALTER TABLE public.grade10_ka_questions
+  ADD CONSTRAINT grade10_ka_questions_section_id_fkey
+  FOREIGN KEY (section_id) REFERENCES public.grade10_ka_sections(id) ON DELETE CASCADE;
+```
 
-1. **Sections**: نسخ كل `grade11_sections` → `grade10_sections` بحفظ `order_index`.
-2. **Topics**: نسخ كل `grade11_topics` → `grade10_topics` مع ربط `section_id` الجديد، حفظ `order_index`.
-3. **Lessons**: نسخ من `grade11_lessons` → `grade10_lessons` مع:
-   - استبعاد: `WHERE TRIM(title) NOT ILIKE 'حذف%'`
-   - استبعاد UUIDs الوهمية (`aaaaaaaa-...`, `bbbbbbbb-...`, إلخ)
-   - إصلاح العنوان: إذا كان `title IN ('مقدمة','مقدمه','مقدمه افتار','مقدمة افاتار')` → `'مقدمة — ' || topic.title`
-   - الحفاظ على `order_index` الأصلي
-4. **Questions**: نسخ `grade11_game_questions` → `grade10_game_questions` فقط للدروس التي تم نسخها، مع ترتيب `difficulty_level` (easy → medium → hard).
+### 2) تنظيف أيتام محتملين قبل إضافة الـ FK (إن وُجدت) — استعلام تحقّق أولاً.
 
-البطاقات في الحادي عشر تبقى كما هي تماماً (بطاقات "حذف" لا تُحذف منها).
+### 3) إعادة تحميل أنواع Supabase تلقائياً بعد الـ migration.
 
----
+لا حاجة لتغيير كود الواجهة — الـ hook صحيح وسيعمل فور إضافة العلاقات.
 
-## المرحلة 3 — كود: hook ومكونات مخصصة للعاشر
+## التحقّق بعد التطبيق
 
-نسخ الملفات (بدون لمس نسخ الحادي عشر):
-
-| الأصل (Grade 11) | النسخة الجديدة (Grade 10) |
-|---|---|
-| `src/hooks/useGrade11Game.ts` | `src/hooks/useGrade10Game.ts` |
-| `src/components/games/KnowledgeAdventureRealContent.tsx` | `src/components/games/KnowledgeAdventureGrade10Content.tsx` |
-| `src/components/games/GameMapReal.tsx` | `src/components/games/GameMapGrade10.tsx` |
-
-تعديلات داخل النسخة الجديدة:
-- استبدال أسماء الجداول: `grade11_*` → `grade10_*`
-- `KnowledgeAdventureGrade10Content` يستخدم `useGrade10Game` و `GameMapGrade10`
-- `Grade10Content.tsx`: استبدال `KnowledgeAdventureRealContent` بـ `KnowledgeAdventureGrade10Content`
-
-> `usePlayerProfile`, `useStudentGameStats`, `useAchievements`, `ShuffledQuizChallenge` تبقى مشتركة (لا تحتاج فصل).
-
----
-
-## المرحلة 4 — الترتيب الصحيح والفتح التسلسلي
-
-داخل `useGrade10Game.ts`:
-
-1. **ترتيب الدروس** عند الـ flatten:
-   ```ts
-   ORDER BY section.order_index, topic.order_index, lesson.order_index
-   ```
-2. **`isLessonUnlocked(index)`**:
-   - الدرس الأول (index = 0) مفتوح دائماً
-   - أي درس آخر مفتوح فقط إذا الدرس السابق في القائمة المرتبة `completed_at IS NOT NULL` ونسبته ≥ 70%
-   - هذا يضمن فتح بطاقة تلو الأخرى عبر حدود المواضيع والأقسام بشكل طبيعي
-3. **ترتيب الأسئلة داخل الدرس**: `easy → medium → hard` ثم `order_index`.
-4. **عرض الفلتر**: إبقاء فلتر `lessonQuestions.length > 0` (لا تظهر دروس بلا أسئلة).
-
----
-
-## المرحلة 5 — التحقق
-
-1. فتح تبويب الصف العاشر → "لعبة المعرفة" والتأكد:
-   - 17 بطاقة نظيفة بدون "حذف" ولا "مقدمه افتار"
-   - الترتيب: قسم 1 → مواضيعه → دروسه، ثم قسم 2 …
-   - فقط البطاقة الأولى مفتوحة، الباقي مقفل
-   - بعد إكمال درس بنسبة ≥ 70% يفتح التالي
-2. فتح تبويب الصف الحادي عشر والتأكد أن 28 بطاقة بلا تغيير.
-3. تحقق DB عبر `supabase--read_query` على `grade10_lessons` / `grade10_game_questions`.
-
----
-
-## التفاصيل التقنية
-
-- لا تغييرات على Edge Functions.
-- جميع التعديلات في `public` schema.
-- استخدام `gen_random_uuid()` للـ IDs الجديدة مع mapping table مؤقت داخل CTE في الـ migration.
-- `grade10_player_profiles` و `grade10_game_achievements` موجودة مسبقاً وستُستخدم.
-- بعد الموافقة: المرحلة 1+2 عبر `supabase--migration` (خطوة واحدة)، ثم المرحلتان 3+4 عبر كود، ثم تحقق المرحلة 5.
-
-هل أبدأ التنفيذ؟
+- الدخول بحساب الطالبة ندية كبها → فتح لعبة المعرفة → يجب أن تظهر 24 بطاقة مرتّبة هرمياً.
+- مراقبة Console: لا أخطاء PGRST.
