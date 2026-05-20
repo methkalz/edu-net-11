@@ -54,7 +54,7 @@ const KnowledgeAdventurePage: React.FC = () => {
         <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl">
           <CardContent className="p-2">
             <div className="min-h-[calc(100vh-200px)]">
-              <KnowledgeAdventureRealContent />
+              {assignedGrade === '10' ? <KnowledgeAdventureGrade10Content /> : <KnowledgeAdventureRealContent />}
             </div>
           </CardContent>
         </Card>
