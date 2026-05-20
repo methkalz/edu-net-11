@@ -15,6 +15,7 @@ import { Card, CardContent } from '@/components/ui/card';
  */
 const KnowledgeAdventurePage: React.FC = () => {
   const navigate = useNavigate();
+  const { assignedGrade } = useStudentAssignedGrade();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50" dir="rtl">
