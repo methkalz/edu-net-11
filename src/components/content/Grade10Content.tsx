@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Video, FolderOpen, Box, BookOpen, Gamepad2 } from 'lucide-react';
+import { Video, FolderOpen, Box, BookOpen, Gamepad2, Wrench } from 'lucide-react';
 import Grade10VideoLibrary from './Grade10VideoLibrary';
 import Grade10MiniProjects from './Grade10MiniProjects';
 import Grade10ThreeDModelManager from './Grade10ThreeDModelManager';
 import Grade10LessonsAdmin from './Grade10LessonsAdmin';
 import KnowledgeAdventureGrade10Content from '../games/KnowledgeAdventureGrade10Content';
-import { useGrade10Files } from '@/hooks/useGrade10Files';
+import Grade10KaRebuildPanel from '@/components/admin/Grade10KaRebuildPanel';
 
 const Grade10Content: React.FC = () => {
   const [activeTab, setActiveTab] = useState('lessons');
@@ -14,7 +14,7 @@ const Grade10Content: React.FC = () => {
   return (
     <div className="w-full">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="lessons" className="flex items-center gap-2">
             <BookOpen className="h-4 w-4" />
             الدروس التعليمية
@@ -30,6 +30,10 @@ const Grade10Content: React.FC = () => {
           <TabsTrigger value="knowledge-adventure" className="flex items-center gap-2">
             <Gamepad2 className="h-4 w-4" />
             لعبة المعرفة
+          </TabsTrigger>
+          <TabsTrigger value="ka-rebuild" className="flex items-center gap-2">
+            <Wrench className="h-4 w-4" />
+            بناء بطاقات اللعبة
           </TabsTrigger>
           <TabsTrigger value="projects" className="flex items-center gap-2">
             <FolderOpen className="h-4 w-4" />
@@ -51,6 +55,10 @@ const Grade10Content: React.FC = () => {
 
         <TabsContent value="knowledge-adventure" className="mt-6">
           <KnowledgeAdventureGrade10Content />
+        </TabsContent>
+
+        <TabsContent value="ka-rebuild" className="mt-6">
+          <Grade10KaRebuildPanel />
         </TabsContent>
 
         <TabsContent value="projects" className="mt-6">
