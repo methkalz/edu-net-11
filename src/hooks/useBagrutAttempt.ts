@@ -234,6 +234,7 @@ export function useBagrutAttempt(examId: string | undefined, studentId: string |
         .single();
 
       const attemptNumber = (examQuery.data?.attempts_used || 0) + 1;
+      const publicationId = examQuery.data?.publication_id || null;
 
       const { data, error } = await supabase
         .from('bagrut_attempts')
@@ -246,7 +247,8 @@ export function useBagrutAttempt(examId: string | undefined, studentId: string |
           selected_section_ids: sectionIds,
           answers: {},
           started_at: new Date().toISOString(),
-        })
+          publication_id: publicationId,
+        } as any)
         .select()
         .single();
 
