@@ -60,7 +60,7 @@ export function useTeacherEligibleClasses(examId?: string, availableForGrades?: 
             id,
             class_name_id,
             grade_level_id,
-            class_names!inner(label),
+            class_names!inner(name),
             grade_levels!inner(code, label)
           )
         `)
@@ -69,7 +69,7 @@ export function useTeacherEligibleClasses(examId?: string, availableForGrades?: 
 
       const rows = (tc || []).map((r: any) => ({
         class_id: r.class_id as string,
-        class_label: (r.classes?.class_names?.label as string) || 'صف',
+        class_label: (r.classes?.class_names?.name as string) || 'صف',
         grade_code: (r.classes?.grade_levels?.code as string) || '',
         grade_label: (r.classes?.grade_levels?.label as string) || '',
       }));
