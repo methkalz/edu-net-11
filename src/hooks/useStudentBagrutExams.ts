@@ -93,9 +93,8 @@ export const useStudentBagrutExams = (studentId?: string, _gradeLevel?: string) 
       const now = new Date();
       const results: AvailableBagrutExam[] = activePubs.map((p: any) => {
         const exam = p.bagrut_exams;
-        const examAttempts = (attempts || []).filter(a =>
-          a.exam_id === exam.id && (a.publication_id === p.id || a.publication_id === null)
-        );
+        // ✅ احتساب المحاولات لهذه النشرة فقط — لا نخلط مع نشرات أخرى
+        const examAttempts = (attempts || []).filter(a => a.publication_id === p.id);
         const submitted = examAttempts.filter(a => a.status === 'submitted' || a.status === 'graded');
         const inProgress = examAttempts.find(a => a.status === 'in_progress');
 
