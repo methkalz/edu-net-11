@@ -7,6 +7,7 @@ import ModernHeader from '@/components/shared/ModernHeader';
 import AppFooter from '@/components/shared/AppFooter';
 import Grade10Content from '@/components/content/Grade10Content';
 import Grade10ContentViewer from '@/components/content/Grade10ContentViewer';
+import Grade10KaRebuildPanel from '@/components/admin/Grade10KaRebuildPanel';
 const Grade10Management: React.FC = () => {
   const { userProfile, loading } = useAuth();
   const { contentBackPath } = useBackPath();
