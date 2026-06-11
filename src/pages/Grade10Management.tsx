@@ -7,7 +7,7 @@ import ModernHeader from '@/components/shared/ModernHeader';
 import AppFooter from '@/components/shared/AppFooter';
 import Grade10Content from '@/components/content/Grade10Content';
 import Grade10ContentViewer from '@/components/content/Grade10ContentViewer';
-import Grade10KaRebuildPanel from '@/components/admin/Grade10KaRebuildPanel';
+
 const Grade10Management: React.FC = () => {
   const { userProfile, loading } = useAuth();
   const { contentBackPath } = useBackPath();
@@ -56,7 +56,6 @@ const Grade10Management: React.FC = () => {
           </div>
           
           <div className="animate-fade-in space-y-6">
-            {canManageContent && <Grade10KaRebuildPanel />}
             {canManageContent ? <Grade10Content /> : <Grade10ContentViewer />}
           </div>
         </div>
