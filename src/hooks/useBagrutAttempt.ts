@@ -306,6 +306,15 @@ export function useBagrutAttempt(examId: string | undefined, studentId: string |
       // حفظ الإجابات أولاً
       await saveAnswersMutation.mutateAsync(answers);
 
+      // ✅ حساب الوقت المستغرق بناءً على started_at
+      let timeSpentSeconds = 0;
+      if (attemptStartedAt) {
+        timeSpentSeconds = Math.max(
+          0,
+          Math.floor((Date.now() - new Date(attemptStartedAt).getTime()) / 1000)
+        );
+      }
+
       // تحديث الحالة إلى submitted
       const { error } = await supabase
         .from('bagrut_attempts')
@@ -313,6 +322,7 @@ export function useBagrutAttempt(examId: string | undefined, studentId: string |
           status: 'submitted',
           submitted_at: new Date().toISOString(),
           answers: answers as any,
+          time_spent_seconds: timeSpentSeconds,
         })
         .eq('id', attemptId);
 
