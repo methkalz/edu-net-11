@@ -276,7 +276,9 @@ export default function StudentBagrutResult() {
     if (!data?.bestAttempt) return false;
     if (data.bestAttempt.is_result_published) return true;
     const hasScore = data.bestAttempt.score !== null && data.bestAttempt.percentage !== null;
-    if (hasScore && data.exam?.allow_review_after_submit) return true;
+    // ✅ أولوية لإعدادات النشرة على إعدادات الامتحان
+    const allowReview = data.publication?.allow_review_after_submit ?? data.exam?.allow_review_after_submit;
+    if (hasScore && allowReview) return true;
     return false;
   }, [data]);
 
