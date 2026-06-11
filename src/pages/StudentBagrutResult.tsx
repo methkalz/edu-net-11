@@ -229,13 +229,24 @@ export default function StudentBagrutResult() {
         .sort((a, b) => (b.percentage || 0) - (a.percentage || 0))[0];
 
       let questionGrades: any[] = [];
+      let publication: any = null;
       if (bestAttempt) {
         const { data: grades } = await supabase
           .from('bagrut_question_grades').select('*').eq('attempt_id', bestAttempt.id);
         questionGrades = grades || [];
+
+        // ✅ جلب أعلام النشرة المرتبطة بالمحاولة (الأولوية على أعلام الامتحان)
+        if (bestAttempt.publication_id) {
+          const { data: pub } = await supabase
+            .from('bagrut_exam_publications')
+            .select('show_answers_to_students, allow_review_after_submit')
+            .eq('id', bestAttempt.publication_id)
+            .maybeSingle();
+          publication = pub;
+        }
       }
 
-      return { exam, attempts: attempts || [], sections: sections || [], questions: questions || [], bestAttempt, questionGrades };
+      return { exam, attempts: attempts || [], sections: sections || [], questions: questions || [], bestAttempt, questionGrades, publication };
     },
     enabled: !!examId && !!user?.id,
   });
