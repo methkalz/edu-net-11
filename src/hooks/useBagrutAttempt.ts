@@ -135,11 +135,12 @@ export function useBagrutAttempt(examId: string | undefined, studentId: string |
           .eq('exam_id', examId)
           .eq('is_active', true);
         const now = Date.now();
+        // ✅ نختار فقط نشرة داخل النافذة الزمنية — لا fallback لنشرة مجدولة/منتهية
         const active = (pubs || []).find(p => {
           const from = p.available_from ? new Date(p.available_from).getTime() : -Infinity;
           const until = p.available_until ? new Date(p.available_until).getTime() : Infinity;
           return from <= now && until >= now;
-        }) || (pubs || [])[0];
+        });
         if (active) {
           publicationId = active.id;
           pubMaxAttempts = active.max_attempts;
