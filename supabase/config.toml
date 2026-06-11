@@ -38,3 +38,6 @@ verify_jwt = true
 
 [functions.fix-true-false-questions]
 verify_jwt = true
+
+[functions.grade10-rebuild-ka-cards]
+verify_jwt = true
