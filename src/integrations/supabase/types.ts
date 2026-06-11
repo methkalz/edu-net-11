@@ -196,6 +196,7 @@ export type Database = {
           last_activity_at: string | null
           max_score: number | null
           percentage: number | null
+          publication_id: string | null
           school_id: string | null
           score: number | null
           section_scores: Json | null
@@ -222,6 +223,7 @@ export type Database = {
           last_activity_at?: string | null
           max_score?: number | null
           percentage?: number | null
+          publication_id?: string | null
           school_id?: string | null
           score?: number | null
           section_scores?: Json | null
@@ -248,6 +250,7 @@ export type Database = {
           last_activity_at?: string | null
           max_score?: number | null
           percentage?: number | null
+          publication_id?: string | null
           school_id?: string | null
           score?: number | null
           section_scores?: Json | null
@@ -270,6 +273,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "bagrut_attempts_publication_id_fkey"
+            columns: ["publication_id"]
+            isOneToOne: false
+            referencedRelation: "bagrut_exam_publications"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "bagrut_attempts_school_id_fkey"
             columns: ["school_id"]
             isOneToOne: false
@@ -289,6 +299,75 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "superadmin_school_stats"
             referencedColumns: ["school_id"]
+          },
+        ]
+      }
+      bagrut_exam_publications: {
+        Row: {
+          allow_review_after_submit: boolean
+          available_from: string
+          available_until: string
+          class_id: string
+          created_at: string
+          exam_id: string
+          id: string
+          is_active: boolean
+          max_attempts: number
+          notes: string | null
+          published_at: string
+          school_id: string | null
+          show_answers_to_students: boolean
+          teacher_id: string
+          updated_at: string
+        }
+        Insert: {
+          allow_review_after_submit?: boolean
+          available_from: string
+          available_until: string
+          class_id: string
+          created_at?: string
+          exam_id: string
+          id?: string
+          is_active?: boolean
+          max_attempts?: number
+          notes?: string | null
+          published_at?: string
+          school_id?: string | null
+          show_answers_to_students?: boolean
+          teacher_id: string
+          updated_at?: string
+        }
+        Update: {
+          allow_review_after_submit?: boolean
+          available_from?: string
+          available_until?: string
+          class_id?: string
+          created_at?: string
+          exam_id?: string
+          id?: string
+          is_active?: boolean
+          max_attempts?: number
+          notes?: string | null
+          published_at?: string
+          school_id?: string | null
+          show_answers_to_students?: boolean
+          teacher_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bagrut_exam_publications_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bagrut_exam_publications_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "bagrut_exams"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -7896,6 +7975,10 @@ export type Database = {
         Returns: undefined
       }
       refresh_superadmin_view: { Args: never; Returns: undefined }
+      student_in_publication_class: {
+        Args: { _publication: string; _student_user: string }
+        Returns: boolean
+      }
       submit_exam_attempt:
         | { Args: { p_attempt_id: string }; Returns: Json }
         | { Args: { p_answers: Json; p_attempt_id: string }; Returns: Json }
@@ -7905,6 +7988,10 @@ export type Database = {
       }
       teacher_can_view_student_user: {
         Args: { p_student_user_id: string }
+        Returns: boolean
+      }
+      teacher_owns_class: {
+        Args: { _class: string; _teacher: string }
         Returns: boolean
       }
       unlock_next_games: {

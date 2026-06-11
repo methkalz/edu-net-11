@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import ModernHeader from '@/components/shared/ModernHeader';
 import { useTeacherBagrutStats, BagrutExamForTeacher } from '@/hooks/useTeacherBagrutStats';
 import TeacherExamPreviewDialog from '@/components/bagrut/TeacherExamPreviewDialog';
+import BagrutTeacherPublishDialog from '@/components/bagrut/BagrutTeacherPublishDialog';
 import { useTeacherContentAccess } from '@/hooks/useTeacherContentAccess';
 import {
   GraduationCap,
@@ -17,12 +18,12 @@ import {
   CheckCircle,
   Award,
   TrendingUp,
-  Target,
   Search,
   Eye,
   BookOpen,
   Calendar,
   ArrowLeft,
+  Send,
 } from 'lucide-react';
 
 const seasonLabels: Record<string, string> = {
@@ -66,9 +67,10 @@ const StatCard: React.FC<StatCardProps> = ({ icon: Icon, label, value, colorClas
 interface ExamCardProps {
   exam: BagrutExamForTeacher;
   onView: () => void;
+  onPublish: () => void;
 }
 
-const ExamCard: React.FC<ExamCardProps> = ({ exam, onView }) => {
+const ExamCard: React.FC<ExamCardProps> = ({ exam, onView, onPublish }) => {
   const hasPending = exam.pendingGrading > 0;
   
   return (
@@ -96,6 +98,11 @@ const ExamCard: React.FC<ExamCardProps> = ({ exam, onView }) => {
                     الصف {grade}
                   </Badge>
                 ))}
+                {exam.activePublications > 0 && (
+                  <Badge className="bg-green-100 text-green-700 text-xs">
+                    منشور لـ {exam.activePublications} صف
+                  </Badge>
+                )}
               </div>
             </div>
           </div>
@@ -129,7 +136,12 @@ const ExamCard: React.FC<ExamCardProps> = ({ exam, onView }) => {
             )}
             
             <TeacherExamPreviewDialog examId={exam.id} examTitle={exam.title} />
-            
+
+            <Button variant="outline" size="sm" onClick={onPublish}>
+              <Send className="h-4 w-4 ml-1" />
+              {exam.activePublications > 0 ? 'إدارة النشر' : 'نشر للطلاب'}
+            </Button>
+
             <Button 
               variant={hasPending ? "default" : "outline"} 
               size="sm"
@@ -137,7 +149,7 @@ const ExamCard: React.FC<ExamCardProps> = ({ exam, onView }) => {
               className={hasPending ? "bg-orange-500 hover:bg-orange-600" : ""}
             >
               <Eye className="h-4 w-4 ml-1" />
-              {hasPending ? 'تصحيح' : 'عرض'}
+              {hasPending ? 'تصحيح' : 'النتائج'}
             </Button>
           </div>
         </div>
@@ -151,6 +163,7 @@ const TeacherBagrutExams: React.FC = () => {
   const { canAccessGrade, loading: accessLoading } = useTeacherContentAccess();
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'pending' | 'graded'>('all');
+  const [publishExam, setPublishExam] = useState<BagrutExamForTeacher | null>(null);
 
   // تحديد الصفوف المتاحة للمعلم
   const canAccessGrade11 = canAccessGrade('11');
@@ -367,11 +380,26 @@ const TeacherBagrutExams: React.FC = () => {
                   key={exam.id}
                   exam={exam}
                   onView={() => navigate(`/bagrut-grading/${exam.id}`)}
+                  onPublish={() => setPublishExam(exam)}
                 />
               ))}
             </div>
           )}
         </div>
+
+        <BagrutTeacherPublishDialog
+          open={!!publishExam}
+          onOpenChange={(o) => !o && setPublishExam(null)}
+          exam={publishExam ? {
+            id: publishExam.id,
+            title: publishExam.title,
+            subject: publishExam.subject,
+            exam_year: publishExam.exam_year,
+            duration_minutes: publishExam.duration_minutes,
+            available_for_grades: publishExam.available_for_grades,
+          } : null}
+        />
+
 
         {/* زر العودة للداشبورد */}
         <div className="flex justify-center pt-4">
