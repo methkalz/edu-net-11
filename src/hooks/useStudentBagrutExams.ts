@@ -141,17 +141,14 @@ export const useStudentBagrutExams = (studentId?: string, _gradeLevel?: string) 
         };
       });
 
-      // إذا للطالب أكثر من نشر لنفس الامتحان (لا يحدث عادة) — نعتمد أحدث نافذة فعالة
-      const byExam = new Map<string, AvailableBagrutExam>();
+      // ✅ التجميع حسب publication_id (لا حسب exam.id) — لكي لا تُحذف نشرتان منفصلتان لنفس الامتحان
+      const byPublication = new Map<string, AvailableBagrutExam>();
       for (const r of results) {
-        const existing = byExam.get(r.id);
-        if (!existing) { byExam.set(r.id, r); continue; }
-        // أولوية للنشر القابل للبدء
-        if (r.can_start && !existing.can_start) byExam.set(r.id, r);
+        byPublication.set(r.publication_id, r);
       }
 
       // اعرض حتى المنتهية إذا كان للطالب محاولات (للنتائج)
-      return Array.from(byExam.values()).filter(r =>
+      return Array.from(byPublication.values()).filter(r =>
         r.can_start || r.attempts_used > 0 || (r.available_from && new Date(r.available_from) > new Date())
       );
     },
