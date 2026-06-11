@@ -1,48 +1,54 @@
-## السبب
 
-عند فحص قاعدة البيانات تبيّن أن جداول `grade10_ka_lessons` / `grade10_ka_topics` / `grade10_ka_sections` / `grade10_ka_questions` تم إنشاؤها **بدون مفاتيح خارجية (Foreign Keys)**.
+## المراجعة
 
-الـ Hook `useGrade10Game` يستخدم استعلام PostgREST بصيغة embedded join:
-```ts
-.select(`..., grade10_ka_topics!inner ( ..., grade10_ka_sections!inner (...) )`)
-```
-هذه الصيغة تتطلّب وجود علاقات FK مُعرَّفة في القاعدة. لعدم وجودها، يُرجع PostgREST خطأ، فيُعرض للطالبة "حدث خطأ في تحميل الدروس".
+في جداول لعبة المعرفة الخاصة بالصف العاشر (`grade10_ka_sections` / `grade10_ka_topics` / `grade10_ka_lessons` / `grade10_ka_questions`) يوجد حالياً **17 قسماً** تم نسخها سابقاً من الحادي عشر. محتوى الصف العاشر الفعلي (حسب `useStudentGrade10Lessons` و `grade10_sections`) يقتصر على **"أساسيات الاتصال" فقط**.
 
-البيانات نفسها موجودة (426 درس، 280 سؤال، 88 موضوع، 17 قسم) و RLS صحيحة (قراءة مفتوحة للموثَّقين).
+لا توجد أي بيانات تقدّم للطلاب (`grade10_ka_progress = 0` في كل الأقسام) → الحذف آمن ولن يفقد أي طالب نتائجه.
 
-## الإصلاح
+## القسم الذي سيتم الإبقاء عليه (1 قسم / 103 درس)
 
-### 1) Migration: إضافة Foreign Keys
+| # | القسم | عدد الدروس |
+|---|---|---|
+| 1 | יסודות התקשורת - أساسيات الاتصال | 103 |
 
+## الأقسام التي سيتم حذفها (16 قسم / 323 درس / 280 سؤال)
+
+| # | القسم | دروس | أسئلة |
+|---|---|---|---|
+| 1 | عناوين الشبكة وطرق تمثيل الأرقام في الشبكة | 53 | 0 |
+| 2 | شبكات الإيثرنت المحلية (Ethernet LANs) | 22 | 40 |
+| 3 | البروتوكولات | 21 | 40 |
+| 4 | النماذج المرجعية لعمل الشبكة (OSI - TCP/IP) | 22 | 10 |
+| 5 | تقنيات الاتصال اللاسلكي | 32 | 20 |
+| 6 | Wide Area Network - الشبكة الواسعة | 13 | 20 |
+| 7 | جهاز المُوجِّه (Router Device) | 26 | 100 |
+| 8 | إعدادات أساسية للسويتش | 17 | 0 |
+| 9 | إعدادات أساسية للراوتر | 7 | 0 |
+| 10 | أوامر مشتركة - الراوتر/السويتش | 34 | 0 |
+| 11 | VLAN - الشبكات المحلية الافتراضية | 27 | 0 |
+| 12 | Inter-VLAN Routing - التوجيه بين شبكات VLAN | 8 | 10 |
+| 13 | التوجيه في الشبكات (Routing) | 20 | 20 |
+| 14 | ACL قوائم الوصول | 12 | 20 |
+| 15 | تدريب عملي على Packet Tracer | 7 | 0 |
+| 16 | أسئلة بجروت | 2 | 0 |
+
+## نطاق العمل
+
+- الحذف يتم **فقط** من جداول `grade10_ka_*` (نسخة لعبة المعرفة للصف العاشر).
+- لا يمسّ نهائياً جداول `grade11_*` ولا جداول محتوى الصف العاشر التعليمية (`grade10_sections/topics/lessons`).
+- الحذف تسلسلي: `grade10_ka_questions` → `grade10_ka_lessons` → `grade10_ka_topics` → `grade10_ka_sections` لكل الأقسام عدا "أساسيات الاتصال".
+
+## التفاصيل التقنية
+
+Migration واحدة تقوم بـ:
 ```sql
-ALTER TABLE public.grade10_ka_topics
-  ADD CONSTRAINT grade10_ka_topics_section_id_fkey
-  FOREIGN KEY (section_id) REFERENCES public.grade10_ka_sections(id) ON DELETE CASCADE;
-
-ALTER TABLE public.grade10_ka_lessons
-  ADD CONSTRAINT grade10_ka_lessons_topic_id_fkey
-  FOREIGN KEY (topic_id) REFERENCES public.grade10_ka_topics(id) ON DELETE CASCADE;
-
-ALTER TABLE public.grade10_ka_questions
-  ADD CONSTRAINT grade10_ka_questions_lesson_id_fkey
-  FOREIGN KEY (lesson_id) REFERENCES public.grade10_ka_lessons(id) ON DELETE CASCADE;
-
-ALTER TABLE public.grade10_ka_questions
-  ADD CONSTRAINT grade10_ka_questions_topic_id_fkey
-  FOREIGN KEY (topic_id) REFERENCES public.grade10_ka_topics(id) ON DELETE CASCADE;
-
-ALTER TABLE public.grade10_ka_questions
-  ADD CONSTRAINT grade10_ka_questions_section_id_fkey
-  FOREIGN KEY (section_id) REFERENCES public.grade10_ka_sections(id) ON DELETE CASCADE;
+DELETE FROM grade10_ka_questions WHERE lesson_id IN (
+  SELECT l.id FROM grade10_ka_lessons l
+  JOIN grade10_ka_topics t ON t.id = l.topic_id
+  JOIN grade10_ka_sections s ON s.id = t.section_id
+  WHERE s.title NOT LIKE '%أساسيات الاتصال%'
+);
+-- وبنفس الفلتر: حذف lessons ثم topics ثم sections
 ```
 
-### 2) تنظيف أيتام محتملين قبل إضافة الـ FK (إن وُجدت) — استعلام تحقّق أولاً.
-
-### 3) إعادة تحميل أنواع Supabase تلقائياً بعد الـ migration.
-
-لا حاجة لتغيير كود الواجهة — الـ hook صحيح وسيعمل فور إضافة العلاقات.
-
-## التحقّق بعد التطبيق
-
-- الدخول بحساب الطالبة ندية كبها → فتح لعبة المعرفة → يجب أن تظهر 24 بطاقة مرتّبة هرمياً.
-- مراقبة Console: لا أخطاء PGRST.
+هل أتابع التنفيذ؟
