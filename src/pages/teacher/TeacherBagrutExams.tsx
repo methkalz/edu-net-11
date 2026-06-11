@@ -380,11 +380,26 @@ const TeacherBagrutExams: React.FC = () => {
                   key={exam.id}
                   exam={exam}
                   onView={() => navigate(`/bagrut-grading/${exam.id}`)}
+                  onPublish={() => setPublishExam(exam)}
                 />
               ))}
             </div>
           )}
         </div>
+
+        <BagrutTeacherPublishDialog
+          open={!!publishExam}
+          onOpenChange={(o) => !o && setPublishExam(null)}
+          exam={publishExam ? {
+            id: publishExam.id,
+            title: publishExam.title,
+            subject: publishExam.subject,
+            exam_year: publishExam.exam_year,
+            duration_minutes: publishExam.duration_minutes,
+            available_for_grades: publishExam.available_for_grades,
+          } : null}
+        />
+
 
         {/* زر العودة للداشبورد */}
         <div className="flex justify-center pt-4">
