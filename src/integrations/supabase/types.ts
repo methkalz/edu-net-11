@@ -7903,6 +7903,10 @@ export type Database = {
         Args: { p_attempt_id: string }
         Returns: boolean
       }
+      teacher_can_view_student_user: {
+        Args: { p_student_user_id: string }
+        Returns: boolean
+      }
       unlock_next_games: {
         Args: { p_completed_game_id: string; p_player_id: string }
         Returns: undefined
