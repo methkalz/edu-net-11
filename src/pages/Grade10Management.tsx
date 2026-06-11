@@ -55,7 +55,8 @@ const Grade10Management: React.FC = () => {
             
           </div>
           
-          <div className="animate-fade-in">
+          <div className="animate-fade-in space-y-6">
+            {canManageContent && <Grade10KaRebuildPanel />}
             {canManageContent ? <Grade10Content /> : <Grade10ContentViewer />}
           </div>
         </div>
