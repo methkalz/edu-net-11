@@ -161,16 +161,37 @@ export function useShuffledQuizSession(gameSource: GameSource = 'grade11') {
       throw error;
     }
 
-    return (data || []).map((q: any) => ({
-      id: q.id,
-      question_text: q.question_text,
-      choices: typeof q.choices === 'string' ? JSON.parse(q.choices) : q.choices,
-      correct_answer: q.correct_answer,
-      explanation: q.explanation,
-      difficulty_level: q.difficulty_level as 'easy' | 'medium' | 'hard',
-      points: q.points || 10
-    }));
+    return (data || []).map((q: any) => {
+      // Normalize choices: DB can store as array of strings OR array of {id,text}.
+      // Always normalize to {id:'A'|'B'|..., text:string} so downstream shuffle works.
+      let rawChoices: any[] = [];
+      if (Array.isArray(q.choices)) {
+        rawChoices = q.choices;
+      } else if (typeof q.choices === 'string') {
+        try { rawChoices = JSON.parse(q.choices); } catch { rawChoices = []; }
+      }
+      const normalizedChoices = rawChoices.map((c: any, i: number) => {
+        const letter = String.fromCharCode(65 + i);
+        if (typeof c === 'string') return { id: letter, text: c };
+        if (c && typeof c === 'object') {
+          const text = c.text ?? c.content ?? c.label ?? String(c.value ?? '');
+          return { id: c.id || letter, text: String(text) };
+        }
+        return { id: letter, text: String(c ?? '') };
+      }).filter((c: any) => c.text && c.text.trim().length > 0);
+
+      return {
+        id: q.id,
+        question_text: q.question_text,
+        choices: normalizedChoices,
+        correct_answer: q.correct_answer,
+        explanation: q.explanation,
+        difficulty_level: q.difficulty_level as 'easy' | 'medium' | 'hard',
+        points: q.points || 10
+      };
+    });
   }, [gameSource]);
+
 
   // إنشاء جلسة جديدة
   const createSession = useCallback(async (
