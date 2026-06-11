@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import ModernHeader from '@/components/shared/ModernHeader';
 import { useTeacherBagrutStats, BagrutExamForTeacher } from '@/hooks/useTeacherBagrutStats';
 import TeacherExamPreviewDialog from '@/components/bagrut/TeacherExamPreviewDialog';
+import BagrutTeacherPublishDialog from '@/components/bagrut/BagrutTeacherPublishDialog';
 import { useTeacherContentAccess } from '@/hooks/useTeacherContentAccess';
 import {
   GraduationCap,
@@ -17,12 +18,12 @@ import {
   CheckCircle,
   Award,
   TrendingUp,
-  Target,
   Search,
   Eye,
   BookOpen,
   Calendar,
   ArrowLeft,
+  Send,
 } from 'lucide-react';
 
 const seasonLabels: Record<string, string> = {
