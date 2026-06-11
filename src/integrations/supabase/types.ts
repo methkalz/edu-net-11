@@ -7689,6 +7689,10 @@ export type Database = {
         Args: { p_exam_id: string; p_student_id: string }
         Returns: Json
       }
+      get_active_bagrut_publication_for_student: {
+        Args: { _exam_id: string; _student_user: string }
+        Returns: string
+      }
       get_active_students_for_reports: {
         Args: never
         Returns: {
@@ -7975,6 +7979,10 @@ export type Database = {
         Returns: undefined
       }
       refresh_superadmin_view: { Args: never; Returns: undefined }
+      student_has_active_bagrut_publication: {
+        Args: { _exam_id: string; _student_user: string }
+        Returns: boolean
+      }
       student_in_publication_class: {
         Args: { _publication: string; _student_user: string }
         Returns: boolean
