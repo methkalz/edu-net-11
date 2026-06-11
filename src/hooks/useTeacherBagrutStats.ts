@@ -192,6 +192,7 @@ export function useTeacherBagrutStats({ canAccessGrade11, canAccessGrade12 }: Us
           gradedCount: examGraded.length,
           publishedCount: examPublished.length,
           averageScore: examAvg,
+          activePublications: activePubsByExam.get(exam.id) || 0,
         };
       });
 
