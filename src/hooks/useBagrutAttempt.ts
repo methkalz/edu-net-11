@@ -35,6 +35,11 @@ export interface BagrutExamData {
   can_start: boolean;
   attempts_used: number;
   attempts_remaining: number;
+  // معرّف النشر النشط (المعلم → صف الطالب). null في وضع المعاينة أو بدون نشر مطابق.
+  publication_id: string | null;
+  // النافذة الزمنية للنشر (للعرض)
+  available_from?: string | null;
+  available_until?: string | null;
 }
 
 export interface BagrutAnswer {
