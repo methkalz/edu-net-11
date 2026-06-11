@@ -1,54 +1,72 @@
 
-## المراجعة
+## التشخيص الدقيق — من أين تنبع المشكلة؟
 
-في جداول لعبة المعرفة الخاصة بالصف العاشر (`grade10_ka_sections` / `grade10_ka_topics` / `grade10_ka_lessons` / `grade10_ka_questions`) يوجد حالياً **17 قسماً** تم نسخها سابقاً من الحادي عشر. محتوى الصف العاشر الفعلي (حسب `useStudentGrade10Lessons` و `grade10_sections`) يقتصر على **"أساسيات الاتصال" فقط**.
+المشكلة **ليست** من لحظة النشر من السوبر آدمن، ولا من إعداد امتحانات البجروت نفسها. النشر يضع الامتحان `is_published=true` ويربطه بصفوف (11/12) كما هو متوقع.
 
-لا توجد أي بيانات تقدّم للطلاب (`grade10_ka_progress = 0` في كل الأقسام) → الحذف آمن ولن يفقد أي طالب نتائجه.
+المشكلة الحقيقية في **مكانين** يعرضان بيانات على مستوى المدرسة كاملة بدون تقييد بصفوف المعلم:
 
-## القسم الذي سيتم الإبقاء عليه (1 قسم / 103 درس)
+### 1) خلل في سياسات RLS على `bagrut_attempts` و `bagrut_question_grades` (السبب الجذري)
 
-| # | القسم | عدد الدروس |
-|---|---|---|
-| 1 | יסודות התקשורת - أساسيات الاتصال | 103 |
-
-## الأقسام التي سيتم حذفها (16 قسم / 323 درس / 280 سؤال)
-
-| # | القسم | دروس | أسئلة |
-|---|---|---|---|
-| 1 | عناوين الشبكة وطرق تمثيل الأرقام في الشبكة | 53 | 0 |
-| 2 | شبكات الإيثرنت المحلية (Ethernet LANs) | 22 | 40 |
-| 3 | البروتوكولات | 21 | 40 |
-| 4 | النماذج المرجعية لعمل الشبكة (OSI - TCP/IP) | 22 | 10 |
-| 5 | تقنيات الاتصال اللاسلكي | 32 | 20 |
-| 6 | Wide Area Network - الشبكة الواسعة | 13 | 20 |
-| 7 | جهاز المُوجِّه (Router Device) | 26 | 100 |
-| 8 | إعدادات أساسية للسويتش | 17 | 0 |
-| 9 | إعدادات أساسية للراوتر | 7 | 0 |
-| 10 | أوامر مشتركة - الراوتر/السويتش | 34 | 0 |
-| 11 | VLAN - الشبكات المحلية الافتراضية | 27 | 0 |
-| 12 | Inter-VLAN Routing - التوجيه بين شبكات VLAN | 8 | 10 |
-| 13 | التوجيه في الشبكات (Routing) | 20 | 20 |
-| 14 | ACL قوائم الوصول | 12 | 20 |
-| 15 | تدريب عملي على Packet Tracer | 7 | 0 |
-| 16 | أسئلة بجروت | 2 | 0 |
-
-## نطاق العمل
-
-- الحذف يتم **فقط** من جداول `grade10_ka_*` (نسخة لعبة المعرفة للصف العاشر).
-- لا يمسّ نهائياً جداول `grade11_*` ولا جداول محتوى الصف العاشر التعليمية (`grade10_sections/topics/lessons`).
-- الحذف تسلسلي: `grade10_ka_questions` → `grade10_ka_lessons` → `grade10_ka_topics` → `grade10_ka_sections` لكل الأقسام عدا "أساسيات الاتصال".
-
-## التفاصيل التقنية
-
-Migration واحدة تقوم بـ:
-```sql
-DELETE FROM grade10_ka_questions WHERE lesson_id IN (
-  SELECT l.id FROM grade10_ka_lessons l
-  JOIN grade10_ka_topics t ON t.id = l.topic_id
-  JOIN grade10_ka_sections s ON s.id = t.section_id
-  WHERE s.title NOT LIKE '%أساسيات الاتصال%'
-);
--- وبنفس الفلتر: حذف lessons ثم topics ثم sections
+السياسة الحالية على `bagrut_attempts`:
+```
+"Teachers can view student attempts from their school"
+USING: profiles.role IN ('teacher','school_admin') AND profiles.school_id = bagrut_attempts.school_id
 ```
 
-هل أتابع التنفيذ؟
+→ هذا يعني **أي معلم في المدرسة يرى كل محاولات كل الطلاب في المدرسة**، حتى لو لم يكن مرتبطاً بأي صف. نفس الخلل بالضبط على `bagrut_question_grades` (سياسة "Teachers can manage question grades from their school"). وهذا يخالف القاعدة الأساسية للمشروع: "Teacher class visibility: teachers see only assigned/created classes".
+
+### 2) الاستعلام في الواجهة لا يصفّي حسب صفوف المعلم
+
+`src/hooks/useTeacherBagrutStats.ts` (السطر 82–86):
+```ts
+.from('bagrut_attempts')
+.eq('school_id', userProfile.school_id)
+.in('exam_id', examIds);
+```
+ومثلها `src/hooks/useBagrutGrading.ts` (السطر 53–62): تصفّي بـ `exam_id` و `school_id` فقط.
+
+نتيجة الخللين معاً: المعلم اشرف أبو الهيجا الجديد يفتح لوحته فيرى جميع محاولات طلاب المدرسة لكل امتحانات البجروت المنشورة لصف 11/12، ويرى "بانتظار التصحيح" حتى وإن لم يكن مسؤولاً عن أي صف.
+
+ملاحظة: `bagrut_exams` ليست المشكلة — سياستها تعرض الامتحانات المنشورة لأي معلم وهذا مقبول كمكتبة عامة، لكن "إحصائيات المحاولات/التصحيح" يجب أن تُحسب من طلاب صفوف المعلم فقط.
+
+---
+
+## الحل
+
+### أ) إصلاح RLS (الطبقة الأمنية الحقيقية)
+
+استبدال السياستين على `bagrut_attempts` و `bagrut_question_grades` بحيث:
+
+- **Teacher**: يرى/يصحّح فقط محاولات الطلاب المسجلين في صفوف مرتبطة به في `teacher_classes` (عبر `students.user_id = bagrut_attempts.student_id` → `class_students` → `teacher_classes.teacher_id = auth.uid()`).
+- **School Admin**: يبقى على مستوى المدرسة كاملة (إشراف إداري).
+- **Superadmin**: يبقى كما هو.
+- **Student**: يبقى كما هو (`student_id = auth.uid()`).
+
+سيتم إنشاء security-definer function (تجنّباً للوقوع في تكرار RLS) باسم:
+```
+public.teacher_can_access_bagrut_attempt(p_attempt_id uuid) RETURNS boolean
+```
+يفحص أن `auth.uid()` معلم مرتبط بأحد صفوف الطالب صاحب المحاولة، مع `SET search_path = public` وفلترة nulls.
+
+### ب) إصلاح الاستعلامات في الواجهة
+
+- `useTeacherBagrutStats.ts`: قبل جلب `bagrut_attempts`، احصل على قائمة `student_ids` الخاصة بصفوف المعلم (عبر RPC `get_students_for_teacher` الموجود مسبقاً، أو استعلام مباشر `teacher_classes` → `class_students` → `students.user_id`)، ثم أضف `.in('student_id', teacherStudentIds)` للاستعلام. للمعلم بدون صفوف: إرجاع stats فارغة فوراً.
+- `useBagrutGrading.ts`: نفس التصفية بالإضافة إلى `school_id`. للـ school_admin لا نضيف هذا الفلتر (نميّز عبر `userProfile.role`).
+
+### ج) (اختياري لاحقاً) "الامتحانات المتاحة" في الكروت
+
+بقاء العدد يعكس المكتبة العامة المنشورة للصفين 11/12 مقبول. أما "إجمالي المحاولات / بانتظار التصحيح / متوسط العلامات" فستصبح صفراً تلقائياً للمعلم الجديد بعد التصفية أعلاه — وهو السلوك المطلوب.
+
+---
+
+## الملفات والتغييرات
+
+1. **Migration جديدة** (RLS + helper function):
+   - `CREATE OR REPLACE FUNCTION public.teacher_can_access_bagrut_attempt(...)` (SECURITY DEFINER, STABLE, search_path=public)
+   - `DROP POLICY` ثم `CREATE POLICY` للسياستين على `bagrut_attempts` (SELECT + UPDATE) و `bagrut_question_grades` (ALL)، تفرّق بين teacher (مقيّد) و school_admin (مدرسة كاملة).
+
+2. **`src/hooks/useTeacherBagrutStats.ts`**: إضافة تصفية بـ `student_id` ضمن طلاب صفوف المعلم.
+
+3. **`src/hooks/useBagrutGrading.ts`**: إضافة نفس التصفية مع تمييز دور `school_admin`.
+
+هل أنفّذ الإصلاح؟
