@@ -37,9 +37,29 @@ export default function StudentBagrutAttempt() {
   const { examId } = useParams<{ examId: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const isPreview = searchParams.get('preview') === 'true';
-  const { user } = useAuth();
+  const requestedPreview = searchParams.get('preview') === 'true';
+  const { user, userProfile } = useAuth();
   const { toast } = useToast();
+
+  // ✅ أمان: المعاينة مسموحة فقط للمعلم / مدير المدرسة / superadmin
+  const canPreview =
+    !!userProfile &&
+    (userProfile.role === 'teacher' ||
+      userProfile.role === 'school_admin' ||
+      userProfile.role === 'superadmin');
+  const isPreview = requestedPreview && canPreview;
+
+  // إذا طلب طالب الوصول إلى ?preview=true → نمنعه فوراً
+  useEffect(() => {
+    if (requestedPreview && userProfile && !canPreview) {
+      toast({
+        title: 'غير مسموح',
+        description: 'وضع المعاينة متاح للمعلمين فقط',
+        variant: 'destructive',
+      });
+      navigate('/student/bagrut-exams', { replace: true });
+    }
+  }, [requestedPreview, canPreview, userProfile, navigate, toast]);
 
   const {
     examData,

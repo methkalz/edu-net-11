@@ -21,6 +21,10 @@ import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { AlertCircle, ArrowRight, CheckCircle2, Clock, Eye, FileText, Loader2, Save, Send, User, XCircle, TrendingUp, BookOpen, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
@@ -1223,7 +1227,9 @@ function GradingDialog({
       percentage: totalPoints > 0 ? (total / totalPoints) * 100 : 0
     };
   };
-  const handleSave = () => {
+  const [confirmUngradedOpen, setConfirmUngradedOpen] = useState(false);
+
+  const doSave = () => {
     // حفظ علامات الأسئلة
     Object.values(questionGrades).forEach(grade => {
       if (grade.question_id) {
@@ -1251,6 +1257,15 @@ function GradingDialog({
       markAsGraded: true,
       publishResult
     });
+  };
+
+  const handleSave = () => {
+    // ✅ تحذير قبل حفظ 0 صامت للأسئلة الإنشائية غير المصححة
+    if (filterStats.needsManual > 0) {
+      setConfirmUngradedOpen(true);
+      return;
+    }
+    doSave();
   };
   const scores = calculateTotalScore();
   return <Dialog open={open} onOpenChange={o => !o && onClose()}>
@@ -1392,5 +1407,26 @@ function GradingDialog({
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      {/* ✅ تأكيد قبل حفظ 0 صامت لأسئلة إنشائية غير مصححة */}
+      <AlertDialog open={confirmUngradedOpen} onOpenChange={setConfirmUngradedOpen}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>تنبيه: لديك أسئلة غير مصححة</AlertDialogTitle>
+            <AlertDialogDescription>
+              هناك <strong>{filterStats.needsManual}</strong> سؤال يحتاج إلى تصحيح يدوي ولم تضع له علامة.
+              إذا تابعت الحفظ، ستُحتسب هذه الأسئلة بعلامة <strong>0</strong>.
+              <br /><br />
+              هل أنت متأكد من رغبتك في حفظ التصحيح؟
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>عودة للتصحيح</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { setConfirmUngradedOpen(false); doSave(); }}>
+              نعم، احفظ
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>;
 }

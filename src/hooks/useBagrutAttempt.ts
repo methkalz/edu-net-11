@@ -135,11 +135,12 @@ export function useBagrutAttempt(examId: string | undefined, studentId: string |
           .eq('exam_id', examId)
           .eq('is_active', true);
         const now = Date.now();
+        // ✅ نختار فقط نشرة داخل النافذة الزمنية — لا fallback لنشرة مجدولة/منتهية
         const active = (pubs || []).find(p => {
           const from = p.available_from ? new Date(p.available_from).getTime() : -Infinity;
           const until = p.available_until ? new Date(p.available_until).getTime() : Infinity;
           return from <= now && until >= now;
-        }) || (pubs || [])[0];
+        });
         if (active) {
           publicationId = active.id;
           pubMaxAttempts = active.max_attempts;
@@ -305,6 +306,15 @@ export function useBagrutAttempt(examId: string | undefined, studentId: string |
       // حفظ الإجابات أولاً
       await saveAnswersMutation.mutateAsync(answers);
 
+      // ✅ حساب الوقت المستغرق بناءً على started_at
+      let timeSpentSeconds = 0;
+      if (attemptStartedAt) {
+        timeSpentSeconds = Math.max(
+          0,
+          Math.floor((Date.now() - new Date(attemptStartedAt).getTime()) / 1000)
+        );
+      }
+
       // تحديث الحالة إلى submitted
       const { error } = await supabase
         .from('bagrut_attempts')
@@ -312,6 +322,7 @@ export function useBagrutAttempt(examId: string | undefined, studentId: string |
           status: 'submitted',
           submitted_at: new Date().toISOString(),
           answers: answers as any,
+          time_spent_seconds: timeSpentSeconds,
         })
         .eq('id', attemptId);
 
@@ -388,27 +399,24 @@ export function useBagrutAttempt(examId: string | undefined, studentId: string |
   }, [attemptId, answers]);
 
   // حماية عند إغلاق الصفحة أو المتصفح
+  // ملاحظة: sendBeacon لا يدعم رؤوس apikey/Authorization المطلوبة من PostgREST،
+  // لذا نكتفي بمحاولة حفظ متزامنة سريعة + تحذير المستخدم.
   useEffect(() => {
-    if (!attemptId) return;
+    if (!attemptId || previewMode) return;
 
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       const currentAnswersStr = JSON.stringify(answersRef.current);
-      if (currentAnswersStr !== lastSavedAnswersRef.current && Object.keys(answersRef.current).length > 0) {
-        // محاولة حفظ سريعة باستخدام sendBeacon
-        const supabaseUrl = 'https://swlwhjnwycvjdhgclwlx.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN3bHdoam53eWN2amRoZ2Nsd2x4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUzMDU4MzgsImV4cCI6MjA3MDg4MTgzOH0.whMWEn_UIrxBa2QbK1leY9QTr1jeTnkUUn3g50fAKus';
-        
-        const payload = JSON.stringify({
-          answers: answersRef.current,
-          last_activity_at: new Date().toISOString()
-        });
-
-        navigator.sendBeacon?.(
-          `${supabaseUrl}/rest/v1/bagrut_attempts?id=eq.${attemptId}`,
-          new Blob([payload], { type: 'application/json' })
-        );
-
-        logger.info('محاولة حفظ طوارئ عند إغلاق الصفحة');
+      if (
+        currentAnswersStr !== lastSavedAnswersRef.current &&
+        Object.keys(answersRef.current).length > 0
+      ) {
+        // إطلاق حفظ غير متزامن — قد يكتمل قبل الإغلاق إذا كان السيرفر سريعاً
+        try {
+          saveAnswersMutation.mutate(answersRef.current);
+        } catch (err) {
+          logger.warn('فشل إطلاق الحفظ عند الإغلاق', err);
+        }
+        logger.info('تحذير المستخدم من إغلاق الصفحة قبل الحفظ');
         e.preventDefault();
         e.returnValue = 'لديك إجابات غير محفوظة. هل أنت متأكد من المغادرة؟';
       }
@@ -416,7 +424,7 @@ export function useBagrutAttempt(examId: string | undefined, studentId: string |
 
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [attemptId]);
+  }, [attemptId, previewMode]);
 
   // دالة مساعدة: إيجاد القسم الذي ينتمي له سؤال (بحث عودي يشمل الأسئلة الفرعية)
   const findSectionForQuestion = useCallback((questionId: string): ParsedSection | null => {

@@ -93,9 +93,8 @@ export const useStudentBagrutExams = (studentId?: string, _gradeLevel?: string) 
       const now = new Date();
       const results: AvailableBagrutExam[] = activePubs.map((p: any) => {
         const exam = p.bagrut_exams;
-        const examAttempts = (attempts || []).filter(a =>
-          a.exam_id === exam.id && (a.publication_id === p.id || a.publication_id === null)
-        );
+        // ✅ احتساب المحاولات لهذه النشرة فقط — لا نخلط مع نشرات أخرى
+        const examAttempts = (attempts || []).filter(a => a.publication_id === p.id);
         const submitted = examAttempts.filter(a => a.status === 'submitted' || a.status === 'graded');
         const inProgress = examAttempts.find(a => a.status === 'in_progress');
 
@@ -142,17 +141,14 @@ export const useStudentBagrutExams = (studentId?: string, _gradeLevel?: string) 
         };
       });
 
-      // إذا للطالب أكثر من نشر لنفس الامتحان (لا يحدث عادة) — نعتمد أحدث نافذة فعالة
-      const byExam = new Map<string, AvailableBagrutExam>();
+      // ✅ التجميع حسب publication_id (لا حسب exam.id) — لكي لا تُحذف نشرتان منفصلتان لنفس الامتحان
+      const byPublication = new Map<string, AvailableBagrutExam>();
       for (const r of results) {
-        const existing = byExam.get(r.id);
-        if (!existing) { byExam.set(r.id, r); continue; }
-        // أولوية للنشر القابل للبدء
-        if (r.can_start && !existing.can_start) byExam.set(r.id, r);
+        byPublication.set(r.publication_id, r);
       }
 
       // اعرض حتى المنتهية إذا كان للطالب محاولات (للنتائج)
-      return Array.from(byExam.values()).filter(r =>
+      return Array.from(byPublication.values()).filter(r =>
         r.can_start || r.attempts_used > 0 || (r.available_from && new Date(r.available_from) > new Date())
       );
     },

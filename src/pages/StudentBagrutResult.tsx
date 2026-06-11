@@ -229,13 +229,24 @@ export default function StudentBagrutResult() {
         .sort((a, b) => (b.percentage || 0) - (a.percentage || 0))[0];
 
       let questionGrades: any[] = [];
+      let publication: any = null;
       if (bestAttempt) {
         const { data: grades } = await supabase
           .from('bagrut_question_grades').select('*').eq('attempt_id', bestAttempt.id);
         questionGrades = grades || [];
+
+        // ✅ جلب أعلام النشرة المرتبطة بالمحاولة (الأولوية على أعلام الامتحان)
+        if (bestAttempt.publication_id) {
+          const { data: pub } = await supabase
+            .from('bagrut_exam_publications')
+            .select('show_answers_to_students, allow_review_after_submit')
+            .eq('id', bestAttempt.publication_id)
+            .maybeSingle();
+          publication = pub;
+        }
       }
 
-      return { exam, attempts: attempts || [], sections: sections || [], questions: questions || [], bestAttempt, questionGrades };
+      return { exam, attempts: attempts || [], sections: sections || [], questions: questions || [], bestAttempt, questionGrades, publication };
     },
     enabled: !!examId && !!user?.id,
   });
@@ -265,7 +276,9 @@ export default function StudentBagrutResult() {
     if (!data?.bestAttempt) return false;
     if (data.bestAttempt.is_result_published) return true;
     const hasScore = data.bestAttempt.score !== null && data.bestAttempt.percentage !== null;
-    if (hasScore && data.exam?.allow_review_after_submit) return true;
+    // ✅ أولوية لإعدادات النشرة على إعدادات الامتحان
+    const allowReview = data.publication?.allow_review_after_submit ?? data.exam?.allow_review_after_submit;
+    if (hasScore && allowReview) return true;
     return false;
   }, [data]);
 
@@ -387,7 +400,7 @@ export default function StudentBagrutResult() {
         </Card>
       )}
 
-      {exam.show_answers_to_students && (
+      {(data.publication?.show_answers_to_students ?? exam.show_answers_to_students) && (
         <Card>
           <CardHeader>
             <CardTitle>تفاصيل الإجابات</CardTitle>
