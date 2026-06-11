@@ -135,7 +135,7 @@ export function useAllTeacherPublications() {
         .select(`
           *,
           bagrut_exams!inner(id, title, subject, exam_year, exam_season, total_points, duration_minutes),
-          classes!inner(id, class_names!inner(label), grade_levels!inner(code, label))
+          classes!inner(id, class_names!inner(name), grade_levels!inner(code, label))
         `)
         .eq('teacher_id', user!.id)
         .order('available_from', { ascending: false });
