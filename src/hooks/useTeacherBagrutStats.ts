@@ -16,6 +16,7 @@ export interface BagrutExamForTeacher {
   gradedCount: number;
   publishedCount: number;
   averageScore: number | null;
+  activePublications: number;
 }
 
 export interface TeacherBagrutStats {
