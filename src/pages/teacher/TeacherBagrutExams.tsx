@@ -163,6 +163,7 @@ const TeacherBagrutExams: React.FC = () => {
   const { canAccessGrade, loading: accessLoading } = useTeacherContentAccess();
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'pending' | 'graded'>('all');
+  const [publishExam, setPublishExam] = useState<BagrutExamForTeacher | null>(null);
 
   // تحديد الصفوف المتاحة للمعلم
   const canAccessGrade11 = canAccessGrade('11');
