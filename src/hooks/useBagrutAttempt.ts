@@ -69,17 +69,17 @@ export function useBagrutAttempt(examId: string | undefined, studentId: string |
       logger.debug('جلب بيانات امتحان البجروت للحل', { examId, studentId });
 
       // جلب الامتحان
-      let examQuery = supabase
+      let examQ = supabase
         .from('bagrut_exams')
         .select('*')
         .eq('id', examId);
       if (!previewMode) {
-        examQuery = examQuery.eq('is_published', true);
+        examQ = examQ.eq('is_published', true);
       }
-      const { data: exam, error: examError } = await examQuery.single();
+      const { data: exam, error: examError } = await examQ.single();
 
       if (examError) throw examError;
-      if (!exam) throw new Error('الامتحان غير موجود أو غير منشور');
+      if (!exam) throw new Error('الامتحان غير موجود أو غير متاح');
 
       // جلب الأقسام
       const { data: sections, error: sectionsError } = await supabase
@@ -120,10 +120,40 @@ export function useBagrutAttempt(examId: string | undefined, studentId: string |
         };
       });
 
+      // جلب النشر النشط للطالب (الإعدادات الفعلية من جدول النشرات)
+      let publicationId: string | null = null;
+      let pubMaxAttempts: number | null = null;
+      let pubShowAnswers: boolean | null = null;
+      let pubAllowReview: boolean | null = null;
+      let pubFrom: string | null = null;
+      let pubUntil: string | null = null;
+
+      if (!previewMode) {
+        const { data: pubs } = await supabase
+          .from('bagrut_exam_publications')
+          .select('id, max_attempts, show_answers_to_students, allow_review_after_submit, available_from, available_until, is_active')
+          .eq('exam_id', examId)
+          .eq('is_active', true);
+        const now = Date.now();
+        const active = (pubs || []).find(p => {
+          const from = p.available_from ? new Date(p.available_from).getTime() : -Infinity;
+          const until = p.available_until ? new Date(p.available_until).getTime() : Infinity;
+          return from <= now && until >= now;
+        }) || (pubs || [])[0];
+        if (active) {
+          publicationId = active.id;
+          pubMaxAttempts = active.max_attempts;
+          pubShowAnswers = active.show_answers_to_students;
+          pubAllowReview = active.allow_review_after_submit;
+          pubFrom = active.available_from;
+          pubUntil = active.available_until;
+        }
+      }
+
       // جلب محاولات الطالب (يتجاهل في وضع المعاينة)
       let submittedCount = 0;
       let inProgressAttempt: any = null;
-      const maxAttempts = exam.max_attempts || 1;
+      const maxAttempts = pubMaxAttempts ?? (exam.max_attempts || 1);
 
       if (!previewMode) {
         const { data: attempts } = await supabase
@@ -154,8 +184,8 @@ export function useBagrutAttempt(examId: string | undefined, studentId: string |
           total_points: exam.total_points || 100,
           instructions: exam.instructions,
           max_attempts: maxAttempts,
-          show_answers_to_students: exam.show_answers_to_students || false,
-          allow_review_after_submit: exam.allow_review_after_submit ?? true,
+          show_answers_to_students: pubShowAnswers ?? (exam.show_answers_to_students || false),
+          allow_review_after_submit: pubAllowReview ?? (exam.allow_review_after_submit ?? true),
           exam_structure_type: examStructureType as 'standard' | 'all_mandatory',
         },
         sections: sectionsWithQuestions,
@@ -168,9 +198,12 @@ export function useBagrutAttempt(examId: string | undefined, studentId: string |
           answers: (inProgressAttempt.answers as Record<string, any>) || {},
           time_spent_seconds: inProgressAttempt.time_spent_seconds || 0,
         } : null,
-        can_start: previewMode || submittedCount < maxAttempts || !!inProgressAttempt,
+        can_start: previewMode || (!!publicationId && submittedCount < maxAttempts) || !!inProgressAttempt,
         attempts_used: submittedCount,
         attempts_remaining: Math.max(0, maxAttempts - submittedCount),
+        publication_id: publicationId,
+        available_from: pubFrom,
+        available_until: pubUntil,
       };
     },
     enabled: !!examId && !!studentId,
