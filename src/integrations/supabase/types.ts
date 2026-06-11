@@ -7899,6 +7899,10 @@ export type Database = {
       submit_exam_attempt:
         | { Args: { p_attempt_id: string }; Returns: Json }
         | { Args: { p_answers: Json; p_attempt_id: string }; Returns: Json }
+      teacher_can_access_bagrut_attempt: {
+        Args: { p_attempt_id: string }
+        Returns: boolean
+      }
       unlock_next_games: {
         Args: { p_completed_game_id: string; p_player_id: string }
         Returns: undefined
