@@ -1407,5 +1407,26 @@ function GradingDialog({
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      {/* ✅ تأكيد قبل حفظ 0 صامت لأسئلة إنشائية غير مصححة */}
+      <AlertDialog open={confirmUngradedOpen} onOpenChange={setConfirmUngradedOpen}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>تنبيه: لديك أسئلة غير مصححة</AlertDialogTitle>
+            <AlertDialogDescription>
+              هناك <strong>{filterStats.needsManual}</strong> سؤال يحتاج إلى تصحيح يدوي ولم تضع له علامة.
+              إذا تابعت الحفظ، ستُحتسب هذه الأسئلة بعلامة <strong>0</strong>.
+              <br /><br />
+              هل أنت متأكد من رغبتك في حفظ التصحيح؟
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>عودة للتصحيح</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { setConfirmUngradedOpen(false); doSave(); }}>
+              نعم، احفظ
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>;
 }
