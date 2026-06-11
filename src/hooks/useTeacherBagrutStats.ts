@@ -47,14 +47,16 @@ interface UseTeacherBagrutStatsOptions {
 
 export function useTeacherBagrutStats({ canAccessGrade11, canAccessGrade12 }: UseTeacherBagrutStatsOptions) {
   const { userProfile } = useAuth();
-  
+
   // تحديد الصفوف المتاحة للمعلم
   const accessibleGrades: string[] = [];
   if (canAccessGrade11) accessibleGrades.push('11');
   if (canAccessGrade12) accessibleGrades.push('12');
 
+  const isSchoolAdmin = userProfile?.role === 'school_admin';
+
   return useQuery({
-    queryKey: ['teacher-bagrut-stats', userProfile?.school_id, accessibleGrades],
+    queryKey: ['teacher-bagrut-stats', userProfile?.user_id, userProfile?.school_id, accessibleGrades, isSchoolAdmin],
     queryFn: async (): Promise<TeacherBagrutStats> => {
       if (!userProfile?.school_id || accessibleGrades.length === 0) {
         return getEmptyStats();
@@ -76,14 +78,60 @@ export function useTeacherBagrutStats({ canAccessGrade11, canAccessGrade12 }: Us
 
       const examIds = filteredExams.map(e => e.id);
 
-      // 2. جلب محاولات طلاب المدرسة لهذه الامتحانات
+      // helper: تكوين stats فارغة لمحاولات الطلاب مع الإبقاء على المكتبة العامة للامتحانات
+      const buildLibraryOnlyStats = (): TeacherBagrutStats => ({
+        ...getEmptyStats(),
+        availableExams: filteredExams.length,
+        publishedForGrade11: filteredExams.filter(e => (e.available_for_grades || []).includes('11')).length,
+        publishedForGrade12: filteredExams.filter(e => (e.available_for_grades || []).includes('12')).length,
+        examsWithDetails: filteredExams.map(exam => ({
+          id: exam.id, title: exam.title, subject: exam.subject, exam_year: exam.exam_year,
+          exam_season: exam.exam_season, available_for_grades: exam.available_for_grades || [],
+          total_points: exam.total_points || 100, duration_minutes: exam.duration_minutes || 180,
+          studentAttempts: 0, pendingGrading: 0, gradedCount: 0, publishedCount: 0, averageScore: null,
+        })),
+      });
+
+      // 2. تحديد طلاب صفوف المعلم (للمعلم فقط — مدير المدرسة يرى كل المدرسة)
+      let teacherStudentUserIds: string[] | null = null;
+      if (!isSchoolAdmin && userProfile?.user_id) {
+        const { data: tcRows, error: tcErr } = await supabase
+          .from('teacher_classes')
+          .select('class_id')
+          .eq('teacher_id', userProfile.user_id);
+        if (tcErr) throw tcErr;
+        const classIds = (tcRows || [])
+          .map((r: any) => r.class_id)
+          .filter((cid: string | null | undefined): cid is string => !!cid);
+
+        if (classIds.length === 0) return buildLibraryOnlyStats();
+
+        const { data: csRows, error: csErr } = await supabase
+          .from('class_students')
+          .select('student_id, students!inner(user_id)')
+          .in('class_id', classIds);
+        if (csErr) throw csErr;
+        teacherStudentUserIds = Array.from(new Set(
+          (csRows || [])
+            .map((r: any) => r.students?.user_id)
+            .filter((uid: string | null | undefined): uid is string => !!uid)
+        ));
+
+        if (teacherStudentUserIds.length === 0) return buildLibraryOnlyStats();
+      }
+
+      // 3. جلب محاولات الطلاب (مقيّدة بطلاب المعلم إن وُجدوا)
       let attempts: any[] = [];
       if (examIds.length > 0) {
-        const { data: attemptsData, error: attemptsError } = await supabase
+        let attemptsQuery = supabase
           .from('bagrut_attempts')
           .select('id, exam_id, student_id, status, percentage, is_result_published')
           .eq('school_id', userProfile.school_id)
           .in('exam_id', examIds);
+        if (teacherStudentUserIds) {
+          attemptsQuery = attemptsQuery.in('student_id', teacherStudentUserIds);
+        }
+        const { data: attemptsData, error: attemptsError } = await attemptsQuery;
 
         if (attemptsError) throw attemptsError;
         attempts = attemptsData || [];
