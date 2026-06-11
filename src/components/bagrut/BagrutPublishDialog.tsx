@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import {
@@ -11,24 +10,18 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import {
-  Calendar,
-  Clock,
   Users,
-  School,
-  Eye,
-  EyeOff,
   Loader2,
   GraduationCap,
-  RefreshCw,
   Globe,
   Lock,
+  Info,
 } from 'lucide-react';
 
 interface BagrutExam {
@@ -40,11 +33,6 @@ interface BagrutExam {
   total_points: number;
   is_published: boolean;
   available_for_grades: string[];
-  available_from: string | null;
-  available_until: string | null;
-  max_attempts: number;
-  show_answers_to_students: boolean;
-  allow_review_after_submit: boolean;
 }
 
 interface BagrutPublishDialogProps {
@@ -67,48 +55,15 @@ export default function BagrutPublishDialog({
   onSuccess,
 }: BagrutPublishDialogProps) {
   const [isSaving, setIsSaving] = useState(false);
-  
-  // حالة النشر
-  const [isPublished, setIsPublished] = useState(false);
+  const [isReleased, setIsReleased] = useState(false);
   const [selectedGrades, setSelectedGrades] = useState<string[]>([]);
-  
-  // إعدادات التوقيت
-  const [useTimeWindow, setUseTimeWindow] = useState(false);
-  const [availableFrom, setAvailableFrom] = useState('');
-  const [availableUntil, setAvailableUntil] = useState('');
-  
-  // إعدادات المحاولات
-  const [maxAttempts, setMaxAttempts] = useState(1);
-  
-  // إعدادات العرض
-  const [showAnswersToStudents, setShowAnswersToStudents] = useState(false);
-  const [allowReviewAfterSubmit, setAllowReviewAfterSubmit] = useState(true);
 
-  // تحميل بيانات الامتحان عند فتح الـ dialog
   useEffect(() => {
     if (exam && open) {
-      setIsPublished(exam.is_published || false);
+      setIsReleased(exam.is_published || false);
       setSelectedGrades(exam.available_for_grades || []);
-      setMaxAttempts(exam.max_attempts || 1);
-      setShowAnswersToStudents(exam.show_answers_to_students || false);
-      setAllowReviewAfterSubmit(exam.allow_review_after_submit ?? true);
-      
-      if (exam.available_from || exam.available_until) {
-        setUseTimeWindow(true);
-        setAvailableFrom(exam.available_from ? formatDateTimeLocal(exam.available_from) : '');
-        setAvailableUntil(exam.available_until ? formatDateTimeLocal(exam.available_until) : '');
-      } else {
-        setUseTimeWindow(false);
-        setAvailableFrom('');
-        setAvailableUntil('');
-      }
     }
   }, [exam, open]);
-
-  const formatDateTimeLocal = (isoString: string) => {
-    const date = new Date(isoString);
-    return date.toISOString().slice(0, 16);
-  };
 
   const handleGradeToggle = (gradeCode: string) => {
     setSelectedGrades(prev =>
@@ -129,57 +84,38 @@ export default function BagrutPublishDialog({
   const handleSave = async () => {
     if (!exam) return;
 
-    // التحقق من الصحة
-    if (isPublished && selectedGrades.length === 0) {
-      toast.error('يجب اختيار صف واحد على الأقل لنشر الامتحان');
+    if (isReleased && selectedGrades.length === 0) {
+      toast.error('يجب اختيار صف واحد على الأقل لإتاحة الامتحان للمعلمين');
       return;
     }
 
-    if (useTimeWindow) {
-      if (!availableFrom || !availableUntil) {
-        toast.error('يجب تحديد تاريخ البداية والنهاية');
-        return;
-      }
-      if (new Date(availableFrom) >= new Date(availableUntil)) {
-        toast.error('تاريخ البداية يجب أن يكون قبل تاريخ النهاية');
-        return;
-      }
-    }
-
     setIsSaving(true);
-
     try {
-      const updateData: any = {
-        is_published: isPublished,
-        available_for_grades: selectedGrades,
-        max_attempts: maxAttempts,
-        show_answers_to_students: showAnswersToStudents,
-        allow_review_after_submit: allowReviewAfterSubmit,
-        status: isPublished ? 'published' : 'ready',
-        updated_at: new Date().toISOString(),
-      };
-
-      if (useTimeWindow) {
-        updateData.available_from = new Date(availableFrom).toISOString();
-        updateData.available_until = new Date(availableUntil).toISOString();
-      } else {
-        updateData.available_from = null;
-        updateData.available_until = null;
-      }
-
       const { error } = await supabase
         .from('bagrut_exams')
-        .update(updateData)
+        .update({
+          is_published: isReleased,
+          available_for_grades: selectedGrades,
+          status: isReleased ? 'published' : 'ready',
+          // الوصول المباشر للطلاب من السوبر آدمن أصبح ملغى — المعلم هو من ينشر
+          available_from: null,
+          available_until: null,
+          updated_at: new Date().toISOString(),
+        })
         .eq('id', exam.id);
 
       if (error) throw error;
 
-      toast.success(isPublished ? 'تم نشر الامتحان بنجاح' : 'تم إخفاء الامتحان');
+      toast.success(
+        isReleased
+          ? 'تم إتاحة الامتحان للمعلمين — يمكنهم الآن مراجعته ونشره لطلابهم'
+          : 'تم إخفاء الامتحان عن المعلمين'
+      );
       onSuccess?.();
       onOpenChange(false);
     } catch (error) {
       console.error('Error updating exam:', error);
-      toast.error('فشل في تحديث إعدادات النشر');
+      toast.error('فشل في تحديث الإعدادات');
     } finally {
       setIsSaving(false);
     }
@@ -193,7 +129,7 @@ export default function BagrutPublishDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <GraduationCap className="h-5 w-5 text-orange-500" />
-            إعدادات نشر الامتحان
+            إتاحة الامتحان للمعلمين
           </DialogTitle>
           <DialogDescription>
             {exam.title} - {exam.subject} ({exam.exam_year})
@@ -201,28 +137,40 @@ export default function BagrutPublishDialog({
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          {/* حالة النشر الرئيسية */}
+          {/* تنبيه شرح النظام الجديد */}
+          <div className="flex gap-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+            <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
+              <p className="font-medium">نظام النشر الجديد</p>
+              <p className="text-xs">
+                دور السوبر آدمن هو إتاحة الامتحان <strong>للمعلمين</strong> فقط ليراجعوه.
+                المعلم بعد ذلك يقرر متى ولأي صف ينشره لطلابه بإعدادات مستقلة (تواريخ، عدد محاولات، إظهار الإجابات).
+              </p>
+            </div>
+          </div>
+
+          {/* حالة الإتاحة الرئيسية */}
           <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border">
             <div className="flex items-center gap-3">
-              {isPublished ? (
+              {isReleased ? (
                 <Globe className="h-5 w-5 text-green-500" />
               ) : (
                 <Lock className="h-5 w-5 text-amber-500" />
               )}
               <div>
                 <p className="font-medium">
-                  {isPublished ? 'الامتحان منشور' : 'الامتحان مخفي'}
+                  {isReleased ? 'متاح للمعلمين' : 'غير متاح'}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {isPublished
-                    ? 'الطلاب يمكنهم رؤية وحل هذا الامتحان'
-                    : 'الامتحان غير مرئي للطلاب'}
+                  {isReleased
+                    ? 'المعلمون يستطيعون مراجعته ونشره لطلابهم'
+                    : 'الامتحان مخفي عن المعلمين والطلاب'}
                 </p>
               </div>
             </div>
             <Switch
-              checked={isPublished}
-              onCheckedChange={setIsPublished}
+              checked={isReleased}
+              onCheckedChange={setIsReleased}
             />
           </div>
 
@@ -246,6 +194,9 @@ export default function BagrutPublishDialog({
                   : 'تحديد الكل'}
               </Button>
             </div>
+            <p className="text-xs text-muted-foreground">
+              معلمو هذه الصفوف فقط هم من سيرون الامتحان ضمن قائمتهم.
+            </p>
             <div className="flex flex-wrap gap-2">
               {AVAILABLE_GRADES.map((grade) => (
                 <Badge
@@ -263,139 +214,12 @@ export default function BagrutPublishDialog({
                 </Badge>
               ))}
             </div>
-            {selectedGrades.length === 0 && isPublished && (
+            {selectedGrades.length === 0 && isReleased && (
               <p className="text-xs text-destructive">
                 يجب اختيار صف واحد على الأقل
               </p>
             )}
           </div>
-
-          <Separator />
-
-          {/* نافذة الوقت */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                تحديد فترة الإتاحة
-              </Label>
-              <Switch
-                checked={useTimeWindow}
-                onCheckedChange={setUseTimeWindow}
-              />
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {useTimeWindow
-                ? 'الامتحان متاح فقط خلال الفترة المحددة'
-                : 'الامتحان متاح طوال الوقت (بعد النشر)'}
-            </p>
-
-            {useTimeWindow && (
-              <div className="grid grid-cols-2 gap-4 pt-2">
-                <div className="space-y-2">
-                  <Label htmlFor="available-from" className="text-xs">
-                    من تاريخ
-                  </Label>
-                  <Input
-                    id="available-from"
-                    type="datetime-local"
-                    value={availableFrom}
-                    onChange={(e) => setAvailableFrom(e.target.value)}
-                    className="text-sm"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="available-until" className="text-xs">
-                    إلى تاريخ
-                  </Label>
-                  <Input
-                    id="available-until"
-                    type="datetime-local"
-                    value={availableUntil}
-                    onChange={(e) => setAvailableUntil(e.target.value)}
-                    className="text-sm"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
-          <Separator />
-
-          {/* إعدادات المحاولات */}
-          <div className="space-y-3">
-            <Label className="flex items-center gap-2">
-              <RefreshCw className="h-4 w-4" />
-              عدد المحاولات المسموحة
-            </Label>
-            <div className="flex items-center gap-3">
-              <Input
-                type="number"
-                min={1}
-                max={10}
-                value={maxAttempts}
-                onChange={(e) => setMaxAttempts(parseInt(e.target.value) || 1)}
-                className="w-24"
-              />
-              <span className="text-sm text-muted-foreground">
-                محاولة لكل طالب
-              </span>
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* إعدادات العرض */}
-          <div className="space-y-4">
-            <Label className="flex items-center gap-2">
-              <Eye className="h-4 w-4" />
-              إعدادات العرض للطالب
-            </Label>
-            
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium">عرض الإجابات الصحيحة</p>
-                <p className="text-xs text-muted-foreground">
-                  السماح للطالب برؤية الإجابات بعد التصحيح
-                </p>
-              </div>
-              <Switch
-                checked={showAnswersToStudents}
-                onCheckedChange={setShowAnswersToStudents}
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium">مراجعة الامتحان</p>
-                <p className="text-xs text-muted-foreground">
-                  السماح للطالب بمراجعة إجاباته بعد التقديم
-                </p>
-              </div>
-              <Switch
-                checked={allowReviewAfterSubmit}
-                onCheckedChange={setAllowReviewAfterSubmit}
-              />
-            </div>
-          </div>
-
-          {/* ملخص */}
-          {isPublished && (
-            <>
-              <Separator />
-              <div className="p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
-                <p className="text-sm font-medium text-green-700 dark:text-green-400 mb-2">
-                  ملخص النشر:
-                </p>
-                <ul className="text-xs text-green-600 dark:text-green-500 space-y-1">
-                  <li>• الصفوف: {selectedGrades.length > 0 ? selectedGrades.map(g => `الصف ${g}`).join('، ') : 'لم يتم تحديد'}</li>
-                  <li>• الفترة: {useTimeWindow ? 'محددة' : 'متاح دائماً'}</li>
-                  <li>• المحاولات: {maxAttempts} محاولة لكل طالب</li>
-                  <li>• المدة: {exam.duration_minutes} دقيقة</li>
-                </ul>
-              </div>
-            </>
-          )}
         </div>
 
         <DialogFooter className="flex-row-reverse gap-2">
