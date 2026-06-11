@@ -79,6 +79,16 @@ export function useTeacherBagrutStats({ canAccessGrade11, canAccessGrade12 }: Us
 
       const examIds = filteredExams.map(e => e.id);
 
+      // جلب عدد النشرات النشطة للمعلم لكل امتحان
+      const { data: pubsData } = await supabase
+        .from('bagrut_exam_publications')
+        .select('id, exam_id, is_active')
+        .in('exam_id', examIds.length > 0 ? examIds : ['00000000-0000-0000-0000-000000000000'])
+        .eq('teacher_id', userProfile.user_id!)
+        .eq('is_active', true);
+      const activePubsByExam = new Map<string, number>();
+      (pubsData || []).forEach((p: any) => activePubsByExam.set(p.exam_id, (activePubsByExam.get(p.exam_id) || 0) + 1));
+
       // helper: تكوين stats فارغة لمحاولات الطلاب مع الإبقاء على المكتبة العامة للامتحانات
       const buildLibraryOnlyStats = (): TeacherBagrutStats => ({
         ...getEmptyStats(),
@@ -90,6 +100,7 @@ export function useTeacherBagrutStats({ canAccessGrade11, canAccessGrade12 }: Us
           exam_season: exam.exam_season, available_for_grades: exam.available_for_grades || [],
           total_points: exam.total_points || 100, duration_minutes: exam.duration_minutes || 180,
           studentAttempts: 0, pendingGrading: 0, gradedCount: 0, publishedCount: 0, averageScore: null,
+          activePublications: activePubsByExam.get(exam.id) || 0,
         })),
       });
 
