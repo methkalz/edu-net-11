@@ -1,72 +1,67 @@
 
-## التشخيص الدقيق — من أين تنبع المشكلة؟
+## أ) تأكيد إصلاح البجروت
 
-المشكلة **ليست** من لحظة النشر من السوبر آدمن، ولا من إعداد امتحانات البجروت نفسها. النشر يضع الامتحان `is_published=true` ويربطه بصفوف (11/12) كما هو متوقع.
+تم سدّ الثغرة في **كل سيناريوهات البجروت**:
 
-المشكلة الحقيقية في **مكانين** يعرضان بيانات على مستوى المدرسة كاملة بدون تقييد بصفوف المعلم:
+| السيناريو | المسار | الحالة بعد الإصلاح |
+|---|---|---|
+| النشر من السوبر آدمن | `bagrut_exams.is_published=true` | لم يكن مصدر المشكلة — الامتحانات منشورة كمكتبة عامة للصفين 11/12 |
+| رؤية المعلم لمحاولات الطلاب | `bagrut_attempts` SELECT | RLS الآن مقيّد بـ `teacher_classes → class_students` |
+| تصحيح المعلم | `bagrut_attempts` UPDATE + `bagrut_question_grades` ALL | RLS الآن مقيّد لطلاب صفوفه فقط |
+| Widget البجروت في الداشبورد | `useTeacherBagrutStats` | يصفّي على `student_id ∈ طلاب صفوف المعلم` + RLS طبقة ثانية |
+| صفحة `/teacher/bagrut-exams` | نفس الـ hook | ✓ |
+| صفحة `/bagrut-grading/:id` | `useBagrutGrading` + RLS | ✓ |
+| مدير المدرسة | سياسات منفصلة | يبقى يرى مدرسته كاملة كما يجب |
+| السوبر آدمن والطالب | بدون تغيير | ✓ |
 
-### 1) خلل في سياسات RLS على `bagrut_attempts` و `bagrut_question_grades` (السبب الجذري)
-
-السياسة الحالية على `bagrut_attempts`:
-```
-"Teachers can view student attempts from their school"
-USING: profiles.role IN ('teacher','school_admin') AND profiles.school_id = bagrut_attempts.school_id
-```
-
-→ هذا يعني **أي معلم في المدرسة يرى كل محاولات كل الطلاب في المدرسة**، حتى لو لم يكن مرتبطاً بأي صف. نفس الخلل بالضبط على `bagrut_question_grades` (سياسة "Teachers can manage question grades from their school"). وهذا يخالف القاعدة الأساسية للمشروع: "Teacher class visibility: teachers see only assigned/created classes".
-
-### 2) الاستعلام في الواجهة لا يصفّي حسب صفوف المعلم
-
-`src/hooks/useTeacherBagrutStats.ts` (السطر 82–86):
-```ts
-.from('bagrut_attempts')
-.eq('school_id', userProfile.school_id)
-.in('exam_id', examIds);
-```
-ومثلها `src/hooks/useBagrutGrading.ts` (السطر 53–62): تصفّي بـ `exam_id` و `school_id` فقط.
-
-نتيجة الخللين معاً: المعلم اشرف أبو الهيجا الجديد يفتح لوحته فيرى جميع محاولات طلاب المدرسة لكل امتحانات البجروت المنشورة لصف 11/12، ويرى "بانتظار التصحيح" حتى وإن لم يكن مسؤولاً عن أي صف.
-
-ملاحظة: `bagrut_exams` ليست المشكلة — سياستها تعرض الامتحانات المنشورة لأي معلم وهذا مقبول كمكتبة عامة، لكن "إحصائيات المحاولات/التصحيح" يجب أن تُحسب من طلاب صفوف المعلم فقط.
+أي معلم جديد بلا صفوف → 0 محاولات، 0 بانتظار التصحيح، مهما كانت الامتحانات المنشورة.
 
 ---
 
-## الحل
+## ب) مشكلة "المتواجدون الآن" — نفس النمط بالضبط
 
-### أ) إصلاح RLS (الطبقة الأمنية الحقيقية)
+### التشخيص
 
-استبدال السياستين على `bagrut_attempts` و `bagrut_question_grades` بحيث:
+ثغرتان متطابقتان للبجروت:
 
-- **Teacher**: يرى/يصحّح فقط محاولات الطلاب المسجلين في صفوف مرتبطة به في `teacher_classes` (عبر `students.user_id = bagrut_attempts.student_id` → `class_students` → `teacher_classes.teacher_id = auth.uid()`).
-- **School Admin**: يبقى على مستوى المدرسة كاملة (إشراف إداري).
-- **Superadmin**: يبقى كما هو.
-- **Student**: يبقى كما هو (`student_id = auth.uid()`).
+**1) RLS مفتوحة على مستوى المدرسة:**
 
-سيتم إنشاء security-definer function (تجنّباً للوقوع في تكرار RLS) باسم:
+`student_presence`:
 ```
-public.teacher_can_access_bagrut_attempt(p_attempt_id uuid) RETURNS boolean
+"Teachers can view student presence in their school"
+USING: school_id = get_user_school_id() AND role IN ('teacher','school_admin','superadmin')
 ```
-يفحص أن `auth.uid()` معلم مرتبط بأحد صفوف الطالب صاحب المحاولة، مع `SET search_path = public` وفلترة nulls.
+→ أي معلم يرى حضور كل طلاب المدرسة.
 
-### ب) إصلاح الاستعلامات في الواجهة
+`class_students`:
+```
+"School members can view class enrollments"
+USING: classes.school_id = get_user_school_id() OR superadmin
+```
+→ أي معلم يرى تسجيلات كل صفوف المدرسة، لذلك تظهر الصفوف في فلتر الـ widget (حادي عشر ب، الثاني عشر ج، علمي ب، إلخ).
 
-- `useTeacherBagrutStats.ts`: قبل جلب `bagrut_attempts`، احصل على قائمة `student_ids` الخاصة بصفوف المعلم (عبر RPC `get_students_for_teacher` الموجود مسبقاً، أو استعلام مباشر `teacher_classes` → `class_students` → `students.user_id`)، ثم أضف `.in('student_id', teacherStudentIds)` للاستعلام. للمعلم بدون صفوف: إرجاع stats فارغة فوراً.
-- `useBagrutGrading.ts`: نفس التصفية بالإضافة إلى `school_id`. للـ school_admin لا نضيف هذا الفلتر (نميّز عبر `userProfile.role`).
+`classes`: مقيّدة بشكل صحيح بـ `is_teacher_assigned_to_class` ✓ — هذه ليست المشكلة.
 
-### ج) (اختياري لاحقاً) "الامتحانات المتاحة" في الكروت
+**2) `useStudentPresence.ts` يجلب بدون تصفية:**
 
-بقاء العدد يعكس المكتبة العامة المنشورة للصفين 11/12 مقبول. أما "إجمالي المحاولات / بانتظار التصحيح / متوسط العلامات" فستصبح صفراً تلقائياً للمعلم الجديد بعد التصفية أعلاه — وهو السلوك المطلوب.
+السطر 69–97: يستعلم `student_presence` و `class_students` دون قيد `teacher_id`، فيستلم كل ما تسمح به RLS (= كل المدرسة).
+
+### الحل
+
+**Migration RLS:**
+- استبدال سياسة SELECT على `student_presence` للمعلم: يرى فقط حضور الطلاب المرتبطين بصفوفه عبر `teacher_classes → class_students → students.user_id = student_presence.user_id`. مدير المدرسة/السوبر آدمن: سياسة منفصلة على مستوى المدرسة.
+- استبدال سياسة SELECT على `class_students` للمعلم: مقيّدة بـ `is_teacher_assigned_to_class(auth.uid(), class_id)`. سياسة منفصلة لمدير المدرسة/السوبر آدمن/الطالب.
+- إنشاء security-definer function `teacher_can_view_student_presence(p_user_id uuid)` لتجنب التكرار.
+
+**تعديل `src/hooks/useStudentPresence.ts`:**
+- إضافة قيد على `class_students` بصفوف المعلم فقط (`teacher_classes`).
+- التأكد من أن قائمة الصفوف الظاهرة في الفلتر هي صفوف المعلم فقط.
 
 ---
 
-## الملفات والتغييرات
+## الملفات
 
-1. **Migration جديدة** (RLS + helper function):
-   - `CREATE OR REPLACE FUNCTION public.teacher_can_access_bagrut_attempt(...)` (SECURITY DEFINER, STABLE, search_path=public)
-   - `DROP POLICY` ثم `CREATE POLICY` للسياستين على `bagrut_attempts` (SELECT + UPDATE) و `bagrut_question_grades` (ALL)، تفرّق بين teacher (مقيّد) و school_admin (مدرسة كاملة).
+1. **Migration** (RLS + helper function): `student_presence` و `class_students`.
+2. **`src/hooks/useStudentPresence.ts`**: تصفية بصفوف المعلم على مستوى التطبيق.
 
-2. **`src/hooks/useTeacherBagrutStats.ts`**: إضافة تصفية بـ `student_id` ضمن طلاب صفوف المعلم.
-
-3. **`src/hooks/useBagrutGrading.ts`**: إضافة نفس التصفية مع تمييز دور `school_admin`.
-
-هل أنفّذ الإصلاح؟
+هل أنفّذ؟
