@@ -1223,7 +1223,9 @@ function GradingDialog({
       percentage: totalPoints > 0 ? (total / totalPoints) * 100 : 0
     };
   };
-  const handleSave = () => {
+  const [confirmUngradedOpen, setConfirmUngradedOpen] = useState(false);
+
+  const doSave = () => {
     // حفظ علامات الأسئلة
     Object.values(questionGrades).forEach(grade => {
       if (grade.question_id) {
@@ -1251,6 +1253,15 @@ function GradingDialog({
       markAsGraded: true,
       publishResult
     });
+  };
+
+  const handleSave = () => {
+    // ✅ تحذير قبل حفظ 0 صامت للأسئلة الإنشائية غير المصححة
+    if (filterStats.needsManual > 0) {
+      setConfirmUngradedOpen(true);
+      return;
+    }
+    doSave();
   };
   const scores = calculateTotalScore();
   return <Dialog open={open} onOpenChange={o => !o && onClose()}>
