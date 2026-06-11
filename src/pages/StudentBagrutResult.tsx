@@ -400,7 +400,7 @@ export default function StudentBagrutResult() {
         </Card>
       )}
 
-      {exam.show_answers_to_students && (
+      {(data.publication?.show_answers_to_students ?? exam.show_answers_to_students) && (
         <Card>
           <CardHeader>
             <CardTitle>تفاصيل الإجابات</CardTitle>
