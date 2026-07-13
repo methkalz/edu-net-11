@@ -74,6 +74,7 @@ const StudentBagrutResult = React.lazy(() => import('@/pages/StudentBagrutResult
 const BagrutGradingPage = React.lazy(() => import('@/pages/BagrutGradingPage'));
 const TeacherBagrutExams = React.lazy(() => import('@/pages/teacher/TeacherBagrutExams'));
 const TrueFalseFixPage = React.lazy(() => import('@/pages/TrueFalseFixPage'));
+const ResetPassword = React.lazy(() => import('@/pages/ResetPassword'));
 import { PageLoading } from "@/components/ui/LoadingComponents";
 
 /**
@@ -108,6 +109,7 @@ const App = () => {
               {/* Authentication routes */}
               <Route path="/auth" element={<LazyAuth />} />
               <Route path="/super-admin-auth" element={<LazySuperAdminAuth />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               
               {/* Main dashboard */}
               <Route path="/dashboard" element={<LazyDashboard />} />

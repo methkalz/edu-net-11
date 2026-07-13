@@ -41,3 +41,6 @@ verify_jwt = true
 
 [functions.grade10-rebuild-ka-cards]
 verify_jwt = true
+
+[functions.admin-set-user-password]
+verify_jwt = true
