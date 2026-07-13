@@ -1184,6 +1184,25 @@ const UserManagement: React.FC = () => {
                             className="w-full justify-start"
                             onClick={() => {
                               setShowUserDetails(false);
+                              handleUserAction('set_password', selectedUser.user_id);
+                            }}
+                          >
+                            <KeyRound className="h-4 w-4 ml-2" />
+                            تعيين كلمة مرور جديدة
+                          </Button>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            تعيين كلمة مرور مباشرة دون إرسال بريد
+                          </p>
+                        </CardContent>
+                      </Card>
+
+                      <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                        <CardContent className="p-4">
+                          <Button 
+                            variant="outline" 
+                            className="w-full justify-start"
+                            onClick={() => {
+                              setShowUserDetails(false);
                               handleUserAction('reset_password', selectedUser.user_id);
                             }}
                           >
