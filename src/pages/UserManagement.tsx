@@ -898,39 +898,85 @@ const UserManagement: React.FC = () => {
             </div>
 
             {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="border-t px-6 py-4">
-                <Pagination>
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious 
-                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                        className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                      />
-                    </PaginationItem>
-                    
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                      <PaginationItem key={page}>
-                        <PaginationLink
-                          onClick={() => setCurrentPage(page)}
-                          isActive={currentPage === page}
-                          className="cursor-pointer"
-                        >
-                          {page}
-                        </PaginationLink>
-                      </PaginationItem>
-                    ))}
-                    
-                    <PaginationItem>
-                      <PaginationNext
-                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                        className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
-              </div>
-            )}
+            {totalPages > 1 && (() => {
+              const pages: (number | 'ellipsis')[] = [];
+              const add = (p: number | 'ellipsis') => pages.push(p);
+              const window = 1; // neighbors around current
+              const showLeftDots = currentPage - window > 2;
+              const showRightDots = currentPage + window < totalPages - 1;
+              add(1);
+              if (showLeftDots) add('ellipsis');
+              const start = Math.max(2, currentPage - window);
+              const end = Math.min(totalPages - 1, currentPage + window);
+              for (let p = start; p <= end; p++) add(p);
+              if (showRightDots) add('ellipsis');
+              if (totalPages > 1) add(totalPages);
+
+              return (
+                <div className="border-t px-4 py-4 sm:px-6" dir="rtl">
+                  <nav
+                    role="navigation"
+                    aria-label="pagination"
+                    className="flex flex-col-reverse sm:flex-row items-center justify-between gap-3"
+                  >
+                    <p className="text-xs text-muted-foreground">
+                      الصفحة <span className="font-semibold text-foreground">{currentPage}</span> من{' '}
+                      <span className="font-semibold text-foreground">{totalPages}</span>
+                    </p>
+
+                    <div className="flex items-center gap-1.5">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className="h-9 gap-1 px-3"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                        <span>السابق</span>
+                      </Button>
+
+                      <div className="flex items-center gap-1">
+                        {pages.map((p, idx) =>
+                          p === 'ellipsis' ? (
+                            <span
+                              key={`e-${idx}`}
+                              className="flex h-9 w-9 items-center justify-center text-muted-foreground"
+                              aria-hidden
+                            >
+                              …
+                            </span>
+                          ) : (
+                            <Button
+                              key={p}
+                              variant={currentPage === p ? 'default' : 'ghost'}
+                              size="sm"
+                              onClick={() => setCurrentPage(p)}
+                              aria-current={currentPage === p ? 'page' : undefined}
+                              className="h-9 min-w-9 px-2 tabular-nums"
+                            >
+                              {p}
+                            </Button>
+                          )
+                        )}
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                        className="h-9 gap-1 px-3"
+                      >
+                        <span>التالي</span>
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </nav>
+                </div>
+              );
+            })()}
+
           </CardContent>
         </Card>
       </div>
