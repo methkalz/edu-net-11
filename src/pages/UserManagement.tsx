@@ -70,7 +70,10 @@ import {
   Trash,
   Settings,
   UserMinus,
-  Award
+  Award,
+  KeyRound,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
