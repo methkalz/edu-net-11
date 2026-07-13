@@ -1,45 +1,59 @@
-## ما سأفعله
+# خطة إصلاح إعادة تعيين كلمة المرور في لوحة السوبر أدمن
 
-### 1) حذف 4 بطاقات (لعبة المعرفة - الصف العاشر)
-حذف من `grade10_ka_lessons` وكل الأسئلة المرتبطة بها من `grade10_ka_questions`:
+## سبب المشكلة الحالية
 
-| العنوان | id |
-|---|---|
-| البروتوكولات الأساسية \| فيديو سيفهمك كل شيء! | `77777777-…` |
-| NAT \| فيديو سيفهمك كل شيء!1 | `88888888-…` |
-| التصميم الهرمي \| فيديو سيفهمك كل شيء! | `66666666-…` |
-| الاثرنت \| فيديو سيفهمك كل شيء! | `55555555-…` |
-
-(الـ 40 سؤالاً المرتبطة بآخر اثنتين ستُحذف؛ موضوعا "التصميم الهرمي" و"الإيثرنت" لديهما بالفعل بطاقات بديلة بـ 5 أسئلة لكل منهما من إعادة البناء الأخيرة).
-
-### 2) تصحيح نص "البطاقة الأولى"
-البطاقة الأولى في الترتيب هي **"اجهزة الشبكه| فيديو سيفهمك كل شيء!"** (id `9166d0d7…`، order_index 10، قسم "أساسيات الاتصال" / موضوع "أجهزة الشبكة"). سأعدّل:
-- **العنوان** → `أجهزة الشبكة (Network Devices)`
-- **المحتوى** → فقرة ملائمة لمحتوى الموضوع (أجهزة الشبكة: مضيف/خادم/راوتر/سويتش/Hub/Repeater/الأجهزة الطرفية والوسيطة) — ليس النص العام عن "زر التشغيل الأزرق".
-
-### 3) السبب الجذري لظهور إجابات فارغة — تم تشخيصه
-
-في `src/hooks/useShuffledQuizSession.ts` السطر 125:
-```ts
-const originalChoices = question.choices.map(choice => ({
-  ...choice,
-  originalId: choice.id   // ← choice هنا نص (string)، وليس object
-}));
-// ثم: text: choice.text   ← undefined
+الرابط الذي يصل بالإيميل لا يعمل لأن الكود في `UserManagement.tsx` يوجّه المستخدم إلى `/auth` بعد الضغط على الرابط:
 ```
+redirectTo: `${window.location.origin}/auth`
+```
+لكن `/auth` لا يعالج رمز الاستعادة (`type=recovery`) الموجود في الـ hash، فيتم تجاهله ويعود المستخدم لصفحة الدخول العادية دون أي نموذج لتغيير كلمة المرور. المطلوب صفحة مخصصة `/reset-password` تلتقط الرمز وتستدعي `supabase.auth.updateUser({ password })`.
 
-أسئلة Grade 10 KA مخزّنة في DB كمصفوفة **نصوص** (`["Router (الموجه)", "Switch فقط", …]`)، بينما الكود يفترض كائنات `{id, text}` (صيغة Grade 11 القديمة). نتيجة:
-- `{...choice}` على نص يفكّك أحرفه
-- `choice.id` = `undefined` و `choice.text` = `undefined`
-- الأزرار تظهر فارغة، والمقارنة مع `correct_answer` تفشل
+## ما سيتم تنفيذه
 
-**الإصلاح:** تطبيع `choices` فور قراءتها من DB في `fetchQuestions` (السطر 164–172) إلى الشكل القياسي `{id:'A'|'B'|'C'|'D', text:<string>}` قبل تمريرها لـ `shuffleChoicesAndTrackCorrect`. هذا يصلح Grade 10 ويظل متوافقاً مع Grade 11.
+### 1) إصلاح رابط "إرسال رابط إعادة التعيين"
+- إنشاء صفحة جديدة `src/pages/ResetPassword.tsx`:
+  - تتحقق من وجود `type=recovery` في الـ URL hash
+  - نموذج بسيط: كلمة مرور جديدة + تأكيدها + شروط قوة كلمة المرور
+  - تستدعي `supabase.auth.updateUser({ password })`
+  - عند النجاح: توست + تحويل إلى `/auth`
+  - مسار عام (خارج حماية تسجيل الدخول)
+- إضافة المسار في `src/App.tsx`: `<Route path="/reset-password" ... />`
+- تعديل `UserManagement.tsx` (السطر 304) ليصبح:
+  ```
+  redirectTo: `${window.location.origin}/reset-password`
+  ```
+- تعديل `redirectTo` في أي مكان آخر يستخدم `resetPasswordForEmail` (إن وُجد) لنفس المسار
 
-### 4) تحقق
-- استعلام للتأكد أن البطاقات الأربع حُذفت
-- فتح بطاقة Grade 10 في المعاينة للتأكد أن الإجابات تظهر
+### 2) إضافة: تعيين كلمة مرور جديدة مباشرة من السوبر أدمن (بدون إيميل)
+- إنشاء Edge Function جديدة: `supabase/functions/admin-set-user-password/index.ts`
+  - تتحقق من JWT وأن المستدعي `superadmin` (عبر جدول `profiles`)
+  - تستقبل `{ user_id, new_password }` مع تحقق Zod (طول أدنى 8، تعقيد معقول)
+  - تستخدم `supabaseAdmin.auth.admin.updateUserById(user_id, { password })`
+  - تسجل الحدث في `audit_log`
+  - CORS + معالجة أخطاء
+- في `src/pages/UserManagement.tsx`:
+  - إضافة خيار جديد في قائمة الإجراءات: **"تعيين كلمة مرور جديدة"**
+  - Dialog يحتوي على: حقلَي كلمة مرور جديدة + تأكيد، مؤشر قوة، زر إظهار/إخفاء
+  - عند الحفظ: `supabase.functions.invoke('admin-set-user-password', ...)`
+  - توست نجاح + إغلاق الحوار (لا تحديث للقائمة مطلوب)
+  - منع تطبيقها على حسابات `superadmin` أخرى (نفس منطق حماية الحذف)
 
-## ملفات ستتغيّر
-- Migration: حذف 4 lessons (+ أسئلتها بالـ cascade/explicit delete)
-- Migration / update: تعديل عنوان ومحتوى البطاقة الأولى
-- `src/hooks/useShuffledQuizSession.ts` — تطبيع الـ choices
+### 3) اعتبارات أمنية
+- Edge Function تستخدم `SUPABASE_SERVICE_ROLE_KEY` داخلياً فقط، لا تُمرَّر من العميل
+- التحقق من دور السوبر أدمن على الخادم قبل تنفيذ التغيير
+- تسجيل كامل في `audit_log` (من غيّر كلمة مرور مَن ومتى)
+- عدم عرض كلمة المرور في اللوجز
+
+## الملفات المتأثرة
+
+| ملف | الإجراء |
+|---|---|
+| `src/pages/ResetPassword.tsx` | جديد |
+| `src/App.tsx` | إضافة Route عام |
+| `src/pages/UserManagement.tsx` | تعديل redirectTo + إضافة Dialog وخيار الإجراء |
+| `supabase/functions/admin-set-user-password/index.ts` | جديد |
+| `supabase/config.toml` | تسجيل الدالة الجديدة (verify_jwt=false مع تحقق داخلي) |
+
+## ملاحظة للمستخدم
+
+قد يكون قالب إيميل الاستعادة الحالي في Supabase يستخدم رابطاً افتراضياً — بعد التعديل ستحتاج التأكد من أن Site URL و Redirect URLs في إعدادات Auth تسمح بـ `/reset-password` (سأنبهك في الرسالة بعد التنفيذ مع رابط مباشر لإعدادات Supabase).
