@@ -140,6 +140,12 @@ const UserManagement: React.FC = () => {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
   const [showRoleManager, setShowRoleManager] = useState(false);
+  const [showSetPasswordDialog, setShowSetPasswordDialog] = useState(false);
+  const [passwordTargetUser, setPasswordTargetUser] = useState<{ user_id: string; full_name: string; email: string } | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [settingPassword, setSettingPassword] = useState(false);
   const [editUserData, setEditUserData] = useState<{
     user_id: string;
     full_name: string;
@@ -301,7 +307,7 @@ const UserManagement: React.FC = () => {
           // Send password reset email
           const { error: resetError } = await supabase.auth.resetPasswordForEmail(
             userToDelete?.email || '', 
-            { redirectTo: `${window.location.origin}/auth` }
+            { redirectTo: `${window.location.origin}/reset-password` }
           );
           
           if (resetError) throw resetError;
@@ -310,6 +316,25 @@ const UserManagement: React.FC = () => {
             title: "تم إرسال الرابط",
             description: `تم إرسال رابط إعادة تعيين كلمة المرور إلى ${userToDelete?.email}`,
           });
+          break;
+
+        case 'set_password':
+          if (userToDelete?.role === 'superadmin') {
+            toast({
+              title: "غير مسموح",
+              description: "لا يمكن تعديل كلمة مرور مدير نظام آخر",
+              variant: "destructive",
+            });
+            return;
+          }
+          setPasswordTargetUser({
+            user_id: userId,
+            full_name: userToDelete?.full_name || '',
+            email: userToDelete?.email || '',
+          });
+          setNewPassword('');
+          setConfirmNewPassword('');
+          setShowSetPasswordDialog(true);
           break;
           
         case 'suspend':
