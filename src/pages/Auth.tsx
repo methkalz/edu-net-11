@@ -110,7 +110,7 @@ const Auth = () => {
               </div>
             </div>
             <h1 className={`text-2xl font-bold text-foreground mb-1.5 transition-all duration-700 delay-300 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-              مرحباً بك
+              تسجيل الدخول إلى EduNet
             </h1>
             <p className={`text-sm text-muted-foreground transition-all duration-700 delay-400 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
               سجّل دخولك إلى منصة التعليم الذكية

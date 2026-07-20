@@ -133,8 +133,7 @@ const Index = () => {
                   <img src="/lovable-uploads/f942a38c-ddca-45fc-82fc-239e22268abe.png" alt="شعار الموقع" className="h-20 md:h-24 w-auto" />
                 </div>
                 <h1 className="text-5xl md:text-7xl font-bold font-cairo mb-4">
-                  
-                  
+                  منصة EduNet التعليمية الذكية
                 </h1>
                 <div className="w-20 h-1 gradient-blue mx-auto rounded-full"></div>
               </div>
