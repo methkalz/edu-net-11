@@ -55,15 +55,17 @@ createRoot(document.getElementById('root')!).render(
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
-          <AuthProvider>
-            <StudentPresenceProvider>
-              <TooltipProvider>
-                <App />
-                <Toaster />
-                <Sonner />
-              </TooltipProvider>
-            </StudentPresenceProvider>
-          </AuthProvider>
+          <HelmetProvider>
+            <AuthProvider>
+              <StudentPresenceProvider>
+                <TooltipProvider>
+                  <App />
+                  <Toaster />
+                  <Sonner />
+                </TooltipProvider>
+              </StudentPresenceProvider>
+            </AuthProvider>
+          </HelmetProvider>
         </BrowserRouter>
       </QueryClientProvider>
     </ErrorBoundary>
