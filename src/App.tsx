@@ -94,6 +94,8 @@ const App = () => {
   return (
     // Global error boundary to catch and handle any unhandled errors
     <ErrorBoundary>
+      {/* SEO: per-route titles, descriptions, and canonical links */}
+      <SeoHead />
       {/* Tooltip provider for UI tooltips throughout the app */}
       <TooltipProvider>
         {/* Toast notification systems - dual system for flexibility */}
