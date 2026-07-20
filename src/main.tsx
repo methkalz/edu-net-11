@@ -21,6 +21,7 @@ import { Toaster } from '@/components/ui/toaster'
 import { Toaster as Sonner } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { BrowserRouter } from 'react-router-dom'
+import { HelmetProvider } from 'react-helmet-async'
 import { AuthProvider } from '@/hooks/useAuth'
 import App from './App.tsx'
 import './index.css'
@@ -54,15 +55,17 @@ createRoot(document.getElementById('root')!).render(
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
-          <AuthProvider>
-            <StudentPresenceProvider>
-              <TooltipProvider>
-                <App />
-                <Toaster />
-                <Sonner />
-              </TooltipProvider>
-            </StudentPresenceProvider>
-          </AuthProvider>
+          <HelmetProvider>
+            <AuthProvider>
+              <StudentPresenceProvider>
+                <TooltipProvider>
+                  <App />
+                  <Toaster />
+                  <Sonner />
+                </TooltipProvider>
+              </StudentPresenceProvider>
+            </AuthProvider>
+          </HelmetProvider>
         </BrowserRouter>
       </QueryClientProvider>
     </ErrorBoundary>
