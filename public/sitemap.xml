@@ -6,11 +6,6 @@
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://edu-net.me/index2</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
     <loc>https://edu-net.me/educational-content</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
