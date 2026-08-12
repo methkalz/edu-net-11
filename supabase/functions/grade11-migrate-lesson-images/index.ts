@@ -1,7 +1,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
-const BUCKET = "lesson-media";
+const BUCKET = "grade11-documents";
 // single base64 image occurrence
 const BASE64_IMG_RE = /data:(image\/[a-zA-Z0-9.+-]+);base64,([A-Za-z0-9+/=\s]+)/;
 const BASE64_IMG_RE_G = /data:(image\/[a-zA-Z0-9.+-]+);base64,([A-Za-z0-9+/=\s]+)/g;
@@ -183,7 +183,7 @@ Deno.serve(async (req) => {
       try {
         const bytes = b64ToBytes(b64);
         const ext = EXT[mime] ?? "png";
-        const path = `grade11-lessons/${lesson.id}/${crypto.randomUUID()}.${ext}`;
+        const path = `grade11-lesson-images/${lesson.id}/${crypto.randomUUID()}.${ext}`;
         const { error: upErr } = await admin.storage
           .from(BUCKET)
           .upload(path, bytes, { contentType: mime, upsert: true, cacheControl: "31536000" });
