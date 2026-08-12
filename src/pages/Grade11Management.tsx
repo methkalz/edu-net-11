@@ -95,7 +95,14 @@ const Grade11Management: React.FC = () => {
                 <Gamepad2 className="h-5 w-5" />
                 الألعاب التعليمية
               </TabsTrigger>
+              {canManageContent && (
+                <TabsTrigger value="tools" variant="primary">
+                  <Wrench className="h-5 w-5" />
+                  أدوات الصيانة
+                </TabsTrigger>
+              )}
             </TabsList>
+
 
             {canManageContent && (
               <TabsContent value="manage">
