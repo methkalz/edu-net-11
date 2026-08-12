@@ -171,6 +171,7 @@ Deno.serve(async (req) => {
     let updated = original;
     let migrated = 0;
     let failed = 0;
+    let lastError = "";
 
     for (let i = 0; i < maxImages; i++) {
       const m = updated.match(BASE64_IMG_RE);
@@ -191,7 +192,8 @@ Deno.serve(async (req) => {
         const { data: pub } = admin.storage.from(BUCKET).getPublicUrl(path);
         updated = updated.split(full).join(pub.publicUrl);
         migrated++;
-      } catch (_e) {
+      } catch (e) {
+        lastError = String((e as Error)?.message ?? e);
         // neutralize unreadable payload so the loop can progress, but keep original intact:
         // stop instead of corrupting content
         failed++;
@@ -222,6 +224,7 @@ Deno.serve(async (req) => {
       title: lesson.title,
       images_migrated: migrated,
       failed,
+      last_error: lastError,
       remaining,
       size_before: sizeBefore,
       size_after: updated.length,
