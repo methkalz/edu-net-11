@@ -73,7 +73,7 @@ const Grade11Management: React.FC = () => {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList 
               variant="primary"
-              className={canManageContent ? 'grid w-full grid-cols-3' : isSchoolAdmin ? 'grid w-full grid-cols-3' : 'grid w-full grid-cols-2'}
+              className={canManageContent ? 'grid w-full grid-cols-4' : isSchoolAdmin ? 'grid w-full grid-cols-3' : 'grid w-full grid-cols-2'}
             >
               {canManageContent && (
                 <TabsTrigger value="manage" variant="primary">
