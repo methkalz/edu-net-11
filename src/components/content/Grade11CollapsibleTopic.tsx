@@ -250,15 +250,17 @@ const Grade11CollapsibleTopic: React.FC<Grade11CollapsibleTopicProps> = ({
                       </div>
                     </div>
                     
-                    <div className="min-w-0 rounded-md border bg-card/70 p-3">
-                      <h5 className="mb-1 break-words text-sm font-semibold text-foreground">
+                    <div className="min-w-0 max-w-full overflow-hidden rounded-md border bg-card/70 p-3">
+                      <h5 className="mb-2 break-words text-sm font-semibold text-foreground">
                         {lesson.title}
                       </h5>
-                      <p className="line-clamp-3 break-words text-sm leading-6 text-muted-foreground">
-                        {getContentPreview(lesson.content)}
-                      </p>
-                      {lesson.content?.includes('<img') && (
-                        <Badge variant="outline" className="mt-2 text-xs">يحتوي على صور</Badge>
+                      {lesson.content ? (
+                        <div
+                          className="lesson-admin-content max-w-full overflow-x-auto break-words text-sm leading-7 text-foreground/90 [&_*]:max-w-full [&_img]:h-auto [&_img]:max-w-full [&_img]:rounded-md [&_iframe]:max-w-full [&_pre]:overflow-x-auto [&_table]:w-full [&_table]:table-fixed [&_td]:break-words [&_th]:break-words"
+                          dangerouslySetInnerHTML={{ __html: lesson.content }}
+                        />
+                      ) : (
+                        <p className="text-sm text-muted-foreground">لا يوجد محتوى نصي لهذا الدرس</p>
                       )}
                     </div>
                     
