@@ -123,6 +123,13 @@ const Grade11Management: React.FC = () => {
             <TabsContent value="games" className="space-y-6 mt-8">
               <GamesSection canManageContent={canManageContent} />
             </TabsContent>
+
+            {canManageContent && (
+              <TabsContent value="tools" className="space-y-6 mt-8">
+                <Grade11ImageMigrationPanel />
+              </TabsContent>
+            )}
+
           </Tabs>
         </div>
       </main>
