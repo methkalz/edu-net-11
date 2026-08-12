@@ -184,7 +184,7 @@ const Grade11ImageMigrationPanel: React.FC = () => {
         </Select>
 
         <div className="flex flex-wrap gap-3">
-          <Button variant="outline" disabled={!!busy} onClick={() => run('migrate', true)}>
+          <Button variant="outline" disabled={!!busy} onClick={() => run('scan')}>
             {busy === 'scan' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
             فحص فقط
           </Button>
