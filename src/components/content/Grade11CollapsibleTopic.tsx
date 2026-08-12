@@ -44,20 +44,6 @@ const Grade11CollapsibleTopic: React.FC<Grade11CollapsibleTopicProps> = ({
   const lessonsCount = topic.lessons?.length || 0;
   const mediaCount = topic.lessons?.reduce((acc, lesson) => acc + (lesson.media?.length || 0), 0) || 0;
 
-  const getContentPreview = (content?: string) => {
-    if (!content) return 'لا يوجد محتوى نصي لهذا الدرس';
-
-    const text = content
-      .replace(/<style[\s\S]*?<\/style>/gi, ' ')
-      .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/&nbsp;/gi, ' ')
-      .replace(/&amp;/gi, '&')
-      .replace(/\s+/g, ' ')
-      .trim();
-
-    return text.length > 180 ? `${text.slice(0, 180)}…` : text || 'يحتوي الدرس على صور أو وسائط';
-  };
 
   // Drag and drop handlers for lessons
   const handleLessonDragStart = (e: React.DragEvent, lessonIndex: number) => {
