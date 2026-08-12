@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, GraduationCap, Gamepad2 } from 'lucide-react';
+import { BookOpen, GraduationCap, Gamepad2, Wrench } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useBackPath } from '@/hooks/useBackPath';
 import { useSearchParams } from 'react-router-dom';
@@ -10,6 +10,8 @@ import Grade11ContentViewer from '@/components/content/Grade11ContentViewer';
 import Grade11SchoolAdminViewer from '@/components/content/Grade11SchoolAdminViewer';
 import Grade11CourseViewer from '@/components/content/Grade11CourseViewer';
 import GamesSection from '@/components/content/GamesSection';
+import Grade11ImageMigrationPanel from '@/components/content/Grade11ImageMigrationPanel';
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Grade11ErrorBoundary } from '@/components/error-boundaries/Grade11ErrorBoundary';
 const Grade11Management: React.FC = () => {
@@ -73,7 +75,7 @@ const Grade11Management: React.FC = () => {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList 
               variant="primary"
-              className={canManageContent ? 'grid w-full grid-cols-3' : isSchoolAdmin ? 'grid w-full grid-cols-3' : 'grid w-full grid-cols-2'}
+              className={canManageContent ? 'grid w-full grid-cols-4' : isSchoolAdmin ? 'grid w-full grid-cols-3' : 'grid w-full grid-cols-2'}
             >
               {canManageContent && (
                 <TabsTrigger value="manage" variant="primary">
@@ -95,7 +97,14 @@ const Grade11Management: React.FC = () => {
                 <Gamepad2 className="h-5 w-5" />
                 الألعاب التعليمية
               </TabsTrigger>
+              {canManageContent && (
+                <TabsTrigger value="tools" variant="primary">
+                  <Wrench className="h-5 w-5" />
+                  أدوات الصيانة
+                </TabsTrigger>
+              )}
             </TabsList>
+
 
             {canManageContent && (
               <TabsContent value="manage">
@@ -116,6 +125,13 @@ const Grade11Management: React.FC = () => {
             <TabsContent value="games" className="space-y-6 mt-8">
               <GamesSection canManageContent={canManageContent} />
             </TabsContent>
+
+            {canManageContent && (
+              <TabsContent value="tools" className="space-y-6 mt-8">
+                <Grade11ImageMigrationPanel />
+              </TabsContent>
+            )}
+
           </Tabs>
         </div>
       </main>
