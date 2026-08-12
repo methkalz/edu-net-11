@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, GraduationCap, Gamepad2 } from 'lucide-react';
+import { BookOpen, GraduationCap, Gamepad2, Wrench } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useBackPath } from '@/hooks/useBackPath';
 import { useSearchParams } from 'react-router-dom';
