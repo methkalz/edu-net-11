@@ -44,3 +44,6 @@ verify_jwt = true
 
 [functions.admin-set-user-password]
 verify_jwt = true
+
+[functions.grade11-migrate-lesson-images]
+verify_jwt = true
