@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, GraduationCap, Gamepad2, Wrench } from 'lucide-react';
+import { BookOpen, GraduationCap, Gamepad2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useBackPath } from '@/hooks/useBackPath';
 import { useSearchParams } from 'react-router-dom';
@@ -10,7 +10,6 @@ import Grade11ContentViewer from '@/components/content/Grade11ContentViewer';
 import Grade11SchoolAdminViewer from '@/components/content/Grade11SchoolAdminViewer';
 import Grade11CourseViewer from '@/components/content/Grade11CourseViewer';
 import GamesSection from '@/components/content/GamesSection';
-import Grade11ImageMigrationPanel from '@/components/content/Grade11ImageMigrationPanel';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Grade11ErrorBoundary } from '@/components/error-boundaries/Grade11ErrorBoundary';
