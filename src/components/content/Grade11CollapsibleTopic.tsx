@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronRight, Lightbulb, Edit2, Trash2, Plus, BookOpen, Clock, GripVertical, Eye, Music } from 'lucide-react';
-import Grade11LessonContentDisplay from './Grade11LessonContentDisplay';
 import LessonPreviewModal from './LessonPreviewModal';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -44,6 +43,21 @@ const Grade11CollapsibleTopic: React.FC<Grade11CollapsibleTopicProps> = ({
 
   const lessonsCount = topic.lessons?.length || 0;
   const mediaCount = topic.lessons?.reduce((acc, lesson) => acc + (lesson.media?.length || 0), 0) || 0;
+
+  const getContentPreview = (content?: string) => {
+    if (!content) return 'لا يوجد محتوى نصي لهذا الدرس';
+
+    const text = content
+      .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+      .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/&amp;/gi, '&')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    return text.length > 180 ? `${text.slice(0, 180)}…` : text || 'يحتوي الدرس على صور أو وسائط';
+  };
 
   // Drag and drop handlers for lessons
   const handleLessonDragStart = (e: React.DragEvent, lessonIndex: number) => {
@@ -192,8 +206,8 @@ const Grade11CollapsibleTopic: React.FC<Grade11CollapsibleTopicProps> = ({
                     onDragOver={handleLessonDragOver}
                     onDrop={(e) => handleLessonDrop(e, lessonIndex)}
                   >
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                      <div className="flex items-center gap-2 min-w-0">
                         <div className="cursor-move" title="اسحب لإعادة الترتيب" onClick={(e) => e.stopPropagation()}>
                           <GripVertical className="h-3 w-3 text-muted-foreground hover:text-foreground transition-colors" />
                         </div>
@@ -205,7 +219,7 @@ const Grade11CollapsibleTopic: React.FC<Grade11CollapsibleTopicProps> = ({
                         </Badge>
                       </div>
                       
-                      <div className="flex gap-1">
+                      <div className="flex shrink-0 gap-1 rounded-md border bg-card/95 p-1 shadow-sm" onPointerDown={(e) => e.stopPropagation()}>
                         <Button 
                           variant="ghost" 
                           size="sm" 
@@ -219,9 +233,11 @@ const Grade11CollapsibleTopic: React.FC<Grade11CollapsibleTopicProps> = ({
                           variant="ghost" 
                           size="sm" 
                           onClick={() => onEditLesson(lesson)}
-                          className="h-7 w-7 p-0 hover:bg-blue-100 hover:text-blue-600"
+                          className="h-7 px-2 hover:bg-blue-100 hover:text-blue-600"
+                          title="تعديل الدرس"
                         >
-                          <Edit2 className="h-3 w-3" />
+                          <Edit2 className="h-3 w-3 ml-1" />
+                          تعديل
                         </Button>
                         <Button 
                           variant="ghost" 
@@ -234,10 +250,17 @@ const Grade11CollapsibleTopic: React.FC<Grade11CollapsibleTopicProps> = ({
                       </div>
                     </div>
                     
-                    <Grade11LessonContentDisplay 
-                      lesson={lesson}
-                      onUpdateMedia={onUpdateMedia}
-                    />
+                    <div className="min-w-0 rounded-md border bg-card/70 p-3">
+                      <h5 className="mb-1 break-words text-sm font-semibold text-foreground">
+                        {lesson.title}
+                      </h5>
+                      <p className="line-clamp-3 break-words text-sm leading-6 text-muted-foreground">
+                        {getContentPreview(lesson.content)}
+                      </p>
+                      {lesson.content?.includes('<img') && (
+                        <Badge variant="outline" className="mt-2 text-xs">يحتوي على صور</Badge>
+                      )}
+                    </div>
                     
                     <div className="flex items-center justify-between text-xs text-muted-foreground mt-3 pt-2 border-t border-emerald-200">
                       <div className="flex items-center gap-3">
