@@ -41,6 +41,7 @@ const Grade11ImageMigrationPanel: React.FC = () => {
   const [topicId, setTopicId] = useState<string>('');
   const [busy, setBusy] = useState<null | 'scan' | 'migrate' | 'restore'>(null);
   const [result, setResult] = useState<MigrationResult | null>(null);
+  const [progress, setProgress] = useState<string>('');
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [restoreOpen, setRestoreOpen] = useState(false);
 
@@ -64,34 +65,95 @@ const Grade11ImageMigrationPanel: React.FC = () => {
     })();
   }, []);
 
-  const run = async (action: 'migrate' | 'restore', dryRun = false) => {
+  const invoke = async (body: Record<string, unknown>) => {
+    const { data, error } = await supabase.functions.invoke('grade11-migrate-lesson-images', { body });
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+    return data;
+  };
+
+  const scan = async (): Promise<ScanItem[]> => {
+    const data = await invoke({ action: 'scan', topic_id: topicId });
+    setResult({
+      action: 'scan',
+      lessons: data.lessons,
+      images_migrated: data.pending_images,
+      bytes_before: data.total_bytes,
+      bytes_after: data.total_bytes,
+      reduction_percent: 0,
+      results: (data.items as ScanItem[]).map((i) => ({ title: i.title, images: i.pending })),
+    });
+    return data.items as ScanItem[];
+  };
+
+  const run = async (action: 'scan' | 'migrate' | 'restore') => {
     if (!topicId) {
       toast.error('اختر الموضوع أولاً');
       return;
     }
-    setBusy(dryRun ? 'scan' : action);
-    setResult(null);
+    setBusy(action);
+    setProgress('');
+    if (action !== 'restore') setResult(null);
     try {
-      const { data, error } = await supabase.functions.invoke('grade11-migrate-lesson-images', {
-        body: { action, topic_id: topicId, dry_run: dryRun },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-
       if (action === 'restore') {
+        const data = await invoke({ action: 'restore', topic_id: topicId });
         toast.success(`تمت الاستعادة لـ ${data.restored} درس`);
-      } else {
-        setResult(data as MigrationResult);
-        toast.success(
-          dryRun
-            ? `تم الفحص: ${data.images_migrated} صورة Base64`
-            : `تم تحويل ${data.images_migrated} صورة — تقليص ${data.reduction_percent}%`
-        );
+        return;
       }
+
+      const items = await scan();
+      if (action === 'scan') {
+        toast.success(`تم الفحص: ${items.reduce((s, i) => s + i.pending, 0)} صورة Base64`);
+        return;
+      }
+
+      const pending = items.filter((i) => i.pending > 0);
+      const rows: MigrationResult['results'] = [];
+      let images = 0;
+      let bytesBefore = 0;
+      let bytesAfter = 0;
+
+      for (let idx = 0; idx < pending.length; idx++) {
+        const item = pending[idx];
+        let remaining = item.pending;
+        let migratedHere = 0;
+        let sizeAfter = item.size;
+        bytesBefore += item.size;
+
+        while (remaining > 0) {
+          setProgress(`(${idx + 1}/${pending.length}) ${item.title} — متبقٍ ${remaining} صورة`);
+          const r = await invoke({ action: 'migrate', lesson_id: item.lesson_id, max_images: 4 });
+          if (!r.images_migrated) {
+            rows.push({ title: item.title, images: migratedHere, error: r.last_error || 'توقف' });
+            break;
+          }
+          migratedHere += r.images_migrated;
+          remaining = r.remaining;
+          sizeAfter = r.size_after;
+        }
+
+        images += migratedHere;
+        bytesAfter += sizeAfter;
+        if (!rows.some((x) => x.title === item.title && x.error)) {
+          rows.push({ title: item.title, images: migratedHere });
+        }
+      }
+
+      setResult({
+        action: 'migrate',
+        lessons: pending.length,
+        images_migrated: images,
+        bytes_before: bytesBefore,
+        bytes_after: bytesAfter,
+        reduction_percent: bytesBefore ? Math.round((1 - bytesAfter / bytesBefore) * 100) : 0,
+        results: rows,
+      });
+      toast.success(`تم تحويل ${images} صورة`);
     } catch (e: any) {
       toast.error(e?.message || 'حدث خطأ أثناء العملية');
     } finally {
       setBusy(null);
+      setProgress('');
     }
   };
 
