@@ -3667,6 +3667,36 @@ export type Database = {
         }
         Relationships: []
       }
+      grade11_lesson_content_backup: {
+        Row: {
+          created_at: string
+          id: string
+          images_migrated: number
+          lesson_id: string
+          migrated_content: string | null
+          original_content: string | null
+          restored_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          images_migrated?: number
+          lesson_id: string
+          migrated_content?: string | null
+          original_content?: string | null
+          restored_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          images_migrated?: number
+          lesson_id?: string
+          migrated_content?: string | null
+          original_content?: string | null
+          restored_at?: string | null
+        }
+        Relationships: []
+      }
       grade11_lesson_difficulty_config: {
         Row: {
           created_at: string | null
