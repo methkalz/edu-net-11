@@ -17,6 +17,13 @@ interface TopicOption {
   section_title: string;
 }
 
+interface ScanItem {
+  lesson_id: string;
+  title: string;
+  pending: number;
+  size: number;
+}
+
 interface MigrationResult {
   action: string;
   lessons: number;
