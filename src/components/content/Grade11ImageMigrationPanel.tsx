@@ -183,6 +183,10 @@ const Grade11ImageMigrationPanel: React.FC = () => {
           </SelectContent>
         </Select>
 
+        {progress && (
+          <div className="text-sm text-muted-foreground">{progress}</div>
+        )}
+
         <div className="flex flex-wrap gap-3">
           <Button variant="outline" disabled={!!busy} onClick={() => run('scan')}>
             {busy === 'scan' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
